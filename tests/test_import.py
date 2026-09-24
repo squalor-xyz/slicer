@@ -277,3 +277,27 @@ class SkeletonTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class OutlineTextValidationTests(unittest.TestCase):
+  """The bulk path builds items directly, so it needs the same guard."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Import_BlankHeading_IsRefusedByTheParser(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## \n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 2)
+      self.assertIn("no title", err)
+      self.assertEqual(repo.state().index.items, [])
+
+  def test_Import_PipeInATitle_LandsAndRendersSafely(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## Fix the a|b parser\n")
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.run("render")[0], 0)
+      self.assertEqual(repo.run("check")[0], 0)

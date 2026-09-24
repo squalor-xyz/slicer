@@ -222,6 +222,64 @@ class OpsTests(unittest.TestCase):
       self.assertTrue((repo.root / ".slicer/slices/done/S02.json").is_file())
       self.assertEqual(repo.state().slices["S02"].findings_note, "G9")
 
+  def test_Add_BlankTitle_IsRefusedWithoutWriting(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/index.json")
+      code, _, err = repo.run("add", "")
+      self.assertEqual(code, 2)
+      self.assertIn("cannot be blank", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Add_WhitespaceTitle_IsRefused(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(repo.run("add", "   ")[0], 2)
+
+  def test_Add_BlankTitle_DoesNotConsumeAnId(self) -> None:
+    # The id is allocated before the item is built, so a late refusal would
+    # burn one.
+    with self.repo() as repo:
+      before = repo.state().index.next_id
+      repo.run("add", "")
+      self.assertEqual(repo.state().index.next_id, before)
+
+  def test_Add_TitleWithANewline_IsRefused(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("add", "one\ntwo")
+      self.assertEqual(code, 2)
+      self.assertIn("newline", err)
+
+  def test_Add_NewlineInAnyOneLineField_IsRefused(self) -> None:
+    with self.repo() as repo:
+      for flag in ("--size", "--findings", "--pass"):
+        with self.subTest(flag):
+          self.assertEqual(repo.run("add", "ok", flag, "a\nb")[0], 2)
+
+  def test_Add_NewlineInATree_IsRefused(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(repo.run("add", "ok", "--tree", "a\nb")[0], 2)
+
+  def test_Set_BlankTitle_IsRefused(self) -> None:
+    # `--title ""` arrives as "" rather than None, so it reaches the field.
+    with self.repo() as repo:
+      code, _, err = repo.run("set", "S02", "--title", "")
+      self.assertEqual(code, 2)
+      self.assertIn("cannot be blank", err)
+      self.assertTrue(repo.state().index.require("S02").title)
+
+  def test_Set_BlankFindings_IsStillAllowed(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("set", "S02", "--findings", "")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").findings, "")
+
+  def test_Set_NewlineInAField_IsRefusedBeforeAnythingIsApplied(self) -> None:
+    with self.repo() as repo:
+      before = repo.state().index.require("S02").size
+      code, _, err = repo.run("set", "S02", "--size", "XL", "--findings", "a\nb")
+      self.assertEqual(code, 2)
+      self.assertIn("newline", err)
+      self.assertEqual(repo.state().index.require("S02").size, before)
+
   def test_Set_UnknownStatus_RefusesAndListsTheKnownOnes(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("set", "S02", "--status", "nonsense")

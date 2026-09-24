@@ -95,8 +95,21 @@ def render_slice(sl: Slice, cfg: Config, template: str) -> bytes:
   return (banner(source) + "\n\n" + tidy(body)).encode("utf-8")
 
 
+def cell(text: str) -> str:
+  """Make a value safe to put in a markdown table cell.
+
+  A pipe would split the cell it sits in and a newline would end the table
+  early, so both have to go. Escaping happens here rather than on the way in,
+  for two reasons: a status label comes from config and never passes through
+  input validation at all, and storing an escaped value would break the
+  byte-identity round trip `migrate` depends on.
+  """
+  return " ".join(text.split()).replace("|", "\\|")
+
+
 def _id_cell(item: Item) -> str:
-  return f"[{item.id}]({SLICES_SUBDIR}/{item.id}.md)" if item.has_slice else item.id
+  link = f"[{item.id}]({SLICES_SUBDIR}/{item.id}.md)" if item.has_slice else item.id
+  return cell(link)
 
 
 def render_row(item: Item, position: int, cfg: Config, template: str) -> str:
@@ -104,19 +117,42 @@ def render_row(item: Item, position: int, cfg: Config, template: str) -> str:
   # A retired row still renders, so the reason it was retired has to be on it;
   # the status column alone does not tell a reader why.
   findings = f"{item.findings} {MIDDOT} {item.reason}".strip(f" {MIDDOT}") if item.reason else item.findings
+  # An item stored before titles were validated may have none. Say so, rather
+  # than rendering a blank cell nobody can act on.
+  title = cell(item.display_title()) or f"(untitled {item.id})"
   return expand(
     template,
     {
       "position": str(position),
       "idcell": _id_cell(item),
-      "id": item.id,
-      "title": item.display_title(),
-      "size": size,
-      "trees": ", ".join(item.trees),
-      "findings": findings,
-      "status": cfg.status_label(item.status),
+      "id": cell(item.id),
+      "title": title,
+      "size": cell(size),
+      "trees": cell(", ".join(item.trees)),
+      "findings": cell(findings),
+      "status": cell(cfg.status_label(item.status)),
     },
   ).strip("\n")
+
+
+# An escaped pipe is content, not a cell wall, so it must not be counted.
+UNESCAPED_PIPE_RE = re.compile(r"(?<!\\)\|")
+
+
+def _cells(row: str) -> int:
+  return len(UNESCAPED_PIPE_RE.findall(row)) - 1
+
+
+def _check_row(row: str, header: str) -> None:
+  """A generated row must have as many cells as its own table's header.
+
+  Never expected to fire: every value goes through `cell` first. It is here to
+  catch the next cell someone adds without doing that, and a `row.md` edited
+  to an arity the header does not share.
+  """
+  got, want = _cells(row), _cells(header)
+  if got != want:
+    raise RenderError(f"generated table row has {got} cells, header has {want}: {row}")
 
 
 def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) -> bytes:
@@ -142,8 +178,10 @@ def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) 
       position += 1
       if item.group and item.group != group:
         group = item.group
-        rows.append(f"| {group} | | | | | | |")
+        rows.append(f"| {cell(group)} | | | | | | |")
       rows.append(render_row(item, position, cfg, row_template))
+    for row in rows:
+      _check_row(row, header)
     lines.append("\n".join([header, sep, *rows]))
     if info is not None and info.outro:
       lines.append(info.outro)

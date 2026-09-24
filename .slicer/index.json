@@ -410,7 +410,7 @@
       "id": "S21",
       "title": "User text reaches the roadmap table unvalidated",
       "short_title": "User text reaches the roadmap table unvalidated",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

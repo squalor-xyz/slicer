@@ -33,7 +33,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit. `render.py` for the escaping and the assertion, `ops.py` for the refusals,\nand a new `tests/test_tables.py`."
     }
   ],
   "notes": []

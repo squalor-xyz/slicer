@@ -24,9 +24,42 @@ def _record(state: State, item: str, action: str, frm: str = "", to: str = "", n
   state.log(LogEntry(when=_now(), item=item, action=action, frm=frm, to=to, note=note))
 
 
+# Fields that land on one line of a roadmap table cell. A newline in any of
+# them ends the table early, so they are refused on the way in rather than
+# mangled on the way out.
+ONE_LINE_FIELDS = (
+  "title",
+  "short_title",
+  "size",
+  "findings",
+  "pass_key",
+  "group",
+)
+
+
+def _reject_bad_text(**fields: object) -> None:
+  """Refuse text that cannot survive a roadmap row. Call before mutating.
+
+  `add` allocates an id before it builds the item, and `set_fields` mutates in
+  place, so anything raised half way through leaves state inconsistent in
+  memory. Everything is checked up front for that reason.
+  """
+  title = fields.get("title")
+  if title is not None and not str(title).strip():
+    raise StateError("a title cannot be blank", code="blank_title")
+  for key in ONE_LINE_FIELDS:
+    value = fields.get(key)
+    if value is not None and "\n" in str(value):
+      raise StateError(f"{key} cannot contain a newline", code="newline_in_field")
+  for tree in fields.get("trees") or []:
+    if "\n" in str(tree):
+      raise StateError("a tree name cannot contain a newline", code="newline_in_field")
+
+
 def add(state: State, title: str, *, item_id: str | None = None, **fields: object) -> Item:
   """Append a roadmap entry. It has no slice file until it is promoted."""
   cfg = state.config
+  _reject_bad_text(title=title, **fields)
   new_id = ids.allocate(state.index, item_id)
   item = Item(
     id=new_id,
@@ -151,6 +184,9 @@ def set_fields(state: State, item_id: str, **fields: object) -> Item:
   cfg = state.config
   item = state.index.require(item_id)
   known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags"}
+  # `--title ""` arrives as "" rather than None, so it reaches here and would
+  # wipe the title. Refuse it; skipping it silently would be just as wrong.
+  _reject_bad_text(**fields)
   changed = sorted(k for k, v in fields.items() if v is not None)
   previous = item.status
   for key, value in fields.items():
@@ -490,6 +526,14 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
     by_title[spec.title] = new_id
 
   for spec, new_id in allocated:
+    _reject_bad_text(
+      title=spec.title,
+      size=spec.size,
+      findings=spec.findings,
+      pass_key=spec.pass_key,
+      group=spec.group,
+      trees=spec.trees,
+    )
     status = spec.status or cfg.open_status
     item = Item(
       id=new_id,
