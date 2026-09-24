@@ -17,3 +17,5 @@
 {"when": "2026-09-24T15:28:44Z", "item": "S07", "action": "add", "from": "", "to": "open", "note": "Copyright holder is unnamed in LICENSE and pyproject"}
 {"when": "2026-09-24T15:29:14Z", "item": "S08", "action": "add", "from": "", "to": "open", "note": "set --findings updates the index row but not the slice file; check does not notice"}
 {"when": "2026-09-24T15:29:41Z", "item": "S01", "action": "status", "from": "open", "to": "done", "note": "public repo at squalor-xyz/slicer; synthetic fixture replaces the real tree"}
+{"when": "2026-09-24T17:55:36Z", "item": "S09", "action": "add", "from": "", "to": "open", "note": "No bulk-load command: a plain list of planned features needs a shell loop over add"}
+{"when": "2026-09-24T17:55:36Z", "item": "S10", "action": "add", "from": "", "to": "open", "note": "id.prefix and id.width in config.json are silently inert after init"}

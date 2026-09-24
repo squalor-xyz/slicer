@@ -20,12 +20,29 @@ PYTHONPATH=src python3 -m slicer --help   # or run it uninstalled
 
 ```sh
 cd any-repo
-slicer init                          # creates .slicer/
-slicer import --from docs/slices     # optional: migrate an existing markdown tree
+slicer init                             # creates .slicer/
+slicer add "Parse the config file" --size M --tree core
+slicer promote S01                      # give it a slice file from the template
+slicer edit S01 --section Why           # opens $EDITOR
+slicer render                           # regenerate .slicer/render/
+slicer check                            # the gate: exit 1 if anything drifted
 ```
 
-`import` refuses to write anything unless every file round-trips byte for byte, so a
-document slicer cannot reproduce is never half-migrated.
+`add` appends a roadmap row; `promote` gives it a slice file. There is no bulk-load
+command — for a list of planned features, loop:
+
+```sh
+while IFS= read -r title; do slicer add "$title"; done < features.txt
+```
+
+Already running this workflow by hand? `slicer import --from docs/slices` migrates a
+markdown tree that is **already in slicer's format** — it is a migration path, not a
+general importer. It refuses to write anything unless every file round-trips byte for
+byte, so a document slicer cannot reproduce is never half-migrated.
+
+**→ [docs/getting-started.md](docs/getting-started.md)** walks through all of this with
+real output. [docs/import-format.md](docs/import-format.md) is the exact grammar
+`import` accepts; [docs/configuration.md](docs/configuration.md) is every config key.
 
 ## Commands
 
@@ -130,6 +147,11 @@ one renders, the section list `promote` seeds, the scope-boundary marker, which 
 exclude an item from derived pointers, and the `sync` targets. Nothing is compiled into
 the tool, so slicer works on a repo with no review protocol at all.
 
+Every key, its default, and which ones are unsafe to change once items exist:
+[docs/configuration.md](docs/configuration.md). Two to know up front — `id.prefix` and
+`id.width` are read only when `index.json` is first written, so changing them later does
+nothing.
+
 ## Tests
 
 ```sh
@@ -154,6 +176,7 @@ hand-written markdown — worth running before changing `legacy.py` or `importer
 0.1.0, and slicer manages its own roadmap: `.slicer/` in this repository is a worked
 example you can read, and `.slicer/render/ROADMAP.md` is what it renders to.
 
+[docs/getting-started.md](docs/getting-started.md) is the walkthrough.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains the layering and the invariants.
 [AGENTS.md](AGENTS.md) has the commands and the house style.
 

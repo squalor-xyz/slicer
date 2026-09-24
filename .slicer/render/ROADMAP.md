@@ -2,7 +2,7 @@
 
 # Roadmap
 
-8 items · — 5 · done 3
+10 items · — 7 · done 3
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -14,3 +14,5 @@
 | 6 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
 | 7 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
 | 8 | S08 | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | — |
+| 9 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | — |
+| 10 | S10 | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | — |
