@@ -98,6 +98,68 @@ class OpsTests(unittest.TestCase):
       repo.run("unpark", "S03")
       self.assertEqual(repo.state().index.require("S03").status, "open")
 
+  def test_Set_StatusCrossingTheDoneBoundary_MovesTheSliceFile(self) -> None:
+    # The bug this replaces: `set --status done` changed the field and left
+    # the file in the open folder, which `verify` then reported as an error.
+    with self.repo() as repo:
+      repo.run("set", "S02", "--status", "done")
+      self.assertTrue((repo.root / ".slicer/slices/done/S02.json").is_file())
+      self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
+
+  def test_Set_StatusCrossingTheDoneBoundary_LeavesVerifyClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--status", "done")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0, out)
+      self.assertNotIn("wrong folder", out)
+
+  def test_Set_StatusBackToOpen_MovesTheFileBack(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--status", "done")
+      repo.run("set", "S02", "--status", "open")
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+      self.assertEqual(repo.run("verify")[0], 0)
+
+  def test_Set_StatusUnchanged_LeavesTheFileWhereItIs(self) -> None:
+    with self.repo() as repo:
+      before = repo.state().find_slice_file("S02")
+      repo.run("set", "S02", "--status", "open")
+      self.assertEqual(repo.state().find_slice_file("S02"), before)
+
+  def test_Set_FieldWithNoStatusChange_MovesNothing(self) -> None:
+    with self.repo() as repo:
+      before = repo.state().find_slice_file("S02")
+      repo.run("set", "S02", "--size", "L")
+      self.assertEqual(repo.state().find_slice_file("S02"), before)
+
+  def test_Set_StatusAndAField_WriteOneLogEntryCarryingTheTransition(self) -> None:
+    with self.repo() as repo:
+      before = len(repo.state().history())
+      repo.run("set", "S02", "--status", "done", "--size", "L")
+      history = repo.state().history()
+      self.assertEqual(len(history) - before, 1)
+      entry = history[-1]
+      self.assertEqual((entry.action, entry.frm, entry.to), ("set", "open", "done"))
+      self.assertEqual(entry.note, "size,status")
+
+  def test_Set_WithoutAStatusChange_LeavesTheTransitionBlank(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--size", "L")
+      entry = repo.state().history()[-1]
+      self.assertEqual((entry.action, entry.frm, entry.to), ("set", "", ""))
+
+  def test_Done_StillWritesAStatusEntry(self) -> None:
+    # `done`, `park` and `unpark` keep their own shape; only `set` changed.
+    with self.repo() as repo:
+      repo.run("done", "S02")
+      self.assertEqual(repo.state().history()[-1].action, "status")
+
+  def test_Retire_MovesTheFileThroughTheSameOnePath(self) -> None:
+    with self.repo() as repo:
+      repo.run("remove", "S02", "--reason", "superseded")
+      self.assertTrue((repo.root / ".slicer/slices/retired/S02.json").is_file())
+      self.assertEqual(repo.run("verify")[0], 0)
+
   def test_Set_UnknownStatus_RefusesAndListsTheKnownOnes(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("set", "S02", "--status", "nonsense")

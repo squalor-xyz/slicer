@@ -103,12 +103,27 @@ def move(
   return target + 1
 
 
+def _relocate_slice(state: State, item_id: str) -> None:
+  """Move a slice file to wherever its item's status now says it belongs.
+
+  The folder is the status made visible on disk, so every path that changes a
+  status has to come through here. It logs nothing: the caller owns the
+  history, because `set` and `done` record the same move differently.
+  """
+  src = state.find_slice_file(item_id)
+  if src is None:
+    return
+  dst = state.slice_path(item_id)
+  if src != dst:
+    vcs.move(state.root, src, dst)
+
+
 def set_fields(state: State, item_id: str, **fields: object) -> Item:
   cfg = state.config
-  item = state.index.get(item_id)
-  if item is None:
-    raise StateError(f"no such item: {item_id}", code="no_such_item")
+  item = state.index.require(item_id)
   known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags"}
+  changed = sorted(k for k, v in fields.items() if v is not None)
+  previous = item.status
   for key, value in fields.items():
     if value is None:
       continue
@@ -117,29 +132,36 @@ def set_fields(state: State, item_id: str, **fields: object) -> Item:
     if key == "status" and value not in cfg.statuses:
       raise StateError(f"unknown status {value!r}; known: {sorted(cfg.statuses)}")
     setattr(item, key, value)
+
+  moved = item.status != previous
+  if moved:
+    _relocate_slice(state, item_id)
   state.save_index()
-  _record(state, item_id, "set", note=",".join(sorted(k for k, v in fields.items() if v is not None)))
+  # One entry, even when a status changed: the transition goes in from/to so
+  # nothing is lost by not writing a second `status` record as well.
+  _record(
+    state,
+    item_id,
+    "set",
+    frm=previous if moved else "",
+    to=item.status if moved else "",
+    note=",".join(changed),
+  )
   return item
 
 
 def set_status(state: State, item_id: str, status: str, *, note: str = "") -> Item:
-  """Change status, moving the slice file when it crosses the done boundary."""
+  """Change status, moving the slice file when it crosses a folder boundary."""
   cfg = state.config
-  item = state.index.get(item_id)
-  if item is None:
-    raise StateError(f"no such item: {item_id}", code="no_such_item")
+  item = state.index.require(item_id)
   if status not in cfg.statuses:
     raise StateError(f"unknown status {status!r}; known: {sorted(cfg.statuses)}")
   previous = item.status
   if previous == status:
     return item
 
-  src = state.find_slice_file(item_id)
   item.status = status
-  if src is not None:
-    dst = state.slice_path(item_id)
-    if src != dst:
-      vcs.move(state.root, src, dst)
+  _relocate_slice(state, item_id)
   state.save_index()
   _record(state, item_id, "status", frm=previous, to=status, note=note)
   return item
@@ -293,12 +315,8 @@ def retire(state: State, item_id: str, *, reason: str, force: bool = False) -> I
   previous = item.status
   item.reason = reason.strip()
 
-  src = state.find_slice_file(item_id)
   item.status = cfg.retired_status
-  if src is not None:
-    dst = state.slice_path(item_id)
-    if src != dst:
-      vcs.move(state.root, src, dst)
+  _relocate_slice(state, item_id)
   state.save_index()
   _record(state, item_id, "retire", frm=previous, to=item.status, note=item.reason)
   return item

@@ -23,7 +23,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Route a `status` change in `set_fields` through `set_status` rather than `setattr`, so\nthere is one code path that knows about the folder mapping. Watch the log: `set_status`\nrecords a `status` entry, and `set` currently records a `set` entry naming the fields —\ndecide which one a combined call writes rather than writing both.\n\n**Not in this slice:** reconciling the other duplicated index/slice fields; that is S08."
+      "body": "Relocation moved out of `set_status` into `_relocate_slice`, which moves the file and\nlogs nothing. `set_status` calls it and keeps writing its own `status` entry, so `done`,\n`park` and `unpark` are unchanged. `set_fields` calls it when the status actually\nchanged. `retire` had the same move dance inline and now shares the one path too — the\npoint of this slice is that exactly one function knows the folder mapping.\n\n**The log decision:** one entry, not two. A combined `set --status done --size M` writes\na single `set` entry whose `note` names both fields and whose `from`/`to` carry the\ntransition, so nothing is lost by not also writing a `status` record:\n\n    2026-09-24T20:04:43Z  S01   set      open -> done  status\n\n**Not in this slice:** reconciling the other duplicated index/slice fields; that is S08."
     },
     {
       "heading": "Check",
@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "One commit. `ops.py` and the tests that pin the new behaviour."
     }
   ],
   "notes": []

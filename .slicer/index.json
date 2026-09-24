@@ -210,7 +210,7 @@
       "id": "S11",
       "title": "set --status changes the field without moving the slice file",
       "short_title": "set --status changes the field without moving the slice file",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

@@ -30,3 +30,6 @@
 {"when": "2026-09-24T19:52:33Z", "item": "S19", "action": "add", "from": "", "to": "open", "note": "Dependencies can only be asked about one item at a time"}
 {"when": "2026-09-24T19:52:33Z", "item": "S20", "action": "add", "from": "", "to": "open", "note": "History records that something changed, never what"}
 {"when": "2026-09-24T19:52:38Z", "item": "S09", "action": "status", "from": "open", "to": "done", "note": "slicer import reads a markdown outline; docs/import.md"}
+{"when": "2026-09-24T20:04:54Z", "item": "S11", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-24T20:04:54Z", "item": "S11", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-24T20:04:54Z", "item": "S11", "action": "status", "from": "open", "to": "done", "note": "one path for the folder mapping; set, done and retire all share it"}
