@@ -8,6 +8,7 @@ package may hardcode a path or a vocabulary belonging to one repository.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
@@ -110,6 +111,18 @@ class Config:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
     if len(set(self.statuses.values())) != len(self.statuses):
       raise ConfigError("two statuses render to the same label; they would be indistinguishable")
+    if not self.id_prefix:
+      raise ConfigError("id.prefix may not be empty")
+    if self.id_width < 1:
+      raise ConfigError(f"id.width must be at least 1, not {self.id_width}")
+    for target in self.sync_targets:
+      try:
+        re.compile(target.match)
+      except re.error as exc:
+        raise ConfigError(
+          f"sync target {target.name!r}: match {target.match!r} is not a valid "
+          f"regular expression: {exc}"
+        ) from None
 
   def to_dict(self) -> dict[str, Any]:
     return {

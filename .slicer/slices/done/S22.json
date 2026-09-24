@@ -23,7 +23,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Extend `Config.validate`: `id.width` at least 1, `id.prefix` non-empty, and every\n`sync.targets[].match` compilable — `re.compile` inside a try, re-raised as `ConfigError`\nnaming the target and the position. Validation belongs at load, so a bad config is caught\nonce rather than at whichever command happens to touch it.\n\nThen widen what `main` catches. It already turns `OSError` into an envelope; `ValueError`\nand `re.error` from user data deserve the same. Do **not** add a blanket `except\nException` — a genuine defect in slicer should still produce a traceback, and the line\nbetween the two is whether the input came from a person.\n\n**Not in this slice:** validating template placeholders in `sync.targets[].template`.\n`render.expand` already raises `RenderError` naming the unknown key, and that is caught."
+      "body": "`Config.validate` gains three rules: `id.prefix` non-empty, `id.width` at least 1, and\nevery `sync.targets[].match` compilable, re-raised as `ConfigError` naming the target and\nthe position. It is already called from `from_dict`, so a bad config is caught at load\nrather than at whichever command happens to touch it. All three rules are on defaulted\nkeys, which is what keeps a pre-`remove` config loading without being edited.\n\n`sync.apply` wraps its own `re.compile` too, because a `SyncTarget` constructed directly\nnever passes through `from_dict`.\n\n`store.load` validates the **index's** copy of the scheme, before the empty-index\nreconciliation. `ids.format_id` reads `index.id_width`, not the config's, so a config-only\nfix left a hand-edited `index.json` able to crash the formatter — and checking after the\nreconciliation would silently repair the same bad value whenever the index happened to be\nempty.\n\n**Deviation, decided 2026-09-24.** This slice originally said to widen `cli.main` to catch\n`ValueError` and `re.error`. That was not done. `ValueError` is extremely broad in Python,\nand catching it in `main` would turn genuine defects in slicer into tidy user-facing\nenvelopes — the opposite of what the envelope is for. With both values validated at load\nthose paths are unreachable, and a traceback from anywhere else is information. The house\nstyle is the one the `OSError` clause set: wrap at the source, do not widen the net.\n\n**Not in this slice:** validating template placeholders in `sync.targets[].template`.\n`render.expand` already raises `RenderError` naming the unknown key, and that is caught."
     },
     {
       "heading": "Check",
@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: `config.py`, `sync.py`, `store.py`, and a new `tests/test_config.py`."
     }
   ],
   "notes": []

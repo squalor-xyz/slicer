@@ -123,6 +123,16 @@ def load(root: Path | None = None) -> State:
   if not index_path.is_file():
     raise StateError(f"{index_path}: not found; run `slicer init` first")
   index = Index.from_dict(jsonio.read(index_path))
+  # `ids.format_id` reads the index's copy of the scheme, not the config's, so
+  # validating the config alone leaves a hand-edited index able to crash the
+  # formatter. Checked before the reconciliation below, so the same bad value
+  # does not get silently repaired when the index happens to be empty.
+  if not index.id_prefix:
+    raise StateError(f"{index_path}: id_prefix may not be empty", code="config")
+  if index.id_width < 1:
+    raise StateError(
+      f"{index_path}: id_width must be at least 1, not {index.id_width}", code="config"
+    )
   # The id scheme lives in the index because allocation must not depend on a
   # config someone edited after ids were handed out. Until the first item
   # exists there is nothing to be inconsistent with, so a changed config still

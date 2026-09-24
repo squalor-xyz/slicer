@@ -62,3 +62,6 @@
 {"when": "2026-09-24T20:22:37Z", "item": "S24", "action": "set", "from": "", "to": "", "note": "depends_on"}
 {"when": "2026-09-24T20:52:11Z", "item": "S21", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-24T20:52:11Z", "item": "S21", "action": "status", "from": "open", "to": "done", "note": "escape at render, refuse at input, and assert the row shape at generation"}
+{"when": "2026-09-24T20:53:25Z", "item": "S22", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-24T20:53:26Z", "item": "S22", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-24T20:53:26Z", "item": "S22", "action": "status", "from": "open", "to": "done", "note": "validated at load; main's catch deliberately not widened"}

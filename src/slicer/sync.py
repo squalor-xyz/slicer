@@ -89,7 +89,16 @@ def apply(root: Path, index: Index, cfg: Config, *, check_only: bool) -> list[Sy
       findings.append(SyncFinding(target.name, target.path, True, "file not found"))
       continue
     text = path.read_text(encoding="utf-8")
-    pattern = re.compile(target.match, re.M)
+    # Config.validate compiles these at load, but a SyncTarget built directly
+    # skips that -- so wrap here as well. Wrap rather than widen: a bad pattern
+    # is someone's config, not a defect in slicer.
+    try:
+      pattern = re.compile(target.match, re.M)
+    except re.error as exc:
+      raise ConfigError(
+        f"sync target {target.name!r}: match {target.match!r} is not a valid "
+        f"regular expression: {exc}"
+      ) from None
     matches = pattern.findall(text)
     if len(matches) != target.count:
       raise ConfigError(

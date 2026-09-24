@@ -430,7 +430,7 @@
       "id": "S22",
       "title": "Config errors escape as Python tracebacks",
       "short_title": "Config errors escape as Python tracebacks",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
