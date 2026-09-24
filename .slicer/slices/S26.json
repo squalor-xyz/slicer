@@ -1,0 +1,38 @@
+{
+  "id": "S26",
+  "title": "A retired row eats a middot from its findings",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found planning S21",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`render_row` folds a retired item's reason into the findings cell:\n\n    findings = f\"{item.findings} {MIDDOT} {item.reason}\".strip(f\" {MIDDOT}\")\n\n`str.strip` takes a **set of characters**, not a suffix, so it removes any leading or\ntrailing run of spaces and middots from the whole joined string. Two symptoms:\n\n    findings '· F1'  + reason 'superseded'  ->  'F1 · superseded'      (leading · eaten)\n    findings 'F2 ·'  + reason 'superseded'  ->  'F2 · · superseded'    (separator doubled)\n    findings 'F3'    + reason 'superseded'  ->  'F3 · superseded'      (correct)\n\nThe strip exists for the case where `findings` is empty, so the join would otherwise\nrender a leading `· `. That case deserves a conditional, not a character-set strip that\nalso reaches into content a user wrote.\n\nOnly retired rows are affected, so it is small — but it is silent edits to someone's\ntext, which is the kind of thing a roadmap tool should never do."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/render.py` — `render_row`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Row_RetiredWithLeadingMiddotInFindings_KeepsIt`.\n2. `Row_RetiredWithTrailingMiddotInFindings_DoesNotDoubleTheSeparator`.\n3. `Row_RetiredWithNoFindings_ShowsOnlyTheReason` — the case the strip was for."
+    },
+    {
+      "heading": "Implement",
+      "body": "Join the parts that are actually present instead of stripping afterwards:\n`\" · \".join(p for p in (item.findings, item.reason) if p)`. That handles the empty case\nby construction and never touches content.\n\n**Not in this slice:** whether a reason belongs in the findings column at all. It does,\nfor the reason the existing comment gives — the status column alone does not say why."
+    },
+    {
+      "heading": "Check",
+      "body": "All three rows in the Why section render as written."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, likely alongside the other."
+    }
+  ],
+  "notes": []
+}

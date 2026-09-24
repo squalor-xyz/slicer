@@ -2,10 +2,30 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 25,
+  "next_id": 27,
   "preamble": "",
   "passes": [],
   "items": [
+    {
+      "id": "S25",
+      "title": "An item id is used as a file path without validation",
+      "short_title": "An item id is used as a file path without validation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "path traversal; found planning S21",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
     {
       "id": "S01",
       "title": "Split slicer into its own repository",
@@ -483,6 +503,26 @@
         ],
         "trees_literal": false,
         "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S26",
+      "title": "A retired row eats a middot from its findings",
+      "short_title": "A retired row eats a middot from its findings",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found planning S21",
         "pass": "",
         "group": "",
         "reason": ""

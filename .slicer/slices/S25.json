@@ -1,0 +1,38 @@
+{
+  "id": "S25",
+  "title": "An item id is used as a file path without validation",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "path traversal; found planning S21",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ids.allocate` checks that an id is unique and nothing else. The id then becomes a\nfilename: `store.slice_path` joins it onto `.slicer/slices/`, and `promote` writes there.\nNothing between the two rejects a separator or a parent reference.\n\n    $ slicer add \"escapee\" --id '../../../pwned'\n    $ slicer promote '../../../pwned'\n    promoted ../../../pwned -> .../proj/.slicer/slices/../../../pwned.json\n\nThat file lands three levels above the tracking directory — outside the project. A\ngentler one, `--id 'S/1'`, silently creates `.slicer/slices/S/1.json`, a subdirectory the\nloader does not scan, so the slice becomes invisible while the index still claims it\nexists. `slicer check` passes on both.\n\n**This is not only reachable through `--id`.** `legacy._parse_row` returns whatever sits\nin the first table cell as the item id, with no character rule:\n\n    >>> legacy._parse_row('| [../evil](../evil.md) | t | M | x | f | done |', ...).item_id\n    '../evil'\n\nSo `slicer migrate` pointed at a markdown tree someone else wrote can write outside the\nproject. The docs actively encourage migrating an existing tree, which makes that a\nrealistic path rather than a theoretical one.\n\nFiled at M rather than S because the fix has to cover three entry points and decide what\nhappens to a project that already contains a bad id."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ids.py` — `allocate`, and a character rule to share\n- `src/slicer/store.py` — `slice_path`, as the last line of defence\n- `src/slicer/migrator.py` — ids adopted from a legacy tree\n- `src/slicer/verify.py` — report an id already stored that breaks the rule"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Add_IdWithASeparator_IsRefused`, for `/` and `\\` and `..`.\n2. `Add_IdWithMarkdownPunctuation_IsRefused` — `|`, `]`, `(`, `)` break the Slice cell's\n   link even though S21 keeps the row well-formed.\n3. `SlicePath_IdEscapingTheSlicesDirectory_IsRefused` — the belt-and-braces check, so a\n   hand-edited index cannot do it either.\n4. `Migrate_TreeWithATraversingId_RefusesToWrite`.\n5. `Verify_StoredIdBreakingTheRule_IsReported`."
+    },
+    {
+      "heading": "Implement",
+      "body": "One rule, shared: an id is a run of characters that is safe both as a filename and inside\na markdown link — letters, digits, `-`, `_`, `.` but not `..`, and nothing else. Reject at\n`ids.allocate` (covering `add --id`), in the migrator when adopting ids, and assert in\n`store.slice_path` that the resolved path is still inside the slices directory, so a\nhand-edited `index.json` cannot reach past it either.\n\nResolve-and-compare is the check that actually holds: string matching on `..` misses\nsymlinks and absolute paths.\n\nExisting bad ids cannot be renamed — ids are never reused and a rename would break every\ncitation — so `verify` reports them and the owner decides.\n\n**Not in this slice:** a general policy for unicode in ids. The rule above is ASCII, which\nis what the default scheme produces; widening it is a separate decision."
+    },
+    {
+      "heading": "Check",
+      "body": "Every id in the Why section is refused, and `migrate` refuses the tree."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
