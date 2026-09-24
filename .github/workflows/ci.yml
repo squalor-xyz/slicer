@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # No install step: tests/support.py puts src/ on sys.path, and slicer
+      # has no dependencies.
+      - name: Tests
+        run: python -m unittest discover -s tests -t tests -v
+
+      # slicer tracks its own roadmap in .slicer/, so the gate it gives other
+      # projects also guards this one: stale render, sync drift or a broken
+      # dependency edge fails the build.
+      #
+      # `check` never shells out to git, so the default shallow checkout is
+      # fine. `slicer verify` would need fetch-depth: 0 — it reads git log.
+      - name: slicer check
+        run: PYTHONPATH=src python -m slicer check

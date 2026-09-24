@@ -1,0 +1,1 @@
+Status: orchard v0.4 companion. Pass 4 review `20260420-pass4-architect-review.md`. **Phases 0–2 are done. atlas layouts M1–M3 are done.** Next: **S13** atlas tables must split behind the data view. Later: S14; parked S09/S10; later S11; atlas ROADMAP 3–4; beacon parsers; lasso. Architecture: `../orchard-dev-plan.md`. Warehouse: `warehouse-design.md`.

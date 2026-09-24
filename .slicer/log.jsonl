@@ -1,0 +1,18 @@
+{"when": "2026-09-24T13:19:39Z", "item": "S01", "action": "add", "from": "", "to": "open", "note": "Split slicer into its own repository"}
+{"when": "2026-09-24T13:19:39Z", "item": "S02", "action": "add", "from": "", "to": "open", "note": "Trial run on a second repo with no legacy tree to import"}
+{"when": "2026-09-24T13:19:39Z", "item": "S03", "action": "add", "from": "", "to": "open", "note": "Export back to a legacy markdown index for anything still expecting one"}
+{"when": "2026-09-24T13:19:40Z", "item": "S04", "action": "add", "from": "", "to": "open", "note": "TUI: edit a section in place instead of handing off to the CLI"}
+{"when": "2026-09-24T13:19:40Z", "item": "S01", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-24T13:58:49Z", "item": "S04", "action": "status", "from": "open", "to": "done", "note": "prose + section editing land together via one curses-suspend mechanism"}
+{"when": "2026-09-24T13:58:49Z", "item": "S05", "action": "add", "from": "", "to": "open", "note": "No command removes a roadmap item; a mistyped add needs index.json"}
+{"when": "2026-09-24T14:33:42Z", "item": "S05", "action": "status", "from": "open", "to": "done", "note": "remove: retire keeps the id, purge frees it only when it was the last allocated"}
+{"when": "2026-09-24T15:28:24Z", "item": "S01", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-09-24T15:28:25Z", "item": "S01", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-09-24T15:28:25Z", "item": "S01", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-09-24T15:28:25Z", "item": "S01", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-24T15:28:25Z", "item": "S01", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-09-24T15:28:25Z", "item": "S01", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-24T15:28:44Z", "item": "S01", "action": "set", "from": "", "to": "", "note": "findings"}
+{"when": "2026-09-24T15:28:44Z", "item": "S06", "action": "add", "from": "", "to": "open", "note": "Publish 0.1.0 to PyPI once CI is green on a tag"}
+{"when": "2026-09-24T15:28:44Z", "item": "S07", "action": "add", "from": "", "to": "open", "note": "Copyright holder is unnamed in LICENSE and pyproject"}
+{"when": "2026-09-24T15:29:14Z", "item": "S08", "action": "add", "from": "", "to": "open", "note": "set --findings updates the index row but not the slice file; check does not notice"}

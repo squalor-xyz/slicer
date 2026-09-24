@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slicer"
+version = "0.1.0"
+description = "Roadmap and slice manager for the review -> slice -> implement loop"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/squalor-xyz/slicer"
+Source = "https://github.com/squalor-xyz/slicer"
+Issues = "https://github.com/squalor-xyz/slicer/issues"
+
+[project.scripts]
+slicer = "slicer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+slicer = ["templates/*.md"]

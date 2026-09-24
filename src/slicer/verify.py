@@ -1,0 +1,108 @@
+"""Integrity checks, offline and against version control.
+
+The protocol this tool serves says the index is a claim and history is the
+fact. `verify` is where that comparison stops being a manual chore — but it
+reports, it never rewrites: a mismatch needs a human to say which side is
+wrong.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+
+from slicer import graph, vcs
+from slicer.store import State
+
+
+@dataclass
+class Finding:
+  level: str
+  item: str
+  message: str
+
+  def to_dict(self) -> dict[str, str]:
+    return {"level": self.level, "item": self.item, "message": self.message}
+
+
+@dataclass
+class VerifyReport:
+  findings: list[Finding] = field(default_factory=list)
+  checked: int = 0
+  git: bool = False
+
+  @property
+  def problems(self) -> list[Finding]:
+    return [f for f in self.findings if f.level == "error"]
+
+  def to_dict(self) -> dict[str, object]:
+    return {
+      "checked": self.checked,
+      "git": self.git,
+      "errors": len(self.problems),
+      "findings": [f.to_dict() for f in self.findings],
+    }
+
+
+def offline(state: State) -> VerifyReport:
+  """Everything checkable without touching git."""
+  cfg = state.config
+  index = state.index
+  report = VerifyReport(checked=len(index.items))
+
+  seen: set[str] = set()
+  for item in index.items:
+    if item.id in seen:
+      report.findings.append(Finding("error", item.id, "duplicate id in the index"))
+    seen.add(item.id)
+    if item.status not in cfg.statuses:
+      report.findings.append(Finding("error", item.id, f"unknown status {item.status!r}"))
+    path = state.find_slice_file(item.id)
+    if item.has_slice and path is None:
+      report.findings.append(Finding("error", item.id, "marked as having a slice, but no file exists"))
+    if path is not None and path != state.slice_path(item.id):
+      report.findings.append(
+        Finding("error", item.id, f"slice file is in the wrong folder for status {item.status!r}")
+      )
+    sl = state.slices.get(item.id)
+    if sl is not None and cfg.boundary and sl.boundary(cfg.boundary) is None:
+      report.findings.append(
+        Finding("warn", item.id, f"no {cfg.boundary} boundary; scope is unbounded")
+      )
+
+  for item_id, dep in graph.dangling(index):
+    report.findings.append(Finding("error", item_id, f"depends on unknown id {dep}"))
+  for cycle in graph.cycles(index):
+    report.findings.append(Finding("error", cycle[0], "dependency cycle: " + " -> ".join(cycle)))
+
+  for sid in sorted(set(state.slices) - seen):
+    report.findings.append(Finding("error", sid, "slice file has no index row"))
+
+  return report
+
+
+def against_git(state: State) -> VerifyReport:
+  """Compare each item's recorded status with what history mentions."""
+  cfg = state.config
+  report = VerifyReport(checked=len(state.index.items))
+  subjects = vcs.subjects(state.root)
+  report.git = bool(subjects)
+  if not subjects:
+    report.findings.append(Finding("info", "", "not a git repository, or no history; git checks skipped"))
+    return report
+
+  for item in state.index.items:
+    hits = [s for s in subjects if re.search(rf"\b{re.escape(item.id)}\b", s)]
+    if item.status == cfg.done_status and not hits:
+      report.findings.append(
+        Finding("warn", item.id, "recorded done, but no commit subject mentions it")
+      )
+    elif item.status == cfg.open_status and hits:
+      report.findings.append(
+        Finding(
+          "warn",
+          item.id,
+          f"recorded open, but {len(hits)} commit(s) mention it: {hits[0]}",
+        )
+      )
+  return report

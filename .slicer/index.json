@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "id_prefix": "S",
+  "id_width": 2,
+  "next_id": 9,
+  "preamble": "",
+  "passes": [],
+  "items": [
+    {
+      "id": "S01",
+      "title": "Split slicer into its own repository",
+      "short_title": "Split slicer into its own repository",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner: the split is what proves nothing project-specific is compiled in",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S02",
+      "title": "Trial run on a second repo with no legacy tree to import",
+      "short_title": "Trial run on a second repo with no legacy tree to import",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S03",
+      "title": "Export back to a legacy markdown index for anything still expecting one",
+      "short_title": "Export back to a legacy markdown index for anything still expecting one",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S04",
+      "title": "TUI: edit a section in place instead of handing off to the CLI",
+      "short_title": "TUI: edit a section in place instead of handing off to the CLI",
+      "status": "done",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S05",
+      "title": "No command removes a roadmap item; a mistyped add needs index.json",
+      "short_title": "No command removes a roadmap item; a mistyped add needs index.json",
+      "status": "done",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found while verifying prose add-pass",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S06",
+      "title": "Publish 0.1.0 to PyPI once CI is green on a tag",
+      "short_title": "Publish 0.1.0 to PyPI once CI is green on a tag",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "follows S01",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S07",
+      "title": "Copyright holder is unnamed in LICENSE and pyproject",
+      "short_title": "Copyright holder is unnamed in LICENSE and pyproject",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner: needs a legal name",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S08",
+      "title": "set --findings updates the index row but not the slice file; check does not notice",
+      "short_title": "set --findings updates the index row but not the slice file; check does not notice",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found while splitting the repo",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    }
+  ],
+  "epilogue": ""
+}

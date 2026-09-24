@@ -1,0 +1,38 @@
+{
+  "id": "S01",
+  "title": "Split slicer into its own repository",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "owner: the split is what proves nothing project-specific is compiled in",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "slicer was written inside another project's working tree, where it was developed\nagainst that project's real slice directory. That is why it works, and it is also why\nit could not be published: the test fixture was a verbatim snapshot of that project's\nreview roadmap, and the README documented an install path that only made sense from the\nparent directory.\n\nSplitting it out is what makes the tool's central claim testable — that nothing in\n`src/slicer/` hardcodes a path belonging to any one project. A repository that contains\nno such project is the proof."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/fixtures/legacy/` — replaced wholesale with a synthetic 14-slice tree\n- `tests/test_import.py`, `tests/test_sync.py`, `tests/test_prose.py` — census numbers,\n  pointer constants and pass keys follow the new fixture\n- `README.md` — install path, the Tests section, a Status section\n- `ARCHITECTURE.md`, `AGENTS.md`, `CLAUDE.md` — new\n- `LICENSE`, `.gitignore`, `.github/workflows/ci.yml` — new\n- `pyproject.toml` — `[project.urls]`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "The suite is the test. Before the split it passed only because the fixture was real;\nafter it, the same 171 tests pass against a tree for a project that does not exist.\n\n1. `test_Import_FixtureTree_RoundTripsEveryFileByteIdentical` — every file in the new\n   fixture re-emits byte for byte, or the importer would refuse to migrate it.\n2. `test_Import_FixtureTree_ReportsTheExpectedCensus` — 14 items, 4 passes, 5 groups,\n   `S15` next.\n3. `test_StatusLine_MigratedFixtureState_MatchesLegacyByteForByte` — the derived status\n   line still reproduces its source exactly."
+    },
+    {
+      "heading": "Implement",
+      "body": "Author the replacement fixture to exercise what the old one did — a middot inside a\nfindings value, singular and plural tree keys, a collective trees cell, off-schema\nheadings, lead and note blocks, four passes, five phase groups, all four statuses, and\nenough relative links to keep the link-rewrite invariant honest. Then follow the\nfailures: every number the tests assert about the old tree is a number about this one.\n\nKeep `SLICER_LEGACY_TREE`. It is now the only way to prove the importer against real\nhand-written markdown, and it keeps that proof private.\n\n**Not in this slice:** publishing to PyPI, release tagging, and a second repository's\ntrial run — that is S02."
+    },
+    {
+      "heading": "Check",
+      "body": "```sh\npython3 -m unittest discover -s tests -t tests   # 171 tests, OK\nPYTHONPATH=src python3 -m slicer check           # exit 0\n```\n\nAnd the one that matters for a public repository: no reference to the parent project\nsurvives anywhere in the tree."
+    },
+    {
+      "heading": "Git",
+      "body": "One repository, `git@github.com:squalor-xyz/slicer.git`, public. The fixture\nreplacement lands before the first commit, because history is not a place you can take\nsomething back out of."
+    }
+  ],
+  "notes": []
+}

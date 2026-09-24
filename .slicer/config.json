@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "id": {
+    "prefix": "S",
+    "width": 2
+  },
+  "statuses": {
+    "open": "—",
+    "done": "done",
+    "parked": "parked",
+    "later": "later"
+  },
+  "open_status": "open",
+  "done_status": "done",
+  "sections": [
+    "Why",
+    "Files",
+    "Failing tests",
+    "Implement",
+    "Check",
+    "Git"
+  ],
+  "boundary": "**Not in this slice:**",
+  "done_dir": "done",
+  "exclude_flags": [],
+  "pointers": {
+    "next_format": "**{{id}}** {{title}}",
+    "next_empty": "nothing unmarked",
+    "later": {
+      "group_sep": "; ",
+      "item_sep": "/",
+      "groups": [
+        {
+          "status": "open",
+          "skip_first": true,
+          "prefix": ""
+        },
+        {
+          "status": "parked",
+          "skip_first": false,
+          "prefix": "parked "
+        },
+        {
+          "status": "later",
+          "skip_first": false,
+          "prefix": "later "
+        }
+      ],
+      "suffix": ""
+    }
+  },
+  "sync": {
+    "targets": []
+  }
+}

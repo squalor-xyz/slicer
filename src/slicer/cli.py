@@ -1,0 +1,571 @@
+#!/usr/bin/env python3
+"""Command line entry point.
+
+Exit codes are stable because scripts depend on them:
+  0  fine        1  drift, or a check failed        2  usage, or nothing to do
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+from slicer import check as check_mod
+from slicer import importer, jsonio, model, ops, prose, render, store, sync, templates, verify
+from slicer.config import CONFIG_NAME, Config
+from slicer.errors import SlicerError
+
+OK, DRIFT, USAGE = 0, 1, 2
+
+
+def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
+  if getattr(args, "json", False):
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+  elif text:
+    print(text)
+
+
+def _state(args: argparse.Namespace) -> store.State:
+  return store.load(Path(args.root) if args.root else None)
+
+
+def cmd_init(args: argparse.Namespace) -> int:
+  root = Path(args.root or ".").resolve()
+  base = root / store.DIR_NAME
+  if (base / CONFIG_NAME).exists() and not args.force:
+    print(f"{base} already exists; pass --force to overwrite its config and templates", file=sys.stderr)
+    return USAGE
+  cfg = Config()
+  jsonio.write(base / CONFIG_NAME, cfg.to_dict())
+  index_path = base / store.INDEX_NAME
+  if not index_path.exists():
+    jsonio.write(index_path, model.Index(id_prefix=cfg.id_prefix, id_width=cfg.id_width).to_dict())
+  for name, text in templates.defaults().items():
+    jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
+  (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
+  _emit(args, {"root": str(root), "dir": str(base)}, f"initialised {base}")
+  return OK
+
+
+def cmd_import(args: argparse.Namespace) -> int:
+  root = Path(args.root or ".").resolve()
+  source = Path(args.source)
+  if not source.is_absolute():
+    source = root / source
+  base = root / store.DIR_NAME
+  cfg = Config.load(base / CONFIG_NAME) if (base / CONFIG_NAME).is_file() else Config()
+
+  render_root = base / store.RENDER_DIR
+  index, slices, report = importer.build(
+    source,
+    cfg,
+    render_dir=render_root / render.SLICES_SUBDIR,
+    index_render_dir=render_root,
+  )
+  lines = [
+    f"source     {source}",
+    f"index      {report.passes} passes, {report.groups} group rows, {report.items} items, next id {report.next_id}",
+    f"status     " + " · ".join(f"{k} {v}" for k, v in report.by_status.items()),
+    f"sizes      " + " · ".join(f"{k} {v}" for k, v in report.by_size.items()),
+    f"slices     {report.slices} parsed, {report.roundtrip_ok} round-trip byte-identical",
+    f"sections   {len(report.off_schema_sections)} off-schema: "
+    + ", ".join(f"{k} {v}" for k, v in list(report.off_schema_sections.items())[:6]),
+    f"depends    {report.depends_edges} edges",
+    f"reconcile  {report.title_differences} title, {report.findings_differences} findings, "
+    f"{report.trees_differences} trees differences - both sides kept",
+  ]
+  for w in report.warnings:
+    lines.append(f"warn       {w}")
+  for p in report.problems:
+    lines.append(f"PROBLEM    {p}")
+
+  if report.problems:
+    lines.append("refusing to write: fix the problems above, or re-run with --dry-run to inspect")
+    _emit(args, report.to_dict(), "\n".join(lines))
+    return DRIFT
+  if args.dry_run:
+    lines.append(f"would write {store.DIR_NAME}/ under {root} (nothing written)")
+    _emit(args, report.to_dict(), "\n".join(lines))
+    return OK
+
+  written = importer.write(root, cfg, index, slices)
+  lines.append(f"wrote      {len(written)} files under {base}")
+  _emit(args, report.to_dict(), "\n".join(lines))
+  return OK
+
+
+def cmd_next(args: argparse.Namespace) -> int:
+  state = _state(args)
+  result = ops.next_item(state)
+  if result.item is None:
+    payload = {"item": None, "blocked": [{"id": i, "waiting_on": b} for i, b in result.blocked]}
+    text = "nothing unmarked" if not result.blocked else "\n".join(
+      f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked
+    )
+    _emit(args, payload, text)
+    return USAGE
+  item = result.item
+  path = state.find_slice_file(item.id)
+  payload = item.to_dict() | {"path": str(path) if path else None}
+  _emit(args, payload, f"{item.id}  {item.display_title()}" + (f"\n     {path}" if path else ""))
+  return OK
+
+
+def cmd_list(args: argparse.Namespace) -> int:
+  state = _state(args)
+  cfg = state.config
+  items = state.index.items
+  if args.status:
+    items = [i for i in items if i.status in args.status]
+  if args.tree:
+    items = [i for i in items if set(args.tree) & set(i.trees)]
+  if args.pass_key:
+    items = [i for i in items if i.pass_key == args.pass_key]
+  rows = [
+    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} {i.display_title()}"
+    for n, i in enumerate(items, 1)
+  ]
+  _emit(args, [i.to_dict() for i in items], "\n".join(rows) or "no matching items")
+  return OK
+
+
+def cmd_show(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = state.index.get(args.id)
+  if item is None:
+    print(f"no such item: {args.id}", file=sys.stderr)
+    return USAGE
+  sl = state.slices.get(args.id)
+  if sl is None:
+    _emit(args, item.to_dict(), f"{item.id}  {item.display_title()}\n(no slice yet; run `slicer promote {item.id}`)")
+    return OK
+  text = render.render_slice(sl, state.config, state.template("slice.md")).decode("utf-8")
+  _emit(args, item.to_dict() | {"slice": sl.to_dict()}, text)
+  return OK
+
+
+def cmd_add(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = ops.add(
+    state, args.title, item_id=args.id, size=args.size or "",
+    trees=args.tree or [], findings=args.findings or "", status=args.status,
+    pass_key=args.pass_key,
+  )
+  _emit(args, item.to_dict(), f"added {item.id}  {item.display_title()}")
+  return OK
+
+
+def cmd_promote(args: argparse.Namespace) -> int:
+  state = _state(args)
+  sl = ops.promote(state, args.id, force=args.force)
+  _emit(args, sl.to_dict(), f"promoted {sl.id} -> {state.slice_path(sl.id)}")
+  return OK
+
+
+def cmd_move(args: argparse.Namespace) -> int:
+  state = _state(args)
+  at = ops.move(state, args.id, before=args.before, after=args.after, to=args.to)
+  _emit(args, {"id": args.id, "position": at}, f"{args.id} is now at position {at}")
+  return OK
+
+
+def cmd_set(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = ops.set_fields(
+    state, args.id, title=args.title, short_title=args.short_title, status=args.status,
+    size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
+    pass_key=args.pass_key,
+  )
+  _emit(args, item.to_dict(), f"updated {item.id}")
+  return OK
+
+
+def cmd_edit(args: argparse.Namespace) -> int:
+  state = _state(args)
+  sl = state.slices.get(args.id)
+  if sl is None:
+    print(f"{args.id} has no slice; run `slicer promote {args.id}` first", file=sys.stderr)
+    return USAGE
+  section = sl.section(args.section)
+  body = _body_from(args, section.body if section else "")
+  if body is None:
+    print("editor exited non-zero; slice unchanged", file=sys.stderr)
+    return USAGE
+  ops.edit_section(state, args.id, args.section, body)
+  _emit(args, {"id": args.id, "section": args.section}, f"updated {args.id} / {args.section}")
+  return OK
+
+
+def _via_editor(initial: str) -> str | None:
+  """Open $EDITOR on `initial`; None means the editor failed, so change nothing."""
+  editor = os.environ.get("EDITOR", "vi")
+  with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as fh:
+    fh.write(initial + "\n")
+    path = fh.name
+  try:
+    done = subprocess.run([*editor.split(), path], check=False)
+    if done.returncode != 0:
+      return None
+    return Path(path).read_text(encoding="utf-8").rstrip("\n")
+  finally:
+    Path(path).unlink(missing_ok=True)
+
+
+def _body_from(args: argparse.Namespace, initial: str) -> str | None:
+  """The new text for an edit: a file, stdin, or $EDITOR."""
+  if args.file:
+    return Path(args.file).read_text(encoding="utf-8").rstrip("\n")
+  if args.stdin:
+    return sys.stdin.read().rstrip("\n")
+  return _via_editor(initial)
+
+
+def _status_cmd(status_attr: str):
+  def run(args: argparse.Namespace) -> int:
+    state = _state(args)
+    status = getattr(state.config, status_attr, status_attr)
+    item = ops.set_status(state, args.id, status, note=getattr(args, "note", "") or "")
+    _emit(args, item.to_dict(), f"{item.id} -> {state.config.status_label(item.status)}")
+    return OK
+  return run
+
+
+def cmd_prose_list(args: argparse.Namespace) -> int:
+  state = _state(args)
+  entries = []
+  rows = []
+  for ref in prose.refs(state.index):
+    lines, preview = prose.summary(state.index, ref)
+    entries.append({"ref": ref, "lines": lines, "preview": preview})
+    unit = "line " if lines == 1 else "lines"
+    rows.append(f"  {ref:<22} {lines:>3} {unit}  {preview}")
+  _emit(args, entries, "\n".join(rows) or "no prose blocks")
+  return OK
+
+
+def cmd_prose_show(args: argparse.Namespace) -> int:
+  state = _state(args)
+  text = prose.get(state.index, args.ref)
+  _emit(args, {"ref": args.ref, "text": text}, text)
+  return OK
+
+
+def cmd_prose_edit(args: argparse.Namespace) -> int:
+  state = _state(args)
+  current = prose.get(state.index, args.ref)
+  body = _body_from(args, current)
+  if body is None:
+    print("editor exited non-zero; roadmap unchanged", file=sys.stderr)
+    return USAGE
+  if body == current:
+    _emit(args, {"ref": args.ref, "changed": False}, f"{args.ref} unchanged")
+    return OK
+  ops.edit_prose(state, args.ref, body)
+  _emit(args, {"ref": args.ref, "changed": True}, f"updated {args.ref}; run `slicer render`")
+  return OK
+
+
+def cmd_prose_add_pass(args: argparse.Namespace) -> int:
+  state = _state(args)
+  info = ops.add_pass(state, args.key, heading=args.heading or "", after=args.after)
+  _emit(
+    args,
+    info.to_dict(),
+    f"created pass {info.key} (no items yet); file items with `slicer add --pass {info.key}`",
+  )
+  return OK
+
+
+def cmd_prose_drop_pass(args: argparse.Namespace) -> int:
+  state = _state(args)
+  ops.drop_pass(state, args.key)
+  _emit(args, {"key": args.key, "dropped": True}, f"dropped pass {args.key}")
+  return OK
+
+
+def cmd_remove(args: argparse.Namespace) -> int:
+  state = _state(args)
+  if args.purge:
+    result = ops.purge(state, args.id, force=args.force)
+    freed = "freed" if result.id_freed else "kept burned"
+    _emit(
+      args,
+      {
+        "id": result.id,
+        "mode": "purge",
+        "id_freed": result.id_freed,
+        "reason": result.reason,
+        "file_removed": result.file_removed,
+      },
+      f"{result.id} deleted \u00b7 id {freed}: {result.reason}",
+    )
+    return OK
+  item = ops.retire(state, args.id, reason=args.reason, force=args.force)
+  _emit(
+    args,
+    item.to_dict() | {"mode": "retire"},
+    f"{item.id} retired \u00b7 {item.reason}\n"
+    f"     id stays claimed; still listed as {state.config.status_label(item.status)}",
+  )
+  return OK
+
+
+def cmd_render(args: argparse.Namespace) -> int:
+  state = _state(args)
+  expected = render.plan(state)
+  diff = render.compare(expected, state.render_dir)
+  touched = render.write(expected, state.render_dir, diff)
+  _emit(args, {"written": touched}, f"rendered {len(touched)} file(s)" if touched else "render already current")
+  return OK
+
+
+def cmd_sync(args: argparse.Namespace) -> int:
+  state = _state(args)
+  findings = sync.apply(state.root, state.index, state.config, check_only=args.check)
+  stale = [f for f in findings if f.stale]
+  payload = [{"target": f.target, "path": f.path, "stale": f.stale, "detail": f.detail} for f in findings]
+  if args.check:
+    text = "\n".join(f"stale {f.path}: {f.detail}" for f in stale) or "sync targets are current"
+    _emit(args, payload, text)
+    return DRIFT if stale else OK
+  text = "\n".join(f"wrote {f.path}" for f in stale) or "sync targets already current"
+  _emit(args, payload, text)
+  return OK
+
+
+def cmd_verify(args: argparse.Namespace) -> int:
+  state = _state(args)
+  offline = verify.offline(state)
+  report = verify.against_git(state)
+  report.findings = offline.findings + report.findings
+  text = "\n".join(
+    f"{f.level:<5} {f.item or '-':<5} {f.message}" for f in report.findings
+  ) or f"{report.checked} items verified; nothing to report"
+  _emit(args, report.to_dict(), text)
+  return DRIFT if report.problems else OK
+
+
+def cmd_check(args: argparse.Namespace) -> int:
+  state = _state(args)
+  report, expected, diff = check_mod.run(state)
+  lines: list[str] = []
+  for rel in report.stale_render:
+    lines.append(f"stale render: {rel}")
+    if args.diff:
+      lines.append(render.unified(expected, state.render_dir, rel))
+  lines.extend(f"orphan render: {rel}" for rel in report.orphan_render)
+  lines.extend(f"stale sync: {s}" for s in report.stale_sync)
+  lines.extend(f"problem: {p}" for p in report.problems)
+  lines.extend(f"warn: {w}" for w in report.warnings)
+  if report.ok and not lines:
+    lines.append(f"check passed: {len(state.index.items)} items, render and sync current")
+  elif report.ok:
+    lines.append("check passed with warnings")
+  else:
+    lines.append("check failed; run `slicer render` and `slicer sync`, then re-run")
+  _emit(args, report.to_dict(), "\n".join(lines))
+  return OK if report.ok else DRIFT
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+  state = _state(args)
+  cfg = state.config
+  items = state.index.items
+  payload = {
+    "total": len(items),
+    "by_status": {cfg.status_label(k): v for k, v in model.counts(items, "status").items()},
+    "by_size": model.counts(items, "size"),
+    "by_tree": model.counts(items, "trees"),
+    "by_pass": model.counts(items, "pass_key"),
+  }
+  groups = (
+    ("status", payload["by_status"]),
+    ("size", payload["by_size"]),
+    ("tree", payload["by_tree"]),
+    ("pass", payload["by_pass"]),
+  )
+  lines = [f"{payload['total']} items"]
+  for name, group in groups:
+    if group:
+      lines.append(f"{name:<10} " + " · ".join(f"{k} {v}" for k, v in group.items()))
+  text = "\n".join(lines)
+  _emit(args, payload, text)
+  return OK
+
+
+def cmd_log(args: argparse.Namespace) -> int:
+  state = _state(args)
+  entries = list(reversed(state.history()))[: args.limit]
+  text = "\n".join(
+    f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
+    for e in entries
+  ) or "no history yet"
+  _emit(args, [e.to_dict() for e in entries], text)
+  return OK
+
+
+def cmd_tui(args: argparse.Namespace) -> int:
+  from slicer import tui
+
+  return tui.run(_state(args))
+
+
+def build_parser() -> argparse.ArgumentParser:
+  # --root is accepted on both sides of the subcommand, because both
+  # `slicer --root x next` and `slicer next --root x` are natural to type.
+  # The subcommand copy suppresses its default so that, when it is absent, it
+  # does not overwrite a value already parsed from before the subcommand.
+  common = argparse.ArgumentParser(add_help=False)
+  common.add_argument(
+    "--root",
+    default=argparse.SUPPRESS,
+    help="project root (default: discovered from the working directory)",
+  )
+  p = argparse.ArgumentParser(prog="slicer", description=__doc__.splitlines()[0])
+  p.add_argument(
+    "--root", default=None, help="project root (default: discovered from the working directory)"
+  )
+  sub = p.add_subparsers(dest="command", required=True)
+
+  def add(name: str, fn, help_: str, *, json_flag: bool = True) -> argparse.ArgumentParser:
+    sp = sub.add_parser(name, help=help_, parents=[common])
+    sp.set_defaults(func=fn)
+    if json_flag:
+      sp.add_argument("--json", action="store_true", help="machine-readable output")
+    return sp
+
+  sp = add("init", cmd_init, "create .slicer/ in a project")
+  sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
+
+  sp = add("import", cmd_import, "migrate an existing markdown slice tree")
+  sp.add_argument("--from", dest="source", default="docs/slices", help="the legacy directory")
+  sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
+
+  add("next", cmd_next, "the first open item whose dependencies are met")
+
+  sp = add("list", cmd_list, "list items")
+  sp.add_argument("--status", action="append", help="filter by status (repeatable)")
+  sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
+  sp.add_argument("--pass", dest="pass_key", help="filter by pass")
+
+  sp = add("show", cmd_show, "print one slice")
+  sp.add_argument("id")
+
+  sp = add("add", cmd_add, "append a roadmap item")
+  sp.add_argument("title")
+  sp.add_argument("--id", help="use this id instead of the next free one")
+  sp.add_argument("--size")
+  sp.add_argument("--tree", action="append")
+  sp.add_argument("--findings")
+  sp.add_argument("--status")
+  sp.add_argument("--pass", dest="pass_key", help="file the item under this pass group")
+
+  sp = add("promote", cmd_promote, "give an item a slice file")
+  sp.add_argument("id")
+  sp.add_argument("--force", action="store_true")
+
+  sp = add("move", cmd_move, "reorder the queue")
+  sp.add_argument("id")
+  sp.add_argument("--before")
+  sp.add_argument("--after")
+  sp.add_argument("--to", type=int)
+
+  sp = add("set", cmd_set, "change an item's fields")
+  sp.add_argument("id")
+  sp.add_argument("--title")
+  sp.add_argument("--short-title", dest="short_title")
+  sp.add_argument("--status")
+  sp.add_argument("--size")
+  sp.add_argument("--tree", action="append")
+  sp.add_argument("--findings")
+  sp.add_argument("--depends-on", dest="depends_on", action="append")
+  sp.add_argument("--pass", dest="pass_key", help="move the item to this pass group")
+
+  sp = add("edit", cmd_edit, "replace one section of a slice")
+  sp.add_argument("id")
+  sp.add_argument("--section", required=True)
+  sp.add_argument("--file")
+  sp.add_argument("--stdin", action="store_true")
+
+  sp = add("done", _status_cmd("done_status"), "mark an item finished")
+  sp.add_argument("id")
+  sp.add_argument("--note", help="one line for the log")
+
+  sp = add("park", _status_cmd("parked"), "set an item aside")
+  sp.add_argument("id")
+
+  sp = add("unpark", _status_cmd("open_status"), "return a parked item to the queue")
+  sp.add_argument("id")
+
+  sp = sub.add_parser("prose", help="read and edit the roadmap's own prose", parents=[common])
+  psub = sp.add_subparsers(dest="prose_command", required=True)
+
+  def padd(name: str, fn, help_: str) -> argparse.ArgumentParser:
+    inner = psub.add_parser(name, help=help_, parents=[common])
+    inner.set_defaults(func=fn)
+    inner.add_argument("--json", action="store_true", help="machine-readable output")
+    return inner
+
+  padd("list", cmd_prose_list, "every addressable block, in render order")
+  padd("show", cmd_prose_show, "print one block").add_argument("ref")
+
+  inner = padd("edit", cmd_prose_edit, "replace one block")
+  inner.add_argument("ref")
+  inner.add_argument("--file")
+  inner.add_argument("--stdin", action="store_true")
+
+  inner = padd("add-pass", cmd_prose_add_pass, "declare a new pass group")
+  inner.add_argument("key")
+  inner.add_argument("--heading", help="the markdown heading for the group")
+  inner.add_argument("--after", help="insert after this pass instead of at the end")
+
+  padd("drop-pass", cmd_prose_drop_pass, "remove an empty pass group").add_argument("key")
+
+  sp = add("remove", cmd_remove, "retire an obsolete item, or purge one outright")
+  sp.add_argument("id")
+  mode = sp.add_mutually_exclusive_group(required=True)
+  mode.add_argument("--reason", help="retire it, recording why; the id stays claimed")
+  mode.add_argument(
+    "--purge", action="store_true", help="delete it outright, for something that never should have existed"
+  )
+  sp.add_argument("--force", action="store_true", help="override the dependents and done guards")
+
+  add("render", cmd_render, "regenerate .slicer/render/")
+
+  sp = add("sync", cmd_sync, "rewrite derived lines in other documents")
+  sp.add_argument("--check", action="store_true", help="report drift instead of writing")
+
+  add("verify", cmd_verify, "check the index against itself and against git")
+
+  sp = add("check", cmd_check, "the CI gate: render, sync and integrity")
+  sp.add_argument("--diff", action="store_true", help="show a diff for each stale file")
+
+  add("stats", cmd_stats, "counts by status, size, tree and pass")
+
+  sp = add("log", cmd_log, "recent status changes")
+  sp.add_argument("--limit", type=int, default=20)
+
+  add("tui", cmd_tui, "browse and reorder interactively", json_flag=False)
+  return p
+
+
+def main(argv: list[str] | None = None) -> int:
+  parser = build_parser()
+  args = parser.parse_args(argv)
+  try:
+    return int(args.func(args))
+  except SlicerError as exc:
+    print(f"slicer: {exc}", file=sys.stderr)
+    return USAGE
+  except KeyError as exc:
+    print(f"slicer: no such item {exc}", file=sys.stderr)
+    return USAGE
+
+
+if __name__ == "__main__":
+  raise SystemExit(main())
