@@ -16,3 +16,4 @@
 {"when": "2026-09-24T15:28:44Z", "item": "S06", "action": "add", "from": "", "to": "open", "note": "Publish 0.1.0 to PyPI once CI is green on a tag"}
 {"when": "2026-09-24T15:28:44Z", "item": "S07", "action": "add", "from": "", "to": "open", "note": "Copyright holder is unnamed in LICENSE and pyproject"}
 {"when": "2026-09-24T15:29:14Z", "item": "S08", "action": "add", "from": "", "to": "open", "note": "set --findings updates the index row but not the slice file; check does not notice"}
+{"when": "2026-09-24T15:29:41Z", "item": "S01", "action": "status", "from": "open", "to": "done", "note": "public repo at squalor-xyz/slicer; synthetic fixture replaces the real tree"}

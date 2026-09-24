@@ -10,7 +10,7 @@
       "id": "S01",
       "title": "Split slicer into its own repository",
       "short_title": "Split slicer into its own repository",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

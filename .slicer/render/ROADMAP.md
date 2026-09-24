@@ -2,11 +2,11 @@
 
 # Roadmap
 
-8 items · — 6 · done 2
+8 items · — 5 · done 3
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | — |
+| 1 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
 | 2 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
 | 3 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
 | 4 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
