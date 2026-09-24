@@ -43,8 +43,8 @@ and the slice files, the config is yours to hand-edit.
 
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
-| `id.prefix` | `"S"` | The id scheme, **only when `index.json` is first written** | **No — inert.** See below |
-| `id.width` | `2` → `S01` | As above | **No — inert** |
+| `id.prefix` | `"S"` | The id scheme | **Until the first item exists.** See below |
+| `id.width` | `2` → `S01` | As above | **Until the first item exists** |
 | `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |
 | `open_status` | `"open"` | Which items `next` considers, what `unpark` returns to, the sync pointers | Only with migration |
 | `done_status` | `"done"` | The `done` target, **which folder a slice lives in**, dependency satisfaction | **No — breaking** |
@@ -61,10 +61,15 @@ and the slice files, the config is yours to hand-edit.
 
 ## The ones that will surprise you
 
-**`id.prefix` and `id.width` are inert after init.** They are read only when seeding
-`index.json`. After that, allocation reads the prefix and width stored *in `index.json`*,
-so editing the config silently does nothing at all — no error, no effect. Set them before
-your first `init`, `import` or `migrate`, or live with `S01`.
+**`id.prefix` and `id.width` freeze once an id has been handed out.** Change them any
+time before the first item exists and the next id uses the new scheme — `init`, look at
+`S01`, decide you want `TASK-001`, edit the config, and the first `add` obeys it.
+
+After that the index owns the scheme, because ids are never reused and renumbering would
+break every commit message and review that cites one. Editing the config then does not
+renumber anything, and `slicer verify` and `slicer check` report the disagreement naming
+both schemes rather than letting it pass quietly. Restore the config, or start a new
+project.
 
 **`done_status`, `done_dir` and `retired_dir` strand existing files.** The folder a slice
 lives in is derived from its status, so changing either side of that mapping leaves

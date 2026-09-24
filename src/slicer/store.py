@@ -123,6 +123,18 @@ def load(root: Path | None = None) -> State:
   if not index_path.is_file():
     raise StateError(f"{index_path}: not found; run `slicer init` first")
   index = Index.from_dict(jsonio.read(index_path))
+  # The id scheme lives in the index because allocation must not depend on a
+  # config someone edited after ids were handed out. Until the first item
+  # exists there is nothing to be inconsistent with, so a changed config still
+  # counts -- otherwise `init`, look, change your mind is a dead end. This is
+  # the one read that adjusts what it read; it is idempotent, and it reaches
+  # disk only on the next save. Past that point `verify` reports the mismatch.
+  if not index.items and (index.id_prefix, index.id_width) != (
+    config.id_prefix,
+    config.id_width,
+  ):
+    index.id_prefix = config.id_prefix
+    index.id_width = config.id_width
   slices: dict[str, Slice] = {}
   slices_root = sdir / SLICES_DIR
   for folder in (

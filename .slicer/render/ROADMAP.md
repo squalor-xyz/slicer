@@ -2,7 +2,7 @@
 
 # Roadmap
 
-20 items · — 14 · done 6
+20 items · — 13 · done 7
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -15,7 +15,7 @@
 | 7 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
 | 8 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
 | 9 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
-| 10 | S10 | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | — |
+| 10 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
 | 11 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
 | 12 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | — |
 | 13 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | found auditing the machine interface | — |

@@ -190,8 +190,8 @@
       "id": "S10",
       "title": "id.prefix and id.width in config.json are silently inert after init",
       "short_title": "id.prefix and id.width in config.json are silently inert after init",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "S",

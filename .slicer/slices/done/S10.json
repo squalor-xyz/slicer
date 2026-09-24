@@ -1,0 +1,38 @@
+{
+  "id": "S10",
+  "title": "id.prefix and id.width in config.json are silently inert after init",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found while writing docs/configuration.md",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ids.allocate` formats a new id from `index.id_prefix` and `index.id_width`. The config's\n`id.prefix` and `id.width` are read in exactly two places — `cmd_init`, when it first\nwrites `index.json`, and `migrate`, when it seeds one — and nowhere else. After that the\nindex is the authority and the config is a dead letter.\n\nSo a project that runs `slicer init`, sees `S01`, and decides it wants `TASK-001` edits\n`config.json` and nothing happens. No error, no warning, no effect. `init --force`\nrewrites the config but explicitly leaves an existing `index.json` alone, so it does not\nhelp either. The only recovery is deleting `.slicer/` and starting over."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py` — `load`\n- `src/slicer/verify.py` — `offline`\n- `docs/configuration.md` — the rule it states is wrong"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Load_EmptyIndexAndChangedConfig_AdoptsTheConfigScheme` — edit the config before the\n   first item, assert the next id uses the new prefix and width.\n2. `Load_ItemsExist_KeepsTheIndexScheme` — ids already handed out do not change.\n3. `Verify_SchemeMismatchWithItems_IsAnErrorNamingBoth`.\n4. `Check_SchemeMismatch_Fails`.\n5. `Verify_SchemeMatches_ReportsNothing`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Two halves, because the honest answer differs before and after the first id is handed\nout.\n\n**Adopt while the index is empty.** In `store.load`, when `index.items` is empty and the\nindex's scheme differs from the config's, take the config's. That is exactly the\ninit-then-reconsider case, and it is unambiguous precisely because no id exists yet to be\nmade inconsistent. It persists on the next save and re-loading is idempotent. This is the\none place in the tool where a read is not purely a read, so it says so in a comment.\n\n**Report once it is not.** In `verify.offline`, a mismatch with items present is an error\nnaming both schemes and saying the index wins because ids are never reused. `check` folds\n`verify.offline` errors in, so this fails the gate instead of passing quietly.\n\nRenumbering is not on the table: ids are never reused, and rewriting them would break\nevery commit message and review that cites one.\n\n**Not in this slice:** validating that a prefix is non-empty or a width is at least 1."
+    },
+    {
+      "heading": "Check",
+      "body": "A fresh project with `\"prefix\": \"TASK-\", \"width\": 3` in its config allocates `TASK-001`.\nAn established one with an edited config fails `slicer check` naming both schemes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit: `store.py`, `verify.py`, the tests, and the docs correction."
+    }
+  ],
+  "notes": []
+}

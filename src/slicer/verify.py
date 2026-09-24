@@ -50,6 +50,17 @@ def offline(state: State) -> VerifyReport:
   index = state.index
   report = VerifyReport(checked=len(index.items))
 
+  if index.items and (index.id_prefix, index.id_width) != (cfg.id_prefix, cfg.id_width):
+    report.findings.append(
+      Finding(
+        "error",
+        "",
+        f"id scheme in config ({cfg.id_prefix!r} width {cfg.id_width}) does not match "
+        f"the index ({index.id_prefix!r} width {index.id_width}); the index wins, "
+        f"because ids are never reused. Restore the config, or start a new project.",
+      )
+    )
+
   seen: set[str] = set()
   for item in index.items:
     if item.id in seen:

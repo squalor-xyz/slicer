@@ -68,16 +68,17 @@ is a trap:
 
 | Key | Default | Change it… |
 |---|---|---|
-| `id.prefix` | `"S"` | **Before `init`, or never.** See below. |
-| `id.width` | `2` → `S01` | **Before `init`, or never.** |
+| `id.prefix` | `"S"` | **Before your first item.** See below. |
+| `id.width` | `2` → `S01` | **Before your first item.** |
 | `sections` | `Why, Files, Failing tests, Implement, Check, Git` | Any time — it only affects future `promote`s. |
 | `statuses` | `open: —`, `done`, `parked`, `later` | Labels any time; renaming a *key* items already use breaks them. |
 | `boundary` | `**Not in this slice:**` | Any time; `""` turns off the scope-boundary warning. |
 
-**The trap:** `id.prefix` and `id.width` are read only when `index.json` is first
-written. After that, id allocation reads the copy stored *in `index.json`*, so editing
-them in `config.json` silently does nothing. If you want `TASK-001` instead of `S01`,
-set it before you run `init`.
+**One-way door:** `id.prefix` and `id.width` are yours to change until the first item
+exists. Run `init`, look at what `S01` would be, decide you want `TASK-001` instead,
+edit the config — the first `add` obeys it. Once an id has been handed out the index
+owns the scheme, because ids are never reused, and `slicer check` reports a config that
+disagrees rather than ignoring it.
 
 The full key-by-key reference, including which changes strand existing files, is in
 [configuration.md](configuration.md).
