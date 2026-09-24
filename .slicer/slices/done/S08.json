@@ -1,0 +1,38 @@
+{
+  "id": "S08",
+  "title": "set --findings updates the index row but not the slice file; check does not notice",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found while splitting the repo",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ops.promote` copies five fields from the index item onto the new slice — title,\nfindings, size, flags and trees — and from that moment nothing keeps them in step. The\nroadmap row renders from `Item`; the slice header renders from `Slice`. So\n`slicer set S01 --findings G9` updates the table and leaves the slice saying `G1`, and\n`slicer check` does not notice because nothing compares the two.\n\nFound while splitting the repo: the S01 findings note named the parent project, and\nfixing it with `set --findings` changed the index while the rendered slice kept the old\ntext. There was no command that could repair it, so it took a hand edit of\n`.slicer/slices/S01.json` — the one thing the tool exists to make unnecessary."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` — `set_fields`, and a new `_sync_slice`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Set_Findings_UpdatesTheSliceHeaderToo` — set it, then assert `slicer show` renders\n   the new value.\n2. `Set_Size_UpdatesTheSlice`, `Set_Trees_UpdateTheSliceNoteAndPlural`,\n   `Set_Title_UpdatesTheSlice`.\n3. `Set_PassKey_DoesNotRewriteTheSliceFile` — an index-only field must not touch it.\n4. `Set_OnAnUnpromotedItem_IsStillFine`."
+    },
+    {
+      "heading": "Implement",
+      "body": "A private `_sync_slice(state, item)` called from `set_fields` after any relocation,\nmapping exactly what `promote` maps: `findings`→`findings_note`, `size`, `trees`→\n`trees_note` plus `trees_plural`, `flags`, and `title`. `short_title` has no slice\ncounterpart and stays index-only, deliberately — the index cell is scannable and the\nslice H1 is explicit, and they differ in most real slices.\n\nSkip the write when nothing changed, so `set --pass 2` does not rewrite a slice file for\nno reason. Order matters: relocate first, then sync, because `save_slice` derives its\npath from the item's status and must write to the file's new home.\n\n**Not in this slice:** reconciling an already-imported tree. `migrate` deliberately\nallows the index and the slice to disagree and reports `title / findings / trees\ndifferences - both sides kept`, because a legacy tree legitimately carries a short table\ntitle and a longer slice heading. This syncs on an explicit `set` and nothing else."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer set S01 --findings X` then `slicer show S01` shows X in the rendered header, and\n`slicer check` stays clean."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, after S11 — both land in `set_fields`, and the relocation has to exist\nbefore the sync can run in the right order."
+    }
+  ],
+  "notes": []
+}

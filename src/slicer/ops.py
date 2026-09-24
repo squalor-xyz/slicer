@@ -118,6 +118,35 @@ def _relocate_slice(state: State, item_id: str) -> None:
     vcs.move(state.root, src, dst)
 
 
+def _sync_slice(state: State, item: Item) -> None:
+  """Push the fields a slice duplicates from its item back down onto it.
+
+  `promote` seeds these five from the item and nothing kept them in step
+  afterwards, so editing the roadmap row left the rendered slice showing the
+  old value. `short_title` is not among them: the index cell and the slice H1
+  differ deliberately, and only the H1 is the slice's own title.
+
+  Only an explicit `set` syncs. `migrate` allows an imported index and slice
+  to disagree and says so in its report; reconciling those is not this.
+  """
+  sl = state.slices.get(item.id)
+  if sl is None:
+    return
+  wanted = {
+    "title": item.title,
+    "findings_note": item.findings,
+    "size": item.size,
+    "flags": list(item.flags),
+    "trees_note": ", ".join(item.trees),
+    "trees_plural": len(item.trees) > 1,
+  }
+  if all(getattr(sl, key) == value for key, value in wanted.items()):
+    return
+  for key, value in wanted.items():
+    setattr(sl, key, value)
+  state.save_slice(sl)
+
+
 def set_fields(state: State, item_id: str, **fields: object) -> Item:
   cfg = state.config
   item = state.index.require(item_id)
@@ -136,6 +165,8 @@ def set_fields(state: State, item_id: str, **fields: object) -> Item:
   moved = item.status != previous
   if moved:
     _relocate_slice(state, item_id)
+  # After any move, so the slice is written to its new home.
+  _sync_slice(state, item)
   state.save_index()
   # One entry, even when a status changed: the transition goes in from/to so
   # nothing is lost by not writing a second `status` record as well.

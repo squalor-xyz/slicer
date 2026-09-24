@@ -150,8 +150,8 @@
       "id": "S08",
       "title": "set --findings updates the index row but not the slice file; check does not notice",
       "short_title": "set --findings updates the index row but not the slice file; check does not notice",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "M",

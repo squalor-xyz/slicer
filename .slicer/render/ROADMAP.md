@@ -2,7 +2,7 @@
 
 # Roadmap
 
-20 items · — 15 · done 5
+20 items · — 14 · done 6
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -13,7 +13,7 @@
 | 5 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
 | 6 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
 | 7 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
-| 8 | S08 | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | — |
+| 8 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
 | 9 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
 | 10 | S10 | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | — |
 | 11 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |

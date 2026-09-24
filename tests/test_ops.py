@@ -160,6 +160,68 @@ class OpsTests(unittest.TestCase):
       self.assertTrue((repo.root / ".slicer/slices/retired/S02.json").is_file())
       self.assertEqual(repo.run("verify")[0], 0)
 
+  def test_Set_Findings_UpdatesTheSliceHeaderToo(self) -> None:
+    # The bug this replaces: the roadmap row changed and the slice kept the
+    # old text, because nothing kept the two copies in step after `promote`.
+    with self.repo() as repo:
+      repo.run("set", "S02", "--findings", "G9")
+      self.assertEqual(repo.state().slices["S02"].findings_note, "G9")
+      _, out, _ = repo.run("show", "S02")
+      self.assertIn("G9", out)
+
+  def test_Set_Size_UpdatesTheSlice(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--size", "L")
+      self.assertEqual(repo.state().slices["S02"].size, "L")
+
+  def test_Set_Trees_UpdateTheSliceNoteAndPlural(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--tree", "alpha", "--tree", "beta")
+      sl = repo.state().slices["S02"]
+      self.assertEqual(sl.trees_note, "alpha, beta")
+      self.assertTrue(sl.trees_plural)
+
+  def test_Set_OneTree_MakesTheSliceSingular(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--tree", "alpha")
+      sl = repo.state().slices["S02"]
+      self.assertEqual(sl.trees_note, "alpha")
+      self.assertFalse(sl.trees_plural)
+
+  def test_Set_Title_UpdatesTheSlice(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--title", "A clearer title")
+      self.assertEqual(repo.state().slices["S02"].title, "A clearer title")
+
+  def test_Set_ShortTitle_LeavesTheSliceTitleAlone(self) -> None:
+    # The index cell and the slice H1 differ on purpose.
+    with self.repo() as repo:
+      before = repo.state().slices["S02"].title
+      repo.run("set", "S02", "--short-title", "Short")
+      self.assertEqual(repo.state().slices["S02"].title, before)
+      self.assertEqual(repo.state().index.require("S02").short_title, "Short")
+
+  def test_Set_IndexOnlyField_DoesNotRewriteTheSliceFile(self) -> None:
+    with self.repo() as repo:
+      path = repo.state().find_slice_file("S02")
+      before = path.read_bytes()
+      repo.run("set", "S02", "--pass", "9")
+      self.assertEqual(path.read_bytes(), before)
+
+  def test_Set_OnAnUnpromotedItem_ChangesTheRowAndNothingElse(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "No slice here")
+      code, _, err = repo.run("set", "S05", "--findings", "G9")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S05").findings, "G9")
+      self.assertIsNone(repo.state().find_slice_file("S05"))
+
+  def test_Set_StatusAndFindings_SyncsIntoTheMovedFile(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--status", "done", "--findings", "G9")
+      self.assertTrue((repo.root / ".slicer/slices/done/S02.json").is_file())
+      self.assertEqual(repo.state().slices["S02"].findings_note, "G9")
+
   def test_Set_UnknownStatus_RefusesAndListsTheKnownOnes(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("set", "S02", "--status", "nonsense")
