@@ -14,8 +14,8 @@ matches.
 errors                                      every module imports from here
 model · config · jsonio · ids · templates   data, defaults, atomic IO, id rules
 store                                       discovery and the on-disk layout
-graph · vcs · prose · legacy                edges, git, roadmap prose, the old format
-ops · render · sync · verify · importer     behaviour
+graph · vcs · prose · legacy · outline      edges, git, prose, the two input formats
+ops · render · sync · verify · migrator     behaviour
 check                                       composes render + sync + verify
 cli · tui                                   front ends
 ```
@@ -91,7 +91,9 @@ work on a repo with no review protocol at all.
 flattened in Python before it reaches a template, and an unknown placeholder raises
 rather than rendering empty.
 
-**Import is all-or-nothing.** `legacy.parse_*` and `emit_*` are inverses, and
+**Import and migration are all-or-nothing.** Both validate everything before writing
+anything: `ops.apply_outline` collects every problem with an outline and refuses the
+whole file, and migration goes further — `legacy.parse_*` and `emit_*` are inverses, and
 `roundtrip_slice` / `roundtrip_index` refuse to return unless re-emitting reproduces the
 input byte for byte. A document slicer cannot reproduce is never half-migrated. The
 emitters exist only for that proof, for `--dry-run` and for the tests — they are not a

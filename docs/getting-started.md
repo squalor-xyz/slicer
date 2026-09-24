@@ -115,35 +115,54 @@ $ slicer list
   2  S02   —       S  Fail loudly on a missing key
 ```
 
-### 4b. From a plain list
+### 4b. In bulk, from a markdown outline
 
-There is no bulk-load command. If your planned features are a list of lines, loop:
+`slicer import` loads a whole roadmap from one file. Start from the template — it is
+built from your own config, so the sections it suggests are the ones this project uses:
 
 ```console
-$ printf '%s\n' "Cache the parsed config" "Document the config schema" > features.txt
-$ while IFS= read -r title; do slicer add "$title"; done < features.txt
-added S03  Cache the parsed config
-added S04  Document the config schema
+$ slicer import --skeleton > roadmap.md
 ```
 
-Then fill in sizes and trees with `slicer set` as you learn them. This is genuinely the
-supported path today — `slicer import` is **not** a general importer, see below.
+Each `##` heading is an item; `key: value` lines under it carry size, tree, findings,
+status, pass, group and dependencies; `###` headings become the slice's sections. An
+entry with sections gets a slice file automatically.
 
-### 4c. From an existing markdown tree
+```console
+$ slicer import roadmap.md --dry-run
+source     ~/code/my-project/roadmap.md
+outline    3 items, 1 with slices
+status     — 2 · parked 1
+depends    1 edges
+nothing written; drop --dry-run to apply
 
-`slicer import` migrates a tree that is **already in slicer's own legacy markdown
-format**: an index named `README.md` containing a six-column table, and one file per
-slice whose first line is `# S01 — title`. It is for projects that were running this
-workflow by hand before slicer existed. It will not read an arbitrary roadmap, a GitHub
-issue export, or a bullet list — for those, use [4b](#4b-from-a-plain-list).
+$ slicer import roadmap.md
+...
+added      S01, S02, S03
+now run `slicer render`
+```
 
-[import-format.md](import-format.md) is the exact grammar, with a minimal working
+It is a **one-way ramp**: the file gets your roadmap in, and after that you manage items
+with `slicer set`, `slicer edit` and the TUI. Running the same file twice is refused,
+naming the collisions, so a double-apply cannot silently double your queue.
+
+[import.md](import.md) is the full format.
+
+### 4c. From an existing legacy markdown tree
+
+`slicer migrate` converts a tree that is **already in slicer's own legacy format**: an
+index named `README.md` containing a six-column table, and one file per slice whose first
+line is `# S01 — title`. It is for projects that were running this workflow by hand
+before slicer existed. For anything else — an arbitrary roadmap, an issue export, a
+bullet list — write an outline and use [4b](#4b-in-bulk-from-a-markdown-outline).
+
+[migrate-format.md](migrate-format.md) is the exact grammar, with a minimal working
 example. Check yours against it before you start.
 
 Always dry-run first. Nothing is written, and you get the full census:
 
 ```console
-$ slicer import --from docs/slices --dry-run
+$ slicer migrate --from docs/slices --dry-run
 source     ~/code/my-project/docs/slices
 index      4 passes, 5 group rows, 14 items, next id S15
 status     done 8 · — 3 · parked 2 · later 1
@@ -160,10 +179,10 @@ parsed and re-emitted to exactly the bytes it came from. Import refuses to write
 anything unless every file does that, so a document slicer cannot reproduce is never
 half-migrated.
 
-When it is clean, run it for real, then render — **`import` does not render**:
+When it is clean, run it for real, then render — **`migrate` does not render**:
 
 ```console
-$ slicer import --from docs/slices
+$ slicer migrate --from docs/slices
 ...
 wrote      19 files under ~/code/my-project/.slicer
 $ slicer render
@@ -322,7 +341,7 @@ to do.
 | `id <X> already exists; ids are never reused` | `add --id` naming a claimed id. Ids are claimed for the life of the project. |
 | `stale render: …` / `check failed` | Run `slicer render` (and `slicer sync` if you have sync targets). |
 | `template missing; re-run \`slicer init --force\` to restore it` | A file under `.slicer/templates/` was deleted. |
-| `refusing to write: fix the problems above` | An import found problems. Nothing was written; see [import-format.md](import-format.md). |
+| `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
 
 `slicer verify` is the broader health check — dangling dependencies, cycles, slices in
 the wrong folder for their status, slices with no index row. It reports and never
@@ -331,5 +350,6 @@ rewrites.
 ---
 
 Next: [configuration.md](configuration.md) for every config key,
-[import-format.md](import-format.md) for the legacy markdown grammar, and
+[import.md](import.md) for the outline format, [agents.md](agents.md) for driving
+slicer from an agent, [migrate-format.md](migrate-format.md) for the legacy grammar, and
 [ARCHITECTURE.md](../ARCHITECTURE.md) if you are changing slicer itself.

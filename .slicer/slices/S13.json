@@ -1,0 +1,38 @@
+{
+  "id": "S13",
+  "title": "move X --before X drops the item from the in-memory index",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found auditing the machine interface",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ops.move` pops the item out of the list before computing its target index. When the\ntarget is the item itself, `index.position(X)` then raises on a list that no longer\ncontains it, and the function exits without reinserting and without saving.\n\nDisk is untouched, so the damage is invisible in the CLI, where the process exits\nimmediately after. In the TUI, or any caller holding state across operations, the item is\nsimply gone from the in-memory index until the next load."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` — `move`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Move_BeforeItself_IsANoOpAndKeepsTheItem` — assert the item is still present and the\n   position is unchanged.\n2. `Move_AfterItself_IsANoOp`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Resolve the target position before popping, or short-circuit when the target id equals\nthe moving id. The second is clearer and says what it means.\n\n**Not in this slice:** moving several items at once."
+    },
+    {
+      "heading": "Check",
+      "body": "Full suite, plus the TUI reorder keys."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,38 @@
+{
+  "id": "S19",
+  "title": "Dependencies can only be asked about one item at a time",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "agent surface",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`graph.py` gives `dangling`, `cycles` and `blocked_by`. There is no reverse index — \n`ops.dependents` rescans every item linearly — no transitive closure and no topological\nsort. `slicer next` answers \"what should I do now\" for exactly one item; `verify` answers\n\"is the graph valid\".\n\nNothing answers \"what is unblocked right now\", \"what does finishing S04 unblock\", or\n\"show me the graph\". Planning work is exactly those questions, and an agent planning a\nbatch has to reimplement them from `list --json`."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "`slicer deps [ID] [--json]`: with an id, what it waits on and what waits on it; without,\nevery unblocked open item. A `--format mermaid` or DOT output would make the graph\nreviewable in a pull request. Build the reverse index once per load in `graph.py`.\n\n**Not in this slice:** scheduling or critical-path analysis."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

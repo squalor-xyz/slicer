@@ -9,7 +9,7 @@ import support
 
 from slicer import sync
 from slicer.config import Config
-from slicer.importer import build
+from slicer.migrator import build
 
 NEXT = "**S13** atlas tables must split behind the data view"
 LATER = "S14; parked S09/S10; later S11; atlas ROADMAP 3–4; beacon parsers; lasso"
@@ -105,7 +105,7 @@ class SyncTests(unittest.TestCase):
     }
     path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     repo.write("docs/implementation-plan.md", "# Plan\n\nStatus: STALE\n\nbody\n")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
 
 
 if __name__ == "__main__":

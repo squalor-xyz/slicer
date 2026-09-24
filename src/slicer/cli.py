@@ -16,9 +16,21 @@ import tempfile
 from pathlib import Path
 
 from slicer import check as check_mod
-from slicer import importer, jsonio, model, ops, prose, render, store, sync, templates, verify
+from slicer import (
+  jsonio,
+  migrator,
+  model,
+  ops,
+  outline,
+  prose,
+  render,
+  store,
+  sync,
+  templates,
+  verify,
+)
 from slicer.config import CONFIG_NAME, Config
-from slicer.errors import SlicerError
+from slicer.errors import SlicerError, StateError
 
 OK, DRIFT, USAGE = 0, 1, 2
 
@@ -38,8 +50,10 @@ def cmd_init(args: argparse.Namespace) -> int:
   root = Path(args.root or ".").resolve()
   base = root / store.DIR_NAME
   if (base / CONFIG_NAME).exists() and not args.force:
-    print(f"{base} already exists; pass --force to overwrite its config and templates", file=sys.stderr)
-    return USAGE
+    raise StateError(
+      f"{base} already exists; pass --force to overwrite its config and templates",
+      code="already_exists",
+    )
   cfg = Config()
   jsonio.write(base / CONFIG_NAME, cfg.to_dict())
   index_path = base / store.INDEX_NAME
@@ -52,7 +66,113 @@ def cmd_init(args: argparse.Namespace) -> int:
   return OK
 
 
+SKELETON_HEAD = """\
+<!--
+  A slicer outline. Each `## ` heading is one roadmap item.
+
+  Optional key lines go directly under the heading:
+    size:     {sizes}
+    tree:     which part of the codebase; comma-separated for several
+    findings: a reference back to whatever raised this
+    status:   {statuses}
+    pass:     a group key, if the project uses passes
+    group:    a phase label rendered above the item
+    depends:  the title of another item, here or already in the roadmap
+
+  A paragraph after the keys and before the first `###` becomes the slice's
+  lead. Each `### ` heading is a section of the slice; an item with no
+  sections is a roadmap row only.
+
+  This project's configured sections are:
+    {sections}
+
+  Import with:  slicer import THIS-FILE.md --dry-run
+-->
+
+# Roadmap
+"""
+
+SKELETON_EXAMPLE = """
+## Parse the config file
+size: {size}
+tree: core
+findings: G1
+
+The loader accepts a missing key and carries on with a zero, so a typo in
+the config reads as a deliberate setting.
+
+{sections}
+"""
+
+
 def cmd_import(args: argparse.Namespace) -> int:
+  if getattr(args, "legacy_from", None) is not None:
+    raise StateError(
+      "--from belongs to `slicer migrate`, which converts an existing markdown "
+      "slice tree; `slicer import` takes an outline file",
+      code="wrong_command",
+    )
+  state = _state(args)
+  cfg = state.config
+
+  if args.skeleton:
+    sizes = "S, M or L by convention; anything you like"
+    statuses = ", ".join(sorted(cfg.statuses))
+    head = SKELETON_HEAD.format(
+      sizes=sizes, statuses=statuses, sections=", ".join(cfg.sections) or "(none)"
+    )
+    body = SKELETON_EXAMPLE.format(
+      size=(cfg.sections and "M") or "M",
+      sections="\n\n".join(f"### {h}" for h in cfg.sections),
+    )
+    _emit(args, {"skeleton": head + body}, head + body)
+    return OK
+
+  if not args.file:
+    raise StateError("give an outline file, or --skeleton to print a template", code="usage")
+
+  path = Path(args.file)
+  if not path.is_absolute():
+    path = Path(args.root or ".").resolve() / path
+  specs = outline.parse(path.read_text(encoding="utf-8"), path=str(path))
+
+  if args.dry_run:
+    report = ops.outline_report(state, specs, force=args.force)
+  else:
+    report = ops.apply_outline(state, specs, force=args.force)
+
+  lines = [
+    f"source     {path}",
+    f"outline    {report.items} items, {report.promoted} with slices",
+    "status     " + " · ".join(f"{k} {v}" for k, v in report.by_status.items()),
+    f"depends    {report.depends_edges} edges",
+  ]
+  if report.off_schema_sections:
+    lines.append(
+      f"sections   {len(report.off_schema_sections)} off-schema: "
+      + ", ".join(f"{k} {v}" for k, v in report.off_schema_sections.items())
+    )
+  for w in report.warnings:
+    lines.append(f"warn       {w}")
+  for pr in report.problems:
+    lines.append(f"PROBLEM    {pr}")
+
+  if report.problems:
+    lines.append("refusing to write: fix the problems above, or re-run with --dry-run to inspect")
+    _emit(args, report.to_dict(), "\n".join(lines))
+    return DRIFT
+  if args.dry_run:
+    lines.append("nothing written; drop --dry-run to apply")
+    _emit(args, report.to_dict(), "\n".join(lines))
+    return OK
+
+  lines.append(f"added      {', '.join(report.ids)}")
+  lines.append("now run `slicer render`")
+  _emit(args, report.to_dict(), "\n".join(lines))
+  return OK
+
+
+def cmd_migrate(args: argparse.Namespace) -> int:
   root = Path(args.root or ".").resolve()
   source = Path(args.source)
   if not source.is_absolute():
@@ -61,7 +181,7 @@ def cmd_import(args: argparse.Namespace) -> int:
   cfg = Config.load(base / CONFIG_NAME) if (base / CONFIG_NAME).is_file() else Config()
 
   render_root = base / store.RENDER_DIR
-  index, slices, report = importer.build(
+  index, slices, report = migrator.build(
     source,
     cfg,
     render_dir=render_root / render.SLICES_SUBDIR,
@@ -93,7 +213,7 @@ def cmd_import(args: argparse.Namespace) -> int:
     _emit(args, report.to_dict(), "\n".join(lines))
     return OK
 
-  written = importer.write(root, cfg, index, slices)
+  written = migrator.write(root, cfg, index, slices)
   lines.append(f"wrote      {len(written)} files under {base}")
   _emit(args, report.to_dict(), "\n".join(lines))
   return OK
@@ -136,10 +256,7 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 def cmd_show(args: argparse.Namespace) -> int:
   state = _state(args)
-  item = state.index.get(args.id)
-  if item is None:
-    print(f"no such item: {args.id}", file=sys.stderr)
-    return USAGE
+  item = state.index.require(args.id)
   sl = state.slices.get(args.id)
   if sl is None:
     _emit(args, item.to_dict(), f"{item.id}  {item.display_title()}\n(no slice yet; run `slicer promote {item.id}`)")
@@ -187,15 +304,18 @@ def cmd_set(args: argparse.Namespace) -> int:
 
 def cmd_edit(args: argparse.Namespace) -> int:
   state = _state(args)
+  # Look the item up first: "S99 has no slice" is a confusing thing to say
+  # about an item that does not exist at all.
+  state.index.require(args.id)
   sl = state.slices.get(args.id)
   if sl is None:
-    print(f"{args.id} has no slice; run `slicer promote {args.id}` first", file=sys.stderr)
-    return USAGE
+    raise StateError(
+      f"{args.id} has no slice; run `slicer promote {args.id}` first", code="no_slice"
+    )
   section = sl.section(args.section)
   body = _body_from(args, section.body if section else "")
   if body is None:
-    print("editor exited non-zero; slice unchanged", file=sys.stderr)
-    return USAGE
+    raise StateError("editor exited non-zero; slice unchanged", code="editor_aborted")
   ops.edit_section(state, args.id, args.section, body)
   _emit(args, {"id": args.id, "section": args.section}, f"updated {args.id} / {args.section}")
   return OK
@@ -260,8 +380,7 @@ def cmd_prose_edit(args: argparse.Namespace) -> int:
   current = prose.get(state.index, args.ref)
   body = _body_from(args, current)
   if body is None:
-    print("editor exited non-zero; roadmap unchanged", file=sys.stderr)
-    return USAGE
+    raise StateError("editor exited non-zero; roadmap unchanged", code="editor_aborted")
   if body == current:
     _emit(args, {"ref": args.ref, "changed": False}, f"{args.ref} unchanged")
     return OK
@@ -442,7 +561,16 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
 
-  sp = add("import", cmd_import, "migrate an existing markdown slice tree")
+  sp = add("import", cmd_import, "add items in bulk from a markdown outline")
+  sp.add_argument("file", nargs="?", help="the outline file")
+  sp.add_argument("--skeleton", action="store_true", help="print a template and exit")
+  sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
+  sp.add_argument("--force", action="store_true", help="add even when a title already exists")
+  # Caught in the handler so a script written against the old `import
+  # --from DIR` gets told where that moved, rather than a bare argparse error.
+  sp.add_argument("--from", dest="legacy_from", default=None, help=argparse.SUPPRESS)
+
+  sp = add("migrate", cmd_migrate, "convert an existing markdown slice tree")
   sp.add_argument("--from", dest="source", default="docs/slices", help="the legacy directory")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
 
@@ -554,17 +682,38 @@ def build_parser() -> argparse.ArgumentParser:
   return p
 
 
+def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
+  """Report a deliberate failure: an envelope for agents, prose for people.
+
+  The human line always goes to stderr, so piping stdout stays safe. With
+  `--json`, stdout additionally carries a machine-readable envelope whose
+  `code` is the stable part -- the message is free to be reworded.
+  """
+  if getattr(args, "json", False):
+    payload = {
+      "error": {
+        "code": getattr(exc, "code", "error"),
+        "message": str(exc),
+        "command": getattr(args, "command", None),
+      }
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+  print(f"slicer: {exc}", file=sys.stderr)
+  return USAGE
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = build_parser()
   args = parser.parse_args(argv)
   try:
     return int(args.func(args))
   except SlicerError as exc:
-    print(f"slicer: {exc}", file=sys.stderr)
-    return USAGE
-  except KeyError as exc:
-    print(f"slicer: no such item {exc}", file=sys.stderr)
-    return USAGE
+    return _fail(args, exc)
+  except OSError as exc:
+    # A missing --file, an unreadable path: someone's mistake, not a bug.
+    # Anything else still raises, because a traceback is the right report
+    # for a defect in slicer itself.
+    return _fail(args, StateError(str(exc), code="io"))
 
 
 if __name__ == "__main__":

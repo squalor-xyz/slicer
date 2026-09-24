@@ -17,7 +17,7 @@ class RetireTests(unittest.TestCase):
     repo = support.TempRepo(git=git)
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Retire_OpenItem_SetsRetiredStatusAndMovesTheFile(self) -> None:
@@ -101,7 +101,7 @@ class PurgeTests(unittest.TestCase):
     repo = support.TempRepo(git=git)
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Purge_LastAllocatedId_RemovesTheItemAndFreesTheId(self) -> None:
@@ -183,7 +183,7 @@ class RemoveCliTests(unittest.TestCase):
     repo = support.TempRepo()
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Remove_WithNeitherReasonNorPurge_ExitsTwo(self) -> None:
@@ -260,7 +260,7 @@ class RetiredStatusConfigTests(unittest.TestCase):
       stored.pop("retired_status", None)
       stored.pop("retired_dir", None)
       path.write_text(json.dumps(stored, ensure_ascii=False, indent=2) + "\n")
-      code, _, err = repo.run("import", "--from", "docs/slices")
+      code, _, err = repo.run("migrate", "--from", "docs/slices")
       self.assertEqual(code, 0, err)
       self.assertEqual(repo.run("render")[0], 0)
       self.assertEqual(repo.run("check")[0], 0)

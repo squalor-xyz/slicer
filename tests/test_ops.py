@@ -15,7 +15,7 @@ class OpsTests(unittest.TestCase):
     repo = support.TempRepo(git=git)
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Add_NoSliceFile_AppendsAnIdeaAndBumpsNextId(self) -> None:
@@ -139,7 +139,7 @@ class DependencyTests(unittest.TestCase):
     with support.TempRepo() as repo:
       support.make_mini(repo)
       repo.run("init")
-      repo.run("import", "--from", "docs/slices")
+      repo.run("migrate", "--from", "docs/slices")
       return repo.state().index
 
   def test_Cycle_SelfDependency_IsDetected(self) -> None:

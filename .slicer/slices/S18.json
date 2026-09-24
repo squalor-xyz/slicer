@@ -1,0 +1,38 @@
+{
+  "id": "S18",
+  "title": "An item has nowhere to put a note",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "agent surface",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`Slice.lead` and `Slice.notes` are the free-form paragraphs around a slice's metadata\nline. They are read by `render` and written by `migrate` and `import` — but no CLI\ncommand can reach either, so a slice created with `promote` has them empty forever.\n\n`done --note` exists but writes only to `log.jsonl`; it never appears in `show`, `render`\nor the TUI. `remove --reason` is the only free text that survives onto an item. So there\nis no way to say \"tried X, it did not work\" against a slice and have anyone see it."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "`slicer note ID [--file/--stdin]` appending a paragraph to `Slice.notes`, and make the\nTUI's `e` reach them. Then decide whether notes should carry a timestamp — they are the\nclosest thing to a discussion thread, and dated entries age better than undated ones.\n\n**Not in this slice:** authorship; nothing in slicer records who did anything, and adding\nidentity is its own decision."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,38 @@
+{
+  "id": "S20",
+  "title": "History records that something changed, never what",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "agent surface",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`log.jsonl` records status transitions faithfully — every `add`, `status`, `move`,\n`retire` and `purge` carries from and to. Content changes do not: an `edit` entry records\nthe section heading and nothing else, and a `set` entry records only which field names\nchanged. Neither old nor new values are kept.\n\nSo an item's status lifecycle is fully replayable and its content history is not\nrecoverable from slicer at all — only from git, and `vcs.py` deliberately exposes no way\nto read it. `slicer log` has no `--item` filter either, so following one slice means\npiping to grep."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "First the cheap half: `slicer log --item S04`, and an `--action` filter. Then decide the\nreal question — whether the log should carry content, or whether slicer should read git\nfor a slice's file and present that. The second keeps the log small and git as the\nsource of truth, at the cost of widening the `vcs.py` allowlist, which is a deliberate\nconstraint worth not widening casually.\n\n**Not in this slice:** any change to the git allowlist without a separate decision."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

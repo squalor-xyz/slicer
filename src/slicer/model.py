@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping
 
+from slicer.errors import StateError
+
 SCHEMA_VERSION = 1
 
 
@@ -213,14 +215,14 @@ class Index:
   def require(self, item_id: str) -> Item:
     it = self.get(item_id)
     if it is None:
-      raise KeyError(item_id)
+      raise StateError(f"no such item: {item_id}", code="no_such_item")
     return it
 
   def position(self, item_id: str) -> int:
     for i, it in enumerate(self.items):
       if it.id == item_id:
         return i
-    raise KeyError(item_id)
+    raise StateError(f"no such item: {item_id}", code="no_such_item")
 
   def by_status(self, status: str) -> list[Item]:
     return [it for it in self.items if it.status == status]

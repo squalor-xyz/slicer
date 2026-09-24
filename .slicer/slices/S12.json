@@ -1,0 +1,38 @@
+{
+  "id": "S12",
+  "title": "flags and group have no CLI setter",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found auditing the machine interface",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`Item.flags` and `Item.group` are real fields with model, render and serialisation\nsupport. `flags` is load-bearing: `sync.exclude_flags` uses it to drop items from the\nderived next-pointer. `group` renders as a phase label row above a run of items.\n\nNeither can be set from the CLI. `ops.set_fields` even lists `flags` in its `known` set,\nbut `cmd_set` never wires an argument for it; `group` is not in `known` at all. Today\nboth arrive only through `slicer migrate` or `slicer import`, so a project that started\nfrom `slicer add` can never use either."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_set` and its parser\n- `src/slicer/ops.py` — `set_fields`, add `group` to `known`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Set_Flag_IsStoredAndExcludesFromTheSyncPointer`.\n2. `Set_Group_RendersALabelRowAboveTheItem`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `--flag` (repeatable, replaces the list like `--tree` does) and `--group` to `set`.\nAdd `group` to the `known` set. Consider `--no-flags` / `--group \"\"` for clearing.\n\n**Not in this slice:** add/remove semantics for list fields; `set` replaces, and changing\nthat is its own decision."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer set S01 --flag OWNER` then `slicer sync --check` sees the item excluded."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

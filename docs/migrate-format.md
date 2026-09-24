@@ -1,11 +1,13 @@
-# The format `slicer import` reads
+# The format `slicer migrate` reads
 
-`slicer import --from DIR` migrates a markdown tree that is **already in slicer's own
-legacy format**. It is not a general importer: there is no JSON, CSV or plain-list
-ingest. If your roadmap is not the shape below, load it with a loop over `slicer add`
-instead — see [getting-started.md](getting-started.md#4b-from-a-plain-list).
+`slicer migrate --from DIR` converts a markdown tree that is **already in slicer's own
+legacy format** — for a project that was running this workflow by hand before slicer
+existed. It is a one-time migration, not a general importer.
 
-Check your tree against this page before you start. Import is all-or-nothing: every file
+If your roadmap is not the shape below, you want [`slicer import`](import.md) instead:
+it reads a plain markdown outline that you or an agent can write from scratch.
+
+Check your tree against this page before you start. Migration is all-or-nothing: every file
 must parse *and* re-emit to exactly the bytes it came from, or nothing is written.
 
 ## Layout
@@ -92,14 +94,14 @@ A typo reads as a deliberate zero.
    — ids comma-separated, with an optional parenthesised note. A third line is an error.
 6. `## ` sections run to the next `## `, bodies verbatim. **Headings are not validated**
    against your `sections` config — off-schema headings are kept in place and merely
-   counted in the import report, and a heading may repeat.
+   counted in the migration report, and a heading may repeat.
 
 ## What makes it refuse
 
 **Parse errors abort immediately**, exit 2, nothing written:
 
 ```console
-$ slicer import --from docs/slices --dry-run
+$ slicer migrate --from docs/slices --dry-run
 slicer: docs/slices/S13-atlas-tables-must-split.md: first line is not '# <id> — <title>'
 ```
 
@@ -112,7 +114,7 @@ mismatch — which prints a unified diff of what was lost.
 1:
 
 ```console
-$ slicer import --from docs/slices --dry-run
+$ slicer migrate --from docs/slices --dry-run
 ...
 warn       S09: prose says 'parked' but the index says 'done'; index wins
 PROBLEM    S09: status 'done' disagrees with its location (open)
@@ -127,7 +129,7 @@ table but not under `done/`, or the reverse).
 Warnings do not block. `--dry-run` always exits 0 when there are no problems, and writes
 nothing either way.
 
-## A minimal tree that imports
+## A minimal tree that migrates
 
 Three files. This exact example imports clean and checks green.
 
@@ -182,7 +184,7 @@ Green.
 
 ```console
 $ slicer init
-$ slicer import --from roadmap
+$ slicer migrate --from roadmap
 index      1 passes, 1 group rows, 2 items, next id S03
 status     done 1 · — 1
 sizes      M 1 · S 1
@@ -193,15 +195,15 @@ $ slicer render && slicer check
 check passed: 2 items, render and sync current
 ```
 
-Drop the `**Not in this slice:**` lines and it still imports — you just get a warning per
+Drop the `**Not in this slice:**` lines and it still migrates — you just get a warning per
 slice that its scope is unbounded.
 
 For a fuller worked example, `tests/fixtures/legacy/` in this repository is a synthetic
 14-slice tree across four passes, exercising every awkward corner of the grammar above.
 
-## After importing
+## After migrating
 
-`import` does not render. Run `slicer render`, then `slicer check`. The generated
+`migrate` does not render. Run `slicer render`, then `slicer check`. The generated
 markdown under `.slicer/render/` is deliberately **not** byte-identical to your old
 files — it is slicer's own shape. Relative links inside imported prose are re-based so
 they still resolve from their new depth.

@@ -28,28 +28,39 @@ slicer render                           # regenerate .slicer/render/
 slicer check                            # the gate: exit 1 if anything drifted
 ```
 
-`add` appends a roadmap row; `promote` gives it a slice file. There is no bulk-load
-command — for a list of planned features, loop:
+`add` appends a roadmap row; `promote` gives it a slice file.
+
+Got a whole roadmap to load? Write it as a markdown outline and import it in one go:
 
 ```sh
-while IFS= read -r title; do slicer add "$title"; done < features.txt
+slicer import --skeleton > roadmap.md   # a template, built from your config
+slicer import roadmap.md --dry-run      # validate; writes nothing
+slicer import roadmap.md                # apply
 ```
 
-Already running this workflow by hand? `slicer import --from docs/slices` migrates a
-markdown tree that is **already in slicer's format** — it is a migration path, not a
-general importer. It refuses to write anything unless every file round-trips byte for
-byte, so a document slicer cannot reproduce is never half-migrated.
+Each `##` heading is an item, optional `key: value` lines carry its size, tree and
+dependencies, and `###` sections become the slice itself — so one file can produce a
+fully written roadmap. It is a one-way ramp: the file is yours to delete afterwards.
+
+Already running this workflow by hand in markdown? `slicer migrate --from docs/slices`
+converts an existing tree that is **already in slicer's legacy format**. It refuses to
+write anything unless every file round-trips byte for byte, so a document slicer cannot
+reproduce is never half-migrated.
 
 **→ [docs/getting-started.md](docs/getting-started.md)** walks through all of this with
-real output. [docs/import-format.md](docs/import-format.md) is the exact grammar
-`import` accepts; [docs/configuration.md](docs/configuration.md) is every config key.
+real output. [docs/import.md](docs/import.md) is the outline format;
+[docs/agents.md](docs/agents.md) is how to drive slicer from an AI agent;
+[docs/migrate-format.md](docs/migrate-format.md) is the legacy grammar; and
+[docs/configuration.md](docs/configuration.md) is every config key.
 
 ## Commands
 
 | | |
 |---|---|
 | `init` | create `.slicer/` with config and templates |
-| `import --from DIR [--dry-run]` | migrate an existing markdown index and slice files |
+| `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
+| `import --skeleton` | print an outline template built from your config |
+| `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
 | `add TITLE [--pass KEY]` | append a roadmap item (no slice file yet) |
 | `promote ID` | give an item a slice file from the template |
 | `move ID --before/--after/--to` | reorder the queue; position is priority |
@@ -73,9 +84,10 @@ real output. [docs/import-format.md](docs/import-format.md) is the exact grammar
 In the TUI, `tab` moves between the queue and the detail pane and `e` opens `$EDITOR` on
 whatever is selected there — a slice section, or a prose block.
 
-Every read command takes `--json`, so an agent calls `slicer next --json` rather than
-parsing markdown. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing
-to do.
+Every command takes `--json`, including the failures — an agent calls `slicer next
+--json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
+prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
+See [docs/agents.md](docs/agents.md).
 
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
 `rev-parse`, `status`, `log`, `mv` and `ls-files`; the writing subcommands cannot be
@@ -166,17 +178,18 @@ inside a findings value, singular and plural tree keys, a collective trees cell,
 headings no schema names, prose between the tables — and the suite proves every file
 round-trips through the parser byte for byte.
 
-Set `SLICER_LEGACY_TREE=/path/to/docs/slices` to additionally prove the importer
+Set `SLICER_LEGACY_TREE=/path/to/docs/slices` to additionally prove the migrator
 against a live markdown tree of your own. That test is skipped when the variable is
-unset, and it is the only way to exercise the importer against real, messily
-hand-written markdown — worth running before changing `legacy.py` or `importer.py`.
+unset, and it is the only way to exercise the migrator against real, messily
+hand-written markdown — worth running before changing `legacy.py` or `migrator.py`.
 
 ## Status
 
 0.1.0, and slicer manages its own roadmap: `.slicer/` in this repository is a worked
 example you can read, and `.slicer/render/ROADMAP.md` is what it renders to.
 
-[docs/getting-started.md](docs/getting-started.md) is the walkthrough.
+[docs/getting-started.md](docs/getting-started.md) is the walkthrough, and
+[docs/agents.md](docs/agents.md) covers driving slicer from an agent.
 [ARCHITECTURE.md](ARCHITECTURE.md) explains the layering and the invariants.
 [AGENTS.md](AGENTS.md) has the commands and the house style.
 

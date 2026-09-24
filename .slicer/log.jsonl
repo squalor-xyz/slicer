@@ -19,3 +19,14 @@
 {"when": "2026-09-24T15:29:41Z", "item": "S01", "action": "status", "from": "open", "to": "done", "note": "public repo at squalor-xyz/slicer; synthetic fixture replaces the real tree"}
 {"when": "2026-09-24T17:55:36Z", "item": "S09", "action": "add", "from": "", "to": "open", "note": "No bulk-load command: a plain list of planned features needs a shell loop over add"}
 {"when": "2026-09-24T17:55:36Z", "item": "S10", "action": "add", "from": "", "to": "open", "note": "id.prefix and id.width in config.json are silently inert after init"}
+{"when": "2026-09-24T19:51:54Z", "item": "S11", "action": "add", "from": "", "to": "open", "note": "set --status changes the field without moving the slice file"}
+{"when": "2026-09-24T19:51:54Z", "item": "S12", "action": "add", "from": "", "to": "open", "note": "flags and group have no CLI setter"}
+{"when": "2026-09-24T19:51:54Z", "item": "S13", "action": "add", "from": "", "to": "open", "note": "move X --before X drops the item from the in-memory index"}
+{"when": "2026-09-24T19:51:54Z", "item": "S14", "action": "add", "from": "", "to": "open", "note": "The TUI help line advertises a key that does something else"}
+{"when": "2026-09-24T19:52:33Z", "item": "S15", "action": "add", "from": "", "to": "open", "note": "Nothing searches anything"}
+{"when": "2026-09-24T19:52:33Z", "item": "S16", "action": "add", "from": "", "to": "open", "note": "Status changes are one item per process"}
+{"when": "2026-09-24T19:52:33Z", "item": "S17", "action": "add", "from": "", "to": "open", "note": "edit always replaces; there is no way to append"}
+{"when": "2026-09-24T19:52:33Z", "item": "S18", "action": "add", "from": "", "to": "open", "note": "An item has nowhere to put a note"}
+{"when": "2026-09-24T19:52:33Z", "item": "S19", "action": "add", "from": "", "to": "open", "note": "Dependencies can only be asked about one item at a time"}
+{"when": "2026-09-24T19:52:33Z", "item": "S20", "action": "add", "from": "", "to": "open", "note": "History records that something changed, never what"}
+{"when": "2026-09-24T19:52:38Z", "item": "S09", "action": "status", "from": "open", "to": "done", "note": "slicer import reads a markdown outline; docs/import.md"}

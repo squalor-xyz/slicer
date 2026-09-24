@@ -1,268 +1,279 @@
-"""Migrating a markdown tree into JSON, including the whole fixture tree."""
+"""`slicer import`: bulk-loading a roadmap from a markdown outline."""
 
 from __future__ import annotations
 
 import json
-import os
 import unittest
-from pathlib import Path
 
 import support
 
-from slicer import importer, legacy
-from slicer.config import Config
+OUTLINE = """\
+# Roadmap
+
+## Parse the config file
+size: M
+tree: core
+findings: G1
+group: Phase 0
+
+The loader accepts a missing key.
+
+### Why
+A typo reads as a deliberate setting.
+
+### Implement
+Raise, and name the key.
+
+**Not in this slice:** the schema doc.
+
+## Fail loudly on a missing key
+size: S
+tree: core
+depends: Parse the config file
+
+## Document the config schema
+size: S
+status: parked
+"""
 
 
 class ImportTests(unittest.TestCase):
-  def test_Import_MiniTree_WritesConfigIndexAndSliceFiles(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      code, out, err = repo.run("import", "--from", "docs/slices")
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Import_Outline_AddsEveryItemInOrder(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      code, out, err = repo.run("import", "roadmap.md")
       self.assertEqual(code, 0, err)
-      self.assertTrue((repo.root / ".slicer/index.json").is_file())
-      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
-
-  def test_Import_MiniTree_PlacesDoneSlicesUnderDone(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      repo.run("import", "--from", "docs/slices")
-      self.assertTrue((repo.root / ".slicer/slices/done/S01.json").is_file())
-      self.assertFalse((repo.root / ".slicer/slices/S01.json").is_file())
-
-  def test_Import_MiniTree_SetsNextIdAboveHighestId(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      repo.run("import", "--from", "docs/slices")
-      self.assertEqual(repo.state().index.next_id, 5)
-
-  def test_Import_MiniTree_KeepsIndexTitleAndFileTitleSeparately(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      repo.run("import", "--from", "docs/slices")
-      item = repo.state().index.require("S01")
-      self.assertEqual(item.short_title, "First thing")
-      self.assertEqual(item.title, "first thing, spelled out at length")
-
-  def test_Import_MiniTree_PreservesProseAroundTables(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      repo.run("import", "--from", "docs/slices")
       index = repo.state().index
-      self.assertIn("Mini index preamble.", index.preamble)
-      self.assertIn("Baseline prose that must survive.", index.passes[0].intro)
-      self.assertIn("Outro prose for pass 1.", index.passes[0].outro)
-      self.assertIn("## Dependencies", index.epilogue)
+      self.assertEqual([i.id for i in index.items], ["S01", "S02", "S03"])
+      self.assertEqual(index.require("S01").title, "Parse the config file")
+      self.assertEqual(index.next_id, 4)
 
-  def test_Import_MiniTree_ReadsDependsOnFromTheSliceFile(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      repo.run("import", "--from", "docs/slices")
+  def test_Import_Outline_CarriesEveryKeyOntoTheItem(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      item = repo.state().index.require("S01")
+      self.assertEqual(item.size, "M")
+      self.assertEqual(item.trees, ["core"])
+      self.assertEqual(item.findings, "G1")
+      self.assertEqual(item.group, "Phase 0")
+
+  def test_Import_DependsByTitle_ResolvesToAnId(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
       self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
 
-  def test_Import_CollectiveTreesCell_KeptAsOneLiteral(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      repo.run("import", "--from", "docs/slices")
-      item = repo.state().index.require("S03")
-      self.assertEqual(item.trees, ["all four"])
-      self.assertTrue(item.trees_literal)
+  def test_Import_EntryWithSections_GetsASliceFile(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      state = repo.state()
+      self.assertTrue(state.index.require("S01").has_slice)
+      self.assertIsNotNone(state.find_slice_file("S01"))
 
-  def test_Import_DryRun_WritesNothing(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      before = sorted(p.name for p in (repo.root / ".slicer").rglob("*.json"))
-      code, out, err = repo.run("import", "--from", "docs/slices", "--dry-run")
-      self.assertEqual(code, 0, err)
-      after = sorted(p.name for p in (repo.root / ".slicer").rglob("*.json"))
-      self.assertEqual(before, after)
-      self.assertIn("nothing written", out)
+  def test_Import_EntryWithoutSections_StaysARoadmapRow(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      state = repo.state()
+      self.assertFalse(state.index.require("S02").has_slice)
+      self.assertIsNone(state.find_slice_file("S02"))
 
-  def test_Import_DryRunJson_ReportsMachineReadableCounts(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.run("init")
-      code, out, _ = repo.run("import", "--from", "docs/slices", "--dry-run", "--json")
-      payload = json.loads(out)
-      self.assertEqual(payload["items"], 4)
-      self.assertEqual(payload["by_status"]["done"], 1)
+  def test_Import_SliceSections_FollowTheConfiguredOrder(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      headings = [s.heading for s in repo.state().slices["S01"].sections]
+      self.assertEqual(headings, ["Why", "Files", "Failing tests", "Implement", "Check", "Git"])
 
-  def test_Import_StatusDisagreesWithLocation_RefusesToWrite(self) -> None:
-    with support.TempRepo() as repo:
-      folder = support.make_mini(repo)
-      # Claim S02 is done while its file still sits outside done/.
-      text = repo.read("docs/slices/README.md").replace(
-        "| [S02](S02-second-thing.md) | Second thing | S | alpha, beta | F3 | — |",
-        "| [S02](S02-second-thing.md) | Second thing | S | alpha, beta | F3 | done |",
-      )
-      repo.write("docs/slices/README.md", text)
-      repo.run("init")
-      code, out, _ = repo.run("import", "--from", "docs/slices")
-      self.assertEqual(code, 1)
-      self.assertIn("disagrees with its location", out)
-      self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
+  def test_Import_LeadParagraph_LandsOnTheSlice(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      self.assertEqual(repo.state().slices["S01"].lead, ["The loader accepts a missing key."])
 
-  def test_Import_UnparsableFile_AbortsWithoutWriting(self) -> None:
-    with support.TempRepo() as repo:
-      support.make_mini(repo)
-      repo.write("docs/slices/S05-broken.md", "# S05 — broken\n\nno meta line\n\n## Why\n\nx\n")
-      repo.run("init")
-      code, _, err = repo.run("import", "--from", "docs/slices")
-      self.assertEqual(code, 2)
-      self.assertIn("Findings", err)
+  def test_Import_StatusOnAnEntry_IsApplied(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      self.assertEqual(repo.state().index.require("S03").status, "parked")
+
+  def test_Import_DoneEntryWithSections_PutsTheFileUnderDone(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## Shipped already\nstatus: done\n\n### Why\nHistory.\n")
+      repo.run("import", "r.md")
+      self.assertTrue((repo.root / ".slicer/slices/done/S01.json").is_file())
       self.assertFalse((repo.root / ".slicer/slices/S01.json").exists())
 
-  def test_Import_FixtureTree_RoundTripsEveryFileByteIdentical(self) -> None:
-    index, slices, located = legacy.read_tree(support.LEGACY)
-    for path in sorted(list(support.LEGACY.glob("*.md")) + list((support.LEGACY / "done").glob("*.md"))):
-      if path.name == "README.md":
-        continue
-      with self.subTest(path.name):
-        text = path.read_text(encoding="utf-8")
-        self.assertEqual(legacy.parse_slice(text, path=str(path)).emit(), text)
-    readme = (support.LEGACY / "README.md").read_text(encoding="utf-8")
-    self.assertEqual(legacy.parse_index(readme, path="README.md").emit(), readme)
+  def test_Import_NoBoundaryInTheOutline_AppendsTheMarker(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\n\n### Why\nBecause.\n")
+      repo.run("import", "r.md")
+      sl = repo.state().slices["S01"]
+      self.assertIsNotNone(sl.boundary("**Not in this slice:**"))
 
-  def test_Import_FixtureTree_ReportsTheExpectedCensus(self) -> None:
-    index, slices, report = importer.build(support.LEGACY, Config())
-    self.assertEqual(report.problems, [])
-    self.assertEqual(report.items, 14)
-    self.assertEqual(report.slices, 14)
-    self.assertEqual(report.passes, 4)
-    self.assertEqual(report.groups, 5)
-    self.assertEqual(report.next_id, "S15")
-    self.assertEqual(
-      report.by_status, {"done": 8, "parked": 2, "—": 3, "later": 1}
-    )
-    self.assertEqual(
-      [i.id for i in index.items if i.status == "open"], ["S12", "S13", "S14"]
-    )
+  def test_Import_BoundaryAlreadyPresent_IsNotDuplicated(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\n\n### Why\nBecause.\n\n**Not in this slice:** other things.\n")
+      repo.run("import", "r.md")
+      bodies = "\n".join(s.body for s in repo.state().slices["S01"].sections)
+      self.assertEqual(bodies.count("**Not in this slice:**"), 1)
 
-  def test_Import_FixtureTree_KeepsOffSchemaHeadings(self) -> None:
-    _, slices, report = importer.build(support.LEGACY, Config())
-    self.assertIn("What landed", report.off_schema_sections)
-    self.assertIn("Code review (same slice)", report.off_schema_sections)
-    headings = [s.heading for s in slices["S07"].sections]
-    self.assertEqual(headings.index("What landed"), 1)
+  def test_Import_PassKey_IsNotInheritedFromTheLastItem(self) -> None:
+    # `ops.add` inherits the previous item's pass; a bulk load must not,
+    # or every entry lands in whichever pass the queue happened to end on.
+    with self.repo() as repo:
+      repo.run("add", "Existing work", "--pass", "6")
+      repo.write("r.md", "## A new thing\n")
+      repo.run("import", "r.md")
+      self.assertEqual(repo.state().index.require("S02").pass_key, "")
 
-  @unittest.skipUnless(os.environ.get("SLICER_LEGACY_TREE"), "SLICER_LEGACY_TREE not set")
-  def test_Import_LiveTree_RoundTripsEveryFileByteIdentical(self) -> None:
-    live = Path(os.environ["SLICER_LEGACY_TREE"])
-    _, _, report = importer.build(live, Config())
-    self.assertEqual(report.problems, [])
+  def test_Import_WritesOneLogEntryPerItem(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      adds = [e for e in repo.state().history() if e.action == "add"]
+      self.assertEqual([e.item for e in adds], ["S01", "S02", "S03"])
+
+  def test_Import_ThenRenderAndCheck_IsClean(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      repo.run("render")
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Import_Json_ReportsTheCensus(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      _, out, _ = repo.run("import", "roadmap.md", "--json")
+      payload = json.loads(out)
+      self.assertEqual(payload["items"], 3)
+      self.assertEqual(payload["promoted"], 1)
+      self.assertEqual(payload["ids"], ["S01", "S02", "S03"])
+      self.assertEqual(payload["depends_edges"], 1)
+
+
+class ImportRefusalTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Import_DuplicateTitle_RefusesAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("import", "roadmap.md")
+      self.assertEqual(code, 1)
+      self.assertIn("already exists as S01", out)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Import_DuplicateTitleWithForce_AddsAnyway(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      repo.run("import", "roadmap.md")
+      code, _, err = repo.run("import", "roadmap.md", "--force")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(len(repo.state().index.items), 6)
+
+  def test_Import_TitleTwiceInOneOutline_Refuses(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## Same\n\n## Same\n")
+      code, out, _ = repo.run("import", "r.md")
+      self.assertEqual(code, 1)
+      self.assertIn("appears twice", out)
+
+  def test_Import_UnknownStatus_RefusesNamingTheKnownOnes(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\nstatus: blocked\n")
+      code, out, _ = repo.run("import", "r.md")
+      self.assertEqual(code, 1)
+      self.assertIn("unknown status 'blocked'", out)
+
+  def test_Import_DanglingDepends_Refuses(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\ndepends: Nothing at all\n")
+      code, out, _ = repo.run("import", "r.md")
+      self.assertEqual(code, 1)
+      self.assertIn("which is not in the outline or the index", out)
+
+  def test_Import_DependsOnAnExistingItem_IsAccepted(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Already here")
+      repo.write("r.md", "## A new thing\ndepends: Already here\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Import_UnparsableOutline_ExitsTwoWithoutWriting(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\nnonsense: x\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 2)
+      self.assertIn("unknown key", err)
+      self.assertEqual(repo.state().index.items, [])
+
+  def test_Import_DryRun_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("import", "roadmap.md", "--dry-run")
+      self.assertEqual(code, 0, err)
+      self.assertIn("nothing written", out)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Import_DryRun_ReportsTheSameCensusAsApplying(self) -> None:
+    with self.repo() as repo:
+      repo.write("roadmap.md", OUTLINE)
+      _, dry, _ = repo.run("import", "roadmap.md", "--dry-run", "--json")
+      _, applied, _ = repo.run("import", "roadmap.md", "--json")
+      for key in ("items", "promoted", "by_status", "depends_edges"):
+        self.assertEqual(json.loads(dry)[key], json.loads(applied)[key], key)
+
+  def test_Import_LegacyFromFlag_PointsAtMigrate(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("import", "--from", "docs/slices")
+      self.assertEqual(code, 2)
+      self.assertIn("slicer migrate", err)
+
+  def test_Import_NoFileAndNoSkeleton_Refuses(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("import")
+      self.assertEqual(code, 2)
+      self.assertIn("--skeleton", err)
+
+
+class SkeletonTests(unittest.TestCase):
+  def test_Skeleton_UsesTheProjectsConfiguredSections(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      import json as _json
+
+      path = repo.root / ".slicer/config.json"
+      cfg = _json.loads(path.read_text())
+      cfg["sections"] = ["Context", "Plan"]
+      path.write_text(_json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
+      _, out, err = repo.run("import", "--skeleton")
+      self.assertIn("### Context", out, err)
+      self.assertIn("### Plan", out)
+      self.assertNotIn("### Failing tests", out)
+
+  def test_Skeleton_RoundTrips_BackThroughImport(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      _, skeleton, _ = repo.run("import", "--skeleton")
+      repo.write("r.md", skeleton)
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").title, "Parse the config file")
 
 
 if __name__ == "__main__":
   unittest.main()
-
-
-class LinkRewriteTests(unittest.TestCase):
-  """Imported prose points at files relative to where it used to live."""
-
-  def test_RewriteLinks_DeeperDestination_AddsTheMissingLevel(self) -> None:
-    from pathlib import Path
-
-    from slicer.importer import rewrite_links
-
-    root = Path("/repo")
-    got = rewrite_links(
-      "see [review](../../20260420-architect-review.md) and [tb](../toolbox.md)",
-      root / "docs/slices",
-      root / ".slicer/render/slices",
-    )
-    self.assertIn("(../../../20260420-architect-review.md)", got)
-    self.assertIn("(../../../docs/toolbox.md)", got)
-
-  def test_RewriteLinks_UrlsAnchorsAndAbsolutePaths_AreLeftAlone(self) -> None:
-    from pathlib import Path
-
-    from slicer.importer import rewrite_links
-
-    text = "[a](https://example.invalid/x) [b](#section) [c](/abs/path.md)"
-    self.assertEqual(
-      rewrite_links(text, Path("/repo/docs/slices"), Path("/repo/.slicer/render/slices")), text
-    )
-
-  def test_RewriteLinks_SameDirectory_ChangesNothing(self) -> None:
-    from pathlib import Path
-
-    from slicer.importer import rewrite_links
-
-    text = "[a](../x.md)"
-    self.assertEqual(rewrite_links(text, Path("/repo/a"), Path("/repo/a")), text)
-
-  def test_Import_FixtureTree_EveryRewrittenLinkPointsWhereItUsedTo(self) -> None:
-    """The invariant: same destination, expressed from the new location."""
-    from pathlib import Path
-
-    from slicer.importer import CODE_RE, LINK_RE, build
-
-    def targets(text: str) -> list[str]:
-      return [m.group(1).partition("#")[0] for m in LINK_RE.finditer(CODE_RE.sub("", text))]
-
-    with support.TempRepo() as repo:
-      source = repo.copy_legacy()
-      repo.run("init")
-      render_dir = repo.root / ".slicer/render/slices"
-      _, slices, _ = build(source, Config(), render_dir=render_dir)
-
-      originals: dict[str, str] = {}
-      for path in list(source.glob("*.md")) + list((source / "done").glob("*.md")):
-        if path.name == "README.md":
-          continue
-        text = path.read_text(encoding="utf-8")
-        originals[text.split(" ", 2)[1]] = text
-
-      checked = 0
-      for sid, sl in slices.items():
-        before = targets(originals[sid])
-        after = targets(
-          "\n\n".join([*sl.lead, *sl.notes, *[s.body for s in sl.sections]])
-        )
-        self.assertEqual(len(before), len(after), f"{sid}: link count changed")
-        for was, now in zip(before, after):
-          checked += 1
-          self.assertEqual(
-            (source / was).resolve(),
-            (render_dir / now).resolve(),
-            f"{sid}: {was} -> {now} points somewhere else",
-          )
-      self.assertGreater(checked, 10)
-
-  def test_RewriteLinks_InsideCodeSpanOrFence_IsLeftAlone(self) -> None:
-    from pathlib import Path
-
-    from slicer.importer import rewrite_links
-
-    frm, to = Path("/repo/docs/slices"), Path("/repo/.slicer/render/slices")
-    span = "run `grep -oh '\\[[^]]*\\](\\([^)]*\\.md\\))'` on it"
-    self.assertEqual(rewrite_links(span, frm, to), span)
-    fence = "```sh\nsee [x](../y.md)\n```"
-    self.assertEqual(rewrite_links(fence, frm, to), fence)
-    self.assertIn("(../../../docs/y.md)", rewrite_links("text [x](../y.md)", frm, to))
-
-  def test_Import_IndexProse_LinksAreRebasedToTheRoadmapLocation(self) -> None:
-    from slicer.importer import build
-
-    with support.TempRepo() as repo:
-      source = repo.copy_legacy()
-      repo.run("init")
-      render_root = repo.root / ".slicer/render"
-      index, _, _ = build(
-        source,
-        Config(),
-        render_dir=render_root / "slices",
-        index_render_dir=render_root,
-      )
-      prose = index.preamble + "\n".join(p.intro + p.outro for p in index.passes) + index.epilogue
-      # `../review-protocol.md` meant docs/review-protocol.md when the index
-      # lived in docs/slices/; from .slicer/render/ that is two levels further.
-      self.assertIn("(../../docs/review-protocol.md)", prose)
-      self.assertNotIn("(../review-protocol.md)", prose)

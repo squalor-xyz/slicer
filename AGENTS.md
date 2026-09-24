@@ -14,11 +14,11 @@ PYTHONPATH=src python3 -m slicer --help          # run it uninstalled
 No install step. `tests/support.py` puts `src/` on `sys.path` itself, so the suite runs
 from a clean checkout with nothing but Python 3.11+.
 
-Optional: `SLICER_LEGACY_TREE=/path/to/docs/slices` additionally proves the importer
+Optional: `SLICER_LEGACY_TREE=/path/to/docs/slices` additionally proves the migrator
 against a live markdown tree. The test is skipped when the variable is unset. The
 committed fixture under `tests/fixtures/legacy/` is synthetic, so this is the only way
-to exercise the importer against real, messily hand-written markdown — do it before
-touching `legacy.py` or `importer.py`.
+to exercise the migrator against real, messily hand-written markdown — do it before
+touching `legacy.py` or `migrator.py`.
 
 To run one test:
 
@@ -35,8 +35,12 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 - **Nothing in `src/slicer/` may hardcode a path, status or heading belonging to one
   project.** It goes in `.slicer/config.json`.
 - **All mutations go through `ops.py`**, never straight into `cli.py` or `tui.py`.
+  `legacy.py` and `outline.py` are pure parsers: text in, dataclasses out, no I/O.
 - **The git allowlist in `vcs.py` stays closed.** slicer does not commit, push or tag.
-- **Import stays all-or-nothing**: the round-trip proof runs before anything is written.
+- **Import and migration stay all-or-nothing**: every problem is collected and the
+  whole file refused before anything is written.
+- **Error messages are for people; `SlicerError.code` is the contract.** Reword a
+  message freely; change a code only when the meaning changes.
 
 ## Working on the roadmap
 
@@ -51,6 +55,15 @@ PYTHONPATH=src python3 -m slicer edit S07 --section Why --file note.md
 PYTHONPATH=src python3 -m slicer done S07
 PYTHONPATH=src python3 -m slicer render
 PYTHONPATH=src python3 -m slicer check
+```
+
+Several items at once go through an outline, which is also how the agent-surface items
+were filed:
+
+```sh
+PYTHONPATH=src python3 -m slicer import --skeleton > /tmp/draft.md
+PYTHONPATH=src python3 -m slicer import /tmp/draft.md --dry-run
+PYTHONPATH=src python3 -m slicer import /tmp/draft.md
 ```
 
 `.slicer/render/` is committed. A change to state without a re-render fails CI.

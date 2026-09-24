@@ -1,0 +1,38 @@
+{
+  "id": "S16",
+  "title": "Status changes are one item per process",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "agent surface",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`done`, `park` and `unpark` each take exactly one positional id, and `set` takes one id.\nMarking five items done is five processes, each doing a full `store.load` — which reads\nevery slice file — plus a full index rewrite and a log append.\n\nFor a human that is merely slow. For an agent closing out a batch it is five chances to\nfail halfway with no transaction boundary."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Accept several ids: `slicer done S01 S02 S03`. Load once, mutate all, save once, one log\nentry each. Same for `park`, `unpark` and `set`. Reading ids from stdin (`-`) would let\n`slicer find ... --json | ... | slicer done -` compose.\n\n**Not in this slice:** undo."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

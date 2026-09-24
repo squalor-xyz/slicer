@@ -1,0 +1,38 @@
+{
+  "id": "S14",
+  "title": "The TUI help line advertises a key that does something else",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found auditing the machine interface",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`tui.HELP` reads `n new`, but `n` is wired to `ops.promote`. There is no way to create an\nitem from the TUI at all, so the string promises a feature that does not exist and\nmislabels one that does."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` — `HELP`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "None worth writing for a string; the fix is one word."
+    },
+    {
+      "heading": "Implement",
+      "body": "Change `n new` to `n promote`. Then decide separately whether the TUI should be able to\nadd an item — if it should, that is a different slice and this one just stops lying in\nthe meantime.\n\n**Not in this slice:** adding items from the TUI."
+    },
+    {
+      "heading": "Check",
+      "body": "Read the help line against the key table in `act`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

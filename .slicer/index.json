@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 11,
+  "next_id": 21,
   "preamble": "",
   "passes": [],
   "items": [
@@ -170,7 +170,7 @@
       "id": "S09",
       "title": "No bulk-load command: a plain list of planned features needs a shell loop over add",
       "short_title": "No bulk-load command: a plain list of planned features needs a shell loop over add",
-      "status": "open",
+      "status": "done",
       "has_slice": false,
       "depends_on": [],
       "fields": {
@@ -201,6 +201,206 @@
         ],
         "trees_literal": false,
         "findings": "found while writing docs/configuration.md",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S11",
+      "title": "set --status changes the field without moving the slice file",
+      "short_title": "set --status changes the field without moving the slice file",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found auditing the machine interface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S12",
+      "title": "flags and group have no CLI setter",
+      "short_title": "flags and group have no CLI setter",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found auditing the machine interface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S13",
+      "title": "move X --before X drops the item from the in-memory index",
+      "short_title": "move X --before X drops the item from the in-memory index",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found auditing the machine interface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S14",
+      "title": "The TUI help line advertises a key that does something else",
+      "short_title": "The TUI help line advertises a key that does something else",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found auditing the machine interface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S15",
+      "title": "Nothing searches anything",
+      "short_title": "Nothing searches anything",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S16",
+      "title": "Status changes are one item per process",
+      "short_title": "Status changes are one item per process",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S17",
+      "title": "edit always replaces; there is no way to append",
+      "short_title": "edit always replaces; there is no way to append",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S18",
+      "title": "An item has nowhere to put a note",
+      "short_title": "An item has nowhere to put a note",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S19",
+      "title": "Dependencies can only be asked about one item at a time",
+      "short_title": "Dependencies can only be asked about one item at a time",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S20",
+      "title": "History records that something changed, never what",
+      "short_title": "History records that something changed, never what",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
         "pass": "",
         "group": "",
         "reason": ""

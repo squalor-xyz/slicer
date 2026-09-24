@@ -10,7 +10,7 @@ import support
 from slicer import prose
 from slicer.config import Config
 from slicer.errors import StateError
-from slicer.importer import build
+from slicer.migrator import build
 
 
 class ParseRefTests(unittest.TestCase):
@@ -44,7 +44,7 @@ class ProseBlockTests(unittest.TestCase):
     repo = support.TempRepo()
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Refs_ImportedIndex_AreListedInRenderOrder(self) -> None:
@@ -139,7 +139,7 @@ class PassGroupTests(unittest.TestCase):
     repo = support.TempRepo()
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_AddPass_NoItems_StillRendersItsHeadingAndIntro(self) -> None:

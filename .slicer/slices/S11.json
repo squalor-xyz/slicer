@@ -1,0 +1,38 @@
+{
+  "id": "S11",
+  "title": "set --status changes the field without moving the slice file",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found auditing the machine interface",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ops.set_fields` is a plain `setattr` loop, so `slicer set S01 --status done` writes the\nnew status onto the item and stops there. `ops.set_status` is the one that moves the\nslice file across the `slices/` → `slices/done/` boundary, and `set` never calls it.\n\nThe result is silent state corruption: the index says done, the file is still in the open\nfolder, and `slicer verify` reports `slice file is in the wrong folder for status`. The\nuser did nothing wrong and gets no warning at the time."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` — `set_fields`\n- `src/slicer/cli.py` — `cmd_set`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Set_StatusToDone_MovesTheSliceFile` — set a status that crosses the boundary,\n   assert the file moved and `verify` is clean.\n2. `Set_StatusUnchanged_DoesNotTouchTheFile`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Route a `status` change in `set_fields` through `set_status` rather than `setattr`, so\nthere is one code path that knows about the folder mapping. Watch the log: `set_status`\nrecords a `status` entry, and `set` currently records a `set` entry naming the fields —\ndecide which one a combined call writes rather than writing both.\n\n**Not in this slice:** reconciling the other duplicated index/slice fields; that is S08."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer verify` clean after a `set --status` round trip."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

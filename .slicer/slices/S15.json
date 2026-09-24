@@ -1,0 +1,38 @@
+{
+  "id": "S15",
+  "title": "Nothing searches anything",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "agent surface",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "There is no way to find an item by text. `list` filters by status, tree and pass only.\nThe TUI has no search, no filter and no jump-to-id — its left pane is always the whole\nqueue. Nothing greps titles, findings or section bodies. The workaround is running your\nown `grep` over `.slicer/slices/*.json`, which means parsing slicer's storage by hand,\nwhich is the thing the tool exists to stop you doing.\n\nThis bites agents hardest: \"is there already an item about X?\" is the first question\nbefore adding anything, and today it cannot be asked."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "`slicer find PATTERN [--in title,findings,body] [--json]`, returning items. Reuse\n`store.load`; no index needed at this size. Consider whether `list` should grow\n`--match` instead of adding a verb — one filter surface is easier to remember.\n\n**Not in this slice:** an index or any dependency; a linear scan is fine for thousands of\nitems."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

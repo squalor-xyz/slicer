@@ -7,7 +7,7 @@ and so each one records the same log entry.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from slicer import graph, ids, prose, vcs
@@ -53,7 +53,7 @@ def promote(state: State, item_id: str, *, force: bool = False) -> Slice:
   cfg = state.config
   item = state.index.get(item_id)
   if item is None:
-    raise StateError(f"no such item: {item_id}")
+    raise StateError(f"no such item: {item_id}", code="no_such_item")
   if item.has_slice and not force:
     raise StateError(f"{item_id} already has a slice; pass --force to overwrite it")
   sections = [Section(heading=h, body="") for h in cfg.sections]
@@ -107,7 +107,7 @@ def set_fields(state: State, item_id: str, **fields: object) -> Item:
   cfg = state.config
   item = state.index.get(item_id)
   if item is None:
-    raise StateError(f"no such item: {item_id}")
+    raise StateError(f"no such item: {item_id}", code="no_such_item")
   known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags"}
   for key, value in fields.items():
     if value is None:
@@ -127,7 +127,7 @@ def set_status(state: State, item_id: str, status: str, *, note: str = "") -> It
   cfg = state.config
   item = state.index.get(item_id)
   if item is None:
-    raise StateError(f"no such item: {item_id}")
+    raise StateError(f"no such item: {item_id}", code="no_such_item")
   if status not in cfg.statuses:
     raise StateError(f"unknown status {status!r}; known: {sorted(cfg.statuses)}")
   previous = item.status
@@ -261,7 +261,7 @@ def _blockers(state: State, item_id: str) -> list[str]:
   """Reasons not to remove this item, in the order worth reading."""
   item = state.index.get(item_id)
   if item is None:
-    raise StateError(f"no such item: {item_id}")
+    raise StateError(f"no such item: {item_id}", code="no_such_item")
   reasons: list[str] = []
   citing = dependents(state, item_id)
   if citing:
@@ -339,3 +339,167 @@ def purge(state: State, item_id: str, *, force: bool = False) -> PurgeResult:
   state.save_index()
   _record(state, item_id, "purge", frm=item.status, note=why)
   return PurgeResult(id=item_id, id_freed=freed, reason=why, file_removed=removed)
+
+
+@dataclass
+class OutlineReport:
+  """What an outline would do, or did. Mirrors the migrate report's shape."""
+
+  items: int = 0
+  promoted: int = 0
+  by_status: dict[str, int] = field(default_factory=dict)
+  ids: list[str] = field(default_factory=list)
+  depends_edges: int = 0
+  off_schema_sections: dict[str, int] = field(default_factory=dict)
+  warnings: list[str] = field(default_factory=list)
+  problems: list[str] = field(default_factory=list)
+
+  def to_dict(self) -> dict[str, object]:
+    return {
+      "items": self.items,
+      "promoted": self.promoted,
+      "by_status": self.by_status,
+      "ids": self.ids,
+      "depends_edges": self.depends_edges,
+      "off_schema_sections": self.off_schema_sections,
+      "warnings": self.warnings,
+      "problems": self.problems,
+    }
+
+
+def outline_report(state: State, specs: list[object], *, force: bool = False) -> OutlineReport:
+  """What this outline says, and everything wrong with it. Writes nothing.
+
+  `apply_outline` calls this first and refuses when `problems` is non-empty,
+  and `--dry-run` calls it alone, so the census a person reads before
+  applying is the same one produced by applying.
+  """
+  cfg = state.config
+  report = OutlineReport()
+  report.items = len(specs)
+  report.promoted = sum(1 for spec in specs if spec.has_slice)
+  for spec in specs:
+    label = cfg.status_label(spec.status or cfg.open_status)
+    report.by_status[label] = report.by_status.get(label, 0) + 1
+    report.depends_edges += len(spec.depends)
+    for section in spec.sections:
+      if section.heading not in cfg.sections:
+        report.off_schema_sections[section.heading] = (
+          report.off_schema_sections.get(section.heading, 0) + 1
+        )
+  problems: list[str] = []
+
+  titles = [s.title for s in specs]
+  seen: set[str] = set()
+  for title in titles:
+    if title in seen:
+      problems.append(f"{title!r} appears twice in the outline")
+    seen.add(title)
+
+  if not force:
+    existing = {it.display_title(): it.id for it in state.index.items}
+    existing.update({it.title: it.id for it in state.index.items})
+    for title in dict.fromkeys(titles):
+      if title in existing:
+        problems.append(
+          f"{title!r} already exists as {existing[title]}; pass --force to add it anyway"
+        )
+
+  known = set(titles) | {it.title for it in state.index.items}
+  known |= {it.display_title() for it in state.index.items}
+  for spec in specs:
+    if spec.status and spec.status not in cfg.statuses:
+      problems.append(
+        f"{spec.title!r}: unknown status {spec.status!r}; known: {sorted(cfg.statuses)}"
+      )
+    for dep in spec.depends:
+      if dep not in known:
+        problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
+  report.problems = problems
+  return report
+
+
+def apply_outline(state: State, specs: list[object], *, force: bool = False) -> OutlineReport:
+  """Append every entry in a parsed outline, or write nothing at all.
+
+  All-or-nothing, like `migrate`: everything is validated first, ids are
+  allocated against one in-memory index, and the index is saved once rather
+  than rewritten per item.
+  """
+  cfg = state.config
+  report = outline_report(state, specs, force=force)
+  if report.problems:
+    return report
+
+  # Titles resolve to ids only once every entry has one, so allocate first.
+  by_title: dict[str, str] = {it.title: it.id for it in state.index.items}
+  by_title.update({it.display_title(): it.id for it in state.index.items})
+  allocated: list[tuple[object, str]] = []
+  for spec in specs:
+    new_id = ids.allocate(state.index)
+    allocated.append((spec, new_id))
+    by_title[spec.title] = new_id
+
+  for spec, new_id in allocated:
+    status = spec.status or cfg.open_status
+    item = Item(
+      id=new_id,
+      title=spec.title,
+      short_title=spec.title,
+      status=status,
+      size=spec.size,
+      trees=list(spec.trees),
+      findings=spec.findings,
+      # Never inherited from the previous item: an outline says where its own
+      # entries belong, and silently filing them under the tail item's pass
+      # would be wrong in exactly the case bulk loading is for.
+      pass_key=spec.pass_key,
+      group=spec.group,
+      depends_on=[by_title[d] for d in spec.depends],
+    )
+    state.index.items.append(item)
+    report.ids.append(new_id)
+
+    if spec.has_slice:
+      sl = _slice_from_spec(spec, item, cfg)
+      item.has_slice = True
+      state.save_slice(sl)
+
+  state.save_index()
+  for spec, new_id in allocated:
+    _record(state, new_id, "add", to=spec.status or cfg.open_status, note=spec.title)
+  return report
+
+
+def _slice_from_spec(spec: object, item: Item, cfg: object) -> Slice:
+  """Build a slice from an outline entry, filling in the configured sections.
+
+  Configured headings the outline did not name are kept, empty, so a
+  slice created this way has the same shape as a promoted one.
+  """
+  supplied = {s.heading: s.body for s in spec.sections}
+  # Configured headings first, in the project's own order, so a slice made
+  # from an outline has the same shape as a promoted one however the outline
+  # happened to order them. Headings the config does not name follow.
+  order = [h for h in cfg.sections]
+  order += [s.heading for s in spec.sections if s.heading not in cfg.sections]
+  sections = [Section(heading=h, body=supplied.get(h, "")) for h in order]
+  if cfg.boundary and not any(
+    line.startswith(cfg.boundary)
+    for s in sections
+    for line in s.body.split("\n\n")
+  ):
+    if sections:
+      tail = sections[-1]
+      tail.body = f"{tail.body}\n\n{cfg.boundary}".strip("\n")
+  return Slice(
+    id=item.id,
+    title=item.title,
+    lead=list(spec.lead),
+    findings_note=item.findings,
+    size=item.size,
+    flags=list(item.flags),
+    trees_note=", ".join(item.trees),
+    trees_plural=len(item.trees) > 1,
+    sections=sections,
+  )

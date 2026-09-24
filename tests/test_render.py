@@ -15,7 +15,7 @@ class RenderTests(unittest.TestCase):
     repo = support.TempRepo()
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Expand_UnknownPlaceholder_RaisesNamingTheKey(self) -> None:
@@ -107,7 +107,7 @@ class FilePermissionTests(unittest.TestCase):
     with support.TempRepo() as repo:
       support.make_mini(repo)
       repo.run("init")
-      repo.run("import", "--from", "docs/slices")
+      repo.run("migrate", "--from", "docs/slices")
       repo.run("render")
       for rel in (".slicer/index.json", ".slicer/slices/S02.json", ".slicer/render/ROADMAP.md"):
         with self.subTest(rel):

@@ -1,9 +1,13 @@
-"""Turn an existing markdown slice tree into canonical JSON state.
+"""Convert an existing markdown slice tree into canonical JSON state.
+
+This is the one-time migration behind `slicer migrate`, for a project that
+was already running this workflow by hand. `slicer import` is the other
+direction of entry: a fresh outline, not an existing tree.
 
 Everything is verified before anything is written: every file must
 round-trip through `legacy`, ids must be unique, and each slice's location
-must agree with its recorded status. A failure aborts the whole import
-rather than leaving a half-migrated tracking directory.
+must agree with its recorded status. A failure aborts the whole migration
+rather than leaving a half-converted tracking directory.
 
 Prose that belongs to no slice — a baseline block, a dependency rationale,
 a "not slices" list — is relocated verbatim, never interpreted.
@@ -75,7 +79,7 @@ def _bare(text: str) -> str:
 
 
 @dataclass
-class ImportReport:
+class MigrateReport:
   items: int = 0
   slices: int = 0
   passes: int = 0
@@ -184,7 +188,7 @@ def build(
   *,
   render_dir: Path | None = None,
   index_render_dir: Path | None = None,
-) -> tuple[Index, dict[str, Slice], ImportReport]:
+) -> tuple[Index, dict[str, Slice], MigrateReport]:
   """Parse and reconcile. Writes nothing; every check runs here.
 
   `render_dir` and `index_render_dir` are where the slice markdown and the
@@ -193,7 +197,7 @@ def build(
   resolve after the move.
   """
   legacy_index, legacy_slices, located = legacy.read_tree(source, done_dir=cfg.done_dir)
-  report = ImportReport()
+  report = MigrateReport()
   report.roundtrip_ok = len(legacy_slices) + 1
 
   preamble, pass_sections, epilogue = split_prose(legacy_index)

@@ -15,7 +15,7 @@ class CliTests(unittest.TestCase):
     repo = support.TempRepo(git=git)
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Init_ExistingDirectory_RefusesWithoutForce(self) -> None:
@@ -114,7 +114,7 @@ class TuiTests(unittest.TestCase):
     repo = support.TempRepo()
     support.make_mini(repo)
     repo.run("init")
-    repo.run("import", "--from", "docs/slices")
+    repo.run("migrate", "--from", "docs/slices")
     return repo
 
   def test_Rows_MixedStatuses_ProduceOneRowPerItemInQueueOrder(self) -> None:

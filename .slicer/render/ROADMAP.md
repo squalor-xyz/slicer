@@ -2,7 +2,7 @@
 
 # Roadmap
 
-10 items · — 7 · done 3
+20 items · — 16 · done 4
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -14,5 +14,15 @@
 | 6 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
 | 7 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
 | 8 | S08 | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | — |
-| 9 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | — |
+| 9 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
 | 10 | S10 | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | — |
+| 11 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | — |
+| 12 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | — |
+| 13 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | found auditing the machine interface | — |
+| 14 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | — |
+| 15 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
+| 16 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
+| 17 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |
+| 18 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
+| 19 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
+| 20 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |

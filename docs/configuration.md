@@ -45,13 +45,13 @@ and the slice files, the config is yours to hand-edit.
 |---|---|---|---|
 | `id.prefix` | `"S"` | The id scheme, **only when `index.json` is first written** | **No — inert.** See below |
 | `id.width` | `2` → `S01` | As above | **No — inert** |
-| `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `import` parses back | Label: **yes**, re-render. Key: **no** |
+| `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |
 | `open_status` | `"open"` | Which items `next` considers, what `unpark` returns to, the sync pointers | Only with migration |
 | `done_status` | `"done"` | The `done` target, **which folder a slice lives in**, dependency satisfaction | **No — breaking** |
 | `retired_status` | `"retired"` | The `remove --reason` target and the `retired/` folder | Yes if nothing is retired yet |
 | `sections` | `Why, Files, Failing tests, Implement, Check, Git` | The headings `promote` seeds. Nothing validates existing slices against it | **Yes** |
 | `boundary` | `"**Not in this slice:**"` | Seeded into the last section by `promote`; `check` warns per slice that lacks it | Yes, but noisy |
-| `done_dir` | `"done"` | `.slicer/slices/done/`, and the subdirectory `import` reads finished slices from | **No — breaking** |
+| `done_dir` | `"done"` | `.slicer/slices/done/`, and the subdirectory `migrate` reads finished slices from | **No — breaking** |
 | `retired_dir` | `"retired"` | `.slicer/slices/retired/` | **No — breaking** |
 | `exclude_flags` | `[]` | Flags that drop an item from the **sync pointers only**. Does not affect `next`, `list` or render | **Yes**, re-run `sync` |
 | `pointers.next_format` | `"**{{id}}** {{title}}"` | The `{{next}}` substitution. `{{id}}` and `{{title}}` only | **Yes**, re-run `sync` |
@@ -64,7 +64,7 @@ and the slice files, the config is yours to hand-edit.
 **`id.prefix` and `id.width` are inert after init.** They are read only when seeding
 `index.json`. After that, allocation reads the prefix and width stored *in `index.json`*,
 so editing the config silently does nothing at all — no error, no effect. Set them before
-your first `init` or `import`, or live with `S01`.
+your first `init`, `import` or `migrate`, or live with `S01`.
 
 **`done_status`, `done_dir` and `retired_dir` strand existing files.** The folder a slice
 lives in is derived from its status, so changing either side of that mapping leaves
@@ -97,7 +97,7 @@ The key is what you type; the label is what renders.
 
 `sections` is only the list `promote` seeds into a new slice, in order, with the last one
 receiving `boundary` as its body. Existing slices are never touched, never validated, and
-may carry headings that appear nowhere here — `import` counts those as "off-schema" and
+may carry headings that appear nowhere here — both `import` and `migrate` count those as "off-schema" and
 keeps them exactly where they were.
 
 Set `boundary` to `""` to turn off the "scope is unbounded" warning entirely.
