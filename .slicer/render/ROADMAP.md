@@ -2,7 +2,7 @@
 
 # Roadmap
 
-20 items · — 12 · done 8
+24 items · — 16 · done 8
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -26,3 +26,7 @@
 | 18 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
 | 19 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
 | 20 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
+| 21 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | — |
+| 22 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | — |
+| 23 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | — |
+| 24 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |

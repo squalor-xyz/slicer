@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 21,
+  "next_id": 25,
   "preamble": "",
   "passes": [],
   "items": [
@@ -401,6 +401,88 @@
         ],
         "trees_literal": false,
         "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S21",
+      "title": "User text reaches the roadmap table unvalidated",
+      "short_title": "User text reaches the roadmap table unvalidated",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S22",
+      "title": "Config errors escape as Python tracebacks",
+      "short_title": "Config errors escape as Python tracebacks",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S23",
+      "title": "park hardcodes the literal parked status",
+      "short_title": "park hardcodes the literal parked status",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S24",
+      "title": "move --to silently clamps an out-of-range position",
+      "short_title": "move --to silently clamps an out-of-range position",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S13"
+      ],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found probing edge cases",
         "pass": "",
         "group": "",
         "reason": ""

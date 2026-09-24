@@ -1,0 +1,40 @@
+{
+  "id": "S21",
+  "title": "User text reaches the roadmap table unvalidated",
+  "lead": [
+    "Three symptoms, one root cause, and a gate that cannot see any of them."
+  ],
+  "depends_note": null,
+  "findings_note": "found probing edge cases",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The roadmap renders as a markdown table and nothing validates or escapes the user text\ngoing into its cells. A pipe splits the cell it sits in:\n\n    $ slicer add 'Fix the a/b parser'      # with a pipe, not a slash\n    | 1 | S01 | Fix the a|b parser | M |  |  | — |\n\nSeven columns, eight cells. Every markdown renderer mangles that row. The same applies to\nfindings, trees, size, and even a status *label* from config — anywhere user text reaches\na cell.\n\nA newline is worse: the row splits across two lines and the second is not a table row at\nall, so the table ends early and the rest of the roadmap renders as prose.\n\nAnd a blank title is accepted outright. `slicer add ''` gives an item with no title, an\nempty row, and `slicer next` returning an id followed by nothing — an item you cannot\nidentify by the only means the tool offers.\n\nIn all three cases **`slicer check` passes**. That is the part that matters: `check`\nproves the rendered markdown is *current* with respect to state, never that it is *valid*.\nA gate that green-lights a broken table is not doing the job it exists for."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` — `add`, `set_fields`: reject at the boundary\n- `src/slicer/render.py` — `render_row`, and a table-shape assertion\n- `src/slicer/check.py` — so the gate can see it\n- `src/slicer/outline.py` — the same rules on the bulk path"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Add_BlankTitle_IsRefused`, and the whitespace-only variant.\n2. `Add_TitleWithANewline_IsRefused`.\n3. `Render_TitleWithAPipe_ProducesAWellFormedRow` — whichever of escape-or-refuse wins,\n   the row must have exactly seven cells.\n4. `Render_StatusLabelWithAPipe_ProducesAWellFormedRow` — config is user text too.\n5. `Check_MalformedTable_Fails` — the gate must catch it, or this recurs.\n6. `Import_BlankTitle_IsRefused` — the outline path enforces the same rule."
+    },
+    {
+      "heading": "Implement",
+      "body": "Decide escape-or-refuse per field, and say why in the code. My reading: **refuse**\nnewlines and blank titles at the boundary, because both indicate a mistake rather than an\nintent, and **escape** pipes as `\\|`, because a pipe in prose is legitimate and a person\nwriting `a|b` means it.\n\nThen make `check` able to see the class: after rendering, assert every generated table row\nhas the column count its header declares. That is what turns this from three fixes into a\nfix, and it is the only part that stops the next variant of it shipping.\n\nStatus labels come from config, so the escape has to happen in the renderer, not only at\ninput validation.\n\n**Not in this slice:** escaping inside slice bodies. A slice is prose, not a table, and a\npipe there is just a pipe."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer check` fails on a hand-broken table. A pipe in a title round-trips to a readable\nroadmap row."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

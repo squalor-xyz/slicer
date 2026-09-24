@@ -1,0 +1,38 @@
+{
+  "id": "S22",
+  "title": "Config errors escape as Python tracebacks",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found probing edge cases",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`Config.validate` checks the status vocabulary and the directory names, and nothing else.\nTwo invalid values reach code that raises a bare Python exception:\n\n    $ slicer add x          # with \"id\": {\"prefix\": \"S\", \"width\": -1}\n    ValueError: Invalid format specifier '0-1d' for object of type 'int'\n\n    $ slicer sync           # with a sync target whose match is \"^Status:[\"\n    re.PatternError: unterminated character set at position 8\n\nBoth are a stack trace, exit 1, and no error envelope — the exact failure mode the\nenvelope was added to remove. An agent driving slicer gets a traceback on stdout's\nsibling and nothing it can branch on.\n\nAdjacent, and silent rather than loud: `width: 0` produces `S1`, and `prefix: \"\"`\nproduces `01`. Neither is refused and neither is obviously intended."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` — `validate`\n- `src/slicer/cli.py` — what `main` catches\n- `src/slicer/sync.py` — compile the pattern where it can be reported"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Config_NegativeIdWidth_IsRefusedAtLoad` with code `config`.\n2. `Config_EmptyIdPrefix_IsRefused`.\n3. `Sync_InvalidRegex_IsAConfigErrorNotATraceback`.\n4. `Config_BadValue_Json_CarriesTheEnvelope` — the agent-facing half."
+    },
+    {
+      "heading": "Implement",
+      "body": "Extend `Config.validate`: `id.width` at least 1, `id.prefix` non-empty, and every\n`sync.targets[].match` compilable — `re.compile` inside a try, re-raised as `ConfigError`\nnaming the target and the position. Validation belongs at load, so a bad config is caught\nonce rather than at whichever command happens to touch it.\n\nThen widen what `main` catches. It already turns `OSError` into an envelope; `ValueError`\nand `re.error` from user data deserve the same. Do **not** add a blanket `except\nException` — a genuine defect in slicer should still produce a traceback, and the line\nbetween the two is whether the input came from a person.\n\n**Not in this slice:** validating template placeholders in `sync.targets[].template`.\n`render.expand` already raises `RenderError` naming the unknown key, and that is caught."
+    },
+    {
+      "heading": "Check",
+      "body": "Every degenerate config in the Why section reports and exits 2 with an envelope."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

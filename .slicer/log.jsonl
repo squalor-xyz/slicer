@@ -55,3 +55,8 @@
 {"when": "2026-09-24T20:08:27Z", "item": "S14", "action": "status", "from": "open", "to": "done", "note": "help line now asserted against the keys it describes"}
 {"when": "2026-09-24T20:08:46Z", "item": "S13", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-09-24T20:08:46Z", "item": "S13", "action": "set", "from": "", "to": "", "note": "findings,size"}
+{"when": "2026-09-24T20:22:32Z", "item": "S21", "action": "add", "from": "", "to": "open", "note": "User text reaches the roadmap table unvalidated"}
+{"when": "2026-09-24T20:22:32Z", "item": "S22", "action": "add", "from": "", "to": "open", "note": "Config errors escape as Python tracebacks"}
+{"when": "2026-09-24T20:22:32Z", "item": "S23", "action": "add", "from": "", "to": "open", "note": "park hardcodes the literal parked status"}
+{"when": "2026-09-24T20:22:32Z", "item": "S24", "action": "add", "from": "", "to": "open", "note": "move --to silently clamps an out-of-range position"}
+{"when": "2026-09-24T20:22:37Z", "item": "S24", "action": "set", "from": "", "to": "", "note": "depends_on"}

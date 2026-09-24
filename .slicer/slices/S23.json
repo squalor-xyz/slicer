@@ -1,0 +1,38 @@
+{
+  "id": "S23",
+  "title": "park hardcodes the literal parked status",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found probing edge cases",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ops.park` defaults to the string `\"parked\"` and `tui.act` passes the same literal. Every\nother status in the tool is configurable: `open_status`, `done_status` and\n`retired_status` all live in config, and `retired_status` is even back-filled for projects\nthat predate it.\n\nSo a project whose vocabulary omits `parked` gets:\n\n    $ slicer park S01\n    slicer: unknown status 'parked'; known: ['done', 'open', 'retired']\n\nfrom a command the help advertises, and the TUI's `p` key fails the same way. It fails\nloudly rather than corrupting anything, which is why nobody noticed.\n\nThis is an invariant violation, not only a bug. `__init__.py` says nothing in the package\nmay hardcode a value belonging to one project, and `ARCHITECTURE.md` repeats it. A status\nname is exactly that kind of value."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` — a `parked_status`, back-filled like `retired_status`\n- `src/slicer/ops.py` — `park`\n- `src/slicer/tui.py` — the `p` branch\n- `src/slicer/cli.py` — the `park` subcommand"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Park_ProjectWithoutParked_UsesTheConfiguredStatus`.\n2. `Park_ProjectDeclaringNoParkedStatus_RefusesWithAClearMessage` — rather than naming a\n   status the project never had.\n3. `Tui_ParkKey_UsesTheConfiguredStatus`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `parked_status` to `Config`, defaulting to `\"parked\"`, back-filled on load exactly as\n`retired_status` is — only that one key, so a project that deliberately dropped some other\nstatus does not get it back. Then read it in `ops.park` and `tui.act`.\n\nWhere a project declares no parked status at all, refuse the way `retire` does when\n`retired_status` is empty: name the config key rather than a status the project never had.\n\n**Not in this slice:** a general mechanism for optional statuses. Three named ones is the\nshape the tool has."
+    },
+    {
+      "heading": "Check",
+      "body": "A project whose statuses are only open and done gets a coherent message from both `park`\nand the TUI."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

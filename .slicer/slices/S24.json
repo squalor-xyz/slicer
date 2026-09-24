@@ -1,0 +1,38 @@
+{
+  "id": "S24",
+  "title": "move --to silently clamps an out-of-range position",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "found probing edge cases",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ops.move` computes `max(0, min(n - 1, len(items)))`, so an out-of-range position is\nquietly changed into a valid one:\n\n    $ slicer move S01 --to 0     ->  S01 is now at position 1\n    $ slicer move S01 --to -5    ->  S01 is now at position 1\n    $ slicer move S01 --to 999   ->  S01 is now at position 5\n\nPositions are 1-based, so `--to 0` is already a mistake, and `--to -5` cannot be anything\nelse. The command reports the position it chose, so the output is at least honest — but a\nscript or an agent that computed an index wrongly gets a silent reorder instead of an\nerror, and reordering is the one operation with no undo."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` — `move`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `Move_ToZero_IsRefused` and `Move_ToNegative_IsRefused`, naming the valid range.\n2. `Move_BeyondTheEnd_IsRefused`.\n3. `Move_ToTheLastPosition_IsStillAllowed` — the off-by-one this invites."
+    },
+    {
+      "heading": "Implement",
+      "body": "Refuse a position outside 1..len(items) with a `StateError` naming the range. Keep the\nclamp nowhere: a caller that wants the end can ask for the length, and a caller that\nguessed should be told.\n\nWorth doing alongside S13, which is the other `move` bug — the two touch the same handful\nof lines and one commit for both would read better than two.\n\n**Not in this slice:** moving several items at once, which is S16's territory."
+    },
+    {
+      "heading": "Check",
+      "body": "Each invocation in the Why section exits 2 with the valid range in the message."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, possibly shared with S13."
+    }
+  ],
+  "notes": []
+}
