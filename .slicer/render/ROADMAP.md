@@ -2,7 +2,7 @@
 
 # Roadmap
 
-20 items · — 13 · done 7
+20 items · — 12 · done 8
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -19,7 +19,7 @@
 | 11 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
 | 12 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | — |
 | 13 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | found auditing the machine interface | — |
-| 14 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | — |
+| 14 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
 | 15 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
 | 16 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
 | 17 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |

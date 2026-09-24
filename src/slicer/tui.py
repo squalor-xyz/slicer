@@ -17,8 +17,11 @@ from slicer import graph, ops, prose, render
 from slicer.errors import SlicerError
 from slicer.store import State
 
+# Every token here names a key that `act` or `run` actually handles. `n`
+# promotes an existing item; the TUI cannot create one.
 HELP = (
-  "j/k move  tab pane  e edit  J/K reorder  d done  p park  u unpark  n new  r render  q quit"
+  "j/k move  tab pane  e edit  J/K reorder  d done  p park  u unpark  "
+  "n promote  r render  q quit"
 )
 
 ITEM, PROSE, SEPARATOR = "item", "prose", "separator"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from pathlib import Path
 
 import support
 
@@ -248,3 +249,29 @@ class TuiTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class TuiHelpTests(unittest.TestCase):
+  """The help line is the only documentation of the key bindings."""
+
+  def test_Help_EveryKeyItNames_IsHandled(self) -> None:
+    # It claimed `n new`; `n` promotes, and nothing in the TUI creates an item.
+    import re
+
+    from slicer import tui
+
+    handled = set(re.findall(r'if key == "(\w+)"', Path(tui.__file__).read_text()))
+    # Handled in the run loop rather than in `act`: movement, tab (as "\t")
+    # and quit (as "q" or Esc).
+    handled |= {"j", "k", "tab", "q"}
+    for token in re.findall(r"(\S+) \w+", tui.HELP):
+      for key in token.split("/"):
+        if key.isalpha():
+          with self.subTest(key):
+            self.assertIn(key, handled)
+
+  def test_Help_DoesNotClaimTheTuiCanCreateAnItem(self) -> None:
+    from slicer import tui
+
+    self.assertNotIn("new", tui.HELP)
+    self.assertIn("n promote", tui.HELP)

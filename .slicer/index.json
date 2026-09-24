@@ -270,7 +270,7 @@
       "id": "S14",
       "title": "The TUI help line advertises a key that does something else",
       "short_title": "The TUI help line advertises a key that does something else",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
