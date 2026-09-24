@@ -18,7 +18,7 @@
 | 10 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
 | 11 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
 | 12 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | — |
-| 13 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | found auditing the machine interface | — |
+| 13 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | — |
 | 14 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
 | 15 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
 | 16 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |

@@ -260,7 +260,7 @@
           "slicer"
         ],
         "trees_literal": false,
-        "findings": "found auditing the machine interface",
+        "findings": "severity revised: cosmetic since the error envelope landed",
         "pass": "",
         "group": "",
         "reason": ""

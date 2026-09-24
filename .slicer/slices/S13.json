@@ -3,7 +3,7 @@
   "title": "move X --before X drops the item from the in-memory index",
   "lead": [],
   "depends_note": null,
-  "findings_note": "found auditing the machine interface",
+  "findings_note": "severity revised: cosmetic since the error envelope landed",
   "size": "S",
   "flags": [],
   "trees_note": "slicer",
@@ -11,7 +11,7 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "`ops.move` pops the item out of the list before computing its target index. When the\ntarget is the item itself, `index.position(X)` then raises on a list that no longer\ncontains it, and the function exits without reinserting and without saving.\n\nDisk is untouched, so the damage is invisible in the CLI, where the process exits\nimmediately after. In the TUI, or any caller holding state across operations, the item is\nsimply gone from the in-memory index until the next load."
+      "body": "`ops.move` pops the item out of the list before computing its target index. When the\ntarget is the item itself, `index.position(X)` is then asked about a list that no longer\ncontains it.\n\n**Severity revised (2026-09-24).** As filed, this dropped the item from the in-memory\nindex: `position` raised a bare `KeyError`, the item was never reinserted and\n`save_index` was never reached. The error-envelope work made `position` raise\n`StateError(code=\"no_such_item\")` instead, which the CLI now reports cleanly and exits 2.\nDisk was never touched either way, so what remains is a confusing message — `no such\nitem: S01` about an item that plainly exists — rather than data loss.\n\nStill worth fixing, but it is a wording bug now, not a corruption one."
     },
     {
       "heading": "Files",
