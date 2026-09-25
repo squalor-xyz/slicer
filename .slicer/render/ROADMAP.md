@@ -2,7 +2,7 @@
 
 # Roadmap
 
-48 items · — 25 · done 23
+49 items · — 25 · done 24
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -18,39 +18,40 @@
 | 10 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | — |
 | 11 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | slicer | dogfooding; done->render->check every commit | done |
 | 12 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | slicer | follow-on from S45, which scoped prose out | done |
-| 13 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | slicer | dogfooding; a temp file per section edit | — |
-| 14 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | — |
-| 15 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
-| 16 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | — |
-| 17 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
-| 18 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | slicer | dogfooding; biggest TUI gap | done |
-| 19 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | slicer | dogfooding; navigation at scale | — |
-| 20 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | — |
-| 21 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
-| 22 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
-| 23 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
-| 24 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
-| 25 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
-| 26 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
-| 27 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
-| 28 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
-| 29 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
-| 30 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
-| 31 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
-| 32 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
-| 33 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
-| 34 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
-| 35 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
-| 36 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |
-| 37 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
-| 38 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
-| 39 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
-| 40 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | done |
-| 41 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | done |
-| 42 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |
-| 43 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | slicer | review; robustness | — |
-| 44 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |
-| 45 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | — |
-| 46 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
-| 47 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |
-| 48 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | — |
+| 13 | [S49](slices/S49.md) | import and migrate should honour --render too | S | slicer | the two bulk-load holdouts from S45/S47 | done |
+| 14 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | slicer | dogfooding; a temp file per section edit | — |
+| 15 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | — |
+| 16 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
+| 17 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | — |
+| 18 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
+| 19 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | slicer | dogfooding; biggest TUI gap | done |
+| 20 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | slicer | dogfooding; navigation at scale | — |
+| 21 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | — |
+| 22 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
+| 23 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
+| 24 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
+| 25 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
+| 26 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
+| 27 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
+| 28 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
+| 29 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
+| 30 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
+| 31 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
+| 32 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
+| 33 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
+| 34 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
+| 35 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
+| 36 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
+| 37 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |
+| 38 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
+| 39 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
+| 40 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
+| 41 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | done |
+| 42 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | done |
+| 43 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |
+| 44 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | slicer | review; robustness | — |
+| 45 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |
+| 46 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | — |
+| 47 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
+| 48 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |
+| 49 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | — |

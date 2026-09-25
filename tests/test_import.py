@@ -301,3 +301,35 @@ class OutlineTextValidationTests(unittest.TestCase):
       self.assertEqual(repo.run("import", "r.md")[0], 0)
       self.assertEqual(repo.run("render")[0], 0)
       self.assertEqual(repo.run("check")[0], 0)
+
+
+class ImportRenderFlagTests(unittest.TestCase):
+  """import honours --render like the other mutating commands (S49)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Import_Render_LeavesCheckClean(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\nsize: M\n")
+      code, out, _ = repo.run("import", "r.md", "--render")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Import_DryRunRender_RendersNothing(self) -> None:
+    # A dry run changed nothing, so --render must not try to render.
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\n")
+      code, _, err = repo.run("import", "r.md", "--dry-run", "--render")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.items, [])
+
+  def test_Import_WithoutRender_LeavesStale(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "existing")
+      repo.run("render")
+      repo.write("r.md", "## A new thing\n")
+      repo.run("import", "r.md")
+      self.assertEqual(repo.run("check")[0], 1)

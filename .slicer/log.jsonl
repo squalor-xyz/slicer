@@ -153,3 +153,6 @@
 {"when": "2026-09-25T12:51:09Z", "item": "S47", "action": "status", "from": "open", "to": "done", "note": "prose edit/add-pass/drop-pass gain --render, reusing the S45 helpers"}
 {"when": "2026-09-25T12:51:46Z", "item": "S47", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-09-25T12:55:21Z", "item": "S48", "action": "add", "from": "", "to": "open", "note": "The scope boundary is fragile prose, not a structured field"}
+{"when": "2026-09-25T12:57:22Z", "item": "S49", "action": "add", "from": "", "to": "open", "note": "import and migrate should honour --render too"}
+{"when": "2026-09-25T12:57:22Z", "item": "S49", "action": "move", "from": "49", "to": "13", "note": ""}
+{"when": "2026-09-25T12:58:15Z", "item": "S49", "action": "status", "from": "open", "to": "done", "note": "import/migrate honour --render; _mutating skips dry-run"}

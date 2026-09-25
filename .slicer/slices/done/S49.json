@@ -1,0 +1,38 @@
+{
+  "id": "S49",
+  "title": "import and migrate should honour --render too",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "the two bulk-load holdouts from S45/S47",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S45 added `--render` to the nine item-mutating commands and S47 to the prose ones, but\n`import` and `migrate` — the two bulk-load paths — were left out. They mutate the most\n(a whole roadmap at once) and both end by telling you to run `slicer render`, so they are\nexactly where the flag would help. Folding them in makes `--render` a universal\nconvention across every command that writes state."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — the `import` and `migrate` registrations, and the `_mutating` guard"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `import FILE --render` leaves `check` clean with no separate render.\n2. `migrate --from DIR --render` does the same.\n3. `import FILE --dry-run --render` renders nothing (a dry run changed nothing, and may\n   have no project to load)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Wrap `cmd_import` and `cmd_migrate` with the existing `_mutating` helper and add `--render`\nvia `_render_flag`. Teach `_mutating` to skip rendering when `--dry-run` is set: a dry run\nwrites nothing, and for `migrate` into an empty directory there is no project to reload, so\nrendering then would fail rather than no-op.\n\n**Not in this slice:** rendering by default without the flag; the flag stays opt-in,\nconsistent with every other command."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer import roadmap.md --render && slicer check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

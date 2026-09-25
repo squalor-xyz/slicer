@@ -52,7 +52,7 @@ def _mutating(fn):
   """
   def wrapped(args: argparse.Namespace) -> int:
     code = fn(args)
-    if code == OK and getattr(args, "render", False):
+    if code == OK and getattr(args, "render", False) and not getattr(args, "dry_run", False):
       state = _state(args)
       expected = render.plan(state)
       written = render.write(expected, state.render_dir, render.compare(expected, state.render_dir))
@@ -627,7 +627,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
 
-  sp = add("import", cmd_import, "add items in bulk from a markdown outline")
+  sp = _render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline"))
   sp.add_argument("file", nargs="?", help="the outline file")
   sp.add_argument("--skeleton", action="store_true", help="print a template and exit")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
@@ -636,7 +636,7 @@ def build_parser() -> argparse.ArgumentParser:
   # --from DIR` gets told where that moved, rather than a bare argparse error.
   sp.add_argument("--from", dest="legacy_from", default=None, help=argparse.SUPPRESS)
 
-  sp = add("migrate", cmd_migrate, "convert an existing markdown slice tree")
+  sp = _render_flag(add("migrate", _mutating(cmd_migrate), "convert an existing markdown slice tree"))
   sp.add_argument("--from", dest="source", default="docs/slices", help="the legacy directory")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")

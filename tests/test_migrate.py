@@ -314,3 +314,22 @@ class MigrateGuardTests(unittest.TestCase):
     with self.nonempty() as repo:
       _, out, _ = repo.run("migrate", "--from", "docs/slices", "--json")
       self.assertEqual(json.loads(out)["error"]["code"], "already_exists")
+
+
+class MigrateRenderFlagTests(unittest.TestCase):
+  """migrate honours --render, and a dry run does not try to render (S49)."""
+
+  def test_Migrate_Render_LeavesCheckClean(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      repo.run("init")
+      code, out, _ = repo.run("migrate", "--from", "docs/slices", "--render")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Migrate_DryRunRenderIntoEmptyDir_DoesNotCrash(self) -> None:
+    # A dry-run migrate writes no .slicer/, so --render must not try to load one.
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      code, _, err = repo.run("migrate", "--from", "docs/slices", "--dry-run", "--render")
+      self.assertEqual(code, 0, err)

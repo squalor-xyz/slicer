@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 49,
+  "next_id": 50,
   "preamble": "",
   "passes": [],
   "items": [
@@ -265,6 +265,28 @@
         ],
         "trees_literal": false,
         "findings": "follow-on from S45, which scoped prose out",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S49",
+      "title": "import and migrate should honour --render too",
+      "short_title": "import and migrate should honour --render too",
+      "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "the two bulk-load holdouts from S45/S47",
         "pass": "",
         "group": "",
         "reason": "",
