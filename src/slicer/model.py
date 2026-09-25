@@ -125,9 +125,38 @@ class Item:
   group: str = ""
   reason: str = ""
   depends_on: list[str] = field(default_factory=list)
+  # Eisenhower axes, 1-3, defaulting to a neutral 2 so unscored items interleave
+  # rather than sinking or floating. Base score is importance-first (below).
+  importance: int = 2
+  urgency: int = 2
 
   def display_title(self) -> str:
     return self.short_title or self.title
+
+  @property
+  def score(self) -> int:
+    """Base priority: importance leads, urgency breaks ties. 11..33."""
+    return self.importance * 10 + self.urgency
+
+  @property
+  def quadrant(self) -> str:
+    """The Eisenhower quadrant, or '-' when either axis is the neutral 2.
+
+    The four quadrants are a 2x2 (high/low); a 1-3 axis has no clean high or
+    low at 2, so the label appears only once both axes are decisively 1 or 3.
+    That keeps the default 2/2 honestly unlabelled rather than calling every
+    unscored item 'do-now'. The score still orders it.
+    """
+    if self.importance == 2 or self.urgency == 2:
+      return "-"
+    important, urgent = self.importance == 3, self.urgency == 3
+    if important and urgent:
+      return "do-now"
+    if important:
+      return "schedule"
+    if urgent:
+      return "delegate"
+    return "drop"
 
   def to_dict(self) -> dict[str, Any]:
     return {
@@ -146,6 +175,8 @@ class Item:
         "pass": self.pass_key,
         "group": self.group,
         "reason": self.reason,
+        "importance": self.importance,
+        "urgency": self.urgency,
       },
     }
 
@@ -167,6 +198,8 @@ class Item:
       pass_key=f.get("pass", ""),
       group=f.get("group", ""),
       reason=f.get("reason", ""),
+      importance=int(f.get("importance", 2)),
+      urgency=int(f.get("urgency", 2)),
     )
 
 

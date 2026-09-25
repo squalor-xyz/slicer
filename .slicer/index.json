@@ -23,7 +23,9 @@
         "findings": "review; sibling of S22",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -43,7 +45,9 @@
         "findings": "review; data loss",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -63,7 +67,9 @@
         "findings": "review; core invariant",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -83,14 +89,16 @@
         "findings": "review; gate completeness",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
       "id": "S38",
       "title": "Priority and criticality scoring: the score as data",
       "short_title": "Priority and criticality scoring: the score as data",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
@@ -103,7 +111,9 @@
         "findings": "user request; Eisenhower matrix",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -125,7 +135,9 @@
         "findings": "user request; critical-path propagation",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
       }
     },
     {
@@ -145,7 +157,9 @@
         "findings": "dogfooding; the flow gap",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -165,7 +179,9 @@
         "findings": "found probing edge cases",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
       }
     },
     {
@@ -185,7 +201,9 @@
         "findings": "found auditing the machine interface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -205,7 +223,9 @@
         "findings": "review; daily friction",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -225,7 +245,9 @@
         "findings": "dogfooding; felt every run",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 3
       }
     },
     {
@@ -245,7 +267,9 @@
         "findings": "profiled; I first misattributed this to store.load",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -265,7 +289,9 @@
         "findings": "severity revised: cosmetic since the error envelope landed",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 1,
+        "urgency": 1
       }
     },
     {
@@ -287,7 +313,9 @@
         "findings": "found probing edge cases",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
       }
     },
     {
@@ -307,7 +335,9 @@
         "findings": "dogfooding; biggest TUI gap",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 3,
+        "urgency": 1
       }
     },
     {
@@ -327,7 +357,9 @@
         "findings": "dogfooding; navigation at scale",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -347,7 +379,9 @@
         "findings": "dogfooding; reorder at scale",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -367,7 +401,9 @@
         "findings": "path traversal; found planning S21",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -387,7 +423,9 @@
         "findings": "owner: the split is what proves nothing project-specific is compiled in",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -407,7 +445,9 @@
         "findings": "",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -427,7 +467,9 @@
         "findings": "",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -447,7 +489,9 @@
         "findings": "",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -467,7 +511,9 @@
         "findings": "found while verifying prose add-pass",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -487,7 +533,9 @@
         "findings": "follows S01",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -507,7 +555,9 @@
         "findings": "owner: needs a legal name",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -527,7 +577,9 @@
         "findings": "found while splitting the repo",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -547,7 +599,9 @@
         "findings": "found while writing the getting-started guide",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -567,7 +621,9 @@
         "findings": "found while writing docs/configuration.md",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -587,7 +643,9 @@
         "findings": "found auditing the machine interface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -607,7 +665,9 @@
         "findings": "found auditing the machine interface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -627,7 +687,9 @@
         "findings": "agent surface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -647,7 +709,9 @@
         "findings": "agent surface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -667,7 +731,9 @@
         "findings": "agent surface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -687,7 +753,9 @@
         "findings": "agent surface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -707,7 +775,9 @@
         "findings": "agent surface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -727,7 +797,9 @@
         "findings": "agent surface",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -747,7 +819,9 @@
         "findings": "found probing edge cases",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -767,7 +841,9 @@
         "findings": "found probing edge cases",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -787,7 +863,9 @@
         "findings": "found planning S21",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -807,7 +885,9 @@
         "findings": "review; robustness",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -827,7 +907,9 @@
         "findings": "review; reporting",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -847,7 +929,9 @@
         "findings": "review; agent workflow",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -867,7 +951,9 @@
         "findings": "review; safety",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {
@@ -887,7 +973,9 @@
         "findings": "review; ergonomics",
         "pass": "",
         "group": "",
-        "reason": ""
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     }
   ],

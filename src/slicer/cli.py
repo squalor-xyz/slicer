@@ -268,8 +268,13 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
     items = [i for i in items if i.pass_key == args.pass_key]
+  if getattr(args, "sort", None) == "score":
+    # A read-only view: sort a copy by score, never the stored order. Ties keep
+    # their manual position because Python's sort is stable.
+    items = sorted(items, key=lambda i: i.score, reverse=True)
   rows = [
-    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} {i.display_title()}"
+    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} "
+    f"{i.score:>2} {i.quadrant:<9} {i.display_title()}"
     for n, i in enumerate(items, 1)
   ]
   _emit(args, [i.to_dict() for i in items], "\n".join(rows) or "no matching items")
@@ -293,7 +298,7 @@ def cmd_add(args: argparse.Namespace) -> int:
   item = ops.add(
     state, args.title, item_id=args.id, size=args.size or "",
     trees=args.tree or [], findings=args.findings or "", status=args.status,
-    pass_key=args.pass_key,
+    pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
   )
   _emit(args, item.to_dict(), f"added {item.id}  {item.display_title()}")
   return OK
@@ -318,7 +323,7 @@ def cmd_set(args: argparse.Namespace) -> int:
   item = ops.set_fields(
     state, args.id, title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
-    pass_key=args.pass_key,
+    pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
   )
   _emit(args, item.to_dict(), f"updated {item.id}")
   return OK
@@ -603,6 +608,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--status", action="append", help="filter by status (repeatable)")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
+  sp.add_argument("--sort", choices=["score"], help="order by priority score, highest first")
 
   sp = add("show", cmd_show, "print one slice")
   sp.add_argument("id")
@@ -615,6 +621,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--findings")
   sp.add_argument("--status")
   sp.add_argument("--pass", dest="pass_key", help="file the item under this pass group")
+  sp.add_argument("--importance", type=int, help="1-3; how important (default 2)")
+  sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
 
   sp = add("promote", cmd_promote, "give an item a slice file")
   sp.add_argument("id")
@@ -636,6 +644,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--findings")
   sp.add_argument("--depends-on", dest="depends_on", action="append")
   sp.add_argument("--pass", dest="pass_key", help="move the item to this pass group")
+  sp.add_argument("--importance", type=int, help="1-3")
+  sp.add_argument("--urgency", type=int, help="1-3")
 
   sp = add("edit", cmd_edit, "replace one section of a slice")
   sp.add_argument("id")

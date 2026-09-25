@@ -121,3 +121,12 @@
 {"when": "2026-09-25T03:34:50Z", "item": "S28", "action": "status", "from": "open", "to": "done", "note": "generated branch checks for collision; verify catches a low next_id"}
 {"when": "2026-09-25T03:39:40Z", "item": "S30", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T03:39:40Z", "item": "S30", "action": "status", "from": "open", "to": "done", "note": "verify now catches retired-dep, filename!=id, and has_slice-false-with-file"}
+{"when": "2026-09-25T03:45:31Z", "item": "S39", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:45:31Z", "item": "S23", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:45:31Z", "item": "S12", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:45:31Z", "item": "S43", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:45:31Z", "item": "S13", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:45:31Z", "item": "S24", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:45:31Z", "item": "S40", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T03:47:14Z", "item": "S38", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T03:47:14Z", "item": "S38", "action": "status", "from": "open", "to": "done", "note": "score as data: importance x urgency, list --sort score; propagation is S39"}

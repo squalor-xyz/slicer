@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: importance/urgency on `Item` (model), a `_valid_score` guard and\nwiring in `ops`, the two outline keys, and `add`/`set` flags plus `list --sort\nscore` with a score/quadrant column in `cli`. Tests in `test_scoring.py`."
     }
   ],
   "notes": []

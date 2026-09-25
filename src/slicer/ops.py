@@ -56,6 +56,17 @@ def _reject_bad_text(**fields: object) -> None:
       raise StateError("a tree name cannot contain a newline", code="newline_in_field")
 
 
+def _valid_score(name: str, value: object) -> int:
+  """An Eisenhower axis is an integer 1-3. Reject anything else, naming it."""
+  try:
+    n = int(value)  # type: ignore[arg-type]
+  except (TypeError, ValueError):
+    raise StateError(f"{name} must be a number 1-3, not {value!r}", code="state") from None
+  if not 1 <= n <= 3:
+    raise StateError(f"{name} must be 1, 2 or 3, not {n}", code="state")
+  return n
+
+
 def add(state: State, title: str, *, item_id: str | None = None, **fields: object) -> Item:
   """Append a roadmap entry. It has no slice file until it is promoted."""
   cfg = state.config
@@ -72,6 +83,8 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
     findings=str(fields.get("findings") or ""),
     pass_key=str(fields.get("pass_key") or (state.index.items[-1].pass_key if state.index.items else "")),
     depends_on=list(fields.get("depends_on") or []),
+    importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
+    urgency=_valid_score("urgency", fields["urgency"]) if fields.get("urgency") is not None else 2,
   )
   if item.status not in cfg.statuses:
     raise StateError(f"unknown status {item.status!r}; known: {sorted(cfg.statuses)}")
@@ -183,7 +196,7 @@ def _sync_slice(state: State, item: Item) -> None:
 def set_fields(state: State, item_id: str, **fields: object) -> Item:
   cfg = state.config
   item = state.index.require(item_id)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "importance", "urgency"}
   # `--title ""` arrives as "" rather than None, so it reaches here and would
   # wipe the title. Refuse it; skipping it silently would be just as wrong.
   _reject_bad_text(**fields)
@@ -196,6 +209,8 @@ def set_fields(state: State, item_id: str, **fields: object) -> Item:
       raise StateError(f"unknown field {key!r}; known: {sorted(known)}")
     if key == "status" and value not in cfg.statuses:
       raise StateError(f"unknown status {value!r}; known: {sorted(cfg.statuses)}")
+    if key in ("importance", "urgency"):
+      value = _valid_score(key, value)
     setattr(item, key, value)
 
   moved = item.status != previous
@@ -549,6 +564,8 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
       pass_key=spec.pass_key,
       group=spec.group,
       depends_on=[by_title[d] for d in spec.depends],
+      importance=spec.importance,
+      urgency=spec.urgency,
     )
     state.index.items.append(item)
     report.ids.append(new_id)

@@ -2,7 +2,7 @@
 
 # Roadmap
 
-44 items · — 28 · done 16
+44 items · — 27 · done 17
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -10,7 +10,7 @@
 | 2 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | slicer | review; data loss | done |
 | 3 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | slicer | review; core invariant | done |
 | 4 | [S30](slices/S30.md) | verify misses several inconsistent states | M | slicer | review; gate completeness | done |
-| 5 | [S38](slices/S38.md) | Priority and criticality scoring: the score as data | M | slicer | user request; Eisenhower matrix | — |
+| 5 | [S38](slices/S38.md) | Priority and criticality scoring: the score as data | M | slicer | user request; Eisenhower matrix | done |
 | 6 | [S39](slices/S39.md) | Priority propagation and next picks the highest effective score | M | slicer | user request; critical-path propagation | — |
 | 7 | [S44](slices/S44.md) | No way to mark an item in-progress, so the queue cannot show what is in flight | M | slicer | dogfooding; the flow gap | — |
 | 8 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | — |
