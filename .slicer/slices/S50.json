@@ -1,0 +1,40 @@
+{
+  "id": "S50",
+  "title": "TUI wizard: create a roadmap interactively",
+  "lead": [
+    "Add a guided \"wizard\" to the ncurses UI that walks a user through building a roadmap\nfrom scratch — slicer prompting for each field it needs, then landing the items (and\ntheir slices) directly."
+  ],
+  "depends_note": null,
+  "findings_note": "user request",
+  "size": "L",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Today the only ways into a roadmap are `slicer add` (one item, title only, then `promote`\nplus one `edit` per section) or hand-writing an outline for `slicer import`. Both assume\nthe user already knows slicer's field model and the outline grammar. A wizard prompts for\nwhat slicer needs and lands the items for you, lowering the barrier for a fresh project.\nThe user chose in-curses step-by-step prompts over an `$EDITOR`-backed skeleton."
+    },
+    {
+      "heading": "Files",
+      "body": "`src/slicer/tui.py` (new wizard mode + entry points); a new in-terminal text-input\nprimitive (in `tui.py` or a small new module) since the TUI has none — every edit today\nsuspends curses and hands off to `$EDITOR` via `_via_editor`; `tests/test_tui.py`. Reuse\n`outline.ItemSpec`/`SectionSpec` and `ops.apply_outline` rather than inventing a new apply\npath."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "The wizard collects answers into `ItemSpec`s that apply to the same result as the\nequivalent `import`. Cancelling writes nothing (all-or-nothing, like `apply_outline`). The\ntext-input primitive (echo, backspace, Enter to accept, Esc to cancel) is exercised as a\npure function, matching the module's \"thin drawing loop, pure functions above it\"\ndiscipline."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. A reusable in-terminal text-input primitive (the core new capability), with its\n   decidable logic pure and testable and only the raw key loop touching curses.\n2. A wizard flow: optional project/document title, then a per-item loop — title, size,\n   tree(s), findings, importance, urgency, group, depends — then offer the configured\n   `sections` to fill, then \"add another item?\".\n3. Collect answers into `outline.ItemSpec` objects and apply via `ops.apply_outline`\n   (all-or-nothing; allocates ids; resolves `depends`-by-title; validates) — the exact path\n   `import` uses, so the wizard inherits its guarantees.\n4. Entry points: a `w` key, and offer the wizard automatically when the roadmap is empty\n   (the loop already special-cases the empty roadmap)."
+    },
+    {
+      "heading": "Check",
+      "body": "unittest suite green; from an installed build, launch the TUI on an empty project, run the\nwizard, and confirm items and slices land and `slicer check` is green."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit.\n\n**Not in this slice:** rich in-curses text editing (multi-line section bodies may still\nhand off to `$EDITOR`); editing existing items via the wizard (the TUI already edits\nfields and sections in place); mouse support and multi-column forms. Whether to also\npersist the collected answers as a durable outline `.md` is decided during implementation;\nre-import/round-trip of any such file is out of scope. This slice is large — the\ntext-input primitive is a natural split point and may become its own prerequisite slice."
+    }
+  ],
+  "notes": []
+}

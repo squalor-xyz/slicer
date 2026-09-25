@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 50,
+  "next_id": 52,
   "preamble": "",
   "passes": [],
   "items": [
@@ -1081,6 +1081,50 @@
         ],
         "trees_literal": false,
         "findings": "reproduced closing S47; a section edit silently dropped it",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S50",
+      "title": "TUI wizard: create a roadmap interactively",
+      "short_title": "TUI wizard: create a roadmap interactively",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "L",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S51",
+      "title": "A mutating command still says \"now run slicer render\" after --render already rendered",
+      "short_title": "A mutating command still says \"now run slicer render\" after --render already rendered",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S50",
         "pass": "",
         "group": "",
         "reason": "",

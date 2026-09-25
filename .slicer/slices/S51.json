@@ -1,0 +1,40 @@
+{
+  "id": "S51",
+  "title": "A mutating command still says \"now run slicer render\" after --render already rendered",
+  "lead": [
+    "When a mutating command is passed `--render`, the `_mutating` wrapper renders and prints\n`rendered N file(s)` — but the command body still prints its static \"now run `slicer\nrender`\" hint, so the output tells the user to do the step that just happened."
+  ],
+  "depends_note": null,
+  "findings_note": "dogfooding S50",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The `--render` flag exists precisely to fold the render step into the mutation. Printing\n\"now run `slicer render`\" in the same run contradicts the `rendered N file(s)` line the\nwrapper prints, and tells the user to repeat work slicer already did. Observed filing S50:\n`slicer import s50.md --render` printed both `rendered 2 file(s)` and `now run\n\\`slicer render\\``."
+    },
+    {
+      "heading": "Files",
+      "body": "`src/slicer/cli.py`. The static hints live in the command bodies, unaware of the flag: the\n`_mutating` wrapper that does the rendering is at `cli.py:46`. Affected hints: `cmd_import`\nat `cli.py:204` (\"now run `slicer render`\") and `cmd_prose_edit` at `cli.py:454` (\"updated\n{ref}; run `slicer render`\"). `cmd_check`'s hint at `cli.py:555` is a different, correct\ncontext and out of scope."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "`tests/test_cli.py` — with `--render`, the plain-text output of `import` (and prose `edit`)\ndoes not contain \"run `slicer render`\"; without `--render`, it still does. `--json` output\nis unchanged either way (the hint is a human-only line, not in the envelope)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Suppress the hint when the render will happen: only append the \"now run `slicer render`\"\nline when `--render` was not passed (and not on `--dry-run`, which already takes its own\nbranch). Keep the guidance for the common no-flag case; drop it when the wrapper is about\nto render. Consider a single small helper so both call sites stay in step, mirroring how\n`_mutating` centralises the render itself."
+    },
+    {
+      "heading": "Check",
+      "body": "unittest suite green; from an installed build, `slicer import x.md --render` prints only\n`rendered N file(s)` (no stale hint) while `slicer import x.md` still prints \"now run\n`slicer render`\"."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit.\n\n**Not in this slice:** rewording the hint text itself, or adding render hints to commands\nthat do not currently print one; this only removes the contradiction when `--render` is\nused. `cmd_check`'s \"run `slicer render` and `slicer sync`\" message is a separate,\ncorrect context and is left alone."
+    }
+  ],
+  "notes": []
+}
