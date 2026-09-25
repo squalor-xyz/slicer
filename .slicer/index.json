@@ -50,7 +50,7 @@
       "id": "S28",
       "title": "A low next_id silently mints a duplicate id",
       "short_title": "A low next_id silently mints a duplicate id",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

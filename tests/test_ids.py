@@ -209,3 +209,61 @@ class CaseCollisionTests(unittest.TestCase):
     with self.repo() as repo:
       _, _, err = repo.run("add", "Second", "--id", "S01")
       self.assertIn("already exists", err)
+
+
+class NextIdIntegrityTests(unittest.TestCase):
+  """next_id must stay above every id in use, or `add` would mint a duplicate."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "first")
+    return repo
+
+  def lower_next_id(self, repo: support.TempRepo, to: int = 1) -> None:
+    path = repo.root / ".slicer/index.json"
+    data = json.loads(path.read_text())
+    data["next_id"] = to
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+
+  def test_Add_WithLoweredNextId_RefusesInsteadOfDuplicating(self) -> None:
+    with self.repo() as repo:
+      self.lower_next_id(repo)
+      code, _, err = repo.run("add", "second")
+      self.assertEqual(code, 2)
+      self.assertIn("reuse", err)
+      # no duplicate was written
+      self.assertEqual([i.id for i in repo.state().index.items], ["S01"])
+
+  def test_Add_WithLoweredNextId_CarriesTheCorruptCode(self) -> None:
+    with self.repo() as repo:
+      self.lower_next_id(repo)
+      _, out, _ = repo.run("add", "second", "--json")
+      self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+
+  def test_Verify_LowNextId_IsAnError(self) -> None:
+    with self.repo() as repo:
+      self.lower_next_id(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("next_id", out)
+
+  def test_Check_LowNextId_Fails(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      self.lower_next_id(repo)
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("next_id", out)
+
+  def test_Verify_HealthyNextId_ReportsNothingAboutIt(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0, out)
+      self.assertNotIn("next_id", out)
+
+  def test_Add_NormalPath_StillAllocatesTheNextId(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "second")
+      self.assertEqual([i.id for i in repo.state().index.items], ["S01", "S02"])
+      self.assertEqual(repo.state().index.next_id, 3)

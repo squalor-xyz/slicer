@@ -71,6 +71,16 @@ def allocate(index, explicit: str | None = None) -> str:
   # A hostile prefix makes every generated id traversing, so the generated
   # side needs the rule too, not just the explicit one.
   require_valid(new_id)
+  # next_id should always be above every id already handed out, but a bad
+  # import, a merge, or a hand-edit can lower it. The explicit branch checks
+  # for a collision; the generated branch must too, or it silently mints a
+  # duplicate of the id it exists to keep unique.
+  if index.get(new_id) is not None:
+    raise StateError(
+      f"next_id ({index.next_id}) would reuse the existing id {new_id}; the index "
+      f"is inconsistent -- run `slicer verify`",
+      code="corrupt",
+    )
   index.next_id += 1
   return new_id
 

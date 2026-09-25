@@ -61,6 +61,18 @@ def offline(state: State) -> VerifyReport:
       )
     )
 
+  water = ids.high_water([it.id for it in index.items], index.id_prefix)
+  if index.next_id < water:
+    report.findings.append(
+      Finding(
+        "error",
+        "",
+        f"next_id is {index.next_id}, at or below an id already in use "
+        f"(it should be at least {water}); the next `add` would reuse an id. "
+        f"Set next_id to {water} in index.json.",
+      )
+    )
+
   seen: set[str] = set()
   for item in index.items:
     if item.id in seen:

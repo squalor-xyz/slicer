@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: the collision guard in `ids.allocate`, the next_id sanity check in\n`verify.offline`, and the tests in `tests/test_ids.py`."
     }
   ],
   "notes": []
