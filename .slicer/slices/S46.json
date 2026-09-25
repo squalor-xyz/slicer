@@ -1,0 +1,38 @@
+{
+  "id": "S46",
+  "title": "edit should take an inline value, not only a file, stdin, or the editor",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding; a temp file per section edit",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer edit ID --section NAME` takes its body from `--file`, `--stdin`, or `$EDITOR`. For\na one-line section — a Git note, a short Implement — that means writing a scratch file and\npointing `--file` at it, or a shell heredoc into `--stdin`. This session that is 36 section\nedits, most of them short, each with the temp-file dance. There is no way to pass the text\ndirectly."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `_body_from`, `cmd_edit`, `cmd_prose_edit`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `edit ID --section NAME --text \"one line\"` sets the body to exactly that.\n2. `prose edit REF --text \"...\"` does the same for a prose block.\n3. `--text` is mutually exclusive with `--file`/`--stdin` (or a defined precedence), and an\n   empty `--text \"\"` is handled deliberately."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `--text` as a fourth body source in `_body_from`, ahead of the `$EDITOR` fallback, for\nboth `edit` and `prose edit`. Decide precedence explicitly if more than one is given —\nsimplest is to reject the combination, matching how the tool refuses ambiguous input\nelsewhere. A newline in `--text` is fine for a section body (unlike a one-line table\nfield), so no `_reject_bad_text` guard is needed here.\n\n**Not in this slice:** multi-section edit in one call, or `edit --append` (S17). This is\njust a fourth source for the single-section edit that already exists."
+    },
+    {
+      "heading": "Check",
+      "body": "Setting a short section is one command with no scratch file."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

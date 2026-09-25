@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 45,
+  "next_id": 47,
   "preamble": "",
   "passes": [],
   "items": [
@@ -221,6 +221,50 @@
         ],
         "trees_literal": false,
         "findings": "review; daily friction",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S45",
+      "title": "A mutating command should be able to render in the same step",
+      "short_title": "A mutating command should be able to render in the same step",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; done->render->check every commit",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 3
+      }
+    },
+    {
+      "id": "S46",
+      "title": "edit should take an inline value, not only a file, stdin, or the editor",
+      "short_title": "edit should take an inline value, not only a file, stdin, or the editor",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; a temp file per section edit",
         "pass": "",
         "group": "",
         "reason": "",

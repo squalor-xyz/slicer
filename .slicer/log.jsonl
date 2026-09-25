@@ -137,3 +137,7 @@
 {"when": "2026-09-25T11:27:53Z", "item": "S39", "action": "status", "from": "open", "to": "done", "note": "effective score propagates up the dep graph; next picks the highest startable"}
 {"when": "2026-09-25T11:42:26Z", "item": "S23", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T11:42:26Z", "item": "S23", "action": "status", "from": "open", "to": "done", "note": "park reads config.parked_status; refuses cleanly when a project has no park state"}
+{"when": "2026-09-25T12:20:39Z", "item": "S45", "action": "add", "from": "", "to": "open", "note": "A mutating command should be able to render in the same step"}
+{"when": "2026-09-25T12:20:39Z", "item": "S46", "action": "add", "from": "", "to": "open", "note": "edit should take an inline value, not only a file, stdin, or the editor"}
+{"when": "2026-09-25T12:20:39Z", "item": "S45", "action": "move", "from": "45", "to": "11", "note": ""}
+{"when": "2026-09-25T12:20:39Z", "item": "S46", "action": "move", "from": "46", "to": "12", "note": ""}
