@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
+from slicer import ids
 from slicer.config import Config
 from slicer.errors import RenderError
 from slicer.model import Index, Item, Slice
@@ -231,6 +232,9 @@ def plan(state) -> dict[str, bytes]:
     sl = state.slices.get(item.id)
     if sl is None:
       continue
+    # render.write joins this onto the render root and mkdirs, so a bad id
+    # escapes here as surely as it does in the slices directory.
+    ids.require_valid(item.id)
     out[f"{SLICES_SUBDIR}/{item.id}.md"] = render_slice(sl, cfg, slice_template)
   return out
 

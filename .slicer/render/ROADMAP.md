@@ -2,11 +2,11 @@
 
 # Roadmap
 
-26 items · — 16 · done 10
+26 items · — 15 · done 11
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | — |
+| 1 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
 | 2 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
 | 3 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
 | 4 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |

@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from slicer import graph, vcs
+from slicer import graph, ids, vcs
 from slicer.store import State
 
 
@@ -66,6 +66,20 @@ def offline(state: State) -> VerifyReport:
     if item.id in seen:
       report.findings.append(Finding("error", item.id, "duplicate id in the index"))
     seen.add(item.id)
+    if not ids.is_valid(item.id):
+      # An error, not a warning: with the path boundary enforced, nothing can
+      # promote, move or retire this item, so the project really is broken.
+      report.findings.append(
+        Finding(
+          "error",
+          item.id,
+          "id cannot be used as a filename; it must start with a letter or digit "
+          "and contain only letters, digits, '.', '-' and '_'. An id is never "
+          "renamed, so the fix is `slicer remove --purge` and add it again",
+        )
+      )
+      # Everything below needs the id as a path; one finding says enough.
+      continue
     if item.status not in cfg.statuses:
       report.findings.append(Finding("error", item.id, f"unknown status {item.status!r}"))
     path = state.find_slice_file(item.id)

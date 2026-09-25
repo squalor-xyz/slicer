@@ -234,6 +234,13 @@ def build(
         report.groups += 1
         continue
       item_id = row.item_id
+      if not ids.is_valid(item_id):
+        # The legacy row regex allows any character but ']', so a tree written
+        # elsewhere can carry an id that would be written as a path.
+        report.problems.append(
+          f"{item_id!r} is not a usable id: it would be written as a filename"
+        )
+        continue
       if item_id in seen:
         report.problems.append(f"duplicate id {item_id} in the index")
         continue
@@ -278,6 +285,11 @@ def build(
     depends_ids, depends_line = _parse_depends(ls.depends) if ls.depends else ([], "")
     item.depends_on = depends_ids
     report.depends_edges += len(depends_ids)
+    if not ids.is_valid(ls.id):
+      report.problems.append(
+        f"{ls.id!r} in the slice file's heading is not a usable id"
+      )
+      continue
     slices[item.id] = Slice(
       id=ls.id,
       title=ls.title,
@@ -363,6 +375,8 @@ def write(root: Path, cfg: Config, index: Index, slices: dict[str, Slice]) -> li
     if sl is None:
       continue
     folder = base / SLICES_DIR / (cfg.done_dir if item.status == cfg.done_status else "")
+    # This join does not go through State.slice_path, so it needs the rule too.
+    ids.require_valid(sl.id)
     path = folder / f"{sl.id}.json"
     jsonio.write(path, sl.to_dict())
     written.append(path)

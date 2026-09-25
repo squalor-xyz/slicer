@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from slicer import jsonio
+from slicer import ids, jsonio
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import StateError
 from slicer.model import Index, LogEntry, Slice
@@ -84,9 +84,20 @@ class State:
       folder = self.retired_dir
     else:
       folder = self.slices_dir
+    # `require_valid` is the containment proof: it admits no separator and no
+    # `..`, so the id is always a single component and the join cannot leave
+    # `folder`. A resolve-and-compare here would only add symlink checking on
+    # slicer's own directory, at roughly sixty times the cost, on a path
+    # `verify` walks once per item.
+    ids.require_valid(item_id)
     return folder / f"{item_id}.json"
 
   def find_slice_file(self, item_id: str) -> Path | None:
+    # A read, so it reports absence rather than raising: `verify` exists to
+    # describe broken state, and must not die on the state it is describing.
+    # The write side (`slice_path`) is where an unusable id is refused.
+    if not ids.is_valid(item_id):
+      return None
     for folder in self.folders():
       candidate = folder / f"{item_id}.json"
       if candidate.is_file():

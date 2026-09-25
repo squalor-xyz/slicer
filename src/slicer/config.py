@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from slicer import ids
 from slicer.errors import ConfigError
 
 CONFIG_NAME = "config.json"
@@ -113,6 +114,14 @@ class Config:
       raise ConfigError("two statuses render to the same label; they would be indistinguishable")
     if not self.id_prefix:
       raise ConfigError("id.prefix may not be empty")
+    # The prefix is the front of every generated id, so a hostile one makes
+    # every id a path. Checked against a sample rather than the prefix alone,
+    # because a prefix legitimately ends in a separator-ish character.
+    if not ids.is_valid(f"{self.id_prefix}{0:0{max(self.id_width, 1)}d}"):
+      raise ConfigError(
+        f"id.prefix {self.id_prefix!r} would produce ids that are not usable as "
+        f"filenames; use letters, digits, '.', '-' and '_'"
+      )
     if self.id_width < 1:
       raise ConfigError(f"id.width must be at least 1, not {self.id_width}")
     for target in self.sync_targets:

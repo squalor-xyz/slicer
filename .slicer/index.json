@@ -10,7 +10,7 @@
       "id": "S25",
       "title": "An item id is used as a file path without validation",
       "short_title": "An item id is used as a file path without validation",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

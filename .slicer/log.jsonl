@@ -68,3 +68,5 @@
 {"when": "2026-09-24T20:55:47Z", "item": "S25", "action": "add", "from": "", "to": "open", "note": "An item id is used as a file path without validation"}
 {"when": "2026-09-24T20:55:47Z", "item": "S26", "action": "add", "from": "", "to": "open", "note": "A retired row eats a middot from its findings"}
 {"when": "2026-09-24T20:56:00Z", "item": "S25", "action": "move", "from": "25", "to": "1", "note": ""}
+{"when": "2026-09-25T02:03:00Z", "item": "S25", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-25T02:03:01Z", "item": "S25", "action": "status", "from": "open", "to": "done", "note": "one rule, seven enforcement points; reads report and writes refuse"}

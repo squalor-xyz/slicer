@@ -83,3 +83,129 @@ class IdSchemeTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+BAD_IDS = [
+  "../x",          # traversal: wrote outside the project
+  "../../../pwned",
+  "S/1",           # a subdirectory store.load never scans
+  "S\\1",
+  "/abs",          # an absolute right-hand operand discards the left
+  "..",
+  ".hidden",       # a leading dot makes a hidden file
+  "a..b",
+  "S|1",           # breaks the roadmap's Slice cell
+  "S]1",
+  "S(1)",
+  "S 1",
+  "",
+]
+
+
+class IdRuleTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Rule_AcceptsEveryShapeSlicerProduces(self) -> None:
+    from slicer import ids
+
+    for good in ("S01", "TASK-001", "R0001", "HOTFIX", "S01a", "v1.2", "a_b"):
+      with self.subTest(good):
+        self.assertTrue(ids.is_valid(good))
+
+  def test_Rule_RejectsEveryDangerousShape(self) -> None:
+    from slicer import ids
+
+    for bad in BAD_IDS:
+      with self.subTest(bad):
+        self.assertFalse(ids.is_valid(bad))
+
+  def test_Add_BadExplicitId_IsRefused(self) -> None:
+    with self.repo() as repo:
+      for bad in BAD_IDS:
+        with self.subTest(bad):
+          code, _, err = repo.run("add", "thing", "--id", bad)
+          self.assertEqual(code, 2, err)
+          self.assertIn("not a usable id", err)
+
+  def test_Add_BadExplicitId_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/index.json")
+      repo.run("add", "thing", "--id", "../../../pwned")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Add_BadExplicitId_CarriesTheBadIdCode(self) -> None:
+    with self.repo() as repo:
+      _, out, _ = repo.run("add", "thing", "--id", "../x", "--json")
+      self.assertEqual(json.loads(out)["error"]["code"], "bad_id")
+
+  def test_Promote_TraversingId_WritesNothingOutsideTheProject(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "thing", "--id", "../../../pwned")
+      repo.run("promote", "../../../pwned")
+      outside = list(repo.root.parent.glob("pwned.json"))
+      self.assertEqual(outside, [])
+
+  def test_Scheme_HostilePrefix_IsRefusedAtLoad(self) -> None:
+    # A prefix is the front of every generated id, so it is a path too.
+    with self.repo() as repo:
+      set_scheme(repo, "../", 2)
+      code, _, err = repo.run("add", "thing")
+      self.assertEqual(code, 2)
+      self.assertIn("id.prefix", err)
+
+  def test_SlicePath_HandEditedTraversingId_IsRefused(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "A thing")
+      path = repo.root / ".slicer/index.json"
+      data = json.loads(path.read_text())
+      data["items"][0]["id"] = "../escapee"
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("cannot be used as a filename", out)
+
+  def test_Check_StoredBadId_Fails(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "A thing")
+      repo.run("render")
+      path = repo.root / ".slicer/index.json"
+      data = json.loads(path.read_text())
+      data["items"][0]["id"] = "S/1"
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+      self.assertNotEqual(repo.run("check")[0], 0)
+
+
+class CaseCollisionTests(unittest.TestCase):
+  """Two ids differing only in case are one file on a case-insensitive disk."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "First")
+    return repo
+
+  def test_Add_IdDifferingOnlyInCase_IsRefused(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("add", "Second", "--id", "s01")
+      self.assertEqual(code, 2)
+      self.assertIn("only in case", err)
+
+  def test_Add_IdDifferingOnlyInCase_DoesNotSayAlreadyExists(self) -> None:
+    # It genuinely is not in the index; saying so would send the reader looking
+    # for an item that is not there.
+    with self.repo() as repo:
+      _, _, err = repo.run("add", "Second", "--id", "s01")
+      self.assertNotIn("already exists", err)
+
+  def test_Add_IdDifferingOnlyInCase_CarriesItsOwnCode(self) -> None:
+    with self.repo() as repo:
+      _, out, _ = repo.run("add", "Second", "--id", "s01", "--json")
+      self.assertEqual(json.loads(out)["error"]["code"], "case_collision")
+
+  def test_Add_ExactDuplicate_StillSaysAlreadyExists(self) -> None:
+    with self.repo() as repo:
+      _, _, err = repo.run("add", "Second", "--id", "S01")
+      self.assertIn("already exists", err)
