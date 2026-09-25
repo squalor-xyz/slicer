@@ -2,7 +2,7 @@
 
 # Roadmap
 
-47 items · — 24 · done 23
+48 items · — 25 · done 23
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -53,3 +53,4 @@
 | 45 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | — |
 | 46 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
 | 47 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |
+| 48 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | — |

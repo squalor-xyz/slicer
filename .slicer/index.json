@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 48,
+  "next_id": 49,
   "preamble": "",
   "passes": [],
   "items": [
@@ -1037,6 +1037,28 @@
         ],
         "trees_literal": false,
         "findings": "review; ergonomics",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S48",
+      "title": "The scope boundary is fragile prose, not a structured field",
+      "short_title": "The scope boundary is fragile prose, not a structured field",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "reproduced closing S47; a section edit silently dropped it",
         "pass": "",
         "group": "",
         "reason": "",

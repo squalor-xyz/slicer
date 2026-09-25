@@ -152,3 +152,4 @@
 {"when": "2026-09-25T12:51:09Z", "item": "S47", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T12:51:09Z", "item": "S47", "action": "status", "from": "open", "to": "done", "note": "prose edit/add-pass/drop-pass gain --render, reusing the S45 helpers"}
 {"when": "2026-09-25T12:51:46Z", "item": "S47", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-25T12:55:21Z", "item": "S48", "action": "add", "from": "", "to": "open", "note": "The scope boundary is fragile prose, not a structured field"}
