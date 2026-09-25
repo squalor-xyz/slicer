@@ -119,3 +119,5 @@
 {"when": "2026-09-25T03:29:22Z", "item": "S29", "action": "status", "from": "open", "to": "done", "note": "refuse when the index has items unless --force; --dry-run still previews"}
 {"when": "2026-09-25T03:34:50Z", "item": "S28", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T03:34:50Z", "item": "S28", "action": "status", "from": "open", "to": "done", "note": "generated branch checks for collision; verify catches a low next_id"}
+{"when": "2026-09-25T03:39:40Z", "item": "S30", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T03:39:40Z", "item": "S30", "action": "status", "from": "open", "to": "done", "note": "verify now catches retired-dep, filename!=id, and has_slice-false-with-file"}

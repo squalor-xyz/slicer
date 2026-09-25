@@ -70,7 +70,7 @@
       "id": "S30",
       "title": "verify misses several inconsistent states",
       "short_title": "verify misses several inconsistent states",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

@@ -41,6 +41,9 @@ class State:
   config: Config
   index: Index
   slices: dict[str, Slice] = field(default_factory=dict)
+  # Where each loaded slice was read from, keyed by its *contained* id, so
+  # verify can tell a file whose id disagrees with its filename.
+  slice_files: dict[str, Path] = field(default_factory=dict)
 
   @property
   def dir(self) -> Path:
@@ -172,6 +175,7 @@ def load(root: Path | None = None) -> State:
     index.id_prefix = config.id_prefix
     index.id_width = config.id_width
   slices: dict[str, Slice] = {}
+  slice_files: dict[str, Path] = {}
   slices_root = sdir / SLICES_DIR
   for folder in (
     slices_root,
@@ -183,4 +187,5 @@ def load(root: Path | None = None) -> State:
     for path in sorted(folder.glob("*.json")):
       sl = _from_dict(path, Slice.from_dict, jsonio.read(path))
       slices[sl.id] = sl
-  return State(root=base, config=config, index=index, slices=slices)
+      slice_files[sl.id] = path
+  return State(root=base, config=config, index=index, slices=slices, slice_files=slice_files)

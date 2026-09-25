@@ -275,3 +275,67 @@ class TuiHelpTests(unittest.TestCase):
 
     self.assertNotIn("new", tui.HELP)
     self.assertIn("n promote", tui.HELP)
+
+
+class VerifyCompletenessTests(unittest.TestCase):
+  """verify must catch the inconsistent states it used to pass on (S30)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Verify_DependsOnRetiredItem_IsReported(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("remove", "S01", "--reason", "obsolete")
+      repo.run("set", "S02", "--depends-on", "S01")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("retired", out)
+      self.assertIn("S01", out)
+
+  def test_Verify_SliceFilenameDisagreesWithId_IsReported(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a thing")
+      repo.run("promote", "S01")
+      # Rewrite the file's contained id so name (S01) and id (S99) disagree.
+      path = repo.root / ".slicer/slices/S01.json"
+      data = json.loads(path.read_text())
+      data["id"] = "S99"
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("S01.json", out)
+      self.assertIn("disagree", out)
+
+  def test_Verify_HasSliceFalseButFilePresent_IsReported(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a thing")
+      repo.run("promote", "S01")
+      # Flip has_slice off in the index while the file stays on disk.
+      path = repo.root / ".slicer/index.json"
+      data = json.loads(path.read_text())
+      data["items"][0]["has_slice"] = False
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("not marked as having a slice", out)
+
+  def test_Verify_CleanTreeWithARetiredItem_StillPasses(self) -> None:
+    # A retired item nobody depends on is fine.
+    with self.repo() as repo:
+      repo.run("add", "a thing")
+      repo.run("remove", "S01", "--reason", "obsolete")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0, out)
+
+  def test_Check_DependsOnRetired_Fails(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("remove", "S01", "--reason", "obsolete")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("render")
+      self.assertNotEqual(repo.run("check")[0], 0)

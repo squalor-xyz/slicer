@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: three findings in `verify.offline`, a `slice_files` map on `State`\n(populated by `store.load`) for the filename check, and the tests in `test_cli.py`."
     }
   ],
   "notes": []

@@ -97,6 +97,10 @@ def offline(state: State) -> VerifyReport:
     path = state.find_slice_file(item.id)
     if item.has_slice and path is None:
       report.findings.append(Finding("error", item.id, "marked as having a slice, but no file exists"))
+    if not item.has_slice and path is not None:
+      report.findings.append(
+        Finding("error", item.id, "has a slice file on disk but is not marked as having a slice")
+      )
     if path is not None and path != state.slice_path(item.id):
       report.findings.append(
         Finding("error", item.id, f"slice file is in the wrong folder for status {item.status!r}")
@@ -109,11 +113,30 @@ def offline(state: State) -> VerifyReport:
 
   for item_id, dep in graph.dangling(index):
     report.findings.append(Finding("error", item_id, f"depends on unknown id {dep}"))
+  if cfg.retired_status:
+    for item in index.items:
+      for dep in item.depends_on:
+        other = index.get(dep)
+        if other is not None and other.status == cfg.retired_status:
+          report.findings.append(
+            Finding(
+              "error",
+              item.id,
+              f"depends on {dep}, which is retired and can never be done -- this item "
+              f"can never be started; drop the dependency or restore {dep}",
+            )
+          )
   for cycle in graph.cycles(index):
     report.findings.append(Finding("error", cycle[0], "dependency cycle: " + " -> ".join(cycle)))
 
   for sid in sorted(set(state.slices) - seen):
     report.findings.append(Finding("error", sid, "slice file has no index row"))
+
+  for sid, path in sorted(state.slice_files.items()):
+    if path.stem != sid:
+      report.findings.append(
+        Finding("error", sid, f"slice file {path.name} contains id {sid!r}; the name and the id disagree")
+      )
 
   return report
 
