@@ -366,7 +366,7 @@
       "id": "S40",
       "title": "The TUI can browse and edit but not create or set fields",
       "short_title": "The TUI can browse and edit but not create or set fields",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

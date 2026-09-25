@@ -20,9 +20,34 @@ from slicer.store import State
 # Every token here names a key that `act` or `run` actually handles. `n`
 # promotes an existing item; the TUI cannot create one.
 HELP = (
-  "j/k move  tab pane  e edit  J/K reorder  d done  p park  u unpark  "
+  "j/k move  tab pane  e edit  a add  J/K reorder  d done  p park  u unpark  "
   "n promote  r render  q quit"
 )
+
+# Item fields editable from the detail pane, in display order: label -> the
+# set_fields kwarg and how to parse the edited text back.
+def _csv(text: str) -> list[str]:
+  return [p.strip() for p in text.split(",") if p.strip()]
+
+
+FIELD_SPEC: dict[str, tuple[str, object]] = {
+  "size": ("size", lambda b: b.strip()),
+  "trees": ("trees", _csv),
+  "findings": ("findings", lambda b: b.strip()),
+  "depends": ("depends_on", _csv),
+  "importance": ("importance", lambda b: b.strip()),
+  "urgency": ("urgency", lambda b: b.strip()),
+}
+
+
+def _field_current(item, label: str) -> str:
+  if label == "trees":
+    return ", ".join(item.trees)
+  if label == "depends":
+    return ", ".join(item.depends_on)
+  if label in ("importance", "urgency"):
+    return str(getattr(item, label))
+  return getattr(item, label) or ""
 
 ITEM, PROSE, SEPARATOR = "item", "prose", "separator"
 
@@ -109,15 +134,21 @@ def row_for(state: State, target: str) -> Row | None:
 
 
 def entries(state: State, target: str) -> list[Entry]:
-  """What the detail pane offers for editing, in display order."""
+  """What the detail pane offers for editing: the item's fields, then its
+  sections. Fields are editable even before an item is promoted."""
   if target in prose.refs(state.index):
     return [Entry(kind=PROSE, target=target, name=target, body=prose.get(state.index, target))]
-  sl = state.slices.get(target)
-  if sl is None:
+  item = state.index.get(target)
+  if item is None:
     return []
-  return [
-    Entry(kind="section", target=target, name=s.heading, body=s.body) for s in sl.sections
+  out = [
+    Entry(kind="field", target=target, name=label, body=_field_current(item, label))
+    for label in FIELD_SPEC
   ]
+  sl = state.slices.get(target)
+  if sl is not None:
+    out += [Entry(kind="section", target=target, name=s.heading, body=s.body) for s in sl.sections]
+  return out
 
 
 def panel(state: State, target: str) -> list[PanelLine]:
@@ -134,22 +165,22 @@ def panel(state: State, target: str) -> list[PanelLine]:
   out = [
     PanelLine(f"{item.id}  {item.title}"),
     PanelLine(""),
-    PanelLine(f"status   {state.config.status_label(item.status)}"),
-    PanelLine(f"size     {item.size or '-'}"),
-    PanelLine(f"trees    {', '.join(item.trees) or '-'}"),
-    PanelLine(f"findings {item.findings or '-'}"),
-    PanelLine(f"depends  {', '.join(item.depends_on) or '-'}"),
-    PanelLine(""),
+    PanelLine(f"status     {state.config.status_label(item.status)}"),
   ]
+  for n, label in enumerate(FIELD_SPEC):
+    out.append(PanelLine(f"{label:<11}{_field_current(item, label) or '-'}", n))
+  out.append(PanelLine(f"score      {item.score} ({item.quadrant})"))
+  out.append(PanelLine(""))
   sl = state.slices.get(target)
   if sl is None:
     out.append(PanelLine("(no slice yet - press n to promote)"))
     return out
+  base = len(FIELD_SPEC)
   for i, section in enumerate(sl.sections):
-    out.append(PanelLine(f"## {section.heading}", i))
+    out.append(PanelLine(f"## {section.heading}", base + i))
     for line in section.body.split("\n"):
-      out.append(PanelLine(line, i))
-    out.append(PanelLine("", i))
+      out.append(PanelLine(line, base + i))
+    out.append(PanelLine("", base + i))
   return out
 
 
@@ -169,10 +200,16 @@ def act(
     elif focus == "right" and entry is not None and 0 <= entry < len(available):
       chosen = available[entry]
     else:
-      return ActResult("select a section with tab, then press e")
+      return ActResult("select a field or section with tab, then press e")
     return ActResult(
       f"editing {chosen.name}",
       EditRequest(kind=chosen.kind, target=chosen.target, name=chosen.name, body=chosen.body),
+    )
+
+  if key == "a":
+    return ActResult(
+      "type a title, save to add (empty cancels)",
+      EditRequest(kind="new", target="", name="new item", body=""),
     )
 
   if key == "r":
@@ -215,13 +252,24 @@ def act(
 
 
 def apply_edit(state: State, request: EditRequest, body: str) -> str:
-  """Write back what the editor produced."""
+  """Write back what the editor produced, through the same `ops` the CLI uses."""
   if body == request.body:
     return f"{request.name} unchanged"
-  if request.kind == PROSE:
-    ops.edit_prose(state, request.target, body)
-  else:
-    ops.edit_section(state, request.target, request.name, body)
+  try:
+    if request.kind == "new":
+      title = body.strip()
+      if not title:
+        return "cancelled"
+      return f"added {ops.add(state, title).id}"
+    if request.kind == PROSE:
+      ops.edit_prose(state, request.target, body)
+    elif request.kind == "field":
+      kwarg, parse = FIELD_SPEC[request.name]
+      ops.set_fields(state, request.target, **{kwarg: parse(body)})
+    else:
+      ops.edit_section(state, request.target, request.name, body)
+  except SlicerError as exc:
+    return str(exc)
   return f"updated {request.name}; press r to render"
 
 

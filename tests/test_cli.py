@@ -149,7 +149,8 @@ class TuiTests(unittest.TestCase):
       state = repo.state()
       lines = tui.panel(state, "S02")
       tagged = sorted({l.entry for l in lines if l.entry is not None})
-      self.assertEqual(tagged, list(range(len(state.slices["S02"].sections))))
+      fields = len(tui.FIELD_SPEC)
+      self.assertEqual(tagged, list(range(fields + len(state.slices["S02"].sections))))
       self.assertTrue(any(l.text == "## Why" for l in lines))
 
   def test_Panel_ProseBlock_ShowsItsTextAsOneEntry(self) -> None:
@@ -167,8 +168,12 @@ class TuiTests(unittest.TestCase):
   def test_Entries_Item_AreItsSectionsInOrder(self) -> None:
     with self.repo() as repo:
       state = repo.state()
-      names = [e.name for e in tui.entries(state, "S02")]
-      self.assertEqual(names, [s.heading for s in state.slices["S02"].sections])
+      entries = tui.entries(state, "S02")
+      fields = len(tui.FIELD_SPEC)
+      self.assertEqual([e.name for e in entries[:fields]], list(tui.FIELD_SPEC))
+      self.assertEqual(
+        [e.name for e in entries[fields:]], [s.heading for s in state.slices["S02"].sections]
+      )
 
   def test_Act_DoneKey_MarksTheItemDoneThroughTheSameOpsPath(self) -> None:
     with self.repo() as repo:
@@ -206,7 +211,9 @@ class TuiTests(unittest.TestCase):
 
   def test_Act_EditWithTheRightPaneFocused_ReturnsThatSection(self) -> None:
     with self.repo() as repo:
-      result = tui.act(repo.state(), "e", "S02", entry=1, focus="right")
+      # Sections come after the fields; entry len(FIELD_SPEC) is the first one.
+      first_section = len(tui.FIELD_SPEC)
+      result = tui.act(repo.state(), "e", "S02", entry=first_section + 1, focus="right")
       self.assertIsNotNone(result.edit)
       self.assertEqual(result.edit.kind, "section")
       self.assertEqual(result.edit.name, "Files")
@@ -217,20 +224,23 @@ class TuiTests(unittest.TestCase):
       self.assertIsNone(result.edit)
       self.assertIn("tab", result.message)
 
-  def test_Act_EditOnAnUnpromotedItem_SaysThereIsNothingToEdit(self) -> None:
+  def test_Act_EditFieldOnAnUnpromotedItem_ReturnsAFieldEdit(self) -> None:
+    # Fields live on the item, so they are editable before promotion.
     with self.repo() as repo:
       repo.run("add", "an idea")
       result = tui.act(repo.state(), "e", "S05", focus="right", entry=0)
-      self.assertIsNone(result.edit)
-      self.assertIn("nothing to edit", result.message)
+      self.assertIsNotNone(result.edit)
+      self.assertEqual(result.edit.kind, "field")
+      self.assertEqual(result.edit.name, "size")
 
   def test_ApplyEdit_Section_WritesThroughOpsAndAsksForARender(self) -> None:
     with self.repo() as repo:
       state = repo.state()
-      request = tui.act(state, "e", "S02", entry=0, focus="right").edit
+      request = tui.act(state, "e", "S02", entry=len(tui.FIELD_SPEC), focus="right").edit
       message = tui.apply_edit(state, request, "a brand new why")
       self.assertIn("press r to render", message)
-      self.assertEqual(repo.state().slices["S02"].section("Why").body, "a brand new why")
+      first = state.slices["S02"].sections[0].heading
+      self.assertEqual(repo.state().slices["S02"].section(first).body, "a brand new why")
 
   def test_ApplyEdit_ProseBlock_WritesThroughOps(self) -> None:
     with self.repo() as repo:
@@ -339,3 +349,68 @@ class VerifyCompletenessTests(unittest.TestCase):
       repo.run("set", "S02", "--depends-on", "S01")
       repo.run("render")
       self.assertNotEqual(repo.run("check")[0], 0)
+
+
+class TuiCreateAndFieldTests(unittest.TestCase):
+  """The TUI can create an item and set fields, through the same ops (S40)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "a thing")
+    return repo
+
+  def test_Act_AddKey_ReturnsANewItemEditRequest(self) -> None:
+    with self.repo() as repo:
+      result = tui.act(repo.state(), "a", "S01")
+      self.assertIsNotNone(result.edit)
+      self.assertEqual(result.edit.kind, "new")
+
+  def test_ApplyEdit_New_CreatesTheItemThroughOps(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      request = tui.act(state, "a", "S01").edit
+      message = tui.apply_edit(state, request, "a fresh item")
+      self.assertIn("added", message)
+      titles = [i.title for i in repo.state().index.items]
+      self.assertIn("a fresh item", titles)
+
+  def test_ApplyEdit_New_EmptyTitleCancels(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      request = tui.act(state, "a", "S01").edit
+      # a whitespace-only title is not created (ops.add would reject a blank one)
+      self.assertEqual(tui.apply_edit(state, request, "   "), "cancelled")
+      self.assertEqual(len(repo.state().index.items), 1)
+
+  def test_ApplyEdit_Field_SetsSizeThroughOps(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      request = tui.act(state, "e", "S01", entry=0, focus="right").edit  # size
+      self.assertEqual(request.kind, "field")
+      tui.apply_edit(state, request, "L")
+      self.assertEqual(repo.state().index.require("S01").size, "L")
+
+  def test_ApplyEdit_Field_SetsTreesAsAList(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      trees_entry = list(tui.FIELD_SPEC).index("trees")
+      request = tui.act(state, "e", "S01", entry=trees_entry, focus="right").edit
+      tui.apply_edit(state, request, "core, cli")
+      self.assertEqual(repo.state().index.require("S01").trees, ["core", "cli"])
+
+  def test_ApplyEdit_Field_SetsImportanceThroughOps(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      imp = list(tui.FIELD_SPEC).index("importance")
+      request = tui.act(state, "e", "S01", entry=imp, focus="right").edit
+      tui.apply_edit(state, request, "3")
+      self.assertEqual(repo.state().index.require("S01").importance, 3)
+
+  def test_ApplyEdit_Field_BadValueReportsInsteadOfCrashing(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      imp = list(tui.FIELD_SPEC).index("importance")
+      request = tui.act(state, "e", "S01", entry=imp, focus="right").edit
+      message = tui.apply_edit(state, request, "9")
+      self.assertIn("1, 2 or 3", message)

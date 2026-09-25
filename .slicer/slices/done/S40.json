@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: `a` create key and field entries in the detail pane (`entries`,\n`panel`, `act`, `apply_edit`) in tui.py, all routed through `ops`; the five\npane tests updated to the fields-then-sections model and new create/field tests\nin test_cli.py."
     }
   ],
   "notes": []
