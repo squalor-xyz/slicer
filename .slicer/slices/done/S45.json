@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: a `_mutating` wrapper and `_render_flag` in cli.py that add\n`--render` to the nine mutating commands from one place, and tests in\ntest_cli.py."
     }
   ],
   "notes": []

@@ -2,7 +2,7 @@
 
 # Roadmap
 
-46 items · — 25 · done 21
+46 items · — 24 · done 22
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -16,7 +16,7 @@
 | 8 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | done |
 | 9 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | done |
 | 10 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | — |
-| 11 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | slicer | dogfooding; done->render->check every commit | — |
+| 11 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | slicer | dogfooding; done->render->check every commit | done |
 | 12 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | slicer | dogfooding; a temp file per section edit | — |
 | 13 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | — |
 | 14 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |

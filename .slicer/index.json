@@ -232,7 +232,7 @@
       "id": "S45",
       "title": "A mutating command should be able to render in the same step",
       "short_title": "A mutating command should be able to render in the same step",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

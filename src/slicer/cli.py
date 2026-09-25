@@ -43,6 +43,31 @@ def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
     print(text)
 
 
+def _mutating(fn):
+  """Wrap a mutating handler so `--render` renders after it, from one place.
+
+  The mutation has already saved to disk, so state is re-read and rendered;
+  centralising it here keeps every mutating command in step rather than each
+  growing its own render step.
+  """
+  def wrapped(args: argparse.Namespace) -> int:
+    code = fn(args)
+    if code == OK and getattr(args, "render", False):
+      state = _state(args)
+      expected = render.plan(state)
+      written = render.write(expected, state.render_dir, render.compare(expected, state.render_dir))
+      if not getattr(args, "json", False):
+        print(f"rendered {len(written)} file(s)")
+    return code
+
+  return wrapped
+
+
+def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
+  sp.add_argument("--render", action="store_true", help="render .slicer/render/ after the change")
+  return sp
+
+
 def _state(args: argparse.Namespace) -> store.State:
   return store.load(Path(args.root) if args.root else None)
 
@@ -627,7 +652,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("show", cmd_show, "print one slice")
   sp.add_argument("id")
 
-  sp = add("add", cmd_add, "append a roadmap item")
+  sp = _render_flag(add("add", _mutating(cmd_add), "append a roadmap item"))
   sp.add_argument("title")
   sp.add_argument("--id", help="use this id instead of the next free one")
   sp.add_argument("--size")
@@ -638,17 +663,17 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--importance", type=int, help="1-3; how important (default 2)")
   sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
 
-  sp = add("promote", cmd_promote, "give an item a slice file")
+  sp = _render_flag(add("promote", _mutating(cmd_promote), "give an item a slice file"))
   sp.add_argument("id")
   sp.add_argument("--force", action="store_true")
 
-  sp = add("move", cmd_move, "reorder the queue")
+  sp = _render_flag(add("move", _mutating(cmd_move), "reorder the queue"))
   sp.add_argument("id")
   sp.add_argument("--before")
   sp.add_argument("--after")
   sp.add_argument("--to", type=int)
 
-  sp = add("set", cmd_set, "change an item's fields")
+  sp = _render_flag(add("set", _mutating(cmd_set), "change an item's fields"))
   sp.add_argument("id")
   sp.add_argument("--title")
   sp.add_argument("--short-title", dest="short_title")
@@ -664,20 +689,20 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
 
-  sp = add("edit", cmd_edit, "replace one section of a slice")
+  sp = _render_flag(add("edit", _mutating(cmd_edit), "replace one section of a slice"))
   sp.add_argument("id")
   sp.add_argument("--section", required=True)
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = add("done", _status_cmd("done_status"), "mark an item finished")
+  sp = _render_flag(add("done", _mutating(_status_cmd("done_status")), "mark an item finished"))
   sp.add_argument("id")
   sp.add_argument("--note", help="one line for the log")
 
-  sp = add("park", cmd_park, "set an item aside")
+  sp = _render_flag(add("park", _mutating(cmd_park), "set an item aside"))
   sp.add_argument("id")
 
-  sp = add("unpark", _status_cmd("open_status"), "return a parked item to the queue")
+  sp = _render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue"))
   sp.add_argument("id")
 
   sp = sub.add_parser("prose", help="read and edit the roadmap's own prose", parents=[common])
@@ -704,7 +729,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   padd("drop-pass", cmd_prose_drop_pass, "remove an empty pass group").add_argument("key")
 
-  sp = add("remove", cmd_remove, "retire an obsolete item, or purge one outright")
+  sp = _render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright"))
   sp.add_argument("id")
   mode = sp.add_mutually_exclusive_group(required=True)
   mode.add_argument("--reason", help="retire it, recording why; the id stays claimed")

@@ -414,3 +414,50 @@ class TuiCreateAndFieldTests(unittest.TestCase):
       request = tui.act(state, "e", "S01", entry=imp, focus="right").edit
       message = tui.apply_edit(state, request, "9")
       self.assertIn("1, 2 or 3", message)
+
+
+class RenderFlagTests(unittest.TestCase):
+  """A mutating command with --render leaves the render current (S45)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "a thing")
+    repo.run("render")
+    return repo
+
+  def test_Done_Render_LeavesCheckClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("promote", "S01")
+      repo.run("render")
+      code, out, _ = repo.run("done", "S01", "--render")
+      self.assertEqual(code, 0, out)
+      self.assertIn("rendered", out)
+      self.assertEqual(repo.run("check")[0], 0)  # no separate render needed
+
+  def test_Add_Render_LeavesCheckClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "another", "--render")
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Set_Render_LeavesCheckClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--findings", "G9", "--render")
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Mutation_WithoutRender_LeavesTheRenderStale(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "another")  # no --render
+      self.assertEqual(repo.run("check")[0], 1)  # stale, as before
+
+  def test_Render_Json_DoesNotEmitTheExtraLine(self) -> None:
+    # The payload stays the command's own; render is a side effect.
+    with self.repo() as repo:
+      _, out, _ = repo.run("add", "another", "--render", "--json")
+      json.loads(out)  # single valid document, not two
+      self.assertNotIn("rendered", out)
+
+  def test_Render_ReportsFileCount(self) -> None:
+    with self.repo() as repo:
+      _, out, _ = repo.run("add", "another", "--render")
+      self.assertRegex(out, r"rendered \d+ file")

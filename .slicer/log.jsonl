@@ -145,3 +145,5 @@
 {"when": "2026-09-25T12:23:26Z", "item": "S12", "action": "status", "from": "open", "to": "done", "note": "set gains --flag/--no-flags/--group; flags no longer import-only"}
 {"when": "2026-09-25T12:40:55Z", "item": "S40", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T12:40:56Z", "item": "S40", "action": "status", "from": "open", "to": "done", "note": "TUI: a adds an item, fields are editable pane entries, all through ops"}
+{"when": "2026-09-25T12:48:04Z", "item": "S45", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T12:48:04Z", "item": "S45", "action": "status", "from": "open", "to": "done", "note": "--render on the nine mutating commands, via one shared wrapper"}
