@@ -1,0 +1,38 @@
+{
+  "id": "S37",
+  "title": "The CLI rebuilds its whole argparse tree on every invocation",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "profiled; I first misattributed this to store.load",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`cli.main` calls `build_parser()` every time, which constructs ~28 subparsers from\nscratch. A cProfile of the full test suite puts **31 of 43 seconds inside\n`build_parser`**, and 16 of those inside `gettext` — argparse does a locale lookup for\nevery argument's help string as it builds each subparser. One build measures ~17ms.\n\n    780  ...  cli.py:545(build_parser)      cumtime 31.1s\n  23403  ...  argparse __init__            cumtime 26.0s\n  69435  ...  gettext.dgettext             cumtime 16.0s\n\nThe suite runs `main()` 780 times in one process, so it pays that 780 times — which is\nwhy 327 tests take ~45s while any single module runs in under a tenth of a second. For a\none-shot CLI the cost is ~17ms of cold start, minor but free to remove; for an agent or\na future watch/REPL mode calling `main()` in-process it is the whole story.\n\nI flagged this earlier as `store.load` reading every slice on every run. That was wrong:\n`store.load` measures 0.15ms. The cost is entirely parser construction."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `build_parser`, `main`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `build_parser` returns a usable parser and `main` still dispatches every command.\n2. A perf guard: `main` invoked N times builds the parser at most once (assert\n   `build_parser` is called once across repeated `main` calls, via a counter or a patch)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Build the parser once and reuse it. A single parser instance handles repeated\n`parse_args` safely — confirmed: `parse_args` populates a fresh namespace and does not\nmutate the parser. Memoize at module scope (or a cached module-level singleton that\n`main` reuses). Keep `build_parser` callable for tests that want a fresh one.\n\nWatch the two subtleties: the `--root` argument uses `default=argparse.SUPPRESS` on the\nsubparser copy so it does not clobber the global one — that behaviour must survive\nreuse — and `set_defaults(func=...)` is set at build time, so a cached parser keeps the\nright dispatch. A test asserting both is worth having.\n\n**Not in this slice:** replacing argparse, or lazy help text. Caching is the whole win\nand stays stdlib."
+    },
+    {
+      "heading": "Check",
+      "body": "The suite drops sharply (build once, not 780 times) and every command still parses and\ndispatches. Cold-start `slicer --help` is unchanged in behaviour."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

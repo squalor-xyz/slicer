@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 37,
+  "next_id": 38,
   "preamble": "",
   "passes": [],
   "items": [
@@ -141,6 +141,26 @@
         ],
         "trees_literal": false,
         "findings": "review; daily friction",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S37",
+      "title": "The CLI rebuilds its whole argparse tree on every invocation",
+      "short_title": "The CLI rebuilds its whole argparse tree on every invocation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "profiled; I first misattributed this to store.load",
         "pass": "",
         "group": "",
         "reason": ""

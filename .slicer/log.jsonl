@@ -93,3 +93,5 @@
 {"when": "2026-09-25T02:51:18Z", "item": "S24", "action": "move", "from": "30", "to": "9", "note": ""}
 {"when": "2026-09-25T02:57:58Z", "item": "S27", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-09-25T02:57:58Z", "item": "S27", "action": "status", "from": "open", "to": "done", "note": "guard jsonio reads and store from_dict; corrupt for state, io for user files"}
+{"when": "2026-09-25T03:04:45Z", "item": "S37", "action": "add", "from": "", "to": "open", "note": "The CLI rebuilds its whole argparse tree on every invocation"}
+{"when": "2026-09-25T03:05:00Z", "item": "S37", "action": "move", "from": "37", "to": "8", "note": ""}
