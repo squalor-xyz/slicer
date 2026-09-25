@@ -2,7 +2,7 @@
 
 # Roadmap
 
-26 items · — 15 · done 11
+26 items · — 14 · done 12
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -31,4 +31,4 @@
 | 23 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | done |
 | 24 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | — |
 | 25 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
-| 26 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | — |
+| 26 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |

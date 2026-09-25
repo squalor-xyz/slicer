@@ -70,3 +70,5 @@
 {"when": "2026-09-24T20:56:00Z", "item": "S25", "action": "move", "from": "25", "to": "1", "note": ""}
 {"when": "2026-09-25T02:03:00Z", "item": "S25", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-09-25T02:03:01Z", "item": "S25", "action": "status", "from": "open", "to": "done", "note": "one rule, seven enforcement points; reads report and writes refuse"}
+{"when": "2026-09-25T02:04:59Z", "item": "S26", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-09-25T02:05:36Z", "item": "S26", "action": "status", "from": "open", "to": "done", "note": "join what is present; the filed second symptom was not a bug"}

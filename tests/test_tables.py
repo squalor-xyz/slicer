@@ -149,3 +149,61 @@ class GeneratedRowAssertionTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class RetiredFindingsTests(unittest.TestCase):
+  """The reason is folded into the findings cell without editing the findings."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def findings_cell(self, repo: support.TempRepo, item_id: str) -> str:
+    return row_for(repo, item_id).strip("|").split("|")[5].strip()
+
+  def test_Retired_LeadingMiddotInFindings_IsKept(self) -> None:
+    # Was: '· F1' + 'superseded' -> 'F1 · superseded', the leading · eaten.
+    with self.repo() as repo:
+      repo.run("add", "A thing", "--findings", "· F1")
+      repo.run("remove", "S01", "--reason", "superseded")
+      repo.run("render")
+      self.assertEqual(self.findings_cell(repo, "S01"), "· F1 · superseded")
+
+  def test_Retired_TrailingMiddotInFindings_IsKeptEvenThoughItLooksDoubled(self) -> None:
+    # Not a regression: a trailing middot the user wrote, plus the separator,
+    # legitimately reads as two. Faithful beats tidy.
+    with self.repo() as repo:
+      repo.run("add", "A thing", "--findings", "F2 ·")
+      repo.run("remove", "S01", "--reason", "superseded")
+      repo.run("render")
+      self.assertEqual(self.findings_cell(repo, "S01"), "F2 · · superseded")
+
+  def test_Retired_ReasonEndingInAMiddot_IsKept(self) -> None:
+    # The other end of the same bug: the strip reached into the reason too.
+    with self.repo() as repo:
+      repo.run("add", "A thing", "--findings", "F1")
+      repo.run("remove", "S01", "--reason", "superseded ·")
+      repo.run("render")
+      self.assertEqual(self.findings_cell(repo, "S01"), "F1 · superseded ·")
+
+  def test_Retired_NoFindings_ShowsOnlyTheReason(self) -> None:
+    # The case the strip was written for; now handled by construction.
+    with self.repo() as repo:
+      repo.run("add", "A thing")
+      repo.run("remove", "S01", "--reason", "superseded")
+      repo.run("render")
+      self.assertEqual(self.findings_cell(repo, "S01"), "superseded")
+
+  def test_Retired_PlainFindings_JoinsWithOneMiddot(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "A thing", "--findings", "F3")
+      repo.run("remove", "S01", "--reason", "superseded")
+      repo.run("render")
+      self.assertEqual(self.findings_cell(repo, "S01"), "F3 · superseded")
+
+  def test_NotRetired_FindingsAreUntouched(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "A thing", "--findings", "· F1 ·")
+      repo.run("render")
+      self.assertEqual(self.findings_cell(repo, "S01"), "· F1 ·")

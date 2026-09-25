@@ -116,8 +116,10 @@ def _id_cell(item: Item) -> str:
 def render_row(item: Item, position: int, cfg: Config, template: str) -> str:
   size = item.size + "".join(f" `[{f}]`" for f in item.flags)
   # A retired row still renders, so the reason it was retired has to be on it;
-  # the status column alone does not tell a reader why.
-  findings = f"{item.findings} {MIDDOT} {item.reason}".strip(f" {MIDDOT}") if item.reason else item.findings
+  # the status column alone does not tell a reader why. Join what is present
+  # rather than stripping afterwards: `.strip(" ·")` took a character *set*,
+  # so it ate a middot the user had written at either end of their findings.
+  findings = f" {MIDDOT} ".join(p for p in (item.findings, item.reason) if p)
   # An item stored before titles were validated may have none. Say so, rather
   # than rendering a blank cell nobody can act on.
   title = cell(item.display_title()) or f"(untitled {item.id})"
