@@ -117,6 +117,20 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertEqual([i.id for i in repo.state().index.items], ["S04", "S01", "S02", "S03"])
 
+  def test_Move_BeforeItself_IsANoOpAndKeepsTheItem(self) -> None:
+    with self.repo() as repo:
+      before = [i.id for i in repo.state().index.items]
+      code, _, err = repo.run("move", "S02", "--before", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([i.id for i in repo.state().index.items], before)
+
+  def test_Move_AfterItself_IsANoOp(self) -> None:
+    with self.repo() as repo:
+      before = [i.id for i in repo.state().index.items]
+      code, _, err = repo.run("move", "S02", "--after", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([i.id for i in repo.state().index.items], before)
+
   def test_Move_WithoutATarget_Refuses(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("move", "S04")

@@ -364,7 +364,7 @@
       "id": "S13",
       "title": "move X --before X drops the item from the in-memory index",
       "short_title": "move X --before X drops the item from the in-memory index",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

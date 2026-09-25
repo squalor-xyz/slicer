@@ -206,6 +206,8 @@ def move(
   """Reorder the queue. Position is priority; nothing else changes."""
   index = state.index
   at = index.position(item_id)
+  if before == item_id or after == item_id:
+    return at + 1  # moving an item relative to itself is a no-op
   item = index.items.pop(at)
   if before is not None:
     target = index.position(before)
