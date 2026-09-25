@@ -17,6 +17,7 @@ from pathlib import Path
 
 from slicer import check as check_mod
 from slicer import (
+  graph,
   jsonio,
   migrator,
   model,
@@ -268,13 +269,17 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
     items = [i for i in items if i.pass_key == args.pass_key]
+  # Effective score: an item inherits the priority of anything that depends on
+  # it, so a blocker of a critical item ranks with it. `^` marks an inherited
+  # boost above the item's own score.
+  eff = graph.effective_scores(state.index)
   if getattr(args, "sort", None) == "score":
-    # A read-only view: sort a copy by score, never the stored order. Ties keep
-    # their manual position because Python's sort is stable.
-    items = sorted(items, key=lambda i: i.score, reverse=True)
+    # A read-only view: sort a copy by effective score, never the stored order.
+    # Ties keep their manual position because Python's sort is stable.
+    items = sorted(items, key=lambda i: eff[i.id], reverse=True)
   rows = [
     f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} "
-    f"{i.score:>2} {i.quadrant:<9} {i.display_title()}"
+    f"{eff[i.id]:>2}{'^' if eff[i.id] > i.score else ' '} {i.quadrant:<9} {i.display_title()}"
     for n, i in enumerate(items, 1)
   ]
   _emit(args, [i.to_dict() for i in items], "\n".join(rows) or "no matching items")

@@ -120,7 +120,7 @@
       "id": "S39",
       "title": "Priority propagation and next picks the highest effective score",
       "short_title": "Priority propagation and next picks the highest effective score",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S38"
@@ -314,8 +314,8 @@
         "pass": "",
         "group": "",
         "reason": "",
-        "importance": 2,
-        "urgency": 1
+        "importance": 1,
+        "urgency": 2
       }
     },
     {

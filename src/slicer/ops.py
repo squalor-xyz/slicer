@@ -268,9 +268,16 @@ class NextResult:
 
 
 def next_item(state: State) -> NextResult:
-  """First open item whose dependencies are all finished."""
+  """The most critical startable item: highest effective score, unblocked.
+
+  Dependencies still hard-gate what is startable -- a blocked item is never
+  returned, whatever its score -- so the score only orders the items that can
+  actually be picked up. Ties keep manual queue order, because `max` returns
+  the first maximal element and the items are walked in index order.
+  """
   cfg = state.config
   blocked: list[tuple[str, list[str]]] = []
+  candidates: list[Item] = []
   for item in state.index.items:
     if item.status != cfg.open_status:
       continue
@@ -278,8 +285,11 @@ def next_item(state: State) -> NextResult:
     if pending:
       blocked.append((item.id, pending))
       continue
-    return NextResult(item=item, blocked=blocked)
-  return NextResult(item=None, blocked=blocked)
+    candidates.append(item)
+  if not candidates:
+    return NextResult(item=None, blocked=blocked)
+  eff = graph.effective_scores(state.index)
+  return NextResult(item=max(candidates, key=lambda it: eff[it.id]), blocked=blocked)
 
 
 def edit_section(state: State, item_id: str, heading: str, body: str) -> Slice:

@@ -57,3 +57,42 @@ def blocked_by(index: Index, item: Item, done_status: str) -> list[str]:
     if other is None or other.status != done_status:
       out.append(dep)
   return out
+
+
+def dependents(index: Index) -> dict[str, list[str]]:
+  """For each id, the ids that declare it as a dependency.
+
+  The reverse of `depends_on`: if X depends on Y, then X is a dependent of Y.
+  """
+  rev: dict[str, list[str]] = {it.id: [] for it in index.items}
+  for it in index.items:
+    for dep in it.depends_on:
+      if dep in rev:
+        rev[dep].append(it.id)
+  return rev
+
+
+def effective_scores(index: Index) -> dict[str, int]:
+  """Each item's priority once it inherits from what depends on it.
+
+  A blocker of a critical item is itself critical: you cannot start the
+  critical work until the blocker is done. So a score propagates from a
+  dependent to its dependency -- if X depends on Y, Y's effective score is at
+  least X's -- transitively, up the whole chain.
+
+  Computed by relaxing the edges to a fixed point rather than recursing, so a
+  long chain cannot raise RecursionError and a cycle simply equalises to the
+  cycle's maximum instead of looping forever.
+  """
+  eff = {it.id: it.score for it in index.items}
+  # (dependent, dependency) edges; a dependency's score is pushed up to at
+  # least its dependent's.
+  edges = [(it.id, dep) for it in index.items for dep in it.depends_on if dep in eff]
+  changed = True
+  while changed:
+    changed = False
+    for dependent, dependency in edges:
+      if eff[dependent] > eff[dependency]:
+        eff[dependency] = eff[dependent]
+        changed = True
+  return eff

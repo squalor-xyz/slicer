@@ -116,3 +116,100 @@ class ScoreOutlineTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class EffectiveScoreTests(unittest.TestCase):
+  """A blocker inherits the priority of what depends on it (S39)."""
+
+  def index(self, *items: Item):
+    from slicer.model import Index
+
+    return Index(items=list(items))
+
+  def it(self, id: str, imp: int = 2, urg: int = 2, deps: list[str] | None = None) -> Item:
+    return Item(id=id, title="t", status="open", importance=imp, urgency=urg, depends_on=deps or [])
+
+  def test_Effective_BlockerInheritsFromDependent(self) -> None:
+    from slicer import graph
+
+    idx = self.index(self.it("S01", 3, 3, deps=["S02"]), self.it("S02"))
+    eff = graph.effective_scores(idx)
+    self.assertEqual(eff["S02"], 33)  # inherited from the 3/3 dependent
+    self.assertEqual(eff["S01"], 33)
+
+  def test_Effective_IsTransitive(self) -> None:
+    from slicer import graph
+
+    idx = self.index(
+      self.it("S01", 3, 3, deps=["S02"]), self.it("S02", deps=["S03"]), self.it("S03")
+    )
+    self.assertEqual(graph.effective_scores(idx)["S03"], 33)
+
+  def test_Effective_CycleIsSafe(self) -> None:
+    from slicer import graph
+
+    idx = self.index(self.it("S01", 3, 1, deps=["S02"]), self.it("S02", 1, 3, deps=["S01"]))
+    eff = graph.effective_scores(idx)  # must terminate
+    self.assertEqual(eff["S01"], 31)
+    self.assertEqual(eff["S02"], 31)  # both equalise to the cycle max
+
+  def test_Effective_UnrelatedItem_KeepsOwnScore(self) -> None:
+    from slicer import graph
+
+    idx = self.index(self.it("S01", 3, 3), self.it("S02", 1, 1))
+    self.assertEqual(graph.effective_scores(idx)["S02"], 11)
+
+  def test_Dependents_IsTheReverseOfDependsOn(self) -> None:
+    from slicer import graph
+
+    idx = self.index(self.it("S01", deps=["S03"]), self.it("S02", deps=["S03"]), self.it("S03"))
+    self.assertEqual(sorted(graph.dependents(idx)["S03"]), ["S01", "S02"])
+
+
+class NextByScoreTests(unittest.TestCase):
+  """next returns the highest-effective-score startable item."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Next_PicksHighestEffectiveScore_NotFirstInOrder(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "low", "--importance", "1", "--urgency", "1")   # S01, first in order
+      repo.run("add", "high", "--importance", "3", "--urgency", "3")  # S02
+      _, out, _ = repo.run("next")
+      self.assertTrue(out.startswith("S02"), out)
+
+  def test_Next_SurfacesTheBlockerOfCriticalWork(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "the critical goal", "--importance", "3", "--urgency", "3")  # S01
+      repo.run("add", "its blocker", "--importance", "1", "--urgency", "1")        # S02
+      repo.run("set", "S01", "--depends-on", "S02")
+      # S01 is blocked by S02; S02 is startable and inherits 33, so it wins.
+      _, out, _ = repo.run("next")
+      self.assertTrue(out.startswith("S02"), out)
+
+  def test_Next_NeverReturnsABlockedItem_WhateverItsScore(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "startable but dull", "--importance", "1", "--urgency", "1")  # S01
+      repo.run("add", "critical but blocked", "--importance", "3", "--urgency", "3")  # S02
+      repo.run("add", "blocker, parked", "--importance", "1", "--urgency", "1")     # S03
+      repo.run("park", "S03")
+      repo.run("set", "S02", "--depends-on", "S03")
+      # S02 is highest-scored but blocked by parked S03; S01 is the only startable.
+      _, out, _ = repo.run("next")
+      self.assertTrue(out.startswith("S01"), out)
+
+  def test_List_SortScore_UsesEffectiveScore(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "critical goal", "--importance", "3", "--urgency", "3")  # S01=33
+      repo.run("add", "its blocker")  # S02, own 22, inherits 33
+      repo.run("set", "S01", "--depends-on", "S02")
+      _, out, _ = repo.run("list", "--sort", "score")
+      # S02 shows an inherited 33 (marked ^) and ranks alongside S01.
+      self.assertIn("33^", out)
+
+
+if __name__ == "__main__":
+  unittest.main()

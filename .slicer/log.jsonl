@@ -130,3 +130,8 @@
 {"when": "2026-09-25T03:45:31Z", "item": "S40", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
 {"when": "2026-09-25T03:47:14Z", "item": "S38", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T03:47:14Z", "item": "S38", "action": "status", "from": "open", "to": "done", "note": "score as data: importance x urgency, list --sort score; propagation is S39"}
+{"when": "2026-09-25T11:26:37Z", "item": "S24", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T11:27:06Z", "item": "S24", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T11:27:07Z", "item": "S13", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T11:27:53Z", "item": "S39", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T11:27:53Z", "item": "S39", "action": "status", "from": "open", "to": "done", "note": "effective score propagates up the dep graph; next picks the highest startable"}

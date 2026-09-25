@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: `dependents` and `effective_scores` in `graph.py`, the reworked\n`next_item` in `ops.py`, effective-score sort/display in `cli.py`, and tests in\n`test_scoring.py`. Honest priority scores set on the backlog while dogfooding."
     }
   ],
   "notes": []
