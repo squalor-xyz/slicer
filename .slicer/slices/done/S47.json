@@ -23,7 +23,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Reuse the `_mutating` wrapper and `_render_flag` helper from S45: wrap the three prose\nmutating handlers and add `--render` to their subparsers. `prose list`/`show` stay\nread-only and unwrapped."
+      "body": "Reuse the `_mutating` wrapper and `_render_flag` helper from S45: wrap the three prose\nmutating handlers and add `--render` to their subparsers. `prose list`/`show` stay\nread-only and unwrapped.\n\n**Not in this slice:** the item-mutating commands, which S45 already covers; and running\n`sync` after a mutation, which S45 also deferred."
     },
     {
       "heading": "Check",
