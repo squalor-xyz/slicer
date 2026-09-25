@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: the guard in `cmd_migrate`, `--force` on the subparser, and the guard\ntests in `tests/test_migrate.py`."
     }
   ],
   "notes": []

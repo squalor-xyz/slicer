@@ -30,7 +30,7 @@
       "id": "S29",
       "title": "migrate silently overwrites an existing roadmap",
       "short_title": "migrate silently overwrites an existing roadmap",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

@@ -115,3 +115,5 @@
 {"when": "2026-09-25T03:24:43Z", "item": "S40", "action": "move", "from": "42", "to": "15", "note": ""}
 {"when": "2026-09-25T03:24:43Z", "item": "S41", "action": "move", "from": "43", "to": "16", "note": ""}
 {"when": "2026-09-25T03:24:43Z", "item": "S42", "action": "move", "from": "44", "to": "17", "note": ""}
+{"when": "2026-09-25T03:29:22Z", "item": "S29", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T03:29:22Z", "item": "S29", "action": "status", "from": "open", "to": "done", "note": "refuse when the index has items unless --force; --dry-run still previews"}

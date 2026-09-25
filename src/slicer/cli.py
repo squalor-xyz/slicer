@@ -188,6 +188,20 @@ def cmd_migrate(args: argparse.Namespace) -> int:
   base = root / store.DIR_NAME
   cfg = Config.load(base / CONFIG_NAME) if (base / CONFIG_NAME).is_file() else Config()
 
+  # migrate replaces config.json and index.json wholesale, so refuse to run it
+  # over a roadmap that already has items -- one mistaken invocation would
+  # destroy it. An empty init'd project has no items and no slices, which is
+  # the normal "init then migrate" path, so that is allowed. --dry-run writes
+  # nothing, so it stays a safe preview even on a non-empty project.
+  index_path = base / store.INDEX_NAME
+  existing = len(model.Index.from_dict(jsonio.read(index_path)).items) if index_path.is_file() else 0
+  if existing and not args.force and not args.dry_run:
+    raise StateError(
+      f"{base} already has a roadmap ({existing} items); migrate would replace it "
+      "-- pass --force to overwrite, or --dry-run to preview",
+      code="already_exists",
+    )
+
   render_root = base / store.RENDER_DIR
   index, slices, report = migrator.build(
     source,
@@ -581,6 +595,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("migrate", cmd_migrate, "convert an existing markdown slice tree")
   sp.add_argument("--from", dest="source", default="docs/slices", help="the legacy directory")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
+  sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
   add("next", cmd_next, "the first open item whose dependencies are met")
 

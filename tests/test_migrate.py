@@ -266,3 +266,51 @@ class LinkRewriteTests(unittest.TestCase):
       # lived in docs/slices/; from .slicer/render/ that is two levels further.
       self.assertIn("(../../docs/review-protocol.md)", prose)
       self.assertNotIn("(../review-protocol.md)", prose)
+
+
+class MigrateGuardTests(unittest.TestCase):
+  """migrate replaces the roadmap wholesale, so it must refuse a non-empty one."""
+
+  def nonempty(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "my existing item")
+    support.make_mini(repo)
+    return repo
+
+  def test_Migrate_NonEmptyProject_RefusesWithoutForce(self) -> None:
+    with self.nonempty() as repo:
+      code, _, err = repo.run("migrate", "--from", "docs/slices")
+      self.assertEqual(code, 2)
+      self.assertIn("already has a roadmap", err)
+      # the original roadmap is untouched
+      self.assertEqual([i.title for i in repo.state().index.items], ["my existing item"])
+
+  def test_Migrate_NonEmptyProject_ForceReplaces(self) -> None:
+    with self.nonempty() as repo:
+      code, _, err = repo.run("migrate", "--from", "docs/slices", "--force")
+      self.assertEqual(code, 0, err)
+      titles = [i.title for i in repo.state().index.items]
+      self.assertNotIn("my existing item", titles)
+      self.assertTrue(titles)
+
+  def test_Migrate_NonEmptyProject_DryRunPreviewsWithoutForce(self) -> None:
+    with self.nonempty() as repo:
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("migrate", "--from", "docs/slices", "--dry-run")
+      self.assertEqual(code, 0, err)
+      self.assertIn("nothing written", out)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Migrate_EmptyProject_ProceedsWithoutForce(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      repo.run("init")
+      code, _, err = repo.run("migrate", "--from", "docs/slices")
+      self.assertEqual(code, 0, err)
+      self.assertTrue(repo.state().index.items)
+
+  def test_Migrate_NonEmptyProject_Json_CarriesAlreadyExists(self) -> None:
+    with self.nonempty() as repo:
+      _, out, _ = repo.run("migrate", "--from", "docs/slices", "--json")
+      self.assertEqual(json.loads(out)["error"]["code"], "already_exists")
