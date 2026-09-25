@@ -60,6 +60,9 @@ def _mutating(fn):
         print(f"rendered {len(written)} file(s)")
     return code
 
+  # main() locks the project around a mutating command; the flag says which
+  # handlers those are, so the render re-read above is inside the same lock.
+  wrapped.mutates = True
   return wrapped
 
 
@@ -806,6 +809,13 @@ def main(argv: list[str] | None = None) -> int:
   parser = build_parser()
   args = parser.parse_args(argv)
   try:
+    # A mutating command holds an advisory lock for its whole run, so two
+    # writers serialise instead of racing (a duplicated id, a half-applied
+    # outline). Read-only commands need no lock.
+    if getattr(args.func, "mutates", False):
+      root = Path(args.root) if args.root else None
+      with store.project_lock(root):
+        return int(args.func(args))
     return int(args.func(args))
   except SlicerError as exc:
     return _fail(args, exc)

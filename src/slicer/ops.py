@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 from slicer import graph, ids, outline, prose, vcs
 from slicer.errors import StateError
@@ -500,10 +501,6 @@ def purge(state: State, item_id: str, *, force: bool = False) -> PurgeResult:
   item = state.index.require(item_id)
 
   path = state.find_slice_file(item_id)
-  removed = False
-  if path is not None:
-    path.unlink()
-    removed = True
 
   state.index.items = [i for i in state.index.items if i.id != item_id]
 
@@ -521,7 +518,14 @@ def purge(state: State, item_id: str, *, force: bool = False) -> PurgeResult:
       state.index.next_id = number
       freed, why = True, "it was the most recent id and nothing refers to it"
 
+  # Index first, then the file: a crash between leaves at worst an orphan slice
+  # file, never an index still naming a slice that has already been deleted.
   state.save_index()
+  removed = False
+  if path is not None:
+    path.unlink()
+    removed = True
+
   _record(state, item_id, "purge", frm=item.status, note=why)
   return PurgeResult(id=item_id, id_freed=freed, reason=why, file_removed=removed)
 
@@ -625,6 +629,10 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
     allocated.append((spec, new_id))
     by_title[spec.title] = new_id
 
+  # Build every item and slice in memory first, writing nothing. A bad-text
+  # rejection on a later spec therefore leaves no files behind, which is what
+  # "write nothing at all" promises.
+  pending: list[Slice] = []
   for spec, new_id in allocated:
     _reject_bad_text(
       title=spec.title,
@@ -656,11 +664,21 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
     report.ids.append(new_id)
 
     if spec.has_slice:
-      sl = _slice_from_spec(spec, item, cfg)
       item.has_slice = True
-      state.save_slice(sl)
+      pending.append(_slice_from_spec(spec, item, cfg))
 
-  state.save_index()
+  # Flush: slice files first, the index last, so a crash never leaves the index
+  # naming a slice that is not there. If a slice write fails, unwind the ones
+  # already written and leave the index untouched -- all or nothing.
+  written: list[Path] = []
+  try:
+    for sl in pending:
+      written.append(state.save_slice(sl))
+    state.save_index()
+  except BaseException:
+    for path in written:
+      path.unlink(missing_ok=True)
+    raise
   for spec, new_id in allocated:
     _record(state, new_id, "add", to=spec.status or cfg.open_status, note=spec.title)
   return report

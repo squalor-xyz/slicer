@@ -19,3 +19,6 @@ venv/
 # It is this project's own roadmap state, and .slicer/render/ is generated
 # markdown that is meant to be committed and diffed — `slicer check` fails
 # when it is stale. Do not add it here.
+#
+# The one exception: .slicer/lock is a transient advisory lock file, never state.
+/.slicer/lock

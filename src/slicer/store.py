@@ -6,20 +6,39 @@ subdirectory of a project, the way git does.
 
 from __future__ import annotations
 
+import os
+import sys
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Iterator
 
 from slicer import ids, jsonio
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import StateError
 from slicer.model import Index, LogEntry, Slice
 
+# flock is POSIX-only; on a platform without it the lock degrades to a no-op
+# rather than crashing, so a Windows user still gets a working (if unguarded)
+# tool. This is why every use is `if fcntl is not None`.
+try:
+  import fcntl
+except ImportError:  # pragma: no cover - exercised only off POSIX
+  fcntl = None  # type: ignore[assignment]
+
 DIR_NAME = ".slicer"
 INDEX_NAME = "index.json"
 LOG_NAME = "log.jsonl"
+LOCK_NAME = "lock"
 SLICES_DIR = "slices"
 RENDER_DIR = "render"
 TEMPLATES_DIR = "templates"
+
+# How long a second writer waits for the lock before giving up. Overridable so
+# tests need not sit through the real wait.
+LOCK_TIMEOUT_ENV = "SLICER_LOCK_TIMEOUT"
+DEFAULT_LOCK_TIMEOUT = 5.0
 
 
 def discover(start: Path | None = None) -> Path:
@@ -31,6 +50,67 @@ def discover(start: Path | None = None) -> Path:
   raise StateError(
     f"no {DIR_NAME}/ found in {here} or any parent; run `slicer init` in the project root"
   )
+
+
+def _lock_timeout() -> float:
+  raw = os.environ.get(LOCK_TIMEOUT_ENV)
+  if raw is None:
+    return DEFAULT_LOCK_TIMEOUT
+  try:
+    return max(0.0, float(raw))
+  except ValueError:
+    return DEFAULT_LOCK_TIMEOUT
+
+
+@contextmanager
+def project_lock(start: Path | None = None, *, timeout: float | None = None) -> Iterator[None]:
+  """Serialise writers on `.slicer/lock` so two mutations cannot interleave.
+
+  `jsonio` makes each file write atomic, but a mutation spans several files; two
+  writers racing can mint the same id or half-apply an outline. An advisory
+  `flock` around the whole mutation is the cheap, honest fix. It is exclusive
+  and best-effort: a second writer waits up to `timeout` and then fails cleanly
+  rather than clobbering, and where `flock` is unavailable it is a no-op.
+  """
+  if fcntl is None:
+    yield
+    return
+  try:
+    root = discover(start)
+  except StateError:
+    # No project here yet -- a create command like `migrate`, or a mistake the
+    # command will report itself. Nothing to serialise against, so don't lock.
+    yield
+    return
+  lock_path = root / DIR_NAME / LOCK_NAME
+  if timeout is None:
+    timeout = _lock_timeout()
+  fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
+  try:
+    deadline = time.monotonic() + timeout
+    announced = False
+    while True:
+      try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        break
+      except OSError:
+        if time.monotonic() >= deadline:
+          raise StateError(
+            "another slicer is writing this project; the lock timed out after "
+            f"{timeout:g}s. Wait for it to finish, or remove {lock_path} if no "
+            "slicer is running.",
+            code="locked",
+          ) from None
+        if not announced:
+          print("waiting for another slicer to finish...", file=sys.stderr)
+          announced = True
+        time.sleep(0.05)
+    try:
+      yield
+    finally:
+      fcntl.flock(fd, fcntl.LOCK_UN)
+  finally:
+    os.close(fd)
 
 
 @dataclass

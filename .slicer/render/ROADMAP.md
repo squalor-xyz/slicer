@@ -2,7 +2,7 @@
 
 # Roadmap
 
-51 items · — 23 · done 27 · parked 1
+51 items · — 22 · done 28 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -49,7 +49,7 @@
 | 41 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | done |
 | 42 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | done |
 | 43 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |
-| 44 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | slicer | review; robustness | — |
+| 44 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | slicer | review; robustness | done |
 | 45 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |
 | 46 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | done |
 | 47 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |

@@ -99,6 +99,7 @@ when the meaning does. Branch on the code.
 | `legacy_format` | Legacy markdown `migrate` could not read or round-trip |
 | `render` | A template named a placeholder that does not exist |
 | `io` | A file could not be read or written |
+| `locked` | Another slicer held the writer lock past the timeout; retry, or clear a stale `.slicer/lock` |
 | `corrupt` | A tracking file (index, a slice, the log) is not valid JSON/UTF-8 or is the wrong shape |
 | `bad_id` | An id is unusable as a filename, or a config prefix would produce one |
 | `case_collision` | An id differs from an existing one only in case |
@@ -165,6 +166,11 @@ a one-item outline: `slicer promote ID --file draft.md` — the same `##` item /
 section shape `import` reads, sections and lead only.
 
 **Ids are never reused.** Adding an item claims its id for the life of the project.
+
+**Writers serialise.** A mutating command holds an advisory lock (`.slicer/lock`) for its
+run, so a fan-out of concurrent `slicer` processes cannot mint duplicate ids or half-apply
+an outline. A second writer waits, then fails with `code="locked"` (exit 2) after a
+timeout; set `SLICER_LOCK_TIMEOUT` (seconds) to tune it. Read-only commands never lock.
 
 **slicer never commits.** `git` access is allowlisted to read-only subcommands plus `mv`.
 Committing is the human's.

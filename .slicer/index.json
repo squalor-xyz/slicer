@@ -960,7 +960,7 @@
       "id": "S31",
       "title": "Operations are not atomic across files, and nothing locks",
       "short_title": "Operations are not atomic across files, and nothing locks",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
