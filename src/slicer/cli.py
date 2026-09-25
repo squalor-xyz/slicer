@@ -717,17 +717,17 @@ def build_parser() -> argparse.ArgumentParser:
   padd("list", cmd_prose_list, "every addressable block, in render order")
   padd("show", cmd_prose_show, "print one block").add_argument("ref")
 
-  inner = padd("edit", cmd_prose_edit, "replace one block")
+  inner = _render_flag(padd("edit", _mutating(cmd_prose_edit), "replace one block"))
   inner.add_argument("ref")
   inner.add_argument("--file")
   inner.add_argument("--stdin", action="store_true")
 
-  inner = padd("add-pass", cmd_prose_add_pass, "declare a new pass group")
+  inner = _render_flag(padd("add-pass", _mutating(cmd_prose_add_pass), "declare a new pass group"))
   inner.add_argument("key")
   inner.add_argument("--heading", help="the markdown heading for the group")
   inner.add_argument("--after", help="insert after this pass instead of at the end")
 
-  padd("drop-pass", cmd_prose_drop_pass, "remove an empty pass group").add_argument("key")
+  _render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty pass group")).add_argument("key")
 
   sp = _render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright"))
   sp.add_argument("id")

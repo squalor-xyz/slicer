@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 47,
+  "next_id": 48,
   "preamble": "",
   "passes": [],
   "items": [
@@ -248,6 +248,28 @@
         "reason": "",
         "importance": 2,
         "urgency": 3
+      }
+    },
+    {
+      "id": "S47",
+      "title": "Extend --render to the prose mutating commands",
+      "short_title": "Extend --render to the prose mutating commands",
+      "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "follow-on from S45, which scoped prose out",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     },
     {

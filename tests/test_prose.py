@@ -223,3 +223,35 @@ class PassGroupTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class ProseRenderFlagTests(unittest.TestCase):
+  """prose mutations can render in the same step, like item mutations (S47)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    support.make_mini(repo)
+    repo.run("init")
+    repo.run("migrate", "--from", "docs/slices")
+    repo.run("render")
+    return repo
+
+  def test_ProseEdit_Render_LeavesCheckClean(self) -> None:
+    with self.repo() as repo:
+      repo.write("new.md", "A fresh preamble.")
+      code, out, _ = repo.run("prose", "edit", "preamble", "--file", str(repo.root / "new.md"), "--render")
+      self.assertEqual(code, 0, out)
+      self.assertIn("rendered", out)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_ProseAddPass_Render_LeavesCheckClean(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("prose", "add-pass", "9", "--heading", "# Pass 9", "--render")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_ProseEdit_WithoutRender_StaysStale(self) -> None:
+    with self.repo() as repo:
+      repo.write("new.md", "Another preamble.")
+      repo.run("prose", "edit", "preamble", "--file", str(repo.root / "new.md"))
+      self.assertEqual(repo.run("check")[0], 1)

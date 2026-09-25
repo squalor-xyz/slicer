@@ -147,3 +147,7 @@
 {"when": "2026-09-25T12:40:56Z", "item": "S40", "action": "status", "from": "open", "to": "done", "note": "TUI: a adds an item, fields are editable pane entries, all through ops"}
 {"when": "2026-09-25T12:48:04Z", "item": "S45", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-09-25T12:48:04Z", "item": "S45", "action": "status", "from": "open", "to": "done", "note": "--render on the nine mutating commands, via one shared wrapper"}
+{"when": "2026-09-25T12:49:55Z", "item": "S47", "action": "add", "from": "", "to": "open", "note": "Extend --render to the prose mutating commands"}
+{"when": "2026-09-25T12:49:55Z", "item": "S47", "action": "move", "from": "47", "to": "12", "note": ""}
+{"when": "2026-09-25T12:51:09Z", "item": "S47", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T12:51:09Z", "item": "S47", "action": "status", "from": "open", "to": "done", "note": "prose edit/add-pass/drop-pass gain --render, reusing the S45 helpers"}

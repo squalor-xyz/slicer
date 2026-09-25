@@ -1,0 +1,38 @@
+{
+  "id": "S47",
+  "title": "Extend --render to the prose mutating commands",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "follow-on from S45, which scoped prose out",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S45 added `--render` to the nine item-mutating commands but deliberately left the prose\ncommands out. `prose edit`, `prose add-pass`, and `prose drop-pass` all change the\nrendered roadmap too, so after one of them `slicer check` is stale with no `--render` to\navoid the manual step — the same friction S45 removed everywhere else. The scope-out was\nnoted in S45's commit as a follow-on; this closes it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — the three prose subparser registrations"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `prose edit REF --render` leaves `check` clean with no separate render.\n2. `prose add-pass` and `prose drop-pass` accept `--render` the same way.\n3. Read-only `prose list`/`show` do not gain the flag."
+    },
+    {
+      "heading": "Implement",
+      "body": "Reuse the `_mutating` wrapper and `_render_flag` helper from S45: wrap the three prose\nmutating handlers and add `--render` to their subparsers. `prose list`/`show` stay\nread-only and unwrapped."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer prose add-pass 2 --heading \"# Pass 2\" --render && slicer check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit: wrap the three prose mutating handlers with `_mutating` and add\n`--render` via `_render_flag` (cli.py), tests in test_prose.py. Reuses the S45\nhelpers."
+    }
+  ],
+  "notes": []
+}
