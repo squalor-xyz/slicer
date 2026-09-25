@@ -1,0 +1,38 @@
+{
+  "id": "S39",
+  "title": "Priority propagation and next picks the highest effective score",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "user request; critical-path propagation",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A raw score is not enough: a low-scored item that blocks a critical one is itself\ncritical, because the critical work cannot start until the blocker is done. So priority\nshould propagate up the dependency graph.\n\nThe **effective score** of an item is the max of its own base score and the effective\nscore of everything that transitively depends on it. A blocker of a Q1 item inherits 33.\nThen `next` returns the highest-effective-score item among the items that are actually\n**unblocked** — dependencies still hard-gate what is startable, and the score orders the\nstartable set, so you naturally do the blockers of important things first. `list --sort\nscore` sorts by effective score too."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/graph.py` — a reverse-dependency pass and effective-score propagation\n- `src/slicer/ops.py` — `next_item` collects the unblocked open set and returns the max\n- `src/slicer/cli.py` — `list --sort score` uses effective score"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A 2/2 item that a 3/3 item depends on has effective score 33.\n2. Propagation is transitive — a blocker of a blocker inherits.\n3. Propagation is cycle-safe (reuse the iterative cycle handling).\n4. `next` returns the highest-effective-score unblocked item, not the first in order.\n5. `next` still never returns a blocked item, whatever its score.\n6. `sync.next_item`'s deliberate table-order difference is preserved."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a reverse index and an effective-score function to `graph.py`, cycle-safe via the same\niterative DFS `cycles` uses (this is the reverse index S19 also wants). Rework\n`ops.next_item` from \"first unblocked in list order\" to \"collect the unblocked open set,\nreturn the max effective score\", ties broken by list order so the result stays stable.\nLeave `sync.next_item` alone — its table-order behaviour is test-locked on purpose.\n\n**Not in this slice:** auto-sorting the stored queue. The score drives `next` and the\n`--sort` view only; `move` remains the source of truth for stored/rendered order."
+    },
+    {
+      "heading": "Check",
+      "body": "`next` surfaces the blocker of the most critical startable work."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,38 @@
+{
+  "id": "S43",
+  "title": "verify's git cross-check emits permanent, unclearable warnings",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding; felt every run",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`verify.against_git` warns \"recorded done, but no commit subject mentions it\" for items\nfinished in a prior repository, and \"recorded open, but a commit mentions it\" for\nmaintenance commits that name an id in their subject. Four of these fire on this very\nrepo every run, and none can be cleared — the history that would satisfy them does not\nexist and never will. A check whose warnings can never go green is one people learn to\nignore, which erodes the real signal."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/verify.py` — `against_git`\n- `src/slicer/config.py` — a toggle, if that is the chosen mechanism"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The git cross-check can be disabled by config and then emits nothing.\n2. A maintenance commit naming an id in a non-completing way does not flag an open item,\n   or there is a way to acknowledge it."
+    },
+    {
+      "heading": "Implement",
+      "body": "Give the git cross-check an off switch in config, and consider narrowing it so a commit\nsubject that merely references an id (a roadmap-maintenance commit) does not read as\n\"this open item was secretly finished\". The aim is that a clean project reports nothing,\nso a warning always means something.\n\n**Not in this slice:** recording per-item content history (S20), which is the deeper fix\nfor \"did this actually land\"."
+    },
+    {
+      "heading": "Check",
+      "body": "A healthy project's `verify` is quiet; a warning means a real discrepancy."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

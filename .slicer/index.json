@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 38,
+  "next_id": 45,
   "preamble": "",
   "passes": [],
   "items": [
@@ -87,6 +87,68 @@
       }
     },
     {
+      "id": "S38",
+      "title": "Priority and criticality scoring: the score as data",
+      "short_title": "Priority and criticality scoring: the score as data",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request; Eisenhower matrix",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S39",
+      "title": "Priority propagation and next picks the highest effective score",
+      "short_title": "Priority propagation and next picks the highest effective score",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S38"
+      ],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request; critical-path propagation",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S44",
+      "title": "No way to mark an item in-progress, so the queue cannot show what is in flight",
+      "short_title": "No way to mark an item in-progress, so the queue cannot show what is in flight",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; the flow gap",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
       "id": "S23",
       "title": "park hardcodes the literal parked status",
       "short_title": "park hardcodes the literal parked status",
@@ -141,6 +203,26 @@
         ],
         "trees_literal": false,
         "findings": "review; daily friction",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S43",
+      "title": "verify's git cross-check emits permanent, unclearable warnings",
+      "short_title": "verify's git cross-check emits permanent, unclearable warnings",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; felt every run",
         "pass": "",
         "group": "",
         "reason": ""
@@ -203,6 +285,66 @@
         ],
         "trees_literal": false,
         "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S40",
+      "title": "The TUI can browse and edit but not create or set fields",
+      "short_title": "The TUI can browse and edit but not create or set fields",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; biggest TUI gap",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S41",
+      "title": "The TUI has no search, filter, jump, or help",
+      "short_title": "The TUI has no search, filter, jump, or help",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; navigation at scale",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S42",
+      "title": "TUI reordering and re-prioritizing are one step at a time",
+      "short_title": "TUI reordering and re-prioritizing are one step at a time",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; reorder at scale",
         "pass": "",
         "group": "",
         "reason": ""

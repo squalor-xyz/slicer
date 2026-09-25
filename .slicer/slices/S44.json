@@ -1,0 +1,38 @@
+{
+  "id": "S44",
+  "title": "No way to mark an item in-progress, so the queue cannot show what is in flight",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding; the flow gap",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Everything not done is `open`. Nothing records that work has started, so the queue cannot\nanswer \"what am I in the middle of\" and `next` cannot tell a started item from an\nuntouched one. Over days of work spread across items, that is the gap that stops the queue\nfrom actually driving the work — you pick manually because the tool cannot show flow."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` — an in-progress status, back-filled like retired\n- `src/slicer/ops.py` — a `start` transition\n- `src/slicer/cli.py` — a `start` command\n- `src/slicer/tui.py` — a start key"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `start` moves an item to the in-progress status.\n2. `next` surfaces an already-started item ahead of untouched ones, or skips it by choice.\n3. `list`/`stats` show what is in flight."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a configured in-progress status (back-filled for existing projects the way retired is,\nso nothing breaks) and a `start` verb, and teach `next` about it so the loop between \"what\nshould I do\" and \"what am I doing\" closes. Pairs with the scoring `next` change — once both\nland, the queue can genuinely drive the work.\n\n**Not in this slice:** time tracking or per-item timestamps beyond the existing log."
+    },
+    {
+      "heading": "Check",
+      "body": "The queue shows what is in flight, and `next` accounts for it."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

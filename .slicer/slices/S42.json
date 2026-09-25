@@ -1,0 +1,38 @@
+{
+  "id": "S42",
+  "title": "TUI reordering and re-prioritizing are one step at a time",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding; reorder at scale",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`J` and `K` move an item one position per keystroke, so dragging something from the bottom\nof a three-dozen-item queue to the top is dozens of presses. There is no move-to-top, no\nmove-to-position, and no way to set the priority score from the TUI once it exists — so\ntriage still means dropping to the CLI."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` — move-to-top / move-to-position keys, score-set keys"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A move-to-top key puts the selected item first via `ops.move`.\n2. A move-to-position prompt moves it there.\n3. Setting importance/urgency from the TUI adjusts the score."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add move-to-top and move-to-position (prompting for a target), routed through `ops.move`,\nand keys to bump importance/urgency once those fields land, so a queue can be triaged in\nplace. Pure `act` paths as usual.\n\n**Not in this slice:** a full drag interaction; discrete jumps cover the pain."
+    },
+    {
+      "heading": "Check",
+      "body": "Reordering and re-prioritizing a large queue takes a few keystrokes, not dozens."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,38 @@
+{
+  "id": "S41",
+  "title": "The TUI has no search, filter, jump, or help",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding; navigation at scale",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "With three dozen items the left pane is one long scroll. There is no search, no filter by\nstatus/tree/pass, no jump-to-id, and the only key hint is a single status-bar line — no\nhelp overlay. Finding an item means scrolling and reading. At any real backlog size the\nTUI stops scaling."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` — a filter/search state over `rows`, a jump, a `?` overlay"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A search term narrows the row list to matching titles/ids (pure `rows`-level filter).\n2. A status/tree filter narrows the list.\n3. Jump-to-id selects the row.\n4. The help overlay lists the keys `act` actually handles."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add an incremental search and a status/tree/pass filter that narrow the row list (a pure\nfunction over `rows`, testable without curses), a jump-to-id, and a `?` overlay built from\nthe same key table `act` dispatches so it cannot go stale — the lesson from S14. A richer\nstatus line showing counts and the active filter.\n\n**Not in this slice:** creating/editing items (previous slice)."
+    },
+    {
+      "heading": "Check",
+      "body": "An item is findable in a large backlog without scrolling."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

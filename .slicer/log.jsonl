@@ -95,3 +95,23 @@
 {"when": "2026-09-25T02:57:58Z", "item": "S27", "action": "status", "from": "open", "to": "done", "note": "guard jsonio reads and store from_dict; corrupt for state, io for user files"}
 {"when": "2026-09-25T03:04:45Z", "item": "S37", "action": "add", "from": "", "to": "open", "note": "The CLI rebuilds its whole argparse tree on every invocation"}
 {"when": "2026-09-25T03:05:00Z", "item": "S37", "action": "move", "from": "37", "to": "8", "note": ""}
+{"when": "2026-09-25T03:24:35Z", "item": "S38", "action": "add", "from": "", "to": "open", "note": "Priority and criticality scoring: the score as data"}
+{"when": "2026-09-25T03:24:35Z", "item": "S39", "action": "add", "from": "", "to": "open", "note": "Priority propagation and next picks the highest effective score"}
+{"when": "2026-09-25T03:24:35Z", "item": "S40", "action": "add", "from": "", "to": "open", "note": "The TUI can browse and edit but not create or set fields"}
+{"when": "2026-09-25T03:24:35Z", "item": "S41", "action": "add", "from": "", "to": "open", "note": "The TUI has no search, filter, jump, or help"}
+{"when": "2026-09-25T03:24:35Z", "item": "S42", "action": "add", "from": "", "to": "open", "note": "TUI reordering and re-prioritizing are one step at a time"}
+{"when": "2026-09-25T03:24:35Z", "item": "S43", "action": "add", "from": "", "to": "open", "note": "verify's git cross-check emits permanent, unclearable warnings"}
+{"when": "2026-09-25T03:24:35Z", "item": "S44", "action": "add", "from": "", "to": "open", "note": "No way to mark an item in-progress, so the queue cannot show what is in flight"}
+{"when": "2026-09-25T03:24:43Z", "item": "S38", "action": "move", "from": "38", "to": "5", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S39", "action": "move", "from": "39", "to": "6", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S44", "action": "move", "from": "44", "to": "7", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S23", "action": "move", "from": "8", "to": "8", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S12", "action": "move", "from": "9", "to": "9", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S32", "action": "move", "from": "10", "to": "10", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S43", "action": "move", "from": "44", "to": "11", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S37", "action": "move", "from": "12", "to": "12", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S13", "action": "move", "from": "13", "to": "13", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S24", "action": "move", "from": "14", "to": "14", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S40", "action": "move", "from": "42", "to": "15", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S41", "action": "move", "from": "43", "to": "16", "note": ""}
+{"when": "2026-09-25T03:24:43Z", "item": "S42", "action": "move", "from": "44", "to": "17", "note": ""}
