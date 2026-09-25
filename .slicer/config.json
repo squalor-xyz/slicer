@@ -51,5 +51,6 @@
   },
   "sync": {
     "targets": []
-  }
+  },
+  "git_check": false
 }

@@ -145,24 +145,25 @@ def against_git(state: State) -> VerifyReport:
   """Compare each item's recorded status with what history mentions."""
   cfg = state.config
   report = VerifyReport(checked=len(state.index.items))
+  if not cfg.git_check:
+    return report
   subjects = vcs.subjects(state.root)
   report.git = bool(subjects)
   if not subjects:
     report.findings.append(Finding("info", "", "not a git repository, or no history; git checks skipped"))
     return report
 
+  # Only the "done but never committed" direction is kept. The inverse --
+  # "open but a commit mentions it" -- fires on every commit named after a
+  # slice before the item is marked done, and on any roadmap-maintenance
+  # commit that references an id, so it is noise in exactly the workflow the
+  # tool encourages. Telling "mentions" from "completes" needs content
+  # history, which is S20; until then this direction is dropped.
   for item in state.index.items:
-    hits = [s for s in subjects if re.search(rf"\b{re.escape(item.id)}\b", s)]
-    if item.status == cfg.done_status and not hits:
+    if item.status != cfg.done_status:
+      continue
+    if not any(re.search(rf"\b{re.escape(item.id)}\b", s) for s in subjects):
       report.findings.append(
         Finding("warn", item.id, "recorded done, but no commit subject mentions it")
-      )
-    elif item.status == cfg.open_status and hits:
-      report.findings.append(
-        Finding(
-          "warn",
-          item.id,
-          f"recorded open, but {len(hits)} commit(s) mention it: {hits[0]}",
-        )
       )
   return report

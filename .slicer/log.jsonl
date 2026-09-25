@@ -156,3 +156,5 @@
 {"when": "2026-09-25T12:57:22Z", "item": "S49", "action": "add", "from": "", "to": "open", "note": "import and migrate should honour --render too"}
 {"when": "2026-09-25T12:57:22Z", "item": "S49", "action": "move", "from": "49", "to": "13", "note": ""}
 {"when": "2026-09-25T12:58:15Z", "item": "S49", "action": "status", "from": "open", "to": "done", "note": "import/migrate honour --render; _mutating skips dry-run"}
+{"when": "2026-09-25T13:02:03Z", "item": "S43", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T13:02:03Z", "item": "S43", "action": "status", "from": "open", "to": "done", "note": "git_check toggle; dropped open-but-mentioned; repo opts out due to cross-repo history"}

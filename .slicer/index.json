@@ -320,7 +320,7 @@
       "id": "S43",
       "title": "verify's git cross-check emits permanent, unclearable warnings",
       "short_title": "verify's git cross-check emits permanent, unclearable warnings",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

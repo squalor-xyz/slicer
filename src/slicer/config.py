@@ -92,6 +92,9 @@ class Config:
   next_empty: str = "nothing unmarked"
   later: dict[str, Any] = field(default_factory=lambda: json.loads(json.dumps(DEFAULT_LATER)))
   sync_targets: list[SyncTarget] = field(default_factory=list)
+  # `verify`'s git cross-check. Off for projects whose history cannot satisfy
+  # it -- a repo split from another, where items were finished before it began.
+  git_check: bool = True
 
   def status_label(self, status: str) -> str:
     return self.statuses.get(status, status)
@@ -156,6 +159,7 @@ class Config:
         "later": self.later,
       },
       "sync": {"targets": [t.to_dict() for t in self.sync_targets]},
+      "git_check": self.git_check,
     }
 
   @staticmethod
@@ -196,6 +200,7 @@ class Config:
       next_empty=pointers.get("next_empty", "nothing unmarked"),
       later=pointers.get("later", json.loads(json.dumps(DEFAULT_LATER))),
       sync_targets=[SyncTarget.from_dict(t) for t in d.get("sync", {}).get("targets", [])],
+      git_check=bool(d.get("git_check", True)),
     )
     cfg.validate()
     return cfg

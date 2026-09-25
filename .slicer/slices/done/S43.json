@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: a `git_check` config toggle (config.py), `against_git` honouring it\nand dropping the noisy \"open but mentioned\" direction (verify.py), the key\ndocumented (docs/configuration.md), and tests in test_cli.py. This repo sets\ngit_check false, since its cross-repo done items can never satisfy the check."
     }
   ],
   "notes": []

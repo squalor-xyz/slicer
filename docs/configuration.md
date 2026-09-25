@@ -58,6 +58,7 @@ and the slice files, the config is yours to hand-edit.
 | `pointers.next_empty` | `"nothing unmarked"` | `{{next}}` when nothing qualifies | **Yes** |
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
 | `sync.targets` | `[]` | Derived lines in documents slicer does not own | **Yes** |
+| `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 
 ## The ones that will surprise you
 

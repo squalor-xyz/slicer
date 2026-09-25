@@ -2,7 +2,7 @@
 
 # Roadmap
 
-49 items · — 25 · done 24
+49 items · — 24 · done 25
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -20,7 +20,7 @@
 | 12 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | slicer | follow-on from S45, which scoped prose out | done |
 | 13 | [S49](slices/S49.md) | import and migrate should honour --render too | S | slicer | the two bulk-load holdouts from S45/S47 | done |
 | 14 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | slicer | dogfooding; a temp file per section edit | — |
-| 15 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | — |
+| 15 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | done |
 | 16 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
 | 17 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | — |
 | 18 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |

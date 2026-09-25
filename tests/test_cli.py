@@ -97,11 +97,23 @@ class CliTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("no commit subject mentions it", out)
 
-  def test_Verify_OpenItemNamedInHistory_IsFlaggedForReview(self) -> None:
+  def test_Verify_OpenItemNamedInHistory_IsNotFlagged(self) -> None:
+    # A commit that merely references an open item (a slice-named or roadmap
+    # commit) no longer reads as "secretly finished" -- that was noise.
     with self.repo(git=True) as repo:
       repo.commit("land S02 second thing")
       _, out, _ = repo.run("verify")
-      self.assertIn("recorded open, but", out)
+      self.assertNotIn("recorded open, but", out)
+
+  def test_Verify_GitCheckDisabled_EmitsNoCrossCheckWarnings(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("initial import, mentioning nothing")
+      path = repo.root / ".slicer/config.json"
+      cfg = json.loads(path.read_text())
+      cfg["git_check"] = False
+      path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
+      _, out, _ = repo.run("verify")
+      self.assertNotIn("no commit subject mentions it", out)
 
   def test_Verify_NotAGitRepository_SaysSoAndStillPasses(self) -> None:
     with self.repo(git=False) as repo:
