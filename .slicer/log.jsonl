@@ -160,3 +160,25 @@
 {"when": "2026-09-25T13:02:03Z", "item": "S43", "action": "status", "from": "open", "to": "done", "note": "git_check toggle; dropped open-but-mentioned; repo opts out due to cross-repo history"}
 {"when": "2026-09-25T13:26:10Z", "item": "S50", "action": "add", "from": "", "to": "open", "note": "TUI wizard: create a roadmap interactively"}
 {"when": "2026-09-25T13:27:46Z", "item": "S51", "action": "add", "from": "", "to": "open", "note": "A mutating command still says \"now run slicer render\" after --render already rendered"}
+{"when": "2026-09-25T13:38:22Z", "item": "S07", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S34", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S31", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S06", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S13", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S46", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S44", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S02", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S24", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:22Z", "item": "S35", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S15", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S18", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S20", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S36", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S41", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S50", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S19", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S33", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S03", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S42", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S37", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-25T13:38:23Z", "item": "S51", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
