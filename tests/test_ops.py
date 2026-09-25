@@ -355,3 +355,65 @@ class DependencyTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class SetFlagGroupTests(unittest.TestCase):
+  """flags and group are settable from the CLI, not only via import (S12)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "a thing")
+    return repo
+
+  def test_Set_Flag_IsStored(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "OWNER")
+      self.assertEqual(repo.state().index.require("S01").flags, ["OWNER"])
+
+  def test_Set_Flag_ExcludesFromTheSyncPointer(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "another")
+      # exclude OWNER-flagged items from the derived next pointer
+      path = repo.root / ".slicer/config.json"
+      import json as _json
+      cfg = _json.loads(path.read_text())
+      cfg["exclude_flags"] = ["OWNER"]
+      path.write_text(_json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
+      repo.run("set", "S01", "--flag", "OWNER")
+      from slicer import sync
+      st = repo.state()
+      self.assertEqual(sync.next_item(st.index, st.config).id, "S02")
+
+  def test_Set_Flag_ReplacesTheList(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "A", "--flag", "B")
+      self.assertEqual(repo.state().index.require("S01").flags, ["A", "B"])
+      repo.run("set", "S01", "--flag", "C")
+      self.assertEqual(repo.state().index.require("S01").flags, ["C"])
+
+  def test_Set_NoFlags_ClearsThem(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "OWNER")
+      repo.run("set", "S01", "--no-flags")
+      self.assertEqual(repo.state().index.require("S01").flags, [])
+
+  def test_Set_Group_IsStoredAndRendersALabelRow(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--group", "Phase 0 — groundwork")
+      self.assertEqual(repo.state().index.require("S01").group, "Phase 0 — groundwork")
+      repo.run("render")
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      self.assertIn("| Phase 0 — groundwork |", roadmap)
+
+  def test_Set_Group_EmptyClearsIt(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--group", "Phase 0")
+      repo.run("set", "S01", "--group", "")
+      self.assertEqual(repo.state().index.require("S01").group, "")
+
+  def test_Set_FlagWithNewline_IsRefused(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("set", "S01", "--flag", "a\nb")
+      self.assertEqual(code, 2)
+      self.assertIn("newline", err)

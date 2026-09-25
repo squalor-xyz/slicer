@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "One commit: `group` into `set_fields` known plus a flag-newline guard (ops),\n`--flag`/`--no-flags`/`--group` on `set` (cli), tests in `test_ops.py`."
     }
   ],
   "notes": []

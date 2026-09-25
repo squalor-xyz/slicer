@@ -54,6 +54,9 @@ def _reject_bad_text(**fields: object) -> None:
   for tree in fields.get("trees") or []:
     if "\n" in str(tree):
       raise StateError("a tree name cannot contain a newline", code="newline_in_field")
+  for flag in fields.get("flags") or []:
+    if "\n" in str(flag):
+      raise StateError("a flag cannot contain a newline", code="newline_in_field")
 
 
 def _valid_score(name: str, value: object) -> int:
@@ -196,7 +199,7 @@ def _sync_slice(state: State, item: Item) -> None:
 def set_fields(state: State, item_id: str, **fields: object) -> Item:
   cfg = state.config
   item = state.index.require(item_id)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "importance", "urgency"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency"}
   # `--title ""` arrives as "" rather than None, so it reaches here and would
   # wipe the title. Refuse it; skipping it silently would be just as wrong.
   _reject_bad_text(**fields)

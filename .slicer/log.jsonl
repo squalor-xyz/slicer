@@ -141,3 +141,5 @@
 {"when": "2026-09-25T12:20:39Z", "item": "S46", "action": "add", "from": "", "to": "open", "note": "edit should take an inline value, not only a file, stdin, or the editor"}
 {"when": "2026-09-25T12:20:39Z", "item": "S45", "action": "move", "from": "45", "to": "11", "note": ""}
 {"when": "2026-09-25T12:20:39Z", "item": "S46", "action": "move", "from": "46", "to": "12", "note": ""}
+{"when": "2026-09-25T12:23:26Z", "item": "S12", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-25T12:23:26Z", "item": "S12", "action": "status", "from": "open", "to": "done", "note": "set gains --flag/--no-flags/--group; flags no longer import-only"}

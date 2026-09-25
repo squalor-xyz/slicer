@@ -188,7 +188,7 @@
       "id": "S12",
       "title": "flags and group have no CLI setter",
       "short_title": "flags and group have no CLI setter",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

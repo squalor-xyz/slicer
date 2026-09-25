@@ -325,10 +325,12 @@ def cmd_move(args: argparse.Namespace) -> int:
 
 def cmd_set(args: argparse.Namespace) -> int:
   state = _state(args)
+  flags = [] if args.no_flags else args.flag
   item = ops.set_fields(
     state, args.id, title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
-    pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
+    pass_key=args.pass_key, flags=flags, group=args.group,
+    importance=args.importance, urgency=args.urgency,
   )
   _emit(args, item.to_dict(), f"updated {item.id}")
   return OK
@@ -656,6 +658,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--findings")
   sp.add_argument("--depends-on", dest="depends_on", action="append")
   sp.add_argument("--pass", dest="pass_key", help="move the item to this pass group")
+  sp.add_argument("--flag", dest="flag", action="append", help="set a flag (repeatable; replaces the list)")
+  sp.add_argument("--no-flags", dest="no_flags", action="store_true", help="clear all flags")
+  sp.add_argument("--group", help="the phase-label group; --group '' clears it")
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
 
