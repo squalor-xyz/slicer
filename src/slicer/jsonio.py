@@ -14,6 +14,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from slicer.errors import StateError
+
 
 def dumps(obj: Any) -> str:
   return json.dumps(obj, ensure_ascii=False, indent=2) + "\n"
@@ -48,7 +50,10 @@ def write_text(path: Path, text: str) -> None:
 
 
 def read(path: Path) -> Any:
-  return json.loads(path.read_text(encoding="utf-8"))
+  try:
+    return json.loads(path.read_text(encoding="utf-8"))
+  except (json.JSONDecodeError, UnicodeDecodeError) as e:
+    raise StateError(f"{path}: not valid JSON: {e}", code="corrupt") from None
 
 
 def append_jsonl(path: Path, obj: Any) -> None:
@@ -60,4 +65,16 @@ def append_jsonl(path: Path, obj: Any) -> None:
 def read_jsonl(path: Path) -> list[Any]:
   if not path.exists():
     return []
-  return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+  try:
+    text = path.read_text(encoding="utf-8")
+  except UnicodeDecodeError as e:
+    raise StateError(f"{path}: not valid UTF-8: {e}", code="corrupt") from None
+  out: list[Any] = []
+  for n, line in enumerate(text.splitlines(), 1):
+    if not line.strip():
+      continue
+    try:
+      out.append(json.loads(line))
+    except json.JSONDecodeError as e:
+      raise StateError(f"{path}:{n}: not valid JSON: {e}", code="corrupt") from None
+  return out

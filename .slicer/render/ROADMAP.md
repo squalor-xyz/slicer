@@ -2,11 +2,11 @@
 
 # Roadmap
 
-36 items · — 24 · done 12
+36 items · — 23 · done 13
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | slicer | review; sibling of S22 | — |
+| 1 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | slicer | review; sibling of S22 | done |
 | 2 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | slicer | review; data loss | — |
 | 3 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | slicer | review; core invariant | — |
 | 4 | [S30](slices/S30.md) | verify misses several inconsistent states | M | slicer | review; gate completeness | — |

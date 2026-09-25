@@ -123,7 +123,22 @@ class State:
     jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())
 
   def history(self) -> list[LogEntry]:
-    return [LogEntry.from_dict(d) for d in jsonio.read_jsonl(self.dir / LOG_NAME)]
+    path = self.dir / LOG_NAME
+    return [_from_dict(path, LogEntry.from_dict, d) for d in jsonio.read_jsonl(path)]
+
+
+def _from_dict(path: Path, loader, data):
+  """Build a dataclass from parsed JSON, naming the file if it is the wrong shape.
+
+  `jsonio.read` already reports bad JSON and encoding; this catches a file
+  that is valid JSON but the wrong shape -- a hand-edit that dropped a
+  required key, say -- so it reports rather than tracebacking with a bare
+  KeyError from deep inside a from_dict.
+  """
+  try:
+    return loader(data)
+  except (KeyError, TypeError, ValueError) as e:
+    raise StateError(f"{path}: not usable, a required field is missing or malformed: {e}", code="corrupt") from None
 
 
 def load(root: Path | None = None) -> State:
@@ -133,7 +148,7 @@ def load(root: Path | None = None) -> State:
   index_path = sdir / INDEX_NAME
   if not index_path.is_file():
     raise StateError(f"{index_path}: not found; run `slicer init` first")
-  index = Index.from_dict(jsonio.read(index_path))
+  index = _from_dict(index_path, Index.from_dict, jsonio.read(index_path))
   # `ids.format_id` reads the index's copy of the scheme, not the config's, so
   # validating the config alone leaves a hand-edited index able to crash the
   # formatter. Checked before the reconciliation below, so the same bad value
@@ -166,6 +181,6 @@ def load(root: Path | None = None) -> State:
     if not folder.is_dir():
       continue
     for path in sorted(folder.glob("*.json")):
-      sl = Slice.from_dict(jsonio.read(path))
+      sl = _from_dict(path, Slice.from_dict, jsonio.read(path))
       slices[sl.id] = sl
   return State(root=base, config=config, index=index, slices=slices)

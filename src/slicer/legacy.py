@@ -258,6 +258,14 @@ def _diff(want: str, got: str, limit: int = 20) -> str:
   return "\n".join(lines[:limit])
 
 
+def _read(path: Path) -> str:
+  """Read a legacy file, reporting bad bytes rather than tracebacking."""
+  try:
+    return path.read_text(encoding="utf-8")
+  except UnicodeDecodeError as e:
+    raise LegacyImportError(f"{path}: not valid UTF-8: {e}") from None
+
+
 def read_tree(source: Path, done_dir: str = "done") -> tuple[LegacyIndex, dict[str, LegacySlice], dict[str, bool]]:
   """Parse an index plus every slice file beside and below it.
 
@@ -266,7 +274,7 @@ def read_tree(source: Path, done_dir: str = "done") -> tuple[LegacyIndex, dict[s
   index_path = source / "README.md"
   if not index_path.exists():
     raise LegacyImportError(f"{index_path}: no index found")
-  index = roundtrip_index(index_path.read_text(encoding="utf-8"), path=str(index_path))
+  index = roundtrip_index(_read(index_path), path=str(index_path))
 
   slices: dict[str, LegacySlice] = {}
   located: dict[str, bool] = {}
@@ -276,7 +284,7 @@ def read_tree(source: Path, done_dir: str = "done") -> tuple[LegacyIndex, dict[s
     for md in sorted(folder.glob("*.md")):
       if md.name == "README.md":
         continue
-      parsed = roundtrip_slice(md.read_text(encoding="utf-8"), path=str(md))
+      parsed = roundtrip_slice(_read(md), path=str(md))
       if parsed.id in slices:
         raise LegacyImportError(f"{md}: duplicate slice id {parsed.id}")
       slices[parsed.id] = parsed

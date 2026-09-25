@@ -10,7 +10,7 @@
       "id": "S27",
       "title": "Corrupted or mis-encoded tracking files crash instead of reporting",
       "short_title": "Corrupted or mis-encoded tracking files crash instead of reporting",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

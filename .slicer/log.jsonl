@@ -91,3 +91,5 @@
 {"when": "2026-09-25T02:51:16Z", "item": "S32", "action": "move", "from": "32", "to": "7", "note": ""}
 {"when": "2026-09-25T02:51:17Z", "item": "S13", "action": "move", "from": "20", "to": "8", "note": ""}
 {"when": "2026-09-25T02:51:18Z", "item": "S24", "action": "move", "from": "30", "to": "9", "note": ""}
+{"when": "2026-09-25T02:57:58Z", "item": "S27", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-25T02:57:58Z", "item": "S27", "action": "status", "from": "open", "to": "done", "note": "guard jsonio reads and store from_dict; corrupt for state, io for user files"}

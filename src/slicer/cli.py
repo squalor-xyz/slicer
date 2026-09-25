@@ -105,6 +105,14 @@ the config reads as a deliberate setting.
 """
 
 
+def _read_user_file(path: Path | str) -> str:
+  """Read a file the user pointed us at, reporting bad bytes as a clean io error."""
+  try:
+    return Path(path).read_text(encoding="utf-8")
+  except UnicodeDecodeError as e:
+    raise StateError(f"{path}: not valid UTF-8: {e}", code="io") from None
+
+
 def cmd_import(args: argparse.Namespace) -> int:
   if getattr(args, "legacy_from", None) is not None:
     raise StateError(
@@ -134,7 +142,7 @@ def cmd_import(args: argparse.Namespace) -> int:
   path = Path(args.file)
   if not path.is_absolute():
     path = Path(args.root or ".").resolve() / path
-  specs = outline.parse(path.read_text(encoding="utf-8"), path=str(path))
+  specs = outline.parse(_read_user_file(path), path=str(path))
 
   if args.dry_run:
     report = ops.outline_report(state, specs, force=args.force)
@@ -331,7 +339,7 @@ def _via_editor(initial: str) -> str | None:
     done = subprocess.run([*editor.split(), path], check=False)
     if done.returncode != 0:
       return None
-    return Path(path).read_text(encoding="utf-8").rstrip("\n")
+    return _read_user_file(path).rstrip("\n")
   finally:
     Path(path).unlink(missing_ok=True)
 
@@ -339,7 +347,7 @@ def _via_editor(initial: str) -> str | None:
 def _body_from(args: argparse.Namespace, initial: str) -> str | None:
   """The new text for an edit: a file, stdin, or $EDITOR."""
   if args.file:
-    return Path(args.file).read_text(encoding="utf-8").rstrip("\n")
+    return _read_user_file(args.file).rstrip("\n")
   if args.stdin:
     return sys.stdin.read().rstrip("\n")
   return _via_editor(initial)

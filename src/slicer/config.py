@@ -193,6 +193,9 @@ class Config:
       raw = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
       raise ConfigError(f"{path}: not found; run `slicer init` first") from None
-    except json.JSONDecodeError as e:
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
       raise ConfigError(f"{path}: invalid JSON: {e}") from None
-    return Config.from_dict(raw)
+    try:
+      return Config.from_dict(raw)
+    except (KeyError, TypeError) as e:
+      raise ConfigError(f"{path}: not a usable config: {e}") from None
