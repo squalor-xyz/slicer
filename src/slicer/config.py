@@ -82,6 +82,7 @@ class Config:
   open_status: str = "open"
   done_status: str = "done"
   retired_status: str = "retired"
+  parked_status: str = "parked"
   sections: list[str] = field(default_factory=lambda: list(DEFAULT_SECTIONS))
   boundary: str = "**Not in this slice:**"
   done_dir: str = "done"
@@ -108,6 +109,8 @@ class Config:
       raise ConfigError(f"done_status {self.done_status!r} is not in statuses")
     if self.retired_status and self.retired_status not in self.statuses:
       raise ConfigError(f"retired_status {self.retired_status!r} is not in statuses")
+    if self.parked_status and self.parked_status not in self.statuses:
+      raise ConfigError(f"parked_status {self.parked_status!r} is not in statuses")
     if len({self.done_dir, self.retired_dir, ""}) != 3:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
     if len(set(self.statuses.values())) != len(self.statuses):
@@ -141,6 +144,7 @@ class Config:
       "open_status": self.open_status,
       "done_status": self.done_status,
       "retired_status": self.retired_status,
+      "parked_status": self.parked_status,
       "sections": list(self.sections),
       "boundary": self.boundary,
       "done_dir": self.done_dir,
@@ -166,6 +170,14 @@ class Config:
     retired = d.get("retired_status", "retired")
     if retired and retired not in statuses:
       statuses[retired] = retired
+    # `parked` was always a default status, so it is not injected into statuses:
+    # a project that dropped it means to have no park state. Default the field
+    # to "parked" only when the status is actually present, else empty -- an
+    # empty parked_status makes `park` refuse cleanly instead of naming a status
+    # the project never had.
+    parked = d.get("parked_status")
+    if parked is None:
+      parked = "parked" if "parked" in statuses else ""
     cfg = Config(
       version=int(d.get("version", 1)),
       id_prefix=ident.get("prefix", "S"),
@@ -174,6 +186,7 @@ class Config:
       open_status=d.get("open_status", "open"),
       done_status=d.get("done_status", "done"),
       retired_status=retired,
+      parked_status=parked,
       sections=list(d.get("sections", DEFAULT_SECTIONS)),
       boundary=d.get("boundary", "**Not in this slice:**"),
       done_dir=d.get("done_dir", "done"),

@@ -166,7 +166,7 @@
       "id": "S23",
       "title": "park hardcodes the literal parked status",
       "short_title": "park hardcodes the literal parked status",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

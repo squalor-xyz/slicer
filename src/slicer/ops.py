@@ -253,8 +253,11 @@ def done(state: State, item_id: str, *, note: str = "") -> Item:
   return set_status(state, item_id, state.config.done_status, note=note)
 
 
-def park(state: State, item_id: str, status: str = "parked") -> Item:
-  return set_status(state, item_id, status)
+def park(state: State, item_id: str, *, note: str = "") -> Item:
+  cfg = state.config
+  if not cfg.parked_status:
+    raise StateError("this project declares no parked status; set parked_status in config")
+  return set_status(state, item_id, cfg.parked_status, note=note)
 
 
 def unpark(state: State, item_id: str) -> Item:

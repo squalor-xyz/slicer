@@ -387,6 +387,13 @@ def _status_cmd(status_attr: str):
   return run
 
 
+def cmd_park(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = ops.park(state, args.id, note=getattr(args, "note", "") or "")
+  _emit(args, item.to_dict(), f"{item.id} -> {state.config.status_label(item.status)}")
+  return OK
+
+
 def cmd_prose_list(args: argparse.Namespace) -> int:
   state = _state(args)
   entries = []
@@ -662,7 +669,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("id")
   sp.add_argument("--note", help="one line for the log")
 
-  sp = add("park", _status_cmd("parked"), "set an item aside")
+  sp = add("park", cmd_park, "set an item aside")
   sp.add_argument("id")
 
   sp = add("unpark", _status_cmd("open_status"), "return a parked item to the queue")

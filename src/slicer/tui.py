@@ -189,7 +189,7 @@ def act(
       ops.set_status(state, target, cfg.done_status)
       return ActResult(f"{target} done")
     if key == "p":
-      ops.set_status(state, target, "parked")
+      ops.park(state, target)
       return ActResult(f"{target} parked")
     if key == "u":
       ops.set_status(state, target, cfg.open_status)

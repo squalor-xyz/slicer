@@ -31,7 +31,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit."
+      "body": "One commit: `parked_status` on `Config` (config.py), `ops.park` reading it,\nthe TUI `p` branch and the `park` CLI command routed through `ops.park`, and\ntests in `test_park.py`."
     }
   ],
   "notes": []
