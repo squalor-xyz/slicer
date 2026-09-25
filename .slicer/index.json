@@ -608,7 +608,7 @@
       "id": "S06",
       "title": "Publish 0.1.0 to PyPI once CI is green on a tag",
       "short_title": "Publish 0.1.0 to PyPI once CI is green on a tag",
-      "status": "open",
+      "status": "parked",
       "has_slice": false,
       "depends_on": [],
       "fields": {

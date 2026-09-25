@@ -2,7 +2,7 @@
 
 # Roadmap
 
-51 items · — 24 · done 27
+51 items · — 23 · done 27 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -33,7 +33,7 @@
 | 25 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
 | 26 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
 | 27 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
-| 28 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
+| 28 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | parked |
 | 29 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | done |
 | 30 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
 | 31 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
