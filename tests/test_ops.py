@@ -53,6 +53,64 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertIn("--force", err)
 
+  def test_Promote_FromASourceFile_PopulatesTheSections(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write(
+        "draft.md",
+        "## a new idea\n\n### Why\nBecause it matters.\n\n### Implement\nDo the thing.\n",
+      )
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S05"]
+      # Configured order is kept; the source only fills the two it named.
+      self.assertEqual([s.heading for s in sl.sections], repo.state().config.sections)
+      self.assertEqual(sl.section("Why").body, "Because it matters.")
+      self.assertEqual(sl.section("Implement").body, "Do the thing.")
+      self.assertEqual(sl.section("Files").body, "")
+
+  def test_Promote_SourceLeadParagraph_LandsOnTheSlice(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\n\nA framing sentence.\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().slices["S05"].lead, ["A framing sentence."])
+
+  def test_Promote_SourceWithItemKeys_RefusesAndPointsToSet(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\nsize: M\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2)
+      self.assertIn("size", err)
+      self.assertIn("set", err)
+      self.assertFalse(repo.state().index.require("S05").has_slice)
+
+  def test_Promote_SourceWithTwoItems_Refuses(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      # A writer who used '##' for sections gets two items, not one; say so.
+      repo.write("draft.md", "## Why\nBecause.\n\n## Implement\nDo it.\n")
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2)
+      self.assertIn("one item", err)
+
+  def test_Promote_SourceWithNoSections_Refuses(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\n")
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2)
+      self.assertIn("no sections", err)
+
+  def test_Promote_FromSourceAlreadyPromoted_RefusesWithoutForce(self) -> None:
+    with self.repo() as repo:
+      repo.write("draft.md", "## S02\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("promote", "S02", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2)
+      self.assertIn("--force", err)
+
   def test_Move_ItemBeforeAnother_ReordersTheQueueOnly(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("move", "S04", "--before", "S01")
@@ -305,6 +363,29 @@ class OpsTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("add", "an idea")
       code, _, err = repo.run("edit", "S05", "--section", "Why", "--stdin")
+      self.assertEqual(code, 2)
+      self.assertIn("promote", err)
+
+  def test_Show_Section_ReturnsOneSectionBody(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "an idea")
+      repo.write("draft.md", "## an idea\n\n### Why\nThe reason.\n\n### Implement\nThe plan.\n")
+      repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      code, out, err = repo.run("show", "S05", "--section", "Why")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out.strip(), "The reason.")
+      self.assertNotIn("The plan.", out)
+
+  def test_Show_MissingSection_ErrorsClearly(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("show", "S02", "--section", "Nonexistent")
+      self.assertEqual(code, 2)
+      self.assertIn("Nonexistent", err)
+
+  def test_Show_SectionOnUnpromotedItem_RefusesLikeEdit(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "an idea")
+      code, _, err = repo.run("show", "S05", "--section", "Why")
       self.assertEqual(code, 2)
       self.assertIn("promote", err)
 

@@ -51,10 +51,10 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | Command | Payload |
 |---|---|
 | `list` | array of items |
-| `show ID` | item, plus `slice` when it has one |
+| `show ID` | item, plus `slice` when it has one; with `--section NAME`, `{id, section, body}` |
 | `next` | item plus `path`; or `{"item": null, "blocked": [...]}` |
 | `add`, `set`, `done`, `park`, `unpark` | the item |
-| `promote` | the slice |
+| `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
 | `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems}` |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |
 | `move` | `{id, position}` |
@@ -89,6 +89,9 @@ when the meaning does. Branch on the code.
 |---|---|
 | `no_such_item` | No item with that id, from any command |
 | `no_slice` | The item exists but has not been promoted |
+| `no_such_section` | `show --section` named a heading the slice does not have |
+| `bad_promote_source` | A `promote` source is not one item, or names no sections |
+| `field_in_promote_source` | A `promote` source set an item field; those belong on `add`/`set` |
 | `already_exists` | `init` on an initialised project |
 | `state` | The operation does not apply — unknown status, already promoted, and similar |
 | `config` | `.slicer/config.json` is missing, malformed or self-contradictory |
@@ -156,8 +159,10 @@ blocker first; dependencies still hard-gate, so a blocked item is never returned
 its score. Take it, do it, `slicer done ID --note "..."`.
 
 **One section at a time.** `slicer edit ID --section "Why" --stdin` replaces one
-section's body. There is no append; read the current body with `slicer show ID --json`
-first if you mean to add to it.
+section's body, and `slicer show ID --section "Why"` reads that one body back (no append
+yet, so read before you mean to add to it). To fill a whole slice at once, hand `promote`
+a one-item outline: `slicer promote ID --file draft.md` — the same `##` item / `###`
+section shape `import` reads, sections and lead only.
 
 **Ids are never reused.** Adding an item claims its id for the life of the project.
 

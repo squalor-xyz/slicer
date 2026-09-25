@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from slicer import graph, ids, prose, vcs
+from slicer import graph, ids, outline, prose, vcs
 from slicer.errors import StateError
 from slicer.model import Item, LogEntry, PassInfo, Section, Slice
 from slicer.store import State
@@ -97,32 +97,101 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
   return item
 
 
-def promote(state: State, item_id: str, *, force: bool = False) -> Slice:
-  """Give an item a slice file with the project's configured sections."""
+def promote(
+  state: State,
+  item_id: str,
+  *,
+  force: bool = False,
+  source: str | None = None,
+  source_path: str = "<promote>",
+) -> Slice:
+  """Give an item a slice file with the project's configured sections.
+
+  With no `source` the sections are seeded empty, as they always were. With a
+  `source` -- a one-item outline, the same shape `import` reads -- the entry's
+  `###` sections and lead prose fill the slice in one call, so a fully-specified
+  slice needs one command instead of a `promote` plus one `edit` per section.
+  """
   cfg = state.config
   item = state.index.get(item_id)
   if item is None:
     raise StateError(f"no such item: {item_id}", code="no_such_item")
   if item.has_slice and not force:
     raise StateError(f"{item_id} already has a slice; pass --force to overwrite it")
-  sections = [Section(heading=h, body="") for h in cfg.sections]
-  if sections and cfg.boundary:
-    sections[-1].body = f"{cfg.boundary}"
-  sl = Slice(
-    id=item.id,
-    title=item.title,
-    findings_note=item.findings,
-    size=item.size,
-    flags=list(item.flags),
-    trees_note=", ".join(item.trees),
-    trees_plural=len(item.trees) > 1,
-    sections=sections,
-  )
+  if source is not None:
+    sl = _slice_from_source(source, item, cfg, source_path)
+  else:
+    sections = [Section(heading=h, body="") for h in cfg.sections]
+    if sections and cfg.boundary:
+      sections[-1].body = f"{cfg.boundary}"
+    sl = Slice(
+      id=item.id,
+      title=item.title,
+      findings_note=item.findings,
+      size=item.size,
+      flags=list(item.flags),
+      trees_note=", ".join(item.trees),
+      trees_plural=len(item.trees) > 1,
+      sections=sections,
+    )
   item.has_slice = True
   state.save_slice(sl)
   state.save_index()
   _record(state, item.id, "promote")
   return sl
+
+
+def _slice_from_source(source: str, item: Item, cfg: object, path: str) -> Slice:
+  """Parse a one-item outline into a populated slice for `promote`.
+
+  The source reuses the outline grammar -- `##` names the item, `###` its
+  sections -- so there is no second slice format to learn or maintain. The item
+  already owns its title and fields, so the source is sections and lead only:
+  its `##` title is ignored, and any item-level key is refused rather than
+  silently dropped, pointing the writer at `add`/`set` where those belong.
+  """
+  specs = outline.parse(source, path=path)
+  if len(specs) != 1:
+    raise StateError(
+      f"{path}: a promote source is one item, but found {len(specs)}; "
+      "an item is a '## ' heading and its sections are '### '",
+      code="bad_promote_source",
+    )
+  spec = specs[0]
+  _reject_promote_source_keys(spec, path)
+  if not spec.has_slice:
+    raise StateError(
+      f"{path}: the source has no sections; write them as '### ' headings, "
+      "or omit --file/--stdin to seed empty ones",
+      code="bad_promote_source",
+    )
+  return _slice_from_spec(spec, item, cfg)
+
+
+# Item fields an outline entry can carry, paired with their neutral default. A
+# promote source names none of them -- the item already has them -- so any that
+# is set is a mistake worth naming rather than dropping.
+_SOURCE_FIELD_DEFAULTS = {
+  "size": "",
+  "trees": [],
+  "findings": "",
+  "pass_key": "",
+  "group": "",
+  "status": "",
+  "depends": [],
+  "importance": 2,
+  "urgency": 2,
+}
+
+
+def _reject_promote_source_keys(spec: object, path: str) -> None:
+  for name, default in _SOURCE_FIELD_DEFAULTS.items():
+    if getattr(spec, name) != default:
+      raise StateError(
+        f"{path}: a promote source cannot set {name!r}; the item already owns "
+        "its fields -- set them with `add` or `set`",
+        code="field_in_promote_source",
+      )
 
 
 def move(

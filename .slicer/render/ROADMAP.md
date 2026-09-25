@@ -2,7 +2,7 @@
 
 # Roadmap
 
-51 items · — 25 · done 26
+51 items · — 24 · done 27
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | 43 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |
 | 44 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | slicer | review; robustness | — |
 | 45 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |
-| 46 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | — |
+| 46 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | done |
 | 47 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
 | 48 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |
 | 49 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | — |

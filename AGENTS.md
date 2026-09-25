@@ -60,6 +60,17 @@ PYTHONPATH=src python3 -m slicer check
 Every mutating command takes `--render`, which folds the separate `render` step into the
 mutation — `slicer done S07 --render` is the two middle steps in one.
 
+To file a fully-specified slice in one step rather than a `promote` plus one `edit` per
+section, hand `promote` a one-item outline (the same `##` item / `### section` shape
+`import` reads) via `--file` or `--stdin`. The item keeps its own fields, so the source is
+sections and lead only:
+
+```sh
+PYTHONPATH=src python3 -m slicer add "Some title"
+PYTHONPATH=src python3 -m slicer promote S07 --file draft.md --render
+PYTHONPATH=src python3 -m slicer show S07 --section Why    # read one section back
+```
+
 Several items at once go through an outline, which is also how the agent-surface items
 were filed:
 

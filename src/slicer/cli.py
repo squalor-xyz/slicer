@@ -315,6 +315,20 @@ def cmd_show(args: argparse.Namespace) -> int:
   state = _state(args)
   item = state.index.require(args.id)
   sl = state.slices.get(args.id)
+  if args.section is not None:
+    # The read counterpart to `edit --section`: one section's body, nothing
+    # else, so an agent can round-trip a section without re-parsing the render.
+    if sl is None:
+      raise StateError(
+        f"{args.id} has no slice; run `slicer promote {args.id}` first", code="no_slice"
+      )
+    section = sl.section(args.section)
+    if section is None:
+      raise StateError(
+        f"{args.id} has no section {args.section!r}", code="no_such_section"
+      )
+    _emit(args, {"id": args.id, "section": section.heading, "body": section.body}, section.body)
+    return OK
   if sl is None:
     _emit(args, item.to_dict(), f"{item.id}  {item.display_title()}\n(no slice yet; run `slicer promote {item.id}`)")
     return OK
@@ -336,7 +350,15 @@ def cmd_add(args: argparse.Namespace) -> int:
 
 def cmd_promote(args: argparse.Namespace) -> int:
   state = _state(args)
-  sl = ops.promote(state, args.id, force=args.force)
+  source = None
+  source_path = "<promote>"
+  if args.file:
+    source = _read_user_file(args.file)
+    source_path = args.file
+  elif args.stdin:
+    source = sys.stdin.read()
+    source_path = "<stdin>"
+  sl = ops.promote(state, args.id, force=args.force, source=source, source_path=source_path)
   _emit(args, sl.to_dict(), f"promoted {sl.id} -> {state.slice_path(sl.id)}")
   return OK
 
@@ -651,6 +673,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("show", cmd_show, "print one slice")
   sp.add_argument("id")
+  sp.add_argument("--section", help="print only this section's body")
 
   sp = _render_flag(add("add", _mutating(cmd_add), "append a roadmap item"))
   sp.add_argument("title")
@@ -666,6 +689,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp = _render_flag(add("promote", _mutating(cmd_promote), "give an item a slice file"))
   sp.add_argument("id")
   sp.add_argument("--force", action="store_true")
+  sp.add_argument("--file", help="a one-item outline whose sections fill the slice")
+  sp.add_argument("--stdin", action="store_true", help="read that outline from stdin")
 
   sp = _render_flag(add("move", _mutating(cmd_move), "reorder the queue"))
   sp.add_argument("id")

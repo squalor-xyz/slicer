@@ -226,9 +226,22 @@ $ slicer edit S01 --section Why --file why.md
 updated S01 / Why
 ```
 
-`edit` takes `--file`, `--stdin`, or nothing — in which case it opens `$EDITOR`. For
-anything more than one section, `slicer tui` is faster: `tab` moves between the queue
-and the detail pane, and `e` opens `$EDITOR` on whatever is selected.
+`edit` takes `--file`, `--stdin`, or nothing — in which case it opens `$EDITOR`. Read one
+section back with `slicer show S01 --section Why`, which prints just that body.
+
+To fill the whole slice in one call rather than one `edit` per section, hand `promote` a
+one-item outline instead — the same `##` item / `### section` shape `import` reads (see
+[import.md](import.md)). The item already owns its fields, so the source is sections and
+lead only:
+
+```console
+$ slicer promote S01 --file draft.md
+promoted S01 -> ~/code/my-project/.slicer/slices/S01.json
+```
+
+For anything more than one section, `slicer tui` is also faster than repeated `edit`s:
+`tab` moves between the queue and the detail pane, and `e` opens `$EDITOR` on whatever is
+selected.
 
 Both `show` and `edit` tell you when an item has not been promoted:
 

@@ -1004,7 +1004,7 @@
       "id": "S34",
       "title": "Filing a detailed slice takes promote plus one edit per section",
       "short_title": "Filing a detailed slice takes promote plus one edit per section",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

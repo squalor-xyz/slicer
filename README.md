@@ -62,11 +62,11 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
 | `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency]` | append a roadmap item (no slice file yet) |
-| `promote ID` | give an item a slice file from the template |
+| `promote ID [--file/--stdin]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `next` | the highest-priority startable item (highest effective score; dependencies still gate) |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
-| `show ID` | print one slice |
+| `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
 | `edit ID --section NAME [--file/--stdin]` | replace one section (or open `$EDITOR`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
