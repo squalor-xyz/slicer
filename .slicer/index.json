@@ -630,7 +630,7 @@
       "id": "S07",
       "title": "Copyright holder is unnamed in LICENSE and pyproject",
       "short_title": "Copyright holder is unnamed in LICENSE and pyproject",
-      "status": "open",
+      "status": "done",
       "has_slice": false,
       "depends_on": [],
       "fields": {

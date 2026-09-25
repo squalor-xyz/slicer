@@ -9,6 +9,7 @@ description = "Roadmap and slice manager for the review -> slice -> implement lo
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
+authors = [{ name = "Squalor LLC" }]
 dependencies = []
 
 [project.urls]
