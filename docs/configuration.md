@@ -16,6 +16,7 @@ and the slice files, the config is yours to hand-edit.
   "open_status": "open",
   "done_status": "done",
   "retired_status": "retired",
+  "parked_status": "parked",
   "sections": ["Why", "Files", "Failing tests", "Implement", "Check", "Git"],
   "boundary": "**Not in this slice:**",
   "done_dir": "done",
@@ -35,7 +36,8 @@ and the slice files, the config is yours to hand-edit.
       "suffix": ""
     }
   },
-  "sync": { "targets": [] }
+  "sync": { "targets": [] },
+  "git_check": true
 }
 ```
 
@@ -58,6 +60,7 @@ and the slice files, the config is yours to hand-edit.
 | `pointers.next_empty` | `"nothing unmarked"` | `{{next}}` when nothing qualifies | **Yes** |
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
 | `sync.targets` | `[]` | Derived lines in documents slicer does not own | **Yes** |
+| `parked_status` | `"parked"` | Which status `park` sets, and what an item returns *from*. **Empty string = the project has no park state, and `park` refuses cleanly** | Yes if nothing is parked |
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 
 ## The ones that will surprise you
@@ -80,6 +83,12 @@ status`. If you must, move the directory yourself with `git mv` in the same chan
 
 **Two statuses may not share a label**, and `retired_dir` may not equal `done_dir`. Both
 are rejected at load with a `ConfigError` naming the conflict.
+
+**`parked_status` defaults only when the status exists.** If the key is absent, it
+becomes `"parked"` when `parked` is in `statuses`, else empty — and `parked` is never
+injected into `statuses`, so a project that dropped it keeps no park state rather than
+having it resurrected. Set `parked_status: ""` to opt out explicitly; `park` then refuses
+with a clear message.
 
 **A missing `retired_status` is back-filled.** A project initialised before `remove`
 existed has no retired status; exactly that one key is added on load, so a project that

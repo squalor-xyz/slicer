@@ -101,9 +101,13 @@ command, and `slicer render` deliberately does not reproduce the legacy shape.
 
 ## Two pointers that disagree on purpose
 
-`slicer next` is dependency-aware: it returns the first open item whose dependencies are
-all done. `sync.next_item` is not: it returns the first open row in table order, because
-it reproduces a queue a human reads top-down. A test locks the difference so nobody
+`slicer next` is dependency-aware and score-ranked: among the open items whose
+dependencies are all done, it returns the one with the highest *effective* score.
+Effective score propagates a priority up the dependency graph (`graph.effective_scores`, a
+fixed-point relaxation, cycle-safe), so a blocker of a critical item inherits its priority
+and is surfaced first; dependencies still hard-gate, so a blocked item is never returned.
+`sync.next_item` is neither: it returns the first open row in table order, because it
+reproduces a queue a human reads top-down. A test locks the difference so nobody
 reconciles them by accident.
 
 ## What `check` is
@@ -111,8 +115,9 @@ reconciles them by accident.
 `check.run` composes render staleness, sync drift and `verify.offline`. It never shells
 out to git, so it is safe to run anywhere — that is why it, and not `verify`, is the CI
 gate. `slicer verify` additionally reads `git log --all` to compare the index against
-what was actually committed; it reports and never rewrites, and it treats a repo with no
-history as a pass.
+what was actually committed — warning when an item is marked done but no commit mentions
+it — unless `git_check` is off in config; it reports and never rewrites, and it treats a
+repo with no history as a pass.
 
 ## Exit codes
 

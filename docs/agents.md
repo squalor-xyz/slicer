@@ -32,14 +32,19 @@ $ slicer next --json
     "findings": "G1",
     "pass": "",
     "group": "Phase 0 — groundwork",
-    "reason": ""
+    "reason": "",
+    "importance": 2,
+    "urgency": 2
   },
   "path": "~/code/my-project/.slicer/slices/S01.json"
 }
 ```
 
 Two shapes recur. An **item** is the object above minus `path`; its soft fields are
-nested under `fields`, and the pass key is spelled `pass`. A **slice** is
+nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
+1–3) are the Eisenhower axes. The combined score and quadrant are derived, not stored, so
+they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
+`list --sort score`. A **slice** is
 `{id, title, lead[], depends_note, findings_note, size, flags[], trees_note,
 trees_plural, sections: [{heading, body}], notes[]}`.
 
@@ -91,6 +96,15 @@ when the meaning does. Branch on the code.
 | `legacy_format` | Legacy markdown `migrate` could not read or round-trip |
 | `render` | A template named a placeholder that does not exist |
 | `io` | A file could not be read or written |
+| `corrupt` | A tracking file (index, a slice, the log) is not valid JSON/UTF-8 or is the wrong shape |
+| `bad_id` | An id is unusable as a filename, or a config prefix would produce one |
+| `case_collision` | An id differs from an existing one only in case |
+| `already_exists` | `init` or `migrate` over a project that already has state |
+| `blank_title` | A title is empty or whitespace |
+| `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline |
+| `editor_aborted` | `$EDITOR` exited non-zero; nothing changed |
+| `wrong_command` | e.g. `import --from` (that flag belongs to `migrate`) |
+| `usage` | The invocation is missing something it needs |
 
 ## Exit codes
 
@@ -131,11 +145,15 @@ means an agent can decide from the dry run alone.
 **Never edit `.slicer/*.json`.** Use the commands. The index, the slice files and
 `.slicer/render/` have to agree, and `slicer check` is what proves they do.
 
-**Render after mutating, and check.** Nothing renders implicitly. `slicer render` then
-`slicer check`; a non-zero check means the work is not finished.
+**Render after mutating, and check.** No command renders implicitly, but every mutating
+command takes `--render` to do it in the same step (`slicer done S01 --render`). Otherwise
+run `slicer render` then `slicer check`; a non-zero check means the work is not finished.
 
-**`slicer next` is the queue.** It returns the first open item whose dependencies are all
-done. Take it, do it, `slicer done ID --note "..."`.
+**`slicer next` is the queue.** It returns the highest-priority *startable* item — the
+one with the highest effective score among items whose dependencies are all done. A
+blocker of a critical item inherits that item's priority, so `next` naturally surfaces the
+blocker first; dependencies still hard-gate, so a blocked item is never returned whatever
+its score. Take it, do it, `slicer done ID --note "..."`.
 
 **One section at a time.** `slicer edit ID --section "Why" --stdin` replaces one
 section's body. There is no append; read the current body with `slicer show ID --json`

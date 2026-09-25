@@ -98,9 +98,9 @@ $ slicer add "Fail loudly on a missing key" --size S --tree core
 added S02  Fail loudly on a missing key
 ```
 
-`add` takes `--size`, `--tree` (repeatable), `--findings`, `--status`, `--pass` and
-`--id`. It does **not** take `--depends-on` or `--short-title` — `set` does, so
-dependencies are a second step:
+`add` takes `--size`, `--tree` (repeatable), `--findings`, `--status`, `--pass`, `--id`,
+and `--importance`/`--urgency` (the priority axes, 1–3). It does **not** take
+`--depends-on` or `--short-title` — `set` does, so dependencies are a second step:
 
 ```console
 $ slicer set S02 --depends-on S01
@@ -112,9 +112,12 @@ that is [step 5](#5-turn-an-item-into-a-slice).
 
 ```console
 $ slicer list
-  1  S01   —       M  Parse the config file
-  2  S02   —       S  Fail loudly on a missing key
+  1  S01   —       M  22  -         Parse the config file
+  2  S02   —       S  22  -         Fail loudly on a missing key
 ```
+
+The `22` and `-` columns are the priority score and quadrant (see
+[step 6](#6-the-loop)); a fresh item sits at a neutral 2/2.
 
 ### 4b. In bulk, from a markdown outline
 
@@ -243,8 +246,10 @@ S01  Parse the config file
      ~/code/my-project/.slicer/slices/S01.json
 ```
 
-`next` is the first open item whose dependencies are all done. Add `--json` and an agent
-can read it without parsing markdown — every read command takes `--json`.
+`next` is the highest-priority *startable* item: the highest effective score among items
+whose dependencies are all done. Because a blocker of a critical item inherits its
+priority, `next` surfaces the blocker first. Add `--json` and an agent can read it without
+parsing markdown — every read command takes `--json`.
 
 Implement it, then:
 
@@ -275,9 +280,23 @@ $ slicer check
 check passed: 4 items, render and sync current
 ```
 
+Or skip the separate render: every mutating command takes `--render`, so
+`slicer done S01 --render` marks it done *and* re-renders in one step. The same flag works
+on `add`, `set`, `move`, `edit`, `import`, and the rest.
+
 **Commit `.slicer/` — all of it, including `render/`.** The markdown is generated, but
 it is what people read in a diff and in a pull request, and `check` fails when it is
 stale. That staleness check is the whole point: state and its rendering cannot drift.
+
+### Priority
+
+Every item carries an **importance** and an **urgency**, each 1–3 (default 2). Set them
+with `slicer set S01 --importance 3 --urgency 2` or at `add` time, and rank the backlog
+with `slicer list --sort score`. The score is `importance × 10 + urgency`, so importance
+leads and urgency breaks ties. A blocker of a high-scored item inherits its score, so
+`slicer next` and the sorted view surface the blockers of important work first — while the
+stored queue order stays whatever you set with `move`. Priority guides what to do next; it
+never silently reorders the roadmap.
 
 `slicer log` shows the history of status changes; `slicer stats` gives counts by status,
 size, tree and pass.
@@ -344,9 +363,11 @@ to do.
 | `template missing; re-run \`slicer init --force\` to restore it` | A file under `.slicer/templates/` was deleted. |
 | `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
 
-`slicer verify` is the broader health check — dangling dependencies, cycles, slices in
-the wrong folder for their status, slices with no index row. It reports and never
-rewrites.
+`slicer verify` is the broader health check — dangling dependencies, cycles, a dependency
+on a retired item, slices in the wrong folder for their status, a slice file whose name
+and contained id disagree, `has_slice` out of step with the files on disk, an id that is
+not a usable filename, and a `next_id` that would reuse an id. It also cross-checks status
+against `git log` unless `git_check` is off in config. It reports and never rewrites.
 
 ---
 

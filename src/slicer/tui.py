@@ -18,7 +18,7 @@ from slicer.errors import SlicerError
 from slicer.store import State
 
 # Every token here names a key that `act` or `run` actually handles. `n`
-# promotes an existing item; the TUI cannot create one.
+# promotes an existing item; `a` creates a new one.
 HELP = (
   "j/k move  tab pane  e edit  a add  J/K reorder  d done  p park  u unpark  "
   "n promote  r render  q quit"

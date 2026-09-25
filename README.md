@@ -61,13 +61,13 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
-| `add TITLE [--pass KEY]` | append a roadmap item (no slice file yet) |
+| `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency]` | append a roadmap item (no slice file yet) |
 | `promote ID` | give an item a slice file from the template |
-| `move ID --before/--after/--to` | reorder the queue; position is priority |
-| `next` | first open item whose dependencies are all done |
-| `list [--status/--tree/--pass]` | filter the queue |
+| `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
+| `next` | the highest-priority startable item (highest effective score; dependencies still gate) |
+| `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `show ID` | print one slice |
-| `set ID --size/--tree/--status/--pass/--depends-on` | change fields |
+| `set ID --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
 | `edit ID --section NAME [--file/--stdin]` | replace one section (or open `$EDITOR`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
@@ -76,18 +76,29 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `render` | regenerate `.slicer/render/` |
 | `sync [--check]` | rewrite derived lines in other documents |
-| `verify` | compare the index against itself and against `git log` |
+| `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
 | `stats` / `log` | counts, and the history of status changes |
 | `tui` | browse, read, reorder and edit interactively |
 
-In the TUI, `tab` moves between the queue and the detail pane and `e` opens `$EDITOR` on
-whatever is selected there — a slice section, or a prose block.
+In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
+whatever is selected there — an item field (size, trees, findings, depends, importance,
+urgency), a slice section, or a prose block — and `a` adds a new item.
 
 Every command takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
 See [docs/agents.md](docs/agents.md).
+
+Every command that changes state — `add`, `set`, `done`, `move`, `promote`, `edit`,
+`remove`, `park`, `unpark`, `import`, `migrate`, and the `prose` edits — takes `--render`
+to regenerate `.slicer/render/` in the same step, so a mutation and its render are one
+command.
+
+Items carry an Eisenhower-style priority: an `--importance` and an `--urgency` (each 1–3),
+combined into a score (importance leads). A blocker of a critical item inherits its
+priority, so `slicer next` and `slicer list --sort score` surface the blockers of
+important work first, while the stored queue order stays whatever `move` set.
 
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
 `rev-parse`, `status`, `log`, `mv` and `ls-files`; the writing subcommands cannot be

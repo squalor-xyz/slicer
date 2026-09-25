@@ -57,6 +57,9 @@ PYTHONPATH=src python3 -m slicer render
 PYTHONPATH=src python3 -m slicer check
 ```
 
+Every mutating command takes `--render`, which folds the separate `render` step into the
+mutation — `slicer done S07 --render` is the two middle steps in one.
+
 Several items at once go through an outline, which is also how the agent-surface items
 were filed:
 

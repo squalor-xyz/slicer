@@ -80,6 +80,8 @@ status: parked
 | `pass` | A pass group key, if the project uses passes |
 | `group` | A phase label rendered above the item |
 | `depends` | The **title** of another item, in this file or already in the roadmap |
+| `importance` | `1`–`3`, how important (default 2); drives the priority score |
+| `urgency` | `1`–`3`, how urgent (default 2); drives the priority score |
 
 An unknown key is an error naming the key and the known set — a silently ignored key is
 a roadmap item that quietly lost its size.
@@ -120,8 +122,8 @@ $ slicer check
 check passed: 3 items, render and sync current
 ```
 
-Import does not render, for the same reason nothing else does: rendering is a separate,
-explicit step, and `check` is what tells you it is due.
+Import does not render by default: rendering is a separate step, and `check` tells you
+when it is due. Pass `slicer import roadmap.md --render` to do both in one command.
 
 ## What import does for you
 
@@ -152,7 +154,7 @@ Import is all-or-nothing. Everything is validated before a byte is written.
 
 ```console
 $ slicer import roadmap.md
-slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends
+slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, importance, urgency
 ```
 
 **Anything the outline says that does not fit the project** is collected, reported

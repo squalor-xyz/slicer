@@ -641,7 +641,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
-  add("next", cmd_next, "the first open item whose dependencies are met")
+  add("next", cmd_next, "the highest-priority startable item")
 
   sp = add("list", cmd_list, "list items")
   sp.add_argument("--status", action="append", help="filter by status (repeatable)")
@@ -743,7 +743,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("sync", cmd_sync, "rewrite derived lines in other documents")
   sp.add_argument("--check", action="store_true", help="report drift instead of writing")
 
-  add("verify", cmd_verify, "check the index against itself and against git")
+  add("verify", cmd_verify, "check the index for consistency (and against git unless git_check is off)")
 
   sp = add("check", cmd_check, "the CI gate: render, sync and integrity")
   sp.add_argument("--diff", action="store_true", help="show a diff for each stale file")

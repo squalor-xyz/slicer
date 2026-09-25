@@ -203,7 +203,8 @@ For a fuller worked example, `tests/fixtures/legacy/` in this repository is a sy
 
 ## After migrating
 
-`migrate` does not render. Run `slicer render`, then `slicer check`. The generated
+`migrate` does not render by default — run `slicer render` then `slicer check`, or pass
+`migrate --render` to do both in one step. The generated
 markdown under `.slicer/render/` is deliberately **not** byte-identical to your old
 files — it is slicer's own shape. Relative links inside imported prose are re-based so
 they still resolve from their new depth.
