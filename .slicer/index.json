@@ -2,10 +2,192 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 27,
+  "next_id": 37,
   "preamble": "",
   "passes": [],
   "items": [
+    {
+      "id": "S27",
+      "title": "Corrupted or mis-encoded tracking files crash instead of reporting",
+      "short_title": "Corrupted or mis-encoded tracking files crash instead of reporting",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; sibling of S22",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S29",
+      "title": "migrate silently overwrites an existing roadmap",
+      "short_title": "migrate silently overwrites an existing roadmap",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; data loss",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S28",
+      "title": "A low next_id silently mints a duplicate id",
+      "short_title": "A low next_id silently mints a duplicate id",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; core invariant",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S30",
+      "title": "verify misses several inconsistent states",
+      "short_title": "verify misses several inconsistent states",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; gate completeness",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S23",
+      "title": "park hardcodes the literal parked status",
+      "short_title": "park hardcodes the literal parked status",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S12",
+      "title": "flags and group have no CLI setter",
+      "short_title": "flags and group have no CLI setter",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found auditing the machine interface",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S32",
+      "title": "add cannot set deps or short-title; park and unpark cannot take a note",
+      "short_title": "add cannot set deps or short-title; park and unpark cannot take a note",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; daily friction",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S13",
+      "title": "move X --before X drops the item from the in-memory index",
+      "short_title": "move X --before X drops the item from the in-memory index",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "severity revised: cosmetic since the error envelope landed",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S24",
+      "title": "move --to silently clamps an out-of-range position",
+      "short_title": "move --to silently clamps an out-of-range position",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S13"
+      ],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "found probing edge cases",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
     {
       "id": "S25",
       "title": "An item id is used as a file path without validation",
@@ -247,46 +429,6 @@
       }
     },
     {
-      "id": "S12",
-      "title": "flags and group have no CLI setter",
-      "short_title": "flags and group have no CLI setter",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "found auditing the machine interface",
-        "pass": "",
-        "group": "",
-        "reason": ""
-      }
-    },
-    {
-      "id": "S13",
-      "title": "move X --before X drops the item from the in-memory index",
-      "short_title": "move X --before X drops the item from the in-memory index",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "severity revised: cosmetic since the error envelope landed",
-        "pass": "",
-        "group": "",
-        "reason": ""
-      }
-    },
-    {
       "id": "S14",
       "title": "The TUI help line advertises a key that does something else",
       "short_title": "The TUI help line advertises a key that does something else",
@@ -467,48 +609,6 @@
       }
     },
     {
-      "id": "S23",
-      "title": "park hardcodes the literal parked status",
-      "short_title": "park hardcodes the literal parked status",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "found probing edge cases",
-        "pass": "",
-        "group": "",
-        "reason": ""
-      }
-    },
-    {
-      "id": "S24",
-      "title": "move --to silently clamps an out-of-range position",
-      "short_title": "move --to silently clamps an out-of-range position",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [
-        "S13"
-      ],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "found probing edge cases",
-        "pass": "",
-        "group": "",
-        "reason": ""
-      }
-    },
-    {
       "id": "S26",
       "title": "A retired row eats a middot from its findings",
       "short_title": "A retired row eats a middot from its findings",
@@ -523,6 +623,106 @@
         ],
         "trees_literal": false,
         "findings": "found planning S21",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S31",
+      "title": "Operations are not atomic across files, and nothing locks",
+      "short_title": "Operations are not atomic across files, and nothing locks",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; robustness",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S33",
+      "title": "stats cannot show progress",
+      "short_title": "stats cannot show progress",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; reporting",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S34",
+      "title": "Filing a detailed slice takes promote plus one edit per section",
+      "short_title": "Filing a detailed slice takes promote plus one edit per section",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; agent workflow",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S35",
+      "title": "remove --purge has no dry-run",
+      "short_title": "remove --purge has no dry-run",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; safety",
+        "pass": "",
+        "group": "",
+        "reason": ""
+      }
+    },
+    {
+      "id": "S36",
+      "title": "No single where-am-I overview",
+      "short_title": "No single where-am-I overview",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; ergonomics",
         "pass": "",
         "group": "",
         "reason": ""

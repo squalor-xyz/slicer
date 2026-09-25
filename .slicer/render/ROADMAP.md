@@ -2,33 +2,43 @@
 
 # Roadmap
 
-26 items · — 14 · done 12
+36 items · — 24 · done 12
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
-| 2 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
-| 3 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
-| 4 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
-| 5 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
-| 6 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
-| 7 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
-| 8 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
-| 9 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
-| 10 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
-| 11 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
-| 12 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
-| 13 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | — |
-| 14 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | — |
-| 15 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
-| 16 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
-| 17 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
-| 18 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |
-| 19 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
-| 20 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
-| 21 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
-| 22 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | done |
-| 23 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | done |
-| 24 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | — |
-| 25 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
-| 26 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |
+| 1 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | slicer | review; sibling of S22 | — |
+| 2 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | slicer | review; data loss | — |
+| 3 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | slicer | review; core invariant | — |
+| 4 | [S30](slices/S30.md) | verify misses several inconsistent states | M | slicer | review; gate completeness | — |
+| 5 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | — |
+| 6 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | — |
+| 7 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | — |
+| 8 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | — |
+| 9 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
+| 10 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
+| 11 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
+| 12 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
+| 13 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
+| 14 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
+| 15 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
+| 16 | S06 | Publish 0.1.0 to PyPI once CI is green on a tag | S | slicer | follows S01 | — |
+| 17 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | slicer | owner: needs a legal name | — |
+| 18 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | slicer | found while splitting the repo | done |
+| 19 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | slicer | found while writing the getting-started guide | done |
+| 20 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
+| 21 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
+| 22 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
+| 23 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
+| 24 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
+| 25 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |
+| 26 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
+| 27 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
+| 28 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
+| 29 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | done |
+| 30 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | slicer | found probing edge cases | done |
+| 31 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | slicer | found planning S21 | done |
+| 32 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | slicer | review; robustness | — |
+| 33 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |
+| 34 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | — |
+| 35 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
+| 36 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |

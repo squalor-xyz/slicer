@@ -1,0 +1,38 @@
+{
+  "id": "S35",
+  "title": "remove --purge has no dry-run",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; safety",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`import` and `migrate` both have `--dry-run`; `remove` does not. `remove --purge` is the\none destructive, non-obviously-reversible operation, and it surfaces its consequences —\na dependent left dangling, an id that stays burned because a commit cites it — only in a\n*later* `slicer check`. A preview would turn a surprise into a decision."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_remove`\n- `src/slicer/ops.py` — a preview path for purge"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `remove --purge --dry-run` reports what would be deleted and writes nothing.\n2. It names any dependents and says whether the id would be freed."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `--dry-run` to `remove`. For purge, report the item, its dependents, and whether the\nid would be reclaimed or stay burned (the same logic purge already computes), without\nwriting. Retire can share the flag.\n\n**Not in this slice:** a general undo — git is the undo for a committed `.slicer/`."
+    },
+    {
+      "heading": "Check",
+      "body": "`remove --purge --dry-run` previews the deletion and its fallout."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,38 @@
+{
+  "id": "S31",
+  "title": "Operations are not atomic across files, and nothing locks",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; robustness",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`jsonio.write` is atomic per file, but multi-file operations are not atomic across files.\n`promote` and `apply_outline` write a slice then the index; a crash between leaves an\norphan slice or a `has_slice` mismatch — so `apply_outline`'s \"write nothing at all\"\ndocstring is not quite true. `purge` unlinks the file before saving the index. And two\n`slicer add` processes both read `next_id`, mint the same id, and the later save clobbers\nthe earlier: no advisory lock anywhere.\n\nLow frequency for a single user, but real for a team or an agent fan-out, and the\nall-or-nothing promise should be honest."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py` — an advisory lock around a load-mutate-save\n- `src/slicer/ops.py` — ordering in `promote`, `purge`, `apply_outline`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `apply_outline` that fails partway leaves no slice files (true all-or-nothing).\n2. A held lock makes a second writer wait or fail cleanly rather than clobber."
+    },
+    {
+      "heading": "Implement",
+      "body": "A file lock (`fcntl.flock` on a `.slicer/lock`, best-effort, stdlib) around the\nload-mutate-save in the CLI entry, so concurrent writers serialize. Order writes so the\nindex is the last thing written, and in `apply_outline` stage slice writes so a mid-loop\nfailure leaves nothing. Keep it stdlib and degrade gracefully where flock is unavailable.\n\n**Not in this slice:** a full transaction log or rollback — the lock plus write-index-last\ncovers the realistic cases."
+    },
+    {
+      "heading": "Check",
+      "body": "A simulated mid-`apply_outline` failure leaves the tree as it was."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

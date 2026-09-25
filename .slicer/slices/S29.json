@@ -1,0 +1,38 @@
+{
+  "id": "S29",
+  "title": "migrate silently overwrites an existing roadmap",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; data loss",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`migrator.write` rewrites `config.json` and `index.json` unconditionally. `cmd_migrate`\nhas no `already_exists` guard and no `--force`, unlike `init`.\n\n    $ slicer add \"my existing item\"; slicer add \"another\"\n    $ slicer migrate --from docs/slices\n    wrote 6 files ...\n    $ slicer list      # the two items are gone, replaced by the migration\n\nOne mistaken `migrate` in an initialized project destroys the current roadmap, and leaves\nany slice files whose ids are not in the migrated index as orphans. `.slicer/` is\ncommitted so git is the recovery, but the tool should refuse, not rely on that."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_migrate`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `migrate` into a project that already has items refuses, exit 2, nothing written.\n2. `migrate --force` proceeds.\n3. `migrate` into a fresh `init` (empty index) still works without `--force`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Refuse when the index already has items unless `--force` is passed, the way `init`\nrefuses an existing config. An empty initialized project is fine — that is the normal\n\"init then migrate\" path. Name the guard in the message and point at `--force`.\n\n**Not in this slice:** merging a migration into an existing roadmap; refuse-or-replace is\nthe honest choice."
+    },
+    {
+      "heading": "Check",
+      "body": "`migrate` over a non-empty project refuses; over an empty one it proceeds."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

@@ -72,3 +72,22 @@
 {"when": "2026-09-25T02:03:01Z", "item": "S25", "action": "status", "from": "open", "to": "done", "note": "one rule, seven enforcement points; reads report and writes refuse"}
 {"when": "2026-09-25T02:04:59Z", "item": "S26", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-09-25T02:05:36Z", "item": "S26", "action": "status", "from": "open", "to": "done", "note": "join what is present; the filed second symptom was not a bug"}
+{"when": "2026-09-25T02:51:00Z", "item": "S27", "action": "add", "from": "", "to": "open", "note": "Corrupted or mis-encoded tracking files crash instead of reporting"}
+{"when": "2026-09-25T02:51:00Z", "item": "S28", "action": "add", "from": "", "to": "open", "note": "A low next_id silently mints a duplicate id"}
+{"when": "2026-09-25T02:51:00Z", "item": "S29", "action": "add", "from": "", "to": "open", "note": "migrate silently overwrites an existing roadmap"}
+{"when": "2026-09-25T02:51:00Z", "item": "S30", "action": "add", "from": "", "to": "open", "note": "verify misses several inconsistent states"}
+{"when": "2026-09-25T02:51:00Z", "item": "S31", "action": "add", "from": "", "to": "open", "note": "Operations are not atomic across files, and nothing locks"}
+{"when": "2026-09-25T02:51:00Z", "item": "S32", "action": "add", "from": "", "to": "open", "note": "add cannot set deps or short-title; park and unpark cannot take a note"}
+{"when": "2026-09-25T02:51:00Z", "item": "S33", "action": "add", "from": "", "to": "open", "note": "stats cannot show progress"}
+{"when": "2026-09-25T02:51:00Z", "item": "S34", "action": "add", "from": "", "to": "open", "note": "Filing a detailed slice takes promote plus one edit per section"}
+{"when": "2026-09-25T02:51:00Z", "item": "S35", "action": "add", "from": "", "to": "open", "note": "remove --purge has no dry-run"}
+{"when": "2026-09-25T02:51:00Z", "item": "S36", "action": "add", "from": "", "to": "open", "note": "No single where-am-I overview"}
+{"when": "2026-09-25T02:51:10Z", "item": "S27", "action": "move", "from": "27", "to": "1", "note": ""}
+{"when": "2026-09-25T02:51:11Z", "item": "S29", "action": "move", "from": "29", "to": "2", "note": ""}
+{"when": "2026-09-25T02:51:12Z", "item": "S28", "action": "move", "from": "29", "to": "3", "note": ""}
+{"when": "2026-09-25T02:51:13Z", "item": "S30", "action": "move", "from": "30", "to": "4", "note": ""}
+{"when": "2026-09-25T02:51:14Z", "item": "S23", "action": "move", "from": "28", "to": "5", "note": ""}
+{"when": "2026-09-25T02:51:14Z", "item": "S12", "action": "move", "from": "18", "to": "6", "note": ""}
+{"when": "2026-09-25T02:51:16Z", "item": "S32", "action": "move", "from": "32", "to": "7", "note": ""}
+{"when": "2026-09-25T02:51:17Z", "item": "S13", "action": "move", "from": "20", "to": "8", "note": ""}
+{"when": "2026-09-25T02:51:18Z", "item": "S24", "action": "move", "from": "30", "to": "9", "note": ""}

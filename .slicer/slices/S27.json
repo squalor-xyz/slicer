@@ -1,0 +1,38 @@
+{
+  "id": "S27",
+  "title": "Corrupted or mis-encoded tracking files crash instead of reporting",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; sibling of S22",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`jsonio.read` and `read_jsonl` call `json.loads` unguarded, and `JSONDecodeError` and\n`UnicodeDecodeError` both subclass `ValueError`, which `cli.main` does not catch. So a\ntruncated, mis-encoded, or conflict-marked `.slicer/index.json`, any slice file, or\n`log.jsonl` produces a raw Python traceback — no envelope, even under `--json`.\n\n    $ printf '<<<<<<< HEAD\\n' >> .slicer/index.json   # a git merge conflict\n    $ slicer list\n    json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n\nThat is the realistic trigger: `.slicer/` is committed, two branches both add items, git\nleaves conflict markers, and now every command tracebacks. `Section.from_dict` does\n`d[\"heading\"]`, so a hand-edited slice missing a key is a bare `KeyError` the same way.\n\nThis is the exact failure mode S22 removed — on the index, slice and log paths S22 did\nnot touch. S22 fixed config; this finishes the job."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/jsonio.py` — `read`, `read_jsonl`\n- `src/slicer/store.py` — `load`, wrapping the `from_dict` calls\n- `src/slicer/config.py` — `load`, add UnicodeDecodeError"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Corrupt `index.json` / a slice / `log.jsonl` / `config.json` each exit 2 with an\n   envelope naming the file.\n2. Invalid UTF-8 in the index and the config are reported, not crashed.\n3. A slice missing `\"heading\"` is reported, naming the file.\n4. A merge-conflict marker in `index.json` is reported — the headline case.\n5. A bad-encoding file passed to `import` carries code `io`, not a traceback."
+    },
+    {
+      "heading": "Implement",
+      "body": "Guard `jsonio.read`/`read_jsonl` and map `JSONDecodeError`/`UnicodeDecodeError` to\n`StateError(code=\"corrupt\")` naming the path. Wrap the `from_dict` calls in `store.load`\nso a `KeyError`/`TypeError` from a hand-edited file becomes the same enveloped error. Add\n`UnicodeDecodeError` to `Config.load`'s except. User-supplied file reads (import outline,\nedit --file) map to code `io`, matching the OSError envelope.\n\nTwo codes on purpose: `corrupt` is \"your project state is broken\", `io` is \"the file you\nhanded me is broken\". Do not add a blanket `except ValueError` in `main` — S22 set the\nrule, wrap at the source.\n\n**Not in this slice:** validating that a file's contained id matches its name — that is\nS30."
+    },
+    {
+      "heading": "Check",
+      "body": "Every reproduction above gives an envelope and exit 2, from an installed build."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

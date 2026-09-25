@@ -1,0 +1,38 @@
+{
+  "id": "S28",
+  "title": "A low next_id silently mints a duplicate id",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; core invariant",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The generated-id branch of `ids.allocate` formats `next_id` and returns it with no\ncollision check — the explicit-id branch checks `index.get`, the generated one does not.\nNothing validates that `next_id` is above every id already present.\n\n    $ # hand-edit index.json next_id back to 1, with S01 present\n    $ slicer add \"second\"\n    added S01  second\n    $ slicer list --json | ...\n    ['S01', 'S01']\n\nTwo rows now share an id and will fight over one slice file. This is precisely what the\nid system exists to prevent: ids are never reused. A bad import, a merge, or a hand-edit\ncan lower `next_id`, and `verify` only notices the duplicate after it exists — it never\ncatches the low-`next_id` precondition."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ids.py` — `allocate`, the generated branch\n- `src/slicer/verify.py` — `offline`, a next_id sanity check"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `allocate` on a generated id that already exists raises rather than returning it.\n2. `verify` reports an index whose `next_id` is at or below an existing numeric id.\n3. The normal allocation path is unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "In the generated branch, if `format_id(...)` collides with an existing id, raise a\n`StateError` — this is corruption, not a normal path. In `verify.offline`, add an error\nfinding when `next_id` is not strictly above the highest numeric id under the prefix, so\n`check` catches the precondition before it bites.\n\n**Not in this slice:** cross-process locking; that is S31."
+    },
+    {
+      "heading": "Check",
+      "body": "A hand-lowered `next_id` fails `check`, and `add` never produces a duplicate."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

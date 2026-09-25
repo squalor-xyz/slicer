@@ -1,0 +1,38 @@
+{
+  "id": "S32",
+  "title": "add cannot set deps or short-title; park and unpark cannot take a note",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; daily friction",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`add` has `--size --tree --findings --status --pass --id` but not `--depends-on` or\n`--short-title`, so every item with a dependency is two commands: `add`, then\n`set --depends-on`. `ops.add` already accepts both kwargs — only the CLI does not wire\nthem. Separately, `done` takes `--note` but `park` and `unpark` do not, so a park's reason\n(\"waiting on upstream\") has nowhere to go; `set_status` already threads `note`.\n\nBoth are the shared `ops` layer supporting a flag the CLI never exposed. The highest-\nfrequency daily friction on the roadmap, and the cheapest."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_add` parser, `_status_cmd` for park/unpark"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `add --depends-on` sets the dependency in one command.\n2. `add --short-title` sets it.\n3. `park --note` and `unpark --note` record the note in the log."
+    },
+    {
+      "heading": "Implement",
+      "body": "Wire `--depends-on` (repeatable, like `set`) and `--short-title` onto `add`, passing them\nthrough to `ops.add`. Add `--note` to `park` and `unpark`, threading into `set_status`.\nNo `ops` change needed.\n\n**Not in this slice:** `--flag`/`--group` setters, which are S12."
+    },
+    {
+      "heading": "Check",
+      "body": "Adding a dependent item is one command; parking with a reason records it."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

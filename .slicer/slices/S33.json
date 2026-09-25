@@ -1,0 +1,38 @@
+{
+  "id": "S33",
+  "title": "stats cannot show progress",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; reporting",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`stats` gives a flat count per bucket — `by_status`, `by_size`, `by_tree`, `by_pass` —\nwhere `by_tree` counts all items in a tree regardless of status. There is no percent-\ncomplete and no per-tree open-vs-done split, so \"how far along am I, and which tree is\nlagging\" cannot be answered without exporting `list --json` and pivoting it by hand. For\na tool whose stated purpose is roadmap management, that is the first question a user asks."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_stats`\n- `src/slicer/model.py` — a cross-tabulation helper if one is cleaner than inline"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `stats --json` includes a done/total and a percent-complete.\n2. It includes a per-tree done-vs-open breakdown.\n3. The existing flat counts are unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a completion summary (done, total, percent) and a status-by-tree cross-tabulation to\nthe `stats` payload and text. Keep the existing buckets so nothing breaks.\n\n**Not in this slice:** burndown over time or diff-since-a-git-ref — that wants history\nthis tool does not keep yet (see S20)."
+    },
+    {
+      "heading": "Check",
+      "body": "`stats` answers per-tree progress and overall completion at a glance."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

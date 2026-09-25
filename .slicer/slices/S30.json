@@ -1,0 +1,38 @@
+{
+  "id": "S30",
+  "title": "verify misses several inconsistent states",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; gate completeness",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`verify`/`check` pass on three broken states:\n\n- A `depends_on` pointing at a **retired** item. `graph.dangling` only flags unknown ids,\n  and a retired item keeps its row, so the dependent silently never surfaces from `next`\n  (its dep is never `done`) with no diagnostic at all.\n- A slice file whose contained `id` differs from its **filename**. `store.load` keys\n  slices by content id, so a renamed or mislabeled file produces a misleading \"no index\n  row\" / \"no file exists\" pair pointing at the wrong ids.\n- `has_slice: false` with a slice file physically present. Only the opposite direction\n  (`has_slice` true, file missing) is checked.\n\nEach is a state the CI gate should catch and does not."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/verify.py` — `offline`\n- `src/slicer/store.py` — surfacing the on-disk filename alongside the loaded slice"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. An item depending on a retired item is reported.\n2. A slice file whose contained id != its filename is reported, naming the file.\n3. `has_slice: false` with a file present is reported.\n4. A clean tree still passes."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add three findings to `verify.offline`: a dependency on a non-done, non-open blocked\nitem (retired/parked-forever) as at least a warning, ideally naming it; a filename/content\nid mismatch, which needs `store.load` to remember where each slice was read from; and the\norphan-file direction of the `has_slice` check.\n\n**Not in this slice:** dependency-query ergonomics (S19) — this is validation, not query."
+    },
+    {
+      "heading": "Check",
+      "body": "Each broken state above fails `verify`; a clean one passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

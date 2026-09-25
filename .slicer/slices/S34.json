@@ -1,0 +1,38 @@
+{
+  "id": "S34",
+  "title": "Filing a detailed slice takes promote plus one edit per section",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; agent workflow",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`promote` seeds empty sections; `edit` replaces exactly one section. The only way to\ncreate a slice with populated bodies in one shot is a whole `import` outline file. So an\nagent filing one fully-specified item runs `add`, `set --depends-on`, `promote`, then\n`edit --section Why`, `edit --section Files`, `edit --section Implement` — six or more\nprocess invocations, each re-invalidating the render. This is the biggest agent-workflow\ntax not already on the roadmap."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_promote` or a new option\n- `src/slicer/ops.py` — populate sections at promote time"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Promoting from a section-bearing source populates the slice in one command.\n2. A read counterpart to `edit --section` returns one section's body."
+    },
+    {
+      "heading": "Implement",
+      "body": "Let `promote` take a source that fills sections in one call — reuse the outline section\nparser rather than inventing a second format — and add `show --section NAME` as the read\ncounterpart to `edit --section`. Together an agent writes and reads a slice without the\n6-call dance.\n\n**Not in this slice:** `edit --append` (S17) and multi-section edit of an existing slice."
+    },
+    {
+      "heading": "Check",
+      "body": "An agent files a fully-specified slice in one or two commands."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

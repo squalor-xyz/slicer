@@ -1,0 +1,38 @@
+{
+  "id": "S36",
+  "title": "No single where-am-I overview",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "review; ergonomics",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "There is no dashboard. `next` returns one item, `stats` returns counts, and the blocked\nset only appears inside `next`'s empty-queue payload. A user starting their day runs three\ncommands and stitches the answer — what is next, what is done of the total, what is\nblocked on what — in their head. It is also the natural \"did it work\" command after\n`init`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — a new `status` command composing existing ops"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `status` shows the next item, a census, and the blocked edges.\n2. `status --json` carries all three."
+    },
+    {
+      "heading": "Implement",
+      "body": "A `status` command that composes `next`, the `stats` census, and the blocked list into\none view and one `--json` payload. Pure composition of existing `ops`; no new state.\n\n**Not in this slice:** a TUI dashboard — this is the CLI front door."
+    },
+    {
+      "heading": "Check",
+      "body": "`status` answers next/progress/blocked in one call."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
