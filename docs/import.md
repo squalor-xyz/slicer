@@ -133,8 +133,11 @@ bodies filled in; any heading the outline names that your config does not is kep
 appended at the end.
 
 **The scope boundary is added when you leave it out.** If no section body contains your
-`boundary` marker, the bare marker is appended to the last section — the same thing
-`promote` does — so `check` does not immediately warn that every new slice is unbounded.
+`boundary` marker, the bare marker seeds the slice’s separate boundary field, as
+`promote` does. Otherwise the first matching paragraph moves out of its section into
+that field. It renders after metadata and before sections, so later section edits
+cannot erase it. Use `slicer edit ID --boundary --text "**Not in this slice:** other work"`
+to change it.
 
 **`status` puts the slice file in the right folder.** An entry marked `done` lands in
 `.slicer/slices/done/`, so importing a roadmap that already has history does not leave

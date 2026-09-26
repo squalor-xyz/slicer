@@ -75,6 +75,14 @@ front ends cannot drift and both write the same log entries. A new command belon
 sometimes the same heading twice, and the order is part of the document. A dict would
 silently discard both facts.
 
+**Scope is independent of section prose.** `Slice.boundary` stores the full boundary
+paragraph and renders at the end of the header, before sections. Older slice JSON
+without the field extracts the first configured-marker paragraph on load, without
+writing; the next slice save persists it. An explicit field, including empty text,
+is authoritative. Promotion/import extract inline boundaries or seed the configured
+marker. Migration extracts only after the legacy parser proves byte identity; its
+raw representation and emitter retain the original inline text.
+
 **Ids are never reused.** Allocation reads the stored high-water mark `Index.next_id`,
 never a count of live items. `remove --purge` un-allocates an id only when it was the
 most recently allocated *and* no commit subject mentions it; anything else stays burned,

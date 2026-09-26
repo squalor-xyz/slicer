@@ -362,7 +362,7 @@ def cmd_promote(args: argparse.Namespace) -> int:
   elif args.stdin:
     source = sys.stdin.read()
     source_path = "<stdin>"
-  sl = ops.promote(state, args.id, force=args.force, source=source, source_path=source_path)
+  sl = ops.promote(state, args.id, force=args.force, source=source, source_path=source_path, boundary=args.boundary)
   _emit(args, sl.to_dict(), f"promoted {sl.id} -> {state.slice_path(sl.id)}")
   return OK
 
@@ -389,6 +389,8 @@ def cmd_set(args: argparse.Namespace) -> int:
 
 
 def cmd_edit(args: argparse.Namespace) -> int:
+  if (args.section is not None) == args.boundary:
+    raise StateError("choose exactly one of --section or --boundary", code="usage")
   state = _state(args)
   # Look the item up first: "S99 has no slice" is a confusing thing to say
   # about an item that does not exist at all.
@@ -398,14 +400,21 @@ def cmd_edit(args: argparse.Namespace) -> int:
     raise StateError(
       f"{args.id} has no slice; run `slicer promote {args.id}` first", code="no_slice"
     )
+  if args.boundary and args.append:
+    raise StateError("--append cannot be used with --boundary", code="usage")
   section = sl.section(args.section)
   if args.append and args.text is None and args.file is None and not args.stdin:
     raise StateError("--append requires --text, --file, or --stdin", code="usage")
-  body = _body_from(args, section.body if section else "")
+  initial = sl.boundary if args.boundary else (section.body if section else "")
+  body = _body_from(args, initial)
   if body is None:
     raise StateError("editor exited non-zero; slice unchanged", code="editor_aborted")
-  ops.edit_section(state, args.id, args.section, body, append=args.append)
-  _emit(args, {"id": args.id, "section": args.section}, f"updated {args.id} / {args.section}")
+  if args.boundary:
+    ops.edit_boundary(state, args.id, body)
+    _emit(args, {"id": args.id, "boundary": body}, f"updated {args.id} / boundary")
+  else:
+    ops.edit_section(state, args.id, args.section, body, append=args.append)
+    _emit(args, {"id": args.id, "section": args.section}, f"updated {args.id} / {args.section}")
   return OK
 
 
@@ -723,6 +732,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--force", action="store_true")
   sp.add_argument("--file", help="a one-item outline whose sections fill the slice")
   sp.add_argument("--stdin", action="store_true", help="read that outline from stdin")
+  sp.add_argument("--boundary", help="full scope-boundary paragraph; overrides source/default; empty clears")
 
   sp = _render_flag(add("move", _mutating(cmd_move), "reorder the queue"))
   sp.add_argument("id")
@@ -746,9 +756,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
 
-  sp = _render_flag(add("edit", _mutating(cmd_edit), "replace or append to one section of a slice"))
+  sp = _render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary"))
   sp.add_argument("id")
-  sp.add_argument("--section", required=True)
+  sp.add_argument("--section", help="section to edit; cannot combine with --boundary")
+  sp.add_argument("--boundary", action="store_true", help="replace the full scope-boundary paragraph")
   sp.add_argument("--append", action="store_true", help="append with a blank line; requires --text, --file, or --stdin; empty input leaves the body unchanged")
   sp.add_argument("--text", help="inline body (exact in replacement mode); empty text clears unless appending; cannot combine with --file/--stdin")
   sp.add_argument("--file")

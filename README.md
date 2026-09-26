@@ -75,13 +75,13 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
 | `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies |
-| `promote ID [--file/--stdin]` | give an item a slice file; a one-item outline fills its sections in one call |
+| `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `next` | the highest-priority startable item (highest effective score; dependencies still gate) |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
-| `edit ID --section NAME [--append] [--text/--file/--stdin]` | replace or append to one section (or open `$EDITOR`) |
+| `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `start ID [ID ...]` | mark an item in progress, so `next` knows it is in flight |
@@ -97,7 +97,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 
 In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (size, trees, findings, depends, importance,
-urgency), a slice section, or a prose block — `s` starts the selected item and `a` adds a
+urgency), a slice section, its scope boundary, or a prose block — `s` starts the selected item and `a` adds a
 new one.
 
 Every command except `tui` takes `--json`, including the failures — an agent calls `slicer next
@@ -141,6 +141,11 @@ log.jsonl            append-only history of status changes
 
 Sections are an ordered **list**, not a map: real slices carry headings no schema names,
 sometimes more than once, and their order is part of the document.
+
+The scope boundary is a separate field on each slice. It renders after metadata and
+before sections, so section edits cannot remove it. Use `slicer edit ID --boundary`
+with `--text`, `--file`, `--stdin`, or the editor to change the full paragraph. Empty
+text clears it. `promote --boundary TEXT` overrides the source/default boundary.
 
 ## Removing an item
 

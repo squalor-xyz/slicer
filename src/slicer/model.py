@@ -30,6 +30,19 @@ class Section:
     return Section(heading=d["heading"], body=d.get("body", ""))
 
 
+def extract_boundary(sections: list[Section], marker: str) -> str:
+  """Lift the first inline boundary out of sections at an input-format boundary."""
+  if marker:
+    for section in sections:
+      paragraphs = section.body.split("\n\n")
+      for at, paragraph in enumerate(paragraphs):
+        if paragraph.startswith(marker):
+          del paragraphs[at]
+          section.body = "\n\n".join(paragraphs)
+          return paragraph
+  return ""
+
+
 @dataclass
 class Slice:
   """The prose of one slice. Sections are an ordered list, never a map.
@@ -50,24 +63,12 @@ class Slice:
   flags: list[str] = field(default_factory=list)
   trees_note: str = ""
   trees_plural: bool = False
+  boundary: str = ""
 
   def section(self, heading: str) -> Section | None:
     for s in self.sections:
       if s.heading == heading:
         return s
-    return None
-
-  def boundary(self, marker: str) -> dict[str, str] | None:
-    """Locate the scope-boundary paragraph, wherever it sits.
-
-    It is not a section and not always last: it closes `## Implement` in
-    some slices and follows `## Git` in others. Callers get a pointer, not
-    a copy — the text stays in the section body that owns it.
-    """
-    for s in self.sections:
-      for para in s.body.split("\n\n"):
-        if para.startswith(marker):
-          return {"section": s.heading, "text": para[len(marker):].strip()}
     return None
 
   def to_dict(self) -> dict[str, Any]:
@@ -81,12 +82,17 @@ class Slice:
       "flags": list(self.flags),
       "trees_note": self.trees_note,
       "trees_plural": self.trees_plural,
+      "boundary": self.boundary,
       "sections": [s.to_dict() for s in self.sections],
       "notes": list(self.notes),
     }
 
   @staticmethod
-  def from_dict(d: Mapping[str, Any]) -> "Slice":
+  def from_dict(d: Mapping[str, Any], *, boundary_marker: str = "") -> "Slice":
+    sections = [Section.from_dict(s) for s in d.get("sections", [])]
+    boundary = d["boundary"] if "boundary" in d else extract_boundary(sections, boundary_marker)
+    if not isinstance(boundary, str):
+      raise TypeError("boundary must be a string")
     return Slice(
       id=d["id"],
       title=d["title"],
@@ -97,7 +103,8 @@ class Slice:
       flags=list(d.get("flags", [])),
       trees_note=d.get("trees_note", ""),
       trees_plural=bool(d.get("trees_plural", False)),
-      sections=[Section.from_dict(s) for s in d.get("sections", [])],
+      boundary=boundary,
+      sections=sections,
       notes=list(d.get("notes", [])),
     )
 

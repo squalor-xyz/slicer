@@ -1,0 +1,39 @@
+{
+  "id": "S48",
+  "title": "The scope boundary is fragile prose, not a structured field",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "reproduced closing S47; a section edit silently dropped it",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** additional marker configuration, prose append, or changes to the legacy markdown grammar.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The scope boundary — the `**Not in this slice:**` paragraph — is not a first-class part\nof a slice. `promote` and `import` append the marker string to whatever section is *last*,\nand `Slice.boundary()` finds it by scanning every section's prose for a paragraph that\nstarts with the marker. Three problems follow:\n\n- **A section edit destroys it, silently.** Filing S47, `import` appended the boundary to\n  its Git section; the next `slicer edit S47 --section Git` replaced that body and dropped\n  the boundary, and `check` then warned that the scope was unbounded. Nothing re-adds it.\n- Its position is arbitrary — \"the last section\", which differs slice to slice.\n- `verify` detects it by scanning prose, so the check is only as reliable as the marker\n  surviving in some body.\n\nIt should be set explicitly when a slice is created and stored as its own thing, so a\nsection edit cannot touch it — the boundary passed as an argument, not smuggled into prose."
+    },
+    {
+      "heading": "Files",
+      "body": "Canonical model/loading, promotion/import and migration conversion, CLI/TUI boundary editing, rendering and verification; focused boundary tests plus user and architecture documentation. The legacy parser/emitter remains unchanged."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Boundary survives section replacement and append, reads old JSON without writing, persists on save, respects explicit clearing and custom/disabled markers, supports all edit sources and promotion overrides, remains visible/editable in the TUI, and preserves legacy byte-identity proof before canonical extraction."
+    },
+    {
+      "heading": "Implement",
+      "body": "Store the full boundary paragraph in Slice.boundary, default empty, with backward-compatible loading at schema version 1. Extract the first configured-marker paragraph from old JSON only when the field is absent; read without writing and persist on the next save. Explicit fields, including empty, are authoritative. Share extraction with promotion, outline import and canonical migration conversion; keep legacy parsing and byte-identity proof unchanged. Seed promotion/import with cfg.boundary when absent. Migration preserves missing boundaries. Empty cfg.boundary disables extraction and warnings. Render after metadata before sections through the existing header. Verify the field. Add edit ID --boundary using existing sources/editor, mutually exclusive with --section; reject --append. Empty text clears. Add promote --boundary TEXT overriding source/default. All writes and logging go through ops."
+    },
+    {
+      "heading": "Check",
+      "body": "Test preservation across edits, append, import, promotion, migration and reload; old JSON read-only extraction, clearing, custom/disabled markers, missing boundaries, rendering and source errors. Run focused and full unittest tests, slicer check and git diff --check. Owner authorizes normal test temporary directories for S48 and waives real legacy-tree validation; use synthetic fixtures and report that limitation."
+    },
+    {
+      "heading": "Git",
+      "body": "Review code, documentation, state and generated markdown. Mark done only after checks pass. One commit: S48: store scope boundaries independently of sections. Push main to origin/main as authorized, without force-pushing."
+    }
+  ],
+  "notes": []
+}

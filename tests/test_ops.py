@@ -45,7 +45,7 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       sl = repo.state().slices["S05"]
       self.assertEqual([s.heading for s in sl.sections], repo.state().config.sections)
-      self.assertIsNotNone(sl.boundary(repo.state().config.boundary))
+      self.assertEqual(sl.boundary, repo.state().config.boundary)
 
   def test_Promote_AlreadyPromoted_RefusesWithoutForce(self) -> None:
     with self.repo() as repo:

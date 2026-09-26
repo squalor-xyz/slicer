@@ -138,7 +138,7 @@ def row_for(state: State, target: str) -> Row | None:
 
 def entries(state: State, target: str) -> list[Entry]:
   """What the detail pane offers for editing: the item's fields, then its
-  sections. Fields are editable even before an item is promoted."""
+  boundary and sections. Fields are editable even before an item is promoted."""
   if target in prose.refs(state.index):
     return [Entry(kind=PROSE, target=target, name=target, body=prose.get(state.index, target))]
   item = state.index.get(target)
@@ -150,6 +150,7 @@ def entries(state: State, target: str) -> list[Entry]:
   ]
   sl = state.slices.get(target)
   if sl is not None:
+    out.append(Entry(kind="boundary", target=target, name="boundary", body=sl.boundary))
     out += [Entry(kind="section", target=target, name=s.heading, body=s.body) for s in sl.sections]
   return out
 
@@ -179,6 +180,10 @@ def panel(state: State, target: str) -> list[PanelLine]:
     out.append(PanelLine("(no slice yet - press n to promote)"))
     return out
   base = len(FIELD_SPEC)
+  out.append(PanelLine("Scope boundary", base))
+  out.extend(PanelLine(line, base) for line in sl.boundary.split("\n"))
+  out.append(PanelLine("", base))
+  base += 1
   for i, section in enumerate(sl.sections):
     out.append(PanelLine(f"## {section.heading}", base + i))
     for line in section.body.split("\n"):
@@ -269,6 +274,8 @@ def apply_edit(state: State, request: EditRequest, body: str) -> str:
       return f"added {ops.add(state, title).id}"
     if request.kind == PROSE:
       ops.edit_prose(state, request.target, body)
+    elif request.kind == "boundary":
+      ops.edit_boundary(state, request.target, body)
     elif request.kind == "field":
       kwarg, parse = FIELD_SPEC[request.name]
       ops.set_fields(state, request.target, **{kwarg: parse(body)})

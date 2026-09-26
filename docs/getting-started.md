@@ -384,14 +384,23 @@ promoted S01 -> ~/code/my-project/.slicer/slices/S01.json
 ```
 
 The headings come from `sections` in your config, each with an empty body, and the
-**last** one gets your `boundary` marker as its body. With the defaults that is:
+scope boundary is stored separately, seeded with your `boundary` marker. The default
+headings are:
 
 ```
 Why · Files · Failing tests · Implement · Check · Git
 ```
 
-with `## Git` pre-filled with `**Not in this slice:**`. Write the scope boundary there
-and `slicer check` stops warning that the slice is unbounded.
+The boundary renders after metadata and before these sections. Set it explicitly:
+
+```sh
+slicer edit S01 --boundary --text "**Not in this slice:** other work" --render
+```
+
+Boundary editing accepts the same input sources and editor as section replacement.
+It cannot combine with `--section` or `--append`; empty text clears the boundary and
+restores the unbounded-scope warning. `promote --boundary TEXT` sets it at creation,
+overriding any boundary in a source outline.
 
 Fill sections one at a time:
 

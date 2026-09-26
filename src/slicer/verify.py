@@ -106,7 +106,7 @@ def offline(state: State) -> VerifyReport:
         Finding("error", item.id, f"slice file is in the wrong folder for status {item.status!r}")
       )
     sl = state.slices.get(item.id)
-    if sl is not None and cfg.boundary and sl.boundary(cfg.boundary) is None:
+    if sl is not None and cfg.boundary and not sl.boundary:
       report.findings.append(
         Finding("warn", item.id, f"no {cfg.boundary} boundary; scope is unbounded")
       )

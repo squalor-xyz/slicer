@@ -74,6 +74,7 @@ def slice_header(sl: Slice, cfg: Config) -> str:
   if sl.depends_note:
     blocks[-1] = blocks[-1] + "\n" + sl.depends_note
   blocks.extend(sl.notes)
+  blocks.append(sl.boundary)
   return "\n\n".join(b for b in blocks if b)
 
 

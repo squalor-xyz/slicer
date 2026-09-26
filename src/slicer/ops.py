@@ -13,7 +13,7 @@ from pathlib import Path
 
 from slicer import graph, ids, outline, prose, vcs
 from slicer.errors import StateError
-from slicer.model import Item, LogEntry, PassInfo, Section, Slice
+from slicer.model import Item, LogEntry, PassInfo, Section, Slice, extract_boundary
 from slicer.store import State
 
 
@@ -105,6 +105,7 @@ def promote(
   force: bool = False,
   source: str | None = None,
   source_path: str = "<promote>",
+  boundary: str | None = None,
 ) -> Slice:
   """Give an item a slice file with the project's configured sections.
 
@@ -123,8 +124,6 @@ def promote(
     sl = _slice_from_source(source, item, cfg, source_path)
   else:
     sections = [Section(heading=h, body="") for h in cfg.sections]
-    if sections and cfg.boundary:
-      sections[-1].body = f"{cfg.boundary}"
     sl = Slice(
       id=item.id,
       title=item.title,
@@ -134,7 +133,10 @@ def promote(
       trees_note=", ".join(item.trees),
       trees_plural=len(item.trees) > 1,
       sections=sections,
+      boundary=cfg.boundary,
     )
+  if boundary is not None:
+    sl.boundary = boundary
   item.has_slice = True
   state.save_slice(sl)
   state.save_index()
@@ -420,6 +422,18 @@ def edit_section(state: State, item_id: str, heading: str, body: str, *, append:
     section.body = body
   state.save_slice(sl)
   _record(state, item_id, "edit", note=heading)
+  return sl
+
+
+def edit_boundary(state: State, item_id: str, body: str) -> Slice:
+  """Change scope independently of section edits."""
+  state.index.require(item_id)
+  sl = state.slices.get(item_id)
+  if sl is None:
+    raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first", code="no_slice")
+  sl.boundary = body
+  state.save_slice(sl)
+  _record(state, item_id, "edit", note="boundary")
   return sl
 
 
@@ -738,14 +752,7 @@ def _slice_from_spec(spec: object, item: Item, cfg: object) -> Slice:
   order = [h for h in cfg.sections]
   order += [s.heading for s in spec.sections if s.heading not in cfg.sections]
   sections = [Section(heading=h, body=supplied.get(h, "")) for h in order]
-  if cfg.boundary and not any(
-    line.startswith(cfg.boundary)
-    for s in sections
-    for line in s.body.split("\n\n")
-  ):
-    if sections:
-      tail = sections[-1]
-      tail.body = f"{tail.body}\n\n{cfg.boundary}".strip("\n")
+  boundary = extract_boundary(sections, cfg.boundary) or cfg.boundary
   return Slice(
     id=item.id,
     title=item.title,
@@ -756,4 +763,5 @@ def _slice_from_spec(spec: object, item: Item, cfg: object) -> Slice:
     trees_note=", ".join(item.trees),
     trees_plural=len(item.trees) > 1,
     sections=sections,
+    boundary=boundary,
   )

@@ -258,6 +258,15 @@ with two newlines. Other whitespace and source-reading rules are preserved. Empt
 appended content changes neither the section nor the log; an empty or missing section
 is filled without a leading separator. Prose editing does not support append.
 
+The scope boundary is independent of section bodies. Use
+`slicer edit ID --boundary --text "**Not in this slice:** other work" --render`
+to replace its full paragraph; file, stdin and editor input also work. This target
+cannot combine with `--section` or `--append`. Empty text clears it.
+`show ID --json` exposes it as `slice.boundary`; boundary edits return
+`{"id": "ID", "boundary": "full paragraph"}`. Promotion accepts `--boundary TEXT`
+to override the source/default. Older JSON is converted in memory on load and the
+field is persisted on the next slice save; read commands do not rewrite JSON.
+
 To fill a whole slice at once, hand `promote`
 a one-item outline: `slicer promote ID --file draft.md` — the same `##` item / `###`
 section shape `import` reads, sections and lead only.

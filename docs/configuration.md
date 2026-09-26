@@ -53,7 +53,7 @@ and the slice files, the config is yours to hand-edit.
 | `done_status` | `"done"` | The `done` target, **which folder a slice lives in**, dependency satisfaction | **No — breaking** |
 | `retired_status` | `"retired"` | The `remove --reason` target and the `retired/` folder | Yes if nothing is retired yet |
 | `sections` | `Why, Files, Failing tests, Implement, Check, Git` | The headings `promote` seeds. Nothing validates existing slices against it | **Yes** |
-| `boundary` | `"**Not in this slice:**"` | Seeded into the last section by `promote`; `check` warns per slice that lacks it | Yes, but noisy |
+| `boundary` | `"**Not in this slice:**"` | Seeds the separate boundary field; identifies inline boundaries in older input; `check` warns when the field is empty | Yes, but noisy |
 | `done_dir` | `"done"` | `.slicer/slices/done/`, and the subdirectory `migrate` reads finished slices from | **No — breaking** |
 | `retired_dir` | `"retired"` | `.slicer/slices/retired/` | **No — breaking** |
 | `exclude_flags` | `[]` | Flags that drop an item from the **sync pointers only**. Does not affect `next`, `list` or render | **Yes**, re-run `sync` |
@@ -118,8 +118,8 @@ that exists in `statuses` (the last two may instead be `""`, switching the featu
 
 ## Sections
 
-`sections` is only the list `promote` seeds into a new slice, in order, with the last one
-receiving `boundary` as its body. Existing slices are never touched, never validated, and
+`sections` is only the list `promote` seeds into a new slice, in order. The boundary
+is a separate slice field seeded from `boundary`. Existing slices are never touched, never validated, and
 may carry headings that appear nowhere here — both `import` and `migrate` count those as "off-schema" and
 keeps them exactly where they were.
 

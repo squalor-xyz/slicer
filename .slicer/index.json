@@ -1070,7 +1070,7 @@
       "id": "S48",
       "title": "The scope boundary is fragile prose, not a structured field",
       "short_title": "The scope boundary is fragile prose, not a structured field",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

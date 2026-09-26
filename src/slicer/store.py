@@ -245,8 +245,8 @@ def load(root: Path | None = None) -> State:
   # The id scheme lives in the index because allocation must not depend on a
   # config someone edited after ids were handed out. Until the first item
   # exists there is nothing to be inconsistent with, so a changed config still
-  # counts -- otherwise `init`, look, change your mind is a dead end. This is
-  # the one read that adjusts what it read; it is idempotent, and it reaches
+  # counts -- otherwise `init`, look, change your mind is a dead end. This
+  # read-time adjustment is idempotent, and it reaches
   # disk only on the next save. Past that point `verify` reports the mismatch.
   if not index.items and (index.id_prefix, index.id_width) != (
     config.id_prefix,
@@ -265,7 +265,9 @@ def load(root: Path | None = None) -> State:
     if not folder.is_dir():
       continue
     for path in sorted(folder.glob("*.json")):
-      sl = _from_dict(path, Slice.from_dict, jsonio.read(path))
+      sl = _from_dict(
+        path, lambda d: Slice.from_dict(d, boundary_marker=config.boundary), jsonio.read(path)
+      )
       slices[sl.id] = sl
       slice_files[sl.id] = path
   return State(root=base, config=config, index=index, slices=slices, slice_files=slice_files)

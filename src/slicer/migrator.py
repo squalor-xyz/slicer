@@ -22,7 +22,7 @@ from pathlib import Path
 
 from slicer import ids, jsonio, legacy, templates
 from slicer.config import CONFIG_NAME, Config
-from slicer.model import Index, Item, PassInfo, Section, Slice
+from slicer.model import Index, Item, PassInfo, Section, Slice, extract_boundary
 from slicer.store import DIR_NAME, INDEX_NAME, SLICES_DIR, TEMPLATES_DIR
 
 PASS_KEY_RE = re.compile(r"pass\s+([^\s)(]+)", re.I)
@@ -290,12 +290,15 @@ def build(
         f"{ls.id!r} in the slice file's heading is not a usable id"
       )
       continue
+    sections = [Section(heading=h, body=fix(b)) for h, b in ls.sections]
+    boundary = extract_boundary(sections, cfg.boundary)
     slices[item.id] = Slice(
       id=ls.id,
       title=ls.title,
       lead=[fix(b) for b in ls.lead],
       depends_note=depends_line or None,
-      sections=[Section(heading=h, body=fix(b)) for h, b in ls.sections],
+      sections=sections,
+      boundary=boundary,
       notes=[fix(b) for b in ls.notes],
       findings_note=str(meta["findings"]),
       size=str(meta["size"]),

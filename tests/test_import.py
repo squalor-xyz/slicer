@@ -116,14 +116,15 @@ class ImportTests(unittest.TestCase):
       repo.write("r.md", "## A thing\n\n### Why\nBecause.\n")
       repo.run("import", "r.md")
       sl = repo.state().slices["S01"]
-      self.assertIsNotNone(sl.boundary("**Not in this slice:**"))
+      self.assertEqual(sl.boundary, "**Not in this slice:**")
 
   def test_Import_BoundaryAlreadyPresent_IsNotDuplicated(self) -> None:
     with self.repo() as repo:
       repo.write("r.md", "## A thing\n\n### Why\nBecause.\n\n**Not in this slice:** other things.\n")
       repo.run("import", "r.md")
       bodies = "\n".join(s.body for s in repo.state().slices["S01"].sections)
-      self.assertEqual(bodies.count("**Not in this slice:**"), 1)
+      self.assertEqual(bodies.count("**Not in this slice:**"), 0)
+      self.assertEqual(repo.state().slices["S01"].boundary, "**Not in this slice:** other things.")
 
   def test_Import_PassKey_IsNotInheritedFromTheLastItem(self) -> None:
     # `ops.add` inherits the previous item's pass; a bulk load must not,

@@ -2,7 +2,7 @@
 
 # Roadmap
 
-55 items · — 19 · done 35 · parked 1
+55 items · — 18 · done 36 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -54,7 +54,7 @@
 | 46 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | slicer | review; agent workflow | done |
 | 47 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
 | 48 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |
-| 49 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | — |
+| 49 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | done |
 | 50 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
 | 51 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | — |
 | 52 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | cli | S46 planning; slicer edit --json prints argparse usage only | — |

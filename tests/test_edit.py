@@ -12,7 +12,8 @@ import support
 
 
 class EditInputTests(unittest.TestCase):
-  commands = (("edit", "S01", "--section", "Why"), ("prose", "edit", "preamble"))
+  commands = (("edit", "S01", "--section", "Why"), ("prose", "edit", "preamble"),
+              ("edit", "S01", "--boundary"))
 
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo()
@@ -23,6 +24,8 @@ class EditInputTests(unittest.TestCase):
 
   def body(self, repo: support.TempRepo, command: tuple[str, ...]) -> str:
     state = repo.state()
+    if "--boundary" in command:
+      return state.slices["S01"].boundary
     if command[0] == "edit":
       return state.slices["S01"].section("Why").body
     return state.index.preamble
