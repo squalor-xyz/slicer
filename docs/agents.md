@@ -262,7 +262,19 @@ Committing is the human's.
 
 ## What is not here yet
 
-Worth knowing before you plan around it: there is no search command, no batch status
-change (`done` takes one id), no way to append to a section, no per-item history beyond
+Worth knowing before you plan around it: there is no search command, no way to append to a section, no per-item history beyond
 status transitions, and no dependency query beyond `next` and `verify`. These are on the
 roadmap — `slicer list --json` plus your own filtering is the workaround for most of them.
+
+## Batch mutations
+
+`done`, `start`, `park`, `unpark`, and `set` accept multiple IDs, for example
+`slicer set S01 S02 --urgency 3 --render`. Flags apply equally to all selected items.
+Use `slicer done - --json` for whitespace-separated IDs on stdin; convert JSON query
+output to IDs before piping it in. Do not mix `-` with positional IDs.
+
+Batches deduplicate in input order and validate every ID and supplied field before
+writing. Invalid requests change nothing; I/O failures have no multi-file rollback.
+One explicit ID retains the JSON object response. Multiple positional IDs and stdin
+return an array, including when only one unique ID remains. See
+[batch changes](getting-started.md#batch-changes) for examples and history semantics.

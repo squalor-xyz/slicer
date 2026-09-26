@@ -2,7 +2,7 @@
 
 # Roadmap
 
-54 items · — 20 · done 33 · parked 1
+54 items · — 19 · done 34 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -41,7 +41,7 @@
 | 33 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
 | 34 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
 | 35 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
-| 36 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | — |
+| 36 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | done |
 | 37 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | — |
 | 38 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
 | 39 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |

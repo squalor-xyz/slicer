@@ -207,3 +207,11 @@
 {"when": "2026-09-26T17:06:22Z", "item": "S32", "action": "status", "from": "open", "to": "started", "note": ""}
 {"when": "2026-09-26T17:07:31Z", "item": "S32", "action": "edit", "from": "", "to": "", "note": "Check"}
 {"when": "2026-09-26T17:07:31Z", "item": "S32", "action": "status", "from": "started", "to": "done", "note": "Exposed dependency and short-title creation options and park/unpark notes; reviewed and verified"}
+{"when": "2026-09-26T17:15:47Z", "item": "S16", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-26T17:17:43Z", "item": "S16", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-26T17:17:43Z", "item": "S16", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-09-26T17:17:43Z", "item": "S16", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-09-26T17:17:43Z", "item": "S16", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-09-26T17:17:43Z", "item": "S16", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-09-26T17:17:43Z", "item": "S16", "action": "status", "from": "started", "to": "done", "note": "Implemented and reviewed batch status/field changes; verified tests and installed CLI"}
+{"when": "2026-09-26T17:17:49Z", "item": "S16", "action": "edit", "from": "", "to": "", "note": "Implement"}

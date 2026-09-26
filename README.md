@@ -80,12 +80,12 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `next` | the highest-priority startable item (highest effective score; dependencies still gate) |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
-| `set ID --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
+| `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
 | `edit ID --section NAME [--text/--file/--stdin]` | replace one section (or open `$EDITOR`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
-| `start ID` | mark an item in progress, so `next` knows it is in flight |
-| `done ID` / `park ID` / `unpark ID` `[--note TEXT]` | change status and optionally record a note; `done` moves the file with `git mv` |
+| `start ID [ID ...]` | mark an item in progress, so `next` knows it is in flight |
+| `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status and optionally record a note; `done` moves the file with `git mv` |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `render` | regenerate `.slicer/render/` |
@@ -118,6 +118,13 @@ important work first, while the stored queue order stays whatever `move` set.
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
 `rev-parse`, `status`, `log`, `mv` and `ls-files`; the writing subcommands cannot be
 reached from the code at all.
+
+### Batch changes
+
+`done`, `start`, `park`, `unpark`, and `set` accept multiple IDs.
+For example, `slicer set S01 S02 --urgency 3 --render` applies the same fields to
+both items. Use `slicer done -` to read whitespace-separated IDs from stdin.
+See [batch changes](docs/getting-started.md#batch-changes) for validation and output rules.
 
 ## What lives in `.slicer/`
 

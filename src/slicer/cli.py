@@ -375,15 +375,16 @@ def cmd_move(args: argparse.Namespace) -> int:
 
 
 def cmd_set(args: argparse.Namespace) -> int:
+  item_ids, batch = _batch_ids(args)
   state = _state(args)
   flags = [] if args.no_flags else args.flag
-  item = ops.set_fields(
-    state, args.id, title=args.title, short_title=args.short_title, status=args.status,
+  items = ops.set_fields_many(
+    state, item_ids, title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
     pass_key=args.pass_key, flags=flags, group=args.group,
     importance=args.importance, urgency=args.urgency,
   )
-  _emit(args, item.to_dict(), f"updated {item.id}")
+  _emit_items(args, items, batch, [f"updated {item.id}" for item in items])
   return OK
 
 
@@ -434,28 +435,40 @@ def _body_from(args: argparse.Namespace, initial: str) -> str | None:
   return _via_editor(initial)
 
 
+def _batch_ids(args: argparse.Namespace) -> tuple[list[str], bool]:
+  raw = args.id
+  if "-" in raw:
+    if raw != ["-"]:
+      raise StateError("use '-' alone to read ids from stdin", code="usage")
+    item_ids = sys.stdin.read().split()
+    if not item_ids:
+      raise StateError("stdin contains no item ids", code="usage")
+    return list(dict.fromkeys(item_ids)), True
+  return list(dict.fromkeys(raw)), len(raw) > 1
+
+
+def _emit_items(args: argparse.Namespace, items: list[model.Item], batch: bool, lines: list[str]) -> None:
+  payload = [item.to_dict() for item in items]
+  _emit(args, payload if batch else payload[0], "\n".join(lines))
+
+
 def _status_cmd(status_attr: str):
   def run(args: argparse.Namespace) -> int:
+    item_ids, batch = _batch_ids(args)
     state = _state(args)
-    status = getattr(state.config, status_attr, status_attr)
-    item = ops.set_status(state, args.id, status, note=getattr(args, "note", "") or "")
-    _emit(args, item.to_dict(), f"{item.id} -> {state.config.status_label(item.status)}")
+    status = getattr(state.config, status_attr)
+    if not status and status_attr in ("parked_status", "started_status"):
+      name = status_attr.removesuffix("_status")
+      raise StateError(f"this project declares no {name} status; set {status_attr} in config")
+    items = ops.set_status_many(state, item_ids, status, note=args.note or "")
+    _emit_items(args, items, batch,
+                [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
     return OK
   return run
 
 
-def cmd_park(args: argparse.Namespace) -> int:
-  state = _state(args)
-  item = ops.park(state, args.id, note=getattr(args, "note", "") or "")
-  _emit(args, item.to_dict(), f"{item.id} -> {state.config.status_label(item.status)}")
-  return OK
-
-
-def cmd_start(args: argparse.Namespace) -> int:
-  state = _state(args)
-  item = ops.start(state, args.id, note=getattr(args, "note", "") or "")
-  _emit(args, item.to_dict(), f"{item.id} -> {state.config.status_label(item.status)}")
-  return OK
+cmd_park = _status_cmd("parked_status")
+cmd_start = _status_cmd("started_status")
 
 
 def cmd_prose_list(args: argparse.Namespace) -> int:
@@ -716,7 +729,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--to", type=int)
 
   sp = _render_flag(add("set", _mutating(cmd_set), "change an item's fields"))
-  sp.add_argument("id")
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--title")
   sp.add_argument("--short-title", dest="short_title")
   sp.add_argument("--status")
@@ -739,19 +752,19 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--stdin", action="store_true")
 
   sp = _render_flag(add("done", _mutating(_status_cmd("done_status")), "mark an item finished"))
-  sp.add_argument("id")
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line for the log")
 
   sp = _render_flag(add("start", _mutating(cmd_start), "mark an item in progress"))
-  sp.add_argument("id")
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line for the log")
 
   sp = _render_flag(add("park", _mutating(cmd_park), "set an item aside"))
-  sp.add_argument("id")
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line for the log")
 
   sp = _render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue"))
-  sp.add_argument("id")
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line for the log")
 
   sp = sub.add_parser("prose", help="read and edit the roadmap's own prose", parents=[common])

@@ -517,6 +517,37 @@ slicer unpark S02 --note "Upstream fix is available" --render
 
 Notes are optional on both commands, as on `done` and `start`.
 
+## Batch changes
+
+Use multiple IDs to apply the same status, fields, or history note in one command:
+
+```sh
+slicer set S01 S02 --importance 3 --urgency 2 --render
+slicer start S01 S02 --note "Starting related work" --render
+slicer done S01 S02 --note "Implemented and verified" --render
+```
+
+`park` and `unpark` accept the same multiple-ID form. To read IDs from a file or
+pipeline, use a standalone `-`:
+
+```sh
+printf 'S01\nS02\n' | slicer done - --note "Verified" --render
+```
+
+Stdin accepts whitespace-separated IDs, not JSON. Empty stdin and mixing `-` with
+explicit IDs are errors. Repeated IDs are processed once, in their first-seen order.
+
+The whole request is validated before any item changes. An unknown ID or invalid
+field refuses the batch. The mutation loads state once and saves the index once;
+`--render` reloads state for rendering. The command holds the existing writer lock.
+Individual file writes remain atomic, but disk failures do not roll back the batch.
+
+Status changes record one history entry per changed item; items already in the
+requested status are unchanged. `set` retains its existing per-item history behavior.
+Human output has one result line per item. With `--json`, one explicit ID returns
+an object; multiple positional IDs or stdin return an array, even when duplicates
+or stdin resolve to just one ID.
+
 ## 7. Passes, if you want them
 
 Passes are an optional grouping — a review round, a milestone, a phase. Items with no

@@ -268,60 +268,72 @@ def _sync_slice(state: State, item: Item) -> None:
   state.save_slice(sl)
 
 
-def set_fields(state: State, item_id: str, **fields: object) -> Item:
-  cfg = state.config
-  item = state.index.require(item_id)
+def _batch_items(state: State, item_ids: list[str]) -> list[Item]:
+  if not item_ids:
+    raise StateError("provide at least one item id", code="usage")
+  return [state.index.require(item_id) for item_id in dict.fromkeys(item_ids)]
+
+
+def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list[Item]:
+  """Validate the whole request before changing any item; save the index once."""
+  items = _batch_items(state, item_ids)
   known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency"}
-  # `--title ""` arrives as "" rather than None, so it reaches here and would
-  # wipe the title. Refuse it; skipping it silently would be just as wrong.
   _reject_bad_text(**fields)
-  changed = sorted(k for k, v in fields.items() if v is not None)
-  previous = item.status
+  values = {}
   for key, value in fields.items():
     if value is None:
       continue
     if key not in known:
       raise StateError(f"unknown field {key!r}; known: {sorted(known)}")
-    if key == "status" and value not in cfg.statuses:
-      raise StateError(f"unknown status {value!r}; known: {sorted(cfg.statuses)}")
+    if key == "status" and value not in state.config.statuses:
+      raise StateError(f"unknown status {value!r}; known: {sorted(state.config.statuses)}")
     if key in ("importance", "urgency"):
       value = _valid_score(key, value)
-    setattr(item, key, value)
+    values[key] = value
 
-  moved = item.status != previous
-  if moved:
-    _relocate_slice(state, item_id)
-  # After any move, so the slice is written to its new home.
-  _sync_slice(state, item)
+  transitions = []
+  for item in items:
+    previous = item.status
+    for key, value in values.items():
+      setattr(item, key, list(value) if isinstance(value, list) else value)
+    moved = item.status != previous
+    if moved:
+      _relocate_slice(state, item.id)
+    _sync_slice(state, item)
+    transitions.append((item, previous, moved))
   state.save_index()
-  # One entry, even when a status changed: the transition goes in from/to so
-  # nothing is lost by not writing a second `status` record as well.
-  _record(
-    state,
-    item_id,
-    "set",
-    frm=previous if moved else "",
-    to=item.status if moved else "",
-    note=",".join(changed),
-  )
-  return item
+  for item, previous, moved in transitions:
+    _record(state, item.id, "set", frm=previous if moved else "",
+            to=item.status if moved else "", note=",".join(sorted(values)))
+  return items
+
+
+def set_fields(state: State, item_id: str, **fields: object) -> Item:
+  return set_fields_many(state, [item_id], **fields)[0]
+
+
+def set_status_many(state: State, item_ids: list[str], status: str, *, note: str = "") -> list[Item]:
+  """Prevalidate a status batch, preserving no-op and per-item history semantics."""
+  items = _batch_items(state, item_ids)
+  if status not in state.config.statuses:
+    raise StateError(f"unknown status {status!r}; known: {sorted(state.config.statuses)}")
+  transitions = []
+  for item in items:
+    previous = item.status
+    if previous == status:
+      continue
+    item.status = status
+    _relocate_slice(state, item.id)
+    transitions.append((item, previous))
+  if transitions:
+    state.save_index()
+    for item, previous in transitions:
+      _record(state, item.id, "status", frm=previous, to=status, note=note)
+  return items
 
 
 def set_status(state: State, item_id: str, status: str, *, note: str = "") -> Item:
-  """Change status, moving the slice file when it crosses a folder boundary."""
-  cfg = state.config
-  item = state.index.require(item_id)
-  if status not in cfg.statuses:
-    raise StateError(f"unknown status {status!r}; known: {sorted(cfg.statuses)}")
-  previous = item.status
-  if previous == status:
-    return item
-
-  item.status = status
-  _relocate_slice(state, item_id)
-  state.save_index()
-  _record(state, item_id, "status", frm=previous, to=status, note=note)
-  return item
+  return set_status_many(state, [item_id], status, note=note)[0]
 
 
 def done(state: State, item_id: str, *, note: str = "") -> Item:

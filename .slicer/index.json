@@ -784,7 +784,7 @@
       "id": "S16",
       "title": "Status changes are one item per process",
       "short_title": "Status changes are one item per process",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
