@@ -81,7 +81,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
-| `edit ID --section NAME [--text/--file/--stdin]` | replace one section (or open `$EDITOR`) |
+| `edit ID --section NAME [--append] [--text/--file/--stdin]` | replace or append to one section (or open `$EDITOR`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `start ID [ID ...]` | mark an item in progress, so `next` knows it is in flight |
@@ -179,8 +179,11 @@ epilogue                 the closing section
 
 `slicer prose list` names every block in the order it renders. Both `edit` and `prose edit`
 take exactly one of `--text`, `--file`, or `--stdin`, or open `$EDITOR` when none is
-supplied. `--text` preserves the argument exactly, including newlines; `--text ""`
-clears the body. For example, `slicer prose edit preamble --text "Current priorities"`.
+supplied. In replacement mode, `--text` preserves the argument exactly, including
+newlines, and `--text ""` clears the body. Section editing also accepts `--append` with an
+explicit source: it joins old and new text with one blank line, removing boundary
+newline characters. Empty appended content leaves the body unchanged.
+For example, `slicer prose edit preamble --text "Current priorities"` replaces the preamble.
 A pass group is opened with `prose add-pass 6 --heading
 "# ..."` and closed with `drop-pass`, which refuses while any item is still filed under
 it. Items are filed with `slicer add --pass 6` or moved with `slicer set <id> --pass 6`.

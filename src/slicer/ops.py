@@ -402,11 +402,18 @@ def next_item(state: State) -> NextResult:
   return NextResult(item=max(pool, key=lambda it: eff[it.id]), blocked=blocked)
 
 
-def edit_section(state: State, item_id: str, heading: str, body: str) -> Slice:
+def edit_section(state: State, item_id: str, heading: str, body: str, *, append: bool = False) -> Slice:
   sl = state.slices.get(item_id)
   if sl is None:
     raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first")
   section = sl.section(heading)
+  if append:
+    body = body.lstrip("\n")
+    if not body:
+      return sl
+    previous = section.body.rstrip("\n") if section else ""
+    if previous:
+      body = previous + "\n\n" + body
   if section is None:
     sl.sections.append(Section(heading=heading, body=body))
   else:

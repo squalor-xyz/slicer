@@ -399,10 +399,12 @@ def cmd_edit(args: argparse.Namespace) -> int:
       f"{args.id} has no slice; run `slicer promote {args.id}` first", code="no_slice"
     )
   section = sl.section(args.section)
+  if args.append and args.text is None and args.file is None and not args.stdin:
+    raise StateError("--append requires --text, --file, or --stdin", code="usage")
   body = _body_from(args, section.body if section else "")
   if body is None:
     raise StateError("editor exited non-zero; slice unchanged", code="editor_aborted")
-  ops.edit_section(state, args.id, args.section, body)
+  ops.edit_section(state, args.id, args.section, body, append=args.append)
   _emit(args, {"id": args.id, "section": args.section}, f"updated {args.id} / {args.section}")
   return OK
 
@@ -744,10 +746,11 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
 
-  sp = _render_flag(add("edit", _mutating(cmd_edit), "replace one section of a slice"))
+  sp = _render_flag(add("edit", _mutating(cmd_edit), "replace or append to one section of a slice"))
   sp.add_argument("id")
   sp.add_argument("--section", required=True)
-  sp.add_argument("--text", help="inline body, preserved exactly; empty text clears it; cannot combine with --file/--stdin")
+  sp.add_argument("--append", action="store_true", help="append with a blank line; requires --text, --file, or --stdin; empty input leaves the body unchanged")
+  sp.add_argument("--text", help="inline body (exact in replacement mode); empty text clears unless appending; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 

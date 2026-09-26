@@ -402,10 +402,22 @@ updated S01 / Why
 
 `edit` and `prose edit` accept one body source: `--text`, `--file`, or `--stdin`.
 Combining sources is a usage error. With none, the command opens `$EDITOR`.
-`--text` stores exactly the supplied argument, preserving spaces and newlines;
+In replacement mode, `--text` stores exactly the supplied argument, preserving spaces and newlines;
 `--text ""` clears the body. File and stdin input strip trailing newline characters.
 Quote inline text for your shell; for a value starting with a dash, use
 `--text="- a bullet"`. Read a section back with `slicer show S01 --section Why`.
+
+To append to a slice section, supply `--append` and one explicit source:
+
+```sh
+slicer edit S01 --section Why --append --text "Also report invalid values" --render
+```
+
+Append removes trailing newline characters from the old body and leading newline
+characters from the new body, then joins nonempty bodies with one blank line. Other
+whitespace and the source-reading rules above are preserved. Empty appended content
+leaves the section and log unchanged; empty or missing sections get the new body
+without a leading separator. Append without a source is a usage error.
 
 ```sh
 slicer prose edit preamble --text "Current priorities" --render

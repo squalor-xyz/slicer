@@ -236,15 +236,27 @@ its score. Read the slice, mark it started, implement and verify it, then use
 `slicer done ID --note "..." --render` and `slicer check`.
 
 **One section at a time.** `slicer edit ID --section "Why" --stdin` replaces one
-section's body, and `slicer show ID --section "Why"` reads that one body back (no append
-yet, so read before you mean to add to it). For short edits use
+section's body, and `slicer show ID --section "Why"` reads that one body back. For short edits use
 `slicer edit ID --section "Why" --text "Updated explanation" --render`; roadmap prose
 supports the same source, such as `slicer prose edit preamble --text "Current work"`.
-Inline text is exact, including whitespace and newlines; `--text ""` clears the body.
+In replacement mode, inline text is exact, including whitespace and newlines;
+`--text ""` clears the body.
 Choose only one of `--text`, `--file`, and `--stdin`; conflicting sources return exit 2
 and `code="usage"` with `--json`. Omitting all sources opens the editor. File and stdin
 sources retain their existing trailing-newline stripping. Quote text for the shell,
 or pass it as one argument when invoking without a shell.
+
+To add to a section:
+
+```sh
+slicer edit ID --section "Why" --append --text "New finding" --render
+```
+
+Append requires exactly one of `--text`, `--file`, or `--stdin`; it never opens the editor. Trailing newline characters in the old body and
+leading newline characters in the new body are removed, then nonempty bodies are joined
+with two newlines. Other whitespace and source-reading rules are preserved. Empty
+appended content changes neither the section nor the log; an empty or missing section
+is filled without a leading separator. Prose editing does not support append.
 
 To fill a whole slice at once, hand `promote`
 a one-item outline: `slicer promote ID --file draft.md` — the same `##` item / `###`
@@ -262,7 +274,7 @@ Committing is the human's.
 
 ## What is not here yet
 
-Worth knowing before you plan around it: there is no search command, no way to append to a section, no per-item history beyond
+Worth knowing before you plan around it: there is no search command, no per-item history beyond
 status transitions, and no dependency query beyond `next` and `verify`. These are on the
 roadmap — `slicer list --json` plus your own filtering is the workaround for most of them.
 
