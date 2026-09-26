@@ -21,6 +21,24 @@ def set_statuses(repo: support.TempRepo, statuses: dict, **extra) -> None:
 
 
 class ParkCliTests(unittest.TestCase):
+  def test_ParkAndUnpark_Notes_AppearInTransitionHistory(self) -> None:
+    for custom in (False, True):
+      for note in (None, "waiting on upstream", ""):
+        with self.subTest(custom=custom, note=note), self.repo() as repo:
+          parked, opened = ("on-hold", "todo") if custom else ("parked", "open")
+          if custom:
+            set_statuses(repo, {"open": "open", "todo": "todo", "done": "done", "on-hold": "hold"},
+                         open_status=opened, parked_status=parked)
+          for command, status in (("park", parked), ("unpark", opened)):
+            args = () if note is None else ("--note", note)
+            previous = repo.state().index.require("S01").status
+            code, out, err = repo.run(command, "S01", *args, "--render", "--json")
+            self.assertEqual(code, 0, err)
+            self.assertEqual(json.loads(out)["status"], status)
+            entry = repo.state().history()[-1]
+            self.assertEqual((entry.frm, entry.to, entry.note), (previous, status, note or ""))
+            self.assertEqual(repo.run("check")[0], 0)
+
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo()
     repo.run("init")

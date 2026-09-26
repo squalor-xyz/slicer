@@ -232,7 +232,7 @@
       "id": "S32",
       "title": "add cannot set deps or short-title; park and unpark cannot take a note",
       "short_title": "add cannot set deps or short-title; park and unpark cannot take a note",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

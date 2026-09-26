@@ -74,7 +74,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
-| `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency]` | append a roadmap item (no slice file yet) |
+| `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies |
 | `promote ID [--file/--stdin]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `next` | the highest-priority startable item (highest effective score; dependencies still gate) |
@@ -85,7 +85,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `start ID` | mark an item in progress, so `next` knows it is in flight |
-| `done ID` / `park ID` / `unpark ID` | change status; `done` moves the file with `git mv` |
+| `done ID` / `park ID` / `unpark ID` `[--note TEXT]` | change status and optionally record a note; `done` moves the file with `git mv` |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `render` | regenerate `.slicer/render/` |

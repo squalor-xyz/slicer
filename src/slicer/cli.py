@@ -346,6 +346,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     state, args.title, item_id=args.id, size=args.size or "",
     trees=args.tree or [], findings=args.findings or "", status=args.status,
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
+    depends_on=args.depends_on, short_title=args.short_title,
   )
   _emit(args, item.to_dict(), f"added {item.id}  {item.display_title()}")
   return OK
@@ -691,6 +692,8 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = _render_flag(add("add", _mutating(cmd_add), "append a roadmap item"))
   sp.add_argument("title")
+  sp.add_argument("--depends-on", action="append", help="dependency id (repeatable)")
+  sp.add_argument("--short-title", help="short title for the roadmap row")
   sp.add_argument("--id", help="use this id instead of the next free one")
   sp.add_argument("--size")
   sp.add_argument("--tree", action="append")
@@ -745,9 +748,11 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = _render_flag(add("park", _mutating(cmd_park), "set an item aside"))
   sp.add_argument("id")
+  sp.add_argument("--note", help="one line for the log")
 
   sp = _render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue"))
   sp.add_argument("id")
+  sp.add_argument("--note", help="one line for the log")
 
   sp = sub.add_parser("prose", help="read and edit the roadmap's own prose", parents=[common])
   psub = sp.add_subparsers(dest="prose_command", required=True)

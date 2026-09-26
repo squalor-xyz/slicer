@@ -215,6 +215,11 @@ means an agent can decide from the dry run alone.
 
 ## Rules for an agent working in a slicer project
 
+**Create a dependent item in one call.** For example,
+`slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.
+Repeat `--depends-on` for multiple ids. `park` and `unpark` accept `--note` to record
+why work is being deferred or resumed; read those notes with `slicer log --json`.
+
 **Never edit `.slicer/*.json`.** Use the commands. The index, the slice files and
 `.slicer/render/` have to agree, and `slicer check` is what proves they do.
 

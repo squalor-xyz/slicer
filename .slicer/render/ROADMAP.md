@@ -2,7 +2,7 @@
 
 # Roadmap
 
-54 items · — 21 · done 32 · parked 1
+54 items · — 20 · done 33 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -16,7 +16,7 @@
 | 8 | [S44](slices/S44.md) | No way to mark an item in-progress, so the queue cannot show what is in flight | M | slicer | dogfooding; the flow gap | done |
 | 9 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | done |
 | 10 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | done |
-| 11 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | — |
+| 11 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | done |
 | 12 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | slicer | dogfooding; done->render->check every commit | done |
 | 13 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | slicer | follow-on from S45, which scoped prose out | done |
 | 14 | [S49](slices/S49.md) | import and migrate should honour --render too | S | slicer | the two bulk-load holdouts from S45/S47 | done |

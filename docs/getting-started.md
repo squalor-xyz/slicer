@@ -270,18 +270,15 @@ Choose individual items, a bulk outline, or migration of a legacy tree.
 ```console
 $ slicer add "Parse the config file" --size M --tree core --findings "G1"
 added S01  Parse the config file
-$ slicer add "Fail loudly on a missing key" --size S --tree core
+$ slicer add "Fail loudly on a missing key" --size S --tree core --depends-on S01
 added S02  Fail loudly on a missing key
 ```
 
 `add` takes `--size`, `--tree` (repeatable), `--findings`, `--status`, `--pass`, `--id`,
-and `--importance`/`--urgency` (the priority axes, 1–3). It does **not** take
-`--depends-on` or `--short-title` — `set` does, so dependencies are a second step:
-
-```console
-$ slicer set S02 --depends-on S01
-updated S02
-```
+`--importance`/`--urgency` (the priority axes, 1–3), `--depends-on` (repeatable, using
+item ids), and `--short-title` for a shorter roadmap label while retaining the full
+title. Omitted or empty short titles fall back to the full title. Use `set` to change
+these fields later; repeated `set --depends-on` flags replace the dependency list.
 
 An item added this way is a roadmap row and nothing more. There is no slice file yet;
 that is [step 5](#5-turn-an-item-into-a-slice).
@@ -510,6 +507,15 @@ never silently reorders the roadmap.
 
 `slicer log` shows the history of status changes; `slicer stats` gives counts by status,
 size, tree and pass.
+
+When setting work aside or returning it to the queue, record the reason in the log:
+
+```sh
+slicer park S02 --note "Waiting on upstream" --render
+slicer unpark S02 --note "Upstream fix is available" --render
+```
+
+Notes are optional on both commands, as on `done` and `start`.
 
 ## 7. Passes, if you want them
 

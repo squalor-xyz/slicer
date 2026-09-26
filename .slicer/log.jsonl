@@ -204,3 +204,6 @@
 {"when": "2026-09-26T16:19:14Z", "item": "S46", "action": "status", "from": "started", "to": "done", "note": "Added exact --text input to edit and prose edit, conflict validation, tests and docs"}
 {"when": "2026-09-26T16:37:31Z", "item": "S02", "action": "set", "from": "", "to": "", "note": "urgency"}
 {"when": "2026-09-26T16:37:31Z", "item": "S02", "action": "move", "from": "25", "to": "54", "note": ""}
+{"when": "2026-09-26T17:06:22Z", "item": "S32", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-26T17:07:31Z", "item": "S32", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-09-26T17:07:31Z", "item": "S32", "action": "status", "from": "started", "to": "done", "note": "Exposed dependency and short-title creation options and park/unpark notes; reviewed and verified"}

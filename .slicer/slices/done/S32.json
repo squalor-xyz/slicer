@@ -27,7 +27,7 @@
     },
     {
       "heading": "Check",
-      "body": "Adding a dependent item is one command; parking with a reason records it."
+      "body": "Implemented add --depends-on (repeatable) and --short-title, plus park/unpark --note through existing operations. Review found no additional issues. Thirteen focused tests and an installed-slicer smoke test passed, covering dependency gating, short-title persistence/rendering/defaults/newline rejection, notes with default/custom statuses, JSON and rendering. Full suite: 455 tests, 451 passed, 1 skipped, 3 existing workspace-isolation failures tracked by S54. slicer check and git diff --check pass."
     },
     {
       "heading": "Git",
