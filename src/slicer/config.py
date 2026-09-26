@@ -83,6 +83,7 @@ class Config:
   done_status: str = "done"
   retired_status: str = "retired"
   parked_status: str = "parked"
+  started_status: str = "started"
   sections: list[str] = field(default_factory=lambda: list(DEFAULT_SECTIONS))
   boundary: str = "**Not in this slice:**"
   done_dir: str = "done"
@@ -114,6 +115,8 @@ class Config:
       raise ConfigError(f"retired_status {self.retired_status!r} is not in statuses")
     if self.parked_status and self.parked_status not in self.statuses:
       raise ConfigError(f"parked_status {self.parked_status!r} is not in statuses")
+    if self.started_status and self.started_status not in self.statuses:
+      raise ConfigError(f"started_status {self.started_status!r} is not in statuses")
     if len({self.done_dir, self.retired_dir, ""}) != 3:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
     if len(set(self.statuses.values())) != len(self.statuses):
@@ -148,6 +151,7 @@ class Config:
       "done_status": self.done_status,
       "retired_status": self.retired_status,
       "parked_status": self.parked_status,
+      "started_status": self.started_status,
       "sections": list(self.sections),
       "boundary": self.boundary,
       "done_dir": self.done_dir,
@@ -182,6 +186,13 @@ class Config:
     parked = d.get("parked_status")
     if parked is None:
       parked = "parked" if "parked" in statuses else ""
+    # Back-filled the way `retired` is, and for the same reason: a config
+    # written before `start` existed names no started status, and validate()
+    # would reject it. Only that one key is added, so a project that renamed
+    # it keeps its own name and one that dropped it stays without.
+    started = d.get("started_status", "started")
+    if started and started not in statuses:
+      statuses[started] = started
     cfg = Config(
       version=int(d.get("version", 1)),
       id_prefix=ident.get("prefix", "S"),
@@ -191,6 +202,7 @@ class Config:
       done_status=d.get("done_status", "done"),
       retired_status=retired,
       parked_status=parked,
+      started_status=started,
       sections=list(d.get("sections", DEFAULT_SECTIONS)),
       boundary=d.get("boundary", "**Not in this slice:**"),
       done_dir=d.get("done_dir", "done"),

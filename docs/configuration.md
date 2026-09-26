@@ -17,6 +17,7 @@ and the slice files, the config is yours to hand-edit.
   "done_status": "done",
   "retired_status": "retired",
   "parked_status": "parked",
+  "started_status": "started",
   "sections": ["Why", "Files", "Failing tests", "Implement", "Check", "Git"],
   "boundary": "**Not in this slice:**",
   "done_dir": "done",
@@ -61,6 +62,7 @@ and the slice files, the config is yours to hand-edit.
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
 | `sync.targets` | `[]` | Derived lines in documents slicer does not own | **Yes** |
 | `parked_status` | `"parked"` | Which status `park` sets, and what an item returns *from*. **Empty string = the project has no park state, and `park` refuses cleanly** | Yes if nothing is parked |
+| `started_status` | `"started"` | Which status `start` sets. `next` returns a started item ahead of every open one. It gets no folder — the slice file stays in `slices/`. **Empty string = the project has no start state, and `start` refuses cleanly** | Yes if nothing is started |
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 
 ## The ones that will surprise you
@@ -94,6 +96,12 @@ with a clear message.
 existed has no retired status; exactly that one key is added on load, so a project that
 deliberately dropped some *other* status does not get it back.
 
+**A missing `started_status` is back-filled the same way,** for a project initialised
+before `start` existed. Rename it and your name is kept; set it to `""` and the project
+stays without one. Note that a started item is absent from the `{{later}}` pointer unless
+you add a group for it to `pointers.later.groups` — the default groups list `open`,
+`parked` and `later` only.
+
 ## Statuses
 
 The key is what you type; the label is what renders.
@@ -104,8 +112,8 @@ The key is what you type; the label is what renders.
 "done_status": "done"
 ```
 
-`open_status`, `done_status` and `retired_status` must each name a key that exists in
-`statuses`. Delete `parked` and `later` if you do not want them — but remove them from
+`open_status`, `done_status`, `retired_status` and `started_status` must each name a key
+that exists in `statuses` (the last two may instead be `""`, switching the feature off). Delete `parked` and `later` if you do not want them — but remove them from
 `pointers.later.groups` too, or the pointer silently skips a group that can never match.
 
 ## Sections

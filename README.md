@@ -74,6 +74,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `edit ID --section NAME [--file/--stdin]` | replace one section (or open `$EDITOR`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
+| `start ID` | mark an item in progress, so `next` knows it is in flight |
 | `done ID` / `park ID` / `unpark ID` | change status; `done` moves the file with `git mv` |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
@@ -86,15 +87,16 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 
 In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (size, trees, findings, depends, importance,
-urgency), a slice section, or a prose block — and `a` adds a new item.
+urgency), a slice section, or a prose block — `s` starts the selected item and `a` adds a
+new one.
 
 Every command takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
 See [docs/agents.md](docs/agents.md).
 
-Every command that changes state — `add`, `set`, `done`, `move`, `promote`, `edit`,
-`remove`, `park`, `unpark`, `import`, `migrate`, and the `prose` edits — takes `--render`
+Every command that changes state — `add`, `set`, `start`, `done`, `move`, `promote`,
+`edit`, `remove`, `park`, `unpark`, `import`, `migrate`, and the `prose` edits — takes `--render`
 to regenerate `.slicer/render/` in the same step, so a mutation and its render are one
 command.
 

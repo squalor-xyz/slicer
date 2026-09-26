@@ -43,6 +43,7 @@ class ErrorEnvelopeTests(unittest.TestCase):
     # exceptions with different wording for the identical condition.
     with self.repo() as repo:
       for argv in (("show", "S99"), ("promote", "S99"), ("done", "S99"),
+                   ("start", "S99"),
                    ("set", "S99", "--size", "M"), ("edit", "S99", "--section", "Why", "--stdin")):
         with self.subTest(argv[0]):
           self.assertEqual(self.envelope(repo, *argv)["code"], "no_such_item")

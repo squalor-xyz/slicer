@@ -144,7 +144,7 @@
       "id": "S44",
       "title": "No way to mark an item in-progress, so the queue cannot show what is in flight",
       "short_title": "No way to mark an item in-progress, so the queue cannot show what is in flight",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

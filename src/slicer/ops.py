@@ -339,6 +339,13 @@ def unpark(state: State, item_id: str) -> Item:
   return set_status(state, item_id, state.config.open_status)
 
 
+def start(state: State, item_id: str, *, note: str = "") -> Item:
+  cfg = state.config
+  if not cfg.started_status:
+    raise StateError("this project declares no started status; set started_status in config")
+  return set_status(state, item_id, cfg.started_status, note=note)
+
+
 @dataclass
 class NextResult:
   item: Item | None
@@ -348,26 +355,39 @@ class NextResult:
 def next_item(state: State) -> NextResult:
   """The most critical startable item: highest effective score, unblocked.
 
+  Work already started wins outright, whatever it scores: the question `next`
+  answers is "what should I be doing", and finishing what is in flight beats
+  starting something new. Only when nothing is started does the score choose,
+  among the open items.
+
   Dependencies still hard-gate what is startable -- a blocked item is never
-  returned, whatever its score -- so the score only orders the items that can
-  actually be picked up. Ties keep manual queue order, because `max` returns
-  the first maximal element and the items are walked in index order.
+  returned, whatever its score or status -- so the score only orders the items
+  that can actually be picked up. Ties keep manual queue order, because `max`
+  returns the first maximal element and the items are walked in index order.
   """
   cfg = state.config
+  # A whitelist, so parked, done, retired and any project-specific status stay
+  # out. An empty started_status means the project has no start state, and the
+  # set is just the open one.
+  active = {cfg.open_status}
+  if cfg.started_status:
+    active.add(cfg.started_status)
   blocked: list[tuple[str, list[str]]] = []
+  started: list[Item] = []
   candidates: list[Item] = []
   for item in state.index.items:
-    if item.status != cfg.open_status:
+    if item.status not in active:
       continue
     pending = graph.blocked_by(state.index, item, cfg.done_status)
     if pending:
       blocked.append((item.id, pending))
       continue
-    candidates.append(item)
-  if not candidates:
+    (started if item.status == cfg.started_status else candidates).append(item)
+  pool = started or candidates
+  if not pool:
     return NextResult(item=None, blocked=blocked)
   eff = graph.effective_scores(state.index)
-  return NextResult(item=max(candidates, key=lambda it: eff[it.id]), blocked=blocked)
+  return NextResult(item=max(pool, key=lambda it: eff[it.id]), blocked=blocked)
 
 
 def edit_section(state: State, item_id: str, heading: str, body: str) -> Slice:

@@ -52,8 +52,8 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `list` | array of items |
 | `show ID` | item, plus `slice` when it has one; with `--section NAME`, `{id, section, body}` |
-| `next` | item plus `path`; or `{"item": null, "blocked": [...]}` |
-| `add`, `set`, `done`, `park`, `unpark` | the item |
+| `next` | item plus `path`; or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
+| `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
 | `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems}` |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |

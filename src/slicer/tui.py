@@ -20,8 +20,8 @@ from slicer.store import State
 # Every token here names a key that `act` or `run` actually handles. `n`
 # promotes an existing item; `a` creates a new one.
 HELP = (
-  "j/k move  tab pane  e edit  a add  J/K reorder  d done  p park  u unpark  "
-  "n promote  r render  q quit"
+  "j/k move  tab pane  e edit  a add  J/K reorder  s start  d done  p park  "
+  "u unpark  n promote  r render  q quit"
 )
 
 # Item fields editable from the detail pane, in display order: label -> the
@@ -106,7 +106,10 @@ def rows(state: State) -> list[Row]:
   out: list[Row] = []
   for n, item in enumerate(state.index.items, 1):
     pending = graph.blocked_by(state.index, item, cfg.done_status)
-    marker = "!" if pending and item.status == cfg.open_status else " "
+    active = item.status == cfg.open_status or (
+      bool(cfg.started_status) and item.status == cfg.started_status
+    )
+    marker = "!" if pending and active else " "
     label = cfg.status_label(item.status)
     out.append(
       Row(
@@ -222,6 +225,9 @@ def act(
     return ActResult("that key applies to a slice, not to a prose block")
 
   try:
+    if key == "s":
+      ops.start(state, target)
+      return ActResult(f"{target} started")
     if key == "d":
       ops.set_status(state, target, cfg.done_status)
       return ActResult(f"{target} done")

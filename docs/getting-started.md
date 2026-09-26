@@ -270,6 +270,18 @@ whose dependencies are all done. Because a blocker of a critical item inherits i
 priority, `next` surfaces the blocker first. Add `--json` and an agent can read it without
 parsing markdown — every read command takes `--json`.
 
+Mark it in flight before you start typing, so the queue can answer "what am I in the
+middle of":
+
+```console
+$ slicer start S01
+S01 -> started
+```
+
+From here `slicer next` returns S01 ahead of every open item, whatever they score —
+finishing what you started beats picking up something new. The slice file does not move;
+`started` is not a folder.
+
 Implement it, then:
 
 ```console

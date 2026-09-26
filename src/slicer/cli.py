@@ -446,6 +446,13 @@ def cmd_park(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_start(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = ops.start(state, args.id, note=getattr(args, "note", "") or "")
+  _emit(args, item.to_dict(), f"{item.id} -> {state.config.status_label(item.status)}")
+  return OK
+
+
 def cmd_prose_list(args: argparse.Namespace) -> int:
   state = _state(args)
   entries = []
@@ -724,6 +731,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--stdin", action="store_true")
 
   sp = _render_flag(add("done", _mutating(_status_cmd("done_status")), "mark an item finished"))
+  sp.add_argument("id")
+  sp.add_argument("--note", help="one line for the log")
+
+  sp = _render_flag(add("start", _mutating(cmd_start), "mark an item in progress"))
   sp.add_argument("id")
   sp.add_argument("--note", help="one line for the log")
 
