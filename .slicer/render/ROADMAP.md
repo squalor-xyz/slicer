@@ -2,7 +2,7 @@
 
 # Roadmap
 
-54 items · — 19 · done 34 · parked 1
+55 items · — 20 · done 34 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -60,3 +60,4 @@
 | 52 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | cli | S46 planning; slicer edit --json prints argparse usage only | — |
 | 53 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | tests | S52 validation; three failures with workspace-local TMPDIR | — |
 | 54 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
+| 55 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | slicer | user request: clearer TUI with color | — |

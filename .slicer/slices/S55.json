@@ -1,0 +1,38 @@
+{
+  "id": "S55",
+  "title": "TUI color and visual polish: status, priority, focus, and feedback",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "user request: clearer TUI with color",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The user requested color and better TUI UI/UX. The current drawing loop in\nsrc/slicer/tui.py uses normal, reverse, bold, and dim attributes, without a color\npalette. Row already exposes status and blocked state; panel exposes field/section\nentries. Use those structures to make status, priority, pane focus, and feedback\neasier to scan while preserving readable text.\n\nRelated items: S41 covers search/filter/jump/help; S42 covers faster reordering;\nS50 covers a creation wizard. This slice is presentation work and can ship independently."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/tui.py: semantic presentation roles, palette setup, row/detail drawing,\n  pane focus, and typed feedback.\n- tests/test_cli.py: existing TUI behavior/rows/panel tests; add focused presentation\n  tests in a new tests/test_tui_style.py.\n- docs/getting-started.md and README.md: describe visual cues and monochrome behavior."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Pure role selection maps configured status roles, including custom vocabulary,\n   to styles; unknown/custom extra statuses remain neutral.\n2. Active blocked items keep a visible ! marker. Priority retains numeric/text cues.\n3. Focused selection remains obvious over every status color; inactive selection\n   remains visible without looking focused.\n4. Monochrome and color initialization failures retain usable selection and labels.\n5. Success, error, and informational outcomes carry explicit severity, including\n   editor errors and validation failures; styling never guesses from message text.\n6. Fake-screen drawing covers clipping, resize, and small terminal dimensions without\n   out-of-bounds writes; existing movement/editing/action behavior remains covered."
+    },
+    {
+      "heading": "Implement",
+      "body": "Keep stdlib curses and the existing pure-function presentation architecture. Add\nsemantic roles (normal, heading, started, done, parked, blocked, priority, success,\nerror, info) and resolve them to curses attributes only in the terminal layer.\nAvoid putting escape sequences into Row.text or PanelLine.text.\n\nUse a small basic-color palette on the terminal's default background: cyan for\nstarted/headings, green for done/success, yellow for parked/blocked and high priority,\nred for errors, neutral for open/other statuses and body text. Resolve named status\nroles through Config fields rather than hardcoded status strings. Keep labels,\nnumeric scores, and blocked markers so no meaning relies solely on hue.\nShow a compact labeled base priority score in the queue and retain the score/quadrant\ndetail. Emphasize priority 3 on either axis without changing ranking or queue order.\n\nInitialize color once inside the curses session, checking capability and available\npairs. Prefer the terminal's default background. Fall back to monochrome if color,\ndefault-background support, or palette initialization is unavailable. Respect a\nnonempty NO_COLOR environment variable. No theme dependency or config migration.\n\nGive panes explicit headings and a visible focus indicator. Focused selection uses\nreverse plus bold and takes precedence over row colors; inactive selection uses\nbold with a textual selection marker. Detail headings and editable fields have\nconsistent visual hierarchy. Preserve existing key bindings and pane navigation.\n\nAdd an explicit message severity to action/edit outcomes. Preserve apply_edit's\nexisting string-return interface through a wrapper if needed by current callers;\nthe run loop should consume the typed result. Informational no-ops and cancellations\nmust not be painted as successful mutations. Use visible Error:/OK:/Info: prefixes\nalongside styling. Keep the normal help line neutral.\n\nReserve layout space for headings and feedback, clamp dimensions after resize, and\nshow a short resize prompt when the panes cannot fit. Centralize bounded drawing\nrather than masking arbitrary curses failures throughout the UI. Preserve editor\nsuspend/resume and redraw behavior.\n\n**Not in this slice:** search/filter/help overlay (S41), reorder shortcuts (S42),\nwizard (S50), mouse controls, user-editable themes, a new TUI framework, CLI colors,\nor changes to roadmap state/priority semantics."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused presentation tests and existing TUI behavior tests, then the regression\nsuite. Run slicer check after updating roadmap state.\n\nManually inspect the TUI on light and dark terminal backgrounds and with NO_COLOR:\nopen/started/done/parked/custom statuses, active blocked items, priority emphasis,\nboth pane selections, prose, successful actions, invalid edits, editor cancellation,\nlong titles, narrow windows, and resizing. Record which terminal checks were actually\nperformed and any unavailable environment. Colors should aid scanning while every\nstate remains understandable without them."
+    },
+    {
+      "heading": "Git",
+      "body": "Implement as a reviewable slice with code, tests, documentation, and generated roadmap\nupdates together. Commit/push only when requested. Filing this specification does not\nimplement the feature or change its queue priority."
+    }
+  ],
+  "notes": []
+}
