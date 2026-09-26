@@ -2,34 +2,34 @@
 
 # Roadmap
 
-51 items · — 20 · done 30 · parked 1
+54 items · — 21 · done 32 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | slicer | review; sibling of S22 | done |
-| 2 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | slicer | review; data loss | done |
-| 3 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | slicer | review; core invariant | done |
-| 4 | [S30](slices/S30.md) | verify misses several inconsistent states | M | slicer | review; gate completeness | done |
-| 5 | [S38](slices/S38.md) | Priority and criticality scoring: the score as data | M | slicer | user request; Eisenhower matrix | done |
-| 6 | [S39](slices/S39.md) | Priority propagation and next picks the highest effective score | M | slicer | user request; critical-path propagation | done |
-| 7 | [S44](slices/S44.md) | No way to mark an item in-progress, so the queue cannot show what is in flight | M | slicer | dogfooding; the flow gap | done |
-| 8 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | done |
-| 9 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | done |
-| 10 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | — |
-| 11 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | slicer | dogfooding; done->render->check every commit | done |
-| 12 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | slicer | follow-on from S45, which scoped prose out | done |
-| 13 | [S49](slices/S49.md) | import and migrate should honour --render too | S | slicer | the two bulk-load holdouts from S45/S47 | done |
-| 14 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | slicer | dogfooding; a temp file per section edit | — |
-| 15 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | done |
-| 16 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
-| 17 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | done |
-| 18 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
-| 19 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | slicer | dogfooding; biggest TUI gap | done |
-| 20 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | slicer | dogfooding; navigation at scale | — |
-| 21 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | — |
-| 22 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
-| 23 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
-| 24 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
+| 1 | [S52](slices/S52.md) | Document onboarding and AI-assisted roadmap workflows | M | docs | documentation review; user workflow | done |
+| 2 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | slicer | review; sibling of S22 | done |
+| 3 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | slicer | review; data loss | done |
+| 4 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | slicer | review; core invariant | done |
+| 5 | [S30](slices/S30.md) | verify misses several inconsistent states | M | slicer | review; gate completeness | done |
+| 6 | [S38](slices/S38.md) | Priority and criticality scoring: the score as data | M | slicer | user request; Eisenhower matrix | done |
+| 7 | [S39](slices/S39.md) | Priority propagation and next picks the highest effective score | M | slicer | user request; critical-path propagation | done |
+| 8 | [S44](slices/S44.md) | No way to mark an item in-progress, so the queue cannot show what is in flight | M | slicer | dogfooding; the flow gap | done |
+| 9 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | slicer | found probing edge cases | done |
+| 10 | [S12](slices/S12.md) | flags and group have no CLI setter | S | slicer | found auditing the machine interface | done |
+| 11 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | slicer | review; daily friction | — |
+| 12 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | slicer | dogfooding; done->render->check every commit | done |
+| 13 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | slicer | follow-on from S45, which scoped prose out | done |
+| 14 | [S49](slices/S49.md) | import and migrate should honour --render too | S | slicer | the two bulk-load holdouts from S45/S47 | done |
+| 15 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | slicer | dogfooding; a temp file per section edit | done |
+| 16 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | done |
+| 17 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
+| 18 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | done |
+| 19 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
+| 20 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | slicer | dogfooding; biggest TUI gap | done |
+| 21 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | slicer | dogfooding; navigation at scale | — |
+| 22 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | — |
+| 23 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | slicer | path traversal; found planning S21 | done |
+| 24 | [S01](slices/S01.md) | Split slicer into its own repository | M | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
 | 25 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
 | 26 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | slicer |  | done |
 | 27 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | slicer | found while verifying prose add-pass | done |
@@ -57,3 +57,6 @@
 | 49 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | — |
 | 50 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
 | 51 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | — |
+| 52 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | cli | S46 planning; slicer edit --json prints argparse usage only | — |
+| 53 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | tests | S52 validation; three failures with workspace-local TMPDIR | — |
+| 54 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |

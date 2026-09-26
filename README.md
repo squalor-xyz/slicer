@@ -2,6 +2,16 @@
 
 Roadmap and slice management for the review → slice → implement → done loop.
 
+slicer is AI-friendly: a coding agent can review a project, turn accepted findings into
+an importable roadmap, and work through bounded slices using commands with JSON output.
+For a new project, start with goals and acceptance criteria instead of review findings.
+The AI supplies the review and planning; slicer stores, validates, prioritizes, and
+renders the work. It runs locally without an AI service or API key.
+
+Start with the [worked workflows](docs/getting-started.md#worked-workflows), use the
+[agent prompts](docs/agents.md#reusable-prompts), or follow the
+[contributor workflow](AGENTS.md#working-on-the-roadmap) to work on slicer itself.
+
 State is **JSON**. The markdown under `.slicer/render/` is generated output — readable,
 committed, and never parsed back. Edit through the commands or the TUI, not by hand.
 
@@ -26,7 +36,7 @@ cd any-repo
 slicer init                             # creates .slicer/
 slicer add "Parse the config file" --size M --tree core
 slicer promote S01                      # give it a slice file from the template
-slicer edit S01 --section Why           # opens $EDITOR
+slicer edit S01 --section Why --text "Load settings before starting the app"
 slicer render                           # regenerate .slicer/render/
 slicer check                            # the gate: exit 1 if anything drifted
 ```
@@ -71,7 +81,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
-| `edit ID --section NAME [--file/--stdin]` | replace one section (or open `$EDITOR`) |
+| `edit ID --section NAME [--text/--file/--stdin]` | replace one section (or open `$EDITOR`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `start ID` | mark an item in progress, so `next` knows it is in flight |
@@ -90,7 +100,7 @@ whatever is selected there — an item field (size, trees, findings, depends, im
 urgency), a slice section, or a prose block — `s` starts the selected item and `a` adds a
 new one.
 
-Every command takes `--json`, including the failures — an agent calls `slicer next
+Every command except `tui` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
 See [docs/agents.md](docs/agents.md).
@@ -160,8 +170,11 @@ pass.<key>.outro         prose below it
 epilogue                 the closing section
 ```
 
-`slicer prose list` names every block in the order it renders. `edit` takes `--file`,
-`--stdin` or opens `$EDITOR`. A pass group is opened with `prose add-pass 6 --heading
+`slicer prose list` names every block in the order it renders. Both `edit` and `prose edit`
+take exactly one of `--text`, `--file`, or `--stdin`, or open `$EDITOR` when none is
+supplied. `--text` preserves the argument exactly, including newlines; `--text ""`
+clears the body. For example, `slicer prose edit preamble --text "Current priorities"`.
+A pass group is opened with `prose add-pass 6 --heading
 "# ..."` and closed with `drop-pass`, which refuses while any item is still filed under
 it. Items are filed with `slicer add --pass 6` or moved with `slicer set <id> --pass 6`.
 
@@ -177,8 +190,8 @@ the tool, so slicer works on a repo with no review protocol at all.
 
 Every key, its default, and which ones are unsafe to change once items exist:
 [docs/configuration.md](docs/configuration.md). Two to know up front — `id.prefix` and
-`id.width` are read only when `index.json` is first written, so changing them later does
-nothing.
+`id.width` can change before the first item exists. After allocation the index owns the
+scheme; changing the config does not renumber items, and a mismatch fails `check`.
 
 ## Tests
 

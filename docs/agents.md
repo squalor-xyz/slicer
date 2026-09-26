@@ -5,8 +5,74 @@ commands; slicer owns the files. Nothing an agent needs requires reading or writ
 `.slicer/*.json` directly — and doing so is how state gets corrupted, because the index,
 the slice files and the rendered markdown have to agree.
 
-Three properties make this work: every command speaks JSON, every failure speaks JSON,
-and every exit code means one thing.
+slicer is AI-friendly and tool-neutral: it runs locally, without an AI service or API
+key. The agent reviews and implements; slicer manages the agreed work. Start with the
+[worked workflows](getting-started.md#worked-workflows) for a new project or an
+existing codebase, or the [contributor loop](../AGENTS.md#working-on-the-roadmap) when
+changing slicer itself.
+
+For automation, use JSON responses and inspect both the exit code and the payload.
+The command and error contracts are described below the prompts.
+
+## Reusable prompts
+
+Adapt these to your project's instructions. They describe separate stages so you can
+review findings and agree on scope before importing or implementing work.
+
+### Plan a new project
+
+```text
+Read the project instructions. Help me turn the following goal, constraints, and
+acceptance criteria into a small roadmap: [describe them here]. Ask about missing
+requirements. Break the work into bounded slices with concrete checks and explicit
+dependencies. Detail the first slice; later items may remain roadmap rows. Identify
+proposed files as proposed, rather than claiming they already exist. Present the plan
+for discussion before importing or implementing it.
+```
+
+### Review an existing project
+
+```text
+Read the project instructions, relevant source, tests, and existing roadmap. Review
+the code for bugs, regressions, missing tests, and maintainability problems supported
+by evidence. For each finding, cite file locations, explain the impact and a concrete
+failure case or verification method, and distinguish confirmed behavior from open
+questions. Identify findings already covered by roadmap items. Propose bounded
+improvements with acceptance criteria; do not change code or import work yet.
+```
+
+### Convert an agreed roadmap
+
+```text
+Convert the accepted goals or review findings into a slicer markdown outline. Read
+docs/import.md from the slicer documentation and obtain the target project's template
+with `slicer import --skeleton`. Use unique ## item titles, supported metadata keys,
+and ### slice sections. Preserve finding references, scope boundaries, acceptance
+checks, and dependencies by exact item title. Propose importance and urgency values
+from 1 to 3 with reasons in your response. Do not invent findings or file locations.
+Save the outline as roadmap.md and run `slicer import roadmap.md --dry-run --json`.
+Resolve validation errors and show me the outline and result before applying it.
+```
+
+If the target project has no `.slicer/` yet, initialize and configure it first as in
+the getting-started guide. Once the outline is agreed, apply it with
+`slicer import roadmap.md --render`, then run `slicer check`. Import is a one-time
+transfer; subsequent edits use slicer commands. Keep references to review evidence in
+the slices rather than relying on the temporary outline as the only record.
+
+### Implement one slice
+
+```text
+Read the project instructions. Run `slicer next --json` and `slicer show ID --json`
+using the returned id. Read the scope, dependencies, relevant source, and tests. If
+there is no slice or its acceptance criteria are ambiguous, resolve the specification
+with me first. Otherwise mark it started with `slicer start ID --render`, implement
+that slice, and run its acceptance checks and required project checks. Update affected
+documentation. Once verified, run `slicer done ID --note "Describe the verified result"
+--render` and `slicer check`. Report changes and checks, and stop after this slice.
+Use commands to change tracking state; never hand-edit the index, slice JSON, or
+generated markdown. Do not commit or publish unless separately authorized.
+```
 
 ## Everything takes `--json`
 
@@ -118,9 +184,12 @@ when the meaning does. Branch on the code.
 | `1` | Drift, or a failed check | Read the payload; this is a report, not an error envelope |
 | `2` | Usage, or nothing to do | Read the envelope — **unless** the payload has no `error` key |
 
-Exit 1 belongs to `check`, `verify`, `sync --check`, `import` and `migrate`. They
-return their normal report with `problems` populated, not an error envelope, because the
-command worked and the answer was "no".
+Exit 1 belongs to `check`, `verify`, `sync --check`, `import` and `migrate`. Inspect
+each command's report: `check` has drift lists and `problems`; `verify` has `errors`
+and `findings`; `sync --check` returns an array with `stale` on each target; import and
+migration validation reports have `problems`. Do not assume
+that every failed report has the same keys. An error envelope, when present, still
+takes precedence over interpreting the payload as a normal report.
 
 **One case to special-case:** `slicer next` exits **2** when nothing is runnable, with
 `{"item": null, "blocked": [...]}`. That is a normal empty queue, not a failure. Test for
@@ -153,15 +222,26 @@ means an agent can decide from the dry run alone.
 command takes `--render` to do it in the same step (`slicer done S01 --render`). Otherwise
 run `slicer render` then `slicer check`; a non-zero check means the work is not finished.
 
-**`slicer next` is the queue.** It returns the highest-priority *startable* item — the
-one with the highest effective score among items whose dependencies are all done. A
+**`slicer next` is the queue.** It considers eligible started items first, then open
+items if none qualify. Within that pool it selects the highest effective score, with
+stored queue order breaking ties. All dependencies must be done. A
 blocker of a critical item inherits that item's priority, so `next` naturally surfaces the
 blocker first; dependencies still hard-gate, so a blocked item is never returned whatever
-its score. Take it, do it, `slicer done ID --note "..."`.
+its score. Read the slice, mark it started, implement and verify it, then use
+`slicer done ID --note "..." --render` and `slicer check`.
 
 **One section at a time.** `slicer edit ID --section "Why" --stdin` replaces one
 section's body, and `slicer show ID --section "Why"` reads that one body back (no append
-yet, so read before you mean to add to it). To fill a whole slice at once, hand `promote`
+yet, so read before you mean to add to it). For short edits use
+`slicer edit ID --section "Why" --text "Updated explanation" --render`; roadmap prose
+supports the same source, such as `slicer prose edit preamble --text "Current work"`.
+Inline text is exact, including whitespace and newlines; `--text ""` clears the body.
+Choose only one of `--text`, `--file`, and `--stdin`; conflicting sources return exit 2
+and `code="usage"` with `--json`. Omitting all sources opens the editor. File and stdin
+sources retain their existing trailing-newline stripping. Quote text for the shell,
+or pass it as one argument when invoking without a shell.
+
+To fill a whole slice at once, hand `promote`
 a one-item outline: `slicer promote ID --file draft.md` — the same `##` item / `###`
 section shape `import` reads, sections and lead only.
 

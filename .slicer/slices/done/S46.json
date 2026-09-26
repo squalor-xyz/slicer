@@ -27,7 +27,7 @@
     },
     {
       "heading": "Check",
-      "body": "Setting a short section is one command with no scratch file."
+      "body": "Verified both edit commands with exact inline text, empty and whitespace-only bodies, multiline and trailing-newline values, conflicting inputs, file/stdin compatibility, editor fallback and abort, prose no-op behavior, and --render. Seven focused tests passed, including parameterized scenarios. A smoke test using the installed slicer passed. Full suite: 450 tests, 446 passed, 1 skipped, 3 known workspace-local temporary-directory failures tracked in S54. slicer check and git diff --check pass. Parser failures outside the error envelope are tracked separately in S53."
     },
     {
       "heading": "Git",

@@ -1,0 +1,38 @@
+{
+  "id": "S52",
+  "title": "Document onboarding and AI-assisted roadmap workflows",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "documentation review; user workflow",
+  "size": "M",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Contributors need a clear route from reading the docs to completing an existing slice. Users need worked examples for a blank project and for an AI code review converted into a roadmap, with slicer presented as AI-friendly."
+    },
+    {
+      "heading": "Files",
+      "body": "README.md, AGENTS.md, ARCHITECTURE.md, docs/getting-started.md, docs/agents.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Documentation acceptance: both example outlines import; priorities and dependencies select the expected next item; the start/done/render/check loop succeeds. Check links and current CLI flags."
+    },
+    {
+      "heading": "Implement",
+      "body": "Expand existing guides with tool-neutral prompts, small importable outlines, review triage, priority and queue ordering, and the contributor workflow. Correct ID configuration, started-item precedence, JSON failure reports, and atomic-write versus writer-lock descriptions.\n\n**Not in this slice:** CLI changes, new dependencies, or implementing the example projects themselves."
+    },
+    {
+      "heading": "Check",
+      "body": "Both documented outlines were extracted and exercised against local source in disposable workspace directories: dry-run, import, priorities, score sorting, stored ordering, dependencies, start/done, and check passed. All 53 local documentation links and anchors resolved; git diff --check passed.\n\nThe unit suite ran 443 tests: 439 passed, 1 optional live-legacy test skipped, and 3 failed because workspace-local temporary directories inherit this checkout's .slicer and Git roots. The failures are the two outside-project tests and the not-a-Git-repository test; a normal external temporary directory was not used under this session's workspace restrictions. No application code changed. The repository slicer check passes with 52 items."
+    },
+    {
+      "heading": "Git",
+      "body": "Leave changes uncommitted for owner review."
+    }
+  ],
+  "notes": []
+}

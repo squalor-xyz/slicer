@@ -1,0 +1,38 @@
+{
+  "id": "S54",
+  "title": "Tests inherit enclosing project state when temporary directories are inside the workspace",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "S52 validation; three failures with workspace-local TMPDIR",
+  "size": "S",
+  "flags": [],
+  "trees_note": "tests",
+  "trees_plural": false,
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Running the suite with TMPDIR inside this checkout causes two outside-project tests to discover the enclosing .slicer directory, and a not-a-Git-repository test to discover its Git repository. S52 validation ran 443 tests with these three failures. Workspace-restricted contributors need an isolated way to run the suite."
+    },
+    {
+      "heading": "Files",
+      "body": " tests/support.py; tests/test_cli.py; tests/test_errors.py; AGENTS.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "The outside-project and not-a-Git-repository tests should retain their intended meaning when temporary directories live beneath a slicer/Git project."
+    },
+    {
+      "heading": "Implement",
+      "body": "Provide test isolation for parent-project discovery without changing production discovery semantics. Document how to run the suite within a workspace boundary.\n\n**Not in this slice:** changing slicer root discovery or weakening assertions to accept inherited state."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the full suite with temporary directories inside the checkout and confirm isolation, including the three previously failing cases."
+    },
+    {
+      "heading": "Git",
+      "body": "Follow owner instructions; no automatic commit."
+    }
+  ],
+  "notes": []
+}

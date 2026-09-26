@@ -62,6 +62,38 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 This repo tracks its own roadmap with slicer. That is the point — it is also the
 end-to-end test.
 
+Start with README.md for the tool's purpose, ARCHITECTURE.md for the implementation
+and invariants, then this file for contributor commands and style. The
+[agent guide](docs/agents.md) covers JSON responses and reusable prompts.
+
+To pick up existing work, run these from the checkout root; no installation is needed:
+
+```sh
+PYTHONPATH=src python3 -m slicer next
+PYTHONPATH=src python3 -m slicer show <ID>
+```
+
+Replace `<ID>` with the returned id. Read the full slice, its dependencies and scope
+boundary, then inspect the relevant source and tests. Resolve missing acceptance
+criteria before implementation. A row without a slice needs `promote` and a written
+specification first. `next` resumes eligible started work before choosing open work.
+
+```sh
+PYTHONPATH=src python3 -m slicer start <ID> --render
+# Implement the slice and run its focused tests, then the repository checks:
+python3 -m unittest discover -s tests -t tests
+PYTHONPATH=src python3 -m slicer check
+PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render
+PYTHONPATH=src python3 -m slicer check
+git diff --check
+git status --short
+```
+
+Review code, documentation, state and generated markdown together. `check` verifies
+tracking consistency; the unit suite verifies code behavior. Mark done only after the
+slice's acceptance checks pass. Leave committing and publishing to the owner's
+instructions; a slice's Git section does not itself authorize them.
+
 **Never hand-edit `.slicer/*.json`.** Use the commands, then re-render:
 
 ```sh

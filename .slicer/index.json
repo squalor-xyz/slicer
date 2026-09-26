@@ -2,10 +2,32 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 52,
+  "next_id": 55,
   "preamble": "",
   "passes": [],
   "items": [
+    {
+      "id": "S52",
+      "title": "Document onboarding and AI-assisted roadmap workflows",
+      "short_title": "Document onboarding and AI-assisted roadmap workflows",
+      "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "documentation review; user workflow",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3
+      }
+    },
     {
       "id": "S27",
       "title": "Corrupted or mis-encoded tracking files crash instead of reporting",
@@ -298,7 +320,7 @@
       "id": "S46",
       "title": "edit should take an inline value, not only a file, stdin, or the editor",
       "short_title": "edit should take an inline value, not only a file, stdin, or the editor",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
@@ -514,28 +536,6 @@
         "reason": "",
         "importance": 2,
         "urgency": 2
-      }
-    },
-    {
-      "id": "S02",
-      "title": "Trial run on a second repo with no legacy tree to import",
-      "short_title": "Trial run on a second repo with no legacy tree to import",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 3
       }
     },
     {
@@ -1129,6 +1129,72 @@
         "group": "",
         "reason": "",
         "importance": 1,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S53",
+      "title": "Argument-parser failures bypass JSON error envelopes",
+      "short_title": "Argument-parser failures bypass JSON error envelopes",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "S46 planning; slicer edit --json prints argparse usage only",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S54",
+      "title": "Tests inherit enclosing project state when temporary directories are inside the workspace",
+      "short_title": "Tests inherit enclosing project state when temporary directories are inside the workspace",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "S52 validation; three failures with workspace-local TMPDIR",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S02",
+      "title": "Trial run on a second repo with no legacy tree to import",
+      "short_title": "Trial run on a second repo with no legacy tree to import",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 1
       }
     }

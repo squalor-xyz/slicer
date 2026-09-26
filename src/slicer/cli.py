@@ -421,7 +421,11 @@ def _via_editor(initial: str) -> str | None:
 
 
 def _body_from(args: argparse.Namespace, initial: str) -> str | None:
-  """The new text for an edit: a file, stdin, or $EDITOR."""
+  """Choose one explicit body source, falling back to $EDITOR only if absent."""
+  if sum((args.text is not None, args.file is not None, args.stdin)) > 1:
+    raise StateError("choose only one of --text, --file, or --stdin", code="usage")
+  if args.text is not None:
+    return args.text
   if args.file:
     return _read_user_file(args.file).rstrip("\n")
   if args.stdin:
@@ -727,6 +731,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = _render_flag(add("edit", _mutating(cmd_edit), "replace one section of a slice"))
   sp.add_argument("id")
   sp.add_argument("--section", required=True)
+  sp.add_argument("--text", help="inline body, preserved exactly; empty text clears it; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
@@ -758,6 +763,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   inner = _render_flag(padd("edit", _mutating(cmd_prose_edit), "replace one block"))
   inner.add_argument("ref")
+  inner.add_argument("--text", help="inline body, preserved exactly; empty text clears it; cannot combine with --file/--stdin")
   inner.add_argument("--file")
   inner.add_argument("--stdin", action="store_true")
 

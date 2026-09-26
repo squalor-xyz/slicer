@@ -2,12 +2,13 @@
 
 Adding slicer to a project, from nothing to a rendered roadmap and a green CI gate.
 
-Every command block below is real output, with the project path shortened to
-`~/code/my-project`.
+Console transcripts show output with the project path shortened to `~/code/my-project`.
+Shell blocks are commands to run; the worked workflows use fictional example projects.
 
 - [1. Install](#1-install)
 - [2. Set it up](#2-set-it-up)
 - [3. Configure before you add anything](#3-configure-before-you-add-anything)
+- [Worked workflows: new project or AI code review](#worked-workflows)
 - [4. Get your roadmap in](#4-get-your-roadmap-in)
 - [5. Turn an item into a slice](#5-turn-an-item-into-a-slice)
 - [6. The loop](#6-the-loop)
@@ -32,6 +33,11 @@ $ slicer --help
 ```
 
 Python 3.11+, no dependencies.
+
+If `slicer` is not found, check that the directory containing its executable is on
+`PATH`. Contributors can run `PYTHONPATH=src python3 -m slicer --help` directly from
+the slicer checkout without installing anything; see the
+[contributor workflow](../AGENTS.md#working-on-the-roadmap).
 
 ## 2. Set it up
 
@@ -89,9 +95,173 @@ disagrees rather than ignoring it.
 The full key-by-key reference, including which changes strand existing files, is in
 [configuration.md](configuration.md).
 
+## Worked workflows
+
+slicer works with any coding agent that can read files and run commands. It does not
+call an AI itself. You and the agent decide what to build; slicer turns the agreed
+work into a persistent queue with dependencies, priorities, and readable slices.
+
+Choose one example below, starting in your project's root after `slicer init` and
+configuration. Each assumes an empty slicer queue, so the allocated ids are S01 and
+S02. The example source paths describe proposed or fictional files, not slicer files.
+
+### A new project: goals to a roadmap
+
+Suppose you want a small CLI that reads a JSON settings file. Tell the agent the goal,
+constraints, and acceptance criteria: Python standard library only, a required
+`name` string, and a command that prints that name. Ask it to divide the work into
+small slices with explicit checks and dependencies. The
+[planning prompt](agents.md#plan-a-new-project) is a starting point.
+
+After agreeing on the plan, save this outline as `roadmap.md`:
+
+```markdown
+# Settings CLI
+
+## Load a settings file
+size: S
+tree: core
+importance: 2
+urgency: 2
+
+### Why
+The command needs a validated name from a JSON settings file.
+### Files
+Create settings.py and tests/test_settings.py.
+### Failing tests
+A valid name loads; missing, non-string, or blank names are rejected.
+### Implement
+Use the standard library to read JSON and validate the name field.
+**Not in this slice:** command-line arguments or printing output.
+### Check
+Run the loader tests for valid and invalid input.
+### Git
+Follow the project's commit policy.
+
+## Print the configured name
+size: S
+tree: cli
+depends: Load a settings file
+importance: 3
+urgency: 2
+```
+
+The first item is a detailed slice. The second is deliberately a roadmap row: it records
+future work and its dependency, but needs a specification before implementation.
+
+### An existing project: AI review to a roadmap
+
+Ask the agent to review the code and tests, citing file locations and concrete failure
+cases for each finding. Use the [review prompt](agents.md#review-an-existing-project).
+Discuss the findings, discard unsupported ones, and compare them with the existing
+roadmap to avoid duplicates. Turn accepted improvements into small slices, preserving
+their evidence and acceptance criteria.
+
+Then ask the agent to convert that roadmap to the [outline format](import.md).
+`slicer import --skeleton` gives it a template based on your project's configuration.
+A free-form review is not directly importable, and `migrate` is only for the
+[legacy markdown format](migrate-format.md).
+
+For this fictional review, assume inspection found that `settings.py` accepts a blank
+name and that the README omits the required field. Save this as `roadmap.md` instead
+of the new-project example:
+
+```markdown
+# Settings review
+
+## Reject blank configured names
+size: S
+tree: core
+findings: R1; settings.py accepts a whitespace-only name
+importance: 3
+urgency: 2
+
+### Why
+A blank name currently reaches the CLI as apparently valid input.
+### Files
+settings.py and tests/test_settings.py.
+### Failing tests
+Loading a name containing only spaces must report invalid input.
+### Implement
+Validate the stripped name before returning settings.
+**Not in this slice:** changing the configuration format or CLI output.
+### Check
+Run the regression test and existing settings tests.
+### Git
+Follow the project's commit policy.
+
+## Document the required name
+size: S
+tree: docs
+findings: R2; README omits the required name field
+depends: Reject blank configured names
+importance: 2
+urgency: 2
+```
+
+For a real review, include actual paths and line references in the slice's Why section;
+do not copy the fictional findings as evidence about your project.
+
+### Import, prioritize, and work through either example
+
+Validate the outline before applying it:
+
+```sh
+slicer import roadmap.md --dry-run
+slicer import roadmap.md --render
+slicer check
+slicer list
+slicer show S01
+```
+
+The import creates S01 with a slice and S02 as a row depending on S01. A rejected dry
+run reports what to fix; resolve those problems before applying. After import, JSON
+is the state: edit through slicer, not by re-importing the outline or editing generated
+markdown. Importing the same titles again is refused by default.
+
+Set the importance and urgency axes (each 1–3), then inspect the ranked queue:
+
+```sh
+slicer set S02 --importance 3 --urgency 3 --render
+slicer list --status open --sort score
+slicer move S02 --before S01 --render
+slicer next
+```
+
+`list --sort score` changes the view; `move` changes stored queue order and therefore
+the rendered roadmap. S01 is still next: S02 depends on it, and S01 inherits S02's
+higher priority. Stored order breaks equal-score ties. For items added individually,
+use `slicer set S02 --depends-on S01` to set the dependency; repeated `--depends-on`
+flags replace the complete dependency list.
+
+Read S01, agree on its scope, and begin:
+
+```sh
+slicer show S01
+slicer start S01 --render
+```
+
+Implement S01 and run its acceptance checks and the project's tests. **Only after
+those pass**, record completion:
+
+```sh
+slicer done S01 --note "Implemented and verified the settings validation" --render
+slicer check
+slicer next
+```
+
+S02 is now next. Since it is only a row, write its detailed specification using
+[promote](#5-turn-an-item-into-a-slice) before starting it. An eligible started item
+takes precedence over open items; dependencies still gate both. See the
+[implementation prompt](agents.md#implement-one-slice) for handing the work to an agent.
+
+`slicer check` verifies roadmap integrity and generated output, not your application's
+correctness. Include changed `.slicer/` state and rendered markdown when preparing the
+work for review, following your project's commit policy.
+
 ## 4. Get your roadmap in
 
-There are two ways in, and which one applies depends entirely on what you have now.
+Choose individual items, a bulk outline, or migration of a legacy tree.
 
 ### 4a. From nothing
 
@@ -189,7 +359,8 @@ parsed and re-emitted to exactly the bytes it came from. Import refuses to write
 anything unless every file does that, so a document slicer cannot reproduce is never
 half-migrated.
 
-When it is clean, run it for real, then render — **`migrate` does not render**:
+When it is clean, run it for real, then render — `migrate` does not render by default
+(use `--render` to combine the steps):
 
 ```console
 $ slicer migrate --from docs/slices
@@ -228,12 +399,20 @@ and `slicer check` stops warning that the slice is unbounded.
 Fill sections one at a time:
 
 ```console
-$ slicer edit S01 --section Why --file why.md
+$ slicer edit S01 --section Why --text "Validate settings before starting the app"
 updated S01 / Why
 ```
 
-`edit` takes `--file`, `--stdin`, or nothing — in which case it opens `$EDITOR`. Read one
-section back with `slicer show S01 --section Why`, which prints just that body.
+`edit` and `prose edit` accept one body source: `--text`, `--file`, or `--stdin`.
+Combining sources is a usage error. With none, the command opens `$EDITOR`.
+`--text` stores exactly the supplied argument, preserving spaces and newlines;
+`--text ""` clears the body. File and stdin input strip trailing newline characters.
+Quote inline text for your shell; for a value starting with a dash, use
+`--text="- a bullet"`. Read a section back with `slicer show S01 --section Why`.
+
+```sh
+slicer prose edit preamble --text "Current priorities" --render
+```
 
 To fill the whole slice in one call rather than one `edit` per section, hand `promote` a
 one-item outline instead — the same `##` item / `### section` shape `import` reads (see

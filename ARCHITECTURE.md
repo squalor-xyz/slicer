@@ -56,9 +56,16 @@ keys in a fixed order, `jsonio` always formats the same way (`ensure_ascii=False
 `indent=2`, one trailing newline), and nothing in `render` emits a timestamp, a version
 or a hostname. Formatting drift would read as a real change and make the gate useless.
 
-**Writes are atomic.** `jsonio.write` goes through `mkstemp` in the destination
+**Individual JSON writes are atomic.** `jsonio.write` goes through `mkstemp` in the destination
 directory then `os.replace`, and restores the umask default mode, because `mkstemp`
 makes 0600 files and these are ordinary tracked project files.
+
+**CLI writers serialize across a command.** `cli.main` takes `store.project_lock`
+around mutating handlers, including their optional render. The advisory lock on
+`.slicer/lock` prevents cooperating writers from interleaving; it does not provide
+multi-file rollback or make readers see an atomic snapshot. Read commands do not lock.
+There is no lock before a tracking directory exists, or on platforms without `flock`.
+See [concurrency configuration](docs/configuration.md#concurrency) for the timeout.
 
 **`ops.py` is the single mutation path.** The CLI and the TUI both call it, so the two
 front ends cannot drift and both write the same log entries. A new command belongs in
@@ -101,8 +108,9 @@ command, and `slicer render` deliberately does not reproduce the legacy shape.
 
 ## Two pointers that disagree on purpose
 
-`slicer next` is dependency-aware and score-ranked: among the open items whose
-dependencies are all done, it returns the one with the highest *effective* score.
+`slicer next` first considers started items whose dependencies are all done. If none
+qualify, it considers open items whose dependencies are all done. Within that pool,
+it returns the highest *effective* score, breaking ties by stored queue order.
 Effective score propagates a priority up the dependency graph (`graph.effective_scores`, a
 fixed-point relaxation, cycle-safe), so a blocker of a critical item inherits its priority
 and is surfaced first; dependencies still hard-gate, so a blocked item is never returned.
