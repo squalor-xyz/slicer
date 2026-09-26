@@ -188,15 +188,13 @@ class RemoveCliTests(unittest.TestCase):
 
   def test_Remove_WithNeitherReasonNorPurge_ExitsTwo(self) -> None:
     with self.repo() as repo:
-      with self.assertRaises(SystemExit) as caught:
-        repo.run("remove", "S02")
-      self.assertEqual(caught.exception.code, 2)
+      code, _, _ = repo.run("remove", "S02")
+      self.assertEqual(code, 2)
 
   def test_Remove_WithBothReasonAndPurge_ExitsTwo(self) -> None:
     with self.repo() as repo:
-      with self.assertRaises(SystemExit) as caught:
-        repo.run("remove", "S02", "--purge", "--reason", "x")
-      self.assertEqual(caught.exception.code, 2)
+      code, _, _ = repo.run("remove", "S02", "--purge", "--reason", "x")
+      self.assertEqual(code, 2)
 
   def test_Remove_PurgeJson_ReportsWhetherTheIdWasFreed(self) -> None:
     with self.repo() as repo:

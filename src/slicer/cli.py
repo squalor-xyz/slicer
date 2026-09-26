@@ -661,6 +661,19 @@ def cmd_tui(args: argparse.Namespace) -> int:
   return tui.run(_state(args))
 
 
+class _ParserError(Exception):
+  """Keep argparse's diagnostic context until main can choose the output format."""
+
+  def __init__(self, parser: argparse.ArgumentParser, message: str) -> None:
+    super().__init__(message)
+    self.parser = parser
+
+
+class _ArgumentParser(argparse.ArgumentParser):
+  def error(self, message: str) -> None:
+    raise _ParserError(self, message)
+
+
 def build_parser() -> argparse.ArgumentParser:
   # --root is accepted on both sides of the subcommand, because both
   # `slicer --root x next` and `slicer next --root x` are natural to type.
@@ -672,7 +685,7 @@ def build_parser() -> argparse.ArgumentParser:
     default=argparse.SUPPRESS,
     help="project root (default: discovered from the working directory)",
   )
-  p = argparse.ArgumentParser(prog="slicer", description=__doc__.splitlines()[0])
+  p = _ArgumentParser(prog="slicer", description=__doc__.splitlines()[0])
   p.add_argument(
     "--root", default=None, help="project root (default: discovered from the working directory)"
   )
@@ -834,13 +847,8 @@ def build_parser() -> argparse.ArgumentParser:
   return p
 
 
-def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
-  """Report a deliberate failure: an envelope for agents, prose for people.
-
-  The human line always goes to stderr, so piping stdout stays safe. With
-  `--json`, stdout additionally carries a machine-readable envelope whose
-  `code` is the stable part -- the message is free to be reworded.
-  """
+def _error_envelope(args: argparse.Namespace, exc: SlicerError) -> None:
+  """Use the same machine-readable failure shape before and after parsing."""
   if getattr(args, "json", False):
     payload = {
       "error": {
@@ -850,14 +858,21 @@ def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
       }
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
+def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
+  """Report a deliberate failure: an envelope for agents, prose for people."""
+  _error_envelope(args, exc)
   print(f"slicer: {exc}", file=sys.stderr)
   return USAGE
 
 
 def main(argv: list[str] | None = None) -> int:
   parser = build_parser()
-  args = parser.parse_args(argv)
+  argv = list(sys.argv[1:] if argv is None else argv)
+  args = argparse.Namespace()
   try:
+    parser.parse_args(argv, namespace=args)
     # A mutating command holds an advisory lock for its whole run, so two
     # writers serialise instead of racing (a duplicated id, a half-applied
     # outline). Read-only commands need no lock.
@@ -866,6 +881,14 @@ def main(argv: list[str] | None = None) -> int:
       with store.project_lock(root):
         return int(args.func(args))
     return int(args.func(args))
+  except _ParserError as exc:
+    # Inspect only explicit option tokens; data after '--' cannot opt into JSON.
+    options = argv[:argv.index("--")] if "--" in argv else argv
+    args.json = "--json" in options
+    _error_envelope(args, StateError(str(exc), code="usage"))
+    exc.parser.print_usage(sys.stderr)
+    print(f"{exc.parser.prog}: error: {exc}", file=sys.stderr)
+    return USAGE
   except SlicerError as exc:
     return _fail(args, exc)
   except OSError as exc:

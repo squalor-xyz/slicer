@@ -148,6 +148,17 @@ $ slicer show S99 --json
 }
 ```
 
+Argument-parser failures also return exit 2 and this envelope with `code="usage"`,
+while retaining argparse’s usage text and diagnostic on stderr. This covers missing
+arguments, unknown options, invalid values and conflicting options, including nested
+commands. `command` is the recognized top-level command (`"prose"` for nested prose
+commands), or `null` when none was recognized.
+
+For parser failures, an exact `--json` token anywhere before the first `--` requests
+the envelope, even if that flag’s position is invalid. This does not make the command
+valid. Tokens after `--` are literal arguments. Help stays human-readable and exits
+successfully, including with `--json`; successful command syntax is unchanged.
+
 **`code` is the contract; `message` is not.** Messages get reworded; codes change only
 when the meaning does. Branch on the code.
 
@@ -174,7 +185,7 @@ when the meaning does. Branch on the code.
 | `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline |
 | `editor_aborted` | `$EDITOR` exited non-zero; nothing changed |
 | `wrong_command` | e.g. `import --from` (that flag belongs to `migrate`) |
-| `usage` | The invocation is missing something it needs |
+| `usage` | Missing arguments, unknown options, invalid values, conflicting options, or other invocation errors |
 
 ## Exit codes
 

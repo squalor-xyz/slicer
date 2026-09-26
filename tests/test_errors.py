@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import io
 import json
+import os
+import subprocess
+import sys
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from unittest.mock import patch
 
 import support
 
@@ -81,6 +87,101 @@ class ErrorEnvelopeTests(unittest.TestCase):
       for argv in (("show", "S99"), ("set", "S01", "--status", "no"), ("promote", "S99")):
         with self.subTest(argv[0]):
           self.assertEqual(sorted(self.envelope(repo, *argv)), ["code", "command", "message"])
+
+
+class ParserErrorTests(unittest.TestCase):
+  cases = (
+    (("edit", "--json"), "edit"),
+    (("list", "--unknown", "--json"), "list"),
+    (("list", "--sort", "invalid", "--json"), "list"),
+    (("log", "--limit", "invalid", "--json"), "log"),
+    (("show", "S01", "--root", "--json"), "show"),
+    (("remove", "S01", "--purge", "--reason", "x", "--json"), "remove"),
+    (("remove", "S01", "--json"), "remove"),
+    (("prose", "edit", "--json"), "prose"),
+    (("prose", "show", "preamble", "--unknown", "--json"), "prose"),
+    (("prose", "unknown", "--json"), "prose"),
+    (("unknown", "--json"), None),
+    (("--json",), None),
+    (("--root", "--json"), None),
+    (("--json", "list"), "list"),
+    (("tui", "--json"), "tui"),
+  )
+
+  def run_main(self, argv: tuple[str, ...]) -> tuple[int, str, str]:
+    from slicer.cli import main
+    out, err = io.StringIO(), io.StringIO()
+    with redirect_stdout(out), redirect_stderr(err):
+      code = main(list(argv))
+    return code, out.getvalue(), err.getvalue()
+
+  def test_ParserFailure_Json_EnvelopeAndDiagnosticsWithoutStateAccess(self) -> None:
+    for argv, command in self.cases:
+      with self.subTest(argv=argv), patch("slicer.cli.store.load") as load, \
+           patch("slicer.cli.store.project_lock") as lock:
+        code, out, err = self.run_main(argv)
+        self.assertEqual(code, 2)
+        error = json.loads(out)["error"]
+        self.assertEqual(set(error), {"code", "message", "command"})
+        self.assertEqual(error["code"], "usage")
+        self.assertEqual(error["command"], command)
+        self.assertTrue(error["message"])
+        self.assertIn("usage: slicer", err)
+        self.assertIn(error["message"], err)
+        self.assertEqual(err.count(": error:"), 1)
+        load.assert_not_called()
+        lock.assert_not_called()
+
+  def test_ParserFailure_ModuleInvocation_MatchesMain(self) -> None:
+    env = dict(os.environ, PYTHONPATH=str(support.SRC))
+    for argv, _ in self.cases:
+      with self.subTest(argv=argv):
+        expected = self.run_main(argv)
+        result = subprocess.run(
+          [sys.executable, "-m", "slicer", *argv], env=env,
+          capture_output=True, text=True, check=False,
+        )
+        self.assertEqual((result.returncode, result.stdout, result.stderr), expected)
+
+  def test_ParserFailure_NoJsonOrLiteralJson_LeavesStdoutEmpty(self) -> None:
+    for argv in (("edit",), ("unknown",), ("list", "--", "--json"),
+                 ("list", "--unknown=--json")):
+      with self.subTest(argv=argv):
+        code, out, err = self.run_main(argv)
+        self.assertEqual(code, 2)
+        self.assertEqual(out, "")
+        self.assertIn("usage: slicer", err)
+        self.assertIn(": error:", err)
+
+  def test_Parser_HelpWithOrWithoutJson_RemainsSuccessfulHumanHelp(self) -> None:
+    for argv in (("--help",), ("--json", "--help"), ("edit", "--help"),
+                 ("edit", "--json", "--help"), ("prose", "edit", "--json", "--help")):
+      with self.subTest(argv=argv):
+        result = subprocess.run(
+          [sys.executable, "-m", "slicer", *argv],
+          env=dict(os.environ, PYTHONPATH=str(support.SRC)),
+          capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(result.stdout.startswith("usage: slicer"))
+        self.assertEqual(result.stderr, "")
+
+  def test_ParserFailure_MutatingCommand_LeavesTrackingUnchanged(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Example")
+      before = {str(p): p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+      code, _, _ = repo.run("remove", "S01", "--purge", "--reason", "x", "--json")
+      self.assertEqual(code, 2)
+      after = {str(p): p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+      self.assertEqual(after, before)
+
+  def test_Parser_ValidJsonAndLiteralArgument_PreserveSuccess(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, err = repo.run("add", "--json", "--", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["title"], "--json")
 
 
 class DriftIsNotAnErrorTests(unittest.TestCase):

@@ -1136,7 +1136,7 @@
       "id": "S53",
       "title": "Argument-parser failures bypass JSON error envelopes",
       "short_title": "Argument-parser failures bypass JSON error envelopes",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

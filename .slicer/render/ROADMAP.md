@@ -2,7 +2,7 @@
 
 # Roadmap
 
-55 items · — 18 · done 36 · parked 1
+55 items · — 17 · done 37 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -57,7 +57,7 @@
 | 49 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | slicer | reproduced closing S47; a section edit silently dropped it | done |
 | 50 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
 | 51 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | — |
-| 52 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | cli | S46 planning; slicer edit --json prints argparse usage only | — |
+| 52 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | cli | S46 planning; slicer edit --json prints argparse usage only | done |
 | 53 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | tests | S52 validation; three failures with workspace-local TMPDIR | — |
 | 54 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
 | 55 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | slicer | user request: clearer TUI with color | — |

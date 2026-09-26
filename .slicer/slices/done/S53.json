@@ -1,0 +1,39 @@
+{
+  "id": "S53",
+  "title": "Argument-parser failures bypass JSON error envelopes",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "S46 planning; slicer edit --json prints argparse usage only",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing command semantics or accepting invalid arguments.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer edit --json` with missing required arguments exits 2 with argparse usage on stderr and no JSON on stdout. cli.main calls parse_args before its SlicerError handler. Agents cannot use the documented error envelope for parser failures."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/cli.py; tests/test_errors.py; docs/agents.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Missing required arguments, unknown options, invalid choices and conflicting parser options produce a usage envelope when --json is requested. Human errors and --help still work."
+    },
+    {
+      "heading": "Implement",
+      "body": "Use an ArgumentParser subclass that raises a private parser-error exception, including nested subparsers. Handle parsing in main with a shared root namespace for recognized top-level command attribution. On parser failure, exact --json before the first -- requests one usage envelope on stdout, including misplaced flags, without accepting invalid syntax. Preserve argparse usage and diagnostic on stderr; return 2. Unknown/unrecognized commands use null attribution; nested prose failures use prose. Reuse envelope formatting and preserve runtime errors, successful parsing and help behavior."
+    },
+    {
+      "heading": "Check",
+      "body": "Test missing arguments/values, unknown options/commands, invalid choices/integers, conflicting remove modes, nested prose, misplaced --json and tokens after --. Exercise main(argv) and python3 -m slicer; assert status, envelope, stderr, help behavior and no handlers/state mutations. Run focused and full unittest suites, slicer check and git diff --check. Normal test temporary directories are authorized for this session."
+    },
+    {
+      "heading": "Git",
+      "body": "Review the complete diff, mark done only after validation, commit as S53: return JSON envelopes for argument-parser failures, then push main to origin/main as authorized. Never force-push."
+    }
+  ],
+  "notes": []
+}
