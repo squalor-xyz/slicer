@@ -3,16 +3,31 @@
 Project guidance for slicer. Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing
 anything non-trivial; it explains the invariants this file only names.
 
+## Install
+
+Editable, so the command tracks your worktree:
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -e .
+ln -s "$PWD/.venv/bin/slicer" ~/.local/bin/slicer   # if ~/.local/bin is on PATH
+```
+
 ## Commands
 
 ```sh
 python3 -m unittest discover -s tests -t tests   # the suite
-PYTHONPATH=src python3 -m slicer check           # the gate; exit 1 means drift
-PYTHONPATH=src python3 -m slicer --help          # run it uninstalled
+slicer check                                     # the gate; exit 1 means drift
+slicer --help
 ```
 
-No install step. `tests/support.py` puts `src/` on `sys.path` itself, so the suite runs
-from a clean checkout with nothing but Python 3.11+.
+The suite needs no install: `tests/support.py` puts `src/` on `sys.path` itself and
+calls `main()` in-process, so it runs from a clean checkout with nothing but Python
+3.11+.
+
+`PYTHONPATH=src python3 -m slicer` still works and is what CI runs — see
+`.github/workflows/ci.yml`. That step is the only place `src/slicer/__main__.py` is
+exercised, so leave it uninstalled.
 
 Optional: `SLICER_LEGACY_TREE=/path/to/docs/slices` additionally proves the migrator
 against a live markdown tree. The test is skipped when the variable is unset. The
@@ -50,11 +65,11 @@ end-to-end test.
 **Never hand-edit `.slicer/*.json`.** Use the commands, then re-render:
 
 ```sh
-PYTHONPATH=src python3 -m slicer add "Some title"
-PYTHONPATH=src python3 -m slicer edit S07 --section Why --file note.md
-PYTHONPATH=src python3 -m slicer done S07
-PYTHONPATH=src python3 -m slicer render
-PYTHONPATH=src python3 -m slicer check
+slicer add "Some title"
+slicer edit S07 --section Why --file note.md
+slicer done S07
+slicer render
+slicer check
 ```
 
 Every mutating command takes `--render`, which folds the separate `render` step into the
@@ -66,18 +81,18 @@ section, hand `promote` a one-item outline (the same `##` item / `### section` s
 sections and lead only:
 
 ```sh
-PYTHONPATH=src python3 -m slicer add "Some title"
-PYTHONPATH=src python3 -m slicer promote S07 --file draft.md --render
-PYTHONPATH=src python3 -m slicer show S07 --section Why    # read one section back
+slicer add "Some title"
+slicer promote S07 --file draft.md --render
+slicer show S07 --section Why    # read one section back
 ```
 
 Several items at once go through an outline, which is also how the agent-surface items
 were filed:
 
 ```sh
-PYTHONPATH=src python3 -m slicer import --skeleton > /tmp/draft.md
-PYTHONPATH=src python3 -m slicer import /tmp/draft.md --dry-run
-PYTHONPATH=src python3 -m slicer import /tmp/draft.md
+slicer import --skeleton > /tmp/draft.md
+slicer import /tmp/draft.md --dry-run
+slicer import /tmp/draft.md
 ```
 
 `.slicer/render/` is committed. A change to state without a re-render fails CI.

@@ -20,10 +20,16 @@ Every command block below is real output, with the project path shortened to
 ```sh
 git clone git@github.com:squalor-xyz/slicer.git
 cd slicer
-pipx install .          # puts `slicer` on PATH
+python3 -m venv .venv
+.venv/bin/pip install -e .
+ln -s "$PWD/.venv/bin/slicer" ~/.local/bin/slicer   # or anywhere on your PATH
 ```
 
-Or run it uninstalled from a checkout, with `PYTHONPATH=src python3 -m slicer`.
+The install is editable, so `slicer` follows the checkout. Check it with:
+
+```console
+$ slicer --help
+```
 
 Python 3.11+, no dependencies.
 
@@ -348,6 +354,9 @@ in render order; `slicer prose edit REF` changes one. See the README's
 One command, one exit code:
 
 ```yaml
+- name: Install slicer
+  run: pip install git+https://github.com/squalor-xyz/slicer
+
 - name: slicer check
   run: slicer check
 ```

@@ -12,9 +12,12 @@ Stdlib Python 3.11+, no dependencies.
 ```sh
 git clone git@github.com:squalor-xyz/slicer.git
 cd slicer
-pipx install .                      # puts `slicer` on PATH
-PYTHONPATH=src python3 -m slicer --help   # or run it uninstalled
+python3 -m venv .venv
+.venv/bin/pip install -e .
+ln -s "$PWD/.venv/bin/slicer" ~/.local/bin/slicer   # or anywhere on your PATH
 ```
+
+The install is editable, so `slicer` follows the checkout. `slicer --help` confirms it.
 
 ## Use it on a project
 
