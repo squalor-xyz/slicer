@@ -25,6 +25,19 @@ The suite needs no install: `tests/support.py` puts `src/` on `sys.path` itself 
 calls `main()` in-process, so it runs from a clean checkout with nothing but Python
 3.11+.
 
+To keep temporary test files inside the checkout, use an ignored directory:
+
+```sh
+mkdir -p .venv/test-tmp
+TMPDIR="$PWD/.venv/test-tmp" python3 -m unittest discover -s tests -t tests
+```
+
+This does not require creating a virtual environment. Tests that need an
+outside-project fixture explicitly use `support.isolated_discovery(root)` to hide
+ancestor slicer configs and stop Git discovery above the fixture. Discovery within
+the fixture stays real; the helper restores its patches on exit. Keep it scoped to
+those tests rather than changing production discovery or using it suite-wide.
+
 `PYTHONPATH=src python3 -m slicer` still works and is what CI runs — see
 `.github/workflows/ci.yml`. That step is the only place `src/slicer/__main__.py` is
 exercised, so leave it uninstalled.

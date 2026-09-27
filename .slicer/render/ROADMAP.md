@@ -2,7 +2,7 @@
 
 # Roadmap
 
-56 items · — 17 · done 38 · parked 1
+56 items · — 16 · done 39 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -58,7 +58,7 @@
 | 50 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
 | 51 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | — |
 | 52 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | cli | S46 planning; slicer edit --json prints argparse usage only | done |
-| 53 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | tests | S52 validation; three failures with workspace-local TMPDIR | — |
+| 53 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | tests | S52 validation; three failures with workspace-local TMPDIR | done |
 | 54 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
 | 55 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | slicer | user request: clearer TUI with color | — |
 | 56 | [S56](slices/S56.md) | Track project goals and non-goals for AI-assisted planning |  | slicer | user request: explicit product direction for AI-assisted planning | — |

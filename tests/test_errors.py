@@ -61,7 +61,7 @@ class ErrorEnvelopeTests(unittest.TestCase):
       self.assertIn("nonsense", error["message"])
 
   def test_OutsideAProject_CarriesTheStateCode(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, out, _ = repo.run("list", "--json")
       self.assertEqual(code, 2)
       self.assertEqual(json.loads(out)["error"]["code"], "state")

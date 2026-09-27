@@ -26,7 +26,7 @@ class CliTests(unittest.TestCase):
       self.assertIn("--force", err)
 
   def test_AnyCommand_OutsideATrackedProject_ExitsTwoWithAnInitHint(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, _, err = repo.run("next")
       self.assertEqual(code, 2)
       self.assertIn("slicer init", err)
@@ -116,7 +116,7 @@ class CliTests(unittest.TestCase):
       self.assertNotIn("no commit subject mentions it", out)
 
   def test_Verify_NotAGitRepository_SaysSoAndStillPasses(self) -> None:
-    with self.repo(git=False) as repo:
+    with self.repo(git=False) as repo, support.isolated_discovery(repo.root):
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
       self.assertIn("not a git repository", out)

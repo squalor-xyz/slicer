@@ -8,8 +8,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
+from typing import Iterator
+from unittest.mock import patch
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 if str(SRC) not in sys.path:
@@ -17,6 +19,30 @@ if str(SRC) not in sys.path:
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 LEGACY = FIXTURES / "legacy"
+
+
+@contextmanager
+def isolated_discovery(root: Path) -> Iterator[None]:
+  """Make a fixture independent of enclosing slicer/Git projects.
+
+  Use explicitly when a test needs to be outside a project. Only ancestor
+  config probes are hidden: real discovery still checks the fixture and its
+  descendants. Git's ceiling likewise permits a repository inside the fixture.
+  The patches are process-wide while active, so this is for serial tests.
+  """
+  from slicer.store import CONFIG_NAME, DIR_NAME
+
+  root = root.resolve()
+  hidden = {parent / DIR_NAME / CONFIG_NAME for parent in root.parents}
+  original_is_file = Path.is_file
+
+  def is_file(path: Path) -> bool:
+    return False if path in hidden else original_is_file(path)
+
+  with patch.object(Path, "is_file", is_file), patch.dict(
+    os.environ, {"GIT_CEILING_DIRECTORIES": str(root.parent)}
+  ):
+    yield
 
 
 class TempRepo:

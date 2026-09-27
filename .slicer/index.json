@@ -1158,7 +1158,7 @@
       "id": "S54",
       "title": "Tests inherit enclosing project state when temporary directories are inside the workspace",
       "short_title": "Tests inherit enclosing project state when temporary directories are inside the workspace",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
