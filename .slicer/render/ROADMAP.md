@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-62 items · — 14 · done 47 · parked 1
+62 items · — 13 · done 48 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -60,7 +60,7 @@
 | 32 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | slicer | found while writing docs/configuration.md | done |
 | 33 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | slicer | found auditing the machine interface | done |
 | 34 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | slicer | found auditing the machine interface | done |
-| 35 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | — |
+| 35 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | done |
 | 36 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | done |
 | 37 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | done |
 | 38 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |

@@ -762,7 +762,7 @@
       "id": "S15",
       "title": "Nothing searches anything",
       "short_title": "Nothing searches anything",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

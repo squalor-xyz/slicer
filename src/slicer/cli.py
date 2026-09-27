@@ -307,9 +307,23 @@ def cmd_next(args: argparse.Namespace) -> int:
   return OK
 
 
+def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
+  """The shared queue-listing row format used by `list` and `find`.
+
+  `^` marks an effective score lifted above the item's own by a dependent, so a
+  blocker of a critical item reads at that item's priority.
+  """
+  cfg = state.config
+  eff = graph.effective_scores(state.index)
+  return [
+    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} "
+    f"{eff[i.id]:>2}{'^' if eff[i.id] > i.score else ' '} {i.quadrant:<9} {i.display_title()}"
+    for n, i in enumerate(items, 1)
+  ]
+
+
 def cmd_list(args: argparse.Namespace) -> int:
   state = _state(args)
-  cfg = state.config
   items = state.index.items
   if args.status:
     items = [i for i in items if i.status in args.status]
@@ -317,20 +331,58 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
     items = [i for i in items if i.pass_key == args.pass_key]
-  # Effective score: an item inherits the priority of anything that depends on
-  # it, so a blocker of a critical item ranks with it. `^` marks an inherited
-  # boost above the item's own score.
-  eff = graph.effective_scores(state.index)
   if getattr(args, "sort", None) == "score":
     # A read-only view: sort a copy by effective score, never the stored order.
     # Ties keep their manual position because Python's sort is stable.
+    eff = graph.effective_scores(state.index)
     items = sorted(items, key=lambda i: eff[i.id], reverse=True)
-  rows = [
-    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} "
-    f"{eff[i.id]:>2}{'^' if eff[i.id] > i.score else ' '} {i.quadrant:<9} {i.display_title()}"
-    for n, i in enumerate(items, 1)
-  ]
-  _emit(args, [i.to_dict() for i in items], "\n".join(rows) or "no matching items")
+  _emit(args, [i.to_dict() for i in items], "\n".join(_item_rows(state, items)) or "no matching items")
+  return OK
+
+
+FIND_FIELDS = ("id", "title", "short_title", "findings", "body")
+
+
+def _search_text(state: store.State, item: model.Item, fields: tuple[str, ...]) -> str:
+  """Concatenate the requested searchable fields for one item, casefolded.
+
+  `body` is the item's slice prose — scope boundary, lead, and every section
+  heading and body — so `find` reaches text that lives only inside a slice.
+  """
+  parts: list[str] = []
+  for field in fields:
+    if field == "body":
+      sl = state.slices.get(item.id)
+      if sl is not None:
+        parts.append(sl.boundary)
+        parts.extend(sl.lead)
+        for section in sl.sections:
+          parts.append(section.heading)
+          parts.append(section.body)
+    else:
+      parts.append(getattr(item, field))
+  return "\n".join(parts).casefold()
+
+
+def cmd_find(args: argparse.Namespace) -> int:
+  needle = args.pattern.strip()
+  if not needle:
+    raise StateError("find needs a nonempty pattern", code="usage")
+  if args.fields is None:
+    fields = FIND_FIELDS
+  else:
+    fields = tuple(f.strip() for f in args.fields.split(",") if f.strip())
+    unknown = [f for f in fields if f not in FIND_FIELDS]
+    if unknown or not fields:
+      raise StateError(
+        f"unknown --in field(s): {', '.join(unknown) or '(none given)'}; "
+        f"choose from {', '.join(FIND_FIELDS)}",
+        code="usage",
+      )
+  state = _state(args)
+  needle = needle.casefold()
+  matches = [i for i in state.index.items if needle in _search_text(state, i, fields)]
+  _emit(args, [i.to_dict() for i in matches], "\n".join(_item_rows(state, matches)) or "no matching items")
   return OK
 
 
@@ -770,6 +822,13 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--sort", choices=["score"], help="order by priority score, highest first")
+
+  sp = add("find", cmd_find, "search items by text")
+  sp.add_argument("pattern")
+  sp.add_argument(
+    "--in", dest="fields",
+    help="comma-separated fields to search: id,title,short_title,findings,body (default: all)",
+  )
 
   sp = add("show", cmd_show, "print one slice")
   sp.add_argument("id")

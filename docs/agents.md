@@ -234,6 +234,10 @@ means an agent can decide from the dry run alone.
 
 ## Rules for an agent working in a slicer project
 
+**Before adding, search for duplicates.** `slicer find "topic" --json` matches item ids,
+titles, findings, and slice bodies (narrow with `--in title,findings,body`), so you can answer
+"is there already an item about X?" before creating one.
+
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.
 Repeat `--depends-on` for multiple ids. `park` and `unpark` accept `--note` to record
@@ -307,9 +311,9 @@ Committing is the human's.
 
 ## What is not here yet
 
-Worth knowing before you plan around it: there is no search command, no per-item history beyond
-status transitions, and no dependency query beyond `next` and `verify`. These are on the
-roadmap — `slicer list --json` plus your own filtering is the workaround for most of them.
+Worth knowing before you plan around it: there is no per-item history beyond status
+transitions, and no dependency query beyond `next` and `verify`. These are on the roadmap —
+`slicer list --json` plus your own filtering is the workaround for most of them.
 
 ## Batch mutations
 
