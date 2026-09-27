@@ -145,7 +145,8 @@ an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
 
 In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (size, trees, findings, depends, importance,
-urgency), a slice section, its scope boundary, or a prose block — `s` starts the selected item and `a` adds a
+urgency), a slice section, its scope boundary, a note (edit it, or empty to remove; the
+`+ add a note` line adds one), or a prose block — `s` starts the selected item and `a` adds a
 new one.
 
 The main TUI screen keeps common shortcuts visible below the status and feedback

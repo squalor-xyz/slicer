@@ -252,8 +252,10 @@ class TuiTests(unittest.TestCase):
       lines = tui.panel(state, "S02")
       tagged = sorted({l.entry for l in lines if l.entry is not None})
       fields = len(tui.FIELD_SPEC)
-      self.assertEqual(tagged, list(range(fields + 1 + len(state.slices["S02"].sections))))
+      # fields, boundary, each section, then the trailing "add a note" entry
+      self.assertEqual(tagged, list(range(fields + 1 + len(state.slices["S02"].sections) + 1)))
       self.assertTrue(any(l.text == "## Why" for l in lines))
+      self.assertTrue(any(l.text == "+ add a note" for l in lines))
 
   def test_Panel_ProseBlock_ShowsItsTextAsOneEntry(self) -> None:
     with self.repo() as repo:
@@ -274,7 +276,8 @@ class TuiTests(unittest.TestCase):
       fields = len(tui.FIELD_SPEC)
       self.assertEqual([e.name for e in entries[:fields]], list(tui.FIELD_SPEC))
       self.assertEqual(
-        [e.name for e in entries[fields:]], ["boundary"] + [s.heading for s in state.slices["S02"].sections]
+        [e.name for e in entries[fields:]],
+        ["boundary"] + [s.heading for s in state.slices["S02"].sections] + ["add a note"],
       )
 
   def test_Act_DoneKey_MarksTheItemDoneThroughTheSameOpsPath(self) -> None:

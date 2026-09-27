@@ -1,0 +1,39 @@
+{
+  "id": "S63",
+  "title": "TUI: view, edit and add slice notes",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections).",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S18/S68 added dated item notes and a CLI `slicer note`, but the TUI could neither show nor edit\nthem. Split from S18."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/tui.py: notes in the detail pane (entries, panel, apply_edit_result, act).\n- src/slicer/ops.py: set_note/remove_note helpers.\n- tests/test_tui.py, tests/test_tui_style.py, tests/test_cli.py; README.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Show item notes in the detail pane for any item (bare or promoted). `e` on a note edits it in\n`$EDITOR`; saving empty removes it. A trailing \"+ add a note\" entry, also via `e`, adds one,\ndated through `ops.add_note` like the CLI. Entry/EditRequest gain a note index; entries() and\npanel() stay in sync (the add line's entry index is the last entry)."
+    },
+    {
+      "heading": "Check",
+      "body": "entries()/panel() include a note per note plus a trailing add entry, indices aligned;\napply_edit_result adds/edits/removes notes on a real repo; existing TUI tests updated for the\nnew trailing entry. Focused TUI tests, the unit suite, slicer check, git diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

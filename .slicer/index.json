@@ -311,8 +311,8 @@
       "id": "S63",
       "title": "TUI: view, edit and add slice notes",
       "short_title": "TUI: view, edit and add slice notes",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "notes": [],
       "fields": {

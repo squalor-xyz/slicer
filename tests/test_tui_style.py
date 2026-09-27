@@ -236,3 +236,39 @@ class TuiFeedbackTests(unittest.TestCase):
       view.notify("previous error", "error")
       type_keys(view, state, keys)
       self.assertEqual(view.message_severity, "info")
+
+
+class TuiNotesEditTests(unittest.TestCase):
+  def test_ApplyEdit_AddEditRemoveNote(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Example")  # S01, bare
+      state = repo.state()
+      # add via the note_new entry
+      add_req = tui.EditRequest("note_new", "S01", "add a note", "")
+      self.assertEqual(tui.apply_edit_result(state, add_req, "tried X").severity, "success")
+      state = repo.state()
+      self.assertTrue(state.index.require("S01").notes[-1].endswith("tried X"))
+      # edit that note (index 0) to new text
+      body = state.index.require("S01").notes[0]
+      edit_req = tui.EditRequest("note", "S01", "note 1", body, index=0)
+      self.assertEqual(tui.apply_edit_result(state, edit_req, "revised").severity, "success")
+      self.assertEqual(repo.state().index.require("S01").notes, ["revised"])
+      # editing to empty removes it
+      state = repo.state()
+      rm_req = tui.EditRequest("note", "S01", "note 1", "revised", index=0)
+      self.assertEqual(tui.apply_edit_result(state, rm_req, "").severity, "success")
+      self.assertEqual(repo.state().index.require("S01").notes, [])
+
+  def test_Panel_PromotedItem_ShowsNotesAfterSections(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Example")
+      repo.run("promote", "S01")
+      repo.run("note", "S01", "--text", "context")
+      state = repo.state()
+      ents = tui.entries(state, "S01")
+      panel = tui.panel(state, "S01")
+      add = next(l for l in panel if l.text == "+ add a note")
+      self.assertEqual(add.entry, len(ents) - 1)
+      self.assertTrue(any("context" in l.text for l in panel))

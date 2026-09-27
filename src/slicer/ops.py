@@ -483,6 +483,31 @@ def add_note(state: State, item_id: str, text: str) -> Item:
   return item
 
 
+def _note_index(item: Item, index: int) -> None:
+  if not 0 <= index < len(item.notes):
+    raise StateError(f"{item.id} has no note {index}", code="usage")
+
+
+def set_note(state: State, item_id: str, index: int, text: str) -> Item:
+  """Replace one note verbatim (the caller edited the full dated paragraph)."""
+  item = state.index.require(item_id)
+  _note_index(item, index)
+  item.notes[index] = text
+  state.save_index()
+  _record(state, item_id, "note", note="edit")
+  return item
+
+
+def remove_note(state: State, item_id: str, index: int) -> Item:
+  """Drop one note."""
+  item = state.index.require(item_id)
+  _note_index(item, index)
+  del item.notes[index]
+  state.save_index()
+  _record(state, item_id, "note", note="remove")
+  return item
+
+
 def edit_boundary(state: State, item_id: str, body: str) -> Slice:
   """Change scope independently of section edits."""
   state.index.require(item_id)

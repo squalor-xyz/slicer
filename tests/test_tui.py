@@ -395,3 +395,28 @@ class TuiDrawingTests(unittest.TestCase):
     self.assertIn('preamble', output)
     self.assertIn('0/4 items', output)
     self.assertIn('Search (Enter accepts, Esc cancels): no match', output)
+
+
+class NotesPanelTests(unittest.TestCase):
+  def test_Entries_IncludeANotePerNotePlusATrailingAddEntry(self) -> None:
+    state = example()
+    item = state.index.require("S02")
+    item.notes = ["**2026-01-01** — first", "second"]
+    ents = tui.entries(state, "S02")
+    notes = [e for e in ents if e.kind == "note"]
+    self.assertEqual([e.index for e in notes], [0, 1])
+    self.assertEqual(ents[-1].kind, "note_new")
+    self.assertIsNone(ents[-1].index)
+
+  def test_Panel_AddLineTagMatchesTheLastEntry(self) -> None:
+    state = example()
+    item = state.index.require("S02")
+    item.notes = ["a note"]
+    ents = tui.entries(state, "S02")
+    panel = tui.panel(state, "S02")
+    self.assertTrue(any(l.role == "heading" and l.text == "Notes" for l in panel))
+    add = next(l for l in panel if l.text == "+ add a note")
+    self.assertEqual(add.entry, len(ents) - 1)
+    # the note's body line is tagged with its own entry index
+    note_entry = next(e_i for e_i, e in enumerate(ents) if e.kind == "note")
+    self.assertTrue(any(l.text == "a note" and l.entry == note_entry for l in panel))

@@ -36,7 +36,7 @@ BINDINGS = (
   Binding(("c",), "c", "clear", "Clear search and all filters (show done too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
   Binding(("?",), "?", "help", "Show help; j/k scroll, ? or Esc closes"),
-  Binding(("e",), "e", "edit", "Edit selected detail field/section or prose"),
+  Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty removes a note)"),
   Binding(("a",), "a", "add", "Add an item"),
   Binding(("J",), "J", "reorder_down", "Reorder down (clear restrictions first)"),
   Binding(("K",), "K", "reorder_up", "Reorder up (clear restrictions first)"),
@@ -136,6 +136,7 @@ class Entry:
   target: str
   name: str
   body: str
+  index: int | None = None  # which note, for kind == "note"
 
 
 @dataclass
@@ -151,6 +152,7 @@ class EditRequest:
   target: str
   name: str
   body: str
+  index: int | None = None  # which note, for kind == "note"
 
 
 @dataclass
@@ -215,6 +217,9 @@ def entries(state: State, target: str) -> list[Entry]:
   if sl is not None:
     out.append(Entry(kind="boundary", target=target, name="boundary", body=sl.boundary))
     out += [Entry(kind="section", target=target, name=s.heading, body=s.body) for s in sl.sections]
+  out += [Entry(kind="note", target=target, name=f"note {i + 1}", body=n, index=i)
+          for i, n in enumerate(item.notes)]
+  out.append(Entry(kind="note_new", target=target, name="add a note", body=""))
   return out
 
 
@@ -245,17 +250,28 @@ def panel(state: State, target: str) -> list[PanelLine]:
   sl = state.slices.get(target)
   if sl is None:
     out.append(PanelLine("(no slice yet - press n to promote)"))
-    return out
-  base = len(FIELD_SPEC)
-  out.append(PanelLine("Scope boundary", base, "heading"))
-  out.extend(PanelLine(line, base) for line in sl.boundary.split("\n"))
-  out.append(PanelLine("", base))
-  base += 1
-  for i, section in enumerate(sl.sections):
-    out.append(PanelLine(f"## {section.heading}", base + i, "heading"))
-    for line in section.body.split("\n"):
-      out.append(PanelLine(line, base + i))
-    out.append(PanelLine("", base + i))
+    note_base = len(FIELD_SPEC)
+  else:
+    base = len(FIELD_SPEC)
+    out.append(PanelLine("Scope boundary", base, "heading"))
+    out.extend(PanelLine(line, base) for line in sl.boundary.split("\n"))
+    out.append(PanelLine("", base))
+    base += 1
+    for i, section in enumerate(sl.sections):
+      out.append(PanelLine(f"## {section.heading}", base + i, "heading"))
+      for line in section.body.split("\n"):
+        out.append(PanelLine(line, base + i))
+      out.append(PanelLine("", base + i))
+    note_base = base + len(sl.sections)
+  # Notes live on any item: `e` edits one (empty removes it), the last line adds one.
+  out.append(PanelLine(""))
+  out.append(PanelLine("Notes", role="heading"))
+  for i, note in enumerate(item.notes):
+    idx = note_base + i
+    for line in note.split("\n"):
+      out.append(PanelLine(line, idx))
+    out.append(PanelLine("", idx))
+  out.append(PanelLine("+ add a note", note_base + len(item.notes)))
   return out
 
 
@@ -279,7 +295,8 @@ def act(
       return ActResult("select a field or section with tab, then press e")
     return ActResult(
       f"editing {chosen.name}",
-      EditRequest(kind=chosen.kind, target=chosen.target, name=chosen.name, body=chosen.body),
+      EditRequest(kind=chosen.kind, target=chosen.target, name=chosen.name,
+                  body=chosen.body, index=chosen.index),
     )
 
   if action == "add":
@@ -361,6 +378,17 @@ def apply_edit_result(state: State, request: EditRequest, body: str | None) -> A
       ops.set_fields(state, request.target, **{kwarg: parse(body)})
       if item.to_dict() == before:
         return ActResult(f"{request.name} unchanged")
+    elif request.kind == "note":
+      if body.strip():
+        ops.set_note(state, request.target, request.index, body)
+        return ActResult("updated note; press r to render", severity="success")
+      ops.remove_note(state, request.target, request.index)
+      return ActResult("note removed; press r to render", severity="success")
+    elif request.kind == "note_new":
+      if not body.strip():
+        return ActResult("cancelled")
+      ops.add_note(state, request.target, body)
+      return ActResult("added note; press r to render", severity="success")
     else:
       ops.edit_section(state, request.target, request.name, body)
   except (SlicerError, OSError) as exc:

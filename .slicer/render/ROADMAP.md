@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-71 items · — 4 · done 66 · parked 1
+71 items · — 3 · done 67 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -39,7 +39,7 @@
 | 11 | [S02](slices/S02.md) | Trial run on a second repo with no legacy tree to import | S | slicer |  | done |
 | 12 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | done |
 | 13 | [S66](slices/S66.md) | done --note and note mean different things (log vs slice) |  | slicer | dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible. | done |
-| 14 | S63 | TUI: view, edit and add slice notes |  | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | — |
+| 14 | [S63](slices/S63.md) | TUI: view, edit and add slice notes |  | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | done |
 | 15 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | — |
 | 16 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
 | 17 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer |  | — |
