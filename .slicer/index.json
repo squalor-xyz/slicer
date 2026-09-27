@@ -142,7 +142,7 @@
       "id": "S35",
       "title": "remove --purge has no dry-run",
       "short_title": "remove --purge has no dry-run",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

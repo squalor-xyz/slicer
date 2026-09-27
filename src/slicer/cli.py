@@ -696,6 +696,24 @@ def cmd_prose_drop_pass(args: argparse.Namespace) -> int:
 
 def cmd_remove(args: argparse.Namespace) -> int:
   state = _state(args)
+  if args.dry_run:
+    preview = ops.remove_preview(state, args.id, purge=args.purge)
+    payload = {
+      "id": preview.id, "mode": preview.mode, "dry_run": True,
+      "blockers": preview.blockers, "file": preview.file,
+      "id_freed": preview.id_freed, "reason": preview.reason,
+    }
+    verb = "purged" if args.purge else "retired"
+    lines = [f"{preview.id} would be {verb} (dry run)"]
+    if args.purge:
+      lines.append(f"     file: {preview.file}" if preview.file else "     no slice file")
+      lines.append(f"     id would be {'freed' if preview.id_freed else 'kept burned'}: {preview.reason}")
+    else:
+      lines.append("     id stays claimed; slice would move to the retired folder")
+    if preview.blockers:
+      lines.append("     blockers: " + "; ".join(preview.blockers) + " (pass --force)")
+    _emit(args, payload, "\n".join(lines))
+    return OK
   if args.purge:
     result = ops.purge(state, args.id, force=args.force)
     freed = "freed" if result.id_freed else "kept burned"
@@ -1066,6 +1084,7 @@ def build_parser() -> argparse.ArgumentParser:
     "--purge", action="store_true", help="delete it outright, for something that never should have existed"
   )
   sp.add_argument("--force", action="store_true", help="override the dependents and done guards")
+  sp.add_argument("--dry-run", action="store_true", help="preview the removal and its fallout; write nothing")
 
   add("render", cmd_render, "regenerate .slicer/render/")
 

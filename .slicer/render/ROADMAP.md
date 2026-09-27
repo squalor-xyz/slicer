@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-70 items · — 13 · done 56 · parked 1
+70 items · — 12 · done 57 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -32,7 +32,7 @@
 | 4 | [S64](slices/S64.md) | slicer log has no per-item filter |  | slicer | dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note. | done |
 | 5 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | done |
 | 6 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | done |
-| 7 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
+| 7 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | done |
 | 8 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |
 | 9 | S68 | no item-level notes/context without a slice |  | slicer | dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice. | — |
 | 10 | S67 | slicer next output is terse |  | slicer | dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag. | — |

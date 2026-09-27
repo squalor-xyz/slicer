@@ -178,6 +178,53 @@ class PurgeTests(unittest.TestCase):
       self.assertIn("most recent", entry.note)
 
 
+class RemoveDryRunTests(unittest.TestCase):
+  def repo(self, git: bool = False) -> support.TempRepo:
+    repo = support.TempRepo(git=git)
+    support.make_mini(repo)
+    repo.run("init")
+    repo.run("migrate", "--from", "docs/slices")
+    return repo
+
+  def test_Purge_DryRun_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a typo")  # S05
+      before_next = repo.state().index.next_id
+      before_log = len(repo.state().history())
+      code, out, err = repo.run("remove", "S05", "--purge", "--dry-run")
+      self.assertEqual(code, 0, err)
+      self.assertIn("would be purged", out)
+      state = repo.state()
+      self.assertIsNotNone(state.index.get("S05"))
+      self.assertEqual(state.index.next_id, before_next)
+      self.assertEqual(len(state.history()), before_log)
+
+  def test_Purge_DryRun_ReportsIdFreedOrBurned(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "most recent")  # S05, freeable
+      freed = json.loads(repo.run("remove", "S05", "--purge", "--dry-run", "--json")[1])
+      self.assertTrue(freed["id_freed"])
+      burned = json.loads(repo.run("remove", "S02", "--purge", "--dry-run", "--json")[1])
+      self.assertFalse(burned["id_freed"])
+      self.assertIn("not the most recent", burned["reason"])
+
+  def test_Purge_DryRun_NamesDependentsWithoutForce(self) -> None:
+    with self.repo() as repo:  # S02 depends on S01 in the fixture
+      code, out, _ = repo.run("remove", "S01", "--purge", "--dry-run", "--json")
+      self.assertEqual(code, 0)
+      payload = json.loads(out)
+      self.assertTrue(any("S02" in b for b in payload["blockers"]))
+      self.assertIsNotNone(repo.state().index.get("S01"))
+
+  def test_Retire_DryRun_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("remove", "S02", "--reason", "obsolete", "--dry-run")
+      self.assertEqual(code, 0)
+      self.assertIn("would be retired", out)
+      self.assertEqual(repo.state().index.require("S02").status, "open")
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+
+
 class RemoveCliTests(unittest.TestCase):
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo()

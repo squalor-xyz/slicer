@@ -126,6 +126,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status and optionally record a note; `done` moves the file with `git mv` |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
+| `remove ID --purge/--reason --dry-run` | preview the removal and its fallout (dependents, id fate); write nothing |
 | `render` | regenerate `.slicer/render/` |
 | `sync [--check]` | rewrite derived lines in other documents |
 | `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
@@ -256,7 +257,9 @@ earlier id stays burned, and the output says which happened and why.
 
 Both refuse when another item depends on it, or when it is `done`; `--force` overrides and
 names the rule it overrode. After a forced purge, `slicer check` reports the dangling
-dependency it left behind.
+dependency it left behind. Add `--dry-run` to either mode to preview the outcome first — the
+dependents that would dangle and whether a purge would free or burn the id — without writing;
+it turns that surprise into a decision.
 
 Retiring needs a status to move into. A tracking directory created before `remove` existed
 gains a `retired` status automatically on load — only that one key, so a project that

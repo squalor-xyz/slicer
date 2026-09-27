@@ -261,6 +261,10 @@ backlog. Judge new work against it, and if it is empty or unclear, ask the owner
 **Never edit `.slicer/*.json`.** Use the commands. The index, the slice files and
 `.slicer/render/` have to agree, and `slicer check` is what proves they do.
 
+**Preview a destructive remove.** `slicer remove ID --purge --dry-run --json` reports what would
+be deleted, which dependents would dangle, and whether the id would be freed or stay burned —
+without writing. Check it before a real `--purge` (`--dry-run` works for `--reason` retires too).
+
 **Render after mutating, and check.** No command renders implicitly, but every mutating
 command takes `--render` to do it in the same step (`slicer done S01 --render`). Otherwise
 run `slicer render` then `slicer check`; a non-zero check means the work is not finished.
