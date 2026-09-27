@@ -292,3 +292,6 @@
 {"when": "2026-09-27T18:03:47Z", "item": "S18", "action": "status", "from": "open", "to": "done", "note": "Added 'slicer note ID [--text/--file/--stdin]' appending a dated paragraph (**YYYY-MM-DD** — text) to Slice.notes via new ops.add_note; renders in show and the slice file (unlike done --note, which is log-only). Requires a promoted item (no_slice error otherwise); blank rejected. TUI editing/adding of notes split to S63. New tests/test_note.py (6 tests); README/getting-started/agents docs updated. 571 tests + slicer check + git diff --check pass."}
 {"when": "2026-09-27T18:07:55Z", "item": "S64", "action": "add", "from": "", "to": "open", "note": "slicer log has no per-item filter"}
 {"when": "2026-09-27T18:07:55Z", "item": "S65", "action": "add", "from": "", "to": "open", "note": "find does not show which field or snippet matched"}
+{"when": "2026-09-27T18:08:55Z", "item": "S66", "action": "add", "from": "", "to": "open", "note": "done --note and note mean different things (log vs slice)"}
+{"when": "2026-09-27T18:08:55Z", "item": "S67", "action": "add", "from": "", "to": "open", "note": "slicer next output is terse"}
+{"when": "2026-09-27T18:08:55Z", "item": "S68", "action": "add", "from": "", "to": "open", "note": "no item-level notes/context without a slice"}
