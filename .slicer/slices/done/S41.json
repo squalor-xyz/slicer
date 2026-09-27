@@ -1,0 +1,39 @@
+{
+  "id": "S41",
+  "title": "The TUI has no search, filter, jump, or help",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding; navigation at scale",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** creating/editing items (previous slice).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "With three dozen items the left pane is one long scroll. There is no search, no filter by\nstatus/tree/pass, no jump-to-id, and the only key hint is a single status-bar line — no\nhelp overlay. Finding an item means scrolling and reading. At any real backlog size the\nTUI stops scaling."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/tui.py — session view state, filters, prompts, selection, shared help/dispatch bindings, and terminal drawing.\n- tests/test_tui.py — focused filtering, navigation, modal input, action, and drawing tests.\n- tests/test_cli.py — shared help/dispatch regression coverage.\n- README.md — TUI controls, default hide-done view, and session-only filter behavior."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Cover configured done-status defaults and custom statuses; combined multi-value filters, missing tree/pass values, and priority axes; search and cancellation; clearing, prose visibility, and counts; visible/hidden/unknown/cancelled jumps; selection after filtering and status changes; no matches; disabled filtered reordering; shared help/dispatch definitions; modal input isolation; and resize-safe drawing."
+    },
+    {
+      "heading": "Implement",
+      "body": "Implement incremental title/ID search, status/tree/pass/importance/urgency filters, jump-to-ID, and help in the TUI. Start with the configured done status hidden. Filters are session-only; preserve queue order and keep roadmap prose available.\n\nUse f for a scrollable filter checklist (arrows or j/k navigate, Space toggles, Enter applies, Esc cancels). Each group has Any; choices within groups combine with OR, groups with AND. Include none choices for tree/pass. Priority means assigned importance/urgency values 1–3, not inherited scores.\n\nUse / for live case-insensitive literal search of IDs, full titles, and short titles; Enter accepts, Esc restores the previous query and selection. Use c to clear search and every filter. Use g to jump by case-insensitive exact ID; reveal hidden targets by clearing restrictions with an explanation, and leave the view unchanged for unknown IDs or cancellation. Use ? for scrollable help generated from shared dispatch definitions.\n\nShow visible/total item counts and active restrictions independently of action messages. Preserve selection by identity; when it disappears, prefer the next surviving row from the previous view, then the preceding row, then the first selectable row. Reset detail selection when the target changes. No matches must leave global controls usable. Disable J/K while any restriction is active, explaining that c restores reordering.\n\nKeep decision logic testable without curses; modal text input must not trigger normal shortcuts. Handle resize and small terminals safely. Preserve unfiltered rows(state) for existing callers. Document controls and initial view in README.md. No dependencies, persisted settings, schema changes, CLI changes, S42 reorder enhancements, or S55 visual polish."
+    },
+    {
+      "heading": "Check",
+      "body": "An item is findable in a large backlog without scrolling: incremental search, combined status/tree/pass/importance/urgency filters, and jump-to-ID work from the TUI. Done items are hidden initially; c reveals all items. Hidden jumps reveal their target with an explanation. Prose remains available, matching counts exclude prose, and J/K cannot reorder a restricted view.\n\nFocused TUI tests and an interactive terminal smoke test must pass. Run the full unit suite and distinguish existing S54 workspace-isolation failures from regressions. Run slicer check and git diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

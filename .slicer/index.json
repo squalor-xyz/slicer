@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 56,
+  "next_id": 57,
   "preamble": "",
   "passes": [],
   "items": [
@@ -454,7 +454,7 @@
       "id": "S41",
       "title": "The TUI has no search, filter, jump, or help",
       "short_title": "The TUI has no search, filter, jump, or help",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
@@ -1213,6 +1213,28 @@
         ],
         "trees_literal": false,
         "findings": "user request: clearer TUI with color",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S56",
+      "title": "Track project goals and non-goals for AI-assisted planning",
+      "short_title": "Track project goals and non-goals for AI-assisted planning",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request: explicit product direction for AI-assisted planning",
         "pass": "",
         "group": "",
         "reason": "",

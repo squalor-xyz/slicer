@@ -100,6 +100,27 @@ whatever is selected there — an item field (size, trees, findings, depends, im
 urgency), a slice section, its scope boundary, or a prose block — `s` starts the selected item and `a` adds a
 new one.
 
+The TUI initially hides the project's configured done status. View controls:
+
+| Key | Action |
+|---|---|
+| `/` | Search IDs, full titles, and short titles as you type; Enter accepts, Esc cancels |
+| `f` | Filter by status, tree, pass, importance, and urgency |
+| `c` | Clear search and all filters, including the default hide-done filter |
+| `g` | Jump to an ID; hidden targets are revealed by clearing search and filters |
+| `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
+
+In the filter panel, arrows or `j/k` navigate, Space toggles choices, Enter applies,
+and Esc cancels. Each group offers Any; tree and pass also offer `(none)`. Multiple
+choices within a group match any selected value; different groups must all match.
+Importance and urgency use the item's assigned values (1–3), not inherited priority.
+Search is case-insensitive literal text and combines with the filters.
+
+The status line shows matching/total item counts and active restrictions. Roadmap
+prose stays accessible below the items and is excluded from those counts. Filters
+last only for this session. `J/K` reordering requires clearing all restrictions with
+`c`; filtering itself preserves queue order.
+
 Every command except `tui` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.

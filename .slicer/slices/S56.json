@@ -1,0 +1,57 @@
+{
+  "id": "S56",
+  "title": "Track project goals and non-goals for AI-assisted planning",
+  "lead": [
+    "Make explicit product direction available to humans and AI agents deciding what to build next, and use the capability to document slicer's own direction."
+  ],
+  "depends_note": null,
+  "findings_note": "user request: explicit product direction for AI-assisted planning",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** inferring goals from the backlog or automatically changing task priorities. Storage, editing interfaces, and any relationship to individual tasks require a design discussion before implementation.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Agents need explicit product direction to recommend what to build next. A task backlog alone does not establish that direction. Slicer's README, architecture, contributor guidance, and roadmap explain the tool and existing work, but planning also needs owner-agreed goals and non-goals."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": "Once the design is agreed, verify recording and retrieval, CLI JSON output, discoverability, and documentation against the acceptance criteria. Run the relevant focused tests, the unit suite, and slicer check for the implementation."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    },
+    {
+      "heading": "Desired outcome",
+      "body": "Slicer can store and expose project-level goals and non-goals for humans and AI agents. Define how this relates to existing roadmap prose before implementation."
+    },
+    {
+      "heading": "Use on slicer itself",
+      "body": "Ask the owner about product direction and record the agreed goals and non-goals. Add a short Goals and non-goals section in README.md that summarizes or points to them. Do not infer the owner's direction from the backlog."
+    },
+    {
+      "heading": "Acceptance criteria",
+      "body": "- Project-level goals and non-goals can be recorded and retrieved through slicer commands.\n- They are discoverable without reading individual slices.\n- Agents can retrieve them through the CLI with JSON output.\n- Documentation explains how goals and non-goals inform planning.\n- Slicer's own agreed goals and non-goals are recorded, and README.md summarizes or points to them."
+    },
+    {
+      "heading": "Design discussion required",
+      "body": "Agree on storage, editing interfaces, the relationship to existing roadmap prose, and any relationship to individual tasks before implementation. Gather the owner's input on slicer's product direction rather than inventing it. These decisions remain open; this item records the requested capability."
+    }
+  ],
+  "notes": []
+}

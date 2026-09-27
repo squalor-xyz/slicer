@@ -274,23 +274,19 @@ if __name__ == "__main__":
 
 
 class TuiHelpTests(unittest.TestCase):
-  """The help line is the only documentation of the key bindings."""
+  """Help and dispatch share bindings rather than drifting independently."""
 
   def test_Help_EveryKeyItNames_IsHandled(self) -> None:
-    # It claimed `n new`; `n` promotes, and nothing in the TUI creates an item.
-    import re
-
-    from slicer import tui
-
-    handled = set(re.findall(r'if key == "(\w+)"', Path(tui.__file__).read_text()))
-    # Handled in the run loop rather than in `act`: movement, tab (as "\t")
-    # and quit (as "q" or Esc).
-    handled |= {"j", "k", "tab", "q"}
-    for token in re.findall(r"(\S+) \w+", tui.HELP):
-      for key in token.split("/"):
-        if key.isalpha():
-          with self.subTest(key):
-            self.assertIn(key, handled)
+    with support.TempRepo() as repo:
+      repo.run("init")
+      state = repo.state()
+      extra = tui.Binding(("!",), "!", "help", "Temporary help alias")
+      from unittest.mock import patch
+      with patch.object(tui, "BINDINGS", (*tui.BINDINGS, extra)):
+        self.assertIn("Temporary help alias", "\n".join(tui.help_lines()))
+        view = tui.View.initial(state)
+        view.handle(state, "!")
+        self.assertEqual(view.mode, "help")
 
   def test_Help_DoesNotClaimTheTuiCanCreateAnItem(self) -> None:
     from slicer import tui
