@@ -112,7 +112,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score]` | reorder the whole queue by priority score in one step (persists the `list --sort score` order) |
-| `next [-n N]` | one eligible item at offset N (default 0); started work first, then effective priority |
+| `next [-n N] [--start]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
 | `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |

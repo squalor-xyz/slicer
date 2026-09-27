@@ -219,8 +219,8 @@
       "id": "S67",
       "title": "slicer next output is terse",
       "short_title": "slicer next output is terse",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "notes": [],
       "fields": {

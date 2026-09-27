@@ -1,0 +1,39 @@
+{
+  "id": "S67",
+  "title": "slicer next output is terse",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer next` printed only id/title/path — not the effective score, why it's next, or its\nstatus, and there was no one-shot to start it. Filed dogfooding."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/cli.py: `cmd_next` shows score/status; new `--start` flag.\n- tests/test_next.py; README.md, docs/agents.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Show the returned item's effective score (with `^` when inherited from a dependent, via\ngraph.effective_scores) and status; add `effective_score` to `--json`. Add `slicer next --start`\nto mark the returned item started in one command, taking the project lock only when it mutates\n(reusing ops.start). `next` stays read-only by default."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer next` shows a `score N · status` line; `--json` carries effective_score; an inherited\nscore shows `^`; `next --start` starts the item (idempotent) and does nothing when none is\neligible. Focused next tests, the unit suite, slicer check, and git diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-70 items · — 8 · done 61 · parked 1
+70 items · — 7 · done 62 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -35,7 +35,7 @@
 | 7 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | done |
 | 8 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | done |
 | 9 | S68 | no item-level notes/context without a slice |  | slicer | dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice. | done |
-| 10 | S67 | slicer next output is terse |  | slicer | dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag. | — |
+| 10 | [S67](slices/S67.md) | slicer next output is terse |  | slicer | dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag. | done |
 | 11 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
 | 12 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | — |
 | 13 | S66 | done --note and note mean different things (log vs slice) |  | slicer | dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible. | — |

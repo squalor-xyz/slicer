@@ -311,9 +311,20 @@ def cmd_next(args: argparse.Namespace) -> int:
     _emit(args, payload, text)
     return USAGE
   item = result.item
+  if args.start:
+    with store.project_lock(state.root):
+      item = ops.start(state, item.id)
+  eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
-  payload = item.to_dict() | {"path": str(path) if path else None}
-  _emit(args, payload, f"{item.id}  {item.display_title()}" + (f"\n     {path}" if path else ""))
+  inherited = "^" if eff > item.score else ""
+  payload = item.to_dict() | {"path": str(path) if path else None, "effective_score": eff}
+  lines = [
+    f"{item.id}  {item.display_title()}",
+    f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
+  ]
+  if path:
+    lines.append(f"     {path}")
+  _emit(args, payload, "\n".join(lines))
   return OK
 
 
@@ -980,6 +991,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("next", cmd_next, "the highest-priority startable item")
   sp.add_argument("-n", type=_nonnegative_int, default=0, metavar="N",
                   help="skip N currently eligible items (default 0); return one item")
+  sp.add_argument("--start", action="store_true", help="mark the returned item started")
 
   sp = add("list", cmd_list, "list items")
   sp.add_argument("--status", action="append", help="filter by status (repeatable)")

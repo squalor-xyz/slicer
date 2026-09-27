@@ -283,7 +283,9 @@ items if none qualify. Within that pool it selects the highest effective score, 
 stored queue order breaking ties. All dependencies must be done. A
 blocker of a critical item inherits that item's priority, so `next` naturally surfaces the
 blocker first; dependencies still hard-gate, so a blocked item is never returned whatever
-its score. Read the slice, mark it started, implement and verify it, then use
+its score. `next` also reports the item's effective score (a `^` marks a score inherited from a
+dependent) and status; `slicer next --start` returns the item and marks it started in one call.
+Read the slice, start it (or `next --start`), implement and verify it, then use
 `slicer done ID --note "..." --render` and `slicer check`.
 
 **One section at a time.** `slicer edit ID --section "Why" --stdin` replaces one
