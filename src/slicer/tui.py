@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import graph, ops, prose, render, tui_style
+from slicer import graph, ops, prose, render, store, tui_style, tui_wizard
 from slicer.errors import SlicerError
 from slicer.store import State
 
@@ -38,6 +38,7 @@ BINDINGS = (
   Binding(("?",), "?", "help", "Show help; j/k scroll, ? or Esc closes"),
   Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty removes a note)"),
   Binding(("a",), "a", "add", "Add an item"),
+  Binding(("w",), "w", "wizard", "Create roadmap items with the guided wizard"),
   Binding(("J",), "J", "reorder_down", "Reorder down (clear restrictions first)"),
   Binding(("K",), "K", "reorder_up", "Reorder up (clear restrictions first)"),
   Binding(("T",), "T", "reorder_top", "Move to top (clear restrictions first)"),
@@ -509,11 +510,14 @@ class View:
   choice_at: int = 0
   help_at: int = 0
   quit: bool = False
+  wizard: tui_wizard.Wizard | None = None
 
   @classmethod
-  def initial(cls, state: State) -> View:
+  def initial(cls, state: State, *, offer_wizard: bool = False) -> View:
     view = cls(Filters.initial(state))
     view.refresh(state)
+    if offer_wizard and not state.index.items:
+      view.mode = "wizard_offer"
     return view
 
   @property
@@ -555,6 +559,23 @@ class View:
     self.refresh(state)
     if key == "KEY_RESIZE":
       return ActResult()
+    if self.mode == "wizard_offer":
+      if key in ("w", "y", *tui_wizard.ENTER):
+        self._open_wizard(state)
+      elif key in ("n", "b", "\x1b"):
+        self.mode = "normal"
+      return ActResult()
+    if self.wizard is not None:
+      intent = self.wizard.handle(key)
+      if intent == "cancel":
+        self.wizard, self.mode = None, "normal"
+        self.notify("wizard cancelled; nothing saved")
+      elif intent == "editor":
+        section = self.wizard.section
+        return ActResult(edit=EditRequest("wizard", "", section.heading, section.body))
+      elif intent == "save":
+        self._save_wizard(state)
+      return ActResult()
     if self.mode in ("search", "jump"):
       return self._prompt(state, key)
     if self.mode == "move":
@@ -573,6 +594,8 @@ class View:
     action = key_action(key)
     if action == "quit":
       self.quit = True
+    elif action == "wizard":
+      self._open_wizard(state)
     elif action == "help":
       self.mode, self.help_at = "help", 0
     elif action in ("search", "jump"):
@@ -613,6 +636,44 @@ class View:
     self.refresh(state)
     return ActResult()
 
+  def _open_wizard(self, state: State) -> None:
+    self.wizard = tui_wizard.Wizard(list(state.config.sections))
+    self.mode = "wizard"
+
+  def _save_wizard(self, state: State) -> None:
+    wizard = self.wizard
+    if wizard is None:
+      return
+    try:
+      specs = wizard.specs()
+      with store.project_lock(state.root):
+        fresh = store.load(state.root)
+        warning = ""
+        try:
+          report = ops.apply_outline(fresh, specs, promote_all=True,
+                                     preamble=wizard.preamble(fresh.index.preamble))
+        except ops.OutlineCommittedError as exc:
+          report, warning = exc.report, str(exc)
+        if report.problems:
+          wizard.error = "; ".join(report.problems)
+          return
+        # The index is committed. Close the draft before rendering so a later
+        # failure cannot invite the user to add the same items a second time.
+        state.config, state.index = fresh.config, fresh.index
+        state.slices, state.slice_files = fresh.slices, fresh.slice_files
+        self.wizard, self.mode = None, "normal"
+        self.filters, self.focus = Filters(), "left"
+        self.refresh(state)
+        self.select((ITEM, report.ids[0]))
+        outcome = act(state, "r", "")
+        if outcome.severity == "error":
+          warning = "; ".join(filter(None, (warning, f"render failed: {outcome.message}; press r to retry")))
+        self.notify(f"saved {len(report.ids)} item(s) and slices" +
+                    (f"; {warning}" if warning else "; rendered roadmap"),
+                    "error" if warning else "success")
+    except (SlicerError, OSError) as exc:
+      wizard.error = str(exc)
+
   def _prompt(self, state: State, key: str) -> ActResult:
     if key == "\x1b":
       if self.mode == "search":
@@ -638,10 +699,8 @@ class View:
       else:
         self.notify("search applied" if self.mode == "search" else "cancelled")
       self.mode = "normal"
-    elif key in ("KEY_BACKSPACE", "\x7f", "\b"):
-      self.text = self.text[:-1]
-    elif len(key) == 1 and key.isprintable():
-      self.text += key
+    else:
+      self.text, _ = tui_wizard.text_input(self.text, key)
     if self.mode == "search":
       self.filters.query = self.text
     self.refresh(state)
@@ -713,6 +772,35 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   if width < tui_style.MIN_WIDTH or height < tui_style.MIN_HEIGHT:
     put(0, 0, f"Resize to at least {tui_style.MIN_WIDTH}x{tui_style.MIN_HEIGHT}", palette.attr("heading"))
     put(1, 0, "Session preserved; q quits from the normal view.")
+    canvas.refresh()
+    return
+
+  if view.mode == "wizard_offer":
+    put(0, 0, "Create a roadmap", palette.attr("heading"))
+    put(2, 0, "This roadmap has no items. Start the guided wizard?")
+    put(4, 0, "Enter / w / y: start wizard   b / n / Esc: browse", palette.attr("info"))
+    canvas.refresh()
+    return
+  if view.wizard is not None:
+    wizard = view.wizard
+    put(0, 0, "Roadmap wizard" + (" · Review" if wizard.mode == "review" else ""),
+        palette.attr("heading"))
+    lines, selected_at = wizard.lines()
+    capacity = height - 4
+    top = max(0, selected_at - capacity + 1)
+    for y, line in enumerate(lines[top:top + capacity], 1):
+      selected = top + y - 1 == selected_at
+      put(y, 0, ("> " if selected else "  ") + line,
+          palette.attr(selected=selected, focused=True))
+    if wizard.mode == "field" and wizard.section is None:
+      value = wizard.text[-(width - 4):]
+      while value and tui_style.cell_width(value) > width - 4:
+        value = value[1:]
+      put(height - 3, 0, "> " + value + "_", palette.attr(selected=True, focused=True))
+    put(height - 2, 0, wizard.error, palette.attr("error"))
+    hint = ("Up/Down: choose   Enter: edit or apply selection   Esc: cancel"
+            if wizard.mode == "review" else "Enter: continue   Shift-Tab: back   Esc: cancel")
+    put(height - 1, 0, hint, palette.attr("info"))
     canvas.refresh()
     return
 
@@ -797,12 +885,17 @@ def run(state: State) -> int:  # pragma: no cover - requires a terminal
     except curses.error:
       pass
     palette = tui_style.setup_palette()
-    view = View.initial(state)
+    view = View.initial(state, offer_wizard=True)
     while not view.quit:
       draw(screen, state, view, palette)
       try:
-        key = screen.getkey()
+        key = screen.get_wch()
+        if isinstance(key, int):
+          key = curses.keyname(key).decode("ascii")
       except curses.error:
+        continue
+      height, width = screen.getmaxyx()
+      if view.wizard is not None and (width < tui_style.MIN_WIDTH or height < tui_style.MIN_HEIGHT):
         continue
       result = view.handle(state, key)
       if result.edit is not None:
@@ -811,9 +904,15 @@ def run(state: State) -> int:  # pragma: no cover - requires a terminal
         try:
           body = _via_editor(result.edit.body)
         except (SlicerError, OSError) as exc:
+          if result.edit.kind == "wizard" and view.wizard is not None:
+            view.wizard.error = f"Editor failed; body unchanged: {exc}"
           outcome = ActResult(str(exc), severity="error")
         else:
-          outcome = apply_edit_result(state, result.edit, body)
+          if result.edit.kind == "wizard" and view.wizard is not None:
+            view.wizard.editor_result(body)
+            outcome = ActResult()
+          else:
+            outcome = apply_edit_result(state, result.edit, body)
         finally:
           curses.reset_prog_mode()
           screen.redrawwin()

@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-71 items · — 1 · done 68 · parked 1 · retired 1
+71 items · done 69 · parked 1 · retired 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -41,7 +41,7 @@
 | 13 | [S66](slices/S66.md) | done --note and note mean different things (log vs slice) |  | slicer | dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible. | done |
 | 14 | [S63](slices/S63.md) | TUI: view, edit and add slice notes |  | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | done |
 | 15 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | done |
-| 16 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
+| 16 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | done |
 | 17 | S03 | Export back to a legacy markdown index for anything still expecting one | M | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
 | 18 | [S52](slices/S52.md) | Document onboarding and AI-assisted roadmap workflows | M | docs | documentation review; user workflow | done |
 | 19 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | slicer | review; sibling of S22 | done |

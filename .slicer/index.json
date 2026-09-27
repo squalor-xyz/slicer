@@ -357,10 +357,12 @@
       "id": "S50",
       "title": "TUI wizard: create a roadmap interactively",
       "short_title": "TUI wizard: create a roadmap interactively",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-09-27** — Owner clarification: prepend optional # Title to existing preamble without replacing prose; JSON and normal generated output only; create slices even for blank sections; optional $EDITOR per section; Shift-Tab back and editable final review; offer wizard once on empty-project launch; confirm before discarding populated drafts."
+      ],
       "fields": {
         "size": "L",
         "flags": [],
