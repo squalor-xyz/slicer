@@ -473,7 +473,7 @@ $ slicer promote S01 --file draft.md
 promoted S01 -> ~/code/my-project/.slicer/slices/S01.json
 ```
 
-For anything more than one section, `slicer tui` is also faster than repeated `edit`s:
+For anything more than one section, `slicer tui` (or its alias `slicer ui`) is also faster than repeated `edit`s:
 `tab` moves between the queue and the detail pane, and `e` opens `$EDITOR` on whatever is
 selected.
 

@@ -128,7 +128,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
 | `stats` / `log` | counts, and the history of status changes |
-| `tui` | browse, read, reorder and edit interactively |
+| `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
 
 `slicer next -n 1` returns the item after the current next item. Offsets are
 nonnegative integers: `-n 0` is the same as `next`. Eligible started items come
@@ -181,7 +181,7 @@ blocked markers remain visible without color. Feedback uses `OK:`, `Error:`, and
 `NO_COLOR=1` for monochrome; unsupported terminals also fall back automatically.
 Below 80 columns or 10 rows, the TUI shows a resize prompt and preserves the session.
 
-Every command except `tui` takes `--json`, including the failures — an agent calls `slicer next
+Every command except the interactive `tui`/`ui` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
 See [docs/agents.md](docs/agents.md).

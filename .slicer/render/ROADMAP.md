@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-61 items · — 15 · done 45 · parked 1
+61 items · — 14 · done 46 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -86,4 +86,4 @@
 | 58 | [S58](slices/S58.md) | Provide a simple install path without cloning the repository |  | slicer | user request: easier installation for casual users while retaining clone-based installs | done |
 | 59 | [S59](slices/S59.md) | Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1) |  |  |  | done |
 | 60 | [S60](slices/S60.md) | List more keyboard shortcuts in the TUI |  |  |  | done |
-| 61 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  |  |  | — |
+| 61 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  |  |  | done |

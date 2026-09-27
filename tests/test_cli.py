@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import io
 import json
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 import support
 
-from slicer import tui
+from slicer import cli, tui
+from slicer.store import State
 
 
 class CliTests(unittest.TestCase):
@@ -469,3 +473,60 @@ class RenderFlagTests(unittest.TestCase):
     with self.repo() as repo:
       _, out, _ = repo.run("add", "another", "--render")
       self.assertRegex(out, r"rendered \d+ file")
+
+
+class TuiAliasTests(unittest.TestCase):
+  """`ui` is a true alias of `tui`: same dispatch, project, errors, exit code."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_UiAndTui_BothDispatchToTheRunnerForTheSameProject(self) -> None:
+    with self.repo() as repo:
+      for name in ("tui", "ui"):
+        with self.subTest(name=name):
+          with patch.object(tui, "run", return_value=7) as run:
+            code, _, err = repo.run(name)
+          self.assertEqual((code, err), (7, ""))
+          self.assertEqual(run.call_count, 1)
+          state = run.call_args.args[0]
+          self.assertIsInstance(state, State)
+          self.assertEqual(state.root, repo.root)
+
+  def test_UiAndTui_ExplicitRootAfterTheName_SelectsThatProject(self) -> None:
+    with self.repo() as repo:
+      for name in ("tui", "ui"):
+        with self.subTest(name=name):
+          with patch.object(tui, "run", return_value=0) as run:
+            code = cli.main([name, "--root", str(repo.root)])
+          self.assertEqual(code, 0)
+          self.assertEqual(run.call_args.args[0].root, repo.root)
+
+  def test_UiAndTui_Help_ExitsWithoutOpeningTheRunner(self) -> None:
+    for name in ("tui", "ui"):
+      with self.subTest(name=name):
+        out = io.StringIO()
+        with patch.object(tui, "run", side_effect=AssertionError("runner opened")) as run:
+          with self.assertRaises(SystemExit) as caught, redirect_stdout(out):
+            cli.main([name, "--help"])
+        self.assertEqual(caught.exception.code, 0)
+        self.assertTrue(out.getvalue().startswith("usage: slicer"))
+        self.assertIn("--root", out.getvalue())
+        run.assert_not_called()
+
+  def test_UiAndTui_Json_RejectedIdentically(self) -> None:
+    with self.repo() as repo:
+      codes = {}
+      for name in ("tui", "ui"):
+        with self.subTest(name=name):
+          with patch.object(tui, "run") as run:
+            code, out, _ = repo.run(name, "--json")
+          run.assert_not_called()
+          payload = json.loads(out)
+          self.assertEqual(payload["error"]["code"], "usage")
+          self.assertIn("--json", payload["error"]["message"])
+          self.assertEqual(code, 2)
+          codes[name] = code
+      self.assertEqual(codes["tui"], codes["ui"])

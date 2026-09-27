@@ -723,8 +723,9 @@ def build_parser() -> argparse.ArgumentParser:
   )
   sub = p.add_subparsers(dest="command", required=True)
 
-  def add(name: str, fn, help_: str, *, json_flag: bool = True) -> argparse.ArgumentParser:
-    sp = sub.add_parser(name, help=help_, parents=[common])
+  def add(name: str, fn, help_: str, *, json_flag: bool = True,
+          aliases: tuple[str, ...] = ()) -> argparse.ArgumentParser:
+    sp = sub.add_parser(name, help=help_, parents=[common], aliases=list(aliases))
     sp.set_defaults(func=fn)
     if json_flag:
       sp.add_argument("--json", action="store_true", help="machine-readable output")
@@ -892,7 +893,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("log", cmd_log, "recent status changes")
   sp.add_argument("--limit", type=int, default=20)
 
-  add("tui", cmd_tui, "browse and reorder interactively", json_flag=False)
+  add("tui", cmd_tui, "browse and reorder interactively (also: ui)",
+      json_flag=False, aliases=("ui",))
   return p
 
 

@@ -83,8 +83,8 @@ generated markdown. Do not commit or publish unless separately authorized.
 
 ## Everything takes `--json`
 
-Every subcommand except `tui` accepts `--json` and writes a single JSON document to
-stdout. Read commands return data; write commands return what they changed.
+Every subcommand except the interactive `tui`/`ui` accepts `--json` and writes a single JSON
+document to stdout. Read commands return data; write commands return what they changed.
 
 ```console
 $ slicer next --json

@@ -1330,7 +1330,7 @@
       "id": "S61",
       "title": "Make slicer ui and slicer tui both open the TUI",
       "short_title": "Make slicer ui and slicer tui both open the TUI",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
