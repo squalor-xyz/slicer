@@ -13,11 +13,12 @@ matches.
 ```
 errors                                      every module imports from here
 model · config · jsonio · ids · templates   data, defaults, atomic IO, id rules
+ai.py                                      project-independent agent instructions
 store                                       discovery and the on-disk layout
 graph · vcs · prose · legacy · outline      edges, git, prose, the two input formats
 ops · render · sync · verify · migrator     behaviour
 check                                       composes render + sync + verify
-cli · tui                                   front ends
+cli · tui · tui_style.py                  front ends and terminal presentation
 ```
 
 The one cycle is deliberate: `cli` imports `tui` lazily inside the `tui` subcommand, and
@@ -36,6 +37,7 @@ never pays for curses.
   slices/retired/<ID>.json retired, with the reason on the index item
   templates/*.md           slice.md, roadmap.md, row.md — yours to edit
   render/ROADMAP.md        GENERATED
+  render/ROADMAP.html      GENERATED, standalone browser view
   render/slices/<ID>.md    GENERATED
 ```
 
@@ -100,6 +102,9 @@ but because `vcs._run` refuses anything off the list, including for a caller tha
 `promote` seeds, the scope-boundary marker, which flags exclude an item from derived
 pointers, the sync targets and the templates all live under `.slicer/`. slicer has to
 work on a repo with no review protocol at all.
+
+`sync` is intentionally outside `ops.py`: it writes configured derived lines to external
+project documents. Other project-state mutations still go through `ops.py`.
 
 **Templates are files, and the engine is not one.** `render.expand` substitutes
 `{{key}}` and nothing else: no loops, no conditionals, no eval. Anything repeated is

@@ -158,7 +158,7 @@ reports drift without writing; `slicer check` includes it.
 ## Not configurable
 
 The tracking directory name (`.slicer`) and the render output paths
-(`render/ROADMAP.md`, `render/slices/<ID>.md`) are fixed.
+(`render/ROADMAP.md`, `render/ROADMAP.html`, `render/slices/<ID>.md`) are fixed.
 
 The escape hatch is `.slicer/templates/*.md` — `slice.md`, `roadmap.md` and `row.md`,
 copied into your project by `init` and yours to edit. They are plain `{{key}}`

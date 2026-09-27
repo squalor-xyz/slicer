@@ -108,18 +108,18 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
-| `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies |
+| `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies |
 | `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
-| `sort [--by score]` | reorder the whole queue by priority score in one step (persists the `list --sort score` order) |
+| `sort [--by score] [--render]` | reorder the whole queue by priority score in one step (persists the `list --sort score` order) |
 | `next [-n N] [--start]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
 | `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
-| `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
+| `set ID [ID ...] --title/--short-title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--no-flags/--group/--importance/--urgency` | change fields |
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
-| `note ID [--text/--file/--stdin]` | append a dated note to any item — no slice needed (shows in `show`/`render`, unlike `done --note`) |
+| `note ID [--text/--file/--stdin] [--render]` | append a dated note to any item — no slice needed (shows in `show`/`render`, unlike `done --note`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `goals` | print the project's goals and non-goals together; supports `--json` |
@@ -163,6 +163,9 @@ The TUI initially hides the project's configured done status. View controls:
 | `f` | Filter by status, tree, pass, importance, and urgency |
 | `c` | Clear search and all filters, including the default hide-done filter |
 | `g` | Jump to an ID; hidden targets are revealed by clearing search and filters |
+| `J` / `K` | Reorder the selected item down / up |
+| `T` | Move the selected item to the top |
+| `M` | Move the selected item to a numbered position |
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
 
 In the filter panel, arrows or `j/k` navigate, Space toggles choices, Enter applies,
@@ -173,8 +176,9 @@ Search is case-insensitive literal text and combines with the filters.
 
 The status line shows matching/total item counts and active restrictions. Roadmap
 prose stays accessible below the items and is excluded from those counts. Filters
-last only for this session. `J/K` reordering requires clearing all restrictions with
-`c`; filtering itself preserves queue order.
+last only for this session. `J/K` reorder down/up, `T` moves to the top and `M` moves to
+a numbered position; reordering requires clearing all restrictions with `c`. Filtering
+itself preserves queue order.
 
 Queue and Details headings mark the focused pane with `>`. Focused selections use
 reverse/bold; inactive selections retain a marker and bold text. Queue rows show
@@ -193,8 +197,8 @@ Every command except the interactive `tui`/`ui` takes `--json`, including the fa
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
 See [docs/agents.md](docs/agents.md).
 
-Every command that changes state — `add`, `set`, `start`, `done`, `move`, `promote`,
-`edit`, `remove`, `park`, `unpark`, `import`, `migrate`, and the `prose` edits — takes `--render`
+Every command that changes state — `add`, `set`, `start`, `done`, `move`, `sort`, `promote`,
+`edit`, `note`, `remove`, `park`, `unpark`, `import`, `migrate`, and the `prose` edits — takes `--render`
 to regenerate `.slicer/render/` in the same step, so a mutation and its render are one
 command.
 
