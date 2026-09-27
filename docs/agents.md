@@ -126,17 +126,24 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
 | `list` | array of items |
 | `show ID` | item, plus `slice` when it has one; with `--section NAME`, `{id, section, body}` |
-| `next` | item plus `path`; or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
+| `next` | item plus `path` and `effective_score`; or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
 | `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
 | `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems}` |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |
 | `move` | `{id, position}` |
-| `edit` | `{id, section}` |
+| `sort` | `{by, moved}` |
+| `edit` | `{id, section}`; boundary edits return `{id, boundary}` |
+| `note` | `{id, added}` |
+| `find` | array of items with `match: {field, snippet}` |
+| `deps` | unblocked-item array; for `deps ID`, `{id, waits_on, blocked_by, dependents}`; mermaid format returns `{format, graph}` |
+| `goals` | `{goals, non_goals}` |
 | `render` | `{written: [...]}` |
+| `sync` | array of `{target, path, stale, detail}` |
 | `check` | `{ok, stale_render, orphan_render, stale_sync, problems, warnings}` |
 | `verify` | `{checked, git, errors, findings: [{level, item, message}]}` |
-| `stats` | `{total, by_status, by_size, by_tree, by_pass}` |
+| `stats` | `{total, completion, by_status, by_size, by_tree, by_pass, by_tree_status}` |
+| `status` | `{next, census, blocked}` |
 | `log` | array of `{when, item, action, from, to, note}`, newest first |
 | `prose list` | `[{ref, lines, preview}]` |
 
@@ -339,11 +346,13 @@ timeout; set `SLICER_LOCK_TIMEOUT` (seconds) to tune it. Read-only commands neve
 **slicer never commits.** `git` access is allowlisted to read-only subcommands plus `mv`.
 Committing is the human's.
 
-## What is not here yet
+## History and dependencies
 
-Worth knowing before you plan around it: there is no per-item history beyond status
-transitions, and no dependency query beyond `next` and `verify`. These are on the roadmap —
-`slicer list --json` plus your own filtering is the workaround for most of them.
+Use `slicer log --item ID --json` to inspect an item's recorded changes. `set` history
+entries include old-to-new field values; `--action set` narrows the log to metadata changes.
+For a durable observation on any item, including one without a slice, use `slicer note ID`;
+`done --note` records a history entry only. Use `slicer deps --json` for unblocked work,
+`deps ID --json` for an item's edges, and `deps --format mermaid` for a graph.
 
 ## Batch mutations
 

@@ -392,3 +392,5 @@
 {"when": "2026-09-27T23:13:28Z", "item": "S81", "action": "status", "from": "open", "to": "done", "note": ""}
 {"when": "2026-09-27T23:13:28Z", "item": "S81", "action": "note", "from": "", "to": "", "note": "Delivered as the wizard's text_input primitive (tui_wizard.p"}
 {"when": "2026-09-27T23:13:28Z", "item": "S50", "action": "note", "from": "", "to": "", "note": "Implemented on feature/S50-tui-roadmap-wizard: guided wizard"}
+{"when": "2026-09-27T23:04:31Z", "item": "S79", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-27T23:07:38Z", "item": "S79", "action": "status", "from": "started", "to": "done", "note": "Updated agent payloads and shipped-feature guidance, CLI/TUI flag and key references, architecture/configuration outputs, and note help. Verified against current CLI/TUI behavior; all 625 tests passed (one skipped), and slicer check passed."}

@@ -1823,7 +1823,7 @@
       "id": "S79",
       "title": "Bring the documentation current with the shipped CLI and TUI",
       "short_title": "Bring the documentation current with the shipped CLI and TUI",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

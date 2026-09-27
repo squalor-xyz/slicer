@@ -1076,7 +1076,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = _render_flag(add("note", _mutating(cmd_note), "append a dated note to an item's slice"))
+  sp = _render_flag(add("note", _mutating(cmd_note), "append a dated note to an item"))
   sp.add_argument("id")
   sp.add_argument("--text", help="inline note; cannot combine with --file/--stdin")
   sp.add_argument("--file")

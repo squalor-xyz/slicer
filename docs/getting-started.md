@@ -494,7 +494,9 @@ promoted S01 -> ~/code/my-project/.slicer/slices/S01.json
 
 For anything more than one section, `slicer tui` (or its alias `slicer ui`) is also faster than repeated `edit`s:
 `tab` moves between the queue and the detail pane, and `e` opens `$EDITOR` on whatever is
-selected.
+selected. Select a note and press `e` to edit it; saving an empty body removes that note.
+Select `+ add a note` and press `e` to add one. Press `J`/`K` to reorder down/up, `T` to
+move to the top, and `M` to enter a position. Clear search and filters with `c` first.
 
 The Queue and Details headings show which pane has focus. A focused selection uses
 reverse/bold; the other pane retains a selection marker. `P:22` in a queue row is
