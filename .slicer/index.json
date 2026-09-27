@@ -1310,7 +1310,7 @@
       "id": "S60",
       "title": "List more keyboard shortcuts in the TUI",
       "short_title": "List more keyboard shortcuts in the TUI",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

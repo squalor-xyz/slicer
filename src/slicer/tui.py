@@ -58,6 +58,28 @@ def key_action(key: str) -> str | None:
 def help_lines() -> list[str]:
   return [f"{b.label:<12} {b.description}" for b in BINDINGS]
 
+
+# Common actions in display order; key labels come from the dispatch table.
+SHORTCUTS = (
+  (("pane",), "panes"), (("edit",), "edit"), (("add",), "add"),
+  (("start",), "start"), (("done",), "done"), (("search",), "search"),
+  (("filter",), "filters"), (("clear",), "show all"), (("jump",), "jump"),
+  (("down", "up"), "move"), (("help",), "help"), (("quit",), "quit"),
+)
+
+
+def shortcut_lines(width: int) -> list[str]:
+  """Pack complete hints into terminal rows without splitting a key/action pair."""
+  labels = {b.action: b.label.split(" / ")[0] for b in BINDINGS}
+  lines: list[str] = []
+  for actions, description in SHORTCUTS:
+    hint = f"{'/'.join(labels[action] for action in actions)} {description}"
+    if lines and tui_style.cell_width(lines[-1] + "  " + hint) < width:
+      lines[-1] += "  " + hint
+    else:
+      lines.append(hint)
+  return lines
+
 # Item fields editable from the detail pane, in display order: label -> the
 # set_fields kwarg and how to parse the edited text back.
 def _csv(text: str) -> list[str]:
@@ -443,7 +465,7 @@ class View:
   focus: str = "left"
   scroll: int = 0
   mode: str = "normal"
-  message: str = "? help  / search  f filters  c show all"
+  message: str = ""
   message_severity: str = "normal"
   text: str = ""
   saved_query: str = ""
@@ -624,8 +646,10 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
     canvas.refresh()
     return
 
-  # One heading row and two footer rows are independent of scrolling content.
-  visible = height - 3
+  # Status and feedback retain their own rows above the normal-view shortcuts.
+  shortcuts = shortcut_lines(width) if view.mode == "normal" else []
+  status_y = height - 2 - len(shortcuts)
+  visible = status_y - 1
   if view.mode in ("filter", "help"):
     title = ("Filters: j/k move, Space toggle, Enter apply, Esc cancel"
              if view.mode == "filter" else "Help: j/k scroll, ? or Esc close")
@@ -680,13 +704,15 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
       selected = line.entry is not None and line.entry == view.entry_at
       attr = palette.attr(line.role, selected=selected, focused=view.focus == "right")
       put(n, right_x, ("> " if selected else "  ") + line.text, attr)
-  put(height - 2, 0, view.status(state), palette.attr("dim"))
+  put(status_y, 0, view.status(state), palette.attr("dim"))
   if view.mode in ("search", "jump"):
     label = "Search" if view.mode == "search" else "Jump to ID"
     prompt = f"{label} (Enter accepts, Esc cancels): {view.text}"
-    put(height - 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))
+    put(status_y + 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))
   else:
-    put(height - 1, 0, view.feedback(), palette.attr(view.message_severity))
+    put(status_y + 1, 0, view.feedback(), palette.attr(view.message_severity))
+  for y, line in enumerate(shortcuts, status_y + 2):
+    put(y, 0, line, palette.attr("dim"))
   canvas.refresh()
 
 

@@ -284,6 +284,94 @@ class Screen:
 
 
 class TuiDrawingTests(unittest.TestCase):
+  def test_Draw_NormalView_CommonShortcutsPersistWithFeedback(self) -> None:
+    hints = ['Tab panes', 'e edit', 'a add', 's start', 'd done', '/ search',
+             'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit']
+    state = example()
+    for height, width, rows in [(10, 80, 2), (24, 160, 1)]:
+      for focus in ['left', 'right']:
+        for severity in ['success', 'error']:
+          with self.subTest(size=(height, width), focus=focus, severity=severity):
+            view = tui.View.initial(state)
+            view.focus = focus
+            view.notify('action feedback', severity)
+            screen = Screen(height, width)
+            tui.draw(screen, state, view)
+            strip = [(y, text) for y, text in screen.writes if y >= height - rows]
+            self.assertEqual(len(strip), rows)
+            text = '  '.join(line for _, line in strip)
+            for hint in hints:
+              self.assertIn(hint, text)
+            self.assertIn((height - rows - 1, view.feedback()), screen.writes)
+            self.assertIn((height - rows - 2, view.status(state)), screen.writes)
+
+  def test_Shortcuts_BindingLabelChanges_AreReflectedInHints(self) -> None:
+    bindings = tuple(tui.Binding(('x',), 'x', b.action, b.description)
+                     if b.action == 'edit' else b for b in tui.BINDINGS)
+    with patch.object(tui, 'BINDINGS', bindings):
+      self.assertIn('x edit', ' '.join(tui.shortcut_lines(80)))
+      self.assertEqual(tui.key_action('x'), 'edit')
+    for actions, _ in tui.SHORTCUTS:
+      for action in actions:
+        binding = next(b for b in tui.BINDINGS if b.action == action)
+        self.assertEqual(tui.key_action(binding.keys[0]), action)
+
+  def test_Draw_ModalViews_DoNotAdvertiseNormalShortcuts(self) -> None:
+    state = example()
+    for mode in ['search', 'jump', 'filter', 'help']:
+      with self.subTest(mode=mode):
+        view = tui.View.initial(state)
+        view.mode, view.draft = mode, view.filters.copy()
+        screen = Screen(10, 80)
+        tui.draw(screen, state, view)
+        text = '\n'.join(text for _, text in screen.writes)
+        self.assertNotIn('Tab panes', text)
+        self.assertIn({'search': 'Search (Enter accepts, Esc cancels)',
+                       'jump': 'Jump to ID (Enter accepts, Esc cancels)',
+                       'filter': 'Space toggle, Enter apply, Esc cancel',
+                       'help': 'Help: j/k scroll, ? or Esc close'}[mode], text)
+
+  def test_Draw_ShortcutRows_LeaveSelectedQueueAndDetailVisible(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    for _ in range(len(view.listing)):
+      view.handle(state, 'j')
+    screen = Screen(10, 80)
+    tui.draw(screen, state, view)
+    self.assertTrue(any(text.startswith('> ') for y, text in screen.writes if 1 <= y <= 5))
+    self.assertGreater(view.scroll, 0)
+    view.select((tui.ITEM, 'S02'))
+    view.refresh(state)
+    view.focus = 'right'
+    view.entry_at = len(tui.entries(state, view.target)) - 1
+    tui.draw(screen, state, view)
+    selected = tui.entries(state, view.target)[view.entry_at].name
+    self.assertTrue(any(text.startswith('> ') and selected in text
+                        for y, text in screen.writes if 1 <= y <= 5))
+
+  def test_Draw_NoMatchesAndResize_PreserveHintsAndSession(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.handle(state, '/')
+    type_keys(view, state, 'no match')
+    view.handle(state, '\n')
+    screen = Screen(10, 80)
+    tui.draw(screen, state, view)
+    text = '\n'.join(text for _, text in screen.writes)
+    self.assertIn('No matching items', text)
+    self.assertIn('Tab panes', text)
+    screen.height, screen.width = 9, 79
+    view.handle(state, 'KEY_RESIZE')
+    tui.draw(screen, state, view)
+    text = '\n'.join(text for _, text in screen.writes)
+    self.assertIn('Resize to at least 80x10', text)
+    self.assertNotIn('Tab panes', text)
+    screen.height, screen.width = 10, 80
+    tui.draw(screen, state, view)
+    text = '\n'.join(text for _, text in screen.writes)
+    self.assertIn('No matching items', text)
+    self.assertIn('Tab panes', text)
+
   def test_Draw_SmallAndResizedScreens_AllModesStayInBounds(self) -> None:
     state = example()
     for height, width in [(0, 0), (1, 1), (2, 8), (5, 24), (24, 100)]:

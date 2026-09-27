@@ -142,6 +142,12 @@ whatever is selected there — an item field (size, trees, findings, depends, im
 urgency), a slice section, its scope boundary, or a prose block — `s` starts the selected item and `a` adds a
 new one.
 
+The main TUI screen keeps common shortcuts visible below the status and feedback
+lines: pane switching, editing, adding, starting/completing items, search, filters,
+show all, jump, movement, help, and quit. Hints use one row when they fit or two at
+80 columns, and stay visible after actions. These are fixed defaults; `?` opens
+the complete shortcut list. Prompts and overlays show their own instructions.
+
 The TUI initially hides the project's configured done status. View controls:
 
 | Key | Action |

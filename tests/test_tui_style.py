@@ -154,7 +154,7 @@ class TuiStyleTests(unittest.TestCase):
       view.notify("same wording", severity)
       screen = StyledScreen()
       tui.draw(screen, state, view, palette)
-      self.assertIn((23, 0, prefix + "same wording", palette.attr(severity)), screen.styled)
+      self.assertIn((22, 0, prefix + "same wording", palette.attr(severity)), screen.styled)
 
   def test_Canvas_WideCombiningAndControlText_StaysInBounds(self) -> None:
     screen = StyledScreen(10, 12)
