@@ -1,0 +1,41 @@
+{
+  "id": "S76",
+  "title": "Derive the version from package metadata and add slicer --version",
+  "lead": [
+    "The version lives in three hand-synced places (`pyproject.toml`,\n`src/slicer/__init__.py`, a README line) and there is no `slicer --version`.\nThree sources drift; a release should have one."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (docs + code)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** bumping the number to 1.0.0 (that is the release step),\nand the PyPI name change (that is the publish slice).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A release process needs a single source of version truth and a way for users and\nagents to ask the running tool its version. Hand-synced copies are a release\nhazard."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/__init__.py` — `__version__`\n- `src/slicer/cli.py` — a top-level `--version` action\n- `pyproject.toml` — remains the source of truth\n- `tests/test_packaging.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `slicer --version` prints the installed package version.\n2. A test asserts `slicer.__version__` equals the version resolved from package\n   metadata (so the two cannot drift)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Resolve `__version__` via `importlib.metadata.version(\"squalor-slicer\")` (fall\nback cleanly when running from an uninstalled checkout), and add a top-level\n`--version` flag to the argparse parser. Leave the actual bump to 1.0.0 to the\nrelease slice; this slice makes the plumbing single-sourced."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer --version` works installed and from a checkout; the drift test passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

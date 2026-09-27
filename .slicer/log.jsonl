@@ -359,3 +359,24 @@
 {"when": "2026-09-27T21:55:00Z", "item": "S42", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-09-27T22:02:22Z", "item": "S42", "action": "status", "from": "open", "to": "started", "note": ""}
 {"when": "2026-09-27T22:04:04Z", "item": "S42", "action": "status", "from": "started", "to": "done", "note": "TUI now has T (move-to-top) and M (move-to-position prompt), both routed through ops.move; verified by tests."}
+{"when": "2026-09-27T22:29:47Z", "item": "pass.v1", "action": "prose", "from": "", "to": "v1", "note": "add-pass"}
+{"when": "2026-09-27T22:31:43Z", "item": "S72", "action": "add", "from": "", "to": "open", "note": "Refuse a newer-than-known state schema instead of silently downgrading it"}
+{"when": "2026-09-27T22:31:43Z", "item": "S73", "action": "add", "from": "", "to": "open", "note": "Raise a clean error on a malformed config numeric field"}
+{"when": "2026-09-27T22:31:43Z", "item": "S74", "action": "add", "from": "", "to": "open", "note": "Keep a --render failure inside one JSON envelope"}
+{"when": "2026-09-27T22:31:43Z", "item": "S75", "action": "add", "from": "", "to": "open", "note": "Give internal/state errors a distinct exit code before the CLI freezes"}
+{"when": "2026-09-27T22:31:43Z", "item": "S76", "action": "add", "from": "", "to": "open", "note": "Derive the version from package metadata and add slicer --version"}
+{"when": "2026-09-27T22:31:43Z", "item": "S77", "action": "add", "from": "", "to": "open", "note": "Add a CHANGELOG seeded from the history"}
+{"when": "2026-09-27T22:31:43Z", "item": "S78", "action": "add", "from": "", "to": "open", "note": "Add a CONTRIBUTING pointer"}
+{"when": "2026-09-27T22:31:43Z", "item": "S79", "action": "add", "from": "", "to": "open", "note": "Bring the documentation current with the shipped CLI and TUI"}
+{"when": "2026-09-27T22:31:43Z", "item": "S80", "action": "add", "from": "", "to": "open", "note": "Add a release checklist, tag CI, and the 1.0.0 bump"}
+{"when": "2026-09-27T22:31:43Z", "item": "S81", "action": "add", "from": "", "to": "open", "note": "Add a reusable multi-field text input to the TUI"}
+{"when": "2026-09-27T22:32:33Z", "item": "S06", "action": "set", "from": "parked", "to": "open", "note": "title Publish 0.1.0 to PyPI once CI is green on a tag→Publish to PyPI as squalor-slicer when a tag's CI is green; status parked→open; pass_key -→v1"}
+{"when": "2026-09-27T22:32:33Z", "item": "S50", "action": "set", "from": "", "to": "", "note": "pass_key -→v1"}
+{"when": "2026-09-27T22:33:03Z", "item": "S06", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-27T22:33:03Z", "item": "S50", "action": "note", "from": "", "to": "", "note": "Text-input primitive split out as its own prerequisite slice"}
+{"when": "2026-09-27T22:33:10Z", "item": "S06", "action": "set", "from": "", "to": "", "note": "depends_on -→S72,S73,S74,S75,S76"}
+{"when": "2026-09-27T22:33:10Z", "item": "S80", "action": "set", "from": "", "to": "", "note": "depends_on -→S76,S77,S06"}
+{"when": "2026-09-27T22:33:10Z", "item": "S50", "action": "set", "from": "", "to": "", "note": "depends_on -→S81"}
+{"when": "2026-09-27T22:33:56Z", "item": "S06", "action": "set", "from": "", "to": "", "note": "depends_on S72,S73,S74,S75,S76→S72,S73,S74,S75,S76"}
+{"when": "2026-09-27T22:33:56Z", "item": "S80", "action": "set", "from": "", "to": "", "note": "depends_on S76,S77,S06→S76,S77,S06"}
+{"when": "2026-09-27T22:34:24Z", "item": "S06", "action": "set", "from": "", "to": "", "note": "short_title Publish 0.1.0 to PyPI once CI is green on a tag→Publish to PyPI as squalor-slicer"}

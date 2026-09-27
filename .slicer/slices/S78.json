@@ -1,0 +1,41 @@
+{
+  "id": "S78",
+  "title": "Add a CONTRIBUTING pointer",
+  "lead": [
+    "There is no `CONTRIBUTING.md`. The substance already lives in `AGENTS.md` (house\nstyle, commands, roadmap workflow); a public repo still expects the file to\nexist at the conventional path."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (docs)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a code of conduct or issue/PR templates.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Contributors and GitHub's UI look for `CONTRIBUTING.md`; its absence on a public\n1.0 reads as an oversight."
+    },
+    {
+      "heading": "Files",
+      "body": "- `CONTRIBUTING.md` (new)"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "None (documentation)."
+    },
+    {
+      "heading": "Implement",
+      "body": "A short `CONTRIBUTING.md` that points to `AGENTS.md` for house style, the test\nand check commands, and the roadmap-driven workflow, rather than duplicating\nthem. Note the stdlib-only / no-dependency rule up front."
+    },
+    {
+      "heading": "Check",
+      "body": "The file exists at the conventional path and routes a newcomer to the real\nguidance."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

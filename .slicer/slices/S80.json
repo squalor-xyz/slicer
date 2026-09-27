@@ -1,0 +1,41 @@
+{
+  "id": "S80",
+  "title": "Add a release checklist, tag CI, and the 1.0.0 bump",
+  "lead": [
+    "Tagging 1.0.0 needs a repeatable, documented procedure and the actual version\nbump. This slice is the final gate that turns a green tree into a release."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (release)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the PyPI account/name setup and trusted-publishing config\n(owned by the publish slice); this consumes it.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A one-off manual release is error-prone and unrepeatable. The bump, the tag, and\nthe automated publish should be a written checklist backed by CI."
+    },
+    {
+      "heading": "Files",
+      "body": "- `RELEASING.md` (new)\n- `pyproject.toml` — bump to `1.0.0`\n- `.github/workflows/` — a tag-triggered build/publish workflow\n- `CHANGELOG.md` — close the `[1.0.0]` section"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "The packaging test still builds; `check`/`verify` green."
+    },
+    {
+      "heading": "Implement",
+      "body": "Write `RELEASING.md`: run `check`, `verify`, the full suite; update the\nCHANGELOG; bump the version; tag `v1.0.0`; let CI build and publish. Add the\ntag-triggered workflow (see the publish slice for the PyPI mechanics). Perform\nthe bump to 1.0.0 here once the depended-on gates are done."
+    },
+    {
+      "heading": "Check",
+      "body": "Following `RELEASING.md` end to end produces a tagged, buildable 1.0.0; CI is\nwired to the tag."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit (the tag itself is created by the release procedure, not this slice)."
+    }
+  ],
+  "notes": []
+}

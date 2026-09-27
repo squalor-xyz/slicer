@@ -1,0 +1,41 @@
+{
+  "id": "S77",
+  "title": "Add a CHANGELOG seeded from the history",
+  "lead": [
+    "There is no CHANGELOG. A both-audience 1.0 needs one; the git history is rich\nenough to seed it."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (docs)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** automating changelog generation.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Users and contributors need a human record of what changed per release; \"read\nthe git log\" is not an acceptable substitute for a published tool."
+    },
+    {
+      "heading": "Files",
+      "body": "- `CHANGELOG.md` (new)\n- `README.md` — link to it"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "None (documentation). `slicer check` must still pass."
+    },
+    {
+      "heading": "Implement",
+      "body": "Create `CHANGELOG.md` in Keep-a-Changelog style with an `[Unreleased]` section\nand a `[1.0.0]` section seeded from the user-facing slices in the history\n(reordering, notes, status/stats, HTML render, agent onboarding, install path,\nJSON envelopes, …). Establish the convention that each release slice updates it."
+    },
+    {
+      "heading": "Check",
+      "body": "`CHANGELOG.md` reads cleanly and covers the notable user-facing changes; linked\nfrom the README."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

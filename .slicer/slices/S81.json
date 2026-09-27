@@ -1,0 +1,41 @@
+{
+  "id": "S81",
+  "title": "Add a reusable multi-field text input to the TUI",
+  "lead": [
+    "The TUI only has single-line, single-purpose prompts (search, jump, move). The\ninteractive roadmap wizard needs to collect several free-text fields in\nsequence. That input widget should exist once, as a reusable primitive, before\nthe wizard is built on it."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the wizard flow itself (S50 consumes this), and any\nmouse/drag interaction.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Building the wizard directly would either duplicate prompt handling or grow it\nad hoc. A tested, reusable multi-field text input keeps the wizard thin and keeps\nevery decision in a pure, terminal-free function as the TUI's design requires."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` — a new prompt/mode primitive alongside `_prompt`/`_move`\n- `tests/test_tui.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Typing, backspace, cursor/field advance, submit, and cancel are all decided\n   by pure functions driven through `View.handle`, no terminal.\n2. Multi-field entry collects each field and yields the full result on submit;\n   cancel discards it."
+    },
+    {
+      "heading": "Implement",
+      "body": "Generalize the existing prompt pattern into a reusable text-input mode that\nsupports full-line editing (not just append) and stepping through an ordered set\nof labeled fields, returning the collected values to the caller. Keep all logic\nin `act`/`View` methods testable without curses, mirroring `_prompt`/`_move`, and\nrender its state through the one `draw` surface."
+    },
+    {
+      "heading": "Check",
+      "body": "The primitive drives a multi-field entry end to end in tests without a terminal;\nexisting prompt modes are unaffected."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
