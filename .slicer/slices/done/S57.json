@@ -1,0 +1,41 @@
+{
+  "id": "S57",
+  "title": "Provide slicer ai instructions for agent onboarding",
+  "lead": [
+    "Give an AI agent a discoverable starting point through the installed tool: `slicer ai instructions`."
+  ],
+  "depends_note": null,
+  "findings_note": "user request: discoverable agent onboarding from the installed tool",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** project-specific status aggregation (S36), storing project goals and non-goals (S56), or automatically executing the instructions. S36 and S56 are related work, not prerequisites.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The existing agent guide explains how to use slicer, but an agent must already know where to find that documentation. A built-in command makes the essential instructions available wherever slicer is installed, including before a project has been initialized. S52 added onboarding documentation but explicitly excluded CLI changes."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/ai.py; src/slicer/cli.py; tests/test_ai.py; README.md; docs/getting-started.md; docs/agents.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Text and JSON return identical instruction content outside an initialized project.\n- The command never calls project discovery, loading, or locking, including with --root at every supported command level.\n- Valid and malformed tracking files remain unchanged.\n- Help exposes the command; nested parser errors retain usage envelopes with command ai.\n- Instruction command examples parse successfully with the current CLI."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add read-only slicer ai instructions with concise Markdown text by default and --json returning {\"instructions\": \"<same content>\"}. Follow existing nested-command help and error conventions. Accept --root without using it; never discover, load, lock, or modify project state.\n\nEmbed the canonical instructions as a multiline string in src/slicer/ai.py so they ship with the existing Python code. No Markdown package resource, packaging changes, wheel build, or additional tooling. The agent guide references the command instead of duplicating the quick start.\n\nCover slicer's purpose, reading project instructions first, agreed planning/import, essential commands, the slice implementation workflow, JSON responses/errors, rendering/checks, and authorization for committing/publishing. Keep examples generic and distinguish project tests from tracking checks.\n\nUpdate README's introduction and command table, the getting-started guide, and the agent guide's entry point and JSON response table."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused AI instruction tests and the existing unit suite with workspace-local TMPDIR. Smoke-test the existing installed entry point in text and JSON modes. Review instruction accuracy, generic examples, documentation references, and absence of project I/O. Run slicer check and git diff --check. No separate packaging build is required."
+    },
+    {
+      "heading": "Git",
+      "body": "Follow owner instructions; this roadmap filing does not authorize committing or publishing the implementation."
+    }
+  ],
+  "notes": []
+}

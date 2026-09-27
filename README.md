@@ -8,6 +8,9 @@ For a new project, start with goals and acceptance criteria instead of review fi
 The AI supplies the review and planning; slicer stores, validates, prioritizes, and
 renders the work. It runs locally without an AI service or API key.
 
+Run `slicer ai instructions` for a concise agent quick start, or add `--json` for
+machine-readable output. It works before initialization and reads no project state.
+
 Start with the [worked workflows](docs/getting-started.md#worked-workflows), use the
 [agent prompts](docs/agents.md#reusable-prompts), or follow the
 [contributor workflow](AGENTS.md#working-on-the-roadmap) to work on slicer itself.
@@ -70,6 +73,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 
 | | |
 |---|---|
+| `ai instructions` | agent quick start, available without a project; supports `--json` |
 | `init` | create `.slicer/` with config and templates |
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |

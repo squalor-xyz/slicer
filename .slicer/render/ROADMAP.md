@@ -2,7 +2,7 @@
 
 # Roadmap
 
-56 items · — 16 · done 39 · parked 1
+58 items · — 17 · done 40 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -62,3 +62,5 @@
 | 54 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
 | 55 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | slicer | user request: clearer TUI with color | — |
 | 56 | [S56](slices/S56.md) | Track project goals and non-goals for AI-assisted planning |  | slicer | user request: explicit product direction for AI-assisted planning | — |
+| 57 | [S57](slices/S57.md) | Provide slicer ai instructions for agent onboarding |  | slicer | user request: discoverable agent onboarding from the installed tool | done |
+| 58 | [S58](slices/S58.md) | Provide a simple install path without cloning the repository |  | slicer | user request: easier installation for casual users while retaining clone-based installs | — |

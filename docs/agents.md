@@ -1,5 +1,12 @@
 # Driving slicer from an agent
 
+Start with `slicer ai instructions` for the canonical concise onboarding guide.
+It is available wherever slicer is installed and works without an initialized project;
+it does not read project files or change state. `slicer ai instructions --json`
+returns `{"instructions": "..."}` with the same Markdown as the text output.
+`--root` is accepted but unused. This page provides the detailed reference and
+reusable prompts; the command is the single source for the quick start.
+
 slicer is built to be called by a coding agent rather than hand-edited. The agent runs
 commands; slicer owns the files. Nothing an agent needs requires reading or writing
 `.slicer/*.json` directly — and doing so is how state gets corrupted, because the index,
@@ -116,6 +123,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 
 | Command | Payload |
 |---|---|
+| `ai instructions` | `{instructions}` containing the generic Markdown quick start |
 | `list` | array of items |
 | `show ID` | item, plus `slice` when it has one; with `--section NAME`, `{id, section, body}` |
 | `next` | item plus `path`; or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |

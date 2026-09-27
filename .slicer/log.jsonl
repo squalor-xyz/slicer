@@ -249,3 +249,13 @@
 {"when": "2026-09-27T14:15:19Z", "item": "S54", "action": "edit", "from": "", "to": "", "note": "Files"}
 {"when": "2026-09-27T14:15:19Z", "item": "S54", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-09-27T14:15:19Z", "item": "S54", "action": "status", "from": "started", "to": "done", "note": "Reproduced all three workspace-local TMPDIR failures, then fixed them with explicitly scoped test isolation. Review confirmed unchanged production code and original assertions. Ten focused checks passed; full workspace-local suite passed 503 tests with only the optional legacy-tree skip. Strengthened exception-propagation coverage during review and reran all four isolation tests successfully. slicer check and git diff --check passed."}
+{"when": "2026-09-27T14:21:00Z", "item": "S57", "action": "add", "from": "", "to": "open", "note": "Provide slicer ai instructions for agent onboarding"}
+{"when": "2026-09-27T14:21:14Z", "item": "S57", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-27T14:27:57Z", "item": "S57", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-27T14:29:39Z", "item": "S57", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-09-27T14:29:39Z", "item": "S57", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-27T14:29:39Z", "item": "S57", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-09-27T14:29:39Z", "item": "S57", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-09-27T14:29:55Z", "item": "S57", "action": "status", "from": "started", "to": "done", "note": "Implemented read-only slicer ai instructions with concise guidance embedded in Python and matching text/JSON output. Updated README and agent/getting-started docs. Reviewed command accuracy, shared instruction source, and project-I/O isolation. Six focused tests and the 509-test workspace-local suite passed (one optional legacy-tree skip); existing installed entry-point smoke, slicer check, and git diff --check passed. No packaging changes or additional tooling."}
+{"when": "2026-09-27T14:30:07Z", "item": "S58", "action": "add", "from": "", "to": "open", "note": "Provide a simple install path without cloning the repository"}
+{"when": "2026-09-27T14:30:17Z", "item": "S58", "action": "promote", "from": "", "to": "", "note": ""}

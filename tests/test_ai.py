@@ -1,0 +1,105 @@
+"""Keep agent onboarding usable before any project state can be trusted."""
+
+from __future__ import annotations
+
+import io
+import json
+import re
+import shlex
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from unittest.mock import patch
+
+import support
+from slicer import ai, cli
+
+
+class AiInstructionsTests(unittest.TestCase):
+  def test_Instructions_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, err = repo.run("ai", "instructions")
+      self.assertEqual((code, err), (0, ""))
+      code, out, err = repo.run("ai", "instructions", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out), {"instructions": text})
+      self.assertEqual(text, ai.INSTRUCTIONS)
+      self.assertTrue(text.startswith("# Getting started with slicer\n"))
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_Instructions_RootAtEveryLevel_NeverDiscoversLoadsOrLocks(self) -> None:
+    with support.TempRepo() as repo:
+      root = str(repo.root / "does-not-exist")
+      cases = (
+        ("--root", root, "ai", "instructions"),
+        ("ai", "--root", root, "instructions"),
+        ("ai", "instructions", "--root", root),
+        ("ai", "instructions"),
+      )
+      with patch("slicer.cli.store.discover", side_effect=AssertionError("discovery")), \
+           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
+           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+        for argv in cases:
+          with self.subTest(argv=argv), redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(cli.main([*argv, "--json"]), 0)
+            self.assertEqual(json.loads(out.getvalue())["instructions"], ai.INSTRUCTIONS)
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_Instructions_ValidAndCorruptState_LeaveAllFilesUnchanged(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      for corrupt in (False, True):
+        if corrupt:
+          repo.write(".slicer/config.json", "not JSON")
+          repo.write(".slicer/index.json", "also not JSON")
+        before = {p.relative_to(repo.root): p.read_bytes()
+                  for p in repo.root.rglob("*") if p.is_file()}
+        for flags in ((), ("--json",)):
+          with self.subTest(corrupt=corrupt, flags=flags):
+            code, _, err = repo.run("ai", "instructions", *flags)
+            self.assertEqual((code, err), (0, ""))
+        after = {p.relative_to(repo.root): p.read_bytes()
+                 for p in repo.root.rglob("*") if p.is_file()}
+        self.assertEqual(after, before)
+
+  def test_Instructions_HelpAtEveryLevel_IsDiscoverableAndHumanReadable(self) -> None:
+    for argv, expected in (
+      (("--help",), "onboarding instructions for coding agents"),
+      (("ai", "--help"), "instructions"),
+      (("ai", "instructions", "--json", "--help"), "--root is accepted but unused"),
+    ):
+      with self.subTest(argv=argv), redirect_stdout(io.StringIO()) as out, \
+           redirect_stderr(io.StringIO()) as err:
+        with self.assertRaises(SystemExit) as caught:
+          cli.main(list(argv))
+        self.assertEqual(caught.exception.code, 0)
+        self.assertIn(expected, " ".join(out.getvalue().split()))
+        self.assertTrue(out.getvalue().startswith("usage: slicer"))
+        self.assertEqual(err.getvalue(), "")
+
+  def test_Instructions_InvalidSyntax_ReturnsAiUsageEnvelope(self) -> None:
+    with support.TempRepo() as repo:
+      for argv in (
+        ("ai", "--json"),
+        ("ai", "unknown", "--json"),
+        ("ai", "instructions", "--unknown", "--json"),
+        ("ai", "instructions", "--render", "--json"),
+        ("ai", "--json", "instructions"),
+      ):
+        with self.subTest(argv=argv):
+          code, out, err = repo.run(*argv)
+          self.assertEqual(code, 2)
+          error = json.loads(out)["error"]
+          self.assertEqual(error["code"], "usage")
+          self.assertEqual(error["command"], "ai")
+          self.assertIn("usage: slicer", err)
+      code, out, err = repo.run("ai")
+      self.assertEqual((code, out), (2, ""))
+      self.assertIn("usage: slicer", err)
+
+  def test_Instructions_CommandExamples_AreAcceptedByTheParser(self) -> None:
+    commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS)
+    self.assertTrue(commands)
+    parser = cli.build_parser()
+    for command in commands:
+      with self.subTest(command=command):
+        parser.parse_args(shlex.split(command)[1:])

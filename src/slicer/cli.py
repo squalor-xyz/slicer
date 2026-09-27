@@ -17,6 +17,7 @@ from pathlib import Path
 
 from slicer import check as check_mod
 from slicer import (
+  ai,
   graph,
   jsonio,
   migrator,
@@ -73,6 +74,11 @@ def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 def _state(args: argparse.Namespace) -> store.State:
   return store.load(Path(args.root) if args.root else None)
+
+
+def cmd_ai_instructions(args: argparse.Namespace) -> int:
+  _emit(args, {"instructions": ai.INSTRUCTIONS}, ai.INSTRUCTIONS.rstrip("\n"))
+  return OK
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -697,6 +703,19 @@ def build_parser() -> argparse.ArgumentParser:
     if json_flag:
       sp.add_argument("--json", action="store_true", help="machine-readable output")
     return sp
+
+  sp = sub.add_parser("ai", help="onboarding instructions for coding agents", parents=[common])
+  aisub = sp.add_subparsers(dest="ai_command", required=True)
+  inner = aisub.add_parser(
+    "instructions", help="print the agent quick start (no project needed)",
+    description=(
+      "Print generic agent instructions without reading or changing project state. "
+      "--root is accepted but unused."
+    ),
+    parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_instructions)
+  inner.add_argument("--json", action="store_true", help="machine-readable output")
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
