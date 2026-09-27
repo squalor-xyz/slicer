@@ -1,0 +1,39 @@
+{
+  "id": "S71",
+  "title": "set --depends-on '' stores an empty-string dependency instead of clearing",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding S02 (greenfield): 'slicer set ID --depends-on \"\"' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`--depends-on` is `action=\"append\"`, so `slicer set ID --depends-on \"\"` produced\n`depends_on=[\"\"]` — a phantom \"depends on unknown id \" that fails `check`/`verify`. Found in the\nS02 greenfield trial. The same path affects `add` and any list field."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/ops.py: a `_clean` helper drops empty/whitespace entries from list fields (trees,\n  flags, depends_on) in `add` and `set_fields_many`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Normalize repeatable list fields by dropping empty entries wherever they are accepted, so an\nempty `--depends-on` (or `--tree`) clears to `[]` rather than storing `['']`."
+    },
+    {
+      "heading": "Check",
+      "body": "`set ID --depends-on \"\"` clears to `[]`; a mix keeps real ids and drops the empty; `add\n--depends-on \"\"` stores none; `verify` stays clean. Focused ops tests + the unit suite."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

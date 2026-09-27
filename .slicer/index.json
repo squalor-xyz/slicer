@@ -1620,8 +1620,8 @@
       "id": "S71",
       "title": "set --depends-on '' stores an empty-string dependency instead of clearing",
       "short_title": "set --depends-on '' stores an empty-string dependency instead of clearing",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "notes": [],
       "fields": {

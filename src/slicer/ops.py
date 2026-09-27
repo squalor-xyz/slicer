@@ -45,6 +45,14 @@ ONE_LINE_FIELDS = (
 )
 
 
+def _clean(value: object) -> object:
+  """Drop empty/whitespace entries from a list field, so `--depends-on ""`
+  (and the like) clears to `[]` rather than storing a phantom `['']`."""
+  if isinstance(value, list):
+    return [v for v in value if str(v).strip()]
+  return value
+
+
 def _reject_bad_text(**fields: object) -> None:
   """Refuse text that cannot survive a roadmap row. Call before mutating.
 
@@ -90,10 +98,10 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
     status=str(fields.get("status") or cfg.open_status),
     has_slice=False,
     size=str(fields.get("size") or ""),
-    trees=list(fields.get("trees") or []),
+    trees=_clean(list(fields.get("trees") or [])),
     findings=str(fields.get("findings") or ""),
     pass_key=str(fields.get("pass_key") or (state.index.items[-1].pass_key if state.index.items else "")),
-    depends_on=list(fields.get("depends_on") or []),
+    depends_on=_clean(list(fields.get("depends_on") or [])),
     importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
     urgency=_valid_score("urgency", fields["urgency"]) if fields.get("urgency") is not None else 2,
   )
@@ -319,7 +327,7 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
       raise StateError(f"unknown status {value!r}; known: {sorted(state.config.statuses)}")
     if key in ("importance", "urgency"):
       value = _valid_score(key, value)
-    values[key] = value
+    values[key] = _clean(value)
 
   transitions = []
   for item in items:

@@ -275,6 +275,25 @@ class OpsTests(unittest.TestCase):
       repo.run("set", "S02", "--size", "L")
       self.assertEqual(repo.state().slices["S02"].size, "L")
 
+  def test_Set_EmptyDependsOn_ClearsInsteadOfStoringAPhantom(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--depends-on", "S01")
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+      repo.run("set", "S02", "--depends-on", "")
+      self.assertEqual(repo.state().index.require("S02").depends_on, [])
+      # a mix keeps the real ids and drops the empty entry
+      repo.run("set", "S02", "--depends-on", "S01", "--depends-on", "")
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+      # after clearing, no phantom "depends on unknown id ''" trips integrity
+      repo.run("set", "S02", "--depends-on", "")
+      self.assertEqual(repo.run("verify")[0], 0)
+
+  def test_Add_EmptyDependsOn_StoresNoDependency(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "fresh", "--depends-on", "")
+      new = repo.state().index.items[-1]
+      self.assertEqual(new.depends_on, [])
+
   def test_Set_Trees_UpdateTheSliceNoteAndPlural(self) -> None:
     with self.repo() as repo:
       repo.run("set", "S02", "--tree", "alpha", "--tree", "beta")
