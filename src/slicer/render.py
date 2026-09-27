@@ -64,7 +64,7 @@ def banner(source: str) -> str:
   )
 
 
-def slice_header(sl: Slice, cfg: Config) -> str:
+def slice_header(sl: Slice, cfg: Config, item_notes: "list[str]" = ()) -> str:
   """The lead blocks, the bold metadata line, and any `Depends on` line."""
   flags = "".join(f" `[{f}]`" for f in sl.flags)
   treekey = "Trees" if sl.trees_plural else "Tree"
@@ -75,12 +75,13 @@ def slice_header(sl: Slice, cfg: Config) -> str:
   blocks = list(sl.lead) + [meta]
   if sl.depends_note:
     blocks[-1] = blocks[-1] + "\n" + sl.depends_note
-  blocks.extend(sl.notes)
+  blocks.extend(sl.notes)       # legacy/migrate notes carried on the slice
+  blocks.extend(item_notes)     # notes added with `slicer note` (on the item)
   blocks.append(sl.boundary)
   return "\n\n".join(b for b in blocks if b)
 
 
-def render_slice(sl: Slice, cfg: Config, template: str) -> bytes:
+def render_slice(sl: Slice, cfg: Config, template: str, item_notes: "list[str]" = ()) -> bytes:
   sections = "\n\n".join(
     f"## {s.heading}\n\n{s.body}" if s.body else f"## {s.heading}" for s in sl.sections
   )
@@ -91,7 +92,7 @@ def render_slice(sl: Slice, cfg: Config, template: str) -> bytes:
       "title": sl.title,
       "emdash": EMDASH,
       "middot": MIDDOT,
-      "header": slice_header(sl, cfg),
+      "header": slice_header(sl, cfg, item_notes),
       "sections": sections,
     },
   )
@@ -352,7 +353,7 @@ def plan(state) -> dict[str, bytes]:
     # render.write joins this onto the render root and mkdirs, so a bad id
     # escapes here as surely as it does in the slices directory.
     ids.require_valid(item.id)
-    out[f"{SLICES_SUBDIR}/{item.id}.md"] = render_slice(sl, cfg, slice_template)
+    out[f"{SLICES_SUBDIR}/{item.id}.md"] = render_slice(sl, cfg, slice_template, item.notes)
   return out
 
 

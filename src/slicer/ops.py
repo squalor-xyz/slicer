@@ -462,18 +462,17 @@ def edit_section(state: State, item_id: str, heading: str, body: str, *, append:
   return sl
 
 
-def add_note(state: State, item_id: str, text: str) -> Slice:
-  """Append a dated note paragraph to a slice, visible in show and render."""
-  sl = state.slices.get(item_id)
-  if sl is None:
-    raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first", code="no_slice")
+def add_note(state: State, item_id: str, text: str) -> Item:
+  """Append a dated note to the item itself — no slice required — visible in
+  `show` and (once promoted) the rendered slice."""
+  item = state.index.require(item_id)
   text = text.strip()
   if not text:
     raise StateError("a note cannot be blank", code="usage")
-  sl.notes.append(f"**{_now()[:10]}** — {text}")
-  state.save_slice(sl)
+  item.notes.append(f"**{_now()[:10]}** — {text}")
+  state.save_index()
   _record(state, item_id, "note", note=text.splitlines()[0][:60])
-  return sl
+  return item
 
 
 def edit_boundary(state: State, item_id: str, body: str) -> Slice:

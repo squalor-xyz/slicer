@@ -298,8 +298,9 @@ sources retain their existing trailing-newline stripping. Quote text for the she
 or pass it as one argument when invoking without a shell.
 
 To leave a durable observation on an item — what you tried, why something was deferred —
-`slicer note ID --text "..."` appends a dated paragraph to its slice, visible in `slicer show`
-and the rendered slice. This differs from `done --note`, which records only to the log.
+`slicer note ID --text "..."` appends a dated note to the item (no slice needed; works on a bare
+row), visible in `slicer show` and, once promoted, the rendered slice. This differs from
+`done --note`, which records only to the log.
 
 To add to a section:
 

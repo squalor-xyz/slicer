@@ -471,9 +471,11 @@ def cmd_show(args: argparse.Namespace) -> int:
     _emit(args, {"id": args.id, "section": section.heading, "body": section.body}, section.body)
     return OK
   if sl is None:
-    _emit(args, item.to_dict(), f"{item.id}  {item.display_title()}\n(no slice yet; run `slicer promote {item.id}`)")
+    lines = [f"{item.id}  {item.display_title()}", *item.notes,
+             f"(no slice yet; run `slicer promote {item.id}`)"]
+    _emit(args, item.to_dict(), "\n".join(lines))
     return OK
-  text = render.render_slice(sl, state.config, state.template("slice.md")).decode("utf-8")
+  text = render.render_slice(sl, state.config, state.template("slice.md"), item.notes).decode("utf-8")
   _emit(args, item.to_dict() | {"slice": sl.to_dict()}, text)
   return OK
 

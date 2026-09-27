@@ -132,6 +132,8 @@ class Item:
   group: str = ""
   reason: str = ""
   depends_on: list[str] = field(default_factory=list)
+  # Dated free-text notes on the item itself, so a note needs no slice.
+  notes: list[str] = field(default_factory=list)
   # Eisenhower axes, 1-3, defaulting to a neutral 2 so unscored items interleave
   # rather than sinking or floating. Base score is importance-first (below).
   importance: int = 2
@@ -173,6 +175,7 @@ class Item:
       "status": self.status,
       "has_slice": self.has_slice,
       "depends_on": list(self.depends_on),
+      "notes": list(self.notes),
       "fields": {
         "size": self.size,
         "flags": list(self.flags),
@@ -197,6 +200,7 @@ class Item:
       status=d["status"],
       has_slice=bool(d.get("has_slice", False)),
       depends_on=list(d.get("depends_on", [])),
+      notes=list(d.get("notes", [])),
       size=f.get("size", ""),
       flags=list(f.get("flags", [])),
       trees=list(f.get("trees", [])),
