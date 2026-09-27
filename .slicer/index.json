@@ -32,7 +32,7 @@
       "id": "S37",
       "title": "The CLI rebuilds its whole argparse tree on every invocation",
       "short_title": "The CLI rebuilds its whole argparse tree on every invocation",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

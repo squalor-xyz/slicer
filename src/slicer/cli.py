@@ -1042,8 +1042,22 @@ def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
   return USAGE
 
 
+_parser: argparse.ArgumentParser | None = None
+
+
+def _cached_parser() -> argparse.ArgumentParser:
+  """Build the parser once and reuse it. `parse_args` writes only its namespace,
+  never the parser, so one instance serves every `main` call — worth doing
+  because building ~28 subparsers (with a gettext lookup per help string) costs
+  ~17ms, paid on every in-process call otherwise."""
+  global _parser
+  if _parser is None:
+    _parser = build_parser()
+  return _parser
+
+
 def main(argv: list[str] | None = None) -> int:
-  parser = build_parser()
+  parser = _cached_parser()
   argv = list(sys.argv[1:] if argv is None else argv)
   args = argparse.Namespace()
   try:
