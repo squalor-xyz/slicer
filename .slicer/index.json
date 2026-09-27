@@ -1504,8 +1504,8 @@
       "id": "S69",
       "title": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)",
       "short_title": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",

@@ -512,6 +512,14 @@ def cmd_move(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_sort(args: argparse.Namespace) -> int:
+  state = _state(args)
+  moved = ops.sort_queue(state, by=args.by)
+  text = f"sorted by {args.by}: {moved} item(s) moved" if moved else f"already sorted by {args.by}"
+  _emit(args, {"by": args.by, "moved": moved}, text)
+  return OK
+
+
 def cmd_set(args: argparse.Namespace) -> int:
   item_ids, batch = _batch_ids(args)
   state = _state(args)
@@ -1003,6 +1011,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--before")
   sp.add_argument("--after")
   sp.add_argument("--to", type=int)
+
+  sp = _render_flag(add("sort", _mutating(cmd_sort), "reorder the whole queue by priority score"))
+  sp.add_argument("--by", choices=["score"], default="score", help="sort key")
 
   sp = _render_flag(add("set", _mutating(cmd_set), "change an item's fields"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")

@@ -234,6 +234,10 @@ means an agent can decide from the dry run alone.
 
 ## Rules for an agent working in a slicer project
 
+**Re-prioritize in one step.** After changing scores with `set`, `slicer sort` reorders the
+whole queue by priority score at once (persisting the `list --sort score` order) instead of a
+`move` per item.
+
 **Plan a batch with the dependency graph.** `slicer deps --json` lists every unblocked open
 item (what you can start now); `slicer deps ID --json` gives what an item waits on, which of
 those still block it, and what depends on it; `slicer deps --format mermaid` prints a

@@ -1,0 +1,39 @@
+{
+  "id": "S69",
+  "title": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding re-sort: reordering the queue needs one 'move --to' per item; list --sort score is view-only. Consider 'slicer sort --by score' to persist, or move accepting a full order / multiple ids.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Reordering the queue is one `slicer move` per item, and `list --sort score` is view-only, so\nre-sorting the whole roadmap by priority means N manual moves. Filed dogfooding a re-prioritize\nthat took 17 moves."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/ops.py: `sort_queue` reorders the queue by effective score.\n- src/slicer/cli.py: `slicer sort [--by score]`.\n- tests; README, getting-started, agents docs."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `slicer sort [--by score]` that reorders the whole queue by effective score (descending,\nstable) in one command, persisting exactly the `list --sort score` view. It overwrites the\nmanual `move` order with priority order, records one `sort` log entry, and is idempotent (a\nno-op sort writes nothing)."
+    },
+    {
+      "heading": "Check",
+      "body": "After scrambling with `move`, `slicer sort` makes `list` order equal `list --sort score`; a\nsecond `sort` reports nothing moved. Focused sort tests, the unit suite, slicer check, and git\ndiff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

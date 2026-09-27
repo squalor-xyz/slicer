@@ -237,6 +237,23 @@ def move(
   return target + 1
 
 
+def sort_queue(state: State, by: str = "score") -> int:
+  """Reorder the whole queue by effective score, matching `list --sort score`.
+
+  Stable, so equal scores keep their current order; overwrites the manual move
+  order with priority order. Returns how many items changed position.
+  """
+  index = state.index
+  eff = graph.effective_scores(index)
+  before = [it.id for it in index.items]
+  index.items.sort(key=lambda it: eff[it.id], reverse=True)
+  moved = sum(a != it.id for a, it in zip(before, index.items))
+  if moved:
+    state.save_index()
+    _record(state, "*", "sort", note=f"by {by} ({moved} moved)")
+  return moved
+
+
 def _relocate_slice(state: State, item_id: str) -> None:
   """Move a slice file to wherever its item's status now says it belongs.
 

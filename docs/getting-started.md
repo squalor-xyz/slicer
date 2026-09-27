@@ -268,7 +268,9 @@ progress census, and the blocked edges into one view (and one `--json` payload),
 run `next`, `stats`, and read `next`'s blocked set separately.
 
 `list --sort score` changes the view; `move` changes stored queue order and therefore
-the rendered roadmap. S01 is still next: S02 depends on it, and S01 inherits S02's
+the rendered roadmap. To make the stored order match that view in one step — instead of a
+`move` per item — run `slicer sort`, which reorders the whole queue by priority score. S01 is
+still next: S02 depends on it, and S01 inherits S02's
 higher priority. Stored order breaks equal-score ties. For items added individually,
 use `slicer set S02 --depends-on S01` to set the dependency; repeated `--depends-on`
 flags replace the complete dependency list.
