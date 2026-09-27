@@ -1350,8 +1350,8 @@
       "id": "S62",
       "title": "Parallel branches conflict on .slicer/log.jsonl and generated render/ files",
       "short_title": "Parallel branches conflict on .slicer/log.jsonl and generated render/ files",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",

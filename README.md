@@ -219,10 +219,18 @@ slices/retired/<ID>.json obsolete slices, with the reason on the item
 templates/*.md       render templates, yours to edit
 render/              GENERATED markdown - ROADMAP.md and one file per slice
 log.jsonl            append-only history of status changes
+.gitattributes       union-merges log.jsonl so parallel branches do not conflict on it
 ```
 
 Sections are an ordered **list**, not a map: real slices carry headings no schema names,
 sometimes more than once, and their order is part of the document.
+
+Landing work on parallel branches touches these files: `log.jsonl` is append-only and
+union-merges automatically (via the generated `.gitattributes`), so both sides' entries
+survive without a conflict. `index.json` is the source of truth — a genuine overlap there is
+yours to resolve. Anything under `render/` is a projection of `index.json`, so after resolving
+a merge just re-run `slicer render` (and `slicer check` will flag it if you forget) rather than
+merging the generated markdown by hand.
 
 The scope boundary is a separate field on each slice. It renders after metadata and
 before sections, so section edits cannot remove it. Use `slicer edit ID --boundary`

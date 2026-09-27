@@ -30,6 +30,7 @@ except ImportError:  # pragma: no cover - exercised only off POSIX
 DIR_NAME = ".slicer"
 INDEX_NAME = "index.json"
 LOG_NAME = "log.jsonl"
+GITATTRIBUTES_NAME = ".gitattributes"
 LOCK_NAME = "lock"
 SLICES_DIR = "slices"
 RENDER_DIR = "render"

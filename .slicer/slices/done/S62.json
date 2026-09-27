@@ -1,0 +1,39 @@
+{
+  "id": "S62",
+  "title": "Parallel branches conflict on .slicer/log.jsonl and generated render/ files",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Landing work on parallel branches conflicts on `.slicer/` files that should not need a\nhuman merge. `log.jsonl` is append-only, so both sides just added different lines; `render/`\nis a deterministic projection of `index.json`, so its \"merge\" is only a re-render. Only\n`index.json` is the real source of truth whose overlaps are a genuine human job."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/cli.py: `cmd_init` writes `.slicer/.gitattributes`; `cmd_log` sorts by timestamp.\n- src/slicer/store.py: `GITATTRIBUTES_NAME` constant.\n- .slicer/.gitattributes: `log.jsonl merge=union`.\n- README.md, docs/getting-started.md, docs/agents.md: the merge/rebase workflow.\n- tests/test_merge.py: gitattributes, log ordering, and a real union merge."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "`slicer init` writes a `.slicer/.gitattributes` marking `log.jsonl merge=union`, so git's\nbuilt-in union driver combines both sides' appended history without a conflict (portable, no\nper-clone config). `slicer log` sorts entries by timestamp (newest first, later-appended\nbreaking ties) so union-interleaved lines still read in order. Document that `render/` is\nregenerated after a merge (resolve `index.json`, `slicer render`), leaning on the existing\n`slicer check` staleness gate.\n\nA custom git merge driver that auto-regenerates `render/` was considered and deferred: it\nneeds per-clone `git config` and crosses slicer's \"never writes git\" boundary to automate a\none-command fix in an occasional case. Revisit if `render/` conflicts prove frequent."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the focused merge tests, the unit suite, `slicer check`, and `git diff --check`. Manually\nconfirm in a throwaway git repo that two branches each running a `slicer` mutation merge with\nno conflict in `log.jsonl`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

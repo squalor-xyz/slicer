@@ -1,0 +1,5 @@
+# slicer manages this file. History is append-only, so union-merge combines the
+# lines both sides added instead of conflicting when branches land in parallel.
+# Generated render/ is a projection of index.json: after a merge, resolve
+# index.json and re-run `slicer render` rather than merging render/ by hand.
+log.jsonl merge=union

@@ -255,6 +255,11 @@ backlog. Judge new work against it, and if it is empty or unclear, ask the owner
 command takes `--render` to do it in the same step (`slicer done S01 --render`). Otherwise
 run `slicer render` then `slicer check`; a non-zero check means the work is not finished.
 
+**After a rebase or merge, resolve `index.json`, then re-render.** `.slicer/log.jsonl`
+union-merges on its own; `index.json` is the source of truth (resolve real overlaps by hand);
+never hand-merge `render/` — run `slicer render` and `slicer check` so the generated markdown
+matches the resolved index.
+
 **`slicer next` is the queue.** It considers eligible started items first, then open
 items if none qualify. Within that pool it selects the highest effective score, with
 stored queue order breaking ties. All dependencies must be done. A

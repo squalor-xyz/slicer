@@ -81,6 +81,15 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
+GITATTRIBUTES = """\
+# slicer manages this file. History is append-only, so union-merge combines the
+# lines both sides added instead of conflicting when branches land in parallel.
+# Generated render/ is a projection of index.json: after a merge, resolve
+# index.json and re-run `slicer render` rather than merging render/ by hand.
+log.jsonl merge=union
+"""
+
+
 def cmd_init(args: argparse.Namespace) -> int:
   root = Path(args.root or ".").resolve()
   base = root / store.DIR_NAME
@@ -96,6 +105,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     jsonio.write(index_path, model.Index(id_prefix=cfg.id_prefix, id_width=cfg.id_width).to_dict())
   for name, text in templates.defaults().items():
     jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
+  jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   _emit(args, {"root": str(root), "dir": str(base)}, f"initialised {base}")
   return OK
@@ -730,7 +740,11 @@ def cmd_stats(args: argparse.Namespace) -> int:
 
 def cmd_log(args: argparse.Namespace) -> int:
   state = _state(args)
-  entries = list(reversed(state.history()))[: args.limit]
+  # Newest first by timestamp so union-merged history (which can interleave the
+  # lines two branches appended) still reads in order. Reverse the append order
+  # first so that, among entries sharing a timestamp, the later-appended one is
+  # shown first -- a stable sort then keeps that tie-break.
+  entries = sorted(reversed(state.history()), key=lambda e: e.when, reverse=True)[: args.limit]
   text = "\n".join(
     f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
     for e in entries
