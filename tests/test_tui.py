@@ -8,14 +8,20 @@ import unittest
 from unittest.mock import patch
 
 import support
-from slicer import tui
+from slicer import tui, tui_style
 from slicer.config import Config
 from slicer.model import Index, Item
 from slicer.store import State
 
 
+class MemoryState(State):
+  @property
+  def dir(self) -> Path:
+    raise AssertionError("in-memory TUI fixtures cannot access tracking files; use TempRepo for actions")
+
+
 def example() -> State:
-  return State(Path.cwd(), Config.from_dict({}), Index(items=[
+  return MemoryState(Path.cwd(), Config.from_dict({}), Index(items=[
     Item('S01', 'Finished setup', 'done', trees=['alpha'], importance=3, urgency=1),
     Item('S02', 'Search full title', 'open', short_title='Find things',
          trees=['alpha', 'beta'], pass_key='one', importance=3, urgency=2),
@@ -268,8 +274,11 @@ class Screen:
 
   def addnstr(self, y, x, text, count, attr):
     assert 0 <= y < self.height and 0 <= x < self.width
-    assert 0 < count < self.width - x
+    assert tui_style.cell_width(text) < self.width - x
+    assert count >= len(text)
     if self.resizing:
+      self.height = max(0, self.height - 1)
+      self.width = max(0, self.width - 1)
       raise curses.error('resized during drawing')
     self.writes.append((y, text[:count]))
 

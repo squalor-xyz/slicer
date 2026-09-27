@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import graph, ops, prose, render
+from slicer import graph, ops, prose, render, tui_style
 from slicer.errors import SlicerError
 from slicer.store import State
 
@@ -93,6 +93,8 @@ class Row:
   text: str
   status: str = ""
   blocked: bool = False
+  priority_at: int = 0
+  high_priority: bool = False
 
   @property
   def selectable(self) -> bool:
@@ -118,6 +120,7 @@ class Entry:
 class PanelLine:
   text: str
   entry: int | None = None
+  role: str = "normal"
 
 
 @dataclass
@@ -132,6 +135,7 @@ class EditRequest:
 class ActResult:
   message: str = ""
   edit: EditRequest | None = None
+  severity: str = "info"
 
 
 def rows(state: State) -> list[Row]:
@@ -145,13 +149,16 @@ def rows(state: State) -> list[Row]:
     )
     marker = "!" if pending and active else " "
     label = cfg.status_label(item.status)
+    prefix = f"{n:>3}{marker} {item.id:<5} {label:<7} {item.size:<2} "
     out.append(
       Row(
         kind=ITEM,
         target=item.id,
-        text=f"{n:>3}{marker} {item.id:<5} {label:<7} {item.size:<2} {item.display_title()}",
+        text=f"{prefix}P:{item.score} {item.display_title()}",
         status=item.status,
         blocked=bool(pending),
+        priority_at=len(prefix),
+        high_priority=item.importance == 3 or item.urgency == 3,
       )
     )
   refs = prose.refs(state.index)
@@ -192,7 +199,7 @@ def entries(state: State, target: str) -> list[Entry]:
 def panel(state: State, target: str) -> list[PanelLine]:
   """The detail pane: plain context lines, plus lines tagged with their entry."""
   if target in prose.refs(state.index):
-    out = [PanelLine(target), PanelLine("")]
+    out = [PanelLine(target, role="heading"), PanelLine("")]
     for line in prose.get(state.index, target).split("\n"):
       out.append(PanelLine(line, 0))
     return out
@@ -201,25 +208,29 @@ def panel(state: State, target: str) -> list[PanelLine]:
   if item is None:
     return [PanelLine("(no such item)")]
   out = [
-    PanelLine(f"{item.id}  {item.title}"),
+    PanelLine(f"{item.id}  {item.title}", role="heading"),
     PanelLine(""),
-    PanelLine(f"status     {state.config.status_label(item.status)}"),
+    PanelLine(f"status     {state.config.status_label(item.status)}",
+              role=tui_style.status_role(item.status, bool(graph.blocked_by(
+                state.index, item, state.config.done_status)), state.config)),
   ]
   for n, label in enumerate(FIELD_SPEC):
-    out.append(PanelLine(f"{label:<11}{_field_current(item, label) or '-'}", n))
-  out.append(PanelLine(f"score      {item.score} ({item.quadrant})"))
+    role = "priority" if label in ("importance", "urgency") and getattr(item, label) == 3 else "field"
+    out.append(PanelLine(f"{label:<11}{_field_current(item, label) or '-'}", n, role))
+  out.append(PanelLine(f"score      {item.score} ({item.quadrant})", role=(
+    "priority" if item.importance == 3 or item.urgency == 3 else "normal")))
   out.append(PanelLine(""))
   sl = state.slices.get(target)
   if sl is None:
     out.append(PanelLine("(no slice yet - press n to promote)"))
     return out
   base = len(FIELD_SPEC)
-  out.append(PanelLine("Scope boundary", base))
+  out.append(PanelLine("Scope boundary", base, "heading"))
   out.extend(PanelLine(line, base) for line in sl.boundary.split("\n"))
   out.append(PanelLine("", base))
   base += 1
   for i, section in enumerate(sl.sections):
-    out.append(PanelLine(f"## {section.heading}", base + i))
+    out.append(PanelLine(f"## {section.heading}", base + i, "heading"))
     for line in section.body.split("\n"):
       out.append(PanelLine(line, base + i))
     out.append(PanelLine("", base + i))
@@ -256,69 +267,88 @@ def act(
     )
 
   if action == "render":
-    expected = render.plan(state)
-    diff = render.compare(expected, state.render_dir)
-    written = render.write(expected, state.render_dir, diff)
-    return ActResult(f"rendered {len(written)} file(s)")
+    try:
+      expected = render.plan(state)
+      diff = render.compare(expected, state.render_dir)
+      written = render.write(expected, state.render_dir, diff)
+      return ActResult(f"rendered {len(written)} file(s)",
+                       severity="success" if written else "info")
+    except (SlicerError, OSError) as exc:
+      return ActResult(str(exc), severity="error")
 
   if is_prose:
     return ActResult("that key applies to a slice, not to a prose block")
 
   try:
-    if action == "start":
-      ops.start(state, target)
-      return ActResult(f"{target} started")
-    if action == "done":
-      ops.set_status(state, target, cfg.done_status)
-      return ActResult(f"{target} done")
-    if action == "park":
-      ops.park(state, target)
-      return ActResult(f"{target} parked")
-    if action == "unpark":
-      ops.set_status(state, target, cfg.open_status)
-      return ActResult(f"{target} reopened")
+    if action in ("start", "done", "park", "unpark"):
+      item = state.index.require(target)
+      previous = item.status
+      if action == "start":
+        ops.start(state, target)
+        message = f"{target} started"
+      elif action == "done":
+        ops.set_status(state, target, cfg.done_status)
+        message = f"{target} done"
+      elif action == "park":
+        ops.park(state, target)
+        message = f"{target} parked"
+      else:
+        ops.set_status(state, target, cfg.open_status)
+        message = f"{target} reopened"
+      return ActResult(message, severity="success" if item.status != previous else "info")
     if action == "reorder_down":
       at = state.index.position(target)
       if at + 1 < len(state.index.items):
         ops.move(state, target, after=state.index.items[at + 1].id)
-        return ActResult(f"{target} moved down")
+        return ActResult(f"{target} moved down", severity="success")
       return ActResult("already last")
     if action == "reorder_up":
       at = state.index.position(target)
       if at > 0:
         ops.move(state, target, before=state.index.items[at - 1].id)
-        return ActResult(f"{target} moved up")
+        return ActResult(f"{target} moved up", severity="success")
       return ActResult("already first")
     if action == "promote":
       ops.promote(state, target)
-      return ActResult(f"{target} promoted")
-  except SlicerError as exc:
-    return ActResult(str(exc))
+      return ActResult(f"{target} promoted", severity="success")
+  except (SlicerError, OSError) as exc:
+    return ActResult(str(exc), severity="error")
   return ActResult()
 
 
-def apply_edit(state: State, request: EditRequest, body: str) -> str:
-  """Write back what the editor produced, through the same `ops` the CLI uses."""
+def apply_edit_result(state: State, request: EditRequest, body: str | None) -> ActResult:
+  """Carry editor outcomes explicitly instead of classifying message wording."""
+  if body is None:
+    return ActResult("editor exited non-zero; nothing changed", severity="error")
   if body == request.body:
-    return f"{request.name} unchanged"
+    return ActResult(f"{request.name} unchanged")
   try:
     if request.kind == "new":
       title = body.strip()
       if not title:
-        return "cancelled"
-      return f"added {ops.add(state, title).id}"
+        return ActResult("cancelled")
+      return ActResult(f"added {ops.add(state, title).id}", severity="success")
     if request.kind == PROSE:
       ops.edit_prose(state, request.target, body)
     elif request.kind == "boundary":
       ops.edit_boundary(state, request.target, body)
     elif request.kind == "field":
       kwarg, parse = FIELD_SPEC[request.name]
+      item = state.index.require(request.target)
+      before = item.to_dict()
       ops.set_fields(state, request.target, **{kwarg: parse(body)})
+      if item.to_dict() == before:
+        return ActResult(f"{request.name} unchanged")
     else:
       ops.edit_section(state, request.target, request.name, body)
-  except SlicerError as exc:
-    return str(exc)
-  return f"updated {request.name}; press r to render"
+  except (SlicerError, OSError) as exc:
+    return ActResult(str(exc), severity="error")
+  return ActResult(f"updated {request.name}; press r to render", severity="success")
+
+
+def apply_edit(state: State, request: EditRequest, body: str) -> str:
+  """Preserve the string interface for callers that do not draw feedback."""
+  return apply_edit_result(state, request, body).message
 
 
 FILTER_GROUPS = ("status", "tree", "pass", "importance", "urgency")
@@ -414,6 +444,7 @@ class View:
   scroll: int = 0
   mode: str = "normal"
   message: str = "? help  / search  f filters  c show all"
+  message_severity: str = "normal"
   text: str = ""
   saved_query: str = ""
   saved_selection: tuple[str, str] | None = None
@@ -447,6 +478,17 @@ class View:
     if identity != self.selected:
       self.entry_at = 0
     self.selected = identity
+
+  def notify(self, message: str, severity: str = "info") -> None:
+    self.message, self.message_severity = message, severity
+
+  def accept(self, result: ActResult) -> None:
+    if result.message:
+      self.notify(result.message, result.severity)
+
+  def feedback(self) -> str:
+    prefix = {"info": "Info: ", "success": "OK: ", "error": "Error: "}.get(self.message_severity, "")
+    return prefix + self.message
 
   def status(self, state: State) -> str:
     count = sum(row.kind == ITEM for row in self.listing)
@@ -482,7 +524,7 @@ class View:
       self.mode, self.draft, self.choice_at = "filter", self.filters.copy(), 0
     elif action == "clear":
       self.filters = Filters()
-      self.message = "search and filters cleared; showing all items"
+      self.notify("search and filters cleared; showing all items")
     elif action == "pane":
       self.focus = "right" if self.focus == "left" and entries(state, self.target) else "left"
     elif action in ("up", "down"):
@@ -496,14 +538,14 @@ class View:
           at = max(0, min(targets.index(self.selected) + delta, len(targets) - 1))
           self.select(targets[at])
     elif action in ("reorder_up", "reorder_down") and self.filters.active:
-      self.message = "reordering disabled while filtered; press c to clear search and filters"
+      self.notify("reordering disabled while filtered; press c to clear search and filters")
     elif action:
       if self.selected or action in ("add", "render"):
         result = act(state, key, self.target, entry=self.entry_at, focus=self.focus)
-        self.message = result.message or self.message
+        self.accept(result)
         self.refresh(state)
         return result
-      self.message = "no item selected"
+      self.notify("no item selected")
     self.refresh(state)
     return ActResult()
 
@@ -513,24 +555,24 @@ class View:
         self.filters.query = self.saved_query
         self.select(self.saved_selection)
       self.mode = "normal"
-      self.message = "cancelled"
+      self.notify("cancelled")
     elif key in ("\n", "\r", "KEY_ENTER"):
       if self.mode == "jump" and self.text.strip():
         item = next((it for it in state.index.items
                      if it.id.casefold() == self.text.strip().casefold()), None)
         if item is None:
-          self.message = f"unknown item ID: {self.text.strip()}"
+          self.notify(f"unknown item ID: {self.text.strip()}", "error")
         else:
           hidden = not self.filters.matches(item)
           if hidden:
             self.filters = Filters()
           self.select((ITEM, item.id))
           self.focus = "left"
-          self.message = f"selected {item.id}" + (
+          self.notify(f"selected {item.id}" + (
             "; search and filters cleared to reveal item" if hidden else ""
-          )
+          ))
       else:
-        self.message = "search applied" if self.mode == "search" else "cancelled"
+        self.notify("search applied" if self.mode == "search" else "cancelled")
       self.mode = "normal"
     elif key in ("KEY_BACKSPACE", "\x7f", "\b"):
       self.text = self.text[:-1]
@@ -544,11 +586,13 @@ class View:
   def _filter(self, state: State, key: str) -> ActResult:
     choices = filter_choices(state)
     if key == "\x1b":
-      self.mode, self.draft, self.message = "normal", None, "filters unchanged"
+      self.mode, self.draft = "normal", None
+      self.notify("filters unchanged")
     elif key in ("\n", "\r", "KEY_ENTER"):
       if self.draft is not None:
         self.filters = self.draft
-      self.mode, self.draft, self.message = "normal", None, "filters applied"
+      self.mode, self.draft = "normal", None
+      self.notify("filters applied")
     elif key in ("j", "KEY_DOWN"):
       self.choice_at = min(self.choice_at + 1, len(choices) - 1)
     elif key in ("k", "KEY_UP"):
@@ -566,29 +610,26 @@ class View:
     return ActResult()
 
 
-def draw(screen, state: State, view: View) -> None:
-  """Clip every write; a resize between size lookup and drawing is harmless."""
-  import curses
-
+def draw(screen, state: State, view: View, palette: tui_style.Palette | None = None) -> None:
+  """Render semantic cues through one bounded terminal drawing surface."""
+  palette = palette or tui_style.monochrome()
   view.refresh(state)
-  height, width = screen.getmaxyx()
-  screen.erase()
+  canvas = tui_style.Canvas(screen)
+  height, width = canvas.height, canvas.width
+  canvas.erase()
+  put = canvas.put
+  if width < tui_style.MIN_WIDTH or height < tui_style.MIN_HEIGHT:
+    put(0, 0, f"Resize to at least {tui_style.MIN_WIDTH}x{tui_style.MIN_HEIGHT}", palette.attr("heading"))
+    put(1, 0, "Session preserved; q quits from the normal view.")
+    canvas.refresh()
+    return
 
-  def put(y: int, x: int, text: str, attr: int = 0, limit: int | None = None) -> None:
-    room = width - x - 1
-    if limit is not None:
-      room = min(room, limit)
-    if 0 <= y < height and 0 <= x < width and room > 0:
-      try:
-        screen.addnstr(y, x, text, room, attr)
-      except curses.error:
-        pass
-
-  visible = max(0, height - 2)
+  # One heading row and two footer rows are independent of scrolling content.
+  visible = height - 3
   if view.mode in ("filter", "help"):
     title = ("Filters: j/k move, Space toggle, Enter apply, Esc cancel"
              if view.mode == "filter" else "Help: j/k scroll, ? or Esc close")
-    put(0, 0, title, curses.A_BOLD)
+    put(0, 0, title, palette.attr("heading"))
     if view.mode == "filter":
       choices = filter_choices(state)
       lines = []
@@ -598,19 +639,23 @@ def draw(screen, state: State, view: View) -> None:
         label = "Any" if value is None else value or "(none)"
         lines.append(f"[{'x' if checked else ' '}] {group:<11} {label}")
       selected_at = view.choice_at
-      top = max(0, selected_at - max(0, visible - 2))
+      top = max(0, selected_at - visible + 1)
     else:
       lines, selected_at, top = help_lines(), -1, view.help_at
-    for n, line in enumerate(lines[top:top + max(0, visible - 1)], 1):
-      attr = curses.A_REVERSE if top + n - 1 == selected_at else 0
-      put(n, 0, line, attr)
+    for n, line in enumerate(lines[top:top + visible], 1):
+      selected = top + n - 1 == selected_at
+      put(n, 0, ("> " if selected else "  ") + line,
+          palette.attr(selected=selected, focused=True))
   else:
-    left_width = max(1, width // 2 - 2)
+    left_width = width // 2 - 2
+    right_x = left_width + 2
+    put(0, 0, ("> " if view.focus == "left" else "  ") + "Queue", palette.attr("heading"), left_width)
+    put(0, right_x, ("> " if view.focus == "right" else "  ") + "Details", palette.attr("heading"))
     matching = any(row.kind == ITEM for row in view.listing)
-    offset = 0 if matching else 1
+    offset = 1 if matching else 2
     if not matching:
-      put(0, 0, "No matching items", limit=left_width)
-    capacity = max(0, visible - offset)
+      put(1, 0, "No matching items", palette.attr("info"), left_width)
+    capacity = visible - (offset - 1)
     selected_at = next((i for i, row in enumerate(view.listing)
                         if row_identity(row) == view.selected), 0)
     if selected_at < view.scroll:
@@ -619,26 +664,30 @@ def draw(screen, state: State, view: View) -> None:
       view.scroll = max(0, selected_at - capacity + 1)
     view.scroll = min(view.scroll, max(0, len(view.listing) - capacity))
     for n, row in enumerate(view.listing[view.scroll:view.scroll + capacity], offset):
-      attr = curses.A_DIM if row.kind == SEPARATOR else 0
-      if row_identity(row) == view.selected:
-        attr = curses.A_REVERSE if view.focus == "left" else curses.A_BOLD
-      put(n, 0, row.text, attr, left_width)
+      selected = row_identity(row) == view.selected
+      role = "dim" if row.kind == SEPARATOR else tui_style.status_role(row.status, row.blocked, state.config)
+      attr = palette.attr(role, selected=selected, focused=view.focus == "left")
+      marker = "> " if selected else "  "
+      put(n, 0, marker + row.text, attr, left_width)
+      if row.kind == ITEM and row.high_priority:
+        x = 2 + tui_style.cell_width(tui_style.clipped(row.text[:row.priority_at], left_width))
+        put(n, x, row.text[row.priority_at:row.priority_at + 4],
+            palette.attr("priority", selected=selected, focused=view.focus == "left"), left_width - x)
     lines = panel(state, view.target) if view.selected else []
     first = next((n for n, line in enumerate(lines) if line.entry == view.entry_at), 0)
     top = max(0, first - 2) if view.focus == "right" else 0
-    for n, line in enumerate(lines[top:top + visible]):
-      attr = curses.A_REVERSE if (
-        line.entry is not None and line.entry == view.entry_at and view.focus == "right"
-      ) else 0
-      put(n, left_width + 2, line.text, attr)
-  put(height - 2, 0, view.status(state), curses.A_DIM)
+    for n, line in enumerate(lines[top:top + visible], 1):
+      selected = line.entry is not None and line.entry == view.entry_at
+      attr = palette.attr(line.role, selected=selected, focused=view.focus == "right")
+      put(n, right_x, ("> " if selected else "  ") + line.text, attr)
+  put(height - 2, 0, view.status(state), palette.attr("dim"))
   if view.mode in ("search", "jump"):
     label = "Search" if view.mode == "search" else "Jump to ID"
     prompt = f"{label} (Enter accepts, Esc cancels): {view.text}"
-    put(height - 1, 0, prompt[-max(1, width - 1):], curses.A_REVERSE)
+    put(height - 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))
   else:
-    put(height - 1, 0, view.message, curses.A_DIM)
-  screen.refresh()
+    put(height - 1, 0, view.feedback(), palette.attr(view.message_severity))
+  canvas.refresh()
 
 
 def run(state: State) -> int:  # pragma: no cover - requires a terminal
@@ -651,9 +700,10 @@ def run(state: State) -> int:  # pragma: no cover - requires a terminal
       curses.curs_set(0)
     except curses.error:
       pass
+    palette = tui_style.setup_palette()
     view = View.initial(state)
     while not view.quit:
-      draw(screen, state, view)
+      draw(screen, state, view, palette)
       try:
         key = screen.getkey()
       except curses.error:
@@ -662,13 +712,16 @@ def run(state: State) -> int:  # pragma: no cover - requires a terminal
       if result.edit is not None:
         curses.def_prog_mode()
         curses.endwin()
-        body = _via_editor(result.edit.body)
-        curses.reset_prog_mode()
-        screen.redrawwin()
-        view.message = (
-          "editor exited non-zero; nothing changed"
-          if body is None else apply_edit(state, result.edit, body)
-        )
+        try:
+          body = _via_editor(result.edit.body)
+        except (SlicerError, OSError) as exc:
+          outcome = ActResult(str(exc), severity="error")
+        else:
+          outcome = apply_edit_result(state, result.edit, body)
+        finally:
+          curses.reset_prog_mode()
+          screen.redrawwin()
+        view.accept(outcome)
     return 0
 
   return curses.wrapper(loop)

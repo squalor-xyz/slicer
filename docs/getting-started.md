@@ -451,6 +451,19 @@ For anything more than one section, `slicer tui` is also faster than repeated `e
 `tab` moves between the queue and the detail pane, and `e` opens `$EDITOR` on whatever is
 selected.
 
+The Queue and Details headings show which pane has focus. A focused selection uses
+reverse/bold; the other pane retains a selection marker. `P:22` in a queue row is
+the base priority score (importance × 10 + urgency), not inherited priority. An
+importance or urgency of 3 emphasizes that score without changing queue order.
+Configured started/done/parked statuses use cyan/green/yellow; active blocked items
+retain `!` and use yellow. Other statuses stay neutral. Error feedback is red;
+`OK:`, `Error:`, and `Info:` prefixes also make results readable without color.
+
+The palette uses the terminal's default background. Unsupported terminals and any
+nonempty `NO_COLOR` value select monochrome, for example `NO_COLOR=1 slicer tui`.
+Keep the terminal at least 80 columns by 10 rows; smaller windows show a resize
+prompt while retaining filters, search, and selection.
+
 Both `show` and `edit` tell you when an item has not been promoted:
 
 ```console

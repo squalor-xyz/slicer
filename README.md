@@ -125,6 +125,18 @@ prose stays accessible below the items and is excluded from those counts. Filter
 last only for this session. `J/K` reordering requires clearing all restrictions with
 `c`; filtering itself preserves queue order.
 
+Queue and Details headings mark the focused pane with `>`. Focused selections use
+reverse/bold; inactive selections retain a marker and bold text. Queue rows show
+`P:22`-style base priority scores (importance × 10 + urgency); an axis of 3 emphasizes
+the score without reordering items. The detail pane retains the score and quadrant.
+
+When supported, cyan marks headings/started work, green marks done/success, yellow
+marks parked/blocked work and high priority, and red marks errors. Labels and `!`
+blocked markers remain visible without color. Feedback uses `OK:`, `Error:`, and
+`Info:` prefixes; unchanged actions and cancellations are informational. Set
+`NO_COLOR=1` for monochrome; unsupported terminals also fall back automatically.
+Below 80 columns or 10 rows, the TUI shows a resize prompt and preserves the session.
+
 Every command except `tui` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.

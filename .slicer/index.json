@@ -1202,7 +1202,7 @@
       "id": "S55",
       "title": "TUI color and visual polish: status, priority, focus, and feedback",
       "short_title": "TUI color and visual polish: status, priority, focus, and feedback",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
