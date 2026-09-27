@@ -618,7 +618,7 @@
           "slicer"
         ],
         "trees_literal": false,
-        "findings": "follows S01",
+        "findings": "PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58",
         "pass": "",
         "group": "",
         "reason": "",
