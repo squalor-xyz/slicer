@@ -244,6 +244,8 @@ class Index:
   passes: list[PassInfo] = field(default_factory=list)
   preamble: str = ""
   epilogue: str = ""
+  goals: str = ""
+  non_goals: str = ""
   version: int = SCHEMA_VERSION
 
   def get(self, item_id: str) -> Item | None:
@@ -298,6 +300,8 @@ class Index:
       "passes": [p.to_dict() for p in self.passes],
       "items": [it.to_dict() for it in self.items],
       "epilogue": self.epilogue,
+      "goals": self.goals,
+      "non_goals": self.non_goals,
     }
 
   @staticmethod
@@ -311,6 +315,8 @@ class Index:
       passes=[PassInfo.from_dict(p) for p in d.get("passes", [])],
       items=[Item.from_dict(i) for i in d.get("items", [])],
       epilogue=d.get("epilogue", ""),
+      goals=d.get("goals", ""),
+      non_goals=d.get("non_goals", ""),
     )
 
 

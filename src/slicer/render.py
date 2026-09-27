@@ -202,12 +202,19 @@ def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) 
     template,
     {
       "preamble": index.preamble,
+      "goals": _titled("Goals", index.goals),
+      "non_goals": _titled("Non-goals", index.non_goals),
       "summary": summary,
       "groups": "\n\n---\n\n".join(chunks),
       "epilogue": index.epilogue,
     },
   )
   return (banner(".slicer/index.json") + "\n\n" + tidy(body)).encode("utf-8")
+
+
+def _titled(title: str, text: str) -> str:
+  """A `## title` block, or nothing when empty so `tidy` collapses the gap."""
+  return f"## {title}\n\n{text}" if text.strip() else ""
 
 
 @dataclass

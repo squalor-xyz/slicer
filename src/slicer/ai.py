@@ -14,10 +14,11 @@ state, so it also works before a project is initialized.
 ## Read the project first
 
 Read the project's instructions (such as AGENTS.md), overview, relevant source,
-and tests before acting. Follow its constraints and required checks. Ask about
-missing goals, scope, or acceptance criteria; do not infer product direction from
-the backlog. Only perform work the user has authorized. Commit or publish only
-when authorized; slicer itself never commits, pushes, or tags.
+and tests before acting. Follow its constraints and required checks. Read the
+recorded product direction with `slicer goals --json`; ask about missing goals,
+scope, or acceptance criteria; do not infer product direction from the backlog.
+Only perform work the user has authorized. Commit or publish only when authorized;
+slicer itself never commits, pushes, or tags.
 
 ## Plan and record agreed work
 

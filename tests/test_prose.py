@@ -50,10 +50,10 @@ class ProseBlockTests(unittest.TestCase):
   def test_Refs_ImportedIndex_AreListedInRenderOrder(self) -> None:
     with self.repo() as repo:
       refs = prose.refs(repo.state().index)
-      self.assertEqual(refs[0], "preamble")
+      self.assertEqual(refs[:3], ["preamble", "goals", "non_goals"])
       self.assertEqual(refs[-1], "epilogue")
       self.assertEqual(
-        refs[1:4], ["pass.1.heading", "pass.1.intro", "pass.1.outro"]
+        refs[3:6], ["pass.1.heading", "pass.1.intro", "pass.1.outro"]
       )
 
   def test_Refs_FixtureTree_CoverEveryImportedPass(self) -> None:
@@ -61,7 +61,7 @@ class ProseBlockTests(unittest.TestCase):
     refs = prose.refs(index)
     for key in ("1", "2", "3", "4"):
       self.assertIn(f"pass.{key}.intro", refs)
-    self.assertEqual(len(refs), 2 + 3 * 4)
+    self.assertEqual(len(refs), 4 + 3 * 4)
 
   def test_Get_UnknownPass_RaisesNamingTheDeclaredOnes(self) -> None:
     with self.repo() as repo:
@@ -82,6 +82,25 @@ class ProseBlockTests(unittest.TestCase):
       code, out, _ = repo.run("prose", "show", "preamble")
       self.assertEqual(code, 0)
       self.assertIn("Mini index preamble.", out)
+
+  def test_GetPut_GoalsAndNonGoals_RoundTripThroughTheIndex(self) -> None:
+    with self.repo() as repo:
+      index = repo.state().index
+      for ref, attr in (("goals", "goals"), ("non_goals", "non_goals")):
+        prose.put(index, ref, f"{ref} body")
+        self.assertEqual(getattr(index, attr), f"{ref} body")
+        self.assertEqual(prose.get(index, ref), f"{ref} body")
+
+  def test_ProseEdit_GoalsBlock_PersistsAndRendersUnderAHeading(self) -> None:
+    with self.repo() as repo:
+      repo.write("g.md", "- ship the thing\n")
+      code, _, err = repo.run("prose", "edit", "goals", "--file", str(repo.root / "g.md"))
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.goals, "- ship the thing")
+      repo.run("render")
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      self.assertIn("## Goals", roadmap)
+      self.assertIn("- ship the thing", roadmap)
 
   def test_ProseEdit_FromAFile_ReplacesTheBlock(self) -> None:
     with self.repo() as repo:

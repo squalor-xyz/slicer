@@ -1224,7 +1224,7 @@
       "id": "S56",
       "title": "Track project goals and non-goals for AI-assisted planning",
       "short_title": "Track project goals and non-goals for AI-assisted planning",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {
@@ -1287,5 +1287,7 @@
       }
     }
   ],
-  "epilogue": ""
+  "epilogue": "",
+  "goals": "- Manage a project's roadmap, goals, and issues in one simple, file-based store\n  (git-tracked JSON today; a database backing may come later — TBD).\n- Keep that store canonical, so humans and AI coding agents can plan the next work\n  directly from it.\n- Treat every generated markdown file (ROADMAP, slices) as a deterministic projection\n  of the JSON, kept in lockstep and enforced by `slicer check`.\n- Offer a machine-readable CLI: every command supports `--json` with stable envelopes\n  and exit codes, so agents automate against slicer without parsing prose.\n- Stay small and dependency-light: standard-library only, install-light, runnable from\n  a clean checkout.\n- Serve both a solo developer working with AI agents and small teams coordinating\n  through git.",
+  "non_goals": "- Not a real-time collaboration or multi-user concurrent-editing tool; coordination\n  happens through git, not a live shared service."
 }

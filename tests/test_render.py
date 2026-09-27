@@ -18,6 +18,25 @@ class RenderTests(unittest.TestCase):
     repo.run("migrate", "--from", "docs/slices")
     return repo
 
+  def test_Titled_EmptyVersusSet_OnlyWrapsRealContent(self) -> None:
+    self.assertEqual(render._titled("Goals", ""), "")
+    self.assertEqual(render._titled("Goals", "   \n"), "")
+    self.assertEqual(render._titled("Goals", "a\nb"), "## Goals\n\na\nb")
+
+  def test_Render_GoalsAndNonGoals_AppearUnderRoadmapWhenSetElseCollapse(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      self.assertNotIn("## Goals", repo.read(".slicer/render/ROADMAP.md"))
+      for ref, body in (("goals", "- a goal"), ("non_goals", "- a non-goal")):
+        repo.write(f"{ref}.md", body + "\n")
+        repo.run("prose", "edit", ref, "--file", str(repo.root / f"{ref}.md"))
+      repo.run("render")
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      self.assertLess(roadmap.index("## Goals"), roadmap.index("## Non-goals"))
+      self.assertLess(roadmap.index("## Non-goals"), roadmap.index("| # |"))
+      self.assertIn("- a goal", roadmap)
+      self.assertIn("- a non-goal", roadmap)
+
   def test_Expand_UnknownPlaceholder_RaisesNamingTheKey(self) -> None:
     with self.assertRaises(RenderError) as caught:
       render.expand("hello {{nope}}", {"other": "x"})

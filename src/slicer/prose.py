@@ -16,7 +16,9 @@ from slicer.errors import StateError
 from slicer.model import Index, PassInfo
 
 PASS_FIELDS = ("heading", "intro", "outro")
-FORMS = "preamble, epilogue, pass.<key>.heading, pass.<key>.intro, pass.<key>.outro"
+SINGLETONS = ("preamble", "goals", "non_goals", "epilogue")
+FORMS = ("preamble, goals, non_goals, epilogue, "
+         "pass.<key>.heading, pass.<key>.intro, pass.<key>.outro")
 
 
 @dataclass(frozen=True)
@@ -31,7 +33,7 @@ class BlockRef:
 
 def parse_ref(ref: str) -> BlockRef:
   """Turn `pass.5.intro` into a reference, or say what the valid forms are."""
-  if ref in ("preamble", "epilogue"):
+  if ref in SINGLETONS:
     return BlockRef(kind=ref)
   parts = ref.split(".")
   if len(parts) == 3 and parts[0] == "pass":
@@ -46,7 +48,7 @@ def parse_ref(ref: str) -> BlockRef:
 
 def refs(index: Index) -> list[str]:
   """Every addressable block, in the order it appears in the rendered roadmap."""
-  out = ["preamble"]
+  out = ["preamble", "goals", "non_goals"]
   for info in index.passes:
     out.extend(f"pass.{info.key}.{field}" for field in PASS_FIELDS)
   out.append("epilogue")

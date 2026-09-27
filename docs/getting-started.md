@@ -612,9 +612,25 @@ pass forms a trailing group with no heading. So once you start using passes, fil
 everything, or live with that untitled group at the bottom.
 
 Each pass carries its own prose — `pass.2.heading`, `pass.2.intro`, `pass.2.outro` —
-alongside the roadmap's `preamble` and `epilogue`. `slicer prose list` names every block
-in render order; `slicer prose edit REF` changes one. See the README's
-[Roadmap prose](../README.md#roadmap-prose) section.
+alongside the roadmap's `preamble`, `goals`, `non_goals`, and `epilogue`. `slicer prose
+list` names every block in render order; `slicer prose edit REF` changes one. See the
+README's [Roadmap prose](../README.md#roadmap-prose) section.
+
+## Goals and non-goals
+
+Goals and non-goals record what the project is *for*, so what belongs on the backlog can
+be judged — separately from what is currently queued. They are two roadmap prose blocks:
+
+```console
+$ slicer prose edit goals --file goals.md      # or --text/--stdin/$EDITOR
+$ slicer prose edit non_goals --stdin < non_goals.md
+$ slicer goals                                 # print both together
+$ slicer goals --json                          # {"goals": "...", "non_goals": "..."}
+```
+
+They render near the top of `ROADMAP.md`, so a reader sees direction before the queue, and
+`slicer check` fails if that rendered copy drifts. Agents read direction with `slicer goals
+--json` and should ask the owner to set it rather than inferring it from the backlog.
 
 ## 8. Wire it into CI
 

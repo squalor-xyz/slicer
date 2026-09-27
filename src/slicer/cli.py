@@ -508,6 +508,18 @@ def cmd_prose_show(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_goals(args: argparse.Namespace) -> int:
+  """Project direction in one read: the goals and non_goals prose blocks."""
+  state = _state(args)
+  goals, non_goals = state.index.goals, state.index.non_goals
+  blocks = []
+  for title, text in (("Goals", goals), ("Non-goals", non_goals)):
+    body = text.rstrip("\n") if text.strip() else "  (none set)"
+    blocks.append(f"{title}:\n{body}")
+  _emit(args, {"goals": goals, "non_goals": non_goals}, "\n\n".join(blocks))
+  return OK
+
+
 def cmd_prose_edit(args: argparse.Namespace) -> int:
   state = _state(args)
   current = prose.get(state.index, args.ref)
@@ -856,6 +868,8 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("check", cmd_check, "the CI gate: render, sync and integrity")
   sp.add_argument("--diff", action="store_true", help="show a diff for each stale file")
+
+  add("goals", cmd_goals, "show project goals and non-goals")
 
   add("stats", cmd_stats, "counts by status, size, tree and pass")
 

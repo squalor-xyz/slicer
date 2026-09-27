@@ -239,6 +239,11 @@ means an agent can decide from the dry run alone.
 Repeat `--depends-on` for multiple ids. `park` and `unpark` accept `--note` to record
 why work is being deferred or resumed; read those notes with `slicer log --json`.
 
+**Read the project's direction before proposing work.** `slicer goals --json` returns
+`{"goals": ..., "non_goals": ...}` — what the project is *for*, kept separate from the
+backlog. Judge new work against it, and if it is empty or unclear, ask the owner to set it
+(`slicer prose edit goals` / `non_goals`) rather than inferring direction from the queue.
+
 **Never edit `.slicer/*.json`.** Use the commands. The index, the slice files and
 `.slicer/render/` have to agree, and `slicer check` is what proves they do.
 

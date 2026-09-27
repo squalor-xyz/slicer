@@ -88,6 +88,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
+| `goals` | print the project's goals and non-goals together; supports `--json` |
 | `start ID [ID ...]` | mark an item in progress, so `next` knows it is in flight |
 | `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status and optionally record a note; `done` moves the file with `git mv` |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
@@ -167,7 +168,7 @@ See [batch changes](docs/getting-started.md#batch-changes) for validation and ou
 
 ```
 config.json          paths, statuses, fields, templates, sync targets
-index.json           the ordered queue: ids, status, metadata, dependencies
+index.json           the ordered queue plus roadmap prose (preamble, goals, non-goals, epilogue)
 slices/<ID>.json     one open slice: title, lead, sections (ordered list)
 slices/done/<ID>.json    finished slices
 slices/retired/<ID>.json obsolete slices, with the reason on the item
@@ -213,6 +214,8 @@ around each pass group, and a closing section. `slicer prose` addresses those bl
 
 ```
 preamble                 the opening note
+goals                    project goals (see below)
+non_goals                project non-goals (see below)
 pass.<key>.heading       the group's markdown heading
 pass.<key>.intro         prose above the group's table
 pass.<key>.outro         prose below it
@@ -232,6 +235,28 @@ it. Items are filed with `slicer add --pass 6` or moved with `slicer set <id> --
 
 A declared pass renders even with no items yet, so a group can be opened before its first
 slice exists.
+
+## Goals and non-goals
+
+The backlog says what is queued; **goals and non-goals** say what the project is *for*, so
+humans and AI agents can judge what belongs on the backlog at all. They are two roadmap
+prose blocks (`goals`, `non_goals`), edited like any other prose and rendered near the top
+of `ROADMAP.md`:
+
+```
+slicer goals              print both, or slicer goals --json for agents
+slicer prose edit goals   record or revise them (--text/--file/--stdin/$EDITOR)
+slicer prose edit non_goals
+```
+
+`slicer check` keeps the rendered copy current. Set direction with the owner — do not
+infer it from the backlog.
+
+slicer's own goals and non-goals: run `slicer goals`, or read them at the top of
+[the roadmap](.slicer/render/ROADMAP.md). In short, slicer is a small, dependency-light,
+file-based store for a project's roadmap, goals, and issues — canonical JSON that humans
+and AI agents plan from, projected deterministically to markdown — and is *not* a
+real-time, multi-user collaboration tool (coordination happens through git).
 
 ## Configuration
 
