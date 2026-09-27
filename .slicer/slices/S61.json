@@ -1,0 +1,41 @@
+{
+  "id": "S61",
+  "title": "Make slicer ui and slicer tui both open the TUI",
+  "lead": [
+    "Accept `slicer ui` as an alias for `slicer tui`, with the same interactive interface and command behavior."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing TUI behavior or keybindings, making the TUI the default command, adding JSON output to the interactive interface, or introducing other command aliases.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The CLI currently registers only `tui`, which dispatches through cmd_tui to tui.run using the resolved project state. Users should be able to type either `ui` or `tui` to open that interface."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/cli.py: parser registration and shared cmd_tui dispatch.\n- tests/test_cli.py: command parsing, project selection, help, and dispatch coverage.\n- README.md, docs/getting-started.md, and docs/agents.md: command discovery and the interactive commands' exception to JSON support."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Add focused CLI tests that invoke each spelling with tui.run mocked, assert the same project is loaded and the runner is called once, and check that its return code is propagated. Cover explicit --root, help without opening the interface, and identical rejection of unsupported --json."
+    },
+    {
+      "heading": "Implement",
+      "body": "Register ui as an alias of the existing tui command using the existing argparse command setup. Both names must share cmd_tui and the same accepted options, project discovery, errors, and return behavior. Preserve lazy loading of the TUI and curses so ordinary commands and help remain usable without an interactive terminal.\n\nMake top-level help show that ui and tui open the same interface. Both `slicer ui --help` and `slicer tui --help` must describe equivalent options and exit without opening curses; the displayed command name may differ. Update command documentation and statements that currently name only tui as the exception to --json support."
+    },
+    {
+      "heading": "Check",
+      "body": "Both spellings open the same TUI for the same project, including when --root selects it explicitly. Both propagate the runner's exit code, provide equivalent help/options, and reject --json consistently. Top-level help and documentation expose the alias. Noninteractive tests use a mocked runner; manually launch and quit each spelling in a terminal.\n\nRun focused CLI tests, then the unit suite, slicer check, and git diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "Follow owner instructions for committing and publishing."
+    }
+  ],
+  "notes": []
+}

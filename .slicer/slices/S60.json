@@ -1,0 +1,41 @@
+{
+  "id": "S60",
+  "title": "List more keyboard shortcuts in the TUI",
+  "lead": [
+    "Make existing keyboard actions easier to discover while browsing the roadmap, without requiring users to open the help overlay first."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** adding or remapping keyboard actions, configurable keybindings, changing roadmap operations, or redesigning the TUI beyond the space needed for shortcut hints.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The normal view starts with `? help  / search  f filters  c show all` in View.message. The BINDINGS table already includes navigation, pane switching, editing, creation, reordering, status changes, promotion, rendering, and quitting, and supplies the full `?` help overlay. These existing actions deserve more visible hints in the browsing view."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/tui.py: BINDINGS, View feedback, and draw layout.\n- src/slicer/tui_style.py: reuse existing bounded drawing and terminal-size behavior if layout changes require it.\n- tests/test_tui.py and tests/test_cli.py: drawing, mode handling, and binding/help coverage.\n- README.md: document the visible hints and how to reach full help."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Add focused rendering checks for visible shortcut hints at the supported minimum size (80x10) and a wider terminal. Cover feedback, prompts, help/filter overlays, and resizing so hints cannot obscure interaction state. Check that advertised keys map to the existing binding actions."
+    },
+    {
+      "heading": "Implement",
+      "body": "Expand the normal browsing view's persistent shortcut hints to include pane switching, editing, adding, starting/completing an item, and quitting, alongside access to full help. Use concise human-readable labels and reuse BINDINGS as the source of key/action information. Additional existing actions may be shown as space permits; keep the complete scrollable help overlay available.\n\nFit hints to the available terminal dimensions without overflowing or overlapping queue/detail content. Keep action feedback, errors, active filters, and search/jump prompts readable. Mode-specific instructions must remain accurate; hints must not imply normal-view actions execute while a prompt or overlay owns input."
+    },
+    {
+      "heading": "Check",
+      "body": "At 80x10 and a wider terminal, the normal view visibly advertises Tab, e, a, s, d, q, and ? with their meanings. Full help still lists every binding. Editing, adding, starting/completing, pane switching, and quitting retain their existing behavior. Feedback and modal instructions remain readable, and shrinking below the supported size preserves the resize prompt and session.\n\nRun focused TUI tests, then the unit suite, slicer check, and git diff --check. Perform a manual terminal pass for readability at both sizes and record the result."
+    },
+    {
+      "heading": "Git",
+      "body": "Follow owner instructions for committing and publishing."
+    }
+  ],
+  "notes": []
+}

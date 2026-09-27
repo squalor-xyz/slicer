@@ -126,6 +126,11 @@ and is surfaced first; dependencies still hard-gate, so a blocked item is never 
 reproduces a queue a human reads top-down. A test locks the difference so nobody
 reconciles them by accident.
 
+`next -n N` selects one item at zero-based offset N from currently eligible started
+items followed by currently eligible open items. Each group is ordered by effective
+score, with stable queue-order ties. It never simulates completion of skipped items.
+The default offset is zero; exhausted offsets return the existing empty result.
+
 ## What `check` is
 
 `check.run` composes render staleness, sync drift and `verify.offline`. It never shells

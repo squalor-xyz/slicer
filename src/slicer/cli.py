@@ -276,14 +276,28 @@ def cmd_migrate(args: argparse.Namespace) -> int:
   return OK
 
 
+def _nonnegative_int(value: str) -> int:
+  try:
+    number = int(value)
+  except ValueError:
+    raise argparse.ArgumentTypeError("must be a nonnegative integer") from None
+  if number < 0:
+    raise argparse.ArgumentTypeError("must be a nonnegative integer")
+  return number
+
+
 def cmd_next(args: argparse.Namespace) -> int:
   state = _state(args)
-  result = ops.next_item(state)
+  result = ops.next_item(state, args.n)
   if result.item is None:
     payload = {"item": None, "blocked": [{"id": i, "waiting_on": b} for i, b in result.blocked]}
     text = "nothing unmarked" if not result.blocked else "\n".join(
       f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked
     )
+    if args.n:
+      text = f"no eligible item at offset {args.n}" + (
+        f"\n{text}" if result.blocked else ""
+      )
     _emit(args, payload, text)
     return USAGE
   item = result.item
@@ -746,7 +760,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
-  add("next", cmd_next, "the highest-priority startable item")
+  sp = add("next", cmd_next, "the highest-priority startable item")
+  sp.add_argument("-n", type=_nonnegative_int, default=0, metavar="N",
+                  help="skip N currently eligible items (default 0); return one item")
 
   sp = add("list", cmd_list, "list items")
   sp.add_argument("--status", action="append", help="filter by status (repeatable)")

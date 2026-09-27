@@ -1290,8 +1290,8 @@
       "id": "S59",
       "title": "Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1)",
       "short_title": "Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1)",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",
@@ -1311,7 +1311,7 @@
       "title": "List more keyboard shortcuts in the TUI",
       "short_title": "List more keyboard shortcuts in the TUI",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",
@@ -1331,7 +1331,7 @@
       "title": "Make slicer ui and slicer tui both open the TUI",
       "short_title": "Make slicer ui and slicer tui both open the TUI",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",

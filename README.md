@@ -81,7 +81,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `add TITLE [--size/--tree/--findings/--status/--pass/--importance/--urgency/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies |
 | `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
-| `next` | the highest-priority startable item (highest effective score; dependencies still gate) |
+| `next [-n N]` | one eligible item at offset N (default 0); started work first, then effective priority |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
@@ -99,6 +99,13 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
 | `stats` / `log` | counts, and the history of status changes |
 | `tui` | browse, read, reorder and edit interactively |
+
+`slicer next -n 1` returns the item after the current next item. Offsets are
+nonnegative integers: `-n 0` is the same as `next`. Eligible started items come
+before eligible open items; each group uses descending effective priority with
+roadmap order breaking ties. Skipping an item does not complete it or unblock its
+dependents. The command returns one item, including rows without slice files;
+an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
 
 In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (size, trees, findings, depends, importance,

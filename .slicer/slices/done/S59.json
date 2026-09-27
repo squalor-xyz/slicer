@@ -1,0 +1,41 @@
+{
+  "id": "S59",
+  "title": "Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1)",
+  "lead": [
+    "Return one item N positions after the current next item with `slicer next -n N`."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** simulating completion, changing priority or dependency rules, returning multiple items, or changing sync pointers.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Users need to inspect upcoming eligible work without marking the current item done or modifying roadmap state."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/ops.py, src/slicer/cli.py, focused next-command tests, README.md and ARCHITECTURE.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Cover offset zero/default equivalence, successive offsets, started/open ordering, effective priority and stable ties, blocked/excluded items, rows without slices, no writes, invalid arguments and exhausted results in text and JSON."
+    },
+    {
+      "heading": "Implement",
+      "body": "Accept a nonnegative integer -n, default zero. Order currently eligible started items before currently eligible open items; within each group sort by descending effective score and retain roadmap order for ties. Return one selected item using existing output formats. Skipping items must not simulate completion or unblock dependencies. Reject invalid arguments with exit 2 and the usage JSON error envelope. Out-of-range offsets return exit 2 and the existing empty JSON result with blocked details; text names the requested offset. Preserve offset-zero behavior."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused tests, the full unit suite with temporary files inside the checkout, slicer check and git diff --check. Verify actual CLI text and JSON offset output."
+    },
+    {
+      "heading": "Git",
+      "body": "No commit or publication without owner instructions."
+    }
+  ],
+  "notes": []
+}
