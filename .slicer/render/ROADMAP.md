@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-61 items · — 14 · done 46 · parked 1
+61 items · — 13 · done 47 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -44,7 +44,7 @@
 | 16 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | slicer | dogfooding; felt every run | done |
 | 17 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
 | 18 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | slicer | severity revised: cosmetic since the error envelope landed | done |
-| 19 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | — |
+| 19 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | slicer | found probing edge cases | done |
 | 20 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | slicer | dogfooding; biggest TUI gap | done |
 | 21 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | slicer | dogfooding; navigation at scale | done |
 | 22 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | slicer | dogfooding; reorder at scale | — |

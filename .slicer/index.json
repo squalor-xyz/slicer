@@ -408,7 +408,7 @@
       "id": "S24",
       "title": "move --to silently clamps an out-of-range position",
       "short_title": "move --to silently clamps an out-of-range position",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S13"

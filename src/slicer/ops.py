@@ -216,7 +216,11 @@ def move(
   elif after is not None:
     target = index.position(after) + 1
   elif to is not None:
-    target = max(0, min(to - 1, len(index.items)))
+    last = len(index.items) + 1  # 1-based position over the full queue (item is popped)
+    if not 1 <= to <= last:
+      index.items.insert(at, item)
+      raise StateError(f"position {to} is out of range 1..{last}", code="usage")
+    target = to - 1
   else:
     index.items.insert(at, item)
     raise StateError("move needs --before, --after or --to")

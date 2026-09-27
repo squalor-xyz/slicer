@@ -137,6 +137,34 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertIn("--before", err)
 
+  def test_Move_ToZero_IsRefused(self) -> None:
+    with self.repo() as repo:
+      before = [i.id for i in repo.state().index.items]
+      code, _, err = repo.run("move", "S01", "--to", "0")
+      self.assertEqual(code, 2)
+      self.assertIn("1..4", err)
+      self.assertEqual([i.id for i in repo.state().index.items], before)
+
+  def test_Move_ToNegative_IsRefused(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("move", "S01", "--to", "-5")
+      self.assertEqual(code, 2)
+      self.assertIn("1..4", err)
+
+  def test_Move_BeyondTheEnd_IsRefused(self) -> None:
+    with self.repo() as repo:
+      before = [i.id for i in repo.state().index.items]
+      code, _, err = repo.run("move", "S01", "--to", "5")
+      self.assertEqual(code, 2)
+      self.assertIn("1..4", err)
+      self.assertEqual([i.id for i in repo.state().index.items], before)
+
+  def test_Move_ToTheLastPosition_IsStillAllowed(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("move", "S01", "--to", "4")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([i.id for i in repo.state().index.items], ["S02", "S03", "S04", "S01"])
+
   def test_Done_OpenItem_MovesTheSliceFileIntoDone(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("done", "S02")
