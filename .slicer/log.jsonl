@@ -295,3 +295,33 @@
 {"when": "2026-09-27T18:08:55Z", "item": "S66", "action": "add", "from": "", "to": "open", "note": "done --note and note mean different things (log vs slice)"}
 {"when": "2026-09-27T18:08:55Z", "item": "S67", "action": "add", "from": "", "to": "open", "note": "slicer next output is terse"}
 {"when": "2026-09-27T18:08:55Z", "item": "S68", "action": "add", "from": "", "to": "open", "note": "no item-level notes/context without a slice"}
+{"when": "2026-09-27T18:16:35Z", "item": "S36", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S37", "action": "set", "from": "", "to": "", "note": "importance"}
+{"when": "2026-09-27T18:16:35Z", "item": "S19", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S20", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S35", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S33", "action": "set", "from": "", "to": "", "note": "importance"}
+{"when": "2026-09-27T18:16:35Z", "item": "S50", "action": "set", "from": "", "to": "", "note": "importance"}
+{"when": "2026-09-27T18:16:35Z", "item": "S51", "action": "set", "from": "", "to": "", "note": "urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S63", "action": "set", "from": "", "to": "", "note": "importance,urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S66", "action": "set", "from": "", "to": "", "note": "importance"}
+{"when": "2026-09-27T18:16:35Z", "item": "S67", "action": "set", "from": "", "to": "", "note": "urgency"}
+{"when": "2026-09-27T18:16:35Z", "item": "S68", "action": "set", "from": "", "to": "", "note": "urgency"}
+{"when": "2026-09-27T18:16:47Z", "item": "S36", "action": "move", "from": "48", "to": "1", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S37", "action": "move", "from": "18", "to": "2", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S65", "action": "move", "from": "65", "to": "3", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S64", "action": "move", "from": "65", "to": "4", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S20", "action": "move", "from": "43", "to": "5", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S19", "action": "move", "from": "43", "to": "6", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S35", "action": "move", "from": "50", "to": "7", "note": ""}
+{"when": "2026-09-27T18:16:47Z", "item": "S33", "action": "move", "from": "49", "to": "8", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S68", "action": "move", "from": "68", "to": "9", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S67", "action": "move", "from": "68", "to": "10", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S02", "action": "move", "from": "58", "to": "11", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S51", "action": "move", "from": "56", "to": "12", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S66", "action": "move", "from": "68", "to": "13", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S63", "action": "move", "from": "68", "to": "14", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S42", "action": "move", "from": "35", "to": "15", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S50", "action": "move", "from": "58", "to": "16", "note": ""}
+{"when": "2026-09-27T18:16:48Z", "item": "S03", "action": "move", "from": "39", "to": "17", "note": ""}
+{"when": "2026-09-27T18:16:58Z", "item": "S69", "action": "add", "from": "", "to": "open", "note": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)"}

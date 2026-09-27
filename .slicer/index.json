@@ -2,10 +2,384 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 69,
+  "next_id": 70,
   "preamble": "",
   "passes": [],
   "items": [
+    {
+      "id": "S36",
+      "title": "No single where-am-I overview",
+      "short_title": "No single where-am-I overview",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; ergonomics",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S37",
+      "title": "The CLI rebuilds its whole argparse tree on every invocation",
+      "short_title": "The CLI rebuilds its whole argparse tree on every invocation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "profiled; I first misattributed this to store.load",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S65",
+      "title": "find does not show which field or snippet matched",
+      "short_title": "find does not show which field or snippet matched",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S64",
+      "title": "slicer log has no per-item filter",
+      "short_title": "slicer log has no per-item filter",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S20",
+      "title": "History records that something changed, never what",
+      "short_title": "History records that something changed, never what",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S19",
+      "title": "Dependencies can only be asked about one item at a time",
+      "short_title": "Dependencies can only be asked about one item at a time",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agent surface",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S35",
+      "title": "remove --purge has no dry-run",
+      "short_title": "remove --purge has no dry-run",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; safety",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S33",
+      "title": "stats cannot show progress",
+      "short_title": "stats cannot show progress",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "review; reporting",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S68",
+      "title": "no item-level notes/context without a slice",
+      "short_title": "no item-level notes/context without a slice",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S67",
+      "title": "slicer next output is terse",
+      "short_title": "slicer next output is terse",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S02",
+      "title": "Trial run on a second repo with no legacy tree to import",
+      "short_title": "Trial run on a second repo with no legacy tree to import",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S51",
+      "title": "A mutating command still says \"now run slicer render\" after --render already rendered",
+      "short_title": "A mutating command still says \"now run slicer render\" after --render already rendered",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S50",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S66",
+      "title": "done --note and note mean different things (log vs slice)",
+      "short_title": "done --note and note mean different things (log vs slice)",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S63",
+      "title": "TUI: view, edit and add slice notes",
+      "short_title": "TUI: view, edit and add slice notes",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections).",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S42",
+      "title": "TUI reordering and re-prioritizing are one step at a time",
+      "short_title": "TUI reordering and re-prioritizing are one step at a time",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding; reorder at scale",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S50",
+      "title": "TUI wizard: create a roadmap interactively",
+      "short_title": "TUI wizard: create a roadmap interactively",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "fields": {
+        "size": "L",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S03",
+      "title": "Export back to a legacy markdown index for anything still expecting one",
+      "short_title": "Export back to a legacy markdown index for anything still expecting one",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1
+      }
+    },
     {
       "id": "S52",
       "title": "Document onboarding and AI-assisted roadmap workflows",
@@ -361,28 +735,6 @@
       }
     },
     {
-      "id": "S37",
-      "title": "The CLI rebuilds its whole argparse tree on every invocation",
-      "short_title": "The CLI rebuilds its whole argparse tree on every invocation",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "profiled; I first misattributed this to store.load",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 1,
-        "urgency": 1
-      }
-    },
-    {
       "id": "S13",
       "title": "move X --before X drops the item from the in-memory index",
       "short_title": "move X --before X drops the item from the in-memory index",
@@ -473,28 +825,6 @@
       }
     },
     {
-      "id": "S42",
-      "title": "TUI reordering and re-prioritizing are one step at a time",
-      "short_title": "TUI reordering and re-prioritizing are one step at a time",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding; reorder at scale",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 1,
-        "urgency": 1
-      }
-    },
-    {
       "id": "S25",
       "title": "An item id is used as a file path without validation",
       "short_title": "An item id is used as a file path without validation",
@@ -536,28 +866,6 @@
         "reason": "",
         "importance": 2,
         "urgency": 2
-      }
-    },
-    {
-      "id": "S03",
-      "title": "Export back to a legacy markdown index for anything still expecting one",
-      "short_title": "Export back to a legacy markdown index for anything still expecting one",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "M",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 1,
-        "urgency": 1
       }
     },
     {
@@ -847,50 +1155,6 @@
       }
     },
     {
-      "id": "S19",
-      "title": "Dependencies can only be asked about one item at a time",
-      "short_title": "Dependencies can only be asked about one item at a time",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "M",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "agent surface",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 1,
-        "urgency": 2
-      }
-    },
-    {
-      "id": "S20",
-      "title": "History records that something changed, never what",
-      "short_title": "History records that something changed, never what",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "M",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "agent surface",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 1
-      }
-    },
-    {
       "id": "S21",
       "title": "User text reaches the roadmap table unvalidated",
       "short_title": "User text reaches the roadmap table unvalidated",
@@ -979,28 +1243,6 @@
       }
     },
     {
-      "id": "S33",
-      "title": "stats cannot show progress",
-      "short_title": "stats cannot show progress",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "M",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "review; reporting",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 1,
-        "urgency": 1
-      }
-    },
-    {
       "id": "S34",
       "title": "Filing a detailed slice takes promote plus one edit per section",
       "short_title": "Filing a detailed slice takes promote plus one edit per section",
@@ -1023,50 +1265,6 @@
       }
     },
     {
-      "id": "S35",
-      "title": "remove --purge has no dry-run",
-      "short_title": "remove --purge has no dry-run",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "review; safety",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 1
-      }
-    },
-    {
-      "id": "S36",
-      "title": "No single where-am-I overview",
-      "short_title": "No single where-am-I overview",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "M",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "review; ergonomics",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 1
-      }
-    },
-    {
       "id": "S48",
       "title": "The scope boundary is fragile prose, not a structured field",
       "short_title": "The scope boundary is fragile prose, not a structured field",
@@ -1086,50 +1284,6 @@
         "reason": "",
         "importance": 2,
         "urgency": 2
-      }
-    },
-    {
-      "id": "S50",
-      "title": "TUI wizard: create a roadmap interactively",
-      "short_title": "TUI wizard: create a roadmap interactively",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "L",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "user request",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 1
-      }
-    },
-    {
-      "id": "S51",
-      "title": "A mutating command still says \"now run slicer render\" after --render already rendered",
-      "short_title": "A mutating command still says \"now run slicer render\" after --render already rendered",
-      "status": "open",
-      "has_slice": true,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding S50",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 1,
-        "urgency": 1
       }
     },
     {
@@ -1174,28 +1328,6 @@
         "reason": "",
         "importance": 2,
         "urgency": 2
-      }
-    },
-    {
-      "id": "S02",
-      "title": "Trial run on a second repo with no legacy tree to import",
-      "short_title": "Trial run on a second repo with no legacy tree to import",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "S",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 1
       }
     },
     {
@@ -1369,9 +1501,9 @@
       }
     },
     {
-      "id": "S63",
-      "title": "TUI: view, edit and add slice notes",
-      "short_title": "TUI: view, edit and add slice notes",
+      "id": "S69",
+      "title": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)",
+      "short_title": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)",
       "status": "open",
       "has_slice": false,
       "depends_on": [],
@@ -1382,117 +1514,7 @@
           "slicer"
         ],
         "trees_literal": false,
-        "findings": "split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections).",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 2
-      }
-    },
-    {
-      "id": "S64",
-      "title": "slicer log has no per-item filter",
-      "short_title": "slicer log has no per-item filter",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note.",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 2
-      }
-    },
-    {
-      "id": "S65",
-      "title": "find does not show which field or snippet matched",
-      "short_title": "find does not show which field or snippet matched",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json.",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 2
-      }
-    },
-    {
-      "id": "S66",
-      "title": "done --note and note mean different things (log vs slice)",
-      "short_title": "done --note and note mean different things (log vs slice)",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible.",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 2
-      }
-    },
-    {
-      "id": "S67",
-      "title": "slicer next output is terse",
-      "short_title": "slicer next output is terse",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag.",
-        "pass": "",
-        "group": "",
-        "reason": "",
-        "importance": 2,
-        "urgency": 2
-      }
-    },
-    {
-      "id": "S68",
-      "title": "no item-level notes/context without a slice",
-      "short_title": "no item-level notes/context without a slice",
-      "status": "open",
-      "has_slice": false,
-      "depends_on": [],
-      "fields": {
-        "size": "",
-        "flags": [],
-        "trees": [
-          "slicer"
-        ],
-        "trees_literal": false,
-        "findings": "dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice.",
+        "findings": "dogfooding re-sort: reordering the queue needs one 'move --to' per item; list --sort score is view-only. Consider 'slicer sort --by score' to persist, or move accepting a full order / multiple ids.",
         "pass": "",
         "group": "",
         "reason": "",
