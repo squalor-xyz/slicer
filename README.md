@@ -114,6 +114,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `next [-n N]` | one eligible item at offset N (default 0); started work first, then effective priority |
 | `list [--status/--tree/--pass] [--sort score]` | filter the queue, or rank it by priority score |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
+| `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |
 | `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |

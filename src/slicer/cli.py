@@ -418,6 +418,40 @@ def cmd_find(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_deps(args: argparse.Namespace) -> int:
+  state = _state(args)
+  index = state.index
+  cfg = state.config
+  if args.id is not None:
+    state.index.require(args.id)
+  if args.format == "mermaid":
+    diagram = graph.mermaid(index, focus=args.id)
+    _emit(args, {"format": "mermaid", "graph": diagram}, diagram)
+    return OK
+  if args.id is not None:
+    item = index.require(args.id)
+    blocked = graph.blocked_by(index, item, cfg.done_status)
+    dependents = graph.dependents(index)[args.id]
+    payload = {
+      "id": args.id, "waits_on": item.depends_on,
+      "blocked_by": blocked, "dependents": dependents,
+    }
+    def _mark(dep: str) -> str:
+      return f"{dep} (blocked)" if dep in blocked else dep
+    lines = [f"{args.id}  {item.display_title()}"]
+    lines.append("waits on         " + (", ".join(_mark(d) for d in item.depends_on) or "-"))
+    lines.append("depended on by   " + (", ".join(dependents) or "-"))
+    _emit(args, payload, "\n".join(lines))
+    return OK
+  eff = graph.effective_scores(index)
+  unblocked = [it for it in index.items
+               if it.status == cfg.open_status and not graph.blocked_by(index, it, cfg.done_status)]
+  unblocked.sort(key=lambda it: eff[it.id], reverse=True)
+  _emit(args, [it.to_dict() for it in unblocked],
+        "\n".join(_item_rows(state, unblocked)) or "nothing unblocked")
+  return OK
+
+
 def cmd_show(args: argparse.Namespace) -> int:
   state = _state(args)
   item = state.index.require(args.id)
@@ -910,6 +944,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--sort", choices=["score"], help="order by priority score, highest first")
+
+  sp = add("deps", cmd_deps, "dependencies: unblocked items, or one item's edges")
+  sp.add_argument("id", nargs="?")
+  sp.add_argument("--format", choices=["mermaid"], help="render the dependency graph")
 
   sp = add("find", cmd_find, "search items by text")
   sp.add_argument("pattern")

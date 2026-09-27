@@ -234,6 +234,11 @@ means an agent can decide from the dry run alone.
 
 ## Rules for an agent working in a slicer project
 
+**Plan a batch with the dependency graph.** `slicer deps --json` lists every unblocked open
+item (what you can start now); `slicer deps ID --json` gives what an item waits on, which of
+those still block it, and what depends on it; `slicer deps --format mermaid` prints a
+PR-reviewable graph. Reach for these instead of reconstructing the graph from `list --json`.
+
 **Before adding, search for duplicates.** `slicer find "topic" --json` matches item ids,
 titles, findings, and slice bodies (narrow with `--in title,findings,body`) and reports the
 matched field and a snippet (`match` in JSON), so you can answer "is there already an item

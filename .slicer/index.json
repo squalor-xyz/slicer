@@ -120,7 +120,7 @@
       "id": "S19",
       "title": "Dependencies can only be asked about one item at a time",
       "short_title": "Dependencies can only be asked about one item at a time",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

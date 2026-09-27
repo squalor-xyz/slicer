@@ -72,6 +72,27 @@ def dependents(index: Index) -> dict[str, list[str]]:
   return rev
 
 
+def mermaid(index: Index, focus: str | None = None) -> str:
+  """A `graph TD` diagram of the dependency edges, dependent -> dependency.
+
+  With `focus`, only edges touching that id (its neighbourhood) are drawn; a
+  node's label is its id and display title, sanitised for mermaid.
+  """
+  edges = [(it.id, dep) for it in index.items for dep in it.depends_on if index.get(dep)]
+  if focus is not None:
+    edges = [(a, b) for a, b in edges if focus in (a, b)]
+  if not edges:
+    return "graph TD\n  %% no dependencies"
+  nodes = {end for edge in edges for end in edge}
+  lines = ["graph TD"]
+  for it in index.items:
+    if it.id in nodes:
+      label = it.display_title().replace('"', "'").replace("\n", " ")
+      lines.append(f'  {it.id}["{it.id} {label}"]')
+  lines += [f"  {a} --> {b}" for a, b in edges]
+  return "\n".join(lines)
+
+
 def effective_scores(index: Index) -> dict[str, int]:
   """Each item's priority once it inherits from what depends on it.
 
