@@ -1,0 +1,41 @@
+{
+  "id": "S82",
+  "title": "Make flags a first-class, filterable tag axis",
+  "lead": [
+    "Items already carry a multi-valued `flags` list, but flags are write-only: they\ncan be set (`set --flag`) and can hide an item at render (`exclude_flags` in\nconfig), yet there is no way to *query* by them. The single-valued `pass` and the\nsubsystem-oriented `trees` cover milestones and code areas; neither gives\northogonal, free-form labels like `security`, `perf`, or `v1.0.0`. This slice\nturns the existing `flags` field into a real, queryable tag axis without adding a\nnew field."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** renaming `flags` to `tags` (the field name stays for\ncompatibility; this is a query surface, not a schema change); a dedicated\n`tag`/`untag` command (use `set --flag`); flag-scoped rendering sections.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A milestone lives in one `pass` and an item belongs to specific `trees`, but\nsometimes you want cross-cutting labels an item can hold several of at once, and\nyou want to filter by them. Flags are already the right data shape (a list); they\njust lack a query surface. Promoting them to a filterable axis gives free-form\ntagging with no new schema."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — a `list --flag` filter (repeatable, matching the existing\n  `--tree`/`--status` filters); consider `find`/`stats` coverage\n- `src/slicer/tui.py` — add `flag` to `FILTER_GROUPS` and `filter_choices` so the\n  `f` filter panel offers flags like it offers tree/pass/importance\n- `src/slicer/graph.py` or wherever list filtering resolves, if shared\n- `docs/agents.md`, `docs/getting-started.md`, `README.md` — document flags as a\n  tag axis and the new filter\n- `tests/test_cli.py`, `tests/test_tui.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `list --flag security` returns only items whose `flags` contain `security`;\n   repeatable `--flag` is OR within the group, matching `--tree` semantics.\n2. The TUI filter panel lists each distinct flag and filters the queue by it.\n3. `exclude_flags` render behavior is unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a `--flag` filter to `list` mirroring `--tree` (repeatable, OR within group,\nAND across groups). Add `flag` to the TUI `FILTER_GROUPS` and `filter_choices`\n(each distinct flag, plus the \"(none)\" case), reusing the existing `Filters`\nmachinery. Keep `set --flag` and `exclude_flags` exactly as they are. Document\nflags as the orthogonal, multi-valued tag axis alongside `pass` (milestone) and\n`trees` (subsystem)."
+    },
+    {
+      "heading": "Check",
+      "body": "You can label items with free-form flags and then answer \"show me everything\ntagged X\" from both the CLI (`list --flag X`) and the TUI filter panel; existing\nflag/exclude behavior is untouched."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

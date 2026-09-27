@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 82,
+  "next_id": 83,
   "preamble": "",
   "passes": [
     {
@@ -1889,6 +1889,29 @@
         "reason": "",
         "importance": 2,
         "urgency": 2
+      }
+    },
+    {
+      "id": "S82",
+      "title": "Make flags a first-class, filterable tag axis",
+      "short_title": "Make flags a first-class, filterable tag axis",
+      "status": "later",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1
       }
     }
   ],

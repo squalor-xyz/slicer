@@ -380,3 +380,5 @@
 {"when": "2026-09-27T22:33:56Z", "item": "S06", "action": "set", "from": "", "to": "", "note": "depends_on S72,S73,S74,S75,S76→S72,S73,S74,S75,S76"}
 {"when": "2026-09-27T22:33:56Z", "item": "S80", "action": "set", "from": "", "to": "", "note": "depends_on S76,S77,S06→S76,S77,S06"}
 {"when": "2026-09-27T22:34:24Z", "item": "S06", "action": "set", "from": "", "to": "", "note": "short_title Publish 0.1.0 to PyPI once CI is green on a tag→Publish to PyPI as squalor-slicer"}
+{"when": "2026-09-27T22:50:46Z", "item": "S82", "action": "add", "from": "", "to": "later", "note": "Make flags a first-class, filterable tag axis"}
+{"when": "2026-09-27T22:50:54Z", "item": "S82", "action": "promote", "from": "", "to": "", "note": ""}
