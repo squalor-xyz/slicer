@@ -357,3 +357,5 @@
 {"when": "2026-09-27T21:54:47Z", "item": "S03", "action": "retire", "from": "open", "to": "retired", "note": "legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals"}
 {"when": "2026-09-27T21:55:00Z", "item": "S42", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-09-27T21:55:00Z", "item": "S42", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-27T22:02:22Z", "item": "S42", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-27T22:04:04Z", "item": "S42", "action": "status", "from": "started", "to": "done", "note": "TUI now has T (move-to-top) and M (move-to-position prompt), both routed through ops.move; verified by tests."}

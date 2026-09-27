@@ -39,7 +39,7 @@
   through git.</p></div></section>
 <section><h2>Non-goals</h2><div class="prose"><p>- Not a real-time collaboration or multi-user concurrent-editing tool; coordination<br>
   happens through git, not a live shared service.</p></div></section>
-<p class="summary">71 items · — 2 · done 67 · parked 1 · retired 1</p>
+<p class="summary">71 items · — 1 · done 68 · parked 1 · retired 1</p>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>S36</td><td>No single where-am-I overview</td><td>M</td><td>slicer</td><td>review; ergonomics</td><td class="status">done</td></tr>
 <tr class="done"><td>2</td><td>S37</td><td>The CLI rebuilds its whole argparse tree on every invocation</td><td>S</td><td>slicer</td><td>profiled; I first misattributed this to store.load</td><td class="status">done</td></tr>
@@ -55,7 +55,7 @@
 <tr class="done"><td>12</td><td>S51</td><td>A mutating command still says &quot;now run slicer render&quot; after --render already rendered</td><td>S</td><td>slicer</td><td>dogfooding S50</td><td class="status">done</td></tr>
 <tr class="done"><td>13</td><td>S66</td><td>done --note and note mean different things (log vs slice)</td><td></td><td>slicer</td><td>dogfooding S18: &#x27;done --note&#x27; writes only log.jsonl; &#x27;slicer note&#x27; writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible.</td><td class="status">done</td></tr>
 <tr class="done"><td>14</td><td>S63</td><td>TUI: view, edit and add slice notes</td><td></td><td>slicer</td><td>split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections).</td><td class="status">done</td></tr>
-<tr class="open"><td>15</td><td>S42</td><td>TUI reordering and re-prioritizing are one step at a time</td><td>S</td><td>slicer</td><td>dogfooding; reorder at scale</td><td class="status">—</td></tr>
+<tr class="done"><td>15</td><td>S42</td><td>TUI reordering and re-prioritizing are one step at a time</td><td>S</td><td>slicer</td><td>dogfooding; reorder at scale</td><td class="status">done</td></tr>
 <tr class="open"><td>16</td><td>S50</td><td>TUI wizard: create a roadmap interactively</td><td>L</td><td>slicer</td><td>user request</td><td class="status">—</td></tr>
 <tr class="retired"><td>17</td><td>S03</td><td>Export back to a legacy markdown index for anything still expecting one</td><td>M</td><td>slicer</td><td>legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals</td><td class="status">retired</td></tr>
 <tr class="done"><td>18</td><td>S52</td><td>Document onboarding and AI-assisted roadmap workflows</td><td>M</td><td>docs</td><td>documentation review; user workflow</td><td class="status">done</td></tr>
