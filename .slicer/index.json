@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 64,
+  "next_id": 66,
   "preamble": "",
   "passes": [],
   "items": [
@@ -1383,6 +1383,50 @@
         ],
         "trees_literal": false,
         "findings": "split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections).",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S64",
+      "title": "slicer log has no per-item filter",
+      "short_title": "slicer log has no per-item filter",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S65",
+      "title": "find does not show which field or snippet matched",
+      "short_title": "find does not show which field or snippet matched",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json.",
         "pass": "",
         "group": "",
         "reason": "",

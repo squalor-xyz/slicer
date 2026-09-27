@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-63 items · — 12 · done 50 · parked 1
+65 items · — 14 · done 50 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -89,3 +89,5 @@
 | 61 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  |  |  | done |
 | 62 | [S62](slices/S62.md) | Parallel branches conflict on .slicer/log.jsonl and generated render/ files |  | slicer | dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/. | done |
 | 63 | S63 | TUI: view, edit and add slice notes |  | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | — |
+| 64 | S64 | slicer log has no per-item filter |  | slicer | dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note. | — |
+| 65 | S65 | find does not show which field or snippet matched |  | slicer | dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json. | — |
