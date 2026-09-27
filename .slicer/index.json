@@ -288,8 +288,8 @@
       "id": "S66",
       "title": "done --note and note mean different things (log vs slice)",
       "short_title": "done --note and note mean different things (log vs slice)",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "notes": [],
       "fields": {

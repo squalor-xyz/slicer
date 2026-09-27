@@ -1,0 +1,39 @@
+{
+  "id": "S66",
+  "title": "done --note and note mean different things (log vs slice)",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`done/start/park/unpark --note` records a one-line history/log entry; `slicer note` appends a\ndurable dated note on the item (shown in show/render). Both said \"note\" and the flag help read\n\"one line for the log\", which is easy to confuse. Filed dogfooding S18."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/cli.py: reword the four `--note` help strings.\n- README.md; a help-content test in tests/test_cli.py."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Clarify only (no behavior change): the four status `--note` flags now read \"one line recorded in\nhistory (see `slicer note` for a durable note on the item)\"; the README done/park/unpark row\ndistinguishes the two. Flag name, behavior, and JSON are unchanged; log notes remain viewable via\n`slicer log --item`."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer done --help` mentions history and `slicer note`; `done --note` behaves as before. Focused\nhelp test + the unit suite."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

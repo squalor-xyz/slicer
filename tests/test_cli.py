@@ -654,3 +654,15 @@ class RenderHintTests(unittest.TestCase):
       a = json.loads(repo.run("prose", "edit", "preamble", "--text", "x", "--json")[1])
       b = json.loads(repo.run("prose", "edit", "preamble", "--text", "y", "--render", "--json")[1])
       self.assertEqual(set(a), set(b))  # same keys; hint was never in the envelope
+
+
+class NoteHelpTests(unittest.TestCase):
+  def test_StatusNote_HelpDistinguishesFromSlicerNote(self) -> None:
+    import io
+    from contextlib import redirect_stdout
+    out = io.StringIO()
+    with self.assertRaises(SystemExit), redirect_stdout(out):
+      cli.main(["done", "--help"])
+    text = out.getvalue()
+    self.assertIn("history", text)
+    self.assertIn("slicer note", text)

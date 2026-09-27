@@ -1084,19 +1084,19 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = _render_flag(add("done", _mutating(_status_cmd("done_status")), "mark an item finished"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
-  sp.add_argument("--note", help="one line for the log")
+  sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
   sp = _render_flag(add("start", _mutating(cmd_start), "mark an item in progress"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
-  sp.add_argument("--note", help="one line for the log")
+  sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
   sp = _render_flag(add("park", _mutating(cmd_park), "set an item aside"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
-  sp.add_argument("--note", help="one line for the log")
+  sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
   sp = _render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
-  sp.add_argument("--note", help="one line for the log")
+  sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
   sp = sub.add_parser("prose", help="read and edit the roadmap's own prose", parents=[common])
   psub = sp.add_subparsers(dest="prose_command", required=True)
