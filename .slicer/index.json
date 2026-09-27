@@ -2,9 +2,16 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 72,
+  "next_id": 82,
   "preamble": "",
-  "passes": [],
+  "passes": [
+    {
+      "key": "v1",
+      "heading": "v1.0.0 release",
+      "intro": "",
+      "outro": ""
+    }
+  ],
   "items": [
     {
       "id": "S36",
@@ -359,8 +366,12 @@
       "short_title": "TUI wizard: create a roadmap interactively",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
-      "notes": [],
+      "depends_on": [
+        "S81"
+      ],
+      "notes": [
+        "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it."
+      ],
       "fields": {
         "size": "L",
         "flags": [],
@@ -369,7 +380,7 @@
         ],
         "trees_literal": false,
         "findings": "user request",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -957,11 +968,17 @@
     },
     {
       "id": "S06",
-      "title": "Publish 0.1.0 to PyPI once CI is green on a tag",
-      "short_title": "Publish 0.1.0 to PyPI once CI is green on a tag",
-      "status": "parked",
-      "has_slice": false,
-      "depends_on": [],
+      "title": "Publish to PyPI as squalor-slicer when a tag's CI is green",
+      "short_title": "Publish to PyPI as squalor-slicer",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S72",
+        "S73",
+        "S74",
+        "S75",
+        "S76"
+      ],
       "notes": [],
       "fields": {
         "size": "S",
@@ -971,7 +988,7 @@
         ],
         "trees_literal": false,
         "findings": "PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 3,
@@ -1633,6 +1650,241 @@
         "trees_literal": false,
         "findings": "dogfooding S02 (greenfield): 'slicer set ID --depends-on \"\"' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug.",
         "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S72",
+      "title": "Refuse a newer-than-known state schema instead of silently downgrading it",
+      "short_title": "Refuse a newer-than-known state schema instead of silently downgrading it",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (code maturity)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3
+      }
+    },
+    {
+      "id": "S73",
+      "title": "Raise a clean error on a malformed config numeric field",
+      "short_title": "Raise a clean error on a malformed config numeric field",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (code maturity)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S74",
+      "title": "Keep a --render failure inside one JSON envelope",
+      "short_title": "Keep a --render failure inside one JSON envelope",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer",
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (code maturity)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S75",
+      "title": "Give internal/state errors a distinct exit code before the CLI freezes",
+      "short_title": "Give internal/state errors a distinct exit code before the CLI freezes",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (code maturity)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3
+      }
+    },
+    {
+      "id": "S76",
+      "title": "Derive the version from package metadata and add slicer --version",
+      "short_title": "Derive the version from package metadata and add slicer --version",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (docs + code)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S77",
+      "title": "Add a CHANGELOG seeded from the history",
+      "short_title": "Add a CHANGELOG seeded from the history",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (docs)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S78",
+      "title": "Add a CONTRIBUTING pointer",
+      "short_title": "Add a CONTRIBUTING pointer",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (docs)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S79",
+      "title": "Bring the documentation current with the shipped CLI and TUI",
+      "short_title": "Bring the documentation current with the shipped CLI and TUI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (docs)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3
+      }
+    },
+    {
+      "id": "S80",
+      "title": "Add a release checklist, tag CI, and the 1.0.0 bump",
+      "short_title": "Add a release checklist, tag CI, and the 1.0.0 bump",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S76",
+        "S77",
+        "S06"
+      ],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (release)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S81",
+      "title": "Add a reusable multi-field text input to the TUI",
+      "short_title": "Add a reusable multi-field text input to the TUI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50)",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 2,

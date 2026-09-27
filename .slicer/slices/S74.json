@@ -1,0 +1,41 @@
+{
+  "id": "S74",
+  "title": "Keep a --render failure inside one JSON envelope",
+  "lead": [
+    "A mutating handler emits its success JSON, then `_mutating` runs `render.write`.\nIf rendering raises (e.g. a template referencing an unknown placeholder), the\nexception propagates to `main`, which prints a *second* JSON error envelope and\nexits 2 — after the mutation is already committed. Agents parsing stdout as one\nJSON document mis-handle it, and the non-zero exit misrepresents a mutation that\nactually succeeded."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (code maturity)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer, cli",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** changing what `render` itself writes, or its standalone\ncommand behavior.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The agent contract (docs/agents.md) promises a single JSON document to stdout\nand an exit code that reflects the outcome. Two documents plus a misleading exit\ncode on the common \"broken template\" case breaks that contract."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `_mutating` (~lines 47-67) and the handlers' `_emit`\n- `src/slicer/render.py` — `RenderError` is the failure raised\n- `tests/test_render.py` or `tests/test_cli.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A mutating command with `--render` and a deliberately broken template writes\n   the mutation, then emits exactly one JSON document describing the render\n   failure, with a defined exit code.\n2. The happy path still emits one success envelope and renders."
+    },
+    {
+      "heading": "Implement",
+      "body": "Restructure `_mutating` so rendering happens before the success payload is\nemitted, or so a render failure is folded into the single envelope (mutation\nsucceeded, render failed, as a warning field), never a second document. Decide\nand document the exit code for \"mutation ok, render failed\". Keep the plain\n(non-`--json`) output equally coherent."
+    },
+    {
+      "heading": "Check",
+      "body": "`--json` mutations with `--render` always produce one parseable document; the\nexit code matches the documented meaning whether render succeeds or fails."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

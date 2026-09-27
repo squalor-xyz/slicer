@@ -1,0 +1,41 @@
+{
+  "id": "S06",
+  "title": "Publish to PyPI as squalor-slicer when a tag's CI is green",
+  "lead": [
+    "The `slicer` name on PyPI is taken (Microsoft InterpretML), so slicer publishes\nunder the distribution name `squalor-slicer` while the command and import package\nstay `slicer`. This is the distribution half of the 1.0 release."
+  ],
+  "depends_note": null,
+  "findings_note": "PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the version bump to 1.0.0 and the release checklist/tag\nprocedure (owned by the release-checklist slice, which consumes this); cutting the\nactual tag.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A both-audience 1.0 should be installable with `pip install squalor-slicer`, not\nonly `git+https`. The name collision is the only thing that blocked publishing;\nthe plan (publish as `squalor-slicer`, keep the `slicer` command/import) resolves\nit without changing how anyone uses the tool."
+    },
+    {
+      "heading": "Files",
+      "body": "- `pyproject.toml` — `name = \"squalor-slicer\"`; keep `[project.scripts] slicer`\n  and the `slicer` import package; confirm metadata (description, URLs, license,\n  classifiers, `requires-python`)\n- `.github/workflows/` — a tag-triggered publish job\n- `README.md`, `docs/getting-started.md` — switch install examples from\n  `git+https://github.com/squalor-xyz/slicer` to `pip install squalor-slicer`\n- reuse the existing packaging test (S58) for the build"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The existing packaging/build test still produces a valid sdist and wheel under\n   the new distribution name, exposing the `slicer` console script and the\n   `slicer` import package.\n2. `slicer --version` (from S76) reports the packaged version once installed."
+    },
+    {
+      "heading": "Implement",
+      "body": "Rename the distribution to `squalor-slicer` in `pyproject.toml`, leaving the\nconsole script (`slicer = \"slicer.cli:main\"`) and the import package untouched so\n`slicer …` and `import slicer` are unchanged. Build the sdist/wheel and verify\nthey install and run. Add a GitHub Actions job that, on a version tag, builds and\npublishes to PyPI — prefer OIDC trusted publishing over a long-lived token.\nUpdate every install example to the PyPI path, keeping a `git+https` note for the\nunreleased/dev case. Register the project (or configure trusted publishing) on\nPyPI before the first tag."
+    },
+    {
+      "heading": "Check",
+      "body": "`pip install squalor-slicer` in a clean environment yields a working `slicer`\ncommand; a tag push triggers CI that builds and publishes; install docs match."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

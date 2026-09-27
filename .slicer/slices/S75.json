@@ -1,0 +1,41 @@
+{
+  "id": "S75",
+  "title": "Give internal/state errors a distinct exit code before the CLI freezes",
+  "lead": [
+    "Every `SlicerError` exits 2 today — the same code as `next` on an empty queue.\nA corrupt state file, a lock timeout, an I/O failure and a bad config are\ntherefore indistinguishable, by exit status alone, from \"nothing to do\". With\nthe CLI contract freezing at 1.0, this is the moment to separate them; changing\nexit codes after 1.0 would be a breaking change."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (code maturity)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** reworking error messages or codes themselves beyond the\nclassification; the `code` strings stay as they are.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Both audiences key off exit status: CI and shell automation that do not parse\nJSON must be able to tell a hard failure from a benign empty result. A 1.0 CLI\nshould encode that distinction in the contract."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `_fail` (~line 37), `main` (~lines 1175-1224), `cmd_next`\n- `src/slicer/errors.py` — a way to classify internal vs usage (e.g. an\n  `internal` flag or a code set)\n- `docs/agents.md`, `README.md` — the exit-code table"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A corrupt/locked/io/config/`schema_too_new` error exits 3.\n2. A usage error, a validation error, and an empty `next` still exit 2.\n3. Success exits 0."
+    },
+    {
+      "heading": "Implement",
+      "body": "Introduce exit code 3 (internal/state) for `code in {corrupt, locked, io,\nconfig, schema_too_new}` and keep 2 for usage/validation/empty. Centralize the\nmapping in `main`/`_fail` from the error's code (or a new `internal` flag on\n`SlicerError`) rather than per-command. Publish the exit-code table in the agent\ndocs and README as part of the stable contract."
+    },
+    {
+      "heading": "Check",
+      "body": "`echo $?` distinguishes \"empty queue\" (2) from \"corrupt repo\" (3); the table is\ndocumented."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

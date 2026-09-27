@@ -1,0 +1,41 @@
+{
+  "id": "S79",
+  "title": "Bring the documentation current with the shipped CLI and TUI",
+  "lead": [
+    "Several docs have drifted from the code: the agent guide states features \"not\nhere yet\" that shipped, payload tables omit commands and fields, and the README\nand getting-started guide miss the newest TUI keys and flags. For an\nagent-facing tool this inaccuracy is the most damaging kind of staleness."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (docs)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the exit-code table (owned by the exit-code slice), the\nCHANGELOG/CONTRIBUTING files (their own slices), and any PyPI/install rewrite\n(owned by the publish slice).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Docs are the contract for both audiences. A false \"what is not here yet\"\nparagraph and drifted `--json` payload tables actively mislead the agents the\ntool is built for."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/agents.md` — false \"What is not here yet\" paragraph; payload table\n  (add `sort`, `deps`, `find`, `goals`, `note`, `status`); `next`\n  (`effective_score`); `stats` (`completion`, `by_tree_status`)\n- `README.md` — `note`/`sort` in the `--render` list; reorder keys `J/K/T/M`;\n  `--id` on `add`; `--short-title`/`--no-flags` on `set`\n- `docs/getting-started.md` — TUI reorder keys and note add/edit/remove\n- `src/slicer/cli.py` — `note` subparser help \"an item's slice\" → \"an item\"\n- `ARCHITECTURE.md` — add `ROADMAP.html`, `ai.py`, `tui_style.py`; note `sync`\n  writes external docs outside `ops.py` by design\n- `docs/configuration.md` — add `ROADMAP.html` to the not-configurable outputs"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "None beyond `slicer check` (which byte-compares render; the `note` help reword is\na one-liner). Consider a doc/CLI consistency check if cheap."
+    },
+    {
+      "heading": "Implement",
+      "body": "Work the file list above: delete/rewrite the stale agents.md paragraph to reflect\n`log --item`, `set` old→new deltas, `note`, and `deps`; add the missing payload\nrows and fields; enumerate `J/K/T/M` wherever reorder keys appear; add the\nundocumented flags; add the missing generated output and modules to\nARCHITECTURE/configuration; and reword the `note` subparser help."
+    },
+    {
+      "heading": "Check",
+      "body": "Every subcommand and its `--json` payload is documented accurately; the README\nand getting-started TUI sections name the current keys; ARCHITECTURE lists all\nmodules and generated outputs; `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

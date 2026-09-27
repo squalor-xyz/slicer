@@ -1,0 +1,41 @@
+{
+  "id": "S73",
+  "title": "Raise a clean error on a malformed config numeric field",
+  "lead": [
+    "`Config.load` catches only `(KeyError, TypeError)`, but `Config.from_dict` and\n`SyncTarget.from_dict` call `int(...)` on `version`, `id.width`, and sync\n`count`. A hand-edited or merge-mangled config such as `{\"id\":{\"width\":\"wide\"}}`\nraises `ValueError`, which escapes to the top and prints a raw traceback —\nviolating the \"clean SlicerError, never a traceback\" invariant. The index/slice\npath already catches `ValueError`; only config is exposed."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (code maturity)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** validating semantic ranges of config values beyond \"is a\nnumber\"; only the crash is in scope.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Broken JSON from a bad merge or hand edit is exactly the case the tool otherwise\nhandles gracefully. A traceback here is an embarrassing crash and breaks the\n`SlicerError.code` contract agents rely on."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` — the `except` in `Config.load` (~line 230)\n- `tests/test_corruption.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `config.json` with `{\"id\":{\"width\":\"wide\"}}` → `ConfigError` (`code=\"config\"`),\n   no traceback.\n2. `config.json` with `{\"version\":\"x\"}` → `ConfigError`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `ValueError` to the `except` tuple in `Config.load` so it raises the same\n`ConfigError`/`code=\"config\"` the non-JSON case already produces. Confirm the\nmessage still names the config file."
+    },
+    {
+      "heading": "Check",
+      "body": "A wrong-typed numeric config field yields a clean, actionable error and exit\ncode, not a stack trace."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
