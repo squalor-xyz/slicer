@@ -54,8 +54,8 @@
       "id": "S65",
       "title": "find does not show which field or snippet matched",
       "short_title": "find does not show which field or snippet matched",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",

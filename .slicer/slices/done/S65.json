@@ -1,0 +1,39 @@
+{
+  "id": "S65",
+  "title": "find does not show which field or snippet matched",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer find` (S15) lists matching items with the same rows as `list`, but never says where\nthe term hit. For a match that lives only in a slice body you must re-open the slice to see\nwhy it matched — friction filed while dogfooding S15."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/cli.py: per-field matching in find (`_field_text`, `_find_match`, `_snippet`),\n  replacing the single-blob `_search_text`.\n- tests/test_find.py; README.md, docs/getting-started.md, docs/agents.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Search each requested field in scope order and report the first hit's field plus a one-line\nsnippet around it. Text output adds an indented `matched in <field>: <snippet>` line under\neach item's existing row; `--json` adds `match: {field, snippet}` per result. The reported\nfield stays in the id/title/short_title/findings/body vocabulary and honours `--in`."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer find <term>` shows the matched field and snippet; `--json` carries `match`; a\nbody-only term reports `body` with surrounding context; `--in` limits the reported field.\nFocused find tests, the unit suite, slicer check, and git diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

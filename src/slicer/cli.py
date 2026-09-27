@@ -353,25 +353,38 @@ def cmd_list(args: argparse.Namespace) -> int:
 FIND_FIELDS = ("id", "title", "short_title", "findings", "body")
 
 
-def _search_text(state: store.State, item: model.Item, fields: tuple[str, ...]) -> str:
-  """Concatenate the requested searchable fields for one item, casefolded.
+def _field_text(state: store.State, item: model.Item, field: str) -> str:
+  """The searchable text of one field. `body` is the item's slice prose —
+  scope boundary, lead, and every section heading and body — so `find` reaches
+  text that lives only inside a slice."""
+  if field != "body":
+    return getattr(item, field)
+  sl = state.slices.get(item.id)
+  if sl is None:
+    return ""
+  parts = [sl.boundary, *sl.lead]
+  for section in sl.sections:
+    parts += [section.heading, section.body]
+  return "\n".join(parts)
 
-  `body` is the item's slice prose — scope boundary, lead, and every section
-  heading and body — so `find` reaches text that lives only inside a slice.
-  """
-  parts: list[str] = []
+
+def _snippet(text: str, idx: int, length: int, pad: int = 25) -> str:
+  """A one-line window around the hit, whitespace collapsed, elided when cut."""
+  start, end = max(0, idx - pad), min(len(text), idx + length + pad)
+  frag = " ".join(text[start:end].split())
+  return ("…" if start > 0 else "") + frag + ("…" if end < len(text) else "")
+
+
+def _find_match(
+  state: store.State, item: model.Item, fields: tuple[str, ...], needle: str
+) -> tuple[str, str] | None:
+  """The first field (in scope order) whose text contains needle, with a snippet."""
   for field in fields:
-    if field == "body":
-      sl = state.slices.get(item.id)
-      if sl is not None:
-        parts.append(sl.boundary)
-        parts.extend(sl.lead)
-        for section in sl.sections:
-          parts.append(section.heading)
-          parts.append(section.body)
-    else:
-      parts.append(getattr(item, field))
-  return "\n".join(parts).casefold()
+    text = _field_text(state, item, field)
+    idx = text.casefold().find(needle)
+    if idx != -1:
+      return field, _snippet(text, idx, len(needle))
+  return None
 
 
 def cmd_find(args: argparse.Namespace) -> int:
@@ -391,8 +404,17 @@ def cmd_find(args: argparse.Namespace) -> int:
       )
   state = _state(args)
   needle = needle.casefold()
-  matches = [i for i in state.index.items if needle in _search_text(state, i, fields)]
-  _emit(args, [i.to_dict() for i in matches], "\n".join(_item_rows(state, matches)) or "no matching items")
+  hits = []
+  for item in state.index.items:
+    match = _find_match(state, item, fields, needle)
+    if match is not None:
+      hits.append((item, match[0], match[1]))
+  payload = [i.to_dict() | {"match": {"field": f, "snippet": s}} for i, f, s in hits]
+  rows = _item_rows(state, [i for i, _, _ in hits])
+  text = "\n".join(
+    f"{row}\n      matched in {f}: {s}" for row, (_, f, s) in zip(rows, hits)
+  ) or "no matching items"
+  _emit(args, payload, text)
   return OK
 
 

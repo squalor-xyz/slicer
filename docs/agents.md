@@ -235,8 +235,9 @@ means an agent can decide from the dry run alone.
 ## Rules for an agent working in a slicer project
 
 **Before adding, search for duplicates.** `slicer find "topic" --json` matches item ids,
-titles, findings, and slice bodies (narrow with `--in title,findings,body`), so you can answer
-"is there already an item about X?" before creating one.
+titles, findings, and slice bodies (narrow with `--in title,findings,body`) and reports the
+matched field and a snippet (`match` in JSON), so you can answer "is there already an item
+about X?" — and see why each hit matched — before creating one.
 
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.

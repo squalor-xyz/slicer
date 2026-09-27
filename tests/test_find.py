@@ -74,13 +74,34 @@ class FindTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertIn("nonempty", err)
 
-  def test_Find_Rows_MatchListFormatForTheSameItems(self) -> None:
-    # Every item's title contains "spelled out", so find returns them all in
-    # queue order — the same rows `list` prints, guarding the shared formatter.
+  def test_Find_Rows_ReuseListFormatPlusAMatchLine(self) -> None:
+    # find adds a "matched in ..." line under each item, but every list row for a
+    # matched item still appears verbatim (shared formatter, plus context).
     with self.repo() as repo:
-      _, found, _ = repo.run("find", "spelled out")
-      _, listed, _ = repo.run("list")
-      self.assertEqual(found, listed)
+      found = repo.run("find", "spelled out")[1]
+      for row in repo.run("list")[1].splitlines():
+        self.assertIn(row, found)
+      self.assertIn("matched in title:", found)
+
+  def test_Find_ReportsTheMatchedFieldAndSnippet(self) -> None:
+    with self.repo() as repo:
+      # title hit
+      payload = json.loads(repo.run("find", "fourth thing", "--json")[1])
+      match = next(p["match"] for p in payload if p["id"] == "S04")
+      self.assertEqual(match["field"], "title")
+      self.assertIn("fourth thing", match["snippet"])
+      # body-only hit ("off-schema" lives only in S03's section body)
+      payload = json.loads(repo.run("find", "off-schema", "--json")[1])
+      self.assertEqual(payload[0]["id"], "S03")
+      self.assertEqual(payload[0]["match"]["field"], "body")
+      self.assertIn("off-schema", payload[0]["match"]["snippet"])
+      # text form surfaces it too
+      self.assertIn("matched in body:", repo.run("find", "off-schema")[1])
+
+  def test_Find_MatchedField_RespectsInScope(self) -> None:
+    with self.repo() as repo:
+      payload = json.loads(repo.run("find", "F9", "--in", "findings", "--json")[1])
+      self.assertEqual(payload[0]["match"]["field"], "findings")
 
 
 if __name__ == "__main__":
