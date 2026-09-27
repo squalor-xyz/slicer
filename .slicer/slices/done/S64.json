@@ -1,0 +1,39 @@
+{
+  "id": "S64",
+  "title": "slicer log has no per-item filter",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer log` takes only `--limit` and prints the whole history, so answering \"what happened to\nthis one item?\" (after note/done/set) means scanning everything. Friction filed dogfooding."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/cli.py: `cmd_log` gains a `--item` filter; registration adds the flag.\n- tests/test_cli.py; README.md, docs/agents.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a repeatable `--item ID` to `log` that scopes history to those items, applied before the\nexisting timestamp sort and `--limit`. Permissive: an unknown or purged id yields no rows\nrather than an error. Empty result reports \"no history for <ids>\"."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer log --item S02` shows only S02; repeated `--item` includes each; `--item` composes with\n`--limit`; an id with no history exits 0. Focused log tests, the unit suite, slicer check, and\ngit diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

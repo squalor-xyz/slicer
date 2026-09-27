@@ -242,7 +242,8 @@ about X?" — and see why each hit matched — before creating one.
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.
 Repeat `--depends-on` for multiple ids. `park` and `unpark` accept `--note` to record
-why work is being deferred or resumed; read those notes with `slicer log --json`.
+why work is being deferred or resumed; read those notes with `slicer log --json`, and scope to
+one item with `slicer log --item ID --json` (repeat `--item` for several).
 
 **Read the project's direction before proposing work.** `slicer goals --json` returns
 `{"goals": ..., "non_goals": ...}` — what the project is *for*, kept separate from the

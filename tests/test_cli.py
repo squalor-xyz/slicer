@@ -80,6 +80,37 @@ class CliTests(unittest.TestCase):
       self.assertEqual(entries[0]["item"], "S04")
       self.assertEqual(entries[1]["item"], "S02")
 
+  def test_Log_ItemFilter_ScopesToThatItem(self) -> None:
+    with self.repo() as repo:
+      repo.run("done", "S02")
+      repo.run("park", "S04")
+      entries = json.loads(repo.run("log", "--item", "S02", "--json")[1])
+      self.assertTrue(entries)
+      self.assertEqual({e["item"] for e in entries}, {"S02"})
+
+  def test_Log_ItemFilter_Repeated_IncludesEach(self) -> None:
+    with self.repo() as repo:
+      repo.run("done", "S02")
+      repo.run("park", "S04")
+      entries = json.loads(repo.run("log", "--item", "S02", "--item", "S04", "--json")[1])
+      self.assertEqual({e["item"] for e in entries}, {"S02", "S04"})
+
+  def test_Log_ItemFilter_ComposesWithLimit(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S02")
+      repo.run("start", "S03")  # unrelated, newer — must not fill S02's limit
+      repo.run("done", "S02")
+      entries = json.loads(repo.run("log", "--item", "S02", "--limit", "1", "--json")[1])
+      self.assertEqual(len(entries), 1)
+      self.assertEqual((entries[0]["item"], entries[0]["to"]), ("S02", "done"))
+
+  def test_Log_ItemFilter_NoHistory_ExitsZeroAndSaysSo(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("log", "--item", "S99")
+      self.assertEqual(code, 0)
+      self.assertIn("no history for S99", out)
+      self.assertEqual(json.loads(repo.run("log", "--item", "S99", "--json")[1]), [])
+
   def test_Verify_CleanTree_ReportsNoProblems(self) -> None:
     with self.repo() as repo:
       code, _, _ = repo.run("verify")
