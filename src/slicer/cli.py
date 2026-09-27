@@ -470,6 +470,16 @@ def cmd_set(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_note(args: argparse.Namespace) -> int:
+  state = _state(args)
+  body = _body_from(args, "")
+  if body is None:
+    raise StateError("editor exited non-zero; nothing added", code="editor_aborted")
+  ops.add_note(state, args.id, body)
+  _emit(args, {"id": args.id, "added": True}, f"added note to {args.id}; run `slicer render`")
+  return OK
+
+
 def cmd_edit(args: argparse.Namespace) -> int:
   if (args.section is not None) == args.boundary:
     raise StateError("choose exactly one of --section or --boundary", code="usage")
@@ -896,6 +906,12 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--boundary", action="store_true", help="replace the full scope-boundary paragraph")
   sp.add_argument("--append", action="store_true", help="append with a blank line; requires --text, --file, or --stdin; empty input leaves the body unchanged")
   sp.add_argument("--text", help="inline body (exact in replacement mode); empty text clears unless appending; cannot combine with --file/--stdin")
+  sp.add_argument("--file")
+  sp.add_argument("--stdin", action="store_true")
+
+  sp = _render_flag(add("note", _mutating(cmd_note), "append a dated note to an item's slice"))
+  sp.add_argument("id")
+  sp.add_argument("--text", help="inline note; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 

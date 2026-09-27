@@ -117,6 +117,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `show ID [--section NAME]` | print one slice, or just one section's body |
 | `set ID [ID ...] --title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--group/--importance/--urgency` | change fields |
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
+| `note ID [--text/--file/--stdin]` | append a dated note to an item's slice (shows in `show`/`render`, unlike `done --note`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `goals` | print the project's goals and non-goals together; supports `--json` |

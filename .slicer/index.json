@@ -828,7 +828,7 @@
       "id": "S18",
       "title": "An item has nowhere to put a note",
       "short_title": "An item has nowhere to put a note",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

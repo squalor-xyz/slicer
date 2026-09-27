@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-63 items · — 13 · done 49 · parked 1
+63 items · — 12 · done 50 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -63,7 +63,7 @@
 | 35 | [S15](slices/S15.md) | Nothing searches anything | M | slicer | agent surface | done |
 | 36 | [S16](slices/S16.md) | Status changes are one item per process | M | slicer | agent surface | done |
 | 37 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | slicer | agent surface | done |
-| 38 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | — |
+| 38 | [S18](slices/S18.md) | An item has nowhere to put a note | M | slicer | agent surface | done |
 | 39 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
 | 40 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
 | 41 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | slicer | found probing edge cases | done |

@@ -466,6 +466,10 @@ without a leading separator. Append without a source is a usage error.
 slicer prose edit preamble --text "Current priorities" --render
 ```
 
+To record an observation against a slice — "tried X, it didn't work" — use `slicer note ID
+--text "..."`. It appends a dated paragraph to the slice (visible in `show` and the rendered
+slice), unlike `done --note`, which only writes the log.
+
 To fill the whole slice in one call rather than one `edit` per section, hand `promote` a
 one-item outline instead — the same `##` item / `### section` shape `import` reads (see
 [import.md](import.md)). The item already owns its fields, so the source is sections and

@@ -8,6 +8,7 @@
   "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
+  "boundary": "**Not in this slice:** authorship; nothing in slicer records who did anything, and adding\nidentity is its own decision.",
   "sections": [
     {
       "heading": "Why",
@@ -23,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "`slicer note ID [--file/--stdin]` appending a paragraph to `Slice.notes`, and make the\nTUI's `e` reach them. Then decide whether notes should carry a timestamp — they are the\nclosest thing to a discussion thread, and dated entries age better than undated ones.\n\n**Not in this slice:** authorship; nothing in slicer records who did anything, and adding\nidentity is its own decision."
+      "body": "`slicer note ID [--file/--stdin]` appending a paragraph to `Slice.notes`, and make the\nTUI's `e` reach them. Then decide whether notes should carry a timestamp — they are the\nclosest thing to a discussion thread, and dated entries age better than undated ones."
     },
     {
       "heading": "Check",
@@ -34,5 +35,7 @@
       "body": ""
     }
   ],
-  "notes": []
+  "notes": [
+    "**2026-09-27** — TUI support split out to S63; CLI note + render shipped here."
+  ]
 }
