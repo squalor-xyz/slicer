@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 70,
+  "next_id": 71,
   "preamble": "",
   "passes": [],
   "items": [
@@ -1515,6 +1515,28 @@
         ],
         "trees_literal": false,
         "findings": "dogfooding re-sort: reordering the queue needs one 'move --to' per item; list --sort score is view-only. Consider 'slicer sort --by score' to persist, or move accepting a full order / multiple ids.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S70",
+      "title": "Render an HTML roadmap file alongside the markdown",
+      "short_title": "Render an HTML roadmap file alongside the markdown",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness.",
         "pass": "",
         "group": "",
         "reason": "",
