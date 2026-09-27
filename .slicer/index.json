@@ -164,7 +164,7 @@
       "id": "S33",
       "title": "stats cannot show progress",
       "short_title": "stats cannot show progress",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

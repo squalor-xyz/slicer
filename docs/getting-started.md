@@ -589,7 +589,8 @@ stored queue order stays whatever you set with `move`. Priority guides what to d
 never silently reorders the roadmap.
 
 `slicer log` shows the history of status changes; `slicer stats` gives counts by status,
-size, tree and pass.
+size, tree and pass, plus overall completion (done/total, percent) and a per-tree status
+breakdown so you can see how far along you are and which tree is lagging.
 
 When setting work aside or returning it to the queue, record the reason in the log:
 

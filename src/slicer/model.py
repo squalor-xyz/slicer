@@ -364,3 +364,20 @@ def counts(items: Iterable[Item], key: str) -> dict[str, int]:
         continue
       out[str(v)] = out.get(str(v), 0) + 1
   return dict(sorted(out.items(), key=lambda kv: (-kv[1], kv[0])))
+
+
+def cross_counts(items: Iterable[Item], row_key: str, col_key: str) -> dict[str, dict[str, int]]:
+  """Tally items by two attributes, e.g. status within each tree. A list-valued
+  row (like `trees`) counts under each of its values; empty rows are skipped.
+  Rows are name-sorted for a deterministic render."""
+  out: dict[str, dict[str, int]] = {}
+  for it in items:
+    value = getattr(it, row_key)
+    rows = value if isinstance(value, list) else [value]
+    col = str(getattr(it, col_key))
+    for r in rows:
+      if r == "":
+        continue
+      bucket = out.setdefault(str(r), {})
+      bucket[col] = bucket.get(col, 0) + 1
+  return {r: out[r] for r in sorted(out)}

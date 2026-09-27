@@ -71,6 +71,32 @@ class CliTests(unittest.TestCase):
       self.assertEqual(payload["by_status"]["done"], 1)
       self.assertEqual(payload["by_tree"]["alpha"], 2)
 
+  def test_Stats_ReportsCompletionAndPerTreeProgress(self) -> None:
+    with self.repo() as repo:
+      code, text, _ = repo.run("stats")
+      self.assertEqual(code, 0)
+      payload = json.loads(repo.run("stats", "--json")[1])
+      self.assertEqual(payload["completion"], {"done": 1, "total": 4, "percent": 25})
+      # per-tree status split; each tree's split sums to its flat count
+      self.assertIn("alpha", payload["by_tree_status"])
+      self.assertEqual(sum(payload["by_tree_status"]["alpha"].values()), payload["by_tree"]["alpha"])
+      self.assertIn("done", payload["by_tree_status"]["alpha"])
+      # existing flat buckets unchanged
+      self.assertEqual(payload["by_status"]["done"], 1)
+      # text surfaces both
+      self.assertIn("1 done (25%)", text)
+      self.assertIn("progress by tree", text)
+
+  def test_CrossCounts_ListRowsCountUnderEachAndSkipEmpty(self) -> None:
+    from slicer import model
+    items = [
+      model.Item("S01", "a", "done", trees=["x", "y"]),
+      model.Item("S02", "b", "open", trees=["x"]),
+      model.Item("S03", "c", "open", trees=[]),
+    ]
+    tab = model.cross_counts(items, "trees", "status")
+    self.assertEqual(tab, {"x": {"done": 1, "open": 1}, "y": {"done": 1}})
+
   def test_Log_AfterTransitions_ListsThemNewestFirst(self) -> None:
     with self.repo() as repo:
       repo.run("done", "S02")

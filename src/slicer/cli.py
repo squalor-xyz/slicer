@@ -808,12 +808,20 @@ def _census(state: store.State) -> dict:
   """The item census `stats` and `status` share, so they cannot disagree."""
   cfg = state.config
   items = state.index.items
+  total = len(items)
+  done = sum(1 for it in items if it.status == cfg.done_status)
+  by_tree_status = {
+    tree: {cfg.status_label(s): n for s, n in cols.items()}
+    for tree, cols in model.cross_counts(items, "trees", "status").items()
+  }
   return {
-    "total": len(items),
+    "total": total,
+    "completion": {"done": done, "total": total, "percent": round(done * 100 / total) if total else 0},
     "by_status": {cfg.status_label(k): v for k, v in model.counts(items, "status").items()},
     "by_size": model.counts(items, "size"),
     "by_tree": model.counts(items, "trees"),
     "by_pass": model.counts(items, "pass_key"),
+    "by_tree_status": by_tree_status,
   }
 
 
@@ -826,10 +834,15 @@ def cmd_stats(args: argparse.Namespace) -> int:
     ("tree", payload["by_tree"]),
     ("pass", payload["by_pass"]),
   )
-  lines = [f"{payload['total']} items"]
+  done = payload["completion"]
+  lines = [f"{payload['total']} items · {done['done']} done ({done['percent']}%)"]
   for name, group in groups:
     if group:
       lines.append(f"{name:<10} " + " · ".join(f"{k} {v}" for k, v in group.items()))
+  if payload["by_tree_status"]:
+    lines.append("progress by tree")
+    for tree, cols in payload["by_tree_status"].items():
+      lines.append(f"  {tree:<10} " + " · ".join(f"{k} {v}" for k, v in cols.items()))
   text = "\n".join(lines)
   _emit(args, payload, text)
   return OK
@@ -852,7 +865,8 @@ def cmd_status(args: argparse.Namespace) -> int:
   progress = " · ".join(f"{k} {v}" for k, v in census["by_status"].items())
   lines = [
     f"Next      {next_line}",
-    f"Progress  {census['total']} items" + (f" · {progress}" if progress else ""),
+    f"Progress  {census['total']} items ({census['completion']['percent']}% done)"
+    + (f" · {progress}" if progress else ""),
   ]
   if blocked:
     lines.append("Blocked")

@@ -23,6 +23,7 @@ class StatusTests(unittest.TestCase):
       self.assertIn("Next", out)
       self.assertIn("Progress", out)
       self.assertIn("items", out)
+      self.assertIn("% done", out)
       self.assertIn("Blocked", out)
 
   def test_Status_Json_CarriesNextCensusAndBlocked(self) -> None:
