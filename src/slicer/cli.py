@@ -722,17 +722,22 @@ def cmd_check(args: argparse.Namespace) -> int:
   return OK if report.ok else DRIFT
 
 
-def cmd_stats(args: argparse.Namespace) -> int:
-  state = _state(args)
+def _census(state: store.State) -> dict:
+  """The item census `stats` and `status` share, so they cannot disagree."""
   cfg = state.config
   items = state.index.items
-  payload = {
+  return {
     "total": len(items),
     "by_status": {cfg.status_label(k): v for k, v in model.counts(items, "status").items()},
     "by_size": model.counts(items, "size"),
     "by_tree": model.counts(items, "trees"),
     "by_pass": model.counts(items, "pass_key"),
   }
+
+
+def cmd_stats(args: argparse.Namespace) -> int:
+  state = _state(args)
+  payload = _census(state)
   groups = (
     ("status", payload["by_status"]),
     ("size", payload["by_size"]),
@@ -745,6 +750,34 @@ def cmd_stats(args: argparse.Namespace) -> int:
       lines.append(f"{name:<10} " + " · ".join(f"{k} {v}" for k, v in group.items()))
   text = "\n".join(lines)
   _emit(args, payload, text)
+  return OK
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+  """The one-call front door: what is next, how far along, and what is blocked."""
+  state = _state(args)
+  result = ops.next_item(state, 0)
+  census = _census(state)
+  nxt = result.item
+  blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
+  path = state.find_slice_file(nxt.id) if nxt is not None else None
+  payload = {
+    "next": (nxt.to_dict() | {"path": str(path) if path else None}) if nxt else None,
+    "census": census,
+    "blocked": blocked,
+  }
+  next_line = f"{nxt.id}  {nxt.display_title()}" if nxt else "nothing unmarked"
+  progress = " · ".join(f"{k} {v}" for k, v in census["by_status"].items())
+  lines = [
+    f"Next      {next_line}",
+    f"Progress  {census['total']} items" + (f" · {progress}" if progress else ""),
+  ]
+  if blocked:
+    lines.append("Blocked")
+    lines.extend(f"  {b['id']} waits on {', '.join(b['waiting_on'])}" for b in blocked)
+  else:
+    lines.append("Blocked   none")
+  _emit(args, payload, "\n".join(lines))
   return OK
 
 
@@ -978,6 +1011,8 @@ def build_parser() -> argparse.ArgumentParser:
   add("goals", cmd_goals, "show project goals and non-goals")
 
   add("stats", cmd_stats, "counts by status, size, tree and pass")
+
+  add("status", cmd_status, "next item, progress, and blockers in one view")
 
   sp = add("log", cmd_log, "recent status changes")
   sp.add_argument("--limit", type=int, default=20)

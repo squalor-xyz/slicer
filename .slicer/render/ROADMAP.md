@@ -22,11 +22,11 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-69 items · — 18 · done 50 · parked 1
+69 items · — 17 · done 51 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | — |
+| 1 | [S36](slices/S36.md) | No single where-am-I overview | M | slicer | review; ergonomics | done |
 | 2 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | — |
 | 3 | S65 | find does not show which field or snippet matched |  | slicer | dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json. | — |
 | 4 | S64 | slicer log has no per-item filter |  | slicer | dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note. | — |

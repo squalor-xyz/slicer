@@ -10,7 +10,7 @@
       "id": "S36",
       "title": "No single where-am-I overview",
       "short_title": "No single where-am-I overview",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

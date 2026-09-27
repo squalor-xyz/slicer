@@ -325,3 +325,4 @@
 {"when": "2026-09-27T18:16:48Z", "item": "S50", "action": "move", "from": "58", "to": "16", "note": ""}
 {"when": "2026-09-27T18:16:48Z", "item": "S03", "action": "move", "from": "39", "to": "17", "note": ""}
 {"when": "2026-09-27T18:16:58Z", "item": "S69", "action": "add", "from": "", "to": "open", "note": "No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)"}
+{"when": "2026-09-27T18:19:45Z", "item": "S36", "action": "status", "from": "open", "to": "done", "note": "Added 'slicer status': composes the next item, the stats census, and the blocked edges into one text view and one --json payload {next, census, blocked}. Pure composition of ops.next_item + a shared _census() helper (extracted from cmd_stats so the two cannot drift); no new state. Not a TUI dashboard (per boundary). New tests/test_status.py (5 tests); README + getting-started updated. 576 tests + slicer check + git diff --check pass."}

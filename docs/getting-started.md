@@ -262,6 +262,10 @@ slicer next
 To locate an item by text rather than by filter, `slicer find PATTERN` searches ids, titles,
 findings, and slice bodies (narrow with `--in title,findings,body`); it also takes `--json`.
 
+`slicer status` is the "where am I / did it work" front door: it composes the next item, a
+progress census, and the blocked edges into one view (and one `--json` payload), so you don't
+run `next`, `stats`, and read `next`'s blocked set separately.
+
 `list --sort score` changes the view; `move` changes stored queue order and therefore
 the rendered roadmap. S01 is still next: S02 depends on it, and S01 inherits S02's
 higher priority. Stored order breaks equal-score ties. For items added individually,
