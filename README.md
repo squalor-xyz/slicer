@@ -147,7 +147,21 @@ In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITO
 whatever is selected there — an item field (size, trees, findings, depends, importance,
 urgency), a slice section, its scope boundary, a note (edit it, or empty to remove; the
 `+ add a note` line adds one), or a prose block — `s` starts the selected item and `a` adds a
-new one.
+new one. Press `w` for the guided roadmap wizard; an empty roadmap offers it once
+when the TUI starts.
+
+The wizard collects an optional roadmap heading and each item's title, size, trees,
+findings, importance, urgency, group, and dependencies (comma-separated exact titles,
+including later draft items). Enter advances and Shift-Tab goes back. Each configured
+section offers `e` to open `$EDITOR`, or Enter to leave its body as it is. Every item
+gets a slice, even when its section bodies are empty.
+
+After adding items, review the answers with Up/Down and Enter to revisit a field or
+section, add another item, or select **Save roadmap**. Esc asks before discarding draft
+answers. Nothing is saved until the final save; validation errors keep the draft for
+correction. A supplied heading is prepended to existing roadmap preamble prose; a blank
+heading leaves it unchanged. Saving generates the normal roadmap output without a
+separate outline file. The project must already be initialized with `slicer init`.
 
 The main TUI screen keeps common shortcuts visible below the status and feedback
 lines: pane switching, editing, adding, starting/completing items, search, filters,

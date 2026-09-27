@@ -364,13 +364,14 @@
       "id": "S50",
       "title": "TUI wizard: create a roadmap interactively",
       "short_title": "TUI wizard: create a roadmap interactively",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S81"
       ],
       "notes": [
-        "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it."
+        "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it.",
+        "**2026-09-27** — Implemented on feature/S50-tui-roadmap-wizard: guided wizard (tui_wizard.py) landing items and slices via ops.apply_outline; text-input primitive delivered (S81)."
       ],
       "fields": {
         "size": "L",
@@ -1872,10 +1873,12 @@
       "id": "S81",
       "title": "Add a reusable multi-field text input to the TUI",
       "short_title": "Add a reusable multi-field text input to the TUI",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-09-27** — Delivered as the wizard's text_input primitive (tui_wizard.py), reused by the TUI search/jump/move prompts."
+      ],
       "fields": {
         "size": "M",
         "flags": [],

@@ -10,6 +10,7 @@
   "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
+  "boundary": "**Not in this slice:** rich in-curses multiline editing; editing existing items through the wizard; mouse support and multi-column forms; durable outline export. Section bodies use $EDITOR. The wizard requires an initialized project.",
   "sections": [
     {
       "heading": "Why",
@@ -33,7 +34,7 @@
     },
     {
       "heading": "Git",
-      "body": "One commit.\n\n**Not in this slice:** rich in-curses text editing (multi-line section bodies may still\nhand off to `$EDITOR`); editing existing items via the wizard (the TUI already edits\nfields and sections in place); mouse support and multi-column forms. Whether to also\npersist the collected answers as a durable outline `.md` is decided during implementation;\nre-import/round-trip of any such file is out of scope. This slice is large — the\ntext-input primitive is a natural split point and may become its own prerequisite slice."
+      "body": "One commit."
     }
   ],
   "notes": []

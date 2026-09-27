@@ -7,6 +7,7 @@ and so each one records the same log entry.
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -723,7 +724,9 @@ class OutlineReport:
     }
 
 
-def outline_report(state: State, specs: list[object], *, force: bool = False) -> OutlineReport:
+def outline_report(
+  state: State, specs: list[object], *, force: bool = False, promote_all: bool = False
+) -> OutlineReport:
   """What this outline says, and everything wrong with it. Writes nothing.
 
   `apply_outline` calls this first and refuses when `problems` is non-empty,
@@ -733,7 +736,7 @@ def outline_report(state: State, specs: list[object], *, force: bool = False) ->
   cfg = state.config
   report = OutlineReport()
   report.items = len(specs)
-  report.promoted = sum(1 for spec in specs if spec.has_slice)
+  report.promoted = sum(1 for spec in specs if promote_all or spec.has_slice)
   for spec in specs:
     label = cfg.status_label(spec.status or cfg.open_status)
     report.by_status[label] = report.by_status.get(label, 0) + 1
@@ -764,6 +767,13 @@ def outline_report(state: State, specs: list[object], *, force: bool = False) ->
   known = set(titles) | {it.title for it in state.index.items}
   known |= {it.display_title() for it in state.index.items}
   for spec in specs:
+    try:
+      _reject_bad_text(title=spec.title, size=spec.size, findings=spec.findings,
+                       pass_key=spec.pass_key, group=spec.group, trees=spec.trees)
+      _valid_score("importance", spec.importance)
+      _valid_score("urgency", spec.urgency)
+    except StateError as exc:
+      problems.append(f"{spec.title!r}: {exc}")
     if spec.status and spec.status not in cfg.statuses:
       problems.append(
         f"{spec.title!r}: unknown status {spec.status!r}; known: {sorted(cfg.statuses)}"
@@ -775,17 +785,38 @@ def outline_report(state: State, specs: list[object], *, force: bool = False) ->
   return report
 
 
-def apply_outline(state: State, specs: list[object], *, force: bool = False) -> OutlineReport:
+class OutlineCommittedError(StateError):
+  """The index was saved; callers must not retry adding the same batch."""
+
+  def __init__(self, report: OutlineReport, error: OSError) -> None:
+    super().__init__(f"items saved, but history could not be written: {error}", code="io")
+    self.report = report
+
+
+def apply_outline(
+  state: State, specs: list[object], *, force: bool = False,
+  preamble: str | None = None, promote_all: bool = False,
+) -> OutlineReport:
   """Append every entry in a parsed outline, or write nothing at all.
 
-  All-or-nothing, like `migrate`: everything is validated first, ids are
-  allocated against one in-memory index, and the index is saved once rather
-  than rewritten per item.
+  Validation failures write nothing. Items and an optional preamble update
+  are staged together; slice/index write failures leave caller state intact.
+  `promote_all` also creates slices for specs with no sections or lead.
+  History follows the index commit, so a history failure raises
+  OutlineCommittedError: the batch is saved and must not be retried.
   """
   cfg = state.config
-  report = outline_report(state, specs, force=force)
+  report = outline_report(state, specs, force=force, promote_all=promote_all)
   if report.problems:
     return report
+
+  # Publish the in-memory draft only after the index is saved. A failed
+  # interactive save must leave the caller able to correct and retry it.
+  original = state
+  state = State(state.root, cfg, deepcopy(state.index), dict(state.slices),
+                dict(state.slice_files))
+  if preamble is not None:
+    state.index.preamble = preamble
 
   # Titles resolve to ids only once every entry has one, so allocate first.
   by_title: dict[str, str] = {it.title: it.id for it in state.index.items}
@@ -796,19 +827,9 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
     allocated.append((spec, new_id))
     by_title[spec.title] = new_id
 
-  # Build every item and slice in memory first, writing nothing. A bad-text
-  # rejection on a later spec therefore leaves no files behind, which is what
-  # "write nothing at all" promises.
+  # Build every item and slice against the staged index before writing.
   pending: list[Slice] = []
   for spec, new_id in allocated:
-    _reject_bad_text(
-      title=spec.title,
-      size=spec.size,
-      findings=spec.findings,
-      pass_key=spec.pass_key,
-      group=spec.group,
-      trees=spec.trees,
-    )
     status = spec.status or cfg.open_status
     item = Item(
       id=new_id,
@@ -830,7 +851,7 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
     state.index.items.append(item)
     report.ids.append(new_id)
 
-    if spec.has_slice:
+    if promote_all or spec.has_slice:
       item.has_slice = True
       pending.append(_slice_from_spec(spec, item, cfg))
 
@@ -846,8 +867,12 @@ def apply_outline(state: State, specs: list[object], *, force: bool = False) -> 
     for path in written:
       path.unlink(missing_ok=True)
     raise
-  for spec, new_id in allocated:
-    _record(state, new_id, "add", to=spec.status or cfg.open_status, note=spec.title)
+  original.index, original.slices = state.index, state.slices
+  try:
+    for spec, new_id in allocated:
+      _record(state, new_id, "add", to=spec.status or cfg.open_status, note=spec.title)
+  except OSError as exc:
+    raise OutlineCommittedError(report, exc) from exc
   return report
 
 

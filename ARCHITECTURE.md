@@ -64,7 +64,9 @@ makes 0600 files and these are ordinary tracked project files.
 around mutating handlers, including their optional render. The advisory lock on
 `.slicer/lock` prevents cooperating writers from interleaving; it does not provide
 multi-file rollback or make readers see an atomic snapshot. Read commands do not lock.
-There is no lock before a tracking directory exists, or on platforms without `flock`.
+The TUI wizard also locks and reloads at final save, including its render; it does
+not hold the lock while collecting answers. Other TUI actions retain their existing
+behavior. There is no lock before a tracking directory exists, or on platforms without `flock`.
 See [concurrency configuration](docs/configuration.md#concurrency) for the timeout.
 
 **`ops.py` is the single mutation path.** The CLI and the TUI both call it, so the two
@@ -82,6 +84,13 @@ writing; the next slice save persists it. An explicit field, including empty tex
 is authoritative. Promotion/import extract inline boundaries or seed the configured
 marker. Migration extracts only after the legacy parser proves byte identity; its
 raw representation and emitter retain the original inline text.
+
+The wizard uses the same outline apply path, optionally forcing slice creation and
+including a preamble update in the batch's index save. Failed validation or slice/index
+writes leave its caller's in-memory state unchanged. History is appended after the index
+commit; an `OutlineCommittedError` identifies a saved batch whose history failed, so an
+interactive caller cannot accidentally retry creating it. Rendering is also a separate
+post-save step; failure leaves the saved items available for rendering again.
 
 **Ids are never reused.** Allocation reads the stored high-water mark `Index.next_id`,
 never a count of live items. `remove --purge` un-allocates an id only when it was the

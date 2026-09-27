@@ -22,13 +22,13 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-83 items · — 13 · done 68 · later 1 · retired 1
+83 items · — 11 · done 70 · later 1 · retired 1
 
 v1.0.0 release
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
-| 1 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | — |
+| 1 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | done |
 | 2 | [S06](slices/S06.md) | Publish to PyPI as squalor-slicer | S | slicer | PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58 | — |
 | 3 | [S72](slices/S72.md) | Refuse a newer-than-known state schema instead of silently downgrading it | M | slicer | v1.0.0 readiness audit (code maturity) | — |
 | 4 | [S73](slices/S73.md) | Raise a clean error on a malformed config numeric field | S | slicer | v1.0.0 readiness audit (code maturity) | — |
@@ -39,7 +39,7 @@ v1.0.0 release
 | 9 | [S78](slices/S78.md) | Add a CONTRIBUTING pointer | S | docs | v1.0.0 readiness audit (docs) | — |
 | 10 | [S79](slices/S79.md) | Bring the documentation current with the shipped CLI and TUI | M | docs | v1.0.0 readiness audit (docs) | — |
 | 11 | [S80](slices/S80.md) | Add a release checklist, tag CI, and the 1.0.0 bump | M | slicer | v1.0.0 readiness audit (release) | — |
-| 12 | [S81](slices/S81.md) | Add a reusable multi-field text input to the TUI | M | slicer | v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50) | — |
+| 12 | [S81](slices/S81.md) | Add a reusable multi-field text input to the TUI | M | slicer | v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50) | done |
 
 ---
 
