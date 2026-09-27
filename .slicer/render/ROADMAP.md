@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-70 items · — 15 · done 54 · parked 1
+70 items · — 14 · done 55 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -30,7 +30,7 @@
 | 2 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | slicer | profiled; I first misattributed this to store.load | done |
 | 3 | [S65](slices/S65.md) | find does not show which field or snippet matched |  | slicer | dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json. | done |
 | 4 | [S64](slices/S64.md) | slicer log has no per-item filter |  | slicer | dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note. | done |
-| 5 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | — |
+| 5 | [S20](slices/S20.md) | History records that something changed, never what | M | slicer | agent surface | done |
 | 6 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | slicer | agent surface | — |
 | 7 | [S35](slices/S35.md) | remove --purge has no dry-run | S | slicer | review; safety | — |
 | 8 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | — |

@@ -111,6 +111,35 @@ class CliTests(unittest.TestCase):
       self.assertIn("no history for S99", out)
       self.assertEqual(json.loads(repo.run("log", "--item", "S99", "--json")[1]), [])
 
+  def test_Log_SetRecordsOldToNewValues(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--importance", "3", "--urgency", "3")
+      repo.run("set", "S02", "--tree", "core", "--size", "M")
+      entries = json.loads(repo.run("log", "--item", "S02", "--action", "set", "--json")[1])
+      notes = " | ".join(e["note"] for e in entries)
+      self.assertIn("importance 2→3", notes)
+      self.assertIn("urgency 2→3", notes)
+      self.assertIn("size", notes)
+      self.assertIn("→core", notes)  # list field rendered
+
+  def test_Log_ActionFilter_ScopesAndComposesWithItem(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--importance", "3")
+      repo.run("done", "S02")
+      set_only = json.loads(repo.run("log", "--action", "set", "--json")[1])
+      self.assertTrue(set_only)
+      self.assertEqual({e["action"] for e in set_only}, {"set"})
+      both = json.loads(repo.run("log", "--item", "S02", "--action", "set", "--json")[1])
+      self.assertEqual({(e["item"], e["action"]) for e in both}, {("S02", "set")})
+
+  def test_Log_ActionFilter_Repeated_IncludesEach(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--importance", "3")
+      repo.run("done", "S02")
+      actions = {e["action"] for e in
+                 json.loads(repo.run("log", "--action", "set", "--action", "status", "--json")[1])}
+      self.assertEqual(actions, {"set", "status"})
+
   def test_Verify_CleanTree_ReportsNoProblems(self) -> None:
     with self.repo() as repo:
       code, _, _ = repo.run("verify")

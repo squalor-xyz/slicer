@@ -98,7 +98,7 @@
       "id": "S20",
       "title": "History records that something changed, never what",
       "short_title": "History records that something changed, never what",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

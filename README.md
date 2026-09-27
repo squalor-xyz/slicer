@@ -129,7 +129,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `sync [--check]` | rewrite derived lines in other documents |
 | `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
-| `stats` / `log [--item ID]` | counts, and the history of status changes (`--item` scopes the log to one or more items) |
+| `stats` / `log [--item ID] [--action A]` | counts, and history (`--item`/`--action` scope it; `set` records old→new values) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`) |
 | `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
 

@@ -809,12 +809,16 @@ def cmd_log(args: argparse.Namespace) -> int:
   if args.item:
     wanted = set(args.item)
     history = [e for e in history if e.item in wanted]
+  if args.action:
+    actions = set(args.action)
+    history = [e for e in history if e.action in actions]
   # Newest first by timestamp so union-merged history (which can interleave the
   # lines two branches appended) still reads in order. Reverse the append order
   # first so that, among entries sharing a timestamp, the later-appended one is
   # shown first -- a stable sort then keeps that tie-break.
   entries = sorted(reversed(history), key=lambda e: e.when, reverse=True)[: args.limit]
-  empty = f"no history for {', '.join(args.item)}" if args.item else "no history yet"
+  filters = (args.item or []) + (args.action or [])
+  empty = ("no history for " + " ".join(filters)) if filters else "no history yet"
   text = "\n".join(
     f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
     for e in entries
@@ -1044,6 +1048,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("log", cmd_log, "recent status changes")
   sp.add_argument("--limit", type=int, default=20)
   sp.add_argument("--item", action="append", help="filter to these item ids (repeatable)")
+  sp.add_argument("--action", action="append", help="filter to these actions, e.g. set, edit (repeatable)")
 
   add("tui", cmd_tui, "browse and reorder interactively (also: ui)",
       json_flag=False, aliases=("ui",))

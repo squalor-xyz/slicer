@@ -25,6 +25,13 @@ def _record(state: State, item: str, action: str, frm: str = "", to: str = "", n
   state.log(LogEntry(when=_now(), item=item, action=action, frm=frm, to=to, note=note))
 
 
+def _fmt(value: object) -> str:
+  """Render a field value compactly for a one-line history note."""
+  if isinstance(value, list):
+    return ",".join(value) or "-"
+  return str(value) if value not in (None, "") else "-"
+
+
 # Fields that land on one line of a roadmap table cell. A newline in any of
 # them ends the table early, so they are refused on the way in rather than
 # mangled on the way out.
@@ -300,17 +307,25 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
   transitions = []
   for item in items:
     previous = item.status
+    changes = []
     for key, value in values.items():
-      setattr(item, key, list(value) if isinstance(value, list) else value)
+      old = getattr(item, key)
+      new = list(value) if isinstance(value, list) else value
+      if old != new:
+        changes.append(f"{key} {_fmt(old)}→{_fmt(new)}")
+      setattr(item, key, new)
     moved = item.status != previous
     if moved:
       _relocate_slice(state, item.id)
     _sync_slice(state, item)
-    transitions.append((item, previous, moved))
+    transitions.append((item, previous, moved, changes))
   state.save_index()
-  for item, previous, moved in transitions:
+  for item, previous, moved, changes in transitions:
+    # Record what changed, not just which fields, so metadata history replays
+    # from slicer; a no-op set falls back to the field names it was asked to set.
+    note = "; ".join(changes) if changes else ",".join(sorted(values))
     _record(state, item.id, "set", frm=previous if moved else "",
-            to=item.status if moved else "", note=",".join(sorted(values)))
+            to=item.status if moved else "", note=note)
   return items
 
 

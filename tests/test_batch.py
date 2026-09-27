@@ -42,8 +42,14 @@ class BatchTests(unittest.TestCase):
         state = repo.state()
         entries = state.history()[before:]
         self.assertEqual([e.item for e in entries], ["S02", "S01"])
-        self.assertEqual([e.note for e in entries],
-                         [",".join(("status", "title", "urgency")) if command == "set" else options[1]] * 2)
+        if command == "set":
+          for e in entries:  # notes now record old→new per item
+            self.assertIn("status open→done", e.note)
+            self.assertIn("→shared", e.note)
+            self.assertIn("urgency", e.note)
+            self.assertIn("→3", e.note)
+        else:
+          self.assertEqual([e.note for e in entries], [options[1]] * 2)
         for item_id in ("S01", "S02"):
           self.assertEqual(state.index.require(item_id).status, status)
           self.assertTrue(state.slice_path(item_id).exists())

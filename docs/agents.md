@@ -243,7 +243,10 @@ about X?" — and see why each hit matched — before creating one.
 `slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.
 Repeat `--depends-on` for multiple ids. `park` and `unpark` accept `--note` to record
 why work is being deferred or resumed; read those notes with `slicer log --json`, and scope to
-one item with `slicer log --item ID --json` (repeat `--item` for several).
+one item with `slicer log --item ID --json` (repeat `--item` for several) or to a kind of change
+with `--action set` / `--action status`. `set` entries record old→new values, so
+`slicer log --item ID --action set --json` reconstructs an item's metadata history from slicer
+(section/prose body edits still live in git).
 
 **Read the project's direction before proposing work.** `slicer goals --json` returns
 `{"goals": ..., "non_goals": ...}` — what the project is *for*, kept separate from the

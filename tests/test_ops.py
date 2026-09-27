@@ -240,7 +240,8 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(len(history) - before, 1)
       entry = history[-1]
       self.assertEqual((entry.action, entry.frm, entry.to), ("set", "open", "done"))
-      self.assertEqual(entry.note, "size,status")
+      self.assertIn("status open→done", entry.note)
+      self.assertIn("size S→L", entry.note)
 
   def test_Set_WithoutAStatusChange_LeavesTheTransitionBlank(self) -> None:
     with self.repo() as repo:
