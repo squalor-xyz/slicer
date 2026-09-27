@@ -1,0 +1,39 @@
+{
+  "id": "S70",
+  "title": "Render an HTML roadmap file alongside the markdown",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness.",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`render/` emitted only ROADMAP.md; users wanted a browser-viewable, shareable roadmap that reads\nwithout a markdown renderer."
+    },
+    {
+      "heading": "Files",
+      "body": "- src/slicer/render.py: `render_html` + inline CSS; wired into `plan` and the orphan scan.\n- tests/test_render.py; README.md, docs/getting-started.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Generate `render/ROADMAP.html` in code (stdlib `html.escape`, no deps) as part of\n`render.plan`, so `slicer render` produces it and `slicer check` keeps it byte-current like\nROADMAP.md. A self-contained page: banner comment first, inline CSS (status-colored rows, light\nand dark), the summary, per-pass item tables (#, ID, Title, Size, Trees, Findings, Status), and\nthe preamble/goals/non-goals/epilogue prose as escaped paragraphs. Deterministic; all data\nescaped. Not a markdown renderer — the structured item table is the value. Existing projects\nupgrade cleanly (no template to add)."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer render` writes ROADMAP.html (banner first, items, escaped text); rendering twice is\nidentical; a hand edit makes `slicer check` fail. Focused render tests, the unit suite, slicer\ncheck, and git diff --check."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

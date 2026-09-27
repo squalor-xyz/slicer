@@ -112,6 +112,42 @@ class RenderTests(unittest.TestCase):
       self.assertTrue((repo.root / ".slicer/render/NOTES.md").exists())
       self.assertEqual(repo.run("check")[0], 0)
 
+  def test_Html_IsRenderedWithBannerAndItems(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      out = repo.read(".slicer/render/ROADMAP.html")
+      self.assertTrue(out.startswith(render.BANNER_PREFIX))
+      self.assertIn("<!DOCTYPE html>", out)
+      self.assertIn("S02", out)
+      self.assertIn('td class="status"', out)
+
+  def test_Html_EscapesItemText_NoInjection(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S02", "--short-title", 'danger <b>& "x"')
+      repo.run("render")
+      out = repo.read(".slicer/render/ROADMAP.html")
+      self.assertIn("&lt;b&gt;", out)
+      self.assertIn("&amp;", out)
+      self.assertNotIn("<b>&", out)
+
+  def test_Html_IsDeterministic(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      first = (repo.root / ".slicer/render/ROADMAP.html").read_bytes()
+      repo.run("render")
+      self.assertEqual((repo.root / ".slicer/render/ROADMAP.html").read_bytes(), first)
+
+  def test_Html_StaleEdit_IsCaughtByCheck(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      path = repo.root / ".slicer/render/ROADMAP.html"
+      path.write_text(path.read_text() + "<!-- tampered -->\n", encoding="utf-8")
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("ROADMAP.html", out)
+      self.assertEqual(repo.run("render")[0], 0)
+      self.assertEqual(repo.run("check")[0], 0)
+
 
 if __name__ == "__main__":
   unittest.main()

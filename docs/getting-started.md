@@ -300,6 +300,10 @@ takes precedence over open items; dependencies still gate both. See the
 correctness. Include changed `.slicer/` state and rendered markdown when preparing the
 work for review, following your project's commit policy.
 
+`slicer render` also writes `.slicer/render/ROADMAP.html` — a standalone, styled view you can
+open in a browser or share without a markdown renderer. It is a checked projection like
+ROADMAP.md, so `slicer check` keeps it current too.
+
 ## 4. Get your roadmap in
 
 Choose individual items, a bulk outline, or migration of a legacy tree.

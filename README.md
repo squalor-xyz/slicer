@@ -128,7 +128,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `remove ID --purge/--reason --dry-run` | preview the removal and its fallout (dependents, id fate); write nothing |
-| `render` | regenerate `.slicer/render/` |
+| `render` | regenerate `.slicer/render/` (ROADMAP.md, a browser-viewable ROADMAP.html, and one file per slice) |
 | `sync [--check]` | rewrite derived lines in other documents |
 | `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
@@ -222,7 +222,7 @@ slices/<ID>.json     one open slice: title, lead, sections (ordered list)
 slices/done/<ID>.json    finished slices
 slices/retired/<ID>.json obsolete slices, with the reason on the item
 templates/*.md       render templates, yours to edit
-render/              GENERATED markdown - ROADMAP.md and one file per slice
+render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), and one file per slice
 log.jsonl            append-only history of status changes
 .gitattributes       union-merges log.jsonl so parallel branches do not conflict on it
 ```

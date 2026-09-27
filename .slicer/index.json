@@ -1526,8 +1526,8 @@
       "id": "S70",
       "title": "Render an HTML roadmap file alongside the markdown",
       "short_title": "Render an HTML roadmap file alongside the markdown",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "fields": {
         "size": "",
