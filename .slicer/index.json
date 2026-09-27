@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 83,
+  "next_id": 84,
   "preamble": "",
   "passes": [
     {
@@ -1911,6 +1911,29 @@
         "group": "",
         "reason": "",
         "importance": 1,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S83",
+      "title": "Show the inherited pass in add's output",
+      "short_title": "Show the inherited pass in add's output",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 1
       }
     }

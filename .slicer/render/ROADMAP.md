@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-82 items · — 12 · done 68 · later 1 · retired 1
+83 items · — 13 · done 68 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -115,3 +115,4 @@ v1.0.0 release
 | 80 | [S70](slices/S70.md) | Render an HTML roadmap file alongside the markdown |  | slicer | user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness. | done |
 | 81 | [S71](slices/S71.md) | set --depends-on '' stores an empty-string dependency instead of clearing |  | slicer | dogfooding S02 (greenfield): 'slicer set ID --depends-on ""' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug. | done |
 | 82 | [S82](slices/S82.md) | Make flags a first-class, filterable tag axis | M | slicer |  | later |
+| 83 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | cli |  | — |
