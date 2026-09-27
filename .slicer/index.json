@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 71,
+  "next_id": 72,
   "preamble": "",
   "passes": [],
   "items": [
@@ -242,8 +242,8 @@
       "id": "S02",
       "title": "Trial run on a second repo with no legacy tree to import",
       "short_title": "Trial run on a second repo with no legacy tree to import",
-      "status": "open",
-      "has_slice": false,
+      "status": "done",
+      "has_slice": true,
       "depends_on": [],
       "notes": [],
       "fields": {
@@ -1609,6 +1609,29 @@
         ],
         "trees_literal": false,
         "findings": "user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness.",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S71",
+      "title": "set --depends-on '' stores an empty-string dependency instead of clearing",
+      "short_title": "set --depends-on '' stores an empty-string dependency instead of clearing",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S02 (greenfield): 'slicer set ID --depends-on \"\"' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug.",
         "pass": "",
         "group": "",
         "reason": "",

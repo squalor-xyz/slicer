@@ -39,7 +39,7 @@
   through git.</p></div></section>
 <section><h2>Non-goals</h2><div class="prose"><p>- Not a real-time collaboration or multi-user concurrent-editing tool; coordination<br>
   happens through git, not a live shared service.</p></div></section>
-<p class="summary">70 items · — 7 · done 62 · parked 1</p>
+<p class="summary">71 items · — 7 · done 63 · parked 1</p>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>S36</td><td>No single where-am-I overview</td><td>M</td><td>slicer</td><td>review; ergonomics</td><td class="status">done</td></tr>
 <tr class="done"><td>2</td><td>S37</td><td>The CLI rebuilds its whole argparse tree on every invocation</td><td>S</td><td>slicer</td><td>profiled; I first misattributed this to store.load</td><td class="status">done</td></tr>
@@ -51,7 +51,7 @@
 <tr class="done"><td>8</td><td>S33</td><td>stats cannot show progress</td><td>M</td><td>slicer</td><td>review; reporting</td><td class="status">done</td></tr>
 <tr class="done"><td>9</td><td>S68</td><td>no item-level notes/context without a slice</td><td></td><td>slicer</td><td>dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice.</td><td class="status">done</td></tr>
 <tr class="done"><td>10</td><td>S67</td><td>slicer next output is terse</td><td></td><td>slicer</td><td>dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag.</td><td class="status">done</td></tr>
-<tr class="open"><td>11</td><td>S02</td><td>Trial run on a second repo with no legacy tree to import</td><td>S</td><td>slicer</td><td></td><td class="status">—</td></tr>
+<tr class="done"><td>11</td><td>S02</td><td>Trial run on a second repo with no legacy tree to import</td><td>S</td><td>slicer</td><td></td><td class="status">done</td></tr>
 <tr class="open"><td>12</td><td>S51</td><td>A mutating command still says &quot;now run slicer render&quot; after --render already rendered</td><td>S</td><td>slicer</td><td>dogfooding S50</td><td class="status">—</td></tr>
 <tr class="open"><td>13</td><td>S66</td><td>done --note and note mean different things (log vs slice)</td><td></td><td>slicer</td><td>dogfooding S18: &#x27;done --note&#x27; writes only log.jsonl; &#x27;slicer note&#x27; writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible.</td><td class="status">—</td></tr>
 <tr class="open"><td>14</td><td>S63</td><td>TUI: view, edit and add slice notes</td><td></td><td>slicer</td><td>split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections).</td><td class="status">—</td></tr>
@@ -111,5 +111,6 @@
 <tr class="done"><td>68</td><td>S62</td><td>Parallel branches conflict on .slicer/log.jsonl and generated render/ files</td><td></td><td>slicer</td><td>dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/.</td><td class="status">done</td></tr>
 <tr class="done"><td>69</td><td>S69</td><td>No way to bulk-reorder or persist a score sort (queue reorder is one move at a time)</td><td></td><td>slicer</td><td>dogfooding re-sort: reordering the queue needs one &#x27;move --to&#x27; per item; list --sort score is view-only. Consider &#x27;slicer sort --by score&#x27; to persist, or move accepting a full order / multiple ids.</td><td class="status">done</td></tr>
 <tr class="done"><td>70</td><td>S70</td><td>Render an HTML roadmap file alongside the markdown</td><td></td><td>slicer</td><td>user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness.</td><td class="status">done</td></tr>
+<tr class="open"><td>71</td><td>S71</td><td>set --depends-on &#x27;&#x27; stores an empty-string dependency instead of clearing</td><td></td><td>slicer</td><td>dogfooding S02 (greenfield): &#x27;slicer set ID --depends-on &quot;&quot;&#x27; sets depends_on=[&#x27;&#x27;], a phantom &#x27;depends on unknown id &#x27; that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug.</td><td class="status">—</td></tr>
 </tbody></table>
 </body></html>

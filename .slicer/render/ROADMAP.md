@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-70 items · — 7 · done 62 · parked 1
+71 items · — 7 · done 63 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -36,7 +36,7 @@
 | 8 | [S33](slices/S33.md) | stats cannot show progress | M | slicer | review; reporting | done |
 | 9 | S68 | no item-level notes/context without a slice |  | slicer | dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice. | done |
 | 10 | [S67](slices/S67.md) | slicer next output is terse |  | slicer | dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag. | done |
-| 11 | S02 | Trial run on a second repo with no legacy tree to import | S | slicer |  | — |
+| 11 | [S02](slices/S02.md) | Trial run on a second repo with no legacy tree to import | S | slicer |  | done |
 | 12 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | slicer | dogfooding S50 | — |
 | 13 | S66 | done --note and note mean different things (log vs slice) |  | slicer | dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible. | — |
 | 14 | S63 | TUI: view, edit and add slice notes |  | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | — |
@@ -96,3 +96,4 @@
 | 68 | [S62](slices/S62.md) | Parallel branches conflict on .slicer/log.jsonl and generated render/ files |  | slicer | dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/. | done |
 | 69 | [S69](slices/S69.md) | No way to bulk-reorder or persist a score sort (queue reorder is one move at a time) |  | slicer | dogfooding re-sort: reordering the queue needs one 'move --to' per item; list --sort score is view-only. Consider 'slicer sort --by score' to persist, or move accepting a full order / multiple ids. | done |
 | 70 | [S70](slices/S70.md) | Render an HTML roadmap file alongside the markdown |  | slicer | user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness. | done |
+| 71 | S71 | set --depends-on '' stores an empty-string dependency instead of clearing |  | slicer | dogfooding S02 (greenfield): 'slicer set ID --depends-on ""' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug. | — |

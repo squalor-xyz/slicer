@@ -1,0 +1,39 @@
+{
+  "id": "S02",
+  "title": "Trial run on a second repo with no legacy tree to import",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "All prior dogfooding was on slicer's own `.slicer/`, which was born from `migrate`. This\nvalidates the greenfield path — a fresh project with no legacy markdown — through init, both\nintake routes (outline import and individual add), authoring, the newer query commands, and the\nrender/check/verify gate."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": "In a throwaway git repo: `slicer init`; `import --skeleton` + a title-dependency outline\n(dry-run then apply) and `add`; `promote`/`edit`/`note` (bare and promoted); `prose edit\ngoals`; `next --start`, `deps --format mermaid`, `find`, `status`, `stats`, `sort`, `log`;\n`render` (ROADMAP.md + ROADMAP.html), `check`, `verify`, `done`, `remove --dry-run`; commit and\nconfirm check is green from a clean tree. File any greenfield-specific friction."
+    },
+    {
+      "heading": "Git",
+      "body": "Validation only — no src changes. Findings filed into the roadmap."
+    }
+  ],
+  "notes": []
+}
