@@ -334,7 +334,7 @@
       "id": "S42",
       "title": "TUI reordering and re-prioritizing are one step at a time",
       "short_title": "TUI reordering and re-prioritizing are one step at a time",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

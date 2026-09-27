@@ -40,6 +40,8 @@ BINDINGS = (
   Binding(("a",), "a", "add", "Add an item"),
   Binding(("J",), "J", "reorder_down", "Reorder down (clear restrictions first)"),
   Binding(("K",), "K", "reorder_up", "Reorder up (clear restrictions first)"),
+  Binding(("T",), "T", "reorder_top", "Move to top (clear restrictions first)"),
+  Binding(("M",), "M", "move_to", "Move to a position (clear restrictions first)"),
   Binding(("s",), "s", "start", "Start item"),
   Binding(("d",), "d", "done", "Mark item done"),
   Binding(("p",), "p", "park", "Park item"),
@@ -347,6 +349,11 @@ def act(
         ops.move(state, target, before=state.index.items[at - 1].id)
         return ActResult(f"{target} moved up", severity="success")
       return ActResult("already first")
+    if action == "reorder_top":
+      if state.index.position(target) > 0:
+        ops.move(state, target, to=1)
+        return ActResult(f"{target} moved to top", severity="success")
+      return ActResult("already first")
     if action == "promote":
       ops.promote(state, target)
       return ActResult(f"{target} promoted", severity="success")
@@ -550,6 +557,8 @@ class View:
       return ActResult()
     if self.mode in ("search", "jump"):
       return self._prompt(state, key)
+    if self.mode == "move":
+      return self._move(state, key)
     if self.mode == "filter":
       return self._filter(state, key)
     if self.mode == "help":
@@ -587,8 +596,13 @@ class View:
         if self.selected in targets:
           at = max(0, min(targets.index(self.selected) + delta, len(targets) - 1))
           self.select(targets[at])
-    elif action in ("reorder_up", "reorder_down") and self.filters.active:
+    elif action in ("reorder_up", "reorder_down", "reorder_top", "move_to") and self.filters.active:
       self.notify("reordering disabled while filtered; press c to clear search and filters")
+    elif action == "move_to":
+      if self.selected:
+        self.mode, self.text = "move", ""
+      else:
+        self.notify("no item selected")
     elif action:
       if self.selected or action in ("add", "render"):
         result = act(state, key, self.target, entry=self.entry_at, focus=self.focus)
@@ -631,6 +645,34 @@ class View:
     if self.mode == "search":
       self.filters.query = self.text
     self.refresh(state)
+    return ActResult()
+
+  def _move(self, state: State, key: str) -> ActResult:
+    """Collect a target position, then reorder through the same ops.move the CLI
+    uses. Only digits are accepted; out-of-range values surface ops.move's error."""
+    if key == "\x1b":
+      self.mode = "normal"
+      self.notify("cancelled")
+    elif key in ("\n", "\r", "KEY_ENTER"):
+      self.mode = "normal"
+      text = self.text.strip()
+      if not text:
+        self.notify("cancelled")
+      elif not self.selected:
+        self.notify("no item selected", "error")
+      elif int(text) == state.index.position(self.target) + 1:
+        self.notify(f"already at {text}")  # no-op: don't move, save or log
+      else:
+        try:
+          landed = ops.move(state, self.target, to=int(text))
+          self.notify(f"{self.target} moved to {landed}", "success")
+        except (SlicerError, OSError) as exc:
+          self.notify(str(exc), "error")
+      self.refresh(state)
+    elif key in ("KEY_BACKSPACE", "\x7f", "\b"):
+      self.text = self.text[:-1]
+    elif len(key) == 1 and key.isdigit():
+      self.text += key
     return ActResult()
 
   def _filter(self, state: State, key: str) -> ActResult:
@@ -733,8 +775,8 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
       attr = palette.attr(line.role, selected=selected, focused=view.focus == "right")
       put(n, right_x, ("> " if selected else "  ") + line.text, attr)
   put(status_y, 0, view.status(state), palette.attr("dim"))
-  if view.mode in ("search", "jump"):
-    label = "Search" if view.mode == "search" else "Jump to ID"
+  if view.mode in ("search", "jump", "move"):
+    label = {"search": "Search", "jump": "Jump to ID", "move": "Move to position"}[view.mode]
     prompt = f"{label} (Enter accepts, Esc cancels): {view.text}"
     put(status_y + 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))
   else:

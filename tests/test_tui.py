@@ -219,13 +219,100 @@ class TuiNavigationTests(unittest.TestCase):
       self.assertEqual([it.id for it in state.index.items], ['S02', 'S01'])
       self.assertEqual(view.target, 'S01')
 
+  def test_Reorder_MoveToTop_PlacesItemFirst(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run('init')
+      for title in ('First', 'Second', 'Third'):
+        repo.run('add', title)
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.handle(state, 'c')  # reordering is blocked while the default filter is active
+      view.select((tui.ITEM, 'S03'))
+      view.handle(state, 'T')
+      self.assertEqual([it.id for it in state.index.items], ['S03', 'S01', 'S02'])
+      self.assertEqual(view.target, 'S03')
+      self.assertIn('moved to top', view.message)
+      # Already-first is a no-op, not a spurious move.
+      view.handle(state, 'T')
+      self.assertEqual([it.id for it in state.index.items], ['S03', 'S01', 'S02'])
+      self.assertEqual(view.message, 'already first')
+
+  def test_MoveToPosition_Prompt_MovesItemThere(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run('init')
+      for title in ('First', 'Second', 'Third', 'Fourth'):
+        repo.run('add', title)
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.handle(state, 'c')
+      view.select((tui.ITEM, 'S01'))
+      view.handle(state, 'M')
+      self.assertEqual(view.mode, 'move')
+      type_keys(view, state, '3')
+      view.handle(state, '\n')
+      self.assertEqual(view.mode, 'normal')
+      self.assertEqual([it.id for it in state.index.items], ['S02', 'S03', 'S01', 'S04'])
+      self.assertEqual(view.target, 'S01')
+      self.assertIn('moved to 3', view.message)
+
+  def test_MoveToPosition_CancelFilteredAndBadRange_DoNoHarm(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run('init')
+      for title in ('First', 'Second'):
+        repo.run('add', title)
+      state = repo.state()
+      view = tui.View.initial(state)
+      # Blocked while the default (status) filter is active.
+      view.handle(state, 'M')
+      self.assertEqual(view.mode, 'normal')
+      self.assertIn('press c', view.message)
+      view.handle(state, 'c')
+      view.select((tui.ITEM, 'S01'))
+      # Esc cancels without moving anything.
+      view.handle(state, 'M')
+      type_keys(view, state, '2')
+      view.handle(state, '\x1b')
+      self.assertEqual(view.mode, 'normal')
+      self.assertEqual([it.id for it in state.index.items], ['S01', 'S02'])
+      self.assertEqual(view.message, 'cancelled')
+      # Out-of-range surfaces ops.move's error and leaves the queue untouched.
+      view.handle(state, 'M')
+      type_keys(view, state, '9')
+      view.handle(state, '\n')
+      self.assertEqual([it.id for it in state.index.items], ['S01', 'S02'])
+      self.assertEqual(view.message_severity, 'error')
+      self.assertIn('out of range', view.message)
+      # Moving to the current position is a no-op: no save, no log entry.
+      log_before = repo.read('.slicer/log.jsonl')
+      view.handle(state, 'M')
+      type_keys(view, state, '1')  # S01 is already first
+      view.handle(state, '\n')
+      self.assertEqual([it.id for it in state.index.items], ['S01', 'S02'])
+      self.assertEqual(view.message, 'already at 1')
+      self.assertNotEqual(view.message_severity, 'success')
+      self.assertEqual(repo.read('.slicer/log.jsonl'), log_before)
+
+  def test_EditPriority_Field_AdjustsScore(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run('init')
+      repo.run('add', 'Item')
+      state = repo.state()
+      self.assertEqual(state.index.require('S01').score, 22)
+      request = tui.EditRequest(kind='field', target='S01', name='importance', body='2')
+      result = tui.apply_edit_result(state, request, '3')
+      self.assertEqual(result.severity, 'success')
+      self.assertEqual(repo.state().index.require('S01').score, 32)
+      request = tui.EditRequest(kind='field', target='S01', name='urgency', body='2')
+      tui.apply_edit_result(state, request, '3')
+      self.assertEqual(repo.state().index.require('S01').score, 33)
+
   def test_ModalKeys_NormalActions_AreNotDispatched(self) -> None:
     state = example()
     for opening in ['/', 'g', 'f', '?']:
       view = tui.View.initial(state)
       view.handle(state, opening)
       with patch.object(tui, 'act', side_effect=AssertionError('normal action dispatched')):
-        type_keys(view, state, 'qdasrJK')
+        type_keys(view, state, 'qdasrJKTM')
       self.assertFalse(view.quit)
       self.assertNotEqual(view.mode, 'normal')
       view.handle(state, '\x1b')
@@ -318,7 +405,7 @@ class TuiDrawingTests(unittest.TestCase):
 
   def test_Draw_ModalViews_DoNotAdvertiseNormalShortcuts(self) -> None:
     state = example()
-    for mode in ['search', 'jump', 'filter', 'help']:
+    for mode in ['search', 'jump', 'move', 'filter', 'help']:
       with self.subTest(mode=mode):
         view = tui.View.initial(state)
         view.mode, view.draft = mode, view.filters.copy()
@@ -328,6 +415,7 @@ class TuiDrawingTests(unittest.TestCase):
         self.assertNotIn('Tab panes', text)
         self.assertIn({'search': 'Search (Enter accepts, Esc cancels)',
                        'jump': 'Jump to ID (Enter accepts, Esc cancels)',
+                       'move': 'Move to position (Enter accepts, Esc cancels)',
                        'filter': 'Space toggle, Enter apply, Esc cancel',
                        'help': 'Help: j/k scroll, ? or Esc close'}[mode], text)
 
@@ -375,7 +463,7 @@ class TuiDrawingTests(unittest.TestCase):
   def test_Draw_SmallAndResizedScreens_AllModesStayInBounds(self) -> None:
     state = example()
     for height, width in [(0, 0), (1, 1), (2, 8), (5, 24), (24, 100)]:
-      for mode in ['normal', 'search', 'jump', 'filter', 'help']:
+      for mode in ['normal', 'search', 'jump', 'move', 'filter', 'help']:
         for resizing in [False, True]:
           with self.subTest(size=(height, width), mode=mode, resizing=resizing):
             view = tui.View.initial(state)
