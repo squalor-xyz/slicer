@@ -380,7 +380,7 @@
       "id": "S03",
       "title": "Export back to a legacy markdown index for anything still expecting one",
       "short_title": "Export back to a legacy markdown index for anything still expecting one",
-      "status": "open",
+      "status": "retired",
       "has_slice": false,
       "depends_on": [],
       "notes": [],
@@ -394,7 +394,7 @@
         "findings": "",
         "pass": "",
         "group": "",
-        "reason": "",
+        "reason": "legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals",
         "importance": 1,
         "urgency": 1
       }

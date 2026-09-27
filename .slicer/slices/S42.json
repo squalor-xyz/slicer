@@ -8,10 +8,11 @@
   "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
+  "boundary": "**Not in this slice:** a full drag interaction; discrete jumps cover the pain.",
   "sections": [
     {
       "heading": "Why",
-      "body": "`J` and `K` move an item one position per keystroke, so dragging something from the bottom\nof a three-dozen-item queue to the top is dozens of presses. There is no move-to-top, no\nmove-to-position, and no way to set the priority score from the TUI once it exists — so\ntriage still means dropping to the CLI."
+      "body": "`J`/`K` move an item one position per keystroke, so dragging something from the bottom of a three-dozen-item queue to the top is dozens of presses. There is no move-to-top and no move-to-position in the TUI.\n\nRe-prioritizing in the TUI is already possible — importance and urgency are editable with `e` — and `slicer sort` bulk-orders the whole queue by score from the CLI. This slice is now only the in-TUI reorder ergonomics."
     },
     {
       "heading": "Files",
@@ -23,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Add move-to-top and move-to-position (prompting for a target), routed through `ops.move`,\nand keys to bump importance/urgency once those fields land, so a queue can be triaged in\nplace. Pure `act` paths as usual.\n\n**Not in this slice:** a full drag interaction; discrete jumps cover the pain."
+      "body": "Add move-to-top and move-to-position (prompting for a target) in the TUI, routed through `ops.move`, so a queue can be reordered in place without dropping to the CLI. Pure `act` paths as usual.\n\n**Not in this slice:** re-prioritizing (done via `e` on importance/urgency) and bulk score-ordering (done by `slicer sort`)."
     },
     {
       "heading": "Check",
