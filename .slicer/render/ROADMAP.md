@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-61 items · — 13 · done 47 · parked 1
+62 items · — 14 · done 47 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -87,3 +87,4 @@
 | 59 | [S59](slices/S59.md) | Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1) |  |  |  | done |
 | 60 | [S60](slices/S60.md) | List more keyboard shortcuts in the TUI |  |  |  | done |
 | 61 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  |  |  | done |
+| 62 | S62 | Parallel branches conflict on .slicer/log.jsonl and generated render/ files |  | slicer | dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/. | — |

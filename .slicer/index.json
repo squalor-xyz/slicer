@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 62,
+  "next_id": 63,
   "preamble": "",
   "passes": [],
   "items": [
@@ -1339,6 +1339,28 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S62",
+      "title": "Parallel branches conflict on .slicer/log.jsonl and generated render/ files",
+      "short_title": "Parallel branches conflict on .slicer/log.jsonl and generated render/ files",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/.",
         "pass": "",
         "group": "",
         "reason": "",
