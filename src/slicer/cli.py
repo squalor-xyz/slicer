@@ -72,6 +72,11 @@ def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   return sp
 
 
+def _render_hint(args: argparse.Namespace) -> str:
+  """The `run slicer render` reminder — empty when --render already rendered."""
+  return "" if getattr(args, "render", False) else "run `slicer render`"
+
+
 def _state(args: argparse.Namespace) -> store.State:
   return store.load(Path(args.root) if args.root else None)
 
@@ -220,7 +225,8 @@ def cmd_import(args: argparse.Namespace) -> int:
     return OK
 
   lines.append(f"added      {', '.join(report.ids)}")
-  lines.append("now run `slicer render`")
+  if _render_hint(args):
+    lines.append(f"now {_render_hint(args)}")
   _emit(args, report.to_dict(), "\n".join(lines))
   return OK
 
@@ -553,7 +559,8 @@ def cmd_note(args: argparse.Namespace) -> int:
   if body is None:
     raise StateError("editor exited non-zero; nothing added", code="editor_aborted")
   ops.add_note(state, args.id, body)
-  _emit(args, {"id": args.id, "added": True}, f"added note to {args.id}; run `slicer render`")
+  hint = _render_hint(args)
+  _emit(args, {"id": args.id, "added": True}, f"added note to {args.id}" + (f"; {hint}" if hint else ""))
   return OK
 
 
@@ -693,7 +700,8 @@ def cmd_prose_edit(args: argparse.Namespace) -> int:
     _emit(args, {"ref": args.ref, "changed": False}, f"{args.ref} unchanged")
     return OK
   ops.edit_prose(state, args.ref, body)
-  _emit(args, {"ref": args.ref, "changed": True}, f"updated {args.ref}; run `slicer render`")
+  hint = _render_hint(args)
+  _emit(args, {"ref": args.ref, "changed": True}, f"updated {args.ref}" + (f"; {hint}" if hint else ""))
   return OK
 
 

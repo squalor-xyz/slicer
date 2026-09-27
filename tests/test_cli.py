@@ -616,3 +616,41 @@ class TuiAliasTests(unittest.TestCase):
           self.assertEqual(code, 2)
           codes[name] = code
       self.assertEqual(codes["tui"], codes["ui"])
+
+
+class RenderHintTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    support.make_mini(repo)
+    repo.run("init")
+    repo.run("migrate", "--from", "docs/slices")
+    return repo
+
+  def test_ProseEdit_RenderSuppressesTheHint(self) -> None:
+    with self.repo() as repo:
+      with_flag = repo.run("prose", "edit", "preamble", "--text", "x", "--render")[1]
+      self.assertNotIn("run `slicer render`", with_flag)
+      without = repo.run("prose", "edit", "preamble", "--text", "y")[1]
+      self.assertIn("run `slicer render`", without)
+
+  def test_Note_RenderSuppressesTheHint(self) -> None:
+    with self.repo() as repo:
+      with_flag = repo.run("note", "S02", "--text", "a", "--render")[1]
+      self.assertNotIn("run `slicer render`", with_flag)
+      without = repo.run("note", "S02", "--text", "b")[1]
+      self.assertIn("run `slicer render`", without)
+
+  def test_Import_RenderSuppressesTheHint(self) -> None:
+    with self.repo() as repo:
+      repo.write("r1.md", "## First new item\nsize: S\n")
+      with_flag = repo.run("import", str(repo.root / "r1.md"), "--render")[1]
+      self.assertNotIn("run `slicer render`", with_flag)
+      repo.write("r2.md", "## Second new item\nsize: S\n")
+      without = repo.run("import", str(repo.root / "r2.md"))[1]
+      self.assertIn("now run `slicer render`", without)
+
+  def test_RenderFlag_LeavesJsonEnvelopeUnchanged(self) -> None:
+    with self.repo() as repo:
+      a = json.loads(repo.run("prose", "edit", "preamble", "--text", "x", "--json")[1])
+      b = json.loads(repo.run("prose", "edit", "preamble", "--text", "y", "--render", "--json")[1])
+      self.assertEqual(set(a), set(b))  # same keys; hint was never in the envelope

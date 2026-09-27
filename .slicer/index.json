@@ -265,7 +265,7 @@
       "id": "S51",
       "title": "A mutating command still says \"now run slicer render\" after --render already rendered",
       "short_title": "A mutating command still says \"now run slicer render\" after --render already rendered",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
