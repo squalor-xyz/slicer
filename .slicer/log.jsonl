@@ -265,3 +265,6 @@
 {"when": "2026-09-27T16:08:33Z", "item": "goals", "action": "prose", "from": "", "to": "", "note": "edit"}
 {"when": "2026-09-27T16:08:33Z", "item": "non_goals", "action": "prose", "from": "", "to": "", "note": "edit"}
 {"when": "2026-09-27T16:12:16Z", "item": "S56", "action": "status", "from": "started", "to": "done", "note": "Project goals/non-goals as index-level prose blocks (goals, non_goals) reusing prose edit/render/JSON; new read-only 'slicer goals' command (text + --json) returning both; rendered under the roadmap heading and gated by check; ai instructions + README + getting-started + agents docs point agents at it. Recorded slicer's own owner-agreed direction. New test_goals.py + prose/render tests; 532 tests + slicer check + git diff --check pass."}
+{"when": "2026-09-27T16:21:55Z", "item": "S59", "action": "add", "from": "", "to": "open", "note": "Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1)"}
+{"when": "2026-09-27T16:24:11Z", "item": "S60", "action": "add", "from": "", "to": "open", "note": "List more keyboard shortcuts in the TUI"}
+{"when": "2026-09-27T16:24:11Z", "item": "S61", "action": "add", "from": "", "to": "open", "note": "Make slicer ui and slicer tui both open the TUI"}

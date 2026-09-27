@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 59,
+  "next_id": 62,
   "preamble": "",
   "passes": [],
   "items": [
@@ -1279,6 +1279,66 @@
         ],
         "trees_literal": false,
         "findings": "user request: easier installation for casual users while retaining clone-based installs",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S59",
+      "title": "Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1)",
+      "short_title": "Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1)",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S60",
+      "title": "List more keyboard shortcuts in the TUI",
+      "short_title": "List more keyboard shortcuts in the TUI",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S61",
+      "title": "Make slicer ui and slicer tui both open the TUI",
+      "short_title": "Make slicer ui and slicer tui both open the TUI",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
         "pass": "",
         "group": "",
         "reason": "",
