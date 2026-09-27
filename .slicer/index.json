@@ -1268,7 +1268,7 @@
       "id": "S58",
       "title": "Provide a simple install path without cloning the repository",
       "short_title": "Provide a simple install path without cloning the repository",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "fields": {

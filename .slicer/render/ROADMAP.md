@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-61 items · — 17 · done 43 · parked 1
+61 items · — 16 · done 44 · parked 1
 
 | # | Slice | Title | Size | Trees | Findings | Status |
 |---|---|---|---|---|---|---|
@@ -83,7 +83,7 @@
 | 55 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | slicer | user request: clearer TUI with color | done |
 | 56 | [S56](slices/S56.md) | Track project goals and non-goals for AI-assisted planning |  | slicer | user request: explicit product direction for AI-assisted planning | done |
 | 57 | [S57](slices/S57.md) | Provide slicer ai instructions for agent onboarding |  | slicer | user request: discoverable agent onboarding from the installed tool | done |
-| 58 | [S58](slices/S58.md) | Provide a simple install path without cloning the repository |  | slicer | user request: easier installation for casual users while retaining clone-based installs | — |
+| 58 | [S58](slices/S58.md) | Provide a simple install path without cloning the repository |  | slicer | user request: easier installation for casual users while retaining clone-based installs | done |
 | 59 | [S59](slices/S59.md) | Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1) |  |  |  | done |
 | 60 | [S60](slices/S60.md) | List more keyboard shortcuts in the TUI |  |  |  | — |
 | 61 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  |  |  | — |

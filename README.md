@@ -22,6 +22,36 @@ Stdlib Python 3.11+, no dependencies.
 
 ## Install
 
+Python 3.11+, no dependencies. Install it to use slicer; clone it to change slicer.
+
+### Install it (no clone)
+
+Into its own virtual environment, straight from GitHub — no checkout required:
+
+```sh
+python3 -m venv ~/.slicer-venv
+~/.slicer-venv/bin/pip install git+https://github.com/squalor-xyz/slicer
+ln -s ~/.slicer-venv/bin/slicer ~/.local/bin/slicer   # or anywhere on your PATH
+```
+
+`slicer --help` confirms it. Update with
+`~/.slicer-venv/bin/pip install -U git+https://github.com/squalor-xyz/slicer`; uninstall by
+deleting the venv and the symlink.
+
+If you prefer a single command, `pip install --user
+git+https://github.com/squalor-xyz/slicer` also works, with two caveats: on macOS Homebrew
+and recent Debian/Ubuntu/Fedora the system Python is "externally managed" (PEP 668) and
+rejects it — use the venv above instead — and the user scripts directory must be on your
+`PATH` (`~/.local/bin` on Linux, `~/Library/Python/3.11/bin` on macOS). Uninstall with
+`pip uninstall slicer`. If you already use [pipx](https://pipx.pypa.io) or
+[uv](https://docs.astral.sh/uv/), `pipx install git+https://github.com/squalor-xyz/slicer`
+or `uv tool install git+https://github.com/squalor-xyz/slicer` install it isolated and on
+your `PATH` in one step.
+
+### Develop on it (clone + editable)
+
+To hack on slicer itself, use an editable install so the command tracks your checkout:
+
 ```sh
 git clone git@github.com:squalor-xyz/slicer.git
 cd slicer

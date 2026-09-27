@@ -5,6 +5,9 @@ anything non-trivial; it explains the invariants this file only names.
 
 ## Install
 
+This is the contributor install. To just *use* slicer, the no-clone path in the
+[README](README.md#install) is simpler.
+
 Editable, so the command tracks your worktree:
 
 ```sh

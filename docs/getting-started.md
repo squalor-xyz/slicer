@@ -23,6 +23,38 @@ Shell blocks are commands to run; the worked workflows use fictional example pro
 
 ## 1. Install
 
+Python 3.11+, no dependencies. Install it to use slicer; clone it to change slicer.
+
+### Install it (no clone)
+
+Into its own virtual environment, straight from GitHub:
+
+```sh
+python3 -m venv ~/.slicer-venv
+~/.slicer-venv/bin/pip install git+https://github.com/squalor-xyz/slicer
+ln -s ~/.slicer-venv/bin/slicer ~/.local/bin/slicer   # or anywhere on your PATH
+```
+
+```console
+$ slicer --help
+```
+
+Update with `~/.slicer-venv/bin/pip install -U git+https://github.com/squalor-xyz/slicer`;
+uninstall by deleting the venv and the symlink.
+
+For a single command, `pip install --user git+https://github.com/squalor-xyz/slicer` works
+too, with two caveats: on macOS Homebrew and recent Debian/Ubuntu/Fedora the system Python
+is "externally managed" (PEP 668) and rejects it — use the venv above — and the user scripts
+directory must be on your `PATH` (`~/.local/bin` on Linux, `~/Library/Python/3.11/bin` on
+macOS). Uninstall with `pip uninstall slicer`. Users of
+[pipx](https://pipx.pypa.io) or [uv](https://docs.astral.sh/uv/) can instead run
+`pipx install git+https://github.com/squalor-xyz/slicer` or `uv tool install
+git+https://github.com/squalor-xyz/slicer` for an isolated, on-PATH install in one step.
+
+### Develop on it (clone + editable)
+
+To change slicer itself, use an editable install so the command tracks your checkout:
+
 ```sh
 git clone git@github.com:squalor-xyz/slicer.git
 cd slicer
@@ -31,13 +63,7 @@ python3 -m venv .venv
 ln -s "$PWD/.venv/bin/slicer" ~/.local/bin/slicer   # or anywhere on your PATH
 ```
 
-The install is editable, so `slicer` follows the checkout. Check it with:
-
-```console
-$ slicer --help
-```
-
-Python 3.11+, no dependencies.
+The install is editable, so `slicer` follows the checkout.
 
 If `slicer` is not found, check that the directory containing its executable is on
 `PATH`. Contributors can run `PYTHONPATH=src python3 -m slicer --help` directly from
@@ -644,8 +670,10 @@ One command, one exit code:
   run: slicer check
 ```
 
-`check` composes render staleness, sync drift and the offline integrity checks. It never
-shells out to git, so a shallow checkout is fine.
+This is the same no-clone install as [section 1](#1-install), run in a throwaway CI
+environment where a shared venv is unnecessary. `check` composes render staleness, sync
+drift and the offline integrity checks. It never shells out to git, so a shallow checkout
+is fine.
 
 `slicer verify` is the other one — it additionally compares the index against
 `git log --all`, warning when an item is recorded done but no commit subject mentions
