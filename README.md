@@ -112,17 +112,17 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
-| `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies |
+| `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--effort/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies. `--effort` is 1–3 and optional |
 | `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
-| `sort [--by score] [--render]` | reorder the whole queue by priority score in one step (persists the `list --sort score` order) |
+| `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
 | `next [-n N] [--start]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started |
 | `next-id` | the id the next `add` or `import` would take, without allocating it |
-| `list [--all] [--status/--tree/--pass] [--sort score]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. Done and retired items are omitted unless `--all` is set or `--status` names them. `--sort score` is a flat score sort instead |
+| `list [--all] [--status/--tree/--pass] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. Done and retired items are omitted unless `--all` is set or `--status` names them. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
 | `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |
 | `show ID [--section NAME ...] [--context]` | print one slice or selected sections; `--context` adds title, dependencies, and scope boundary |
-| `set ID [ID ...] --title/--short-title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--no-flags/--group/--importance/--urgency` | change fields |
+| `set ID [ID ...] --title/--short-title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--no-flags/--group/--importance/--urgency/--effort/--no-effort` | change fields. `--no-effort` clears an estimate |
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
 | `note ID [--text/--file/--stdin] [--render]` | append a dated note to any item — no slice needed (shows in `show`/`render`, unlike `done --note`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |

@@ -107,7 +107,8 @@ $ slicer next --json
     "group": "Phase 0 — groundwork",
     "reason": "",
     "importance": 2,
-    "urgency": 2
+    "urgency": 2,
+    "effort": null
   },
   "path": "~/code/my-project/.slicer/slices/S01.json"
 }
@@ -115,7 +116,7 @@ $ slicer next --json
 
 Two shapes recur. An **item** is the object above minus `path`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
-1–3) are the Eisenhower axes. The combined score and quadrant are derived, not stored, so
+1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. The combined score and quadrant are derived, not stored, so
 they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
 `list --sort score`. `--json` without `--lean` is always this full shape.
 
@@ -133,7 +134,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | Command | Payload |
 |---|---|
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
-| `list` | array of items. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. `--sort score` is that same set in flat score order |
+| `list` | array of items. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. `--sort score` is that same set in flat score order. `--sort effort` orders `fields.effort` from 1 to 3 and puts null last, without writing state. `sort --by effort` persists that order |
 | `show ID` | item, plus `slice` when it has one; with one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
 | `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
 | `next-id` | `{"id": "S02"}` and nothing else; text is the bare id. Does not allocate, lock, log, or accept `--render` |

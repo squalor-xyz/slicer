@@ -162,6 +162,7 @@ SKELETON_HEAD = """\
     depends:  the title of another item, here or already in the roadmap
     importance: 1, 2 or 3; how important (default 2)
     urgency:    1, 2 or 3; how urgent (default 2)
+    effort:     1, 2 or 3; optional, omit to leave unset
 
   A paragraph after the keys and before the first `###` becomes the slice's
   lead. Each `### ` heading is a section of the slice; an item with no
@@ -183,6 +184,7 @@ tree: core
 findings: G1
 importance: 3
 urgency: 1
+effort: 1
 
 The loader accepts a missing key and carries on with a zero, so a typo in
 the config reads as a deliberate setting.
@@ -401,6 +403,7 @@ def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
   eff = graph.effective_scores(state.index)
   return [
     f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} "
+    f"{'-' if i.effort is None else i.effort} "
     f"{eff[i.id]:>2}{'^' if eff[i.id] > i.score else ' '} {i.quadrant:<9} {i.display_title()}"
     for n, i in enumerate(items, 1)
   ]
@@ -452,6 +455,9 @@ def cmd_list(args: argparse.Namespace) -> int:
     # Ties keep their manual position because Python's sort is stable.
     eff = graph.effective_scores(state.index)
     items = sorted(items, key=lambda i: eff[i.id], reverse=True)
+  elif getattr(args, "sort", None) == "effort":
+    # Same tie rule, and still a copy: effort order is not the stored queue.
+    items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_next_order(state, items)
   _emit(args, [i.to_dict() for i in items], "\n".join(_item_rows(state, items)) or "no matching items")
@@ -628,7 +634,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     state, args.title, item_id=args.id, size=args.size or "",
     trees=args.tree or [], findings=args.findings or "", status=args.status,
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
-    depends_on=args.depends_on, short_title=args.short_title,
+    effort=args.effort, depends_on=args.depends_on, short_title=args.short_title,
   )
   text = f"added {item.id}  {item.display_title()}"
   if item.pass_key:
@@ -670,12 +676,15 @@ def cmd_sort(args: argparse.Namespace) -> int:
 def cmd_set(args: argparse.Namespace) -> int:
   item_ids, batch = _batch_ids(args)
   state = _state(args)
+  if args.no_effort and args.effort is not None:
+    raise StateError("--effort and --no-effort cannot be combined", code="usage")
   flags = [] if args.no_flags else args.flag
   items = ops.set_fields_many(
     state, item_ids, title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
     pass_key=args.pass_key, flags=flags, group=args.group,
     importance=args.importance, urgency=args.urgency,
+    effort=ops.CLEAR_EFFORT if args.no_effort else args.effort,
   )
   _emit_items(args, items, batch, [f"updated {item.id}" for item in items])
   return OK
@@ -1141,7 +1150,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="filter by status (repeatable); replaces the default of omitting done and retired")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
-  sp.add_argument("--sort", choices=["score"], help="order by priority score, highest first")
+  sp.add_argument("--sort", choices=["score", "effort"],
+                  help="score: flat priority, highest first; effort: lightest estimate first, unset last")
 
   sp = add("deps", cmd_deps, "dependencies: unblocked items, or one item's edges")
   sp.add_argument("id", nargs="?")
@@ -1175,6 +1185,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--pass", dest="pass_key", help="file the item under this pass group")
   sp.add_argument("--importance", type=int, help="1-3; how important (default 2)")
   sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
+  sp.add_argument("--effort", type=int, help="1-3; optional estimate, omit to leave unset")
 
   sp = _render_flag(add("promote", _mutating(cmd_promote), "give an item a slice file"))
   sp.add_argument("id")
@@ -1190,7 +1201,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--to", type=int)
 
   sp = _render_flag(add("sort", _mutating(cmd_sort), "reorder the whole queue by priority score"))
-  sp.add_argument("--by", choices=["score"], default="score", help="sort key")
+  sp.add_argument("--by", choices=["score", "effort"], default="score",
+                  help="score (default) or effort: lightest estimate first, unset last")
 
   sp = _render_flag(add("set", _mutating(cmd_set), "change an item's fields"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
@@ -1207,6 +1219,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--group", help="the phase-label group; --group '' clears it")
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
+  sp.add_argument("--effort", type=int, help="1-3; optional estimate")
+  sp.add_argument("--no-effort", action="store_true", help="clear the effort estimate")
 
   sp = _render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary"))
   sp.add_argument("id")

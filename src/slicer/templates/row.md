@@ -1,1 +1,1 @@
-| {{position}} | {{idcell}} | {{title}} | {{size}} | {{trees}} | {{findings}} | {{status}} |
+| {{position}} | {{idcell}} | {{title}} | {{size}} | {{effort}} | {{trees}} | {{findings}} | {{status}} |

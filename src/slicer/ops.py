@@ -14,7 +14,7 @@ from pathlib import Path
 
 from slicer import graph, ids, outline, prose, vcs
 from slicer.errors import StateError
-from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, extract_boundary
+from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary
 from slicer.store import State
 
 
@@ -76,6 +76,11 @@ def _reject_bad_text(**fields: object) -> None:
       raise StateError("a flag cannot contain a newline", code="newline_in_field")
 
 
+# `set_fields_many` treats None as "this field was not in the request".
+# Clearing effort needs a value that is not None and is not a score.
+CLEAR_EFFORT = object()
+
+
 def _valid_score(name: str, value: object) -> int:
   """An Eisenhower axis is an integer 1-3. Reject anything else, naming it."""
   try:
@@ -105,6 +110,7 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
     depends_on=_clean(list(fields.get("depends_on") or [])),
     importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
     urgency=_valid_score("urgency", fields["urgency"]) if fields.get("urgency") is not None else 2,
+    effort=_valid_score("effort", fields["effort"]) if fields.get("effort") is not None else None,
   )
   if item.status not in cfg.statuses:
     raise StateError(f"unknown status {item.status!r}; known: {sorted(cfg.statuses)}")
@@ -207,6 +213,7 @@ _SOURCE_FIELD_DEFAULTS = {
   "depends": [],
   "importance": 2,
   "urgency": 2,
+  "effort": None,
 }
 
 
@@ -260,9 +267,12 @@ def sort_queue(state: State, by: str = "score") -> int:
   order with priority order. Returns how many items changed position.
   """
   index = state.index
-  eff = graph.effective_scores(index)
   before = [it.id for it in index.items]
-  index.items.sort(key=lambda it: eff[it.id], reverse=True)
+  if by == "effort":
+    index.items.sort(key=effort_rank)
+  else:
+    eff = graph.effective_scores(index)
+    index.items.sort(key=lambda it: eff[it.id], reverse=True)
   moved = sum(a != it.id for a, it in zip(before, index.items))
   if moved:
     state.save_index()
@@ -323,7 +333,7 @@ def _batch_items(state: State, item_ids: list[str]) -> list[Item]:
 def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list[Item]:
   """Validate the whole request before changing any item; save the index once."""
   items = _batch_items(state, item_ids)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency", "effort"}
   _reject_bad_text(**fields)
   values = {}
   for key, value in fields.items():
@@ -331,9 +341,11 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
       continue
     if key not in known:
       raise StateError(f"unknown field {key!r}; known: {sorted(known)}")
-    if key == "status" and value not in state.config.statuses:
+    if value is CLEAR_EFFORT:
+      value = None
+    elif key == "status" and value not in state.config.statuses:
       raise StateError(f"unknown status {value!r}; known: {sorted(state.config.statuses)}")
-    if key in ("importance", "urgency"):
+    elif key in ("importance", "urgency", "effort"):
       value = _valid_score(key, value)
     values[key] = _clean(value)
 
@@ -873,6 +885,7 @@ def apply_outline(
       depends_on=[by_title[d] for d in spec.depends],
       importance=spec.importance,
       urgency=spec.urgency,
+      effort=spec.effort,
     )
     state.index.items.append(item)
 

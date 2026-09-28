@@ -138,6 +138,8 @@ class Item:
   # rather than sinking or floating. Base score is importance-first (below).
   importance: int = 2
   urgency: int = 2
+  # Optional implementation weight, 1-3. Unset stays out of priority.
+  effort: int | None = None
 
   def display_title(self) -> str:
     return self.short_title or self.title
@@ -187,6 +189,7 @@ class Item:
         "reason": self.reason,
         "importance": self.importance,
         "urgency": self.urgency,
+        "effort": self.effort,
       },
     }
 
@@ -211,7 +214,28 @@ class Item:
       reason=f.get("reason", ""),
       importance=int(f.get("importance", 2)),
       urgency=int(f.get("urgency", 2)),
+      effort=_optional_effort(f["effort"]) if "effort" in f else None,
     )
+
+
+def _optional_effort(value: object) -> int | None:
+  """Load a stored effort. Missing is handled by the caller; null is unset."""
+  if value is None:
+    return None
+  try:
+    n = int(value)  # type: ignore[arg-type]
+  except (TypeError, ValueError):
+    raise StateError(f"effort must be a number 1-3, not {value!r}", code="corrupt") from None
+  if not 1 <= n <= 3:
+    raise StateError(f"effort must be 1, 2 or 3, not {n}", code="corrupt")
+  return n
+
+
+def effort_rank(item: Item) -> tuple[int, int]:
+  """Assigned effort ascending, then unset. A stable sort keeps tie order."""
+  if item.effort is None:
+    return (1, 0)
+  return (0, item.effort)
 
 
 @dataclass
