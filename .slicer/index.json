@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 90,
+  "next_id": 91,
   "preamble": "",
   "passes": [
     {
@@ -2078,6 +2078,31 @@
         "reason": "",
         "importance": 3,
         "urgency": 2
+      }
+    },
+    {
+      "id": "S90",
+      "title": "Set up PyPI and the trusted publisher for squalor-slicer",
+      "short_title": "Set up PyPI and the trusted publisher for squalor-slicer",
+      "status": "later",
+      "has_slice": true,
+      "depends_on": [
+        "S06"
+      ],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "PyPI was down when S06 landed; account, GitHub environment, and pending publisher are still undone",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 1
       }
     }
   ],

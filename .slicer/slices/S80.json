@@ -10,7 +10,7 @@
   "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
-  "boundary": "**Not in this slice:** the PyPI account/name setup and trusted-publishing config\n(owned by the publish slice); this consumes it.",
+  "boundary": "**Not in this slice:** the PyPI account, the GitHub environment, and the trusted publisher (S90); this consumes that setup.",
   "sections": [
     {
       "heading": "Why",
