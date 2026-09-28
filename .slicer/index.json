@@ -1707,7 +1707,7 @@
       "id": "S74",
       "title": "Keep a --render failure inside one JSON envelope",
       "short_title": "Keep a --render failure inside one JSON envelope",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

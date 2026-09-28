@@ -48,21 +48,38 @@ def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
     print(text)
 
 
+def _render_after_mutation(args: argparse.Namespace) -> int:
+  """Re-read and render the just-saved state; return how many files changed."""
+  state = _state(args)
+  expected = render.plan(state)
+  return len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
+
+
 def _mutating(fn):
   """Wrap a mutating handler so `--render` renders after it, from one place.
 
-  The mutation has already saved to disk, so state is re-read and rendered;
-  centralising it here keeps every mutating command in step rather than each
-  growing its own render step.
+  The handler has already saved to disk and printed its own result (an object,
+  or a JSON array for a batch of ids). If the follow-up render fails, the change
+  is still committed, so we must not let the failure reach `main` — that would
+  print a *second* document after the handler's result. Instead stdout stays the
+  handler's single result unchanged, the render failure goes to stderr, and the
+  exit is DRIFT (1): state and `render/` are now out of step, which is what
+  `slicer render` resolves. The exit is DRIFT whatever the cause, because the
+  mutation the user asked for did succeed; only the projection is stale.
   """
   def wrapped(args: argparse.Namespace) -> int:
+    if not (getattr(args, "render", False) and not getattr(args, "dry_run", False)):
+      return fn(args)
     code = fn(args)
-    if code == OK and getattr(args, "render", False) and not getattr(args, "dry_run", False):
-      state = _state(args)
-      expected = render.plan(state)
-      written = render.write(expected, state.render_dir, render.compare(expected, state.render_dir))
-      if not getattr(args, "json", False):
-        print(f"rendered {len(written)} file(s)")
+    if code != OK:
+      return code
+    try:
+      written = _render_after_mutation(args)
+    except (SlicerError, OSError) as exc:
+      print(f"slicer: saved, but render failed: {exc}; run `slicer render`", file=sys.stderr)
+      return DRIFT
+    if not getattr(args, "json", False):
+      print(f"rendered {written} file(s)")
     return code
 
   # main() locks the project around a mutating command; the flag says which
