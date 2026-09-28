@@ -86,6 +86,8 @@ class LeanCommandTests(unittest.TestCase):
       "add", "Parse the config file", "--size", "M", "--tree", "core", "--findings", "G1",
     )
     repo.run("promote", "S01")
+    repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+    repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
     return repo
 
   def test_ListNextAndShow_WithoutLean_KeepTheFullShape(self) -> None:
@@ -130,7 +132,10 @@ class LeanCommandTests(unittest.TestCase):
       self.assertTrue(sl["sections"])
       for section in sl["sections"]:
         self.assertIn("heading", section)
-        self.assertNotIn("body", section)
+        if section["heading"] in ("Implement", "Check"):
+          self.assertTrue(section["body"])
+        else:
+          self.assertNotIn("body", section)
 
   def test_List_LeanWithoutJson_DoesNotChangeTheText(self) -> None:
     with self.repo() as repo:

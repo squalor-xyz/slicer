@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-97 items · — 1 · done 95 · retired 1
+98 items · — 1 · done 96 · retired 1
 
 v1.0.0 release
 
@@ -130,3 +130,4 @@ v1.0.0 release
 | 95 | [S95](slices/S95.md) | Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok | M | - | docs | AI credit-flow review | done |
 | 96 | [S96](slices/S96.md) | Add optional effort estimates and effort sorting | M | - | slicer, cli, tui, docs | user request | done |
 | 97 | [S97](slices/S97.md) | Rank the TUI queue and choose a sort field and direction | M | - | tui, slicer, docs | user request | done |
+| 98 | [S102](slices/S102.md) | Do not hand next a slice that does not say what done means |  | - | slicer |  | done |

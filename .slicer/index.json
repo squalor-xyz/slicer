@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 98,
+  "next_id": 105,
   "preamble": "",
   "passes": [
     {
@@ -2362,6 +2362,30 @@
         ],
         "trees_literal": false,
         "findings": "user request",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S102",
+      "title": "Do not hand next a slice that does not say what done means",
+      "short_title": "Do not hand next a slice that does not say what done means",
+      "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
         "pass": "",
         "group": "",
         "reason": "",

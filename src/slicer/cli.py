@@ -357,18 +357,36 @@ def cmd_next_id(args: argparse.Namespace) -> int:
   return OK
 
 
+def _unspecified_payload(result: ops.NextResult) -> list[dict[str, object]]:
+  return [{"id": item_id, "missing": missing} for item_id, missing in result.unspecified]
+
+
+def _unspecified_lines(result: ops.NextResult) -> list[str]:
+  lines: list[str] = []
+  for item_id, missing in result.unspecified:
+    names = " and ".join(missing)
+    edits = " and ".join(f"`slicer edit {item_id} --section {name}`" for name in missing)
+    verb = "is" if len(missing) == 1 else "are"
+    lines.append(f"skipped {item_id}: {names} {verb} empty. Fill them with {edits}.")
+  return lines
+
+
 def cmd_next(args: argparse.Namespace) -> int:
   state = _state(args)
   result = ops.next_item(state, args.n)
   if result.item is None:
-    payload = {"item": None, "blocked": [{"id": i, "waiting_on": b} for i, b in result.blocked]}
-    text = "nothing unmarked" if not result.blocked else "\n".join(
-      f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked
-    )
+    payload = {
+      "item": None,
+      "blocked": [{"id": i, "waiting_on": b} for i, b in result.blocked],
+    }
+    skipped = _unspecified_payload(result)
+    if skipped:
+      payload["unspecified"] = skipped
+    parts = [f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked]
+    parts.extend(_unspecified_lines(result))
+    text = "\n".join(parts) if parts else "nothing unmarked"
     if args.n:
-      text = f"no eligible item at offset {args.n}" + (
-        f"\n{text}" if result.blocked else ""
-      )
+      text = f"no eligible item at offset {args.n}" + (f"\n{text}" if parts else "")
     _emit(args, payload, text)
     return USAGE
   item = result.item
@@ -385,6 +403,10 @@ def cmd_next(args: argparse.Namespace) -> int:
   ]
   if path:
     lines.append(f"     {path}")
+  skipped = _unspecified_payload(result)
+  if skipped:
+    payload["unspecified"] = skipped
+    lines.extend(_unspecified_lines(result))
   if args.show:
     # Fold the follow-up `show ID` into this one call: an agent picking up work
     # reads the slice in the same turn it learns the id, saving a round trip.
@@ -1020,6 +1042,9 @@ def cmd_status(args: argparse.Namespace) -> int:
     lines.extend(f"  {b['id']} waits on {', '.join(b['waiting_on'])}" for b in blocked)
   else:
     lines.append("Blocked   none")
+  if result.unspecified:
+    lines.extend(_unspecified_lines(result))
+    payload["unspecified"] = _unspecified_payload(result)
   _emit(args, payload, "\n".join(lines))
   return OK
 

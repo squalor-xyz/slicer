@@ -427,6 +427,7 @@ class OpsTests(unittest.TestCase):
   def test_Next_BlockedFirstItem_SkipsToTheNextEligibleOne(self) -> None:
     with self.repo() as repo:
       repo.run("unpark", "S03")
+      repo.run("edit", "S03", "--section", "Implement", "--text", "Do that.")
       repo.run("set", "S02", "--depends-on", "S03")
       code, out, _ = repo.run("next")
       self.assertEqual(code, 0)

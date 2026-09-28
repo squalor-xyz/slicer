@@ -80,7 +80,9 @@ the slices rather than relying on the temporary outline as the only record.
 Read the project instructions. Run `slicer next --json` and `slicer show ID --json`
 using the returned id. Read the scope, dependencies, relevant source, and tests. If
 there is no slice or its acceptance criteria are ambiguous, resolve the specification
-with me first. Otherwise mark it started with `slicer start ID --render`, implement
+with me first. If `next` includes `unspecified`, fill each missing section with
+`slicer edit ID --section NAME` before implementing that id. Do not invent the body.
+Otherwise mark it started with `slicer start ID --render`, implement
 that slice, and run its acceptance checks and required project checks. Update affected
 documentation. Once verified, run `slicer done ID --note "Describe the verified result"
 --render` and `slicer check`. Report changes and checks, and stop after this slice.
@@ -143,7 +145,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
 | `list` | array of items. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. `--sort score` is that same set in flat score order. `--sort effort` orders `fields.effort` from 1 to 3 and puts null last, without writing state. `sort --by effort` persists that order |
 | `show ID` | item, plus `slice` when it has one; with one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
-| `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
+| `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); or `{"item": null, "blocked": [...]}`. `unspecified` is present when a slice was skipped because Implement or Check is empty: `[{"id", "missing"}]`. Fill those with `slicer edit ID --section NAME`. A started item is returned ahead of every open one |
 | `next-id` | `{"id": "S02"}` and nothing else; text is the bare id. Does not allocate, lock, log, or accept `--render` |
 | `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |

@@ -1,0 +1,42 @@
+{
+  "id": "S102",
+  "title": "Do not hand next a slice that does not say what done means",
+  "lead": [
+    "`slicer next` returned S95 while its Why, Files, Failing tests, Implement, Check, and Git sections were empty. The lead even said the packaging still needed design. An agent then has to invent the acceptance criteria.",
+    "**Not in this slice:** refusing a slice that has a lead but a short Check. Only an empty Implement or an empty Check blocks eligibility. Do not change the stored status."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`next` is how an agent picks up work. An empty Check means there is nothing to verify, so the slice is not ready to implement."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` or the `next` eligibility helper it calls\n- the test that covers `next` ordering\n- `docs/agents.md`, where the implement loop is described"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. An open slice whose Implement or Check is empty is skipped while a later slice with both sections filled is returned.\n2. When every eligible slice has an empty Implement or Check, `next` takes the no-item path and names the skipped ids.\n3. A slice with both sections filled is still returned as it is today."
+    },
+    {
+      "heading": "Implement",
+      "body": "Treat an empty Implement or an empty Check as not eligible, the same way an unmet dependency is not eligible. Leave the item's status unchanged. Say in `docs/agents.md` that `next` will not return a slice until those two sections have text."
+    },
+    {
+      "heading": "Check",
+      "body": "The two skipping cases above pass, and an ordinary specified slice is still the one `next` returns."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
