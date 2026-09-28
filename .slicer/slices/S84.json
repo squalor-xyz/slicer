@@ -1,0 +1,41 @@
+{
+  "id": "S84",
+  "title": "Show importance and urgency in the import skeleton",
+  "lead": [
+    "The import parser already accepts `importance` and `urgency`, stores them on\nthe item, and `docs/import.md` lists both keys. `slicer import --skeleton`\ndoes not. Its comment lists size, tree, findings, status, pass, group, and\ndepends (`SKELETON_HEAD` in `src/slicer/cli.py`, ~lines 126-133), and the\nexample item sets none of the priority keys. Someone who copies the skeleton\nimports a complete-looking outline and then has to `set` every priority pair\nafterwards."
+  ],
+  "depends_note": null,
+  "findings_note": "user feedback on import",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** new priority keys, or changing how a score is calculated.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The skeleton is the outline people actually copy. A key the parser accepts\nbut the template never shows is a key that does not get used. Priorities\nbelong in the outline so a roadmap import is one repeatable file, not an\nimport followed by a second pass of `set`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `SKELETON_HEAD` and `SKELETON_EXAMPLE` (~lines 122-157)\n- `tests/test_import.py` — `SkeletonTests` (~line 254)"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `import --skeleton` text names `importance` and `urgency` next to the other keys.\n2. The example item sets a non-default pair, and importing that skeleton\n   stores those values on the item. `test_Skeleton_RoundTrips_BackThroughImport`\n   still succeeds."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `importance` and `urgency` to the skeleton's key comment, with the same\n1–3 range the parser enforces. Set them on the example item to something\nother than 2/2, so a round-trip proves the keys were read and not merely\ndefaulted. Leave the parser, `apply_outline`, and the `docs/import.md` key\ntable alone; they already describe this."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer import --skeleton` shows both keys, and importing that file lands\nthe example's importance and urgency. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

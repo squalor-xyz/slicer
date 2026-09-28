@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-83 items · — 7 · done 74 · later 1 · retired 1
+86 items · — 10 · done 74 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -116,3 +116,6 @@ v1.0.0 release
 | 81 | [S71](slices/S71.md) | set --depends-on '' stores an empty-string dependency instead of clearing |  | slicer | dogfooding S02 (greenfield): 'slicer set ID --depends-on ""' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug. | done |
 | 82 | [S82](slices/S82.md) | Make flags a first-class, filterable tag axis | M | slicer |  | later |
 | 83 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | cli |  | — |
+| 84 | [S84](slices/S84.md) | Show importance and urgency in the import skeleton | S | cli | user feedback on import | — |
+| 85 | [S85](slices/S85.md) | Report the ids an import dry-run would assign | S | cli | user feedback on import | — |
+| 86 | [S86](slices/S86.md) | Accept a roadmap preamble in an import outline | M | cli | user feedback on import | — |

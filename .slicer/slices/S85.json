@@ -1,0 +1,41 @@
+{
+  "id": "S85",
+  "title": "Report the ids an import dry-run would assign",
+  "lead": [
+    "`slicer import --dry-run --json` counts the items and returns `\"ids\": []`.\nAllocation happens only in `apply_outline`, after `outline_report` returns\n(`src/slicer/ops.py`, report built ~line 809, ids appended ~line 852).\n`cmd_import` calls `outline_report` alone for a dry run (`src/slicer/cli.py`,\n~lines 200-201) and prints ids only in the `added` line after a real write.\n`test_Import_DryRun_ReportsTheSameCensusAsApplying` compares the census and\ndeliberately skips `ids` (`tests/test_import.py`, ~lines 233-239)."
+  ],
+  "depends_note": null,
+  "findings_note": "user feedback on import",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** letting an outline choose its own ids. Allocation stays `next_id`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A dry run is where a person checks dependencies and prepares the follow-up\nedits. Those edits need the ids the import is about to claim. An empty\n`ids` array says nothing was proposed. The ids have to be the ones a\nfollowing apply will use, and the dry run must not consume them."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` — `outline_report` / `apply_outline` (~lines 727-852)\n- `src/slicer/cli.py` — `cmd_import` dry-run text (~lines 205-228)\n- `tests/test_import.py` — the dry-run census test (~line 233)"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A successful `--dry-run --json` returns the ids a following apply assigns, in outline order, and writes nothing. `next_id` in the index is unchanged, so a second dry run returns the same ids.\n2. The text report names those ids the way a real import's `added` line does.\n3. An outline with problems still returns `\"ids\": []` and writes nothing.\n4. `test_Import_DryRun_ReportsTheSameCensusAsApplying` also compares `ids`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Fill `report.ids` on the success path with the ids `ids.allocate` would hand out, using a copy of the index so the on-disk `next_id` does not move. Do this inside the shared report path or by sharing one helper with `apply_outline`, so the dry run and the apply cannot drift. When `problems` is non-empty, leave `ids` empty: apply returns before allocation, and the dry run must match. Print the proposed ids in the human report before `nothing written`."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer import FILE --dry-run --json` on a valid outline lists the ids the next real import will claim, and the index is byte-for-byte unchanged. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
