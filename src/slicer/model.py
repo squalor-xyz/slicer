@@ -359,6 +359,38 @@ class LogEntry:
     )
 
 
+def lean(payload: Any) -> Any:
+  """A smaller copy of a JSON payload for `--json --lean`.
+
+  Files on disk keep the full `to_dict` shape. This only drops values that
+  say nothing: empty strings, lists, and dicts, nulls other than the
+  `item: null` sentinel, `trees_literal: false`, a `short_title` that
+  repeats `title`, and `path` on an item. Other false booleans and every
+  number stay, so `has_slice: false` and a default score are still visible.
+  """
+  if isinstance(payload, list):
+    return [lean(item) for item in payload]
+  if not isinstance(payload, dict):
+    return payload
+  item = "id" in payload and "title" in payload
+  title = payload.get("title")
+  out: dict[str, Any] = {}
+  for key, value in payload.items():
+    if item and key == "path":
+      continue
+    if key == "trees_literal" and value is False:
+      continue
+    if key == "short_title" and value == title:
+      continue
+    cleaned = lean(value)
+    if cleaned == "" or cleaned == [] or cleaned == {}:
+      continue
+    if cleaned is None and key != "item":
+      continue
+    out[key] = cleaned
+  return out
+
+
 def counts(items: Iterable[Item], key: str) -> dict[str, int]:
   """Tally items by a named attribute, for `stats`. List values count once each."""
   out: dict[str, int] = {}

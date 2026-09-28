@@ -42,8 +42,18 @@ from slicer.errors import SlicerError, StateError, is_internal
 OK, DRIFT, USAGE, INTERNAL = 0, 1, 2, 3
 
 
+def _json_flags(parser: argparse.ArgumentParser) -> None:
+  parser.add_argument("--json", action="store_true", help="machine-readable output")
+  parser.add_argument(
+    "--lean", action="store_true",
+    help="with --json, omit empty fields, a repeated short title, and an item path",
+  )
+
+
 def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
   if getattr(args, "json", False):
+    if getattr(args, "lean", False):
+      payload = model.lean(payload)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
   elif text:
     print(text)
@@ -1082,7 +1092,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser(name, help=help_, parents=[common], aliases=list(aliases))
     sp.set_defaults(func=fn)
     if json_flag:
-      sp.add_argument("--json", action="store_true", help="machine-readable output")
+      _json_flags(sp)
     return sp
 
   sp = sub.add_parser("ai", help="onboarding instructions for coding agents", parents=[common])
@@ -1096,7 +1106,7 @@ def build_parser() -> argparse.ArgumentParser:
     parents=[common],
   )
   inner.set_defaults(func=cmd_ai_instructions)
-  inner.add_argument("--json", action="store_true", help="machine-readable output")
+  _json_flags(inner)
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
@@ -1235,7 +1245,7 @@ def build_parser() -> argparse.ArgumentParser:
   def padd(name: str, fn, help_: str) -> argparse.ArgumentParser:
     inner = psub.add_parser(name, help=help_, parents=[common])
     inner.set_defaults(func=fn)
-    inner.add_argument("--json", action="store_true", help="machine-readable output")
+    _json_flags(inner)
     return inner
 
   padd("list", cmd_prose_list, "every addressable block, in render order")
