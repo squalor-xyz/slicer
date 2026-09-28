@@ -650,8 +650,12 @@ class View:
         fresh = store.load(state.root)
         warning = ""
         try:
-          report = ops.apply_outline(fresh, specs, promote_all=True,
-                                     preamble=wizard.preamble(fresh.index.preamble))
+          report = ops.apply_outline(
+            fresh, specs, promote_all=True,
+            preamble=wizard.preamble(fresh.index.preamble),
+            # The wizard composes the new preamble from the stored one.
+            replace_preamble=True,
+          )
         except ops.OutlineCommittedError as exc:
           report, warning = exc.report, str(exc)
         if report.problems:

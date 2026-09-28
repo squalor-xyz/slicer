@@ -245,6 +245,54 @@ class ImportRefusalTests(unittest.TestCase):
       for key in ("items", "promoted", "by_status", "ids", "depends_edges"):
         self.assertEqual(json.loads(dry)[key], json.loads(applied)[key], key)
 
+  def test_Import_PreambleUnderTheTitle_IsStoredWithoutTheTitle(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "# Roadmap\n\nContext for the queue.\n\nMore context.\n\n## One\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(
+        repo.state().index.preamble, "Context for the queue.\n\nMore context."
+      )
+      self.assertEqual(repo.state().index.require("S01").title, "One")
+
+  def test_Import_DryRun_ReportsThePreambleAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "# Roadmap\n\nContext for the queue.\n\n## One\n")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("import", "r.md", "--dry-run")
+      self.assertEqual(code, 0, err)
+      self.assertIn("preamble   Context for the queue.", out)
+      self.assertIn("nothing written", out)
+      payload = json.loads(repo.run("import", "r.md", "--dry-run", "--json")[1])
+      self.assertEqual(payload["preamble"], "Context for the queue.")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Import_DifferentPreamble_RefusesUntilForce(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "# Roadmap\n\nFirst context.\n\n## One\n")
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      before = repo.read(".slicer/index.json")
+      repo.write("r.md", "# Roadmap\n\nSecond context.\n\n## Two\n")
+      code, out, _ = repo.run("import", "r.md")
+      self.assertEqual(code, 1)
+      self.assertIn("preamble differs", out)
+      self.assertIn("--force", out)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      code, _, err = repo.run("import", "r.md", "--force")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.preamble, "Second context.")
+      self.assertEqual(repo.state().index.require("S02").title, "Two")
+
+  def test_Import_NoLeadingProse_LeavesTheStoredPreamble(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "# Roadmap\n\nKeep this.\n\n## One\n")
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      repo.write("r.md", "## Two\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.preamble, "Keep this.")
+      self.assertEqual(repo.state().index.require("S02").title, "Two")
+
   def test_Import_DryRun_WithProblems_ReportsNoIdsAndWritesNothing(self) -> None:
     with self.repo() as repo:
       repo.write("r.md", "## A thing\nstatus: blocked\n")

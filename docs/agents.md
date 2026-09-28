@@ -130,7 +130,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `next-id` | `{"id": "S02"}` and nothing else; text is the bare id. Does not allocate, lock, log, or accept `--render` |
 | `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
-| `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems}` |
+| `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems, preamble}`. `preamble` is the leading prose, or null when the outline has none |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |
 | `move` | `{id, position}` |
 | `sort` | `{by, moved}` |

@@ -69,6 +69,23 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(sl.section("Implement").body, "Do the thing.")
       self.assertEqual(sl.section("Files").body, "")
 
+  def test_Promote_SourceWithLeadingProse_RefusesAndLeavesThePreamble(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      before = repo.read(".slicer/index.json")
+      stored = repo.state().index.preamble
+      self.assertTrue(stored)
+      repo.write(
+        "draft.md",
+        "# Roadmap\n\nOther context.\n\n## a new idea\n\n### Why\nBecause.\n",
+      )
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2)
+      self.assertIn("slicer prose edit preamble", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.state().index.preamble, stored)
+      self.assertFalse(repo.state().index.require("S05").has_slice)
+
   def test_Promote_SourceLeadParagraph_LandsOnTheSlice(self) -> None:
     with self.repo() as repo:
       repo.run("add", "a new idea")

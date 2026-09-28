@@ -218,12 +218,14 @@ def cmd_import(args: argparse.Namespace) -> int:
   path = Path(args.file)
   if not path.is_absolute():
     path = Path(args.root or ".").resolve() / path
-  specs = outline.parse(_read_user_file(path), path=str(path))
+  parsed = outline.parse(_read_user_file(path), path=str(path))
+  specs = parsed.items
+  preamble = parsed.preamble or None
 
   if args.dry_run:
-    report = ops.outline_report(state, specs, force=args.force)
+    report = ops.outline_report(state, specs, force=args.force, preamble=preamble)
   else:
-    report = ops.apply_outline(state, specs, force=args.force)
+    report = ops.apply_outline(state, specs, force=args.force, preamble=preamble)
 
   lines = [
     f"source     {path}",
@@ -231,6 +233,8 @@ def cmd_import(args: argparse.Namespace) -> int:
     "status     " + " · ".join(f"{k} {v}" for k, v in report.by_status.items()),
     f"depends    {report.depends_edges} edges",
   ]
+  if report.preamble is not None:
+    lines.append("preamble   " + report.preamble.replace("\n", " "))
   if report.off_schema_sections:
     lines.append(
       f"sections   {len(report.off_schema_sections)} off-schema: "

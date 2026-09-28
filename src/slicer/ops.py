@@ -169,7 +169,14 @@ def _slice_from_source(source: str, item: Item, cfg: object, path: str) -> Slice
   its `##` title is ignored, and any item-level key is refused rather than
   silently dropped, pointing the writer at `add`/`set` where those belong.
   """
-  specs = outline.parse(source, path=path)
+  parsed = outline.parse(source, path=path)
+  if parsed.preamble:
+    raise StateError(
+      f"{path}: leading prose is the roadmap preamble, not part of one slice; "
+      "set it with `slicer prose edit preamble`",
+      code="bad_promote_source",
+    )
+  specs = parsed.items
   if len(specs) != 1:
     raise StateError(
       f"{path}: a promote source is one item, but found {len(specs)}; "
@@ -710,6 +717,7 @@ class OutlineReport:
   off_schema_sections: dict[str, int] = field(default_factory=dict)
   warnings: list[str] = field(default_factory=list)
   problems: list[str] = field(default_factory=list)
+  preamble: str | None = None
 
   def to_dict(self) -> dict[str, object]:
     return {
@@ -721,6 +729,7 @@ class OutlineReport:
       "off_schema_sections": self.off_schema_sections,
       "warnings": self.warnings,
       "problems": self.problems,
+      "preamble": self.preamble,
     }
 
 
@@ -730,7 +739,8 @@ def _allocate_outline_ids(index: Index, count: int) -> list[str]:
 
 
 def outline_report(
-  state: State, specs: list[object], *, force: bool = False, promote_all: bool = False
+  state: State, specs: list[object], *, force: bool = False, promote_all: bool = False,
+  preamble: str | None = None, replace_preamble: bool = False,
 ) -> OutlineReport:
   """What this outline says, and everything wrong with it. Writes nothing.
 
@@ -786,6 +796,13 @@ def outline_report(
     for dep in spec.depends:
       if dep not in known:
         problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
+  stored_preamble = state.index.preamble
+  if (
+    preamble is not None and stored_preamble and stored_preamble != preamble
+    and not force and not replace_preamble
+  ):
+    problems.append("preamble differs from the one already stored; pass --force to replace it")
+  report.preamble = preamble
   report.problems = problems
   if not problems:
     report.ids = _allocate_outline_ids(deepcopy(state.index), len(specs))
@@ -803,6 +820,7 @@ class OutlineCommittedError(StateError):
 def apply_outline(
   state: State, specs: list[object], *, force: bool = False,
   preamble: str | None = None, promote_all: bool = False,
+  replace_preamble: bool = False,
 ) -> OutlineReport:
   """Append every entry in a parsed outline, or write nothing at all.
 
@@ -813,7 +831,10 @@ def apply_outline(
   OutlineCommittedError: the batch is saved and must not be retried.
   """
   cfg = state.config
-  report = outline_report(state, specs, force=force, promote_all=promote_all)
+  report = outline_report(
+    state, specs, force=force, promote_all=promote_all, preamble=preamble,
+    replace_preamble=replace_preamble,
+  )
   if report.problems:
     return report
 
