@@ -1,0 +1,41 @@
+{
+  "id": "S93",
+  "title": "Read only the sections an agent implements against",
+  "lead": [
+    "`show ID --section NAME` reads back one section, but an agent that wants the boundary\nplus acceptance still pulls the whole ~4 KB slice. Let `--section` take several names,\nor add a projection (e.g. `--implement`) returning just boundary + acceptance + deps,\nso the agent reads exactly what it codes against instead of the full slice."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": ""
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Repeating `show ID --section NAME` returns only matching sections, in slice order.\n2. One section without `--context` keeps the current `{id, section, body}` JSON shape.\n3. `--context` adds item title, dependencies, and boundary while retaining only selected\n   sections; text and JSON output both contain only that projection.\n4. Missing sections, an unpromoted item, and `--context` without `--section` return clear\n   errors."
+    },
+    {
+      "heading": "Implement",
+      "body": "Make `show --section` repeatable. Preserve its existing single-section response when\nexactly one section is requested without context. For multiple names, return an ordered\n`sections` array containing only matches; preserve the slice's section order, including\nrepeated headings. If any requested name is absent, refuse the request.\n\nAdd `--context`, valid only with at least one `--section`. Its projection includes the\nitem id/title/dependencies, slice boundary, and selected sections. Do not hardcode section\nheadings in production code: each project chooses which acceptance sections to request.\nDocument a call selecting Failing tests, Implement, and Check. Keep full `show ID` output\nunchanged."
+    },
+    {
+      "heading": "Check",
+      "body": "The documented JSON command returns only the requested acceptance/implementation\nsections plus title, dependencies, and boundary. Existing single-section and full-slice\nreads retain their current behavior. Focused and full tests pass, `slicer check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

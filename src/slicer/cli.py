@@ -561,13 +561,47 @@ def cmd_show(args: argparse.Namespace) -> int:
       raise StateError(
         f"{args.id} has no slice; run `slicer promote {args.id}` first", code="no_slice"
       )
-    section = sl.section(args.section)
-    if section is None:
-      raise StateError(
-        f"{args.id} has no section {args.section!r}", code="no_such_section"
+    if args.context and len(args.section) == 1:
+      selected = [s for s in sl.sections if s.heading == args.section[0]]
+    elif len(args.section) == 1:
+      section = sl.section(args.section[0])
+      selected = [section] if section is not None else []
+    else:
+      wanted = set(args.section)
+      selected = [s for s in sl.sections if s.heading in wanted]
+    missing = [name for name in dict.fromkeys(args.section)
+               if not any(s.heading == name for s in sl.sections)]
+    if missing:
+      name = missing[0]
+      raise StateError(f"{args.id} has no section {name!r}", code="no_such_section")
+    if args.context:
+      payload = {
+        "id": args.id,
+        "title": item.title,
+        "depends_on": list(item.depends_on),
+        "boundary": sl.boundary,
+        "sections": [s.to_dict() for s in selected],
+      }
+      lines = [
+        f"{item.id}  {item.title}",
+        "depends    " + (", ".join(item.depends_on) or "(none)"),
+        "boundary   " + (sl.boundary or "(none)"),
+      ]
+      for section in selected:
+        lines.extend(["", f"## {section.heading}", section.body])
+      _emit(args, payload, "\n".join(lines))
+    elif len(args.section) == 1:
+      section = selected[0]
+      _emit(
+        args, {"id": args.id, "section": section.heading, "body": section.body}, section.body
       )
-    _emit(args, {"id": args.id, "section": section.heading, "body": section.body}, section.body)
+    else:
+      payload = {"id": args.id, "sections": [s.to_dict() for s in selected]}
+      text = "\n\n".join(f"## {s.heading}\n{s.body}" for s in selected)
+      _emit(args, payload, text)
     return OK
+  if args.context:
+    raise StateError("--context requires at least one --section", code="usage")
   if sl is None:
     lines = [f"{item.id}  {item.display_title()}", *item.notes,
              f"(no slice yet; run `slicer promote {item.id}`)"]
@@ -1112,7 +1146,12 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("show", cmd_show, "print one slice")
   sp.add_argument("id")
-  sp.add_argument("--section", help="print only this section's body")
+  sp.add_argument(
+    "--section", action="append",
+    help="print only this section's body; repeat to select several",
+  )
+  sp.add_argument("--context", action="store_true",
+                  help="with --section, include title, dependencies, and scope boundary")
 
   sp = _render_flag(add("add", _mutating(cmd_add), "append a roadmap item"))
   sp.add_argument("title")

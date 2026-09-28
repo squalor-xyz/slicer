@@ -125,7 +125,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
 | `list` | array of items. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. `--sort score` is that same set in flat score order |
-| `show ID` | item, plus `slice` when it has one; with `--section NAME`, `{id, section, body}` |
+| `show ID` | item, plus `slice` when it has one; with one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
 | `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
 | `next-id` | `{"id": "S02"}` and nothing else; text is the bare id. Does not allocate, lock, log, or accept `--render` |
 | `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
@@ -310,8 +310,13 @@ returns the started item *and* its full slice in one invocation, so picking up w
 single command instead of `next` then `show`. Read the slice, start it (or `next --start`),
 implement and verify it, then use `slicer done ID --note "..." --render` and `slicer check`.
 
-**One section at a time.** `slicer edit ID --section "Why" --stdin` replaces one
-section's body, and `slicer show ID --section "Why"` reads that one body back. For short edits use
+**Read only the implementation sections.** Repeat `--section` to return just selected
+sections, and add `--context` to include the item title, dependencies, and scope boundary:
+`slicer show S01 --section "Failing tests" --section "Implement" --section "Check" --context --json`.
+This avoids loading unrelated slice prose while keeping headings configurable per project.
+
+For edits, `slicer edit ID --section "Why" --stdin` replaces one section's body, and
+`slicer show ID --section "Why"` reads that one body back. For short edits use
 `slicer edit ID --section "Why" --text "Updated explanation" --render`; roadmap prose
 supports the same source, such as `slicer prose edit preamble --text "Current work"`.
 In replacement mode, inline text is exact, including whitespace and newlines;

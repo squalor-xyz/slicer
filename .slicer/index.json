@@ -2155,7 +2155,7 @@
       "id": "S93",
       "title": "Read only the sections an agent implements against",
       "short_title": "Read only the sections an agent implements against",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

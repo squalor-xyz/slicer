@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 
 import support
@@ -454,6 +455,46 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertEqual(out.strip(), "The reason.")
       self.assertNotIn("The plan.", out)
+
+  def test_Show_MultipleSections_ReturnsOnlyRequestedSectionsInSliceOrder(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "an idea")
+      repo.write(
+        "draft.md",
+        "## an idea\n\n### Why\nThe reason.\n\n### Implement\nThe plan.\n\n### Check\nThe test.\n",
+      )
+      repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      code, out, err = repo.run("show", "S05", "--section", "Check",
+                                "--section", "Why", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["id"], "S05")
+      self.assertEqual(payload["sections"], [
+        {"heading": "Why", "body": "The reason."},
+        {"heading": "Check", "body": "The test."},
+      ])
+
+  def test_Show_SelectedSectionsWithContext_IncludesBoundaryAndDependencies(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "an idea", "--depends-on", "S02")
+      repo.write(
+        "draft.md", "## an idea\n\n### Implement\nThe plan.\n\n### Check\nThe test.\n"
+      )
+      repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      code, out, err = repo.run("show", "S05", "--section", "Implement",
+                                "--section", "Check", "--context", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["title"], "an idea")
+      self.assertEqual(payload["depends_on"], ["S02"])
+      self.assertEqual(payload["boundary"], repo.state().slices["S05"].boundary)
+      self.assertEqual([s["heading"] for s in payload["sections"]], ["Implement", "Check"])
+
+  def test_Show_Context_RequiresASection(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("show", "S02", "--context")
+      self.assertEqual(code, 2)
+      self.assertIn("requires at least one --section", err)
 
   def test_Show_MissingSection_ErrorsClearly(self) -> None:
     with self.repo() as repo:

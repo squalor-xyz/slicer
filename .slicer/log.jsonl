@@ -458,3 +458,8 @@
 {"when": "2026-09-28T15:03:55Z", "item": "S86", "action": "status", "from": "started", "to": "done", "note": "import stores prose under the outline title as the roadmap preamble and leaves the title out. A different stored preamble is refused unless --force. An outline with no leading prose leaves the stored preamble alone. promote --file rejects leading prose and points at slicer prose edit preamble."}
 {"when": "2026-09-28T15:08:05Z", "item": "S94", "action": "status", "from": "open", "to": "started", "note": ""}
 {"when": "2026-09-28T15:08:21Z", "item": "S94", "action": "status", "from": "started", "to": "done", "note": "Updated contributor and getting-started guidance to make slicer ai instructions the canonical concise agent onboarding and docs/agents.md the detailed reference."}
+{"when": "2026-09-28T15:11:10Z", "item": "S93", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-28T15:12:29Z", "item": "S93", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-09-28T15:12:32Z", "item": "S93", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-28T15:12:35Z", "item": "S93", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-09-28T15:12:52Z", "item": "S93", "action": "status", "from": "started", "to": "done", "note": "Added repeatable show --section selection and --context for title, dependencies, boundary, and chosen sections; kept the single-section and full-slice contracts intact."}
