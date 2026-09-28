@@ -405,3 +405,4 @@
 {"when": "2026-09-28T02:27:22Z", "item": "S84", "action": "add", "from": "", "to": "open", "note": "Show importance and urgency in the import skeleton"}
 {"when": "2026-09-28T02:27:22Z", "item": "S85", "action": "add", "from": "", "to": "open", "note": "Report the ids an import dry-run would assign"}
 {"when": "2026-09-28T02:27:22Z", "item": "S86", "action": "add", "from": "", "to": "open", "note": "Accept a roadmap preamble in an import outline"}
+{"when": "2026-09-28T02:34:44Z", "item": "S87", "action": "add", "from": "", "to": "open", "note": "Print the next slice id without allocating it"}
