@@ -971,7 +971,7 @@
       "id": "S06",
       "title": "Publish to PyPI as squalor-slicer when a tag's CI is green",
       "short_title": "Publish to PyPI as squalor-slicer",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S72",

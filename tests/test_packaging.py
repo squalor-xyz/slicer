@@ -1,8 +1,10 @@
 """A no-clone install must stay self-contained: shipped templates and entry point.
 
-These are the packaging facts that let `pip install git+...` (no checkout) produce a
-working `slicer` with its templates. If a future edit drops them, `init`/`render` break
-only for installed users, whom the suite otherwise never exercises. Guard them here.
+These are the packaging facts that let `pip install squalor-slicer` produce a
+working `slicer` command with its templates. The distribution name is not the
+import name: PyPI already has a project called slicer. If a future edit drops
+the entry point or the templates, `init`/`render` break only for installed
+users, whom the suite otherwise never exercises. Guard them here.
 """
 
 from __future__ import annotations
@@ -23,6 +25,11 @@ class PackagingTests(unittest.TestCase):
   def test_PackageData_Templates_AreDeclaredForTheWheel(self) -> None:
     package_data = self.pyproject["tool"]["setuptools"]["package-data"]
     self.assertIn("templates/*.md", package_data["slicer"])
+
+  def test_DistributionName_IsSqualorSlicer(self) -> None:
+    # PyPI's `slicer` name belongs to someone else. The command and import stay
+    # `slicer`; only the distribution name is `squalor-slicer`.
+    self.assertEqual(self.pyproject["project"]["name"], "squalor-slicer")
 
   def test_Scripts_SlicerConsoleEntryPoint_IsDeclared(self) -> None:
     self.assertEqual(self.pyproject["project"]["scripts"]["slicer"], "slicer.cli:main")

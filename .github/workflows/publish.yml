@@ -1,0 +1,66 @@
+# Publish squalor-slicer to PyPI when a version tag is pushed.
+#
+# Trusted publishing (OIDC). No API token lives in this repo. Before the first
+# tag, add a pending publisher on PyPI for the project `squalor-slicer`:
+#   owner: squalor-xyz
+#   repository: slicer
+#   workflow: publish.yml
+#   environment: pypi
+# The GitHub environment name is `pypi` as well. Cutting the tag, and bumping
+# slicer.__version__ to match it, belong to the release checklist.
+
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Tests
+        run: python -m unittest discover -s tests -t tests -v
+
+      - name: slicer check
+        run: PYTHONPATH=src python -m slicer check
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Tag matches the packaged version
+        run: |
+          version=$(PYTHONPATH=src python -c "import slicer; print(slicer.__version__)")
+          test "${GITHUB_REF}" = "refs/tags/v${version}"
+
+      - name: Build
+        run: |
+          python -m pip install build
+          python -m build
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
