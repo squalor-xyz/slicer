@@ -1,0 +1,41 @@
+{
+  "id": "S91",
+  "title": "Return the next slice body in one call to cut a model round trip",
+  "lead": [
+    "The agent loop forces two turns to begin work: `next --json` to get the id, then\n`show ID --json` to read the slice. Every turn replays the whole growing context,\nso that second turn is the most expensive unit in the flow. `next --start` already\nproves the \"fuse two steps into one call\" pattern; the read half is still split.\nAdd `--show` so `next` (and `next --start`) returns the item together with the slice\nsections, boundary, and dependencies in one payload, removing a full model turn per\nslice picked up."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A driving agent cannot implement from `next` alone — it always follows with `show`.\nBecause each command is a separate model turn and each turn re-sends the entire\ncontext, collapsing `next`+`show` into one call saves far more than trimming bytes.\nThis is the single highest-leverage credit optimization in the agent flow."
+    },
+    {
+      "heading": "Files",
+      "body": "`src/slicer/cli.py` (the `next` subcommand and its `--start` handling),\n`src/slicer/ops.py` (assemble item + slice payload), `docs/agents.md` and\n`src/slicer/ai.py` (document the one-call loop)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `--show` to `next`. When set, include the item's `slice` object (the same shape\n`show ID --json` returns: lead, sections, boundary, depends) in the payload. Compose\nwith `--start` and `--render` so `next --start --show --json` returns the started\nitem and everything needed to implement it. Keep the default `next` output unchanged."
+    },
+    {
+      "heading": "Check",
+      "body": "`next --start --show --json` returns the started item plus its full `slice` in one\ninvocation, byte-identical to what `show ID --json` would have returned separately.\nA test asserts the fused payload equals the two-call composition. `--json` contract\ncodes are unchanged. `docs/agents.md` and `ai instructions` describe the one-call loop."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

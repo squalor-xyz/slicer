@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 91,
+  "next_id": 96,
   "preamble": "",
   "passes": [
     {
@@ -2103,6 +2103,121 @@
         "reason": "",
         "importance": 3,
         "urgency": 1
+      }
+    },
+    {
+      "id": "S91",
+      "title": "Return the next slice body in one call to cut a model round trip",
+      "short_title": "Return the next slice body in one call to cut a model round trip",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S92",
+      "title": "Add a lean JSON profile that drops empty and default fields",
+      "short_title": "Add a lean JSON profile that drops empty and default fields",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S93",
+      "title": "Read only the sections an agent implements against",
+      "short_title": "Read only the sections an agent implements against",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S94",
+      "title": "Point agents at the command, not the 21 KB reference doc",
+      "short_title": "Point agents at the command, not the 21 KB reference doc",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S95",
+      "title": "Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok",
+      "short_title": "Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     }
   ],
