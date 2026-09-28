@@ -1,0 +1,41 @@
+{
+  "id": "S96",
+  "title": "Add optional effort estimates and effort sorting",
+  "lead": [
+    "Roadmap items have free-form `size` and priority axes, but no normalized estimate of\nimplementation weight. Add an optional `effort` field so people can compare and order\nwork by cost without changing what `next` considers important."
+  ],
+  "depends_note": null,
+  "findings_note": "user request",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer, cli, tui, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** inferring effort from `size`; changing priority scores or `next`;\neffort filters, statistics, or dependency-aware effort aggregation.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`size` is deliberately free text and cannot provide a reliable sort key. A small,\noptional numeric effort axis makes implementation weight machine-readable while\nallowing unestimated work to remain unset."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/model.py`, `ops.py`, `outline.py`, and `cli.py` — store, validate,\n  mutate, import, expose, and sort effort\n- `src/slicer/tui.py` and `tui_wizard.py` — edit and create the field interactively\n- `src/slicer/render.py` and bundled templates — show effort in generated roadmaps\n- CLI/model/import/TUI/render tests and user/agent documentation"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Old item JSON without `effort` loads with `effort=None`; new JSON and command JSON\n   expose `fields.effort` as an integer or `null`.\n2. `add --effort`, `set --effort`, outline `effort:`, the TUI editor, and the wizard\n   accept only `1`, `2`, or `3`; omission leaves it unset and `set --no-effort` clears it.\n3. Text and generated Markdown/HTML roadmap rows display `1`–`3` or `-` when unset.\n4. `list --sort effort` orders assigned effort from `1` to `3`, puts unset items last,\n   and preserves stored queue order for ties without writing state.\n5. `sort --by effort` persists exactly that ordering and reports its normal moved count.\n6. Default `list`, `next`, score sorting, dependency priority propagation, and existing\n   projects remain unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `Item.effort: int | None = None` and serialize it in the fixed-order `fields` object.\nTreat a missing key as `None` for backward compatibility. Share one validator for the\n`1`–`3` range across add, set, import, and TUI paths. Add `--effort` to `add` and `set`,\n`--no-effort` to `set`, and `effort:` to outline import and the import skeleton. Include\nthe field in TUI editing and roadmap creation.\n\nExpose effort in text rows, JSON responses, generated Markdown, and generated HTML;\nextend bundled templates without requiring existing custom templates to adopt the new\nplaceholder. Add `effort` to the accepted keys for read-only `list --sort` and mutating\n`sort --by`. Use a shared stable key: assigned values ascending, then unset values,\nwith current queue order breaking ties. Keep the default sort mode and all priority\ncalculations unchanged. Document the field, clearing syntax, and ordering."
+    },
+    {
+      "heading": "Check",
+      "body": "An item can carry, clear, import, edit, display, and round-trip an optional effort from\n1 to 3. Both view-only and persistent effort sorts put the lightest estimated work\nfirst and unestimated work last, while normal prioritization behaves exactly as before."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

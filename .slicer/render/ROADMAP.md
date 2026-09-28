@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-95 items · — 8 · done 85 · later 1 · retired 1
+96 items · — 9 · done 85 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -128,3 +128,4 @@ v1.0.0 release
 | 93 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | cli | user request for a next-id command | — |
 | 94 | [S93](slices/S93.md) | Read only the sections an agent implements against | S | cli | AI credit-flow review | — |
 | 95 | [S95](slices/S95.md) | Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok | M | docs | AI credit-flow review | — |
+| 96 | [S96](slices/S96.md) | Add optional effort estimates and effort sorting | M | slicer, cli, tui, docs | user request | — |

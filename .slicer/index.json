@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 96,
+  "next_id": 97,
   "preamble": "",
   "passes": [
     {
@@ -2213,6 +2213,32 @@
         ],
         "trees_literal": false,
         "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S96",
+      "title": "Add optional effort estimates and effort sorting",
+      "short_title": "Add optional effort estimates and effort sorting",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer",
+          "cli",
+          "tui",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "user request",
         "pass": "",
         "group": "",
         "reason": "",
