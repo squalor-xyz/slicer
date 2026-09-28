@@ -66,6 +66,29 @@ class CorruptStateTests(unittest.TestCase):
       state_file(repo, "config.json", b"\xff\xfe")
       self.assertEqual(self.envelope(repo, "list")["code"], "config")
 
+  def _non_numeric(self, repo: support.TempRepo, **fields: object) -> dict:
+    path = repo.root / ".slicer" / "config.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.update(fields)
+    state_file(repo, "config.json", json.dumps(data))
+    code, out, err = repo.run("list", "--json")
+    self.assertEqual(code, 3)
+    self.assertNotIn("Traceback", err)
+    error = json.loads(out)["error"]
+    self.assertEqual(error["code"], "config")
+    self.assertIn("config.json", error["message"])
+    return error
+
+  def test_NonNumericIdWidth_IsAConfigErrorNotATraceback(self) -> None:
+    with self.repo() as repo:
+      data = json.loads((repo.root / ".slicer" / "config.json").read_text(encoding="utf-8"))
+      data["id"]["width"] = "wide"
+      self._non_numeric(repo, id=data["id"])
+
+  def test_NonNumericVersion_IsAConfigErrorNotATraceback(self) -> None:
+    with self.repo() as repo:
+      self._non_numeric(repo, version="x")
+
   def test_SliceMissingARequiredKey_IsReportedNamingTheFile(self) -> None:
     with self.repo() as repo:
       # valid JSON, wrong shape: a section with no heading

@@ -238,5 +238,5 @@ class Config:
       reject_future_schema(str(path), raw["version"], SCHEMA_VERSION)
     try:
       return Config.from_dict(raw)
-    except (KeyError, TypeError) as e:
+    except (KeyError, TypeError, ValueError) as e:
       raise ConfigError(f"{path}: not a usable config: {e}") from None
