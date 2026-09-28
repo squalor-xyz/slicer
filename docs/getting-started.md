@@ -27,11 +27,12 @@ Python 3.11+, no dependencies. Install it to use slicer; clone it to change slic
 
 ### Install it (no clone)
 
-Into its own virtual environment, straight from GitHub:
+Into its own virtual environment from PyPI. The distribution is `squalor-slicer`
+because the `slicer` name on PyPI is taken; the command it installs is still `slicer`.
 
 ```sh
 python3 -m venv ~/.slicer-venv
-~/.slicer-venv/bin/pip install git+https://github.com/squalor-xyz/slicer
+~/.slicer-venv/bin/pip install squalor-slicer
 ln -s ~/.slicer-venv/bin/slicer ~/.local/bin/slicer   # or anywhere on your PATH
 ```
 
@@ -39,17 +40,19 @@ ln -s ~/.slicer-venv/bin/slicer ~/.local/bin/slicer   # or anywhere on your PATH
 $ slicer --help
 ```
 
-Update with `~/.slicer-venv/bin/pip install -U git+https://github.com/squalor-xyz/slicer`;
+Update with `~/.slicer-venv/bin/pip install -U squalor-slicer`;
 uninstall by deleting the venv and the symlink.
 
-For a single command, `pip install --user git+https://github.com/squalor-xyz/slicer` works
-too, with two caveats: on macOS Homebrew and recent Debian/Ubuntu/Fedora the system Python
-is "externally managed" (PEP 668) and rejects it — use the venv above — and the user scripts
-directory must be on your `PATH` (`~/.local/bin` on Linux, `~/Library/Python/3.11/bin` on
-macOS). Uninstall with `pip uninstall slicer`. Users of
-[pipx](https://pipx.pypa.io) or [uv](https://docs.astral.sh/uv/) can instead run
-`pipx install git+https://github.com/squalor-xyz/slicer` or `uv tool install
-git+https://github.com/squalor-xyz/slicer` for an isolated, on-PATH install in one step.
+For a single command, `pip install --user squalor-slicer` works too, with two caveats: on
+macOS Homebrew and recent Debian/Ubuntu/Fedora the system Python is "externally managed"
+(PEP 668) and rejects it — use the venv above — and the user scripts directory must be on
+your `PATH` (`~/.local/bin` on Linux, `~/Library/Python/3.11/bin` on macOS). Uninstall with
+`pip uninstall squalor-slicer`. Users of [pipx](https://pipx.pypa.io) or
+[uv](https://docs.astral.sh/uv/) can instead run `pipx install squalor-slicer` or
+`uv tool install squalor-slicer` for an isolated, on-PATH install in one step.
+
+To try unreleased main instead of the latest release, replace the package name with
+`git+https://github.com/squalor-xyz/slicer`.
 
 ### Develop on it (clone + editable)
 
@@ -690,7 +693,7 @@ One command, one exit code:
 
 ```yaml
 - name: Install slicer
-  run: pip install git+https://github.com/squalor-xyz/slicer
+  run: pip install squalor-slicer
 
 - name: slicer check
   run: slicer check
