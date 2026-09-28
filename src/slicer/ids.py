@@ -39,6 +39,26 @@ def format_id(prefix: str, number: int, width: int) -> str:
   return f"{prefix}{number:0{width}d}"
 
 
+def format_next(index) -> str:
+  """The id `allocate` would hand out next, without consuming it.
+
+  A hostile prefix makes every generated id traversing, so the generated side
+  needs `require_valid` too, not just an explicit id. `next_id` should always
+  sit above every id already handed out, but a bad import, a merge, or a
+  hand-edit can lower it. Refuse that collision here, or a later `allocate`
+  would mint a duplicate of the id it exists to keep unique.
+  """
+  new_id = format_id(index.id_prefix, index.next_id, index.id_width)
+  require_valid(new_id)
+  if index.get(new_id) is not None:
+    raise StateError(
+      f"next_id ({index.next_id}) would reuse the existing id {new_id}; the index "
+      f"is inconsistent -- run `slicer verify`",
+      code="corrupt",
+    )
+  return new_id
+
+
 def parse_id(item_id: str, prefix: str) -> int | None:
   """Return the numeric part, or None if `item_id` is not of this scheme."""
   m = re.fullmatch(re.escape(prefix) + r"(\d+)", item_id)
@@ -67,20 +87,7 @@ def allocate(index, explicit: str | None = None) -> str:
     if number is not None and number >= index.next_id:
       index.next_id = number + 1
     return explicit
-  new_id = format_id(index.id_prefix, index.next_id, index.id_width)
-  # A hostile prefix makes every generated id traversing, so the generated
-  # side needs the rule too, not just the explicit one.
-  require_valid(new_id)
-  # next_id should always be above every id already handed out, but a bad
-  # import, a merge, or a hand-edit can lower it. The explicit branch checks
-  # for a collision; the generated branch must too, or it silently mints a
-  # duplicate of the id it exists to keep unique.
-  if index.get(new_id) is not None:
-    raise StateError(
-      f"next_id ({index.next_id}) would reuse the existing id {new_id}; the index "
-      f"is inconsistent -- run `slicer verify`",
-      code="corrupt",
-    )
+  new_id = format_next(index)
   index.next_id += 1
   return new_id
 

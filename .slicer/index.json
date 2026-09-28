@@ -2015,7 +2015,7 @@
       "id": "S87",
       "title": "Print the next slice id without allocating it",
       "short_title": "Print the next slice id without allocating it",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

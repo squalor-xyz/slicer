@@ -117,6 +117,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score] [--render]` | reorder the whole queue by priority score in one step (persists the `list --sort score` order) |
 | `next [-n N] [--start]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started |
+| `next-id` | the id the next `add` or `import` would take, without allocating it |
 | `list [--all] [--status/--tree/--pass] [--sort score]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. Done and retired items are omitted unless `--all` is set or `--status` names them. `--sort score` is a flat score sort instead |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
 | `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |
