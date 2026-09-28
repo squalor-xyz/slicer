@@ -432,6 +432,26 @@ class ListDoneDefaultTests(unittest.TestCase):
       self.assertNotIn("Traceback", err)
       self.assertNotIn("S02", self.ids(repo))
 
+  def test_List_Flag_MatchesAnyNamedFlag_AndAndsWithOtherFilters(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "security", "--flag", "v1")
+      repo.run("set", "S02", "--flag", "security")
+      repo.run("set", "S03", "--flag", "perf")
+      # S01 open/alpha, S02 done/alpha, S03 parked/beta, S04 later/alpha, S05 started/beta.
+      self.assertEqual(self.ids(repo, "--flag", "security"), ["S01"])
+      self.assertEqual(self.ids(repo, "--all", "--flag", "security"), ["S01", "S02"])
+      self.assertEqual(
+        self.ids(repo, "--all", "--flag", "security", "--flag", "perf"),
+        ["S01", "S02", "S03"],
+      )
+      self.assertEqual(self.ids(repo, "--all", "--flag", "security", "--tree", "alpha"), ["S01", "S02"])
+      self.assertEqual(self.ids(repo, "--flag", "missing"), [])
+      path = repo.root / ".slicer/config.json"
+      cfg = json.loads(path.read_text())
+      cfg["exclude_flags"] = ["security"]
+      path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
+      self.assertEqual(self.ids(repo, "--all", "--flag", "security"), ["S01", "S02"])
+
   def test_List_OnlyDoneItems_PrintsNoMatchAndExitsZero(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")

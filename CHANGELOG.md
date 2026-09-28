@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer list --flag` filters by a free-form flag. Repeat it to match any of the named flags. The TUI filter panel offers the same flag axis, including items with no flags.
+
 ### Changed
 
 - `slicer import --skeleton` lists `importance` and `urgency` (1, 2 or 3) and sets a non-default pair on the example item.

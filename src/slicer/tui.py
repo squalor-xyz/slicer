@@ -478,7 +478,7 @@ def apply_edit(state: State, request: EditRequest, body: str) -> str:
   return apply_edit_result(state, request, body).message
 
 
-FILTER_GROUPS = ("status", "tree", "pass", "importance", "urgency")
+FILTER_GROUPS = ("status", "tree", "pass", "importance", "urgency", "flag")
 
 
 @dataclass
@@ -514,6 +514,7 @@ class Filters:
       "status": {item.status}, "tree": set(item.trees) or {""},
       "pass": {item.pass_key}, "importance": {str(item.importance)},
       "urgency": {str(item.urgency)},
+      "flag": set(item.flags) or {""},
     }
     return all(not selected or selected & candidates[group]
                for group, selected in self.values.items())
@@ -542,13 +543,14 @@ def filtered_rows(
 
 
 def filter_choices(state: State) -> list[tuple[str, str | None]]:
-  """None is Any; the empty string is an item with no tree/pass."""
+  """None is Any; the empty string is an item with no tree, pass, or flag."""
   items = state.index.items
   values = {
     "status": list(state.config.statuses),
     "tree": [""] + sorted({tree for it in items for tree in it.trees}),
     "pass": [""] + sorted({it.pass_key for it in items if it.pass_key}),
     "importance": ["1", "2", "3"], "urgency": ["1", "2", "3"],
+    "flag": [""] + sorted({flag for it in items for flag in it.flags}),
   }
   return [(group, value) for group in FILTER_GROUPS for value in [None, *values[group]]]
 

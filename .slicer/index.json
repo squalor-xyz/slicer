@@ -1981,7 +1981,7 @@
       "id": "S82",
       "title": "Make flags a first-class, filterable tag axis",
       "short_title": "Make flags a first-class, filterable tag axis",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
