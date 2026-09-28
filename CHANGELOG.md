@@ -12,6 +12,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer add` names a non-empty pass in its plain-text confirmation, including a pass inherited from the previous item. `--json` is unchanged.
 - `slicer next-id` prints the id the next `add` or `import` would take, without allocating it.
 - `slicer import` stores prose between the outline title and the first item as the roadmap preamble. A different stored preamble is refused unless `--force`. `promote --file` rejects that prose.
+- `--json --lean` omits empty and default scaffolding from a payload. `--json` alone is unchanged.
 
 ## [1.0.0]
 

@@ -2132,7 +2132,7 @@
       "id": "S92",
       "title": "Add a lean JSON profile that drops empty and default fields",
       "short_title": "Add a lean JSON profile that drops empty and default fields",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
