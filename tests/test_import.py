@@ -227,7 +227,14 @@ class ImportRefusalTests(unittest.TestCase):
       before = repo.read(".slicer/index.json")
       code, out, err = repo.run("import", "roadmap.md", "--dry-run")
       self.assertEqual(code, 0, err)
-      self.assertIn("nothing written", out)
+      self.assertIn(
+        "added      S01, S02, S03\nnothing written",
+        out,
+      )
+      _, first, _ = repo.run("import", "roadmap.md", "--dry-run", "--json")
+      _, second, _ = repo.run("import", "roadmap.md", "--dry-run", "--json")
+      self.assertEqual(json.loads(first)["ids"], ["S01", "S02", "S03"])
+      self.assertEqual(json.loads(second)["ids"], ["S01", "S02", "S03"])
       self.assertEqual(repo.read(".slicer/index.json"), before)
 
   def test_Import_DryRun_ReportsTheSameCensusAsApplying(self) -> None:
@@ -235,8 +242,19 @@ class ImportRefusalTests(unittest.TestCase):
       repo.write("roadmap.md", OUTLINE)
       _, dry, _ = repo.run("import", "roadmap.md", "--dry-run", "--json")
       _, applied, _ = repo.run("import", "roadmap.md", "--json")
-      for key in ("items", "promoted", "by_status", "depends_edges"):
+      for key in ("items", "promoted", "by_status", "ids", "depends_edges"):
         self.assertEqual(json.loads(dry)[key], json.loads(applied)[key], key)
+
+  def test_Import_DryRun_WithProblems_ReportsNoIdsAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\nstatus: blocked\n")
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("import", "r.md", "--dry-run", "--json")
+      payload = json.loads(out)
+      self.assertEqual(code, 1)
+      self.assertTrue(payload["problems"])
+      self.assertEqual(payload["ids"], [])
+      self.assertEqual(repo.read(".slicer/index.json"), before)
 
   def test_Import_LegacyFromFlag_PointsAtMigrate(self) -> None:
     with self.repo() as repo:

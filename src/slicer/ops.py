@@ -14,7 +14,7 @@ from pathlib import Path
 
 from slicer import graph, ids, outline, prose, vcs
 from slicer.errors import StateError
-from slicer.model import Item, LogEntry, PassInfo, Section, Slice, extract_boundary
+from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, extract_boundary
 from slicer.store import State
 
 
@@ -724,6 +724,11 @@ class OutlineReport:
     }
 
 
+def _allocate_outline_ids(index: Index, count: int) -> list[str]:
+  """Allocate one id per outline entry against the supplied index."""
+  return [ids.allocate(index) for _ in range(count)]
+
+
 def outline_report(
   state: State, specs: list[object], *, force: bool = False, promote_all: bool = False
 ) -> OutlineReport:
@@ -782,6 +787,8 @@ def outline_report(
       if dep not in known:
         problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
   report.problems = problems
+  if not problems:
+    report.ids = _allocate_outline_ids(deepcopy(state.index), len(specs))
   return report
 
 
@@ -821,10 +828,8 @@ def apply_outline(
   # Titles resolve to ids only once every entry has one, so allocate first.
   by_title: dict[str, str] = {it.title: it.id for it in state.index.items}
   by_title.update({it.display_title(): it.id for it in state.index.items})
-  allocated: list[tuple[object, str]] = []
-  for spec in specs:
-    new_id = ids.allocate(state.index)
-    allocated.append((spec, new_id))
+  allocated = list(zip(specs, _allocate_outline_ids(state.index, len(specs))))
+  for spec, new_id in allocated:
     by_title[spec.title] = new_id
 
   # Build every item and slice against the staged index before writing.
@@ -849,7 +854,6 @@ def apply_outline(
       urgency=spec.urgency,
     )
     state.index.items.append(item)
-    report.ids.append(new_id)
 
     if promote_all or spec.has_slice:
       item.has_slice = True

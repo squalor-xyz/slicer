@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-90 items · — 6 · done 82 · later 1 · retired 1
+90 items · — 5 · done 83 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -41,7 +41,7 @@ v1.0.0 release
 | 11 | [S80](slices/S80.md) | Add a release checklist, tag CI, and the 1.0.0 bump | M | slicer | v1.0.0 readiness audit (release) | done |
 | 12 | [S81](slices/S81.md) | Add a reusable multi-field text input to the TUI | M | slicer | v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50) | done |
 | 13 | [S84](slices/S84.md) | Show importance and urgency in the import skeleton | S | cli | user feedback on import | — |
-| 14 | [S85](slices/S85.md) | Report the ids an import dry-run would assign | S | cli | user feedback on import | — |
+| 14 | [S85](slices/S85.md) | Report the ids an import dry-run would assign | S | cli | user feedback on import | done |
 | 15 | [S88](slices/S88.md) | Hide done items from list by default | S | cli | v1.0.0 readiness audit (cli contract) | done |
 | 16 | [S89](slices/S89.md) | Hide retired items and list in next's order | S | cli | v1.0.0 readiness audit (cli contract) | done |
 | 17 | [S90](slices/S90.md) | Set up PyPI and the trusted publisher for squalor-slicer | S | slicer | PyPI was down when S06 landed; account, GitHub environment, and pending publisher are still undone | done |

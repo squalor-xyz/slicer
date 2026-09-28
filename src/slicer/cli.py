@@ -240,12 +240,12 @@ def cmd_import(args: argparse.Namespace) -> int:
     lines.append("refusing to write: fix the problems above, or re-run with --dry-run to inspect")
     _emit(args, report.to_dict(), "\n".join(lines))
     return DRIFT
+  lines.append(f"added      {', '.join(report.ids)}")
   if args.dry_run:
     lines.append("nothing written; drop --dry-run to apply")
     _emit(args, report.to_dict(), "\n".join(lines))
     return OK
 
-  lines.append(f"added      {', '.join(report.ids)}")
   if _render_hint(args):
     lines.append(f"now {_render_hint(args)}")
   _emit(args, report.to_dict(), "\n".join(lines))
