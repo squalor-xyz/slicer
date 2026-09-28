@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 84,
+  "next_id": 87,
   "preamble": "",
   "passes": [
     {
@@ -1938,6 +1938,75 @@
         "reason": "",
         "importance": 2,
         "urgency": 1
+      }
+    },
+    {
+      "id": "S84",
+      "title": "Show importance and urgency in the import skeleton",
+      "short_title": "Show importance and urgency in the import skeleton",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "user feedback on import",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1
+      }
+    },
+    {
+      "id": "S85",
+      "title": "Report the ids an import dry-run would assign",
+      "short_title": "Report the ids an import dry-run would assign",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "user feedback on import",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S86",
+      "title": "Accept a roadmap preamble in an import outline",
+      "short_title": "Accept a roadmap preamble in an import outline",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "user feedback on import",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
       }
     }
   ],

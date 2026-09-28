@@ -1,0 +1,41 @@
+{
+  "id": "S86",
+  "title": "Accept a roadmap preamble in an import outline",
+  "lead": [
+    "Prose between a `# Roadmap` title and the first `##` item is refused with\n\"text before the first '##' item; a document title needs a single '#'\"\n(`src/slicer/outline.py`, ~lines 170-173). The title was present. The\nmessage tells the writer to add the line they already wrote, and says\nnothing about where roadmap-wide context actually goes. `apply_outline`\ncan store a preamble (`src/slicer/ops.py`, ~lines 818-819) but `cmd_import`\nnever passes one. `slicer prose edit preamble` is the only supported way\nto set it."
+  ],
+  "depends_note": null,
+  "findings_note": "user feedback on import",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** goals, non-goals, epilogue, or per-pass prose in the outline. The `#` title line stays ignored.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "An outline is supposed to be the whole roadmap in one file. Context under\nthe title is the preamble readers see above the queue. Rejecting it with a\nhint about the title sends people looking for a format problem they do not\nhave. Accepting that prose makes the import match the file they tried to\nwrite. Rewording the error alone would still drop the paragraph on the\nfloor."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/outline.py` — `parse` (~lines 106-174); it currently returns only the item list\n- `src/slicer/cli.py` — `cmd_import` (~line 198)\n- `src/slicer/ops.py` — `apply_outline`'s existing `preamble` argument, and `_slice_from_source` for `promote`\n- `docs/import.md` — the shape section, next to the rule that a `#` title is ignored\n- `tests/test_outline.py`, `tests/test_import.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. An outline whose body is a `#` title, a paragraph, then `##` items imports. The paragraph becomes `index.preamble`. The title line is not part of it. Items import as they do today.\n2. `--dry-run` reports that preamble and writes nothing.\n3. A second import whose preamble differs from a non-empty preamble already stored is refused, nothing written, until `--force`.\n4. An outline with no leading prose leaves the existing preamble alone.\n5. `promote --file` rejects leading prose and names `slicer prose edit preamble`. Promoting one slice must not rewrite roadmap prose."
+    },
+    {
+      "heading": "Implement",
+      "body": "Keep the single `#` title ignored. Treat the other text before the first `##` item as the roadmap preamble: return it from `parse` beside the specs (both callers today are `cmd_import` and `promote`'s `_slice_from_source`). `import` passes it to `apply_outline`. On apply, set `index.preamble` when the outline has that prose. If the stored preamble is already non-empty and different, add a problem and write nothing unless `--force`, same as a duplicate title. No leading prose means do not touch the preamble.\n\n`promote --file` does not take a preamble. If the source has leading prose, refuse it with an error that points at `slicer prose edit preamble`.\n\nDocument the shape in `docs/import.md`: context under the title is the preamble, and goals, non-goals, and the epilogue stay on `slicer prose`."
+    },
+    {
+      "heading": "Check",
+      "body": "A file that starts with `# Roadmap`, a short intro, and then items imports the intro as the preamble and the items as the queue. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
