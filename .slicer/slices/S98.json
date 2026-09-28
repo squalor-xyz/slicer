@@ -1,0 +1,41 @@
+{
+  "id": "S98",
+  "title": "Default to a one-call slice pickup in agent guidance",
+  "lead": [
+    "The short agent instructions mention `next --show`, but their numbered workflow and reusable implementation prompt still teach separate `next` and `show` calls. Align the default example with the one-call read path so agents spend fewer calls and less context on routine pickup."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The canonical instructions are often consumed instead of the longer reference. Inconsistent examples make the efficient path easy to miss and force an avoidable second CLI invocation."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`\n- `docs/agents.md`\n- `tests/test_ai.py` or focused documentation checks"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A focused assertion or review check confirms the short guide and reusable implementation prompt present `slicer next --show --json` as the standard read path.\n2. Existing instruction text and JSON output remain identical to each other."
+    },
+    {
+      "heading": "Implement",
+      "body": "Update the quick start and reusable prompt to use `next --show --json`, explain that the returned item and slice come together, and preserve the existing read-specification-before-starting rule. Keep the detailed reference aligned. Do not change S95's agent packaging scope or status."
+    },
+    {
+      "heading": "Check",
+      "body": "The short guide and reusable prompt consistently show the one-call read path, and `slicer ai instructions` text/JSON behavior remains valid."
+    },
+    {
+      "heading": "Git",
+      "body": "No commit required."
+    }
+  ],
+  "notes": []
+}

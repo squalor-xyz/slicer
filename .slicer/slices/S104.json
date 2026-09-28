@@ -1,0 +1,42 @@
+{
+  "id": "S104",
+  "title": "Let set clear an optional field without a one-off sentinel",
+  "lead": [
+    "`set_fields` treats `None` as \"this field was not in the request\", so storing an unset effort needed a private `CLEAR_EFFORT` object. The next optional field will need another sentinel.",
+    "**Not in this slice:** changing `add`, where omitting the flag already means unset. Do not change the JSON shape of effort."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Optional item fields are cleared by writing null. The set path cannot express that with `None`, which already means leave the stored value alone."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`set_fields_many`)\n- `src/slicer/cli.py` and `src/slicer/tui.py`, where effort clears today\n- the effort tests"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `set ID --no-effort` still stores null, and a following `show --json` has `fields.effort` null.\n2. `set ID --effort 2` still stores 2, and omitting `--effort` leaves the stored value alone.\n3. The effort clear no longer depends on a dedicated sentinel object."
+    },
+    {
+      "heading": "Implement",
+      "body": "Give `set_fields_many` one way to say \"write null\" that is distinct from \"leave unchanged\", and use it for effort. Keep the command and TUI behavior the same."
+    },
+    {
+      "heading": "Check",
+      "body": "The three cases above pass, and a set that does not mention effort does not clear it."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

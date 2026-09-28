@@ -1,0 +1,41 @@
+{
+  "id": "S99",
+  "title": "Surface targeted slice reads in the short agent guide",
+  "lead": [
+    "The detailed agent reference explains how to request selected slice sections with context, but the short onboarding guide barely surfaces this token-saving option. Add a compact example where agents are likely to see it."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Agents can otherwise load unrelated slice prose or spend another call locating the more efficient section-selection syntax."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`\n- `docs/agents.md`\n- `tests/test_ai.py` or focused documentation checks"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A focused assertion or review check confirms the short guide documents repeated `--section` and `--context` for targeted reads.\n2. The example uses configurable section headings as examples rather than claiming those headings exist in every project."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a concise `slicer show ID --section ... --context --json` example to the short guide, pointing out that only selected bodies plus title, dependencies, and scope boundary are returned. Keep the detailed reference accurate and avoid duplicating the full command contract."
+    },
+    {
+      "heading": "Check",
+      "body": "An agent can find the targeted-read syntax from the short onboarding output and the example does not imply project-specific headings are universal."
+    },
+    {
+      "heading": "Git",
+      "body": "No commit required."
+    }
+  ],
+  "notes": []
+}

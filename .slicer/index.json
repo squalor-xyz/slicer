@@ -2371,6 +2371,102 @@
       }
     },
     {
+      "id": "S98",
+      "title": "Default to a one-call slice pickup in agent guidance",
+      "short_title": "Default to a one-call slice pickup in agent guidance",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S99",
+      "title": "Surface targeted slice reads in the short agent guide",
+      "short_title": "Surface targeted slice reads in the short agent guide",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S100",
+      "title": "Clarify when to start a slice in agent workflows",
+      "short_title": "Clarify when to start a slice in agent workflows",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S101",
+      "title": "Add a compact ready-to-work CLI context bundle",
+      "short_title": "Add a compact ready-to-work CLI context bundle",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "AI credit-flow review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
       "id": "S102",
       "title": "Do not hand next a slice that does not say what done means",
       "short_title": "Do not hand next a slice that does not say what done means",
@@ -2391,6 +2487,54 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S103",
+      "title": "Keep a failed render from landing done",
+      "short_title": "Keep a failed render from landing done",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S104",
+      "title": "Let set clear an optional field without a one-off sentinel",
+      "short_title": "Let set clear an optional field without a one-off sentinel",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": null
       }
     }

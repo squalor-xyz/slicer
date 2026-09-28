@@ -1,0 +1,42 @@
+{
+  "id": "S103",
+  "title": "Keep a failed render from landing done",
+  "lead": [
+    "`slicer done S86 --render` printed `saved, but render failed` and the slice was already done. The project row template did not match the roadmap header, so the status change was written and the roadmap was left stale.",
+    "**Not in this slice:** changing which template errors render reports. The failure should still name the template problem."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`done --render` is the last step of the agent loop. If render fails, the slice should still be started, so the agent can fix the template and finish once."
+    },
+    {
+      "heading": "Files",
+      "body": "- the `done` path in `src/slicer/ops.py` and the render-after-save path in `src/slicer/cli.py`\n- a test that forces render to fail"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `done ID --render` against a row template that cannot render leaves the slice in its previous status and does not write the index.\n2. `done ID --render` with a working template still marks the slice done and renders."
+    },
+    {
+      "heading": "Implement",
+      "body": "Publish the status change only after render succeeds, or roll it back when render fails. Keep the error that tells the user what to fix."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing-template case does not move the slice to done. The successful case still does."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

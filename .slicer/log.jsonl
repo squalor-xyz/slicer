@@ -472,7 +472,15 @@
 {"when": "2026-09-28T16:18:28Z", "item": "S97", "action": "status", "from": "started", "to": "done", "note": "The TUI queue opens in the same ranked order as slicer list. o sorts the view by ranked order, ID, title, status, size, importance, urgency, effective score, or effort, ascending or descending, for the session only. J/K/T/M still move the stored queue."}
 {"when": "2026-09-28T16:29:40Z", "item": "S95", "action": "status", "from": "open", "to": "started", "note": ""}
 {"when": "2026-09-28T16:31:42Z", "item": "S95", "action": "status", "from": "started", "to": "done", "note": "slicer ai skill prints one SKILL.md for Claude Code, Codex, and Grok. The implement loop and exit-code rules are the same sentences as slicer ai instructions. skills/slicer/SKILL.md matches the command."}
+{"when": "2026-09-28T16:32:06Z", "item": "S98", "action": "add", "from": "", "to": "open", "note": "Default to a one-call slice pickup in agent guidance"}
+{"when": "2026-09-28T16:32:06Z", "item": "S99", "action": "add", "from": "", "to": "open", "note": "Surface targeted slice reads in the short agent guide"}
+{"when": "2026-09-28T16:32:06Z", "item": "S100", "action": "add", "from": "", "to": "open", "note": "Clarify when to start a slice in agent workflows"}
+{"when": "2026-09-28T16:32:06Z", "item": "S101", "action": "add", "from": "", "to": "open", "note": "Add a compact ready-to-work CLI context bundle"}
 {"when": "2026-09-28T16:36:57Z", "item": "S102", "action": "add", "from": "", "to": "open", "note": "Do not hand next a slice that does not say what done means"}
+{"when": "2026-09-28T16:36:57Z", "item": "S103", "action": "add", "from": "", "to": "open", "note": "Keep a failed render from landing done"}
+{"when": "2026-09-28T16:36:57Z", "item": "S104", "action": "add", "from": "", "to": "open", "note": "Let set clear an optional field without a one-off sentinel"}
 {"when": "2026-09-28T16:36:57Z", "item": "S102", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-28T16:36:57Z", "item": "S103", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-28T16:36:58Z", "item": "S104", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-09-28T16:47:03Z", "item": "S102", "action": "status", "from": "open", "to": "started", "note": ""}
 {"when": "2026-09-28T16:47:03Z", "item": "S102", "action": "status", "from": "started", "to": "done", "note": "next skips a slice with an empty Implement or Check and names it in unspecified, including the slicer edit command that fills the section. A row with no slice stays eligible. The skill and docs/agents.md tell an agent to fill those sections instead of inventing them."}

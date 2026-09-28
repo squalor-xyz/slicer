@@ -1,0 +1,41 @@
+{
+  "id": "S100",
+  "title": "Clarify when to start a slice in agent workflows",
+  "lead": [
+    "Agent guidance presents `next --start --show` as a one-call option while also requiring agents to inspect the slice and resolve ambiguity before starting work. State one clear sequence so efficiency guidance does not encourage premature status changes."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The current examples can leave agents unsure whether they should mark work started before validating its scope and acceptance criteria."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`\n- `docs/agents.md`\n- `tests/test_ai.py` or focused documentation checks"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A focused assertion or review check confirms the standard flow reads the slice before marking it started.\n2. Any documented `next --start` shortcut clearly identifies when it is appropriate and does not conflict with the spec-first flow."
+    },
+    {
+      "heading": "Implement",
+      "body": "Choose and document a single default sequence: fetch the next item and slice, inspect scope/dependencies/checks, resolve ambiguity, then start. Retain the combined start shortcut only with a clear precondition that the specification is already trusted. Keep descriptions consistent across quick start and detailed reference."
+    },
+    {
+      "heading": "Check",
+      "body": "The quick start, reusable prompt, and detailed reference agree on when status changes, and a new agent can follow the workflow without choosing between contradictory examples."
+    },
+    {
+      "heading": "Git",
+      "body": "No commit required."
+    }
+  ],
+  "notes": []
+}

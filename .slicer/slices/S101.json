@@ -1,0 +1,41 @@
+{
+  "id": "S101",
+  "title": "Add a compact ready-to-work CLI context bundle",
+  "lead": [
+    "Agents may need separate calls to find the next slice, inspect its specification, and check roadmap context. Explore a compact CLI command or output profile that returns the minimum useful ready-to-work context in one invocation."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Reducing routine CLI round trips and avoiding unrelated roadmap data could lower agent latency and context use. The response needs to stay bounded so it does not merely combine large outputs."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`\n- `src/slicer/ops.py` if shared selection logic is needed\n- `docs/agents.md`\n- focused CLI tests"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A focused CLI test proves the chosen interface returns the next eligible item and its slice in one call.\n2. The response includes only explicitly chosen context fields and remains machine-readable with stable JSON behavior.\n3. Empty or blocked queues have a defined result consistent with existing `next` semantics."
+    },
+    {
+      "heading": "Implement",
+      "body": "Design the smallest interface that provides a useful ready-to-work bundle, considering existing `next --show`, `status`, `goals`, and section-only `show` before adding functionality. Specify the included fields and empty/blocked behavior; avoid returning the full roadmap by default. Document the interface and add focused tests only if this item is implemented."
+    },
+    {
+      "heading": "Check",
+      "body": "An agent can obtain the agreed minimum pickup context in one invocation, with bounded output and stable handling of no eligible work."
+    },
+    {
+      "heading": "Git",
+      "body": "No commit required."
+    }
+  ],
+  "notes": []
+}
