@@ -2,7 +2,10 @@
 """Command line entry point.
 
 Exit codes are stable because scripts depend on them:
-  0  fine        1  drift, or a check failed        2  usage, or nothing to do
+  0  fine
+  1  drift, or a check failed
+  2  usage, validation, or nothing to do
+  3  internal or state (corrupt, locked, io, config, schema_too_new)
 """
 
 from __future__ import annotations
@@ -32,9 +35,9 @@ from slicer import (
   verify,
 )
 from slicer.config import CONFIG_NAME, Config
-from slicer.errors import SlicerError, StateError
+from slicer.errors import SlicerError, StateError, is_internal
 
-OK, DRIFT, USAGE = 0, 1, 2
+OK, DRIFT, USAGE, INTERNAL = 0, 1, 2, 3
 
 
 def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
@@ -1173,10 +1176,14 @@ def _error_envelope(args: argparse.Namespace, exc: SlicerError) -> None:
 
 
 def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
-  """Report a deliberate failure: an envelope for agents, prose for people."""
+  """Report a deliberate failure: an envelope for agents, prose for people.
+
+  Exit status comes from the error code, in one place: internal/state codes
+  are 3, and everything else deliberate (usage, validation) stays 2.
+  """
   _error_envelope(args, exc)
   print(f"slicer: {exc}", file=sys.stderr)
-  return USAGE
+  return INTERNAL if is_internal(exc.code) else USAGE
 
 
 _parser: argparse.ArgumentParser | None = None

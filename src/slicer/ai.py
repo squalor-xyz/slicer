@@ -66,7 +66,8 @@ Use `--json` for automation and inspect both the exit code and payload. Failures
 can return an `error` object containing `code`, `message`, and `command`; branch
 on the stable code rather than message wording. Human diagnostics also go to
 stderr. Exit 0 means success; exit 1 is a failed check or validation report whose
-details must be inspected; exit 2 means an invocation/state error or no next item.
+details must be inspected; exit 2 means a usage or validation error, or no next item;
+exit 3 means an internal or state error (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).
 In particular, `next` can return exit 2 with `{"item": null, "blocked": [...]}`
 and no error object: inspect the blocked items rather than assuming work is done.
 

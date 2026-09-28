@@ -21,9 +21,9 @@ class ErrorEnvelopeTests(unittest.TestCase):
     repo.run("add", "A thing")
     return repo
 
-  def envelope(self, repo: support.TempRepo, *argv: str) -> dict:
+  def envelope(self, repo: support.TempRepo, *argv: str, exit_code: int = 2) -> dict:
     code, out, err = repo.run(*argv, "--json")
-    self.assertEqual(code, 2, f"expected a usage failure; stderr was {err!r}")
+    self.assertEqual(code, exit_code, f"expected exit {exit_code}; stderr was {err!r}")
     return json.loads(out)["error"]
 
   def test_Failure_JsonFlag_PutsAnEnvelopeOnStdout(self) -> None:
@@ -69,7 +69,9 @@ class ErrorEnvelopeTests(unittest.TestCase):
   def test_MissingEditFile_IsAnEnvelopeNotATraceback(self) -> None:
     with self.repo() as repo:
       repo.run("promote", "S01")
-      error = self.envelope(repo, "edit", "S01", "--section", "Why", "--file", "/nope/missing.md")
+      error = self.envelope(
+        repo, "edit", "S01", "--section", "Why", "--file", "/nope/missing.md", exit_code=3,
+      )
       self.assertEqual(error["code"], "io")
 
   def test_MalformedOutline_CarriesTheOutlineCode(self) -> None:
@@ -205,6 +207,118 @@ class DriftIsNotAnErrorTests(unittest.TestCase):
       payload = json.loads(out)
       self.assertNotIn("error", payload)
       self.assertIsNone(payload["item"])
+
+
+class ExitStatusTests(unittest.TestCase):
+  """Exit 3 is internal/state. Exit 2 stays usage, validation, and an empty queue."""
+
+  def test_InternalCodes_ExitThreeFromFail(self) -> None:
+    import argparse
+
+    from slicer.cli import INTERNAL, USAGE, _fail
+    from slicer.errors import INTERNAL_CODES, SlicerError
+
+    self.assertEqual(
+      INTERNAL_CODES, frozenset({"corrupt", "locked", "io", "config", "schema_too_new"}),
+    )
+    args = argparse.Namespace(json=True, command="list")
+    for code_name in ("corrupt", "locked", "io", "config", "schema_too_new"):
+      with self.subTest(code=code_name), redirect_stdout(io.StringIO()) as out, \
+           redirect_stderr(io.StringIO()) as err:
+        code = _fail(args, SlicerError("cannot continue", code=code_name))
+        self.assertEqual(code, INTERNAL)
+        error = json.loads(out.getvalue())["error"]
+        self.assertEqual(error["code"], code_name)
+        self.assertEqual(error["message"], "cannot continue")
+        self.assertIn("slicer: cannot continue", err.getvalue())
+    args.json = False
+    for code_name in ("usage", "state"):
+      with self.subTest(code=code_name), redirect_stdout(io.StringIO()) as out, \
+           redirect_stderr(io.StringIO()):
+        self.assertEqual(_fail(args, SlicerError("nope", code=code_name)), USAGE)
+        self.assertEqual(out.getvalue(), "")
+
+  def test_CorruptIoAndConfig_ExitThree(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "A thing")
+      repo.run("promote", "S01")
+      (repo.root / ".slicer" / "index.json").write_text("garbage{", encoding="utf-8")
+      code, out, err = repo.run("list", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+      self.assertIn("slicer:", err)
+      self.assertIn("index.json", err)
+
+    with support.TempRepo() as repo:
+      repo.run("init")
+      (repo.root / ".slicer" / "config.json").write_text("garbage{", encoding="utf-8")
+      code, out, err = repo.run("list", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "config")
+      self.assertIn("slicer:", err)
+
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "A thing")
+      repo.run("promote", "S01")
+      code, out, err = repo.run(
+        "edit", "S01", "--section", "Why", "--file", "/nope/missing.md", "--json",
+      )
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "io")
+      self.assertIn("slicer:", err)
+
+  def test_LockTimeout_ExitsThree(self) -> None:
+    import os
+
+    from slicer import store
+
+    if store.fcntl is None:  # pragma: no cover - POSIX only
+      self.skipTest("no flock on this platform")
+    with support.TempRepo() as repo:
+      repo.run("init")
+      lock_path = repo.root / ".slicer" / store.LOCK_NAME
+      fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
+      store.fcntl.flock(fd, store.fcntl.LOCK_EX)
+      os.environ[store.LOCK_TIMEOUT_ENV] = "0.2"
+      try:
+        code, out, err = repo.run("add", "held", "--json")
+      finally:
+        store.fcntl.flock(fd, store.fcntl.LOCK_UN)
+        os.close(fd)
+        os.environ.pop(store.LOCK_TIMEOUT_ENV, None)
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "locked")
+      self.assertIn("slicer:", err)
+
+  def test_UsageValidationAndEmptyNext_ExitTwo(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, _ = repo.run("list", "--nope", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+
+      repo.run("add", "A thing")
+      code, out, _ = repo.run("set", "S01", "--status", "nonsense", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, _ = repo.run("next", "--json")
+      self.assertEqual(code, 2)
+      payload = json.loads(out)
+      self.assertNotIn("error", payload)
+      self.assertIsNone(payload["item"])
+
+  def test_Success_ExitsZero(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "A thing")
+      code, out, err = repo.run("list", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)[0]["id"], "S01")
 
 
 if __name__ == "__main__":

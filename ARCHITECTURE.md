@@ -156,4 +156,4 @@ repo with no history as a pass.
 
 ## Exit codes
 
-`0` fine · `1` drift or a failed check · `2` usage error, or nothing to do.
+`0` fine · `1` drift or a failed check · `2` usage, validation, or nothing to do · `3` internal or state (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).

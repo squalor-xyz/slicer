@@ -26,7 +26,7 @@ class CorruptStateTests(unittest.TestCase):
 
   def envelope(self, repo: support.TempRepo, *argv: str) -> dict:
     code, out, err = repo.run(*argv, "--json")
-    self.assertEqual(code, 2, f"expected clean failure; stderr was {err!r}")
+    self.assertEqual(code, 3, f"expected an internal failure; stderr was {err!r}")
     return json.loads(out)["error"]
 
   def test_CorruptIndex_IsReportedNotCrashed(self) -> None:
@@ -86,7 +86,7 @@ class CorruptStateTests(unittest.TestCase):
     with self.repo() as repo:
       state_file(repo, "index.json", "garbage{")
       code, out, err = repo.run("list")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertEqual(out, "")
       self.assertIn("index.json", err)
 
@@ -103,7 +103,7 @@ class BadUserFileTests(unittest.TestCase):
     with self.repo() as repo:
       (repo.root / "r.md").write_bytes(b"## \xff bad\n")
       code, out, _ = repo.run("import", "r.md", "--json")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertEqual(json.loads(out)["error"]["code"], "io")
 
   def test_EditBadEncodingFile_IsAnIoError(self) -> None:
@@ -112,7 +112,7 @@ class BadUserFileTests(unittest.TestCase):
       repo.run("promote", "S01")
       (repo.root / "body.md").write_bytes(b"\xff\xfe")
       code, out, _ = repo.run("edit", "S01", "--section", "Why", "--file", "body.md", "--json")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertEqual(json.loads(out)["error"]["code"], "io")
 
 

@@ -703,8 +703,9 @@ it. If you add it to CI it needs `fetch-depth: 0`, or it sees no history and ski
 
 ## 9. When something goes wrong
 
-Exit codes: **0** fine · **1** drift or a failed check · **2** usage error, or nothing
-to do.
+Exit codes: **0** fine · **1** drift or a failed check · **2** usage, validation, or
+nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
+`schema_too_new`).
 
 | What you see | What it means |
 |---|---|
