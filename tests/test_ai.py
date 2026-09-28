@@ -21,6 +21,8 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn(expected, ai.LOOP)
     self.assertIn("item and its slice together", ai.LOOP)
     self.assertIn("Read its scope, dependencies, and acceptance checks", ai.LOOP)
+    self.assertIn("before changing its status", ai.LOOP)
+    self.assertIn("specification is\n   trusted and needs no clarification", ai.LOOP)
     self.assertLess(ai.LOOP.index("Read its scope"), ai.LOOP.index("slicer start ID"))
     self.assertNotIn("slicer next --json`, then `slicer show", ai.LOOP)
 
@@ -30,7 +32,16 @@ class AiInstructionsTests(unittest.TestCase):
     prompt = docs.split("### Implement one slice", 1)[1].split("```", 2)[1]
     self.assertIn(expected, prompt)
     self.assertIn("Read the scope, dependencies", prompt)
+    self.assertIn("resolve the specification\nwith me first", prompt)
     self.assertLess(prompt.index("Read the scope"), prompt.index("slicer start ID"))
+    self.assertIn("Once the specification is clear and trusted", prompt)
+
+    reference_flow = docs.split("**`slicer next` is the queue.**", 1)[1].split(
+      "**Read only the implementation sections.**", 1
+    )[0]
+    self.assertLess(reference_flow.index("resolve any\nambiguity"),
+                    reference_flow.index("slicer start ID"))
+    self.assertIn("If the\nspecification is already trusted", reference_flow)
 
   def test_Instructions_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):

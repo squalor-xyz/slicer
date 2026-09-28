@@ -2422,7 +2422,7 @@
       "id": "S100",
       "title": "Clarify when to start a slice in agent workflows",
       "short_title": "Clarify when to start a slice in agent workflows",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

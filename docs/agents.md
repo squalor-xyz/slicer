@@ -82,9 +82,10 @@ item and its slice together. Read the scope, dependencies, relevant source, and 
 there is no slice or its acceptance criteria are ambiguous, resolve the specification
 with me first. If `next` includes `unspecified`, fill each missing section with
 `slicer edit ID --section NAME` before implementing that id. Do not invent the body.
-Otherwise mark it started with `slicer start ID --render`, implement
-that slice, and run its acceptance checks and required project checks. Update affected
-documentation. Once verified, run `slicer done ID --note "Describe the verified result"
+Once the specification is clear and trusted, mark it started with
+`slicer start ID --render`. Implement that slice, and run its acceptance checks and
+required project checks. Update affected documentation. Once verified, run
+`slicer done ID --note "Describe the verified result"
 --render` and `slicer check`. Report changes and checks, and stop after this slice.
 Use commands to change tracking state; never hand-edit the index, slice JSON, or
 generated markdown. Do not commit or publish unless separately authorized.
@@ -326,9 +327,11 @@ its score. `next` also reports the item's effective score (a `^` marks a score i
 dependent) and status; `slicer next --start` returns the item and marks it started in one call.
 Use `slicer next --show --json` as the standard read path: it returns the item and its
 full slice together, so picking up work takes one command instead of `next` then `show`.
-Read the slice, start it (or use `slicer next --start --show --json` to start and read in
-one call), implement and verify it, then use `slicer done ID --note "..." --render` and
-`slicer check`.
+Read the slice and inspect its scope, dependencies, and acceptance checks; resolve any
+ambiguity before starting it. Then run `slicer start ID --render`, implement and verify
+it, and use `slicer done ID --note "..." --render` followed by `slicer check`. If the
+specification is already trusted and needs no clarification, `slicer next --start --show
+--json` may combine fetching, reading, and starting the item.
 
 **Read only the implementation sections.** Repeat `--section` to return just selected
 sections, and add `--context` to include the item title, dependencies, and scope boundary:
