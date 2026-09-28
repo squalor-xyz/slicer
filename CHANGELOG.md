@@ -17,6 +17,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - The TUI queue opens in `slicer list` order and, like `list`, hides done and retired until asked. Parked items stay visible and sort last. `o` sorts the view by a field and direction for the session without rewriting the stored queue.
 - `slicer ai skill` prints one `SKILL.md` for Claude Code, Codex, and Grok. It names the implement loop and the exit codes, and it is generated from the same sentences as `slicer ai instructions`.
 - `slicer next` skips a slice whose Implement or Check is empty and names it in `unspecified`, with the `slicer edit` command that fills the section.
+- `slicer ai instructions` shows a repeated `--section` plus `--context` read. The headings in that example are illustrations; use the names the project configures.
 
 ## [1.0.0]
 

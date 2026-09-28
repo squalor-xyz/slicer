@@ -95,8 +95,12 @@ lead and sections. Use the project's configured sections, not assumed headings.
 Within that pool, effective priority includes priority inherited from dependents.
 Use `slicer list --json` (omits done and retired, ordered as `next` walks the queue and then the other visible rows by score; `--all` or `--status` includes the hidden statuses), `slicer list --sort score --json` (same rows, flat effective-score order), `slicer stats --json`,
 and `slicer log --json` to inspect the roadmap. Use `slicer show ID --section NAME`
-to read a section, and `slicer edit ID --section NAME --text "Body" --render` to
-replace it. Use `--help` on a command for supported options.
+to read one section, and `slicer edit ID --section NAME --text "Body" --render` to
+replace it. To return only selected section bodies plus the title, dependencies,
+and scope boundary, repeat `--section` and add `--context`:
+`slicer show ID --section "Implement" --section "Check" --context --json`.
+Those headings are examples; use the section names the project configures.
+Use `--help` on a command for supported options.
 
 ## State and command results
 
