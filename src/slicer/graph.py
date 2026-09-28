@@ -7,6 +7,7 @@ raise RecursionError.
 
 from __future__ import annotations
 
+from slicer.config import Config
 from slicer.model import Index, Item
 
 
@@ -117,3 +118,38 @@ def effective_scores(index: Index) -> dict[str, int]:
         eff[dependency] = eff[dependent]
         changed = True
   return eff
+
+
+def ranked_order(
+  index: Index, cfg: Config, items: list[Item], *, descending: bool = True,
+) -> list[Item]:
+  """The order `list` shows: unblocked started, unblocked open, then the rest.
+
+  Parked items are a last group, still by effective score. Each other group
+  is by effective score too. Descending is the list order. Ascending reverses
+  the groups and sorts score upward. Ties keep stored queue order.
+  """
+  eff = effective_scores(index)
+  started = cfg.started_status
+  parked = cfg.parked_status
+  place = {it.id: n for n, it in enumerate(index.items)}
+
+  def tier(item: Item) -> int:
+    if parked and item.status == parked:
+      return 3
+    if blocked_by(index, item, cfg.done_status):
+      return 2
+    if started and item.status == started:
+      return 0
+    if item.status == cfg.open_status:
+      return 1
+    return 2
+
+  def key(item: Item) -> tuple[int, int, int]:
+    group = tier(item)
+    score = eff[item.id]
+    if descending:
+      return (group, -score, place[item.id])
+    return (-group, score, place[item.id])
+
+  return sorted(items, key=key)

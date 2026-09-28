@@ -148,7 +148,14 @@ roadmap order breaking ties. Skipping an item does not complete it or unblock it
 dependents. The command returns one item, including rows without slice files;
 an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
 
-In the TUI, `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
+In the TUI, the queue opens in the same ranked order as `slicer list`: eligible
+started items, then eligible open items, then the other visible rows, each by
+effective score, with parked items last. Done and retired stay hidden until
+you clear the filter or ask for them. `o` sorts that view by ranked order, ID, title, status, size,
+importance, urgency, effective score, or effort, ascending or descending. The
+choice lasts for the session and does not rewrite the stored queue. `J`, `K`,
+`T`, and `M` still move items in stored order, and only when no filter or
+search is active. `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (size, trees, findings, depends, importance,
 urgency), a slice section, its scope boundary, a note (edit it, or empty to remove; the
 `+ add a note` line adds one), or a prose block — `s` starts the selected item and `a` adds a

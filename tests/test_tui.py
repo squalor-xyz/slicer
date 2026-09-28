@@ -34,22 +34,141 @@ def item_ids(view: tui.View) -> list[str]:
   return [r.target for r in view.listing if r.kind == tui.ITEM]
 
 
+class TuiSortTests(unittest.TestCase):
+  def test_InitialOrder_MatchesListRank(self) -> None:
+    state = example()
+    state.index.items[1].status = "started"
+    state.index.items[3].status = "open"
+    view = tui.View.initial(state)
+    self.assertEqual(item_ids(view), ["S02", "S04", "S03"])
+
+  def test_Picker_OffersEveryField_AndReorders(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.handle(state, "o")
+    labels = [label for _, label in tui.SORT_FIELDS]
+    self.assertEqual(labels, [
+      "ranked order", "ID", "title", "status", "size", "importance",
+      "urgency", "effective score", "effort",
+    ])
+    view.choice_at = next(i for i, (name, _) in enumerate(tui.SORT_FIELDS) if name == "id")
+    view.handle(state, " ")
+    view.handle(state, "\n")
+    self.assertEqual(item_ids(view), ["S02", "S03", "S04"])
+    self.assertEqual(view.sort_field, "id")
+    self.assertFalse(view.sort_desc)
+
+  def test_Direction_BlanksLast_AndTiesKeepStoredOrder(self) -> None:
+    state = example()
+    state.index.items[0].size = "L"
+    state.index.items[1].size = ""
+    state.index.items[1].short_title = ""
+    state.index.items[1].title = "Same"
+    state.index.items[2].size = "S"
+    state.index.items[2].title = "Same"
+    state.index.items[3].size = "M"
+    state.index.items[1].effort = None
+    state.index.items[2].effort = 1
+    state.index.items[3].effort = 3
+    view = tui.View(tui.Filters())
+    view.sort_field = "effort"
+    view.sort_desc = False
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S03", "S04", "S01", "S02"])
+    view.sort_desc = True
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S04", "S03", "S01", "S02"])
+    view.sort_field = "size"
+    view.sort_desc = False
+    view.refresh(state)
+    self.assertEqual(item_ids(view)[-1], "S02")
+    view.sort_desc = True
+    view.refresh(state)
+    self.assertEqual(item_ids(view)[-1], "S02")
+    view.sort_field = "title"
+    view.sort_desc = True
+    view.refresh(state)
+    titles = item_ids(view)
+    same = [item_id for item_id in titles if state.index.require(item_id).display_title() == "Same"]
+    self.assertEqual(same, ["S02", "S03"])
+
+  def test_Sort_KeepsSelectionAndFilters_ClearDoesNotResetSort(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.filters.values["status"] = {"parked"}
+    view.refresh(state)
+    view.select((tui.ITEM, "S03"))
+    view.handle(state, "o")
+    view.handle(state, " ")
+    view.choice_at = next(i for i, (name, _) in enumerate(tui.SORT_FIELDS) if name == "id")
+    view.handle(state, "\n")
+    self.assertEqual(view.target, "S03")
+    self.assertTrue(view.filters.active)
+    self.assertEqual(view.sort_field, "id")
+    view.handle(state, "c")
+    self.assertFalse(view.filters.active)
+    self.assertEqual(view.sort_field, "id")
+    self.assertEqual(item_ids(view)[0], "S01")
+
+  def test_Sort_IsSessionOnly(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "B")
+      repo.run("add", "A")
+      before = repo.read(".slicer/index.json")
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.handle(state, "o")
+      view.handle(state, " ")
+      view.choice_at = next(i for i, (name, _) in enumerate(tui.SORT_FIELDS) if name == "title")
+      view.handle(state, "\n")
+      self.assertEqual(item_ids(view), ["S02", "S01"])
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      fresh = tui.View.initial(repo.state())
+      self.assertEqual(fresh.sort_field, "ranked")
+      self.assertEqual(item_ids(fresh), ["S01", "S02"])
+
+  def test_Reorder_StaysOnStoredOrder_AndStillRefusesWhileFiltered(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "First")
+      repo.run("add", "Second")
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.filters.values["status"] = {"open"}
+      view.refresh(state)
+      before = [item.id for item in state.index.items]
+      view.handle(state, "J")
+      self.assertEqual([item.id for item in state.index.items], before)
+      self.assertIn("reordering disabled", view.message)
+      view.handle(state, "c")
+      view.sort_field = "id"
+      view.sort_desc = True
+      view.refresh(state)
+      view.select((tui.ITEM, "S01"))
+      view.handle(state, "J")
+      self.assertEqual([item.id for item in repo.state().index.items], ["S02", "S01"])
+
+
 def type_keys(view: tui.View, state: State, text: str) -> None:
   for key in text:
     view.handle(state, key)
 
 
 class TuiFilteringTests(unittest.TestCase):
-  def test_InitialView_Defaults_HidesOnlyDone(self) -> None:
+  def test_InitialView_Defaults_HidesDoneAndRetired(self) -> None:
     state = example()
+    state.index.items.append(Item('S05', 'Old idea', 'retired', importance=3, urgency=3))
     view = tui.View.initial(state)
-    self.assertEqual(item_ids(view), ['S02', 'S03', 'S04'])
-    self.assertTrue(view.status(state).startswith('3/4 items'))
-    self.assertEqual(len([r for r in tui.rows(state) if r.kind == tui.ITEM]), 4)
+    self.assertEqual(item_ids(view), ['S04', 'S02', 'S03'])
+    self.assertNotIn('S05', item_ids(view))
+    self.assertTrue(view.status(state).startswith('3/5 items'))
+    self.assertEqual([r.target for r in tui.rows(state) if r.kind == tui.ITEM],
+                     ['S04', 'S02', 'S05', 'S01', 'S03'])
     view.handle(state, 'c')
-    self.assertEqual(item_ids(view), ['S01', 'S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(view), ['S04', 'S02', 'S05', 'S01', 'S03'])
     self.assertFalse(view.filters.active)
-    self.assertEqual(item_ids(tui.View.initial(state)), ['S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(tui.View.initial(state)), ['S04', 'S02', 'S03'])
 
   def test_InitialView_CustomDoneStatus_UsesConfiguration(self) -> None:
     state = example()
@@ -57,7 +176,7 @@ class TuiFilteringTests(unittest.TestCase):
     state.config.done_status = 'shipped'
     for item, status in zip(state.index.items, ['shipped', 'todo', 'waiting', 'todo']):
       item.status = status
-    self.assertEqual(item_ids(tui.View.initial(state)), ['S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(tui.View.initial(state)), ['S02', 'S04', 'S03'])
     self.assertIn(('status', 'waiting'), tui.filter_choices(state))
     self.assertNotIn(('status', 'open'), tui.filter_choices(state))
 
@@ -71,7 +190,7 @@ class TuiFilteringTests(unittest.TestCase):
     view.filters.values['pass'] = {'one'}
     view.refresh(state)
     self.assertEqual(item_ids(view), ['S02'])
-    self.assertTrue(view.listing[0].text.lstrip().startswith('2'))
+    self.assertTrue(view.listing[0].text.lstrip().startswith('1'))
 
   def test_Filters_MissingTreeAndPass_AreSelectable(self) -> None:
     state = example()
@@ -92,7 +211,7 @@ class TuiFilteringTests(unittest.TestCase):
     view = tui.View(tui.Filters())
     view.filters.values['importance'] = {'3'}
     view.refresh(state)
-    self.assertEqual(item_ids(view), ['S01', 'S02'])
+    self.assertEqual(item_ids(view), ['S02', 'S01'])
     view.filters.values['urgency'] = {'2'}
     view.refresh(state)
     self.assertEqual(item_ids(view), ['S02'])
@@ -119,8 +238,8 @@ class TuiFilteringTests(unittest.TestCase):
     view.handle(state, 'j')
     previous = view.selected
     view.handle(state, '/')
-    type_keys(view, state, 'current')
-    self.assertEqual(view.target, 'S04')
+    type_keys(view, state, 'deferred')
+    self.assertEqual(view.target, 'S03')
     view.handle(state, '\x1b')
     self.assertEqual(view.selected, previous)
     self.assertEqual(view.filters.query, '')
@@ -130,7 +249,7 @@ class TuiFilteringTests(unittest.TestCase):
     for _ in range(4):
       view.handle(state, 'KEY_BACKSPACE')
     view.handle(state, '\n')
-    self.assertEqual(item_ids(view), ['S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(view), ['S04', 'S02', 'S03'])
 
   def test_FilterPanel_ApplyCancelAndAny_AreIndependentOfLiveFilters(self) -> None:
     state = example()
@@ -138,9 +257,9 @@ class TuiFilteringTests(unittest.TestCase):
     view.handle(state, 'f')
     view.choice_at = tui.filter_choices(state).index(('status', None))
     view.handle(state, ' ')
-    self.assertEqual(item_ids(view), ['S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(view), ['S04', 'S02', 'S03'])
     view.handle(state, '\x1b')
-    self.assertEqual(item_ids(view), ['S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(view), ['S04', 'S02', 'S03'])
     view.handle(state, 'f')
     view.handle(state, ' ')
     view.choice_at = tui.filter_choices(state).index(('status', 'done'))
@@ -151,7 +270,7 @@ class TuiFilteringTests(unittest.TestCase):
     view.choice_at = tui.filter_choices(state).index(('status', 'done'))
     view.handle(state, ' ')
     view.handle(state, '\n')
-    self.assertEqual(item_ids(view), ['S01', 'S02', 'S03', 'S04'])
+    self.assertEqual(item_ids(view), ['S04', 'S02', 'S01', 'S03'])
 
 
 class TuiNavigationTests(unittest.TestCase):
@@ -321,7 +440,7 @@ class TuiNavigationTests(unittest.TestCase):
   def test_NoSelection_GlobalControls_StillWork(self) -> None:
     state = example()
     state.index.items.clear()
-    with patch.object(tui, 'rows', return_value=[]):
+    with patch.object(tui, 'filtered_rows', return_value=[]):
       view = tui.View.initial(state)
       view.handle(state, 'd')
       self.assertEqual(view.message, 'no item selected')

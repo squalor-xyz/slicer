@@ -40,11 +40,11 @@ class CliTests(unittest.TestCase):
       code, out, _ = repo.run("list", "--json")
       self.assertEqual(code, 0)
       # S01 is done, so the default list leaves it out. S02 is the only
-      # startable row, so it leads; parked and later follow in stored order.
-      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S03", "S04"])
+      # startable row, so it leads; later follows, and parked is last.
+      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S04", "S03"])
       code, out, _ = repo.run("list", "--all", "--json")
       self.assertEqual(code, 0)
-      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S01", "S03", "S04"])
+      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S01", "S04", "S03"])
 
   def test_List_StatusFilter_NarrowsToThatStatus(self) -> None:
     with self.repo() as repo:
@@ -228,8 +228,8 @@ class TuiTests(unittest.TestCase):
   def test_Rows_MixedStatuses_ProduceOneRowPerItemInQueueOrder(self) -> None:
     with self.repo() as repo:
       rows = [r for r in tui.rows(repo.state()) if r.kind == tui.ITEM]
-      self.assertEqual([r.target for r in rows], ["S01", "S02", "S03", "S04"])
-      self.assertIn("done", rows[0].text)
+      self.assertEqual([r.target for r in rows], ["S02", "S01", "S04", "S03"])
+      self.assertTrue(any("done" in r.text for r in rows))
 
   def test_Rows_AfterTheItems_ListTheProseBlocksBehindASeparator(self) -> None:
     with self.repo() as repo:
@@ -401,16 +401,16 @@ class ListDoneDefaultTests(unittest.TestCase):
       self.assertNotIn("S06", text)
       for item_id in ("S01", "S03", "S04", "S05"):
         self.assertIn(item_id, text)
-      # Started S05 leads, then unblocked open S01, then parked and later.
-      self.assertEqual(self.ids(repo), ["S05", "S01", "S03", "S04"])
+      # Started S05 leads, then unblocked open S01, then later, and parked last.
+      self.assertEqual(self.ids(repo), ["S05", "S01", "S04", "S03"])
       self.assertEqual(self.ids(repo, "--status", "retired"), ["S06"])
 
   def test_List_All_IncludesDone_AndOtherFiltersStillApply(self) -> None:
     with self.repo() as repo:
-      self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S03", "S04", "S06"])
+      self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S04", "S06", "S03"])
       self.assertEqual(self.ids(repo, "--all", "--tree", "alpha"), ["S01", "S02", "S04", "S06"])
       self.assertEqual(self.ids(repo, "--tree", "alpha"), ["S01", "S04"])
-      self.assertEqual(self.ids(repo, "--all", "--pass", "now"), ["S01", "S02", "S03", "S06"])
+      self.assertEqual(self.ids(repo, "--all", "--pass", "now"), ["S01", "S02", "S06", "S03"])
       self.assertEqual(self.ids(repo, "--pass", "now"), ["S01", "S03"])
       self.assertEqual(self.ids(repo, "--all", "--sort", "score")[0], "S02")
       scored = self.ids(repo, "--sort", "score")

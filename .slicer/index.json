@@ -2346,7 +2346,7 @@
       "id": "S97",
       "title": "Rank the TUI queue and choose a sort field and direction",
       "short_title": "Rank the TUI queue and choose a sort field and direction",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S96"

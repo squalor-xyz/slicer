@@ -118,7 +118,7 @@ class TuiStyleTests(unittest.TestCase):
     state = example()
     state.index.require("S02").depends_on = ["S03"]
     listing = [r for r in tui.rows(state) if r.kind == tui.ITEM]
-    self.assertEqual([r.target for r in listing], [it.id for it in state.index.items])
+    self.assertEqual([r.target for r in listing], ["S04", "S02", "S01", "S03"])
     for row in listing:
       item = state.index.require(row.target)
       self.assertIn(f"P:{item.score}", row.text)
@@ -134,14 +134,14 @@ class TuiStyleTests(unittest.TestCase):
     screen = StyledScreen()
     tui.draw(screen, state, view, palette)
     self.assertTrue(any(text == "> Queue" for _, _, text, _ in screen.styled))
-    self.assertTrue(any(text.startswith("> ") and "S02" in text and attr == palette.focused
+    self.assertTrue(any(text.startswith("> ") and "S04" in text and attr == palette.focused
                         for _, x, text, attr in screen.styled if x == 0))
     self.assertTrue(any(text == "P:13" and attr == palette.attr("priority")
                         for _, _, text, attr in screen.styled))
     view.handle(state, "\t")
     tui.draw(screen, state, view, palette)
     self.assertTrue(any(text == "> Details" for _, _, text, _ in screen.styled))
-    self.assertTrue(any("S02" in text and attr == palette.inactive
+    self.assertTrue(any("S04" in text and attr == palette.inactive
                         for _, x, text, attr in screen.styled if x == 0))
     self.assertTrue(any(text.startswith("> size") and attr == palette.focused
                         for _, _, text, attr in screen.styled))
