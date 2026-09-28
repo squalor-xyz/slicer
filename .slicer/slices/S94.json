@@ -1,0 +1,41 @@
+{
+  "id": "S94",
+  "title": "Point agents at the command, not the 21 KB reference doc",
+  "lead": [
+    "`slicer ai instructions` is a right-sized ~1 K-token onboarding; `docs/agents.md` is\n~5 K tokens and is for humans. The risk is an agent pulling the whole reference doc\ninto context. Make the repo's AGENTS.md and getting-started point agents at the\ncommand as the canonical onboarding, and consider `ai instructions --brief` (just the\nloop and exit codes) for the leanest start. The reference doc stays for people."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": ""
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

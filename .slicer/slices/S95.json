@@ -1,0 +1,41 @@
+{
+  "id": "S95",
+  "title": "Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok",
+  "lead": [
+    "The deepest \"do more in the tool, less in the model\" move is to stop agents\nre-deriving the workflow from prose each session. Ship a small, fixed skill/command\nthat names the four-command loop and the exit-code rules and nothing else, so the\n\"how do I drive slicer\" reasoning lives in a static artifact rather than per-session\nmodel tokens. Provide equivalents for the major coding agents — a Claude Code skill,\nan OpenAI Codex prompt/command, and a Grok agent skill — sharing one source of truth\n(`ai instructions`) so they cannot drift. Needs a little design on packaging before it\nis a slice."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": ""
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

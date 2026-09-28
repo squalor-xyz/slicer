@@ -1,0 +1,41 @@
+{
+  "id": "S92",
+  "title": "Add a lean JSON profile that drops empty and default fields",
+  "lead": [
+    "Every `--json` read ships full-fat: `short_title` duplicates `title` when unset,\n`path` is an absolute string, `trees_literal` is internal, and empty collections\n(`notes`, `flags`, `depends_on`) and empty-string fields (`pass`, `group`, `reason`)\nare all emitted. Roughly 35% of a `list --json` row is empty scaffolding, and because\nJSON sits in context and is replayed every turn, the waste compounds across a session.\nA lean profile shrinks `list`/`next`/`show` by an estimated 30-45% with no change to\nwhat the agent can learn."
+  ],
+  "depends_note": null,
+  "findings_note": "AI credit-flow review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The agent pays for every byte of every read on each subsequent turn until compaction.\nOmitting fields that carry no information is a pure, passive credit saving that needs\nno change to the agent's behavior."
+    },
+    {
+      "heading": "Files",
+      "body": "`src/slicer/cli.py` (a `--lean`/`--full` flag or a config default for `--json`),\n`src/slicer/model.py` (the `to_dict` shaping), `docs/agents.md` (document the shape)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a lean shaping applied under `--json`: omit empty lists, empty strings, and\ndefault-valued internal fields (`trees_literal`); omit `short_title` when it equals\n`title`; omit `path` unless requested. Gate it behind an explicit flag (or a config\ndefault with `--full` to opt back) so the documented shape stays stable — the error\ncontract is `code`-based, but the success shape is documented and must not silently\nchange. Apply uniformly across read commands."
+    },
+    {
+      "heading": "Check",
+      "body": "Under the lean profile, a `next`/`list`/`show` payload omits empty and default fields\nand the duplicated `short_title`/`path`; a test measures the byte reduction on a known\nfixture and asserts no informational field is lost. Full mode reproduces today's shape\nexactly. The change is documented in `docs/agents.md`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
