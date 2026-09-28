@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-86 items · — 9 · done 75 · later 1 · retired 1
+87 items · — 10 · done 75 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -119,3 +119,4 @@ v1.0.0 release
 | 84 | [S84](slices/S84.md) | Show importance and urgency in the import skeleton | S | cli | user feedback on import | — |
 | 85 | [S85](slices/S85.md) | Report the ids an import dry-run would assign | S | cli | user feedback on import | — |
 | 86 | [S86](slices/S86.md) | Accept a roadmap preamble in an import outline | M | cli | user feedback on import | — |
+| 87 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | cli | user request for a next-id command | — |

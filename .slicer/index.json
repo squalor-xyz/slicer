@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 87,
+  "next_id": 88,
   "preamble": "",
   "passes": [
     {
@@ -2002,6 +2002,29 @@
         ],
         "trees_literal": false,
         "findings": "user feedback on import",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S87",
+      "title": "Print the next slice id without allocating it",
+      "short_title": "Print the next slice id without allocating it",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "user request for a next-id command",
         "pass": "",
         "group": "",
         "reason": "",
