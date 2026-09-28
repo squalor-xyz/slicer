@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `slicer import --skeleton` lists `importance` and `urgency` (1, 2 or 3) and sets a non-default pair on the example item.
+
 ## [1.0.0]
 
 ### Added

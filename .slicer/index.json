@@ -1946,7 +1946,7 @@
       "id": "S84",
       "title": "Show importance and urgency in the import skeleton",
       "short_title": "Show importance and urgency in the import skeleton",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

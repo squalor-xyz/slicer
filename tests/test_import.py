@@ -284,6 +284,13 @@ class SkeletonTests(unittest.TestCase):
       self.assertIn("### Plan", out)
       self.assertNotIn("### Failing tests", out)
 
+  def test_Skeleton_NamesImportanceAndUrgency_BesideTheOtherKeys(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      _, skeleton, _ = repo.run("import", "--skeleton")
+      self.assertIn("importance: 1, 2 or 3; how important (default 2)", skeleton)
+      self.assertIn("urgency:    1, 2 or 3; how urgent (default 2)", skeleton)
+
   def test_Skeleton_RoundTrips_BackThroughImport(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")
@@ -291,7 +298,11 @@ class SkeletonTests(unittest.TestCase):
       repo.write("r.md", skeleton)
       code, _, err = repo.run("import", "r.md")
       self.assertEqual(code, 0, err)
-      self.assertEqual(repo.state().index.require("S01").title, "Parse the config file")
+      item = repo.state().index.require("S01")
+      self.assertEqual(item.title, "Parse the config file")
+      # 3/1 is not the 2/2 default, so the import read the example keys.
+      self.assertEqual(item.importance, 3)
+      self.assertEqual(item.urgency, 1)
 
 
 if __name__ == "__main__":
