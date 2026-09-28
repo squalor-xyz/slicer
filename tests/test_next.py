@@ -51,6 +51,40 @@ class NextVerboseTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertEqual(repo.state().index.require("S01").status, before)
 
+  def test_Next_Show_IncludesSliceEqualToShow(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")
+      repo.run("promote", "S01")
+      payload = json.loads(repo.run("next", "--show", "--json")[1])
+      shown = json.loads(repo.run("show", "S01", "--json")[1])
+      # The fused read equals the two-call composition: same slice object.
+      self.assertEqual(payload["slice"], shown["slice"])
+
+  def test_Next_StartShow_ReturnsStartedItemWithSlice(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")
+      repo.run("promote", "S01")
+      code, _, err = repo.run("next", "--start", "--show", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(repo.run("next", "--show", "--json")[1])
+      self.assertEqual(payload["status"], repo.state().config.started_status)
+      self.assertIn("slice", payload)
+
+  def test_Next_Show_NoSlice_OmitsSliceKey(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")  # a bare row, never promoted
+      code, _, err = repo.run("next", "--show", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("slice", json.loads(repo.run("next", "--show", "--json")[1]))
+
+  def test_Next_Show_NothingEligible_StillEmptyEnvelope(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "only")
+      repo.run("done", "S01")
+      code, out, _ = repo.run("next", "--show", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out), {"item": None, "blocked": []})
+
 
 if __name__ == "__main__":
   unittest.main()

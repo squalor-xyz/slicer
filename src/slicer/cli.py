@@ -351,6 +351,16 @@ def cmd_next(args: argparse.Namespace) -> int:
   ]
   if path:
     lines.append(f"     {path}")
+  if args.show:
+    # Fold the follow-up `show ID` into this one call: an agent picking up work
+    # reads the slice in the same turn it learns the id, saving a round trip.
+    sl = state.slices.get(item.id)
+    if sl is None:
+      lines.append(f"     (no slice yet; run `slicer promote {item.id}`)")
+    else:
+      payload = payload | {"slice": sl.to_dict()}
+      lines.append(render.render_slice(
+        sl, state.config, state.template("slice.md"), item.notes).decode("utf-8"))
   _emit(args, payload, "\n".join(lines))
   return OK
 
@@ -1056,6 +1066,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("-n", type=_nonnegative_int, default=0, metavar="N",
                   help="skip N currently eligible items (default 0); return one item")
   sp.add_argument("--start", action="store_true", help="mark the returned item started")
+  sp.add_argument("--show", action="store_true",
+                  help="also include the item's full slice, as `show` returns it")
 
   sp = add("list", cmd_list, "list items in next's order, omitting done and retired unless asked")
   sp.add_argument("--all", action="store_true",
