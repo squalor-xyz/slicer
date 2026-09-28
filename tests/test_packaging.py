@@ -27,6 +27,15 @@ class PackagingTests(unittest.TestCase):
   def test_Scripts_SlicerConsoleEntryPoint_IsDeclared(self) -> None:
     self.assertEqual(self.pyproject["project"]["scripts"]["slicer"], "slicer.cli:main")
 
+  def test_Version_IsSingleSourcedFromThePackageAttr(self) -> None:
+    # The version has one home: slicer.__version__. pyproject derives it, so the
+    # two can never drift; a static [project].version would reintroduce the drift.
+    project = self.pyproject["project"]
+    self.assertNotIn("version", project, "version must not be a static literal")
+    self.assertIn("version", project["dynamic"])
+    dynamic = self.pyproject["tool"]["setuptools"]["dynamic"]
+    self.assertEqual(dynamic["version"], {"attr": "slicer.__version__"})
+
   def test_Defaults_EveryBundledTemplate_LoadsThroughThePackage(self) -> None:
     loaded = templates.defaults()
     self.assertEqual(sorted(loaded), sorted(templates.TEMPLATE_NAMES))

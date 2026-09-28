@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import cli, tui
+from slicer import __version__, cli, tui
 from slicer.store import State
 
 
@@ -669,3 +669,13 @@ class NoteHelpTests(unittest.TestCase):
     text = out.getvalue()
     self.assertIn("history", text)
     self.assertIn("slicer note", text)
+
+
+class VersionFlagTests(unittest.TestCase):
+  def test_Version_Flag_PrintsPackageVersionAndExitsZero(self) -> None:
+    out = io.StringIO()
+    with self.assertRaises(SystemExit) as cm, redirect_stdout(out):
+      cli.build_parser().parse_args(["--version"])
+    self.assertEqual(cm.exception.code, 0)
+    self.assertIn(__version__, out.getvalue())
+    self.assertIn("slicer", out.getvalue())

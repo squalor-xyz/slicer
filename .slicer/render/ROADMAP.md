@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-83 items · — 8 · done 73 · later 1 · retired 1
+83 items · — 7 · done 74 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -34,7 +34,7 @@ v1.0.0 release
 | 4 | [S73](slices/S73.md) | Raise a clean error on a malformed config numeric field | S | slicer | v1.0.0 readiness audit (code maturity) | — |
 | 5 | [S74](slices/S74.md) | Keep a --render failure inside one JSON envelope | M | slicer, cli | v1.0.0 readiness audit (code maturity) | — |
 | 6 | [S75](slices/S75.md) | Give internal/state errors a distinct exit code before the CLI freezes | M | cli | v1.0.0 readiness audit (code maturity) | done |
-| 7 | [S76](slices/S76.md) | Derive the version from package metadata and add slicer --version | S | slicer | v1.0.0 readiness audit (docs + code) | — |
+| 7 | [S76](slices/S76.md) | Derive the version from package metadata and add slicer --version | S | slicer | v1.0.0 readiness audit (docs + code) | done |
 | 8 | [S77](slices/S77.md) | Add a CHANGELOG seeded from the history | S | docs | v1.0.0 readiness audit (docs) | done |
 | 9 | [S78](slices/S78.md) | Add a CONTRIBUTING pointer | S | docs | v1.0.0 readiness audit (docs) | — |
 | 10 | [S79](slices/S79.md) | Bring the documentation current with the shipped CLI and TUI | M | docs | v1.0.0 readiness audit (docs) | done |

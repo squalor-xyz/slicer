@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "slicer"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Roadmap and slice manager for the review -> slice -> implement loop"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,9 @@ Issues = "https://github.com/squalor-xyz/slicer/issues"
 
 [project.scripts]
 slicer = "slicer.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "slicer.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
