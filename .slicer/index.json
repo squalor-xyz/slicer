@@ -1684,7 +1684,7 @@
       "id": "S73",
       "title": "Raise a clean error on a malformed config numeric field",
       "short_title": "Raise a clean error on a malformed config numeric field",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

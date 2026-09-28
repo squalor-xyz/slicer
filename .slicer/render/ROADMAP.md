@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-87 items · — 9 · done 76 · later 1 · retired 1
+87 items · — 8 · done 77 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -31,7 +31,7 @@ v1.0.0 release
 | 1 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | slicer | user request | done |
 | 2 | [S06](slices/S06.md) | Publish to PyPI as squalor-slicer | S | slicer | PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58 | — |
 | 3 | [S72](slices/S72.md) | Refuse a newer-than-known state schema instead of silently downgrading it | M | slicer | v1.0.0 readiness audit (code maturity) | done |
-| 4 | [S73](slices/S73.md) | Raise a clean error on a malformed config numeric field | S | slicer | v1.0.0 readiness audit (code maturity) | — |
+| 4 | [S73](slices/S73.md) | Raise a clean error on a malformed config numeric field | S | slicer | v1.0.0 readiness audit (code maturity) | done |
 | 5 | [S74](slices/S74.md) | Keep a --render failure inside one JSON envelope | M | slicer, cli | v1.0.0 readiness audit (code maturity) | done |
 | 6 | [S75](slices/S75.md) | Give internal/state errors a distinct exit code before the CLI freezes | M | cli | v1.0.0 readiness audit (code maturity) | done |
 | 7 | [S76](slices/S76.md) | Derive the version from package metadata and add slicer --version | S | slicer | v1.0.0 readiness audit (docs + code) | done |
