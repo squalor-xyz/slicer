@@ -6,8 +6,8 @@
 #   repository: slicer
 #   workflow: publish.yml
 #   environment: pypi
-# The GitHub environment name is `pypi` as well. Cutting the tag, and bumping
-# slicer.__version__ to match it, belong to the release checklist.
+# The GitHub environment name is `pypi` as well. Cutting the tag is
+# RELEASING.md. The tag must be `v` plus slicer.__version__.
 
 name: Publish
 

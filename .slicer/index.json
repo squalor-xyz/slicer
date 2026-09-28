@@ -1848,7 +1848,7 @@
       "id": "S80",
       "title": "Add a release checklist, tag CI, and the 1.0.0 bump",
       "short_title": "Add a release checklist, tag CI, and the 1.0.0 bump",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S76",
@@ -2084,7 +2084,7 @@
       "id": "S90",
       "title": "Set up PyPI and the trusted publisher for squalor-slicer",
       "short_title": "Set up PyPI and the trusted publisher for squalor-slicer",
-      "status": "later",
+      "status": "open",
       "has_slice": true,
       "depends_on": [
         "S06"
