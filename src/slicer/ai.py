@@ -29,6 +29,10 @@ In particular, `next` can return exit 2 with `{"item": null, "blocked": [...]}`
 and no error object: inspect the blocked items rather than assuming work is done.
 """
 
+SPEC_GAP = """\
+If `next` JSON includes `unspecified`, those ids are not ready. Fill each missing section with `slicer edit ID --section NAME` and run `next` again. Do not invent the section body.
+"""
+
 SKILL_DESCRIPTION = (
   "Drive a slicer roadmap. Use when asked to take a slice, implement the next "
   "slice, or drive slicer."
@@ -44,6 +48,7 @@ def skill_text() -> str:
     "---\n"
     "\n"
     f"{LOOP}\n"
+    f"{SPEC_GAP}\n"
     f"{EXITS}\n"
     "The rest of the guide is `slicer ai instructions`.\n"
   )
@@ -85,7 +90,7 @@ lead and sections. Use the project's configured sections, not assumed headings.
 
 ## Implement one slice
 
-""" + LOOP + """
+""" + LOOP + SPEC_GAP + """
 `next` resumes eligible started work before open work; dependencies gate both.
 Within that pool, effective priority includes priority inherited from dependents.
 Use `slicer list --json` (omits done and retired, ordered as `next` walks the queue and then the other visible rows by score; `--all` or `--status` includes the hidden statuses), `slicer list --sort score --json` (same rows, flat effective-score order), `slicer stats --json`,

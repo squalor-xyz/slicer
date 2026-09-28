@@ -55,6 +55,8 @@ class NextVerboseTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("add", "work")
       repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
       payload = json.loads(repo.run("next", "--show", "--json")[1])
       shown = json.loads(repo.run("show", "S01", "--json")[1])
       # The fused read equals the two-call composition: same slice object.
@@ -64,6 +66,8 @@ class NextVerboseTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("add", "work")
       repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
       code, _, err = repo.run("next", "--start", "--show", "--json")
       self.assertEqual(code, 0, err)
       payload = json.loads(repo.run("next", "--show", "--json")[1])
@@ -76,6 +80,48 @@ class NextVerboseTests(unittest.TestCase):
       code, _, err = repo.run("next", "--show", "--json")
       self.assertEqual(code, 0, err)
       self.assertNotIn("slice", json.loads(repo.run("next", "--show", "--json")[1]))
+
+  def test_Next_EmptyImplementOrCheck_IsSkippedAndNamed(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Needs a spec")
+      repo.run("promote", "S01")
+      repo.run("add", "Ready")
+      repo.run("promote", "S02")
+      repo.run("edit", "S02", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S02", "--section", "Check", "--text", "The thing works.")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["id"], "S02")
+      self.assertEqual(payload["unspecified"], [{"id": "S01", "missing": ["Implement", "Check"]}])
+      code, text, err = repo.run("next")
+      self.assertEqual(code, 0, err)
+      self.assertIn("skipped S01: Implement and Check are empty.", text)
+      self.assertIn("`slicer edit S01 --section Implement`", text)
+      self.assertIn("`slicer edit S01 --section Check`", text)
+      self.assertEqual(repo.state().index.require("S01").status, "open")
+
+  def test_Next_OnlyUnspecified_IsTheNoItemPath(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Needs a spec")
+      repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      code, out, _ = repo.run("next", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out), {
+        "item": None,
+        "blocked": [],
+        "unspecified": [{"id": "S01", "missing": ["Check"]}],
+      })
+
+  def test_Next_NoSlice_StaysEligible(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "bare row")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("unspecified", payload)
 
   def test_Next_Show_NothingEligible_StillEmptyEnvelope(self) -> None:
     with self.repo() as repo:

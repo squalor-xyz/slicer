@@ -24,6 +24,8 @@ class NextOffsetTests(unittest.TestCase):
         self.run_ok(repo, "add", title, "--importance", importance)
       self.run_ok(repo, "start", "S01", "S03")
       self.run_ok(repo, "promote", "S03")
+      self.run_ok(repo, "edit", "S03", "--section", "Implement", "--text", "Do the thing.")
+      self.run_ok(repo, "edit", "S03", "--section", "Check", "--text", "The thing works.")
       before = {str(p): p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
       for offset, item_id in enumerate(["S03", "S01", "S02", "S04"]):
         payload = json.loads(self.run_ok(repo, "next", "-n", str(offset), "--json"))

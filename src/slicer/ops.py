@@ -428,6 +428,7 @@ def start(state: State, item_id: str, *, note: str = "") -> Item:
 class NextResult:
   item: Item | None
   blocked: list[tuple[str, list[str]]]
+  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
 
 
 def next_item(state: State, offset: int = 0) -> NextResult:
@@ -451,6 +452,7 @@ def next_item(state: State, offset: int = 0) -> NextResult:
   if cfg.started_status:
     active.add(cfg.started_status)
   blocked: list[tuple[str, list[str]]] = []
+  unspecified: list[tuple[str, list[str]]] = []
   started: list[Item] = []
   candidates: list[Item] = []
   for item in state.index.items:
@@ -459,14 +461,35 @@ def next_item(state: State, offset: int = 0) -> NextResult:
     pending = graph.blocked_by(state.index, item, cfg.done_status)
     if pending:
       blocked.append((item.id, pending))
+    missing = _missing_spec(state, item)
+    if missing:
+      unspecified.append((item.id, missing))
+    if pending or missing:
       continue
     (started if item.status == cfg.started_status else candidates).append(item)
   if not started and not candidates:
-    return NextResult(item=None, blocked=blocked)
+    return NextResult(item=None, blocked=blocked, unspecified=unspecified)
   eff = graph.effective_scores(state.index)
   pool = (sorted(started, key=lambda it: -eff[it.id])
           + sorted(candidates, key=lambda it: -eff[it.id]))
-  return NextResult(item=pool[offset] if offset < len(pool) else None, blocked=blocked)
+  return NextResult(
+    item=pool[offset] if offset < len(pool) else None,
+    blocked=blocked,
+    unspecified=unspecified,
+  )
+
+
+def _missing_spec(state: State, item: Item) -> list[str]:
+  """Implement and Check headings with no text. A row with no slice is not this case."""
+  sl = state.slices.get(item.id)
+  if sl is None:
+    return []
+  missing: list[str] = []
+  for heading in ("Implement", "Check"):
+    section = sl.section(heading)
+    if section is None or not section.body.strip():
+      missing.append(heading)
+  return missing
 
 
 def edit_section(state: State, item_id: str, heading: str, body: str, *, append: bool = False) -> Slice:

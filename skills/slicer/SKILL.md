@@ -14,6 +14,8 @@ description: Drive a slicer roadmap. Use when asked to take a slice, implement t
 4. Run `slicer done ID --note "Describe the verified outcome" --render --json`,
    then `slicer check --json`. Report results and any remaining limitations.
 
+If `next` JSON includes `unspecified`, those ids are not ready. Fill each missing section with `slicer edit ID --section NAME` and run `next` again. Do not invent the section body.
+
 Use `--json` for automation and inspect both the exit code and payload. Failures
 can return an `error` object containing `code`, `message`, and `command`; branch
 on the stable code rather than message wording. Human diagnostics also go to
