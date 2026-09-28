@@ -39,11 +39,12 @@ class CliTests(unittest.TestCase):
     with self.repo() as repo:
       code, out, _ = repo.run("list", "--json")
       self.assertEqual(code, 0)
-      # S01 is done, so the default list leaves it out.
+      # S01 is done, so the default list leaves it out. S02 is the only
+      # startable row, so it leads; parked and later follow in stored order.
       self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S03", "S04"])
       code, out, _ = repo.run("list", "--all", "--json")
       self.assertEqual(code, 0)
-      self.assertEqual([i["id"] for i in json.loads(out)], ["S01", "S02", "S03", "S04"])
+      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S01", "S03", "S04"])
 
   def test_List_StatusFilter_NarrowsToThatStatus(self) -> None:
     with self.repo() as repo:
@@ -392,25 +393,29 @@ class ListDoneDefaultTests(unittest.TestCase):
     self.assertEqual((code, err), (0, ""), out)
     return [item["id"] for item in json.loads(out)]
 
-  def test_List_Default_OmitsDoneAndKeepsTheRest(self) -> None:
+  def test_List_Default_OmitsDoneAndRetired(self) -> None:
     with self.repo() as repo:
       code, text, err = repo.run("list")
       self.assertEqual((code, err), (0, ""))
       self.assertNotIn("S02", text)
-      for item_id in ("S01", "S03", "S04", "S05", "S06"):
+      self.assertNotIn("S06", text)
+      for item_id in ("S01", "S03", "S04", "S05"):
         self.assertIn(item_id, text)
-      self.assertEqual(self.ids(repo), ["S01", "S03", "S04", "S05", "S06"])
+      # Started S05 leads, then unblocked open S01, then parked and later.
+      self.assertEqual(self.ids(repo), ["S05", "S01", "S03", "S04"])
+      self.assertEqual(self.ids(repo, "--status", "retired"), ["S06"])
 
   def test_List_All_IncludesDone_AndOtherFiltersStillApply(self) -> None:
     with self.repo() as repo:
-      self.assertEqual(self.ids(repo, "--all"), ["S01", "S02", "S03", "S04", "S05", "S06"])
+      self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S03", "S04", "S06"])
       self.assertEqual(self.ids(repo, "--all", "--tree", "alpha"), ["S01", "S02", "S04", "S06"])
-      self.assertEqual(self.ids(repo, "--tree", "alpha"), ["S01", "S04", "S06"])
+      self.assertEqual(self.ids(repo, "--tree", "alpha"), ["S01", "S04"])
       self.assertEqual(self.ids(repo, "--all", "--pass", "now"), ["S01", "S02", "S03", "S06"])
-      self.assertEqual(self.ids(repo, "--pass", "now"), ["S01", "S03", "S06"])
+      self.assertEqual(self.ids(repo, "--pass", "now"), ["S01", "S03"])
       self.assertEqual(self.ids(repo, "--all", "--sort", "score")[0], "S02")
       scored = self.ids(repo, "--sort", "score")
       self.assertNotIn("S02", scored)
+      self.assertNotIn("S06", scored)
       self.assertEqual(scored[0], "S03")
 
   def test_List_Status_IsAnAllowListThatIncludesDone(self) -> None:
@@ -441,6 +446,37 @@ class ListDoneDefaultTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class ListNextOrderTests(unittest.TestCase):
+  """Default list order is the sequence `next` walks, then the rest by score."""
+
+  def ids(self, repo: support.TempRepo, *argv: str) -> list[str]:
+    code, out, err = repo.run("list", *argv, "--json")
+    self.assertEqual((code, err), (0, ""))
+    return [item["id"] for item in json.loads(out)]
+
+  def test_List_Default_PutsStartedAheadOfAHigherOpenScore(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "open high", "--importance", "3", "--urgency", "3")
+      repo.run("add", "started low", "--importance", "1", "--urgency", "1")
+      repo.run("start", "S02")
+      self.assertEqual(self.ids(repo), ["S02", "S01"])
+      self.assertEqual(json.loads(repo.run("next", "--json")[1])["id"], "S02")
+
+  def test_List_Default_PutsABlockedItemAfterStartableOnes(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "startable", "--importance", "1", "--urgency", "1")
+      repo.run("add", "blocked high", "--importance", "3", "--urgency", "3")
+      repo.run("add", "parked blocker", "--importance", "1", "--urgency", "1")
+      repo.run("park", "S03")
+      repo.run("set", "S02", "--depends-on", "S03")
+      self.assertEqual(self.ids(repo), ["S01", "S02", "S03"])
+      self.assertEqual(json.loads(repo.run("next", "--json")[1])["id"], "S01")
+      # Flat score keeps the blocked item first. Its parked dependency inherits 33.
+      self.assertEqual(self.ids(repo, "--sort", "score"), ["S02", "S03", "S01"])
 
 
 class TuiHelpTests(unittest.TestCase):

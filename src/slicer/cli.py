@@ -370,6 +370,28 @@ def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
   ]
 
 
+def _list_in_next_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
+  """The sequence `next` walks, then every other visible row by effective score.
+
+  A started or open item with an unfinished dependency is not startable, so it
+  joins the trailing group. Ties keep stored order; sorting is stable.
+  """
+  cfg = state.config
+  eff = graph.effective_scores(state.index)
+  started = cfg.started_status
+
+  def tier(item: model.Item) -> int:
+    if graph.blocked_by(state.index, item, cfg.done_status):
+      return 2
+    if started and item.status == started:
+      return 0
+    if item.status == cfg.open_status:
+      return 1
+    return 2
+
+  return sorted(items, key=lambda item: (tier(item), -eff[item.id]))
+
+
 def cmd_list(args: argparse.Namespace) -> int:
   state = _state(args)
   if args.all and args.status:
@@ -381,8 +403,10 @@ def cmd_list(args: argparse.Namespace) -> int:
   if args.status:
     items = [i for i in items if i.status in args.status]
   elif not args.all:
-    done = state.config.done_status
-    items = [i for i in items if i.status != done]
+    hidden = {state.config.done_status}
+    if state.config.retired_status:
+      hidden.add(state.config.retired_status)
+    items = [i for i in items if i.status not in hidden]
   if args.tree:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
@@ -392,6 +416,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     # Ties keep their manual position because Python's sort is stable.
     eff = graph.effective_scores(state.index)
     items = sorted(items, key=lambda i: eff[i.id], reverse=True)
+  else:
+    items = _list_in_next_order(state, items)
   _emit(args, [i.to_dict() for i in items], "\n".join(_item_rows(state, items)) or "no matching items")
   return OK
 
@@ -1031,11 +1057,11 @@ def build_parser() -> argparse.ArgumentParser:
                   help="skip N currently eligible items (default 0); return one item")
   sp.add_argument("--start", action="store_true", help="mark the returned item started")
 
-  sp = add("list", cmd_list, "list items, omitting the done status unless asked")
+  sp = add("list", cmd_list, "list items in next's order, omitting done and retired unless asked")
   sp.add_argument("--all", action="store_true",
-                  help="include items in the configured done status (default: omit them)")
+                  help="include done and retired items (default: omit them)")
   sp.add_argument("--status", action="append",
-                  help="filter by status (repeatable); replaces the default of omitting the done status")
+                  help="filter by status (repeatable); replaces the default of omitting done and retired")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--sort", choices=["score"], help="order by priority score, highest first")

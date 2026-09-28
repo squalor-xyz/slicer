@@ -1,0 +1,41 @@
+{
+  "id": "S89",
+  "title": "Hide retired items and list in next's order",
+  "lead": [
+    "`slicer list` hides done items, but a retired row is still in the default\nqueue, and the rows come back in stored order. `slicer next` already walks a\ndifferent sequence: unblocked started items by effective score, then unblocked\nopen items by effective score. The default list should be that sequence, then\nthe other rows that are still visible."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.0.0 readiness audit (cli contract)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing `next`, `move`, `sort`, or the rendered roadmap. `--sort score` stays a flat effective-score sort. Parked and later items stay visible.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The list is how a person and an agent see the work ahead. A retired item is\nfinished in the same sense a done item is: it is not going to be implemented.\nA stored-order list also hides the order `next` will actually offer. On this\nrepo S80 scores the same as S06 but depends on S06, so a flat score sort puts\nit second while `next` will not return it until S06 is done."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` — `cmd_list` and the `list` parser\n- `README.md` — the `list` row\n- `docs/agents.md` — the `list` payload row\n- `docs/getting-started.md` — the sentence that treats an unsorted list as stored order\n- `src/slicer/ai.py` — the `slicer list --json` instruction\n- `CHANGELOG.md` — the unreleased list bullet\n- `tests/test_cli.py`, `tests/test_scoring.py`, `tests/test_sort.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Default `list` omits retired as well as done. `--all` and `--status retired` include the retired item.\n2. A started low-score item is listed before an open higher-score item, and that first id is what `next` returns.\n3. A blocked open item with a higher score is listed after the unblocked open items.\n4. `--sort score` still orders those same rows by effective score alone, blocked item included."
+    },
+    {
+      "heading": "Implement",
+      "body": "When `--all` and `--status` are absent, drop `done_status` and, when it is non-empty, `retired_status`. Do not hardcode either word. `--status` replaces that default. `--all` turns it off. `--all` with `--status` stays a usage error.\n\nDefault order, after the status, tree, and pass filters, is three stable tiers. Ties keep stored order. Effective score is the same value `next` uses.\n\n1. Unblocked started items, highest effective score first.\n2. Unblocked open items, highest effective score first.\n3. Every other visible item, highest effective score first.\n\nThe startable prefix is the sequence `next`, `next -n 1`, `next -n 2`, for items the filters still include. `--sort score` stays a flat effective-score sort with no tiers. Do not change `next`, `move`, `sort`, or the rendered roadmap."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer list` on this repo omits retired S03 and starts with S06, then the other unblocked open items by score, with blocked S80 after that run. `slicer next` is still S06. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

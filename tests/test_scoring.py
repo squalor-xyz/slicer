@@ -81,12 +81,12 @@ class ScoreCliTests(unittest.TestCase):
       _, out, _ = repo.run("list", "--sort", "score", "--json")
       self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S03", "S01"])
 
-  def test_List_WithoutSort_KeepsManualOrder(self) -> None:
+  def test_List_Default_OrdersStartableItemsByScore(self) -> None:
     with self.repo() as repo:
       repo.run("add", "low", "--importance", "1", "--urgency", "1")
       repo.run("add", "high", "--importance", "3", "--urgency", "3")
       _, out, _ = repo.run("list", "--json")
-      self.assertEqual([i["id"] for i in json.loads(out)], ["S01", "S02"])
+      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S01"])
 
   def test_List_TextShowsScoreAndQuadrant(self) -> None:
     with self.repo() as repo:

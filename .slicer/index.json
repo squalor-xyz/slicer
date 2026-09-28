@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 89,
+  "next_id": 90,
   "preamble": "",
   "passes": [
     {
@@ -979,7 +979,8 @@
         "S74",
         "S75",
         "S76",
-        "S88"
+        "S88",
+        "S89"
       ],
       "notes": [],
       "fields": {
@@ -2054,6 +2055,29 @@
         "reason": "",
         "importance": 3,
         "urgency": 3
+      }
+    },
+    {
+      "id": "S89",
+      "title": "Hide retired items and list in next's order",
+      "short_title": "Hide retired items and list in next's order",
+      "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (cli contract)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2
       }
     }
   ],
