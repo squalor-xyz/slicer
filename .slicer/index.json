@@ -1661,7 +1661,7 @@
       "id": "S72",
       "title": "Refuse a newer-than-known state schema instead of silently downgrading it",
       "short_title": "Refuse a newer-than-known state schema instead of silently downgrading it",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

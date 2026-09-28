@@ -406,3 +406,4 @@
 {"when": "2026-09-28T02:27:22Z", "item": "S85", "action": "add", "from": "", "to": "open", "note": "Report the ids an import dry-run would assign"}
 {"when": "2026-09-28T02:27:22Z", "item": "S86", "action": "add", "from": "", "to": "open", "note": "Accept a roadmap preamble in an import outline"}
 {"when": "2026-09-28T02:34:44Z", "item": "S87", "action": "add", "from": "", "to": "open", "note": "Print the next slice id without allocating it"}
+{"when": "2026-09-28T02:57:00Z", "item": "S72", "action": "status", "from": "open", "to": "done", "note": "store.load/migrate refuse an index/config whose version exceeds this build's SCHEMA_VERSION (code schema_too_new, exit 3), at the parse boundary before any save; documents the 1.x forward-migration convention."}

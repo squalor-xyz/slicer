@@ -10,7 +10,8 @@ from __future__ import annotations
 
 # Hard failures: the project or the process cannot proceed. Usage and
 # validation stay outside this set so they keep a different exit status.
-# `schema_too_new` is reserved; nothing raises it yet.
+# `schema_too_new` is raised by `store.load` when the on-disk schema is newer
+# than this build understands.
 INTERNAL_CODES = frozenset({
   "corrupt",
   "locked",
@@ -68,3 +69,21 @@ class RenderError(SlicerError):
   """A template referenced a placeholder that does not exist."""
 
   code = "render"
+
+
+def reject_future_schema(where: str, found: int, known: int) -> None:
+  """Refuse state written by a newer slicer instead of silently downgrading it.
+
+  A higher on-disk `version` means keys this build does not know: loading it
+  would drop them, and the next save would rewrite the file at the older shape,
+  losing data. Called at the parse boundary so every reader (`store.load`,
+  `migrate`, …) is covered. Within 1.x, a schema bump ships a reader/migrator
+  that lifts the old shape on load — a slice-schema change must bump the index
+  version too — so raising the version is always paired with a reader for it.
+  """
+  if found > known:
+    raise StateError(
+      f"{where}: written by a newer slicer (schema {found}; this build knows "
+      f"{known}). Upgrade slicer to open this project.",
+      code="schema_too_new",
+    )

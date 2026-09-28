@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from slicer import ids
-from slicer.errors import ConfigError
+from slicer.errors import ConfigError, reject_future_schema
 
 CONFIG_NAME = "config.json"
 
@@ -73,9 +73,16 @@ DEFAULT_LATER = {
 }
 
 
+# The config-file schema version this build writes and fully understands. A
+# higher number on disk means a newer slicer wrote it; `store.load` refuses it
+# rather than dropping the keys this build does not know. Bump only alongside a
+# reader that lifts the older shape.
+SCHEMA_VERSION = 1
+
+
 @dataclass
 class Config:
-  version: int = 1
+  version: int = SCHEMA_VERSION
   id_prefix: str = "S"
   id_width: int = 2
   statuses: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_STATUSES))
@@ -194,7 +201,7 @@ class Config:
     if started and started not in statuses:
       statuses[started] = started
     cfg = Config(
-      version=int(d.get("version", 1)),
+      version=int(d.get("version", SCHEMA_VERSION)),
       id_prefix=ident.get("prefix", "S"),
       id_width=int(ident.get("width", 2)),
       statuses=statuses,
@@ -225,6 +232,10 @@ class Config:
       raise ConfigError(f"{path}: not found; run `slicer init` first") from None
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
       raise ConfigError(f"{path}: invalid JSON: {e}") from None
+    # Refuse a newer schema before parsing or validating, so a config only a
+    # newer slicer understands is reported as "upgrade slicer", not as invalid.
+    if isinstance(raw, dict) and isinstance(raw.get("version"), int):
+      reject_future_schema(str(path), raw["version"], SCHEMA_VERSION)
     try:
       return Config.from_dict(raw)
     except (KeyError, TypeError) as e:

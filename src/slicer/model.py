@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping
 
-from slicer.errors import StateError
+from slicer.errors import StateError, reject_future_schema
 
 SCHEMA_VERSION = 1
 
@@ -310,8 +310,10 @@ class Index:
 
   @staticmethod
   def from_dict(d: Mapping[str, Any]) -> "Index":
+    version = int(d.get("version", SCHEMA_VERSION))
+    reject_future_schema("index.json", version, SCHEMA_VERSION)
     return Index(
-      version=int(d.get("version", SCHEMA_VERSION)),
+      version=version,
       id_prefix=d.get("id_prefix", "S"),
       id_width=int(d.get("id_width", 2)),
       next_id=int(d.get("next_id", 1)),

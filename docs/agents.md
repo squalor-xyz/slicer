@@ -193,6 +193,7 @@ when the meaning does. Branch on the code.
 | `io` | A file could not be read or written |
 | `locked` | Another slicer held the writer lock past the timeout; retry, or clear a stale `.slicer/lock` |
 | `corrupt` | A tracking file (index, a slice, the log) is not valid JSON/UTF-8 or is the wrong shape |
+| `schema_too_new` | `index.json` or `config.json` was written by a newer slicer; upgrade slicer to open the project |
 | `bad_id` | An id is unusable as a filename, or a config prefix would produce one |
 | `case_collision` | An id differs from an existing one only in case |
 | `already_exists` | `init` or `migrate` over a project that already has state |

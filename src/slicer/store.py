@@ -228,6 +228,9 @@ def _from_dict(path: Path, loader, data):
 def load(root: Path | None = None) -> State:
   base = discover(root)
   sdir = base / DIR_NAME
+  # Config.load and Index.from_dict refuse a newer-than-known schema at the parse
+  # boundary (code schema_too_new), so every reader — here and `migrate` — is
+  # covered without a save ever running against a file this build cannot read.
   config = Config.load(sdir / CONFIG_NAME)
   index_path = sdir / INDEX_NAME
   if not index_path.is_file():
