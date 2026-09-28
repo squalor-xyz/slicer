@@ -8,8 +8,11 @@ from __future__ import annotations
 LOOP = """\
 1. Run `slicer next --show --json` to get the next item and its slice together.
    Read its scope, dependencies, and acceptance checks. Resolve missing or
-   ambiguous specifications before implementation.
-2. Run `slicer start ID --render --json`. Implement the agreed scope, update
+   ambiguous specifications before changing its status. If the specification is
+   trusted and needs no clarification, `slicer next --start --show --json` may
+   combine these first steps.
+2. Otherwise, run `slicer start ID --render --json` after reviewing the slice.
+   Implement the agreed scope, update
    affected documentation, and run the slice's checks and required project tests.
 3. Review the changes and run `slicer check --json`. Fix problems before marking
    work complete; this tracking check does not replace code tests.
