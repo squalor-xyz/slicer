@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-96 items · — 8 · done 86 · later 1 · retired 1
+96 items · — 7 · done 87 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -123,7 +123,7 @@ v1.0.0 release
 | 88 | [S70](slices/S70.md) | Render an HTML roadmap file alongside the markdown |  | slicer | user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness. | done |
 | 89 | [S71](slices/S71.md) | set --depends-on '' stores an empty-string dependency instead of clearing |  | slicer | dogfooding S02 (greenfield): 'slicer set ID --depends-on ""' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug. | done |
 | 90 | [S82](slices/S82.md) | Make flags a first-class, filterable tag axis | M | slicer |  | later |
-| 91 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | cli |  | — |
+| 91 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | cli |  | done |
 | 92 | [S86](slices/S86.md) | Accept a roadmap preamble in an import outline | M | cli | user feedback on import | — |
 | 93 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | cli | user request for a next-id command | — |
 | 94 | [S93](slices/S93.md) | Read only the sections an agent implements against | S | cli | AI credit-flow review | — |
