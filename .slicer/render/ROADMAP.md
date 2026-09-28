@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-104 items · — 4 · done 99 · retired 1
+104 items · — 3 · done 100 · retired 1
 
 v1.0.0 release
 
