@@ -25,8 +25,8 @@ class SortTests(unittest.TestCase):
       repo.run("set", "S02", "--importance", "1", "--urgency", "1")
       code, _, err = repo.run("sort")
       self.assertEqual(code, 0, err)
-      stored = self._ids(repo.run("list", "--json")[1])
-      by_score = self._ids(repo.run("list", "--sort", "score", "--json")[1])
+      stored = [item.id for item in repo.state().index.items]
+      by_score = self._ids(repo.run("list", "--all", "--sort", "score", "--json")[1])
       self.assertEqual(stored, by_score)
 
   def test_Sort_IsIdempotent_AndDoesNotRelog(self) -> None:

@@ -267,8 +267,12 @@ and a snippet so you see why each item hit; it also takes `--json` (each result 
 progress census, and the blocked edges into one view (and one `--json` payload), so you don't
 run `next`, `stats`, and read `next`'s blocked set separately.
 
-`list --sort score` changes the view; `move` changes stored queue order and therefore
-the rendered roadmap. To make the stored order match that view in one step — instead of a
+Default `list` is the view `next` walks: unblocked started items, then unblocked
+open items, then the other visible rows, each by effective score. Done and retired
+items are left out unless you pass `--all` or name them with `--status`.
+`list --sort score` is a flat score sort of that same set, which can rank a blocked
+item above work `next` would actually pick. `move` changes stored queue order and therefore
+the rendered roadmap. To make the stored order match the flat score view in one step — instead of a
 `move` per item — run `slicer sort`, which reorders the whole queue by priority score. S01 is
 still next: S02 depends on it, and S01 inherits S02's
 higher priority. Stored order breaks equal-score ties. For items added individually,

@@ -9,6 +9,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Changed
 
 - `list` omits items in the configured done status unless `--all` is set or `--status` names them. `--all` together with `--status` is a usage error.
+- `list` also omits the configured retired status, and orders the remaining rows as `next` would walk them, then the other visible rows by effective score. `--sort score` stays a flat score sort.
 
 ## [1.0.0]
 
