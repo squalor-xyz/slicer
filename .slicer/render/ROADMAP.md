@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-97 items · — 6 · done 89 · later 1 · retired 1
+97 items · — 5 · done 90 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -47,7 +47,7 @@ v1.0.0 release
 | 17 | [S90](slices/S90.md) | Set up PyPI and the trusted publisher for squalor-slicer | S | slicer | PyPI was down when S06 landed; account, GitHub environment, and pending publisher are still undone | done |
 | 18 | [S91](slices/S91.md) | Return the next slice body in one call to cut a model round trip | M | cli | AI credit-flow review | done |
 | 19 | [S92](slices/S92.md) | Add a lean JSON profile that drops empty and default fields | M | cli | AI credit-flow review | — |
-| 20 | [S94](slices/S94.md) | Point agents at the command, not the 21 KB reference doc | S | docs | AI credit-flow review | — |
+| 20 | [S94](slices/S94.md) | Point agents at the command, not the 21 KB reference doc | S | docs | AI credit-flow review | done |
 
 ---
 

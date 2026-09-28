@@ -3,9 +3,10 @@
 Adding slicer to a project, from nothing to a rendered roadmap and a green CI gate.
 
 For an AI agent, start with `slicer ai instructions` (or
-`slicer ai instructions --json`). This built-in quick start explains the workflow
-and rules without requiring or reading project state. The [agent guide](agents.md)
-contains the detailed reference and reusable prompts.
+`slicer ai instructions --json`). This built-in guide is the concise, canonical
+onboarding; it explains the workflow and rules without requiring or reading project
+state. Consult the [agent reference](agents.md) for detailed command/JSON contracts
+and reusable prompts when you need them.
 
 Console transcripts show output with the project path shortened to `~/code/my-project`.
 Shell blocks are commands to run; the worked workflows use fictional example projects.

@@ -2178,7 +2178,7 @@
       "id": "S94",
       "title": "Point agents at the command, not the 21 KB reference doc",
       "short_title": "Point agents at the command, not the 21 KB reference doc",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

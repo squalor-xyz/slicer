@@ -79,8 +79,11 @@ This repo tracks its own roadmap with slicer. That is the point — it is also t
 end-to-end test.
 
 Start with README.md for the tool's purpose, ARCHITECTURE.md for the implementation
-and invariants, then this file for contributor commands and style. The
-[agent guide](docs/agents.md) covers JSON responses and reusable prompts.
+and invariants, then this file for contributor commands and style. For agent
+onboarding, use `slicer ai instructions` (or `slicer ai instructions --json`); it is
+the concise, canonical quick start and works without project state. The
+[agent reference](docs/agents.md) is for detailed command/JSON contracts and reusable
+prompts.
 
 To pick up existing work, run these from the checkout root; no installation is needed:
 
