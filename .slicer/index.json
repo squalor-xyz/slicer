@@ -2398,7 +2398,7 @@
       "id": "S99",
       "title": "Surface targeted slice reads in the short agent guide",
       "short_title": "Surface targeted slice reads in the short agent guide",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

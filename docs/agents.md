@@ -333,7 +333,8 @@ one call), implement and verify it, then use `slicer done ID --note "..." --rend
 **Read only the implementation sections.** Repeat `--section` to return just selected
 sections, and add `--context` to include the item title, dependencies, and scope boundary:
 `slicer show S01 --section "Failing tests" --section "Implement" --section "Check" --context --json`.
-This avoids loading unrelated slice prose while keeping headings configurable per project.
+Those headings are examples; a project configures its own section names. This avoids
+loading unrelated slice prose. The payload shapes stay in the command table above.
 
 For edits, `slicer edit ID --section "Why" --stdin` replaces one section's body, and
 `slicer show ID --section "Why"` reads that one body back. For short edits use

@@ -153,6 +153,19 @@ class AiInstructionsTests(unittest.TestCase):
           self.assertEqual(cli.main(["ai", "skill", "--root", root, "--json"]), 0)
         self.assertEqual(json.loads(out.getvalue())["skill"], ai.skill_text())
 
+  def test_Instructions_TargetedRead_DocumentsRepeatedSectionAndContext(self) -> None:
+    text = ai.INSTRUCTIONS
+    example = 'slicer show ID --section "Implement" --section "Check" --context --json'
+    self.assertIn(example, text)
+    self.assertGreaterEqual(example.count("--section"), 2)
+    self.assertIn("--context", example)
+    start = text.index(example)
+    window = text[max(0, start - 240): start + len(example) + 240]
+    self.assertIn("examples", window)
+    self.assertIn("the project configures", window)
+    self.assertNotIn("every project", window.lower())
+    self.assertNotIn("all projects", window.lower())
+
   def test_Instructions_CommandExamples_AreAcceptedByTheParser(self) -> None:
     commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS)
     self.assertTrue(commands)
