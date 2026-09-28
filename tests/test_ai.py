@@ -16,6 +16,22 @@ from slicer import ai, cli
 
 
 class AiInstructionsTests(unittest.TestCase):
+  def test_Instructions_UseOneCallSliceReadPath_AndPreserveReadBeforeStart(self) -> None:
+    expected = "slicer next --show --json"
+    self.assertIn(expected, ai.LOOP)
+    self.assertIn("item and its slice together", ai.LOOP)
+    self.assertIn("Read its scope, dependencies, and acceptance checks", ai.LOOP)
+    self.assertLess(ai.LOOP.index("Read its scope"), ai.LOOP.index("slicer start ID"))
+    self.assertNotIn("slicer next --json`, then `slicer show", ai.LOOP)
+
+    reference = (Path(__file__).resolve().parents[1] / "docs" / "agents.md")
+    docs = reference.read_text(encoding="utf-8")
+    self.assertIn(expected, docs)
+    prompt = docs.split("### Implement one slice", 1)[1].split("```", 2)[1]
+    self.assertIn(expected, prompt)
+    self.assertIn("Read the scope, dependencies", prompt)
+    self.assertLess(prompt.index("Read the scope"), prompt.index("slicer start ID"))
+
   def test_Instructions_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, err = repo.run("ai", "instructions")
@@ -104,7 +120,6 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn(ai.LOOP, ai.INSTRUCTIONS)
     self.assertIn(ai.EXITS, ai.INSTRUCTIONS)
     for command in (
-      "slicer next --json",
       "slicer next --show --json",
       "slicer start ID --render --json",
       "slicer check --json",

@@ -77,8 +77,8 @@ the slices rather than relying on the temporary outline as the only record.
 ### Implement one slice
 
 ```text
-Read the project instructions. Run `slicer next --json` and `slicer show ID --json`
-using the returned id. Read the scope, dependencies, relevant source, and tests. If
+Read the project instructions. Run `slicer next --show --json` to get the next
+item and its slice together. Read the scope, dependencies, relevant source, and tests. If
 there is no slice or its acceptance criteria are ambiguous, resolve the specification
 with me first. If `next` includes `unspecified`, fill each missing section with
 `slicer edit ID --section NAME` before implementing that id. Do not invent the body.
@@ -324,10 +324,11 @@ blocker of a critical item inherits that item's priority, so `next` naturally su
 blocker first; dependencies still hard-gate, so a blocked item is never returned whatever
 its score. `next` also reports the item's effective score (a `^` marks a score inherited from a
 dependent) and status; `slicer next --start` returns the item and marks it started in one call.
-Add `--show` to fold the follow-up `show` into the same call: `slicer next --start --show --json`
-returns the started item *and* its full slice in one invocation, so picking up work costs a
-single command instead of `next` then `show`. Read the slice, start it (or `next --start`),
-implement and verify it, then use `slicer done ID --note "..." --render` and `slicer check`.
+Use `slicer next --show --json` as the standard read path: it returns the item and its
+full slice together, so picking up work takes one command instead of `next` then `show`.
+Read the slice, start it (or use `slicer next --start --show --json` to start and read in
+one call), implement and verify it, then use `slicer done ID --note "..." --render` and
+`slicer check`.
 
 **Read only the implementation sections.** Repeat `--section` to return just selected
 sections, and add `--context` to include the item title, dependencies, and scope boundary:

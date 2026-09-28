@@ -3,8 +3,7 @@ name: slicer
 description: Drive a slicer roadmap. Use when asked to take a slice, implement the next slice, or drive slicer.
 ---
 
-1. Run `slicer next --json`, then `slicer show ID --json` for the returned ID
-   (or `slicer next --show --json` to get the item and its slice in one call).
+1. Run `slicer next --show --json` to get the next item and its slice together.
    Read its scope, dependencies, and acceptance checks. Resolve missing or
    ambiguous specifications before implementation.
 2. Run `slicer start ID --render --json`. Implement the agreed scope, update
