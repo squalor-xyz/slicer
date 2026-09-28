@@ -48,6 +48,42 @@ class AddOptionsTests(unittest.TestCase):
         self.assertEqual(item.short_title, "Full title")
         self.assertEqual(item.depends_on, [])
 
+  def test_Add_InheritedPass_IsNamedInTheConfirmation(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Milestone", "--pass", "v1")
+      code, out, err = repo.run("add", "Follow-up")
+      self.assertEqual(code, 0, err)
+      self.assertIn("added S02  Follow-up (pass: v1)", out)
+      self.assertEqual(repo.state().index.require("S02").pass_key, "v1")
+
+  def test_Add_EmptyPass_OmitsThePassNote(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, err = repo.run("add", "First")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out.strip(), "added S01  First")
+      self.assertNotIn("(pass:", out)
+
+  def test_Add_ExplicitPass_IsNamedWithoutAnEmptyNote(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, err = repo.run("add", "First", "--pass", "v1")
+      self.assertEqual(code, 0, err)
+      self.assertIn("added S01  First (pass: v1)", out)
+      self.assertNotIn("(pass: )", out)
+
+  def test_Add_Json_CarriesPassWithoutTheConfirmationText(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Milestone", "--pass", "v1")
+      code, out, err = repo.run("add", "Follow-up", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["id"], "S02")
+      self.assertEqual(payload["fields"]["pass"], "v1")
+      self.assertNotIn("(pass:", out)
+
   def test_Add_NewlineInShortTitle_RejectsWithoutAllocating(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")

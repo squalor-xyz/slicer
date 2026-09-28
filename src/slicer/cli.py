@@ -574,7 +574,10 @@ def cmd_add(args: argparse.Namespace) -> int:
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
     depends_on=args.depends_on, short_title=args.short_title,
   )
-  _emit(args, item.to_dict(), f"added {item.id}  {item.display_title()}")
+  text = f"added {item.id}  {item.display_title()}"
+  if item.pass_key:
+    text += f" (pass: {item.pass_key})"
+  _emit(args, item.to_dict(), text)
   return OK
 
 

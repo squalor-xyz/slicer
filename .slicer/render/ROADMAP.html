@@ -39,7 +39,7 @@
   through git.</p></div></section>
 <section><h2>Non-goals</h2><div class="prose"><p>- Not a real-time collaboration or multi-user concurrent-editing tool; coordination<br>
   happens through git, not a live shared service.</p></div></section>
-<p class="summary">96 items · — 8 · done 86 · later 1 · retired 1</p>
+<p class="summary">96 items · — 7 · done 87 · later 1 · retired 1</p>
 <h2>v1.0.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>S50</td><td>TUI wizard: create a roadmap interactively</td><td>L</td><td>slicer</td><td>user request</td><td class="status">done</td></tr>
@@ -134,7 +134,7 @@
 <tr class="done"><td>88</td><td>S70</td><td>Render an HTML roadmap file alongside the markdown</td><td></td><td>slicer</td><td>user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness.</td><td class="status">done</td></tr>
 <tr class="done"><td>89</td><td>S71</td><td>set --depends-on &#x27;&#x27; stores an empty-string dependency instead of clearing</td><td></td><td>slicer</td><td>dogfooding S02 (greenfield): &#x27;slicer set ID --depends-on &quot;&quot;&#x27; sets depends_on=[&#x27;&#x27;], a phantom &#x27;depends on unknown id &#x27; that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug.</td><td class="status">done</td></tr>
 <tr class="other"><td>90</td><td>S82</td><td>Make flags a first-class, filterable tag axis</td><td>M</td><td>slicer</td><td></td><td class="status">later</td></tr>
-<tr class="open"><td>91</td><td>S83</td><td>Show the inherited pass in add&#x27;s output</td><td>S</td><td>cli</td><td></td><td class="status">—</td></tr>
+<tr class="done"><td>91</td><td>S83</td><td>Show the inherited pass in add&#x27;s output</td><td>S</td><td>cli</td><td></td><td class="status">done</td></tr>
 <tr class="open"><td>92</td><td>S86</td><td>Accept a roadmap preamble in an import outline</td><td>M</td><td>cli</td><td>user feedback on import</td><td class="status">—</td></tr>
 <tr class="open"><td>93</td><td>S87</td><td>Print the next slice id without allocating it</td><td>S</td><td>cli</td><td>user request for a next-id command</td><td class="status">—</td></tr>
 <tr class="open"><td>94</td><td>S93</td><td>Read only the sections an agent implements against</td><td>S</td><td>cli</td><td>AI credit-flow review</td><td class="status">—</td></tr>

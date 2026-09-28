@@ -1923,7 +1923,7 @@
       "id": "S83",
       "title": "Show the inherited pass in add's output",
       "short_title": "Show the inherited pass in add's output",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
