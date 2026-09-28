@@ -39,7 +39,8 @@ lead and sections. Use the project's configured sections, not assumed headings.
 
 ## Implement one slice
 
-1. Run `slicer next --json`, then `slicer show ID --json` for the returned ID.
+1. Run `slicer next --json`, then `slicer show ID --json` for the returned ID
+   (or `slicer next --show --json` to get the item and its slice in one call).
    Read its scope, dependencies, and acceptance checks. Resolve missing or
    ambiguous specifications before implementation.
 2. Run `slicer start ID --render --json`. Implement the agreed scope, update
