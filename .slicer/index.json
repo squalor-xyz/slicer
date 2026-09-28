@@ -2374,7 +2374,7 @@
       "id": "S98",
       "title": "Default to a one-call slice pickup in agent guidance",
       "short_title": "Default to a one-call slice pickup in agent guidance",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
