@@ -1731,7 +1731,7 @@
       "id": "S75",
       "title": "Give internal/state errors a distinct exit code before the CLI freezes",
       "short_title": "Give internal/state errors a distinct exit code before the CLI freezes",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

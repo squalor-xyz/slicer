@@ -66,7 +66,7 @@ class AtomicTests(unittest.TestCase):
         store.fcntl.flock(fd, store.fcntl.LOCK_UN)
         os.close(fd)
         os.environ.pop(store.LOCK_TIMEOUT_ENV, None)
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn('"code": "locked"', out)
       # Nothing was added while the lock was held elsewhere.
       self.assertIsNone(repo.state().index.get("S01"))

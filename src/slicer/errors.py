@@ -8,6 +8,23 @@ changes only when the meaning does.
 from __future__ import annotations
 
 
+# Hard failures: the project or the process cannot proceed. Usage and
+# validation stay outside this set so they keep a different exit status.
+# `schema_too_new` is reserved; nothing raises it yet.
+INTERNAL_CODES = frozenset({
+  "corrupt",
+  "locked",
+  "io",
+  "config",
+  "schema_too_new",
+})
+
+
+def is_internal(code: str) -> bool:
+  """True when `code` is a hard failure rather than usage or validation."""
+  return code in INTERNAL_CODES
+
+
 class SlicerError(Exception):
   """Base for every error slicer raises deliberately."""
 

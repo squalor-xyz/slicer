@@ -153,7 +153,7 @@ class IdRuleTests(unittest.TestCase):
     with self.repo() as repo:
       set_scheme(repo, "../", 2)
       code, _, err = repo.run("add", "thing")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("id.prefix", err)
 
   def test_SlicePath_HandEditedTraversingId_IsRefused(self) -> None:
@@ -230,7 +230,7 @@ class NextIdIntegrityTests(unittest.TestCase):
     with self.repo() as repo:
       self.lower_next_id(repo)
       code, _, err = repo.run("add", "second")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("reuse", err)
       # no duplicate was written
       self.assertEqual([i.id for i in repo.state().index.items], ["S01"])

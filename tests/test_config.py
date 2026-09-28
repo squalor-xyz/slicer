@@ -28,26 +28,26 @@ class ConfigValidationTests(unittest.TestCase):
     with self.repo() as repo:
       poke(repo, "config.json", id={"prefix": "S", "width": -1})
       code, _, err = repo.run("add", "another")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("id.width", err)
 
   def test_ZeroIdWidth_IsRefused(self) -> None:
     with self.repo() as repo:
       poke(repo, "config.json", id={"prefix": "S", "width": 0})
-      self.assertEqual(repo.run("list")[0], 2)
+      self.assertEqual(repo.run("list")[0], 3)
 
   def test_EmptyIdPrefix_IsRefused(self) -> None:
     with self.repo() as repo:
       poke(repo, "config.json", id={"prefix": "", "width": 2})
       code, _, err = repo.run("list")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("id.prefix", err)
 
   def test_BadConfig_Json_CarriesTheEnvelope(self) -> None:
     with self.repo() as repo:
       poke(repo, "config.json", id={"prefix": "S", "width": -1})
       code, out, _ = repo.run("list", "--json")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertEqual(json.loads(out)["error"]["code"], "config")
 
   def test_ValidScheme_IsAccepted(self) -> None:
@@ -77,7 +77,7 @@ class SyncPatternTests(unittest.TestCase):
       poke(repo, "config.json", sync=self.target("^Status:["))
       repo.write("plan.md", "Status: x\n")
       code, _, err = repo.run("sync")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("not a valid regular expression", err)
 
   def test_UncompilableMatch_FailsEveryCommandThatLoadsState(self) -> None:
@@ -86,13 +86,13 @@ class SyncPatternTests(unittest.TestCase):
       poke(repo, "config.json", sync=self.target("^Status:["))
       for argv in (("list",), ("check",), ("verify",), ("next",)):
         with self.subTest(argv[0]):
-          self.assertEqual(repo.run(*argv)[0], 2)
+          self.assertEqual(repo.run(*argv)[0], 3)
 
   def test_UncompilableMatch_Json_CarriesTheEnvelope(self) -> None:
     with self.repo() as repo:
       poke(repo, "config.json", sync=self.target("(unclosed"))
       code, out, _ = repo.run("list", "--json")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       error = json.loads(out)["error"]
       self.assertEqual(error["code"], "config")
       self.assertIn("plan", error["message"])
@@ -116,14 +116,14 @@ class IndexSchemeValidationTests(unittest.TestCase):
     with self.repo() as repo:
       poke(repo, "index.json", id_width=-1)
       code, _, err = repo.run("add", "another")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("id_width", err)
       self.assertIn("index.json", err)
 
   def test_HandEditedIndexPrefix_IsRefused(self) -> None:
     with self.repo() as repo:
       poke(repo, "index.json", id_prefix="")
-      self.assertEqual(repo.run("list")[0], 2)
+      self.assertEqual(repo.run("list")[0], 3)
 
   def test_BadIndexWidth_IsRefusedEvenWhenTheIndexIsEmpty(self) -> None:
     # The empty-index reconciliation would otherwise repair it silently, so
@@ -132,7 +132,7 @@ class IndexSchemeValidationTests(unittest.TestCase):
       repo.run("init")
       poke(repo, "index.json", id_width=-1)
       code, _, err = repo.run("add", "A thing")
-      self.assertEqual(code, 2)
+      self.assertEqual(code, 3)
       self.assertIn("id_width", err)
 
 

@@ -204,7 +204,7 @@ Below 80 columns or 10 rows, the TUI shows a resize prompt and preserves the ses
 
 Every command except the interactive `tui`/`ui` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
-prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage or nothing to do.
+prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage, validation, or nothing to do, `3` internal or state (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).
 See [docs/agents.md](docs/agents.md).
 
 Every command that changes state — `add`, `set`, `start`, `done`, `move`, `promote`,

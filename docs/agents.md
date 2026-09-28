@@ -201,7 +201,11 @@ when the meaning does. Branch on the code.
 |---|---|---|
 | `0` | Fine | Continue |
 | `1` | Drift, or a failed check | Read the payload; this is a report, not an error envelope |
-| `2` | Usage, or nothing to do | Read the envelope — **unless** the payload has no `error` key |
+| `2` | Usage, validation, or nothing to do | Read the envelope — **unless** the payload has no `error` key |
+| `3` | Internal or state (`corrupt`, `locked`, `io`, `config`, `schema_too_new`) | The project or the process cannot proceed; read the envelope and stop |
+
+Exit 3 is a hard failure. Exit 2 is usage, validation, or an empty queue, so status
+alone separates them.
 
 Exit 1 belongs to `check`, `verify`, `sync --check`, `import` and `migrate`. Inspect
 each command's report: `check` has drift lists and `problems`; `verify` has `errors`
@@ -333,7 +337,7 @@ section shape `import` reads, sections and lead only.
 
 **Writers serialise.** A mutating command holds an advisory lock (`.slicer/lock`) for its
 run, so a fan-out of concurrent `slicer` processes cannot mint duplicate ids or half-apply
-an outline. A second writer waits, then fails with `code="locked"` (exit 2) after a
+an outline. A second writer waits, then fails with `code="locked"` (exit 3) after a
 timeout; set `SLICER_LOCK_TIMEOUT` (seconds) to tune it. Read-only commands never lock.
 
 **slicer never commits.** `git` access is allowlisted to read-only subcommands plus `mv`.
