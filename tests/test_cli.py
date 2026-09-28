@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import __version__, cli, tui
+from slicer import __version__, cli, render, tui
 from slicer.store import State
 
 
@@ -679,3 +679,54 @@ class VersionFlagTests(unittest.TestCase):
     self.assertEqual(cm.exception.code, 0)
     self.assertIn(__version__, out.getvalue())
     self.assertIn("slicer", out.getvalue())
+
+
+class RenderAfterMutationTests(unittest.TestCase):
+  """A --render failure after a saved mutation must not print a second document;
+  stdout keeps the handler's one result and the exit is DRIFT (saved, render stale)."""
+
+  def _fresh(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_JsonMode_RenderFails_StdoutIsTheOneSuccessDocument(self) -> None:
+    with self._fresh() as repo:
+      with patch.object(render, "write", side_effect=render.RenderError("bad placeholder")):
+        code, out, err = repo.run("add", "Thing", "--render", "--json")
+      self.assertEqual(code, 1)  # DRIFT — saved, but render/ is stale
+      doc = json.loads(out)  # exactly one JSON document (json.loads rejects a second)
+      self.assertIn("id", doc)  # the handler's own success payload, unchanged
+      self.assertIn("render failed", err)
+      self.assertEqual(len(repo.state().index.items), 1)  # the mutation persisted
+
+  def test_JsonMode_RenderFails_BatchArrayPayloadKeptAsArray(self) -> None:
+    # A batch of ids emits a JSON array; a render failure must not reshape it.
+    with self._fresh() as repo:
+      repo.run("add", "One")
+      repo.run("add", "Two")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("done", "S01", "S02", "--render", "--json")
+      self.assertEqual(code, 1)
+      doc = json.loads(out)
+      self.assertIsInstance(doc, list)  # still an array, iterable as before
+      self.assertEqual({item["id"] for item in doc}, {"S01", "S02"})
+      self.assertIn("render failed", err)
+      done = {i.id for i in repo.state().index.items if i.status == "done"}
+      self.assertEqual(done, {"S01", "S02"})  # the batch mutation persisted
+
+  def test_PlainMode_RenderFails_StderrAndDriftExit(self) -> None:
+    with self._fresh() as repo:
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("add", "Thing", "--render")
+      self.assertEqual(code, 1)
+      self.assertIn("render failed", err)
+      self.assertNotIn('"error"', out)  # no error envelope on stdout
+      self.assertEqual(len(repo.state().index.items), 1)
+
+  def test_JsonMode_RenderSucceeds_OneCleanDocumentAndExitZero(self) -> None:
+    with self._fresh() as repo:
+      code, out, err = repo.run("add", "Thing", "--render", "--json")
+      self.assertEqual(code, 0)
+      json.loads(out)  # one parseable document
+      self.assertEqual(len(repo.state().index.items), 1)

@@ -221,6 +221,13 @@ migration validation reports have `problems`. Do not assume
 that every failed report has the same keys. An error envelope, when present, still
 takes precedence over interpreting the payload as a normal report.
 
+Exit 1 also covers a mutating command's `--render` step failing *after* the change was
+saved: the change is committed but `render/` is now stale. stdout keeps the command's
+single normal result (an object, or an array for a batch of ids) — never a second
+document — and the render failure is reported on stderr. The exit is 1 whatever the
+cause, because the mutation itself succeeded and only the projection is stale. Re-run
+`slicer render` (after fixing the cause) to resolve it.
+
 **One case to special-case:** `slicer next` exits **2** when nothing is runnable, with
 `{"item": null, "blocked": [...]}`. That is a normal empty queue, not a failure. Test for
 the `error` key rather than assuming exit 2 means something went wrong.
