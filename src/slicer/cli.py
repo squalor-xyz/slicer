@@ -34,6 +34,7 @@ from slicer import (
   templates,
   verify,
 )
+from slicer import __version__
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import SlicerError, StateError, is_internal
 
@@ -959,6 +960,7 @@ def build_parser() -> argparse.ArgumentParser:
   p.add_argument(
     "--root", default=None, help="project root (default: discovered from the working directory)"
   )
+  p.add_argument("--version", action="version", version=f"slicer {__version__}")
   sub = p.add_subparsers(dest="command", required=True)
 
   def add(name: str, fn, help_: str, *, json_flag: bool = True,

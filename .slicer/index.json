@@ -1754,7 +1754,7 @@
       "id": "S76",
       "title": "Derive the version from package metadata and add slicer --version",
       "short_title": "Derive the version from package metadata and add slicer --version",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

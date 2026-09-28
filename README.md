@@ -370,8 +370,9 @@ hand-written markdown — worth running before changing `legacy.py` or `migrator
 
 ## Status
 
-0.1.0, and slicer manages its own roadmap: `.slicer/` in this repository is a worked
-example you can read, and `.slicer/render/ROADMAP.md` is what it renders to.
+slicer manages its own roadmap: `.slicer/` in this repository is a worked
+example you can read, and `.slicer/render/ROADMAP.md` is what it renders to. Run
+`slicer --version` for the installed version, and see the [changelog](CHANGELOG.md).
 
 [docs/getting-started.md](docs/getting-started.md) is the walkthrough, and
 [docs/agents.md](docs/agents.md) covers driving slicer from an agent.
