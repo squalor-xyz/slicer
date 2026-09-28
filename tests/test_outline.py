@@ -12,7 +12,7 @@ from slicer.errors import OutlineError
 
 class OutlineParseTests(unittest.TestCase):
   def parse(self, text: str) -> list[outline.ItemSpec]:
-    return outline.parse(text, path="out.md")
+    return outline.parse(text, path="out.md").items
 
   def test_Parse_HeadingOnly_IsAnItemWithNoSlice(self) -> None:
     specs = self.parse("## Just a title\n")
@@ -60,7 +60,18 @@ class OutlineParseTests(unittest.TestCase):
     self.assertEqual(specs[0].sections[0].heading, "What landed")
 
   def test_Parse_DocumentTitle_IsIgnored(self) -> None:
-    self.assertEqual(len(self.parse("# Roadmap\n\n## One\n\n## Two\n")), 2)
+    parsed = outline.parse("# Roadmap\n\n## One\n\n## Two\n", path="out.md")
+    self.assertEqual(parsed.preamble, "")
+    self.assertEqual([spec.title for spec in parsed.items], ["One", "Two"])
+
+  def test_Parse_ProseUnderTheTitle_IsThePreambleWithoutTheTitle(self) -> None:
+    parsed = outline.parse(
+      "# Roadmap\n\nContext for the queue.\n\nMore context.\n\n## One\n",
+      path="out.md",
+    )
+    self.assertEqual(parsed.preamble, "Context for the queue.\n\nMore context.")
+    self.assertEqual([spec.title for spec in parsed.items], ["One"])
+    self.assertNotIn("Roadmap", parsed.preamble)
 
   def test_Parse_HtmlComment_IsStripped(self) -> None:
     specs = self.parse("<!-- guidance\n  spanning lines -->\n## T\nsize: S\n")
@@ -102,8 +113,10 @@ class OutlineRefusalTests(unittest.TestCase):
   def test_Parse_SectionBeforeAnyItem_Refuses(self) -> None:
     self.assertRefuses("### Why\nBecause.\n", "before any '##' item")
 
-  def test_Parse_TextBeforeFirstItem_Refuses(self) -> None:
-    self.assertRefuses("Some stray prose.\n\n## T\n", "before the first '##'")
+  def test_Parse_ProseBeforeFirstItem_IsThePreamble(self) -> None:
+    parsed = outline.parse("Some stray prose.\n\n## T\n", path="out.md")
+    self.assertEqual(parsed.preamble, "Some stray prose.")
+    self.assertEqual(parsed.items[0].title, "T")
 
   def test_Parse_NoItems_Refuses(self) -> None:
     self.assertRefuses("# Just a title\n", "no items")

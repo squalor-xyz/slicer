@@ -6,10 +6,13 @@ is deliberately not the legacy format — that one is rigid because it has to
 round-trip byte for byte, and it is read by `slicer migrate` instead.
 
 This module only parses. It has no I/O, knows nothing about ids, and never
-touches state: it turns text into `ItemSpec`s and complains precisely about
-text it cannot read. Applying them is `ops.apply_outline`.
+touches state: it turns text into a preamble and `ItemSpec`s and complains
+precisely about text it cannot read. Applying them is `ops.apply_outline`.
 
 The shape:
+
+    # Roadmap                      a document title; ignored
+                                 prose here is the roadmap preamble
 
     ## Parse the config file        an item; the heading is its title
     size: M                         key lines, directly under the heading
@@ -45,6 +48,14 @@ COMMENT_RE = re.compile(r"(?s)<!--.*?-->")
 class SectionSpec:
   heading: str
   body: str
+
+
+@dataclass
+class ParsedOutline:
+  """One outline file: roadmap preamble, then items."""
+
+  preamble: str
+  items: list[ItemSpec]
 
 
 @dataclass
@@ -103,14 +114,15 @@ def _blocks(lines: list[str]) -> list[str]:
   return out
 
 
-def parse(text: str, *, path: str = "<outline>") -> list[ItemSpec]:
-  """Turn outline markdown into specs, or say exactly what is wrong with it."""
+def parse(text: str, *, path: str = "<outline>") -> ParsedOutline:
+  """Turn outline markdown into a preamble and specs, or say what is wrong."""
   if "\r" in text:
     raise OutlineError(f"{path}: CRLF line endings; convert to LF first")
   text = COMMENT_RE.sub("", text)
   lines = text.split("\n")
 
   specs: list[ItemSpec] = []
+  preamble_lines: list[str] = []
   current: ItemSpec | None = None
   # Which part of an entry we are in: keys come first, then lead prose, then
   # sections. Once prose or a section has started, a key line is just text.
@@ -168,10 +180,9 @@ def parse(text: str, *, path: str = "<outline>") -> list[ItemSpec]:
       continue
 
     if current is None:
-      if line.strip():
-        raise OutlineError(
-          f"{path}:{n}: text before the first '##' item; a document title needs a single '#'"
-        )
+      # A `#` title was already skipped. Everything else before the first
+      # item is the roadmap preamble, not a format error.
+      preamble_lines.append(line)
       continue
 
     if phase == "keys":
@@ -200,7 +211,7 @@ def parse(text: str, *, path: str = "<outline>") -> list[ItemSpec]:
 
   if not specs:
     raise OutlineError(f"{path}: no items; an item is a '## ' heading")
-  return specs
+  return ParsedOutline(preamble="\n".join(preamble_lines).strip(), items=specs)
 
 
 def _assign(spec: ItemSpec, key: str, value: str, *, path: str, line: int) -> None:

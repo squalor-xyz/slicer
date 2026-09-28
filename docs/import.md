@@ -60,6 +60,11 @@ status: parked
 
 - A single `#` heading is a document title and is ignored, so a generated outline can
   carry one.
+- Prose between that title and the first `##` item is the roadmap preamble, the context
+  rendered above the queue. The title line is not part of it. An outline with no leading
+  prose leaves a preamble already stored alone. A second import whose preamble differs
+  from a non-empty one already stored is refused until `--force`. Goals, non-goals, and
+  the epilogue are not part of the outline; set them with `slicer prose`.
 - `<!-- HTML comments -->` are stripped. The skeleton uses them for its guidance.
 - **`##` opens an item.** The heading text is its title.
 - **Key lines** come directly under the heading. The block ends at the first line that is
@@ -180,7 +185,8 @@ existing roadmap so a double-apply is caught rather than silently doubling your 
 `--force` adds anyway, for the genuine case of two items that share a title.
 
 The other problems in this tier: the same title twice in one outline, a `status` your
-config does not define, and a `depends` that resolves to nothing.
+config does not define, a `depends` that resolves to nothing, and a preamble that
+differs from a non-empty one already stored.
 
 ## Driving it from an agent
 
