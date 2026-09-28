@@ -8,6 +8,7 @@ import re
 import shlex
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from unittest.mock import patch
 
 import support
@@ -95,6 +96,47 @@ class AiInstructionsTests(unittest.TestCase):
       code, out, err = repo.run("ai")
       self.assertEqual((code, out), (2, ""))
       self.assertIn("usage: slicer", err)
+
+  def test_Skill_MatchesTheInstructionsLoop_AndTheCommittedFile(self) -> None:
+    text = ai.skill_text()
+    self.assertIn(ai.LOOP, text)
+    self.assertIn(ai.EXITS, text)
+    self.assertIn(ai.LOOP, ai.INSTRUCTIONS)
+    self.assertIn(ai.EXITS, ai.INSTRUCTIONS)
+    for command in (
+      "slicer next --json",
+      "slicer next --show --json",
+      "slicer start ID --render --json",
+      "slicer check --json",
+      "slicer done ID --note",
+    ):
+      self.assertIn(command, text)
+    for code in ("Exit 0", "exit 1", "exit 2", "exit 3"):
+      self.assertIn(code, text)
+    self.assertNotIn("import --skeleton", text)
+    self.assertNotIn("slicer goals", text)
+    path = Path(__file__).resolve().parents[1] / "skills" / "slicer" / "SKILL.md"
+    self.assertEqual(path.read_text(encoding="utf-8"), text)
+
+  def test_Skill_OutsideProject_TextAndJsonMatch(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, err = repo.run("ai", "skill")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(text, ai.skill_text())
+      code, out, err = repo.run("ai", "skill", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out), {"skill": text})
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_Skill_RootFlag_DoesNotDiscover(self) -> None:
+    with support.TempRepo() as repo:
+      root = str(repo.root / "does-not-exist")
+      with patch("slicer.cli.store.discover", side_effect=AssertionError("discovery")), \
+           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
+           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+        with redirect_stdout(io.StringIO()) as out:
+          self.assertEqual(cli.main(["ai", "skill", "--root", root, "--json"]), 0)
+        self.assertEqual(json.loads(out.getvalue())["skill"], ai.skill_text())
 
   def test_Instructions_CommandExamples_AreAcceptedByTheParser(self) -> None:
     commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS)

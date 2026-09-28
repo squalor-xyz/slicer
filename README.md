@@ -108,6 +108,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | | |
 |---|---|
 | `ai instructions` | agent quick start, available without a project; supports `--json` |
+| `ai skill` | the same loop and exit rules as a `SKILL.md` for Claude Code, Codex, and Grok |
 | `init` | create `.slicer/` with config and templates |
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |

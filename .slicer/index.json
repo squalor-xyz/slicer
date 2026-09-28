@@ -2295,7 +2295,7 @@
       "id": "S95",
       "title": "Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok",
       "short_title": "Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
