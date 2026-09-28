@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 97,
+  "next_id": 98,
   "preamble": "",
   "passes": [
     {
@@ -2235,6 +2235,33 @@
           "slicer",
           "cli",
           "tui",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "user request",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2
+      }
+    },
+    {
+      "id": "S97",
+      "title": "Rank the TUI queue and choose a sort field and direction",
+      "short_title": "Rank the TUI queue and choose a sort field and direction",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S96"
+      ],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "tui",
+          "slicer",
           "docs"
         ],
         "trees_literal": false,
