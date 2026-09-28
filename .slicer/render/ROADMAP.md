@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-83 items · — 11 · done 70 · later 1 · retired 1
+83 items · — 10 · done 71 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -35,7 +35,7 @@ v1.0.0 release
 | 5 | [S74](slices/S74.md) | Keep a --render failure inside one JSON envelope | M | slicer, cli | v1.0.0 readiness audit (code maturity) | — |
 | 6 | [S75](slices/S75.md) | Give internal/state errors a distinct exit code before the CLI freezes | M | cli | v1.0.0 readiness audit (code maturity) | — |
 | 7 | [S76](slices/S76.md) | Derive the version from package metadata and add slicer --version | S | slicer | v1.0.0 readiness audit (docs + code) | — |
-| 8 | [S77](slices/S77.md) | Add a CHANGELOG seeded from the history | S | docs | v1.0.0 readiness audit (docs) | — |
+| 8 | [S77](slices/S77.md) | Add a CHANGELOG seeded from the history | S | docs | v1.0.0 readiness audit (docs) | done |
 | 9 | [S78](slices/S78.md) | Add a CONTRIBUTING pointer | S | docs | v1.0.0 readiness audit (docs) | — |
 | 10 | [S79](slices/S79.md) | Bring the documentation current with the shipped CLI and TUI | M | docs | v1.0.0 readiness audit (docs) | — |
 | 11 | [S80](slices/S80.md) | Add a release checklist, tag CI, and the 1.0.0 bump | M | slicer | v1.0.0 readiness audit (release) | — |

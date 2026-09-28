@@ -392,3 +392,5 @@
 {"when": "2026-09-27T23:13:28Z", "item": "S81", "action": "status", "from": "open", "to": "done", "note": ""}
 {"when": "2026-09-27T23:13:28Z", "item": "S81", "action": "note", "from": "", "to": "", "note": "Delivered as the wizard's text_input primitive (tui_wizard.p"}
 {"when": "2026-09-27T23:13:28Z", "item": "S50", "action": "note", "from": "", "to": "", "note": "Implemented on feature/S50-tui-roadmap-wizard: guided wizard"}
+{"when": "2026-09-27T23:43:09Z", "item": "S77", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-27T23:43:14Z", "item": "S77", "action": "status", "from": "started", "to": "done", "note": "Added a Keep a Changelog history for 1.0.0 and unreleased work, linked from README; slicer check and git diff --check pass."}
