@@ -1777,7 +1777,7 @@
       "id": "S77",
       "title": "Add a CHANGELOG seeded from the history",
       "short_title": "Add a CHANGELOG seeded from the history",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

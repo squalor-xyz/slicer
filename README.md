@@ -14,6 +14,7 @@ machine-readable output. It works before initialization and reads no project sta
 Start with the [worked workflows](docs/getting-started.md#worked-workflows), use the
 [agent prompts](docs/agents.md#reusable-prompts), or follow the
 [contributor workflow](AGENTS.md#working-on-the-roadmap) to work on slicer itself.
+See the [changelog](CHANGELOG.md) for notable changes by release.
 
 State is **JSON**. The markdown under `.slicer/render/` is generated output — readable,
 committed, and never parsed back. Edit through the commands or the TUI, not by hand.
