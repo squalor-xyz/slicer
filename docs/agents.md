@@ -7,6 +7,13 @@ returns `{"instructions": "..."}` with the same Markdown as the text output.
 `--root` is accepted but unused. This page provides the detailed reference and
 reusable prompts; the command is the single source for the quick start.
 
+`slicer ai skill` prints a `SKILL.md` for that implement loop and the exit-code
+rules. Claude Code, Codex, and Grok load the same file. Copy or symlink
+`skills/slicer/SKILL.md` to `.claude/skills/slicer/SKILL.md`,
+`.agents/skills/slicer/SKILL.md` (Codex also reads `.codex/skills/`), or
+`.grok/skills/slicer/SKILL.md` (Grok also reads the Claude and `.agents` paths).
+`--json` returns `{"skill": "..."}`.
+
 slicer is built to be called by a coding agent rather than hand-edited. The agent runs
 commands; slicer owns the files. Nothing an agent needs requires reading or writing
 `.slicer/*.json` directly — and doing so is how state gets corrupted, because the index,

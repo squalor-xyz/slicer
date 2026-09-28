@@ -118,6 +118,12 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_ai_skill(args: argparse.Namespace) -> int:
+  text = ai.skill_text()
+  _emit(args, {"skill": text}, text.rstrip("\n"))
+  return OK
+
+
 GITATTRIBUTES = """\
 # slicer manages this file. History is append-only, so union-merge combines the
 # lines both sides added instead of conflicting when branches land in parallel.
@@ -1098,6 +1104,16 @@ def build_parser() -> argparse.ArgumentParser:
     parents=[common],
   )
   inner.set_defaults(func=cmd_ai_instructions)
+  _json_flags(inner)
+  inner = aisub.add_parser(
+    "skill", help="print the agent skill for Claude Code, Codex, and Grok",
+    description=(
+      "Print the SKILL.md for the implement loop. It needs no project. "
+      "--root is accepted but unused."
+    ),
+    parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_skill)
   _json_flags(inner)
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
