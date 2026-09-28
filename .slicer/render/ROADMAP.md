@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-96 items · — 7 · done 87 · later 1 · retired 1
+96 items · — 6 · done 88 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -125,7 +125,7 @@ v1.0.0 release
 | 90 | [S82](slices/S82.md) | Make flags a first-class, filterable tag axis | M | slicer |  | later |
 | 91 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | cli |  | done |
 | 92 | [S86](slices/S86.md) | Accept a roadmap preamble in an import outline | M | cli | user feedback on import | — |
-| 93 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | cli | user request for a next-id command | — |
+| 93 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | cli | user request for a next-id command | done |
 | 94 | [S93](slices/S93.md) | Read only the sections an agent implements against | S | cli | AI credit-flow review | — |
 | 95 | [S95](slices/S95.md) | Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok | M | docs | AI credit-flow review | — |
 | 96 | [S96](slices/S96.md) | Add optional effort estimates and effort sorting | M | slicer, cli, tui, docs | user request | — |

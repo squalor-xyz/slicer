@@ -22,6 +22,7 @@ from slicer import check as check_mod
 from slicer import (
   ai,
   graph,
+  ids,
   jsonio,
   migrator,
   model,
@@ -325,6 +326,13 @@ def _nonnegative_int(value: str) -> int:
   if number < 0:
     raise argparse.ArgumentTypeError("must be a nonnegative integer")
   return number
+
+
+def cmd_next_id(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item_id = ids.format_next(state.index)
+  _emit(args, {"id": item_id}, item_id)
+  return OK
 
 
 def cmd_next(args: argparse.Namespace) -> int:
@@ -1075,6 +1083,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--start", action="store_true", help="mark the returned item started")
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
+
+  sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 
   sp = add("list", cmd_list, "list items in next's order, omitting done and retired unless asked")
   sp.add_argument("--all", action="store_true",

@@ -267,3 +267,77 @@ class NextIdIntegrityTests(unittest.TestCase):
       repo.run("add", "second")
       self.assertEqual([i.id for i in repo.state().index.items], ["S01", "S02"])
       self.assertEqual(repo.state().index.next_id, 3)
+
+
+class NextIdCommandTests(unittest.TestCase):
+  """`next-id` reports the formatted high-water id and writes nothing."""
+
+  def test_NextId_FreshProject_PrintsS01TwiceWithoutWriting(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("next-id")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out.strip(), "S01")
+      self.assertEqual(repo.state().index.next_id, 1)
+      code, out, err = repo.run("next-id")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out.strip(), "S01")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_NextId_AfterAdd_PrintsS02WithoutChangingTheIndex(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "first")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("next-id")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out.strip(), "S02")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_NextId_Json_IsOnlyTheId(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "first")
+      code, out, err = repo.run("next-id", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out), {"id": "S02"})
+      code, text, err = repo.run("next-id")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(text.strip(), "S02")
+
+  def test_NextId_CustomPrefixAndWidth_UsesTheIndexScheme(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "first")
+      path = repo.root / ".slicer/index.json"
+      data = json.loads(path.read_text())
+      data["id_prefix"] = "TASK-"
+      data["id_width"] = 3
+      data["next_id"] = 7
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+      code, out, err = repo.run("next-id")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out.strip(), "TASK-007")
+      self.assertEqual(json.loads(repo.read(".slicer/index.json"))["next_id"], 7)
+
+  def test_NextId_LoweredNextId_IsCorruptAndWritesNothing(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "first")
+      path = repo.root / ".slicer/index.json"
+      data = json.loads(path.read_text())
+      data["next_id"] = 1
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("next-id", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_NextId_RenderFlag_IsAUsageError(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, _, err = repo.run("next-id", "--render")
+      self.assertEqual(code, 2)
+      self.assertIn("render", err)
