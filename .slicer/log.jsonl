@@ -424,3 +424,5 @@
 {"when": "2026-09-28T12:46:47Z", "item": "S90", "action": "add", "from": "", "to": "later", "note": "Set up PyPI and the trusted publisher for squalor-slicer"}
 {"when": "2026-09-28T12:46:47Z", "item": "S90", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-09-28T12:46:47Z", "item": "S80", "action": "edit", "from": "", "to": "", "note": "boundary"}
+{"when": "2026-09-28T13:42:38Z", "item": "S84", "action": "set", "from": "", "to": "", "note": "pass_key -→v1"}
+{"when": "2026-09-28T13:42:38Z", "item": "S85", "action": "set", "from": "", "to": "", "note": "pass_key -→v1"}
