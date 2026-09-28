@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `list` omits items in the configured done status unless `--all` is set or `--status` names them. `--all` together with `--status` is a usage error.
+
 ## [1.0.0]
 
 ### Added

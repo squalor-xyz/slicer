@@ -39,6 +39,10 @@ class CliTests(unittest.TestCase):
     with self.repo() as repo:
       code, out, _ = repo.run("list", "--json")
       self.assertEqual(code, 0)
+      # S01 is done, so the default list leaves it out.
+      self.assertEqual([i["id"] for i in json.loads(out)], ["S02", "S03", "S04"])
+      code, out, _ = repo.run("list", "--all", "--json")
+      self.assertEqual(code, 0)
       self.assertEqual([i["id"] for i in json.loads(out)], ["S01", "S02", "S03", "S04"])
 
   def test_List_StatusFilter_NarrowsToThatStatus(self) -> None:
@@ -360,6 +364,79 @@ class TuiTests(unittest.TestCase):
       request = tui.act(state, "e", "preamble").edit
       self.assertIn("unchanged", tui.apply_edit(state, request, request.body))
       self.assertEqual(repo.state().history(), [])
+
+
+class ListDoneDefaultTests(unittest.TestCase):
+  """The default queue is the work still ahead. Done stays reachable on purpose."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("prose", "add-pass", "now")
+    repo.run("prose", "add-pass", "next")
+    repo.run("add", "open item", "--tree", "alpha", "--pass", "now", "--importance", "1", "--urgency", "1")
+    repo.run("add", "done item", "--tree", "alpha", "--pass", "now", "--importance", "3", "--urgency", "3")
+    repo.run("add", "parked item", "--tree", "beta", "--pass", "now")
+    repo.run("add", "later item", "--tree", "alpha", "--pass", "next")
+    repo.run("add", "started item", "--tree", "beta", "--pass", "next")
+    repo.run("add", "retired item", "--tree", "alpha", "--pass", "now")
+    repo.run("done", "S02")
+    repo.run("park", "S03")
+    repo.run("set", "S04", "--status", "later")
+    repo.run("start", "S05")
+    repo.run("remove", "S06", "--reason", "obsolete")
+    return repo
+
+  def ids(self, repo: support.TempRepo, *argv: str) -> list[str]:
+    code, out, err = repo.run("list", *argv, "--json")
+    self.assertEqual((code, err), (0, ""), out)
+    return [item["id"] for item in json.loads(out)]
+
+  def test_List_Default_OmitsDoneAndKeepsTheRest(self) -> None:
+    with self.repo() as repo:
+      code, text, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      self.assertNotIn("S02", text)
+      for item_id in ("S01", "S03", "S04", "S05", "S06"):
+        self.assertIn(item_id, text)
+      self.assertEqual(self.ids(repo), ["S01", "S03", "S04", "S05", "S06"])
+
+  def test_List_All_IncludesDone_AndOtherFiltersStillApply(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(self.ids(repo, "--all"), ["S01", "S02", "S03", "S04", "S05", "S06"])
+      self.assertEqual(self.ids(repo, "--all", "--tree", "alpha"), ["S01", "S02", "S04", "S06"])
+      self.assertEqual(self.ids(repo, "--tree", "alpha"), ["S01", "S04", "S06"])
+      self.assertEqual(self.ids(repo, "--all", "--pass", "now"), ["S01", "S02", "S03", "S06"])
+      self.assertEqual(self.ids(repo, "--pass", "now"), ["S01", "S03", "S06"])
+      self.assertEqual(self.ids(repo, "--all", "--sort", "score")[0], "S02")
+      scored = self.ids(repo, "--sort", "score")
+      self.assertNotIn("S02", scored)
+      self.assertEqual(scored[0], "S03")
+
+  def test_List_Status_IsAnAllowListThatIncludesDone(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(self.ids(repo, "--status", "done"), ["S02"])
+      self.assertEqual(self.ids(repo, "--status", "open"), ["S01"])
+      self.assertEqual(self.ids(repo, "--status", "done", "--status", "open"), ["S01", "S02"])
+
+  def test_List_AllWithStatus_IsAUsageError(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("list", "--all", "--status", "done", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertNotIn("Traceback", err)
+      self.assertNotIn("S02", self.ids(repo))
+
+  def test_List_OnlyDoneItems_PrintsNoMatchAndExitsZero(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "finished")
+      repo.run("done", "S01")
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("no matching items", out)
+      code, out, err = repo.run("list", "--json")
+      self.assertEqual((code, err, json.loads(out)), (0, "", []))
 
 
 if __name__ == "__main__":

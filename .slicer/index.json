@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 88,
+  "next_id": 89,
   "preamble": "",
   "passes": [
     {
@@ -978,7 +978,8 @@
         "S73",
         "S74",
         "S75",
-        "S76"
+        "S76",
+        "S88"
       ],
       "notes": [],
       "fields": {
@@ -2030,6 +2031,29 @@
         "reason": "",
         "importance": 2,
         "urgency": 2
+      }
+    },
+    {
+      "id": "S88",
+      "title": "Hide done items from list by default",
+      "short_title": "Hide done items from list by default",
+      "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "v1.0.0 readiness audit (cli contract)",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3
       }
     }
   ],

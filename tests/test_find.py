@@ -75,13 +75,15 @@ class FindTests(unittest.TestCase):
       self.assertIn("nonempty", err)
 
   def test_Find_Rows_ReuseListFormatPlusAMatchLine(self) -> None:
-    # find adds a "matched in ..." line under each item, but every list row for a
-    # matched item still appears verbatim (shared formatter, plus context).
+    # find adds a "matched in ..." line under each item. The item line uses the
+    # same formatter as list. The leading index counts that command's own rows,
+    # and find still includes done items, so the numbers are not the same.
     with self.repo() as repo:
       found = repo.run("find", "spelled out")[1]
       for row in repo.run("list")[1].splitlines():
-        self.assertIn(row, found)
+        self.assertIn(row.split(None, 1)[1], found)
       self.assertIn("matched in title:", found)
+      self.assertIn("S01", found)
 
   def test_Find_ReportsTheMatchedFieldAndSnippet(self) -> None:
     with self.repo() as repo:
