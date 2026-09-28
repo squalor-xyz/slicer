@@ -372,9 +372,17 @@ def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
 
 def cmd_list(args: argparse.Namespace) -> int:
   state = _state(args)
+  if args.all and args.status:
+    raise StateError(
+      "--all and --status cannot be combined; --status already chooses which statuses to show",
+      code="usage",
+    )
   items = state.index.items
   if args.status:
     items = [i for i in items if i.status in args.status]
+  elif not args.all:
+    done = state.config.done_status
+    items = [i for i in items if i.status != done]
   if args.tree:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
@@ -1023,8 +1031,11 @@ def build_parser() -> argparse.ArgumentParser:
                   help="skip N currently eligible items (default 0); return one item")
   sp.add_argument("--start", action="store_true", help="mark the returned item started")
 
-  sp = add("list", cmd_list, "list items")
-  sp.add_argument("--status", action="append", help="filter by status (repeatable)")
+  sp = add("list", cmd_list, "list items, omitting the done status unless asked")
+  sp.add_argument("--all", action="store_true",
+                  help="include items in the configured done status (default: omit them)")
+  sp.add_argument("--status", action="append",
+                  help="filter by status (repeatable); replaces the default of omitting the done status")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--sort", choices=["score"], help="order by priority score, highest first")

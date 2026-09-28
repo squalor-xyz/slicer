@@ -51,7 +51,7 @@ lead and sections. Use the project's configured sections, not assumed headings.
 
 `next` resumes eligible started work before open work; dependencies gate both.
 Within that pool, effective priority includes priority inherited from dependents.
-Use `slicer list --json`, `slicer list --sort score --json`, `slicer stats --json`,
+Use `slicer list --json` (omits the done status; `--all` or `--status` includes finished items), `slicer list --sort score --json` (same default), `slicer stats --json`,
 and `slicer log --json` to inspect the roadmap. Use `slicer show ID --section NAME`
 to read a section, and `slicer edit ID --section NAME --text "Body" --render` to
 replace it. Use `--help` on a command for supported options.

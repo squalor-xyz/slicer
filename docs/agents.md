@@ -124,7 +124,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | Command | Payload |
 |---|---|
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
-| `list` | array of items |
+| `list` | array of items. The configured done status is omitted unless `--all` is set or `--status` names it; `--all` together with `--status` is `usage`. `--sort score` uses the same item set |
 | `show ID` | item, plus `slice` when it has one; with `--section NAME`, `{id, section, body}` |
 | `next` | item plus `path` and `effective_score`; or `{"item": null, "blocked": [...]}`. A started item is returned ahead of every open one |
 | `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
