@@ -135,6 +135,7 @@ def render_row(item: Item, position: int, cfg: Config, template: str) -> str:
       "id": cell(item.id),
       "title": title,
       "size": cell(size),
+      "effort": "-" if item.effort is None else str(item.effort),
       "trees": cell(", ".join(item.trees)),
       "findings": cell(findings),
       "status": cell(cfg.status_label(item.status)),
@@ -163,8 +164,17 @@ def _check_row(row: str, header: str) -> None:
 
 
 def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) -> bytes:
-  header = "| # | Slice | Title | Size | Trees | Findings | Status |"
-  sep = "|---|---|---|---|---|---|---|"
+  # Effort is a placeholder a template may adopt. One that never names it keeps
+  # the previous seven columns, so an existing row.md still renders.
+  has_effort = bool(re.search(r"\{\{\s*effort\s*\}\}", row_template))
+  if has_effort:
+    header = "| # | Slice | Title | Size | Effort | Trees | Findings | Status |"
+    sep = "|---|---|---|---|---|---|---|---|"
+    group_gap = "| | | | | | | |"
+  else:
+    header = "| # | Slice | Title | Size | Trees | Findings | Status |"
+    sep = "|---|---|---|---|---|---|---|"
+    group_gap = "| | | | | | |"
   ordered_keys = index.pass_keys()
 
   chunks: list[str] = []
@@ -185,7 +195,7 @@ def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) 
       position += 1
       if item.group and item.group != group:
         group = item.group
-        rows.append(f"| {cell(group)} | | | | | | |")
+        rows.append(f"| {cell(group)} {group_gap}")
       rows.append(render_row(item, position, cfg, row_template))
     for row in rows:
       _check_row(row, header)
@@ -297,20 +307,21 @@ def render_html(index: Index, cfg: Config) -> bytes:
       parts.append(f'<div class="prose">{_prose_html(info.intro)}</div>')
     parts.append(
       "<table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th>"
-      "<th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>"
+      "<th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>"
     )
     group = ""
     for item in members:
       position += 1
       if item.group and item.group != group:
         group = item.group
-        parts.append(f'<tr class="group"><td></td><td colspan="6"><strong>{e(group)}</strong></td></tr>')
+        parts.append(f'<tr class="group"><td></td><td colspan="7"><strong>{e(group)}</strong></td></tr>')
       size = item.size + "".join(f" [{f}]" for f in item.flags)
       findings = f" {MIDDOT} ".join(p for p in (item.findings, item.reason) if p)
       title = item.display_title() or f"(untitled {item.id})"
       parts.append(
         f'<tr class="{_status_class(item.status, cfg)}"><td>{position}</td>'
         f"<td>{e(item.id)}</td><td>{e(title)}</td><td>{e(size)}</td>"
+        f"<td>{'-' if item.effort is None else item.effort}</td>"
         f'<td>{e(", ".join(item.trees))}</td><td>{e(findings)}</td>'
         f'<td class="status">{e(cfg.status_label(item.status))}</td></tr>'
       )

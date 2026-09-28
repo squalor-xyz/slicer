@@ -46,19 +46,19 @@ class CellEscapingTests(unittest.TestCase):
   def test_Cell_WhitespaceRun_Collapses(self) -> None:
     self.assertEqual(render.cell("  a   b  "), "a b")
 
-  def test_Row_PipeInTitle_KeepsSevenCells(self) -> None:
+  def test_Row_PipeInTitle_KeepsEightCells(self) -> None:
     with self.repo() as repo:
       repo.run("add", "Fix the a|b parser", "--size", "M")
       repo.run("render")
-      self.assertEqual(cells(row_for(repo, "S01")), 7)
+      self.assertEqual(cells(row_for(repo, "S01")), 8)
 
-  def test_Row_PipeInFindingsAndTrees_KeepsSevenCells(self) -> None:
+  def test_Row_PipeInFindingsAndTrees_KeepsEightCells(self) -> None:
     with self.repo() as repo:
       repo.run("add", "A thing", "--findings", "see x|y", "--tree", "core|cli")
       repo.run("render")
-      self.assertEqual(cells(row_for(repo, "S01")), 7)
+      self.assertEqual(cells(row_for(repo, "S01")), 8)
 
-  def test_Row_PipeInAStatusLabel_KeepsSevenCells(self) -> None:
+  def test_Row_PipeInAStatusLabel_KeepsEightCells(self) -> None:
     # Labels come from config, so input validation cannot reach them.
     with self.repo() as repo:
       repo.run("add", "A thing")
@@ -67,23 +67,23 @@ class CellEscapingTests(unittest.TestCase):
       cfg["statuses"]["open"] = "a|b"
       path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
       repo.run("render")
-      self.assertEqual(cells(row_for(repo, "S01")), 7)
+      self.assertEqual(cells(row_for(repo, "S01")), 8)
 
-  def test_Row_PipeInAGroupLabel_KeepsSevenCells(self) -> None:
+  def test_Row_PipeInAGroupLabel_KeepsEightCells(self) -> None:
     with self.repo() as repo:
       repo.write("r.md", "## A thing\ngroup: Phase 0 | groundwork\n")
       repo.run("import", "r.md")
       repo.run("render")
       roadmap = repo.read(".slicer/render/ROADMAP.md")
       group_row = next(l for l in roadmap.splitlines() if "Phase 0" in l)
-      self.assertEqual(cells(group_row), 7)
+      self.assertEqual(cells(group_row), 8)
 
-  def test_Row_RetiredReasonWithAPipe_KeepsSevenCells(self) -> None:
+  def test_Row_RetiredReasonWithAPipe_KeepsEightCells(self) -> None:
     with self.repo() as repo:
       repo.run("add", "A thing")
       repo.run("remove", "S01", "--reason", "superseded by a|b")
       repo.run("render")
-      self.assertEqual(cells(row_for(repo, "S01")), 7)
+      self.assertEqual(cells(row_for(repo, "S01")), 8)
 
 
 class RepairOnRenderTests(unittest.TestCase):
@@ -107,7 +107,7 @@ class RepairOnRenderTests(unittest.TestCase):
       repo.run("render")
       row = row_for(repo, "S01")
       self.assertIn("line one line two", row)
-      self.assertEqual(cells(row), 7)
+      self.assertEqual(cells(row), 8)
 
   def test_Render_StoredBadTitle_StillChecksClean(self) -> None:
     with self.repo() as repo:
@@ -137,8 +137,8 @@ class GeneratedRowAssertionTests(unittest.TestCase):
       self.assertNotEqual(repo.run("check")[0], 0)
 
   def test_CheckRow_MatchingHeader_Passes(self) -> None:
-    header = "| # | Slice | Title | Size | Trees | Findings | Status |"
-    render._check_row(r"| 1 | S01 | a\|b | M | core | F1 | — |", header)
+    header = "| # | Slice | Title | Size | Effort | Trees | Findings | Status |"
+    render._check_row(r"| 1 | S01 | a\|b | M | - | core | F1 | — |", header)
 
   def test_CheckRow_EscapedPipesAreNotCellWalls(self) -> None:
     header = "| a | b |"
@@ -160,7 +160,7 @@ class RetiredFindingsTests(unittest.TestCase):
     return repo
 
   def findings_cell(self, repo: support.TempRepo, item_id: str) -> str:
-    return row_for(repo, item_id).strip("|").split("|")[5].strip()
+    return row_for(repo, item_id).strip("|").split("|")[6].strip()
 
   def test_Retired_LeadingMiddotInFindings_IsKept(self) -> None:
     # Was: '· F1' + 'superseded' -> 'F1 · superseded', the leading · eaten.

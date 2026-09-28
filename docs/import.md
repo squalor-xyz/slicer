@@ -87,6 +87,7 @@ status: parked
 | `depends` | The **title** of another item, in this file or already in the roadmap |
 | `importance` | `1`–`3`, how important (default 2); drives the priority score |
 | `urgency` | `1`–`3`, how urgent (default 2); drives the priority score |
+| `effort` | `1`–`3`, optional implementation weight. Omit the key to leave it unset. It does not change `next` |
 
 An unknown key is an error naming the key and the known set — a silently ignored key is
 a roadmap item that quietly lost its size.
@@ -162,7 +163,7 @@ Import is all-or-nothing. Everything is validated before a byte is written.
 
 ```console
 $ slicer import roadmap.md
-slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, importance, urgency
+slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, importance, urgency, effort
 ```
 
 **Anything the outline says that does not fit the project** is collected, reported

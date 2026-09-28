@@ -115,7 +115,7 @@ class WizardInputTests(unittest.TestCase):
   def test_Wizard_EditorFailureAndResize_KeepBodyAndStep(self):
     wizard = tui_wizard.Wizard(["Why"])
     answer(wizard, "")
-    for value in ("First", "", "", "", "2", "2", "", ""):
+    for value in ("First", "", "", "", "2", "2", "", "", ""):
       answer(wizard, value)
     self.assertEqual(wizard.handle("e"), "editor")
     wizard.editor_result("One\n\nTwo")
@@ -369,7 +369,7 @@ class WizardLoopTests(unittest.TestCase):
       # Start, set heading, use Shift-Tab and return, fill fields, edit Why,
       # skip the remaining sections, review, save, and quit.
       keys = iter([*"\nCafé\n", curses.KEY_BTAB, "\n", *"界\n",
-                   *"\n" * 7, "e", *"\n" * 6, "n", *"j" * 16, "\n", "q"])
+                   *"\n" * 8, "e", *"\n" * 6, "n", *"j" * 17, "\n", "q"])
 
       class Terminal(Screen):
         def get_wch(self):

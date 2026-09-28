@@ -89,6 +89,14 @@ def _csv(text: str) -> list[str]:
   return [p.strip() for p in text.split(",") if p.strip()]
 
 
+def _effort_edit(body: str) -> object:
+  """Blank clears effort. Anything else is validated as 1, 2 or 3 on set."""
+  text = body.strip()
+  if not text:
+    return ops.CLEAR_EFFORT
+  return text
+
+
 FIELD_SPEC: dict[str, tuple[str, object]] = {
   "size": ("size", lambda b: b.strip()),
   "trees": ("trees", _csv),
@@ -96,6 +104,7 @@ FIELD_SPEC: dict[str, tuple[str, object]] = {
   "depends": ("depends_on", _csv),
   "importance": ("importance", lambda b: b.strip()),
   "urgency": ("urgency", lambda b: b.strip()),
+  "effort": ("effort", _effort_edit),
 }
 
 

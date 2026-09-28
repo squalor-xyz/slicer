@@ -23,8 +23,9 @@ FIELDS = (
   ("Urgency", "1, 2 or 3; default 2"),
   ("Group", "Optional group label"),
   ("Depends", "Comma-separated exact titles; later draft items are allowed"),
+  ("Effort", "1, 2 or 3; blank leaves it unset"),
 )
-DEFAULTS = ("", "", "", "", "2", "2", "", "")
+DEFAULTS = ("", "", "", "", "2", "2", "", "", "")
 
 
 def text_input(text: str, key: str) -> tuple[str, str]:
@@ -58,9 +59,13 @@ class DraftItem:
     for at in (4, 5):
       if values[at] not in ("1", "2", "3"):
         raise StateError(f"{FIELDS[at][0]} must be 1, 2 or 3.")
+    effort = values[8]
+    if effort not in ("", "1", "2", "3"):
+      raise StateError("Effort must be 1, 2 or 3, or blank.")
     return ItemSpec(title=values[0], size=values[1], trees=csv(values[2]),
                     findings=values[3], importance=int(values[4]), urgency=int(values[5]),
                     group=values[6], depends=csv(values[7]),
+                    effort=int(effort) if effort else None,
                     sections=[SectionSpec(s.heading, s.body) for s in self.sections])
 
 
@@ -218,6 +223,8 @@ class Wizard:
         self.error = "An item title is required."
       elif self.step in (4, 5) and value not in ("1", "2", "3"):
         self.error = f"{FIELDS[self.step][0]} must be 1, 2 or 3."
+      elif self.step == len(FIELDS) - 1 and value not in ("", "1", "2", "3"):
+        self.error = "Effort must be 1, 2 or 3, or blank."
       else:
         self._advance()
     return ""

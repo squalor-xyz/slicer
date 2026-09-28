@@ -37,7 +37,7 @@ from slicer.errors import OutlineError
 
 # Keys an entry may carry. Anything else is an error naming this set, because
 # a silently ignored key is a roadmap item that quietly lost its size.
-KEYS = ("size", "tree", "trees", "findings", "status", "pass", "group", "depends", "importance", "urgency")
+KEYS = ("size", "tree", "trees", "findings", "status", "pass", "group", "depends", "importance", "urgency", "effort")
 LIST_KEYS = ("tree", "trees", "depends")
 
 KEY_RE = re.compile(r"^(?P<key>[a-z][a-z-]*)\s*:\s*(?P<value>.*)$")
@@ -73,6 +73,7 @@ class ItemSpec:
   depends: list[str] = field(default_factory=list)
   importance: int = 2
   urgency: int = 2
+  effort: int | None = None
   lead: list[str] = field(default_factory=list)
   sections: list[SectionSpec] = field(default_factory=list)
 
@@ -226,7 +227,7 @@ def _assign(spec: ItemSpec, key: str, value: str, *, path: str, line: int) -> No
     raise OutlineError(f"{path}:{line}: {key!r} has no value")
   if key == "pass":
     spec.pass_key = value
-  elif key in ("importance", "urgency"):
+  elif key in ("importance", "urgency", "effort"):
     if value not in ("1", "2", "3"):
       raise OutlineError(f"{path}:{line}: {key} must be 1, 2 or 3, not {value!r}")
     setattr(spec, key, int(value))
