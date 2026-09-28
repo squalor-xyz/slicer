@@ -410,25 +410,8 @@ def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
 
 
 def _list_in_next_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
-  """The sequence `next` walks, then every other visible row by effective score.
-
-  A started or open item with an unfinished dependency is not startable, so it
-  joins the trailing group. Ties keep stored order; sorting is stable.
-  """
-  cfg = state.config
-  eff = graph.effective_scores(state.index)
-  started = cfg.started_status
-
-  def tier(item: model.Item) -> int:
-    if graph.blocked_by(state.index, item, cfg.done_status):
-      return 2
-    if started and item.status == started:
-      return 0
-    if item.status == cfg.open_status:
-      return 1
-    return 2
-
-  return sorted(items, key=lambda item: (tier(item), -eff[item.id]))
+  """The sequence `next` walks, then every other visible row by effective score."""
+  return graph.ranked_order(state.index, state.config, items)
 
 
 def cmd_list(args: argparse.Namespace) -> int:

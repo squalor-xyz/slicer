@@ -33,7 +33,8 @@ BINDINGS = (
   Binding(("\t",), "Tab", "pane", "Switch queue/detail pane"),
   Binding(("/",), "/", "search", "Search item IDs and titles; Enter accepts, Esc cancels"),
   Binding(("f",), "f", "filter", "Filter items; Space toggles, Enter applies, Esc cancels"),
-  Binding(("c",), "c", "clear", "Clear search and all filters (show done too)"),
+  Binding(("o",), "o", "sort", "Sort the view; j/k choose a field, Space flips direction, Enter applies"),
+  Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
   Binding(("?",), "?", "help", "Show help; j/k scroll, ? or Esc closes"),
   Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty removes a note)"),
@@ -66,7 +67,7 @@ def help_lines() -> list[str]:
 SHORTCUTS = (
   (("pane",), "panes"), (("edit",), "edit"), (("add",), "add"),
   (("start",), "start"), (("done",), "done"), (("search",), "search"),
-  (("filter",), "filters"), (("clear",), "show all"), (("jump",), "jump"),
+  (("filter",), "filters"), (("sort",), "sort"), (("clear",), "show all"), (("jump",), "jump"),
   (("down", "up"), "move"), (("help",), "help"), (("quit",), "quit"),
 )
 
@@ -174,11 +175,64 @@ class ActResult:
   severity: str = "info"
 
 
-def rows(state: State) -> list[Row]:
-  """The queue, then the roadmap's own prose blocks."""
+SORT_FIELDS = (
+  ("ranked", "ranked order"),
+  ("id", "ID"),
+  ("title", "title"),
+  ("status", "status"),
+  ("size", "size"),
+  ("importance", "importance"),
+  ("urgency", "urgency"),
+  ("score", "effective score"),
+  ("effort", "effort"),
+)
+
+
+def sort_items(state: State, items: list, field: str, descending: bool) -> list:
+  """Order a visible subset. Blanks stay last. Ties keep stored queue order."""
+  if field == "ranked":
+    return graph.ranked_order(state.index, state.config, items, descending=descending)
+  place = {it.id: n for n, it in enumerate(state.index.items)}
+  eff = graph.effective_scores(state.index)
+
+  def raw(item):
+    if field == "id":
+      return item.id
+    if field == "title":
+      return item.display_title()
+    if field == "status":
+      return state.config.status_label(item.status)
+    if field == "size":
+      return item.size
+    if field == "importance":
+      return item.importance
+    if field == "urgency":
+      return item.urgency
+    if field == "score":
+      return eff[item.id]
+    return item.effort
+
+  def key(item):
+    value = raw(item)
+    blank = value is None or value == ""
+    if blank:
+      directed = ""
+    elif isinstance(value, int) and descending:
+      directed = -value
+    elif isinstance(value, str) and descending:
+      directed = tuple(-ord(c) for c in value)
+    else:
+      directed = value
+    return (1 if blank else 0, directed, place[item.id])
+
+  return sorted(items, key=key)
+
+
+def item_rows(state: State, items: list) -> list[Row]:
+  """Queue rows in the given order. The number is the position in that view."""
   cfg = state.config
   out: list[Row] = []
-  for n, item in enumerate(state.index.items, 1):
+  for n, item in enumerate(items, 1):
     pending = graph.blocked_by(state.index, item, cfg.done_status)
     active = item.status == cfg.open_status or (
       bool(cfg.started_status) and item.status == cfg.started_status
@@ -197,6 +251,12 @@ def rows(state: State) -> list[Row]:
         high_priority=item.importance == 3 or item.urgency == 3,
       )
     )
+  return out
+
+
+def rows(state: State) -> list[Row]:
+  """The queue in ranked order, then the roadmap's own prose blocks."""
+  out = item_rows(state, graph.ranked_order(state.index, state.config, list(state.index.items)))
   refs = prose.refs(state.index)
   if refs:
     out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
@@ -431,7 +491,10 @@ class Filters:
   @classmethod
   def initial(cls, state: State) -> Filters:
     filters = cls()
-    filters.values["status"] = set(state.config.statuses) - {state.config.done_status}
+    hidden = {state.config.done_status}
+    if state.config.retired_status:
+      hidden.add(state.config.retired_status)
+    filters.values["status"] = set(state.config.statuses) - hidden
     return filters
 
   def copy(self) -> Filters:
@@ -463,9 +526,19 @@ class Filters:
     return "  ".join(parts) or "all items"
 
 
-def filtered_rows(state: State, filters: Filters) -> list[Row]:
-  matching = {it.id for it in state.index.items if filters.matches(it)}
-  return [row for row in rows(state) if row.kind != ITEM or row.target in matching]
+def filtered_rows(
+  state: State, filters: Filters, sort_field: str = "ranked", descending: bool = True,
+) -> list[Row]:
+  visible = [it for it in state.index.items if filters.matches(it)]
+  ordered = sort_items(state, visible, sort_field, descending)
+  out = item_rows(state, ordered)
+  refs = prose.refs(state.index)
+  if refs:
+    out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
+    for ref in refs:
+      lines, preview = prose.summary(state.index, ref, width=30)
+      out.append(Row(kind=PROSE, target=ref, text=f"     {ref:<22} {lines:>3}  {preview}"))
+  return out
 
 
 def filter_choices(state: State) -> list[tuple[str, str | None]]:
@@ -504,6 +577,9 @@ class View:
   """Session-only interaction state; no terminal calls or persisted preferences."""
 
   filters: Filters
+  sort_field: str = "ranked"
+  sort_desc: bool = True
+  sort_draft_desc: bool = True
   listing: list[Row] = field(default_factory=list)
   selected: tuple[str, str] | None = None
   entry_at: int = 0
@@ -534,7 +610,7 @@ class View:
     return self.selected[1] if self.selected else ""
 
   def refresh(self, state: State) -> None:
-    listing = filtered_rows(state, self.filters)
+    listing = filtered_rows(state, self.filters, self.sort_field, self.sort_desc)
     selected = reconcile_selection(self.listing, listing, self.selected)
     if selected != self.selected:
       self.entry_at = 0
@@ -562,7 +638,10 @@ class View:
 
   def status(self, state: State) -> str:
     count = sum(row.kind == ITEM for row in self.listing)
-    return f"{count}/{len(state.index.items)} items  {self.filters.summary()}"
+    direction = "desc" if self.sort_desc else "asc"
+    label = dict(SORT_FIELDS)[self.sort_field]
+    summary = self.filters.summary()
+    return f"{count}/{len(state.index.items)} items  sort={label} {direction}  {summary}"
 
   def handle(self, state: State, key: str) -> ActResult:
     self.refresh(state)
@@ -591,6 +670,8 @@ class View:
       return self._move(state, key)
     if self.mode == "filter":
       return self._filter(state, key)
+    if self.mode == "sort":
+      return self._sort(state, key)
     if self.mode == "help":
       if key in ("?", "\x1b"):
         self.mode = "normal"
@@ -613,6 +694,10 @@ class View:
       self.text = self.filters.query if action == "search" else ""
     elif action == "filter":
       self.mode, self.draft, self.choice_at = "filter", self.filters.copy(), 0
+    elif action == "sort":
+      self.mode = "sort"
+      self.sort_draft_desc = self.sort_desc
+      self.choice_at = next(i for i, (name, _) in enumerate(SORT_FIELDS) if name == self.sort_field)
     elif action == "clear":
       self.filters = Filters()
       self.notify("search and filters cleared; showing all items")
@@ -747,6 +832,26 @@ class View:
       self.text += key
     return ActResult()
 
+  def _sort(self, state: State, key: str) -> ActResult:
+    """Pick a view order. Enter applies it; nothing is written to the queue."""
+    if key == "\x1b":
+      self.mode = "normal"
+      self.notify("sort unchanged")
+    elif key in ("\n", "\r", "KEY_ENTER"):
+      self.sort_field = SORT_FIELDS[self.choice_at][0]
+      self.sort_desc = self.sort_draft_desc
+      self.mode = "normal"
+      direction = "descending" if self.sort_desc else "ascending"
+      self.notify(f"sorted by {dict(SORT_FIELDS)[self.sort_field]}, {direction}")
+    elif key in ("j", "KEY_DOWN"):
+      self.choice_at = min(self.choice_at + 1, len(SORT_FIELDS) - 1)
+    elif key in ("k", "KEY_UP"):
+      self.choice_at = max(0, self.choice_at - 1)
+    elif key == " ":
+      self.sort_draft_desc = not self.sort_draft_desc
+    self.refresh(state)
+    return ActResult()
+
   def _filter(self, state: State, key: str) -> ActResult:
     choices = filter_choices(state)
     if key == "\x1b":
@@ -821,11 +926,22 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   shortcuts = shortcut_lines(width) if view.mode == "normal" else []
   status_y = height - 2 - len(shortcuts)
   visible = status_y - 1
-  if view.mode in ("filter", "help"):
-    title = ("Filters: j/k move, Space toggle, Enter apply, Esc cancel"
-             if view.mode == "filter" else "Help: j/k scroll, ? or Esc close")
+  if view.mode in ("filter", "help", "sort"):
+    title = {
+      "filter": "Filters: j/k move, Space toggle, Enter apply, Esc cancel",
+      "sort": "Sort: j/k choose field, Space flips direction, Enter applies, Esc cancels",
+      "help": "Help: j/k scroll, ? or Esc close",
+    }[view.mode]
     put(0, 0, title, palette.attr("heading"))
-    if view.mode == "filter":
+    if view.mode == "sort":
+      direction = "descending" if view.sort_draft_desc else "ascending"
+      lines = [
+        f"{label:<16} {direction if n == view.choice_at else ''}"
+        for n, (_, label) in enumerate(SORT_FIELDS)
+      ]
+      selected_at = view.choice_at
+      top = max(0, selected_at - visible + 1)
+    elif view.mode == "filter":
       choices = filter_choices(state)
       lines = []
       for group, value in choices:

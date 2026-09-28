@@ -14,6 +14,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer import` stores prose between the outline title and the first item as the roadmap preamble. A different stored preamble is refused unless `--force`. `promote --file` rejects that prose.
 - `--json --lean` omits empty and default scaffolding from a payload. `--json` alone is unchanged.
 - Items can carry an optional `effort` of 1, 2, or 3. `list --sort effort` and `sort --by effort` put the lightest estimate first and unestimated items last. `next` and score sorting are unchanged.
+- The TUI queue opens in `slicer list` order and, like `list`, hides done and retired until asked. Parked items stay visible and sort last. `o` sorts the view by a field and direction for the session without rewriting the stored queue.
 
 ## [1.0.0]
 
