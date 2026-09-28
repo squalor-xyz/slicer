@@ -461,6 +461,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
     items = [i for i in items if i.pass_key == args.pass_key]
+  if args.flag:
+    items = [i for i in items if set(args.flag) & set(i.flags)]
   if getattr(args, "sort", None) == "score":
     # A read-only view: sort a copy by effective score, never the stored order.
     # Ties keep their manual position because Python's sort is stable.
@@ -1174,6 +1176,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="filter by status (repeatable); replaces the default of omitting done and retired")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
+  sp.add_argument("--flag", action="append",
+                  help="filter by flag (repeatable; an item matches if it has any of them)")
   sp.add_argument("--sort", choices=["score", "effort"],
                   help="score: flat priority, highest first; effort: lightest estimate first, unset last")
 

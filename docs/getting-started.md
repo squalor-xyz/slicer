@@ -672,6 +672,14 @@ alongside the roadmap's `preamble`, `goals`, `non_goals`, and `epilogue`. `slice
 list` names every block in render order; `slicer prose edit REF` changes one. See the
 README's [Roadmap prose](../README.md#roadmap-prose) section.
 
+A pass is one milestone, and trees name subsystems. Flags are the other axis: free-form
+labels an item can hold several of at once, such as `security` or `perf`. Set them with
+`slicer set S01 --flag security --flag perf` (that replaces the list; `--no-flags` clears
+it). `slicer list --flag security` returns items carrying that flag, and repeating
+`--flag` matches any of the names. The TUI filter panel (`f`) lists each distinct flag
+and `(none)` for an item with no flags. `exclude_flags` in config still only drops an
+item from the sync pointers.
+
 ## Goals and non-goals
 
 Goals and non-goals record what the project is *for*, so what belongs on the backlog can

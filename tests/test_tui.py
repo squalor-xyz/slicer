@@ -192,6 +192,33 @@ class TuiFilteringTests(unittest.TestCase):
     self.assertEqual(item_ids(view), ['S02'])
     self.assertTrue(view.listing[0].text.lstrip().startswith('1'))
 
+  def test_Filters_Flag_ListsDistinctValuesAndFiltersTheQueue(self) -> None:
+    state = example()
+    state.index.items[0].flags = ["security"]
+    state.index.items[1].flags = ["security", "perf"]
+    state.index.items[2].flags = ["perf"]
+    choices = tui.filter_choices(state)
+    flags = [value for group, value in choices if group == "flag"]
+    self.assertEqual(flags, [None, "", "perf", "security"])
+
+    view = tui.View(tui.Filters())
+    view.filters.values["flag"] = {"security", "perf"}
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S02", "S01", "S03"])
+    view.filters.values["flag"] = {""}
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S04"])
+    view.filters.values.update(flag={"security"}, tree={"alpha"})
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S02", "S01"])
+
+    view = tui.View.initial(state)
+    view.handle(state, "f")
+    view.choice_at = tui.filter_choices(state).index(("flag", "security"))
+    view.handle(state, " ")
+    view.handle(state, "\n")
+    self.assertEqual(item_ids(view), ["S02"])
+
   def test_Filters_MissingTreeAndPass_AreSelectable(self) -> None:
     state = example()
     view = tui.View(tui.Filters())
