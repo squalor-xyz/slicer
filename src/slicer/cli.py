@@ -149,6 +149,8 @@ SKELETON_HEAD = """\
     pass:     a group key, if the project uses passes
     group:    a phase label rendered above the item
     depends:  the title of another item, here or already in the roadmap
+    importance: 1, 2 or 3; how important (default 2)
+    urgency:    1, 2 or 3; how urgent (default 2)
 
   A paragraph after the keys and before the first `###` becomes the slice's
   lead. Each `### ` heading is a section of the slice; an item with no
@@ -168,6 +170,8 @@ SKELETON_EXAMPLE = """
 size: {size}
 tree: core
 findings: G1
+importance: 3
+urgency: 1
 
 The loader accepts a missing key and carries on with a zero, so a typo in
 the config reads as a deliberate setting.
