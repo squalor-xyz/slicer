@@ -2084,7 +2084,7 @@
       "id": "S90",
       "title": "Set up PyPI and the trusted publisher for squalor-slicer",
       "short_title": "Set up PyPI and the trusted publisher for squalor-slicer",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S06"
