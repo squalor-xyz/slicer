@@ -57,7 +57,8 @@ class MergeGuardTests(unittest.TestCase):
     with support.TempRepo(git=True) as repo:
       repo.run("init")
       self.assertFalse(vcs.merge_in_progress(repo.root))
-      code, _, err = repo.run("add", "allowed")
+      # Scored, so the S140 unscored hint stays out of the stderr this checks.
+      code, _, err = repo.run("add", "allowed", "--effort", "1")
       self.assertEqual(code, 0, err)
       self.assertEqual(err, "")
 

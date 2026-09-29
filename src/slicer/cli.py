@@ -1002,6 +1002,11 @@ def cmd_add(args: argparse.Namespace) -> int:
   if item.pass_key:
     text += f" (pass: {item.pass_key})"
   _emit(args, item.to_dict(), text)
+  if item.unscored and item.status in (state.config.open_status, state.config.started_status):
+    _write_err(args, (
+      f"slicer: {item.id} is unscored (importance 2, urgency 2, no effort), so it ranks on "
+      f"nothing; pass --importance, --urgency and --effort, or `slicer set {item.id}` later."
+    ))
   return OK
 
 

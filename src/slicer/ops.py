@@ -15,7 +15,7 @@ from typing import Callable, Mapping
 
 from slicer import graph, ids, outline, prose, render, vcs
 from slicer.errors import StateError
-from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary
+from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary, is_unscored
 from slicer.store import State
 
 
@@ -997,6 +997,18 @@ def outline_report(
     for dep in spec.depends:
       if dep not in known:
         problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
+  active = {cfg.open_status, cfg.started_status}
+  unscored = [
+    spec.title for spec in specs
+    if (spec.status or cfg.open_status) in active
+    and is_unscored(spec.importance, spec.urgency, spec.effort)
+  ]
+  if unscored:
+    report.warnings.append(
+      f"{len(unscored)} item(s) unscored (importance 2, urgency 2, no effort), so they rank "
+      "on nothing; add importance:, urgency: and effort: keys: "
+      + ", ".join(repr(t) for t in unscored)
+    )
   stored_preamble = state.index.preamble
   if (
     preamble is not None and stored_preamble and stored_preamble != preamble

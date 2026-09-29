@@ -3509,7 +3509,7 @@
       "id": "S140",
       "title": "Hint when an item is filed unscored",
       "short_title": "Hint when an item is filed unscored",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

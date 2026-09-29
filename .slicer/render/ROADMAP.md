@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-140 items · — 6 · done 133 · retired 1
+140 items · — 5 · done 134 · retired 1
 
 v1.0.0 release
 
@@ -61,7 +61,7 @@ v1.0.0 release
 | 31 | [S137](slices/S137.md) | Let add opt out of pass inheritance |  | 1 | slicer | S127 docs audit: add --pass '' still inherits the previous item's pass | done |
 | 32 | [S138](slices/S138.md) | Trim the command catalogue out of ai instructions |  | 1 | slicer | S127 review: ai instructions length, owner question | done |
 | 33 | [S139](slices/S139.md) | Tell agents to fill in priority and estimate fields when filing items |  | 1 | slicer | owner request, 2026-09-29 v1.0.0 triage | done |
-| 34 | [S140](slices/S140.md) | Hint when an item is filed unscored |  | 1 | slicer | S139 decision: guidance only for 1.0.0, tool nudge later | — |
+| 34 | [S140](slices/S140.md) | Hint when an item is filed unscored |  | 1 | slicer | S139 decision: guidance only for 1.0.0, tool nudge later | done |
 
 ---
 
