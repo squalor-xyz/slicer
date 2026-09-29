@@ -1,0 +1,42 @@
+{
+  "id": "S112",
+  "title": "Label list columns and say when rows are hidden",
+  "lead": [
+    "`slicer list` prints rows with no header. An unset effort is `-`, in the same line as the score. An empty default list says `no matching items` and does not mention the done and retired rows it hid.",
+    "**Not in this slice:** which statuses are hidden, the JSON array shape, sort order, or the TUI."
+  ],
+  "depends_note": null,
+  "findings_note": "credit review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The columns are number, id, status, size, effort, score, quadrant, and title, and nothing in the text output names them. Reading `-` as a missing effort took a follow-up question. When every item is done or retired, the command looks like a failed filter. `slicer status` has the census, but `list` is the command people run."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_list` and `_item_rows`)\n- the list tests\n- `README.md` and `CHANGELOG.md` if the text shape is part of the documented contract"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A non-empty text list starts with one header line that names effort and score. An item with no effort still shows `-` under effort.\n2. When the default filter hides done or retired rows, the text says how many were hidden and names `--all`. JSON remains the array of visible items, with no extra keys.\n3. `--all`, a `--status` filter, and an empty project do not claim that rows were hidden when none were."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a single header row to the text list. When the default status filter omits at least one item, append one line with the hidden count and `--all`. Keep JSON as the list of item records. Do not add the header to `--json` output. Match the header to the row fields, including the effort column only if the row still prints effort."
+    },
+    {
+      "heading": "Check",
+      "body": "The three cases above pass. `slicer list --json` of a project that hides done items is still a JSON array. The suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

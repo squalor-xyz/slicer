@@ -1,0 +1,42 @@
+{
+  "id": "S111",
+  "title": "Roll migrate back when a required render fails",
+  "lead": [
+    "`--require-render` snapshots `index.json`, `log.jsonl`, `slices/`, and `render/`. `migrate` also writes `config.json` and `templates/`, and it can create a project that was not there yet.",
+    "**Not in this slice:** `done --render`, the default save-then-exit-1 policy, or the TUI."
+  ],
+  "depends_note": null,
+  "findings_note": "credit review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`_require_render` calls `store.load` before the handler, so `migrate --render --require-render` in an empty directory exits `code=\"state\"` (\"no .slicer/ found\") instead of migrating. When the working directory is inside an existing project, that load snapshots the ancestor, while `migrate` writes a new `.slicer/` in the directory it was given. A render failure restores the ancestor and leaves the new tree in place, and the error envelope still says nothing was published. On `migrate --force` in the same project, index and slices roll back, and `config.json` plus templates do not: a custom row template is replaced by the defaults, and a config that omitted a status label gains it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`_require_render`, `_project_snapshot`, `_restore_project`)\n- `src/slicer/migrator.py` only if the write set has to be shared\n- `tests/test_cli.py` or the migrate tests"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `migrate --render --require-render` in an empty directory whose render then fails leaves no `.slicer/` behind. The exit is 2 and the code is `render`.\n2. The same command with the working directory inside an existing project does not leave a new nested `.slicer/` when render fails, and it does not modify the ancestor.\n3. `migrate --force --render --require-render` on a project with a custom `templates/row.md` and a config that omits a stock status label restores those files as well as the index, log, slices, and render output."
+    },
+    {
+      "heading": "Implement",
+      "body": "Snapshot the directory the handler will write, not an ancestor discovered before `migrate` creates `.slicer/`. Include `config.json` and `templates/`, and skip the lock. If that directory did not exist, delete what the failed command created. Do not call `store.load` early enough to reject a create-path migrate. Keep the promise on the `render` error: state and generated output are as they were before the command."
+    },
+    {
+      "heading": "Check",
+      "body": "The three cases above pass. A successful `migrate --render --require-render` still writes the project and the render output. Other commands' `--require-render` rollback still passes. The suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

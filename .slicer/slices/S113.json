@@ -1,0 +1,39 @@
+{
+  "id": "S113",
+  "title": "Detect concurrent work on a slice across branches and worktrees",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "slicer's tracking state is per-branch, git-tracked JSON, so a slice marked\n`started` in one branch or worktree is invisible to another until they merge. On\n2026-09-28 two agent sessions implemented S105 at the same time in separate\nworktrees — one as `--strict`, one as `--require-render` — and neither saw the\nother's in-progress work; one complete, tested implementation had to be discarded\nand the other superseded on `main`. The `started` status only guards work within a\nsingle branch's state. Nothing on `start` or `next` signals that a slice is already\nbeing worked elsewhere, so parallel agents silently duplicate a slice."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py` — a read-only view of branches and worktrees. The allowlist\n  is currently `rev-parse`, `status`, `log`, `mv`, `ls-files`; it would gain only\n  read-only queries.\n- `src/slicer/ops.py` and `src/slicer/cli.py` — where `start` (and possibly `next`)\n  surfaces the warning.\n- a test that fakes a sibling branch/worktree and asserts the warning."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `slicer start SNN` warns (stderr, non-blocking, exit unchanged) when a worktree\n   or branch whose name references `SNN` already exists elsewhere in the repo.\n2. `slicer start SNN` is silent when no such branch or worktree exists.\n3. The new git queries are read-only and refused by `vcs._run` if off the allowlist."
+    },
+    {
+      "heading": "Implement",
+      "body": "Give slicer a read-only way to notice a slice is probably already being worked in a\nparallel branch or worktree, and warn on `start`. A cheap first cut: check\n`git worktree list` and `git branch --all` for a name that references the slice id\n(the repo already uses `feature/S<id>` branches) and print a non-blocking warning to\nstderr. Extend the `vcs` allowlist only for those read-only queries. Do NOT add\ncross-process locking, a shared claims registry, or blocking behavior in this slice.\n\nProduct decision to confirm before building: whether `next` should warn too, and\nwhether matching is by branch/worktree name or something stronger. Do not infer this\nfrom the backlog — agree it first."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer start` prints a non-blocking stderr warning when a sibling branch or\nworktree names the slice id, and stays silent otherwise. The git queries stay\nread-only and on the allowlist. Exit codes are unchanged."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, once the scope question above is settled."
+    }
+  ],
+  "notes": []
+}

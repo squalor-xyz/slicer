@@ -1,0 +1,42 @@
+{
+  "id": "S108",
+  "title": "Fold shipped notes into the 1.0.0 changelog",
+  "lead": [
+    "`__version__` is already `1.0.0`. `[Unreleased]` still holds the user-visible work landed after that section was written, and the tag has not been pushed.",
+    "**Not in this slice:** creating or pushing `v1.0.0`, changing `__version__`, or publishing to PyPI. `RELEASING.md` still owns the tag."
+  ],
+  "depends_note": null,
+  "findings_note": "credit review",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`RELEASING.md` says to move `[Unreleased]` into the version section and leave `[Unreleased]` empty before tagging. PyPI will not accept `1.0.0` again. The current `[1.0.0]` section does not mention `next --ready`, `--require-render`, `list --flag`, effort, lean JSON, `next-id`, the import preamble, the agent skill, the TUI queue order, or the pickup and loop changes this pass adds. Tagging current `main` without that edit publishes a changelog that omits those commands."
+    },
+    {
+      "heading": "Files",
+      "body": "- `CHANGELOG.md`\n- `src/slicer/__init__.py` only to confirm it still reads `1.0.0`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. After the edit, `[Unreleased]` has no Added, Changed, or Fixed notes. Every user-visible bullet that was under `[Unreleased]`, plus the pickup and the agent-loop changes, is under `[1.0.0]`.\n2. `__version__` is still `1.0.0`. No tag is created."
+    },
+    {
+      "heading": "Implement",
+      "body": "Move the shipped notes into `[1.0.0]` in the existing Added, Changed, and Fixed groups. Keep Keep-a-Changelog order. Do this only after the pickup slice and the agent-loop slice are done, so their notes are included. Leave the tag, the PyPI upload, and any version bump unperformed."
+    },
+    {
+      "heading": "Check",
+      "body": "`CHANGELOG.md` has an empty `[Unreleased]` and a `[1.0.0]` section that names the commands above. `slicer check` passes. `git tag --list v1.0.0` is empty."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

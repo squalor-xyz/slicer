@@ -1,0 +1,42 @@
+{
+  "id": "S109",
+  "title": "Stop generated roadmap files from conflict-marking on merge",
+  "lead": [
+    "Merging a slice branch conflicts on `.slicer/render/ROADMAP.md` and `ROADMAP.html` even when `index.json` merges clean. The repair is already \"run `slicer render`\", but git stops in the generated files first.",
+    "**Not in this slice:** changing what `render` writes, union-merging the markdown, or teaching slicer to run `git config`."
+  ],
+  "depends_note": null,
+  "findings_note": "credit review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`.slicer/.gitattributes` union-merges `log.jsonl` only. `ROADMAP.md` is about 18 KB and `ROADMAP.html` about 27 KB, so a conflict is both a manual step and a large read for an agent. `docs/getting-started.md` already says not to hand-merge `render/`. The merge still writes conflict markers because no driver is attached. A driver named in `.gitattributes` works only after the clone defines it; slicer's git allowlist does not include `config`, and this slice does not add it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (the `GITATTRIBUTES` text `init` writes)\n- `.slicer/.gitattributes` in this repo\n- `README.md` and `docs/getting-started.md` for the one-time driver setup\n- a merge test under `tests/`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Two branches that each change `ROADMAP.md` and `ROADMAP.html`, with `index.json` otherwise mergeable, merge with no conflict markers in those files when the documented driver is configured. One side's bytes are kept.\n2. `slicer render` then `slicer check` after that merge succeeds.\n3. `log.jsonl` still union-merges. `slicer init` writes the same attributes a new project needs."
+    },
+    {
+      "heading": "Implement",
+      "body": "Point the generated roadmap files at a merge driver that keeps the current branch's copy (`true` as the driver is enough). Document the two `git config` lines a clone runs once so the name in `.gitattributes` resolves. Update this repo's `.slicer/.gitattributes` and the `GITATTRIBUTES` constant together. Say in the getting-started merge row that the driver avoids markers and that `slicer render` is still required so the kept copy matches the index. Do not union the rendered files and do not mark them binary."
+    },
+    {
+      "heading": "Check",
+      "body": "The three cases above pass in a temporary git repo. `slicer check` passes. A merge of this repo's render files no longer requires deleting conflict markers by hand when the driver is configured."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

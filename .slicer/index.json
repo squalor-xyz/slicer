@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 106,
+  "next_id": 114,
   "preamble": "",
   "passes": [
     {
@@ -2543,6 +2543,202 @@
       "title": "Choose whether render success is required for a mutation",
       "short_title": "Choose whether render success is required for a mutation",
       "status": "done",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [
+        "**2026-09-29** — Landed as --strict (render-first via State.staged() + ops.render_gated) in commit 37b0d79, superseding the earlier --require-render implementation. The done history entry's note predates that decision."
+      ],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S106",
+      "title": "Return only the sections a pickup needs",
+      "short_title": "Return only the sections a pickup needs",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S107",
+      "title": "Point the agent loop at the small commands",
+      "short_title": "Point the agent loop at the small commands",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S106"
+      ],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S108",
+      "title": "Fold shipped notes into the 1.0.0 changelog",
+      "short_title": "Fold shipped notes into the 1.0.0 changelog",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S107"
+      ],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S109",
+      "title": "Stop generated roadmap files from conflict-marking on merge",
+      "short_title": "Stop generated roadmap files from conflict-marking on merge",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S110",
+      "title": "Roll back a partial render when done --render fails",
+      "short_title": "Roll back a partial render when done --render fails",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S111",
+      "title": "Roll migrate back when a required render fails",
+      "short_title": "Roll migrate back when a required render fails",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S112",
+      "title": "Label list columns and say when rows are hidden",
+      "short_title": "Label list columns and say when rows are hidden",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "credit review",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S113",
+      "title": "Detect concurrent work on a slice across branches and worktrees",
+      "short_title": "Detect concurrent work on a slice across branches and worktrees",
+      "status": "open",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
