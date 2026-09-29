@@ -24,6 +24,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer ai skill` prints one `SKILL.md` for Claude Code, Codex, and Grok. It names the implement loop and the exit codes, and it is generated from the same sentences as `slicer ai instructions`.
 - `slicer next` skips a slice whose Implement or Check is empty and names it in `unspecified`, with the `slicer edit` command that fills the section.
 - `slicer ai instructions` shows a repeated `--section` plus `--context` read. The headings in that example are illustrations; use the names the project configures.
+- The generated `.gitattributes` points `render/` at a `slicer-generated` merge driver so parallel branches keep the current branch's copy on merge instead of writing conflict markers into the large ROADMAP files. `slicer init` writes it; each clone defines the driver once with two `git config` lines (see the README and getting-started). `log.jsonl` still union-merges, and `slicer render` is still required so the kept files match the merged `index.json`.
 
 ## [1.0.0]
 

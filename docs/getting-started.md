@@ -591,6 +591,20 @@ change that cannot be rendered is rolled back instead of landing.
 it is what people read in a diff and in a pull request, and `check` fails when it is
 stale. That staleness check is the whole point: state and its rendering cannot drift.
 
+**Set up the render merge driver once per clone.** The generated `.gitattributes` points
+`render/` at a `slicer-generated` driver so a merge keeps the current branch's copy instead
+of writing conflict markers into those large files. A driver name only resolves once the
+clone defines it, and slicer's git allowlist cannot run `git config` for you, so run these
+two lines once in each clone:
+
+```sh
+git config merge.slicer-generated.name "keep the current branch's generated files"
+git config merge.slicer-generated.driver true
+```
+
+The kept copy still has to match the merged `index.json`, so re-run `slicer render` after
+resolving a merge — the driver only skips the markers, it does not re-project the state.
+
 ### Priority
 
 Every item carries an **importance** and an **urgency**, each 1–3 (default 2). Set them
@@ -736,7 +750,7 @@ nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
 | `stale render: …` / `check failed` | Run `slicer render` (and `slicer sync` if you have sync targets). |
 | `template missing; re-run \`slicer init --force\` to restore it` | A file under `.slicer/templates/` was deleted. |
 | `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
-| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth — resolve a real overlap there by hand. For anything under `render/`, don't merge it: resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue; `slicer check` catches a forgotten re-render. |
+| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth — resolve a real overlap there by hand. For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see below) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. |
 
 `slicer verify` is the broader health check — dangling dependencies, cycles, a dependency
 on a retired item, slices in the wrong folder for their status, a slice file whose name
