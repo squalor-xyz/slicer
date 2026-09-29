@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-142 items · — 3 · done 138 · retired 1
+142 items · — 2 · done 139 · retired 1
 
 v1.0.0 release
 
@@ -73,7 +73,7 @@ v1.1.0 release
 | 36 | [S129](slices/S129.md) | Make the suite independent of where TMPDIR points |  | 1 |  |  | done |
 | 37 | [S132](slices/S132.md) | Render empty slice metadata without broken emphasis |  | 1 |  |  | — |
 | 38 | [S134](slices/S134.md) | Show pass membership in the list table |  | 1 |  |  | done |
-| 39 | [S141](slices/S141.md) | Move the TUI manual out of the README into docs/tui.md | S | 1 | slicer | docs review: README carries the only full TUI manual | — |
+| 39 | [S141](slices/S141.md) | Move the TUI manual out of the README into docs/tui.md | S | 1 | slicer | docs review: README carries the only full TUI manual | done |
 | 40 | [S142](slices/S142.md) | Slim the README to a front page and give each doc topic one home | M | 2 | slicer | docs review: README duplicates install, batch, goals and next/list detail from docs | — |
 
 ---
