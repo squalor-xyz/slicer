@@ -1,0 +1,41 @@
+{
+  "id": "S131",
+  "title": "Reject unknown dependency ids at set time",
+  "lead": [
+    "`set --depends-on` writes any string into `depends_on` without checking it names a real\nitem, so a mutation command can leave the roadmap in a state `check` then rejects."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Filing the S128→S130 edge, `slicer set S128 --depends-on \"S124,S125,S126,S127,S130\"`\nreplaced the edge list with a single dependency literally named\n`\"S124,S125,S126,S127,S130\"`. The command printed `updated S128` and exited 0. Only the\nseparate `slicer check` caught it, as `S128: depends on unknown id S124,S125,S126,S127,S130`.\n\n`--depends-on` is `action=\"append\"` and its help says \"repeatable\" (`src/slicer/cli.py:1667`),\nso a comma list is the caller's mistake -- but slicer should refuse it rather than store it.\n`set_fields_many` (`src/slicer/ops.py:329`) already validates the things it knows how to:\n`status` against `config.statuses`, and `importance`/`urgency`/`effort` through\n`_valid_score`. `_batch_items` validates the *target* ids via `state.index.require`. The\ndependency ids are the one input that goes in unchecked.\n\nTwo further gaps this exposed:\n\n- `--render --strict` did not roll the change back. The render succeeded (\"rendered 0\n  file(s)\") because dependency edges are not rendered, so strict was satisfied by a render\n  that could not have failed. Strict currently guarantees nothing about referential integrity.\n- The repo's own rule is that import and migration are all-or-nothing, and `migrator.py:336`\n  refuses an outline with `depends on unknown id`. A direct `set` is held to a weaker\n  standard than an import of the same edge."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`set_fields_many`, where `status` and the scores are already validated)\n- `src/slicer/graph.py` (`dangling` and `cycles` already exist and are the reusable check)\n- `tests/test_cli.py` / the ops tests, for the new refusals\n- `src/slicer/cli.py` only if the `--depends-on` help or error text needs to say \"repeatable\" louder"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `set <id> --depends-on \"S1,S2\"` exits non-zero, changes nothing on disk, and the error\n   names the offending id and says the flag is repeatable.\n2. `set <id> --depends-on <unknown-id>` is refused the same way.\n3. A refused `set` that names several fields at once leaves *every* field unchanged, not\n   just `depends_on` -- the all-or-nothing rule import already follows.\n4. Setting valid dependency ids still works, including several repeated `--depends-on` flags.\n5. `slicer check` still reports a dangling edge that predates this change, so existing state\n   with a bad edge is not made unreachable."
+    },
+    {
+      "heading": "Implement",
+      "body": "Validate `depends_on` in `set_fields_many` alongside the existing `status` and score checks,\nbefore anything is saved, and raise `StateError` naming the unknown id. Reuse\n`graph.dangling` rather than writing a second membership test. `set_fields_many` already\ncollects its validation up front and saves once, so the all-or-nothing property falls out if\nthe check goes in the validation loop rather than the mutation loop.\n\nSettle with the project before building, do not infer:\n\n- Whether the same validation belongs on `add`/`promote`'s `--depends-on` path, which reaches\n  ops through the same field (`cli.py:984`, `cli.py:1031`).\n- Whether a self-edge and a cycle should also be refused here, given `graph.cycles` exists and\n  `verify` already reports both. Refusing at set time is stricter than today and could block a\n  legitimate intermediate state while rewiring several edges.\n- Whether `--strict` should mean more than \"the render succeeded\". Widening it is a bigger\n  change than this slice and may belong on its own.\n\nPick an error `code` consistent with the existing vocabulary; the message is free to reword but\nthe code is the contract."
+    },
+    {
+      "heading": "Check",
+      "body": "The refusals above hold, nothing is written on a refused `set`, valid edges still land, the\nsuite passes, and `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

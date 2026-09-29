@@ -600,3 +600,4 @@
 {"when": "2026-09-29T15:26:17Z", "item": "S130", "action": "add", "from": "", "to": "open", "note": "Advertise Python 3.14 in the package classifiers"}
 {"when": "2026-09-29T15:27:51Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127→S124,S125,S126,S127,S130"}
 {"when": "2026-09-29T15:27:58Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127,S130→S124,S125,S126,S127,S130"}
+{"when": "2026-09-29T15:29:33Z", "item": "S131", "action": "add", "from": "", "to": "open", "note": "Reject unknown dependency ids at set time"}

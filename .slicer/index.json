@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 131,
+  "next_id": 132,
   "preamble": "",
   "passes": [
     {
@@ -3272,6 +3272,29 @@
         "group": "",
         "reason": "",
         "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S131",
+      "title": "Reject unknown dependency ids at set time",
+      "short_title": "Reject unknown dependency ids at set time",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
         "urgency": 2,
         "effort": 1
       }

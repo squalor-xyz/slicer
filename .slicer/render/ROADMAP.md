@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-130 items · — 5 · done 124 · retired 1
+131 items · — 6 · done 124 · retired 1
 
 v1.0.0 release
 
@@ -163,3 +163,4 @@ v1.0.0 release
 | 128 | [S128](slices/S128.md) | Cut and tag the 1.0.0 release |  | 1 |  |  | — |
 | 129 | [S129](slices/S129.md) | Make the suite independent of where TMPDIR points |  | 1 |  |  | — |
 | 130 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | — |
+| 131 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 1 |  |  | — |
