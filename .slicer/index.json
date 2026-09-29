@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 139,
+  "next_id": 140,
   "preamble": "",
   "passes": [
     {
@@ -3217,7 +3217,10 @@
         "S127",
         "S130",
         "S131",
-        "S133"
+        "S133",
+        "S136",
+        "S137",
+        "S138"
       ],
       "notes": [
         "**2026-09-29** — Release-workflow review: publish.yml publishes via PyPI trusted publishing (OIDC), so before the first v* tag a pending publisher must be configured on PyPI (owner: squalor-xyz, repo: slicer, workflow: publish.yml, environment: pypi) per the publish.yml header. Follow RELEASING.md to cut the tag. S124 must bump the matrix in BOTH ci.yml and publish.yml. pyproject reads the version from slicer.__version__, and the publish job asserts the tag equals v<version>."
@@ -3417,11 +3420,11 @@
         ],
         "trees_literal": false,
         "findings": "S127 docs audit: next_item ignores claims and sibling worktrees",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 2
       }
     },
@@ -3442,11 +3445,11 @@
         ],
         "trees_literal": false,
         "findings": "S127 docs audit: add --pass '' still inherits the previous item's pass",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 1,
+        "urgency": 3,
         "effort": 1
       }
     },
@@ -3467,11 +3470,36 @@
         ],
         "trees_literal": false,
         "findings": "S127 review: ai instructions length, owner question",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 1,
+        "urgency": 3,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S139",
+      "title": "Tell agents to fill in priority and estimate fields when filing items",
+      "short_title": "Tell agents to fill in priority and estimate fields when filing items",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, 2026-09-29 v1.0.0 triage",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
         "effort": 1
       }
     }

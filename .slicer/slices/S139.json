@@ -1,0 +1,41 @@
+{
+  "id": "S139",
+  "title": "Tell agents to fill in priority and estimate fields when filing items",
+  "lead": [
+    "Agent guidance for creating roadmap items never asks for importance, urgency, effort, size, tree or findings, so agent-filed items land at the defaults and the roadmap cannot be sorted until someone scores them by hand."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, 2026-09-29 v1.0.0 triage",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Every item defaults to importance 2, urgency 2 and no effort, and `list`, `next` and `sort` rank on those fields. At the start of the 2026-09-29 v1.0.0 triage, all six open items in this repo scored 32 with no quadrant, so the queue order carried no information and a separate pass was needed to score them. The agent-facing text does not prompt for these fields: the \"Plan and record agreed work\" section of `slicer ai instructions` (`src/slicer/ai.py`, `INSTRUCTIONS`) shows `slicer add \"Title\" --render --json` with only `--depends-on`, and the \"Convert an agreed roadmap\" prompt in `docs/agents.md` asks for importance and urgency but not `effort`, `size`, `tree` or `findings`. `slicer import --skeleton` already lists every metadata key, so the outline path has the shape; the guidance just does not ask for it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py` (`INSTRUCTIONS`, the \"Plan and record agreed work\" section; `LOOP`, `EXITS` and `SPEC_GAP` are shared with `ai skill`)\n- `docs/agents.md` (the \"Plan a new project\", \"Review an existing project\" and \"Convert an agreed roadmap\" prompts, and the agent rules)\n- `tests/test_ai.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `ai instructions` tells an agent filing an item, by `add` or by outline, to propose `--importance`, `--urgency` and `--effort` (and `--size`, `--tree` and `--findings` where the project uses them), with a one-line reason for each score, instead of leaving the defaults.\n2. Its `add` example includes those flags and still parses (the existing parser-example test).\n3. The `docs/agents.md` planning and conversion prompts ask for the same fields.\n4. The existing `tests/test_ai.py` guarantees still hold, and `ai skill` output is unchanged unless the shared loop is deliberately edited."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle with the project before building, do not infer:\n\n- Whether the agent sets proposed values directly and reports them, or proposes them for the owner to confirm before filing.\n- Whether `add` or `import --dry-run` should also warn when an item is filed at the default 2/2 with no effort. That is a tool change, not a docs change, and may belong in its own slice.\n\nThen update the planning text and prompts. Keep the addition short: S138 is trimming the same `INSTRUCTIONS` text, so do the two together or rebase one on the other."
+    },
+    {
+      "heading": "Check",
+      "body": "The tests above pass; the suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
