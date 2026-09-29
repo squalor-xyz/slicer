@@ -109,6 +109,15 @@ class Slice:
     )
 
 
+def is_unscored(importance: int, urgency: int, effort: int | None) -> bool:
+  """True when importance and urgency are the default 2 and effort is unset.
+
+  A deliberate 2/2 with an effort estimate is scored; only the untouched
+  defaults are, because they leave the queue with nothing to sort on.
+  """
+  return importance == 2 and urgency == 2 and effort is None
+
+
 @dataclass
 class Item:
   """One roadmap entry. May exist with no slice file (`has_slice=False`).
@@ -147,6 +156,11 @@ class Item:
 
   def display_title(self) -> str:
     return self.short_title or self.title
+
+  @property
+  def unscored(self) -> bool:
+    """Every priority field still at its default, so the item ranks on nothing."""
+    return is_unscored(self.importance, self.urgency, self.effort)
 
   @property
   def score(self) -> int:

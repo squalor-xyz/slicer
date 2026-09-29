@@ -114,7 +114,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run] [--force]` | convert an existing legacy markdown tree; `--force` replaces an existing roadmap |
-| `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--effort/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies. `--effort` is 1–3 and optional |
+| `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--effort/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies. `--effort` is 1–3 and optional; an open item left at importance 2, urgency 2 and no effort gets a stderr hint |
 | `promote ID [--file/--stdin] [--boundary TEXT] [--force]` | give an item a slice file; a one-item outline fills its sections in one call. `--force` overwrites an existing slice |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |

@@ -347,6 +347,9 @@ added S02  Fail loudly on a missing key
 item ids), and `--short-title` for a shorter roadmap label while retaining the full
 title. Omitted or empty short titles fall back to the full title. Use `set` to change
 these fields later; repeated `set --depends-on` flags replace the dependency list.
+An open item left at importance 2, urgency 2 and no effort ranks on nothing, so `add`
+prints a stderr hint to score it and `import` lists such items under `warn`; neither
+changes what is written or the exit code.
 Both refuse a dependency `check` would reject — an unknown id (a comma list such as
 `S01,S02` is one unknown id; repeat the flag instead), the item itself, a retired item, or
 an edge that closes a cycle — and write nothing.

@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Settle with the project before building, do not infer: whether \"unscored\" means 2/2 with no effort or any of the three left at its default, whether a config switch turns the hint off, and whether it belongs in `add`, `import`, or both."
+      "body": "Settle with the project before building, do not infer: whether \"unscored\" means 2/2 with no effort or any of the three left at its default, whether a config switch turns the hint off, and whether it belongs in `add`, `import`, or both.\n\nSettled with the owner (2026-09-29, the agent's recommendations accepted):\n\n- \"Unscored\" means all three at their defaults: importance 2, urgency 2, and no effort. A deliberate 2/2 with an effort estimate stays quiet.\n- No config switch: the hint never touches stdout, the JSON payload, or the exit code.\n- Both: `add` prints a stderr hint; `import` (dry run and real) lists unscored items in its existing `warnings`."
     },
     {
       "heading": "Check",

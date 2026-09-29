@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer add` prints a non-blocking stderr hint when an open or started item is filed at importance 2, urgency 2 and no effort, and `slicer import` (dry run and real) names such items in `warnings`, so an unscored item is caught when it is filed rather than when the queue will not sort. Stdout, the JSON payload and the exit code are unchanged; a deliberate 2/2 with an effort estimate is quiet.
 - `slicer start` records a claim on the item (owner and time). `slicer list` names the owner and marks other in-progress rows with `*`; `--json` includes `claim`. `slicer release` clears a claim without changing status, and `done` clears it too. The owner is config `claim_owner`, otherwise the git user name, otherwise the worktree name.
 - `slicer start` warns on stderr when another branch or worktree name refers to that slice id. The current checkout is ignored, the exit code is unchanged, and `next` stays silent.
 - Text `slicer list` now labels its columns and reports how many matching done or retired items the default filter hides, with a `--all` hint. JSON output remains an array.
