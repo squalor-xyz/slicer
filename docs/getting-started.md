@@ -57,17 +57,8 @@ To try unreleased main instead of the latest release, replace the package name w
 
 ### Develop on it (clone + editable)
 
-To change slicer itself, use an editable install so the command tracks your checkout:
-
-```sh
-git clone git@github.com:squalor-xyz/slicer.git
-cd slicer
-python3 -m venv .venv
-.venv/bin/pip install -e .
-ln -s "$PWD/.venv/bin/slicer" ~/.local/bin/slicer   # or anywhere on your PATH
-```
-
-The install is editable, so `slicer` follows the checkout.
+To change slicer itself, use the editable contributor install in
+[AGENTS.md](../AGENTS.md#install); the command then tracks your checkout.
 
 If `slicer` is not found, check that the directory containing its executable is on
 `PATH`. Contributors can run `PYTHONPATH=src python3 -m slicer --help` directly from
@@ -375,11 +366,12 @@ that is [step 5](#5-turn-an-item-into-a-slice).
 
 ```console
 $ slicer list
-  1  S01   —       M  22  -         Parse the config file
-  2  S02   —       S  22  -         Fail loudly on a missing key
+  #  ID    STATUS  CLAIM SIZE EFFORT SCORE QUADRANT  TITLE
+  1  S01   —       -     M    -      22    -         Parse the config file
+  2  S02   —       -     S    -      22    -         Fail loudly on a missing key
 ```
 
-The `22` and `-` columns are the priority score and quadrant (see
+The SCORE and QUADRANT columns are the priority score and quadrant (see
 [step 6](#6-the-loop)); a fresh item sits at a neutral 2/2.
 
 ### 4b. In bulk, from a markdown outline
@@ -736,8 +728,8 @@ everything, or live with that untitled group at the bottom.
 
 Each pass carries its own prose — `pass.2.heading`, `pass.2.intro`, `pass.2.outro` —
 alongside the roadmap's `preamble`, `goals`, `non_goals`, and `epilogue`. `slicer prose
-list` names every block in render order; `slicer prose edit REF` changes one. See the
-README's [Roadmap prose](../README.md#roadmap-prose) section.
+list` names every block in render order; `slicer prose edit REF` changes one. See
+[Roadmap prose](commands.md#roadmap-prose) in the command reference.
 
 A pass is one milestone, and trees name subsystems. Flags are the other axis: free-form
 labels an item can hold several of at once, such as `security` or `perf`. Set them with
