@@ -109,6 +109,10 @@ class Config:
   # `verify`'s git cross-check. Off for projects whose history cannot satisfy
   # it -- a repo split from another, where items were finished before it began.
   git_check: bool = True
+  # `verify`'s render-merge-driver reminder. On by default, but only fires when
+  # this checkout has sibling worktrees (the workflow the driver serves). Off
+  # silences it entirely, for a project that does not use the driver.
+  render_driver_check: bool = True
   # Who `start` records when it claims an item. Empty means git user.name,
   # then the worktree directory name.
   claim_owner: str = ""
@@ -182,6 +186,7 @@ class Config:
       },
       "sync": {"targets": [t.to_dict() for t in self.sync_targets]},
       "git_check": self.git_check,
+      "render_driver_check": self.render_driver_check,
       "claim_owner": self.claim_owner,
     }
 
@@ -232,6 +237,7 @@ class Config:
       later=pointers.get("later", json.loads(json.dumps(DEFAULT_LATER))),
       sync_targets=[SyncTarget.from_dict(t) for t in d.get("sync", {}).get("targets", [])],
       git_check=bool(d.get("git_check", True)),
+      render_driver_check=bool(d.get("render_driver_check", True)),
       claim_owner=_claim_owner(d.get("claim_owner", "")),
     )
     cfg.validate()

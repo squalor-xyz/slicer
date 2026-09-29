@@ -3134,7 +3134,7 @@
       "id": "S125",
       "title": "Tame the verify render-driver warning for solo projects",
       "short_title": "Tame the verify render-driver warning for solo projects",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
