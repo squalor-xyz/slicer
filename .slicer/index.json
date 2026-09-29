@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 132,
+  "next_id": 135,
   "preamble": "",
   "passes": [
     {
@@ -3168,11 +3168,11 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 3,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 2
       }
     },
@@ -3182,8 +3182,13 @@
       "short_title": "Bring all docs up to date for the 1.0.0 release",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
-      "notes": [],
+      "depends_on": [
+        "S131",
+        "S133"
+      ],
+      "notes": [
+        "**2026-09-29** — Docs gap found while triaging: `slicer add` inherits the previous item's pass (`src/slicer/ops.py:105`, documented only in `docs/import.md:155` and CHANGELOG). `add --pass` help (`src/slicer/cli.py:1674`) and getting-started §7 do not say so; with the v1 pass as the tail, a post-1.0 item filed with `add` silently lands in v1. `set ID --pass ''` clears it."
+      ],
       "claim": null,
       "fields": {
         "size": "",
@@ -3191,11 +3196,11 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 3,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 3
       }
     },
@@ -3210,7 +3215,9 @@
         "S125",
         "S126",
         "S127",
-        "S130"
+        "S130",
+        "S131",
+        "S133"
       ],
       "notes": [
         "**2026-09-29** — Release-workflow review: publish.yml publishes via PyPI trusted publishing (OIDC), so before the first v* tag a pending publisher must be configured on PyPI (owner: squalor-xyz, repo: slicer, workflow: publish.yml, environment: pypi) per the publish.yml header. Follow RELEASING.md to cut the tag. S124 must bump the matrix in BOTH ci.yml and publish.yml. pyproject reads the version from slicer.__version__, and the publish job asserts the tag equals v<version>."
@@ -3222,11 +3229,11 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 3,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 1
       }
     },
@@ -3248,7 +3255,7 @@
         "pass": "",
         "group": "",
         "reason": "",
-        "importance": 3,
+        "importance": 2,
         "urgency": 2,
         "effort": 1
       }
@@ -3268,11 +3275,11 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 1
       }
     },
@@ -3291,11 +3298,80 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 3,
-        "urgency": 2,
+        "urgency": 3,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S132",
+      "title": "Render empty slice metadata without broken emphasis",
+      "short_title": "Render empty slice metadata without broken emphasis",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S133",
+      "title": "Key JSON status tallies by status, not display label",
+      "short_title": "Key JSON status tallies by status, not display label",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "v1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S134",
+      "title": "Show pass membership in the list table",
+      "short_title": "Show pass membership in the list table",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1
       }
     }

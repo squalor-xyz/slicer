@@ -1,0 +1,41 @@
+{
+  "id": "S133",
+  "title": "Key JSON status tallies by status, not display label",
+  "lead": [
+    "`stats --json` and `import --json` report `by_status` keyed by each status's display label, so open items appear under `\"—\"` rather than `\"open\"`."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The goals promise `--json` with stable envelopes so agents automate without parsing prose. In this repo `slicer stats --json` returns `\"by_status\": {\"done\": 124, \"—\": 7, \"retired\": 1}`, and `import --dry-run --json` returned `\"by_status\": {\"—\": 1}`. The keys come from `cfg.status_label(...)` (`src/slicer/cli.py:1430` and `:1436` in `_census`, `src/slicer/ops.py:894`, `src/slicer/migrator.py:346`), which is the configured display string, not the status key that `set --status`, `list --status` and the item JSON (`\"status\": \"open\"`) use. A project that relabels a status therefore changes its JSON keys, and an agent cannot join the tally to item statuses. The existing tests (`tests/test_cli.py:77`, `tests/test_start.py:199`) only check `done` and `started`, whose labels match their keys, so the drift is uncaught. Once 1.0.0 is published, changing these keys is a breaking change to a documented envelope (`docs/agents.md:154`, `:167`), so this is the cheapest moment to settle it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`_census`, line 1423, which builds `by_status` and `by_tree_status` for both `stats` and `status`)\n- `src/slicer/ops.py:894` (the import outline report) and `src/slicer/migrator.py:346` (the migrate report)\n- `tests/test_cli.py`, `tests/test_import.py`\n- `docs/agents.md`, `docs/import.md` (the `by_status` example), `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. In a project whose open status has a label different from its key, `stats --json` and `import --json` key `by_status` by the status key (`\"open\"`).\n2. `by_tree_status` keys the same way.\n3. The human `stats` text output may keep showing labels."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle with the project before building, do not infer: whether the JSON keys should be the status keys (the recommendation, matching the item JSON), and whether the human output keeps labels. Then key the JSON tallies by status key, keep labels for text output, and note the envelope change in the CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "The tests above pass; docs match the envelope; suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

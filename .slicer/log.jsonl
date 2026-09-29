@@ -601,3 +601,19 @@
 {"when": "2026-09-29T15:27:51Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127→S124,S125,S126,S127,S130"}
 {"when": "2026-09-29T15:27:58Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127,S130→S124,S125,S126,S127,S130"}
 {"when": "2026-09-29T15:29:33Z", "item": "S131", "action": "add", "from": "", "to": "open", "note": "Reject unknown dependency ids at set time"}
+{"when": "2026-09-29T15:33:25Z", "item": "S126", "action": "set", "from": "", "to": "", "note": "pass_key -→v1; urgency 2→3"}
+{"when": "2026-09-29T15:33:25Z", "item": "S127", "action": "set", "from": "", "to": "", "note": "pass_key -→v1; urgency 2→3"}
+{"when": "2026-09-29T15:33:25Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "pass_key -→v1; urgency 2→3"}
+{"when": "2026-09-29T15:33:26Z", "item": "S130", "action": "set", "from": "", "to": "", "note": "pass_key -→v1; urgency 2→3"}
+{"when": "2026-09-29T15:33:35Z", "item": "S126", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-09-29T15:33:56Z", "item": "S132", "action": "add", "from": "", "to": "open", "note": "Render empty slice metadata without broken emphasis"}
+{"when": "2026-09-29T15:34:21Z", "item": "S133", "action": "add", "from": "", "to": "open", "note": "Key JSON status tallies by status, not display label"}
+{"when": "2026-09-29T15:34:33Z", "item": "S133", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-09-29T15:34:41Z", "item": "S133", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-09-29T15:34:49Z", "item": "S134", "action": "add", "from": "", "to": "open", "note": "Show pass membership in the list table"}
+{"when": "2026-09-29T15:35:16Z", "item": "S134", "action": "set", "from": "", "to": "", "note": "pass_key v1→-"}
+{"when": "2026-09-29T15:35:49Z", "item": "S127", "action": "note", "from": "", "to": "", "note": "Docs gap found while triaging: `slicer add` inherits the pre"}
+{"when": "2026-09-29T15:39:34Z", "item": "S131", "action": "set", "from": "", "to": "", "note": "pass_key -→v1; urgency 2→3; effort 1→2"}
+{"when": "2026-09-29T15:39:34Z", "item": "S129", "action": "set", "from": "", "to": "", "note": "importance 3→2"}
+{"when": "2026-09-29T15:39:34Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127,S130→S124,S125,S126,S127,S130,S131,S133"}
+{"when": "2026-09-29T15:42:39Z", "item": "S127", "action": "set", "from": "", "to": "", "note": "depends_on -→S131,S133"}

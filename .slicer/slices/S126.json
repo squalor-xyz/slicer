@@ -20,7 +20,7 @@
     },
     {
       "heading": "Failing tests",
-      "body": "1. A project written at schema 1 (older `claim`-less index and slices) loads without error, reads items as unclaimed, and the next save re-stamps `version` to 2 in both `index.json` and `config.json`.\n2. A schema-2 project is refused by the v1 reader path with `code=\"schema_too_new\"` (the existing future-schema guard).\n3. `slicer check`/`verify` are clean immediately after such an upgrade save plus a render."
+      "body": "1. A project written at index schema 1 (older `claim`-less index and slices) loads without error, reads items as unclaimed, and the next save re-stamps `index.json` `version` to 2. `config.json` carries its own, separate schema version (`config.SCHEMA_VERSION = 1`, `src/slicer/config.py:86`) and stays at 1; the docs must not conflate the two.\n2. A schema-2 project is refused by the v1 reader path with `code=\"schema_too_new\"` (the existing future-schema guard).\n3. `slicer check`/`verify` are clean immediately after such an upgrade save plus a render."
     },
     {
       "heading": "Implement",
