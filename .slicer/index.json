@@ -2616,7 +2616,7 @@
       "id": "S108",
       "title": "Fold shipped notes into the 1.0.0 changelog",
       "short_title": "Fold shipped notes into the 1.0.0 changelog",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S107"

@@ -6,12 +6,22 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.0.0]
+
 ### Added
 
 - `--strict`, with `--render`, keeps a mutation only when rendering succeeds. The change is rendered before it lands, and a render failure rolls the whole change back — leaving state and generated output untouched — and exits 2 with `code="render"`. `--render` alone still saves first. `done --render` already requires a successful render and now shares the same render-first path.
 - `slicer next --ready` returns a bounded pickup of the next eligible item: its id, title, status, dependencies, effective score, and slice path; the slice when it has one; and the blocked list. An empty queue matches `next` (exit 2, `item: null`). `--ready` with `--show` is a usage error.
 - `slicer next --ready --section NAME` repeats to return the scope boundary and those section bodies only. Omitting `--section` still returns the full slice. `--section` without `--ready` is a usage error. `--json --lean` applies to that payload.
 - `slicer list --flag` filters by a free-form flag. Repeat it to match any of the named flags. The TUI filter panel offers the same flag axis, including items with no flags.
+- Agent onboarding instructions with reusable prompts and a no-state quick start.
+- JSON output for commands, including structured error envelopes for failures.
+- A no-clone install path using an isolated Python environment.
+- Roadmap commands for goals, status, dependencies, search, sorting, notes, and
+  progress statistics.
+- TUI search, filters, jump and help; item and slice note editing; queue
+  reordering; and a guided roadmap wizard.
+- Browser-viewable HTML roadmap rendering.
 
 ### Changed
 
@@ -27,22 +37,6 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer next` skips a slice whose Implement or Check is empty and names it in `unspecified`, with the `slicer edit` command that fills the section.
 - `slicer ai instructions` shows a repeated `--section` plus `--context` read. The headings in that example are illustrations; use the names the project configures.
 - The generated `.gitattributes` points `render/` at a `slicer-generated` merge driver so parallel branches keep the current branch's copy on merge instead of writing conflict markers into the large ROADMAP files. `slicer init` writes it; each clone defines the driver once with two `git config` lines (see the README and getting-started). `log.jsonl` still union-merges, and `slicer render` is still required so the kept files match the merged `index.json`.
-
-## [1.0.0]
-
-### Added
-
-- Agent onboarding instructions with reusable prompts and a no-state quick start.
-- JSON output for commands, including structured error envelopes for failures.
-- A no-clone install path using an isolated Python environment.
-- Roadmap commands for goals, status, dependencies, search, sorting, notes, and
-  progress statistics.
-- TUI search, filters, jump and help; item and slice note editing; queue
-  reordering; and a guided roadmap wizard.
-- Browser-viewable HTML roadmap rendering.
-
-### Changed
-
 - `next` reports item score and status, supports offsets, and can start the
   selected item.
 - `move` supports moving an item to a chosen position or to the top of the
