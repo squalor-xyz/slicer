@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- The different-worktree warning no longer fires for a project elsewhere in the code's own worktree (a nested subproject, or a test fixture under an ignored scratch directory). It now requires the two paths to be different worktrees, not merely the same repo. The suite passes with the in-checkout `TMPDIR` that AGENTS.md documents.
+
 ## [1.0.0] - 2026-09-29
 
 ### Added

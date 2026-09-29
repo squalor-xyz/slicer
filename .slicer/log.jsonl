@@ -670,3 +670,6 @@
 {"when": "2026-09-29T19:04:42Z", "item": "S129", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.1"}
 {"when": "2026-09-29T19:04:42Z", "item": "S134", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.1"}
 {"when": "2026-09-29T19:04:42Z", "item": "S132", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.1"}
+{"when": "2026-09-29T19:12:08Z", "item": "S129", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-09-29T19:12:08Z", "item": "S129", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-29T19:19:35Z", "item": "S129", "action": "status", "from": "started", "to": "done", "note": "Detector now requires differing worktree toplevels, not just a shared git common dir; nested-project regression test added; test_merge outside-repo test uses isolated_discovery. Suite green (902, 1 skipped) with in-checkout and default TMPDIR."}

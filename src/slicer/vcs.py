@@ -246,8 +246,9 @@ def foreign_worktree(root: Path, code_dir: Path) -> str | None:
   trap, where edits in the project's own `src/` are not what actually runs.
 
   Returns None for ordinary use: code under the project (normal dev or
-  `PYTHONPATH=src`), or code from an unrelated location such as a site-packages
-  install (a different repo, or no repo at all). Best-effort and read-only; any
+  `PYTHONPATH=src`), a project elsewhere in the code's own worktree, or code
+  from an unrelated location such as a site-packages install (a different repo,
+  or no repo at all). Best-effort and read-only; any
   failure yields None so it can never break a command.
   """
   try:
@@ -259,6 +260,15 @@ def foreign_worktree(root: Path, code_dir: Path) -> str | None:
     return None
   code_common = _git_common_dir(code_dir)
   if code_common is None or code_common != _git_common_dir(root):
+    return None
+  # Same repo is not enough: a project nested in the code's own worktree (a
+  # subproject, or a test fixture under an ignored scratch dir) runs this
+  # worktree's code, so only differing worktree toplevels are the trap.
+  try:
+    code_tree = _current_worktree(code_dir)
+    if code_tree is None or code_tree == _current_worktree(root):
+      return None
+  except OSError:
     return None
   return (
     f"running code from {code_dir}, but this project is {root} -- a different "
