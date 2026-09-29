@@ -102,11 +102,14 @@ and the output says which happened and why.
 **The folder is the status, made visible on disk.** `State.slice_path` derives the
 directory from the item's status, and `ops.set_status` moves the file with `git mv` when
 the status crosses a folder boundary, so the change stays one tracked rename.
-For a render-first mutation — `done --render`, or any mutation run under `--strict` — `ops`
+For a render-first item mutation — `done --render`, or one run under `--strict` — `ops`
 renders the proposed state before it lands. `State.staged()` buffers every persistence side
 effect (index and slice writes, history lines, and slice-file moves) while `ops.render_gated`
 renders; a template or render failure discards the whole batch, leaving state and `render/`
 untouched, and re-raises. The default `--render` still saves first and renders after.
+`migrate --render --strict` is the exception to staging: migration also writes config
+and templates and may create `.slicer/`, so the CLI snapshots that exact directory
+and restores it if rendering fails.
 
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
 `ls-files`. `commit`, `push` and `tag` are unreachable from the code — not by convention

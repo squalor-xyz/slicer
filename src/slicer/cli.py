@@ -16,10 +16,11 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import nullcontext, redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from slicer import check as check_mod
@@ -100,7 +101,8 @@ def _mutating(fn):
   buffers the mutation and its output, renders the proposed state, and only then
   lets the change land — the render-first policy `done` already follows, offered
   to any mutation. A render failure there rolls the whole change back and prints
-  nothing.
+  nothing. Migration uses `_migrate_strict` because it also replaces config and
+  templates and may create the tracking directory.
   """
   def wrapped(args: argparse.Namespace) -> int:
     render_on = getattr(args, "render", False) and not getattr(args, "dry_run", False)
@@ -109,6 +111,8 @@ def _mutating(fn):
     if not render_on:
       return fn(args)
     if getattr(args, "strict", False):
+      if args.command == "migrate":
+        return _migrate_strict(fn, args)
       return _mutate_strict(fn, args)
     code = fn(args)
     if code != OK:
@@ -159,6 +163,57 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
   return code
 
 
+def _migrate_strict(fn, args: argparse.Namespace) -> int:
+  """Roll back every file migrate can replace if its required render fails.
+
+  Migrate creates config and templates as well as state, so it cannot use the
+  staged State transaction used by ordinary mutations. Snapshot its exact
+  target directory, never an ancestor found by project discovery.
+  """
+  base = Path(args.root or ".").resolve() / store.DIR_NAME
+  existed = base.exists()
+  directories = {
+    path.relative_to(base) for path in base.rglob("*") if path.is_dir()
+  } if existed else set()
+  saved = {
+    path.relative_to(base): path.read_bytes()
+    for path in base.rglob("*") if path.is_file() and path.name != store.LOCK_NAME
+  } if existed else {}
+  args._defer_output = True
+  try:
+    code = fn(args)
+    if code != OK:
+      return code
+    state = store.load(base.parent)
+    expected = render.plan(state)
+    written = len(render.write_atomic(
+      expected, state.render_dir, render.compare(expected, state.render_dir)
+    ))
+  except BaseException:
+    if not existed:
+      if base.exists():
+        shutil.rmtree(base)
+    else:
+      for path in sorted(base.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+        if path.is_file() and path.name != store.LOCK_NAME and path.relative_to(base) not in saved:
+          path.unlink()
+        elif path.is_dir() and path.relative_to(base) not in directories:
+          try:
+            path.rmdir()
+          except OSError:
+            pass
+      for rel, data in saved.items():
+        path = base / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    raise
+  for line in getattr(args, "_deferred", []):
+    print(line)
+  if not getattr(args, "json", False):
+    print(f"rendered {written} file(s)")
+  return code
+
+
 def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   sp.add_argument("--render", action="store_true", help="render .slicer/render/ after the change")
   return sp
@@ -166,8 +221,8 @@ def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 def _strict_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   """`--strict` gates a mutation on its render (with `--render`): the change is
-  rolled back, and nothing printed, if the render fails. Offered on the everyday
-  item mutations; `done --render` already behaves this way."""
+  rolled back, and nothing printed, if the render fails. Offered on everyday
+  item mutations and migrate; `done --render` already behaves this way."""
   sp.add_argument(
     "--strict", action="store_true",
     help="with --render, require the render to succeed before the change lands",
@@ -1412,7 +1467,7 @@ def build_parser() -> argparse.ArgumentParser:
   # --from DIR` gets told where that moved, rather than a bare argparse error.
   sp.add_argument("--from", dest="legacy_from", default=None, help=argparse.SUPPRESS)
 
-  sp = _render_flag(add("migrate", _mutating(cmd_migrate), "convert an existing markdown slice tree"))
+  sp = _strict_flag(_render_flag(add("migrate", _mutating(cmd_migrate), "convert an existing markdown slice tree")))
   sp.add_argument("--from", dest="source", default="docs/slices", help="the legacy directory")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
@@ -1652,7 +1707,13 @@ def main(argv: list[str] | None = None) -> int:
     # outline). Read-only commands need no lock.
     if getattr(args.func, "mutates", False):
       root = Path(args.root) if args.root else None
-      with store.project_lock(root):
+      # A create-path migrate targets its own new .slicer/, not an ancestor's.
+      # There is no target project lock until that directory exists.
+      creating_migrate = (
+        args.command == "migrate"
+        and not ((root or Path.cwd()).resolve() / store.DIR_NAME / CONFIG_NAME).is_file()
+      )
+      with (nullcontext() if creating_migrate else store.project_lock(root)):
         return int(args.func(args))
     return int(args.func(args))
   except _ParserError as exc:

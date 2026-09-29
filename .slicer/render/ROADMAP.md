@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-116 items · — 4 · done 111 · retired 1
+116 items · — 3 · done 112 · retired 1
 
 v1.0.0 release
 
@@ -143,7 +143,7 @@ v1.0.0 release
 | 108 | [S105](slices/S105.md) | Choose whether render success is required for a mutation |  | - |  |  | done |
 | 109 | [S109](slices/S109.md) | Stop generated roadmap files from conflict-marking on merge | M | 2 | slicer | credit review | done |
 | 110 | [S110](slices/S110.md) | Roll back a partial render when done --render fails | S | 2 | slicer | credit review | done |
-| 111 | [S111](slices/S111.md) | Roll migrate back when a required render fails | M | 2 | slicer | credit review | — |
+| 111 | [S111](slices/S111.md) | Roll migrate back when a required render fails | M | 2 | slicer | credit review | done |
 | 112 | [S112](slices/S112.md) | Label list columns and say when rows are hidden | S | 1 | slicer | credit review | — |
 | 113 | [S113](slices/S113.md) | Detect concurrent work on a slice across branches and worktrees |  | - |  |  | — |
 | 114 | [S114](slices/S114.md) | Claim a slice and surface claimed / in-work items in list |  | - |  |  | — |
