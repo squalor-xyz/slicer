@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 import support
 
 from slicer import graph, ops, vcs
-from slicer.errors import StateError
+from slicer.errors import RenderError, StateError
 
 
 class OpsTests(unittest.TestCase):
@@ -516,6 +517,123 @@ class OpsTests(unittest.TestCase):
         with self.subTest(forbidden):
           with self.assertRaises(StateError):
             vcs._run(repo.root, forbidden, "--any")
+
+  def test_Git_ReadOnlyBranchAndWorktreeQueries_StayOnTheAllowlist(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      listed = vcs._run(repo.root, "worktree", "list", "--porcelain")
+      self.assertEqual(listed.returncode, 0, listed.stderr)
+      self.assertIn("worktree ", listed.stdout)
+      branches = vcs._run(repo.root, "branch", "--all", "--format=%(refname)")
+      self.assertEqual(branches.returncode, 0, branches.stderr)
+      self.assertIn("refs/heads/", branches.stdout)
+      for forbidden in (
+        ("worktree", "add", "elsewhere"),
+        ("branch", "-D", "elsewhere"),
+        ("commit", "--any"),
+      ):
+        with self.subTest(forbidden):
+          with self.assertRaises(StateError):
+            vcs._run(repo.root, *forbidden)
+
+  def test_Start_SiblingBranch_WarnsWithoutChangingExit(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      made = repo._git("branch", "feature/S02")
+      self.assertEqual(made.returncode, 0, made.stderr)
+      code, out, err = repo.run("start", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertIn("S02 ->", out)
+      self.assertIn("slicer: S02 is also named by branch feature/S02", err)
+      code, out, err = repo.run("start", "S02", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["status"], "started")
+      self.assertIn("branch feature/S02", err)
+
+  def test_Start_SiblingWorktree_WarnsWithoutChangingExit(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      sibling = repo.root / "other" / "S02"
+      sibling.parent.mkdir()
+      added = repo._git("worktree", "add", "-q", "-b", "side", str(sibling), "HEAD")
+      self.assertEqual(added.returncode, 0, added.stderr)
+      code, out, err = repo.run("start", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertIn("S02 ->", out)
+      self.assertIn(f"worktree {sibling}", err)
+      self.assertNotIn("branch side", err)
+
+  def test_Start_NoSiblingName_IsSilent(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      code, out, err = repo.run("start", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertIn("S02 ->", out)
+      self.assertEqual(err, "")
+
+  def test_Start_CurrentBranchAndItsRemote_AreNotElsewhere(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      checked = repo._git("checkout", "-q", "-b", "feature/S02")
+      self.assertEqual(checked.returncode, 0, checked.stderr)
+      remote = repo._git("update-ref", "refs/remotes/origin/feature/S02", "HEAD")
+      self.assertEqual(remote.returncode, 0, remote.stderr)
+      code, _, err = repo.run("start", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(err, "")
+      other = repo._git("branch", "nested/feature/S02")
+      self.assertEqual(other.returncode, 0, other.stderr)
+      code, _, err = repo.run("start", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertIn("branch nested/feature/S02", err)
+      self.assertNotIn("origin/feature/S02", err)
+
+  def test_Start_LongerId_DoesNotMatchAShorterOne(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      made = repo._git("branch", "feature/S020")
+      self.assertEqual(made.returncode, 0, made.stderr)
+      code, _, err = repo.run("start", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(err, "")
+
+  def test_Elsewhere_NestedProject_SkipsItsOwnWorktree(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      outer = repo.root / "S02"
+      added = repo._git("worktree", "add", "-q", "-b", "feature/S02", str(outer), "HEAD")
+      self.assertEqual(added.returncode, 0, added.stderr)
+      nested = outer / "pkg"
+      nested.mkdir()
+      self.assertEqual(vcs.elsewhere(nested, "S02"), [])
+      other = repo._git("branch", "also-S02")
+      self.assertEqual(other.returncode, 0, other.stderr)
+      self.assertEqual(vcs.elsewhere(nested, "S02"), ["branch also-S02"])
+
+  def test_Start_StrictRenderFailure_DoesNotWarn(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      made = repo._git("branch", "feature/S02")
+      self.assertEqual(made.returncode, 0, made.stderr)
+      before = repo.state().index.require("S02").status
+      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+        code, out, err = repo.run("start", "S02", "--render", "--strict")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(out, "")
+      self.assertNotIn("also named", err)
+      self.assertEqual(repo.state().index.require("S02").status, before)
+
+  def test_Next_SiblingBranch_StaysSilent(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("base")
+      made = repo._git("branch", "feature/S02")
+      self.assertEqual(made.returncode, 0, made.stderr)
+      code, _, err = repo.run("next")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("also named", err)
+      code, _, err = repo.run("next", "--start")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("also named", err)
 
 
 class DependencyTests(unittest.TestCase):

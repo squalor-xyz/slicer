@@ -249,8 +249,10 @@ priority, so `slicer next` and `slicer list --sort score` surface the blockers o
 important work first, while the stored queue order stays whatever `move` set.
 
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
-`rev-parse`, `status`, `log`, `mv` and `ls-files`; the writing subcommands cannot be
-reached from the code at all.
+`rev-parse`, `status`, `log`, `mv`, `ls-files`, and the read-only queries
+`worktree list --porcelain` and `branch --all`. `start` uses those to warn when another
+branch or worktree name already refers to the slice; the exit code does not change, and
+`next` stays silent. Writing subcommands cannot be reached from the code at all.
 
 ### Batch changes
 

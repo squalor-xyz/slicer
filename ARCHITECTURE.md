@@ -112,8 +112,11 @@ and templates and may create `.slicer/`, so the CLI snapshots that exact directo
 and restores it if rendering fails.
 
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
-`ls-files`. `commit`, `push` and `tag` are unreachable from the code — not by convention
-but because `vcs._run` refuses anything off the list, including for a caller that asks.
+`ls-files`, `worktree`, and `branch`. The last two are only the read-only forms
+`worktree list --porcelain` and `branch --all --format=%(refname)`, so `start` can see a
+sibling checkout; any other `worktree` or `branch` argument is refused. `commit`, `push`
+and `tag` are unreachable from the code — not by convention but because `vcs._run` refuses
+anything off the list, including for a caller that asks.
 
 **Nothing project-specific is compiled in.** Status vocabulary, the section list
 `promote` seeds, the scope-boundary marker, which flags exclude an item from derived

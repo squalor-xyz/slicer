@@ -39,6 +39,7 @@ from slicer import (
   sync,
   templates,
   verify,
+  vcs,
 )
 from slicer import __version__
 from slicer.config import CONFIG_NAME, Config
@@ -67,14 +68,23 @@ def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
 def _write_out(args: argparse.Namespace, line: str) -> None:
   """Print, or buffer under `--strict` so no success output escapes before the
   render that gates the change has actually succeeded."""
+  _defer(args, "_deferred", line, sys.stdout)
+
+
+def _write_err(args: argparse.Namespace, line: str) -> None:
+  """Same gate as `_write_out`, for a warning that must vanish if `--strict` rolls back."""
+  _defer(args, "_deferred_err", line, sys.stderr)
+
+
+def _defer(args: argparse.Namespace, attr: str, line: str, stream: object) -> None:
   if getattr(args, "_defer_output", False):
-    buf = getattr(args, "_deferred", None)
+    buf = getattr(args, attr, None)
     if buf is None:
       buf = []
-      args._deferred = buf
+      setattr(args, attr, buf)
     buf.append(line)
   else:
-    print(line)
+    print(line, file=stream)
 
 
 def _render_after_mutation(args: argparse.Namespace) -> int:
@@ -158,6 +168,8 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
     raise
   for line in getattr(args, "_deferred", []):
     print(line)
+  for line in getattr(args, "_deferred_err", []):
+    print(line, file=sys.stderr)
   if not getattr(args, "json", False):
     print(f"rendered {written} file(s)")
   return code
@@ -1039,7 +1051,27 @@ def _status_cmd(status_attr: str):
 
 
 cmd_park = _status_cmd("parked_status")
-cmd_start = _status_cmd("started_status")
+
+
+def cmd_start(args: argparse.Namespace) -> int:
+  """Mark items started, then warn if another checkout already names one.
+
+  The warning is stderr only. `next` does not call this, and a failed start
+  does not warn. Ids are read once so a batch still loads and saves once.
+  """
+  item_ids, batch = _batch_ids(args)
+  state = _state(args)
+  status = state.config.started_status
+  if not status:
+    raise StateError("this project declares no started status; set started_status in config")
+  items = ops.set_status_many(state, item_ids, status, note=args.note or "")
+  _emit_items(args, items, batch,
+              [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
+  for item_id in item_ids:
+    names = vcs.elsewhere(state.root, item_id)
+    if names:
+      _write_err(args, f"slicer: {item_id} is also named by {', '.join(names)}")
+  return OK
 
 
 def cmd_done(args: argparse.Namespace) -> int:
