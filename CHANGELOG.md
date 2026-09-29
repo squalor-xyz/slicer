@@ -15,6 +15,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer init`, when run inside a git repo, prints the two `git config` lines that turn on the `slicer-generated` render merge driver, so the one-time per-clone setup is surfaced rather than buried in the docs. slicer still never runs `git config` itself. `--json` output is unchanged.
 - slicer warns on stderr when its own code and the project it discovers are different worktrees of one repo — an editable install run from a sibling checkout, whose `src/` edits are not what runs. The note names both paths and suggests `PYTHONPATH=src python3 -m slicer`. It never touches stdout or the exit code, stays silent for ordinary use (code under the project, or an unrelated install), and is silenced by `SLICER_NO_CODE_WARNING`.
 - `slicer setup-git` prints the two `git config` lines that turn on the `slicer-generated` render merge driver, so a clone (which never runs `init`) can enable it in one step — run the command, or `slicer setup-git | sh`. It needs no project, `--json` returns the commands as a list, and slicer still never runs `git config` itself.
+- `slicer verify` warns (never fails) when the `slicer-generated` render merge driver is not configured in the current clone, pointing at `slicer setup-git`, so a forgotten setup is caught before a merge writes conflict markers. The probe is a read-only `git config --get`; `slicer check` stays git-free and does not run it.
 
 ### Changed
 

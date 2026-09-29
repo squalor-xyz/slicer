@@ -612,6 +612,8 @@ git config merge.slicer-generated.driver true
 
 The kept copy still has to match the merged `index.json`, so re-run `slicer render` after
 resolving a merge — the driver only skips the markers, it does not re-project the state.
+`slicer verify` warns (it never fails) when this clone has not configured the driver, so a
+forgotten setup is caught before a merge writes markers rather than after.
 
 ### Priority
 

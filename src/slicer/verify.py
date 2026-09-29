@@ -145,6 +145,14 @@ def against_git(state: State) -> VerifyReport:
   """Compare each item's recorded status with what history mentions."""
   cfg = state.config
   report = VerifyReport(checked=len(state.index.items))
+  # Clone setup, not history: independent of git_check. Warn once here rather than
+  # let an unconfigured render merge driver write conflict markers on the next merge.
+  if vcs.is_repo(state.root) and not vcs.render_driver_configured(state.root):
+    report.findings.append(Finding(
+      "warn", "",
+      "render merge driver not configured in this clone; run `slicer setup-git` so "
+      "merges keep render/ instead of writing conflict markers",
+    ))
   if not cfg.git_check:
     return report
   subjects = vcs.subjects(state.root)

@@ -3088,7 +3088,7 @@
       "id": "S123",
       "title": "Warn in verify when the render merge driver is not configured",
       "short_title": "Warn in verify when the render merge driver is not configured",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
