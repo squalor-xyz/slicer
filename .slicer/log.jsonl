@@ -525,3 +525,5 @@
 {"when": "2026-09-29T11:52:46Z", "item": "S107", "action": "status", "from": "started", "to": "done", "note": "The agent loop picks up with next --ready --section --json --lean, and start and edit use --render --strict. The filed slice still said --require-render; that flag is --strict."}
 {"when": "2026-09-29T11:54:16Z", "item": "S115", "action": "purge", "from": "open", "to": "", "note": "it was the most recent id and nothing refers to it"}
 {"when": "2026-09-29T11:54:17Z", "item": "S114", "action": "purge", "from": "open", "to": "", "note": "S114 is named in 1 commit subject(s)"}
+{"when": "2026-09-29T11:50:16Z", "item": "S114", "action": "add", "from": "", "to": "open", "note": "Claim a slice and surface claimed / in-work items in list"}
+{"when": "2026-09-29T11:50:17Z", "item": "S114", "action": "promote", "from": "", "to": "", "note": ""}

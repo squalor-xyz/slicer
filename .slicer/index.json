@@ -2755,6 +2755,30 @@
         "urgency": 2,
         "effort": null
       }
+    },
+    {
+      "id": "S114",
+      "title": "Claim a slice and surface claimed / in-work items in list",
+      "short_title": "Claim a slice and surface claimed / in-work items in list",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S113"
+      ],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
     }
   ],
   "epilogue": "",

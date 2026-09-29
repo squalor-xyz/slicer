@@ -1,0 +1,39 @@
+{
+  "id": "S114",
+  "title": "Claim a slice and surface claimed / in-work items in list",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "slicer tracks in-work with the `started` status, and `slicer list` already shows\nstarted items (it hides only done and retired). What is missing is a *claim*: there\nis no record of who or which worktree is working a slice, so nothing survives across\nthe per-branch, git-tracked state (the S105 duplicate-work incident — see S113), and\nthe default `list` does not make in-work work stand out, since a started item just\nsorts among open items by effective score. An agent scanning `list` cannot tell what\nis actively being worked, or by whom, before picking something up."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/model.py` and `src/slicer/ops.py` — the claim record (owner/worktree\n  and when) and the commands that set and clear it.\n- `src/slicer/cli.py` (`cmd_list` / `_item_rows`) — surface claimed and in-work rows\n  distinctly and name the owner; keep `--json` a superset.\n- `src/slicer/vcs.py` — only if the claim reads worktree/branch identity (read-only).\n- list tests, and `README.md` / `docs/getting-started.md` for the claim workflow."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Claiming a slice records an owner (and time) and `slicer list` shows the item as\n   claimed with that owner; `--json` carries the claim fields.\n2. `slicer list` surfaces in-work (started) and claimed items distinctly from plain\n   open items — grouped or marked — by default.\n3. Releasing or finishing a claim clears it; a done slice is never shown as claimed."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a lightweight claim to a slice/item — who (a configurable identity, e.g. the git\nuser or the worktree) and when — set when work starts and cleared when it finishes or\nis released. Surface claimed and in-work items distinctly in `slicer list` (group or\nmark them, name the owner), with `--json` a superset that carries the claim fields.\nCoordinate the claim representation with S113 so one record powers both the\ncross-branch warning and the list display. Keep render/`log.jsonl` determinism intact.\n\nProduct decision to settle first, not to infer from the backlog: whether a claim is a\nnew status, a field on the item, or a separate (possibly non-git) record — and how it\ninteracts with the per-branch state that made S113 necessary. Agree this with the\nproject before building; it may split into a claim-record slice and a list-display\nslice."
+    },
+    {
+      "heading": "Check",
+      "body": "The cases above pass. `slicer list` (text and `--json`) shows claimed / in-work items\ndistinctly and names the owner; a released or finished claim no longer shows.\n`slicer check` and the suite pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, or a small series, once the representation is settled. Coordinate with\nS113. Do not tag or push."
+    }
+  ],
+  "notes": []
+}
