@@ -598,3 +598,5 @@
 {"when": "2026-09-29T15:22:28Z", "item": "S125", "action": "status", "from": "started", "to": "done", "note": "verify's render-driver reminder now fires only when the checkout has sibling worktrees (reusing vcs.sibling_worktrees), so a solo single-worktree clone stays quiet; a new render_driver_check config flag (default true) silences it entirely. Independent of git_check; check stays git-free. S123 tests updated to add a sibling worktree; 845 tests pass."}
 {"when": "2026-09-29T15:26:17Z", "item": "S129", "action": "add", "from": "", "to": "open", "note": "Make the suite independent of where TMPDIR points"}
 {"when": "2026-09-29T15:26:17Z", "item": "S130", "action": "add", "from": "", "to": "open", "note": "Advertise Python 3.14 in the package classifiers"}
+{"when": "2026-09-29T15:27:51Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127→S124,S125,S126,S127,S130"}
+{"when": "2026-09-29T15:27:58Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127,S130→S124,S125,S126,S127,S130"}
