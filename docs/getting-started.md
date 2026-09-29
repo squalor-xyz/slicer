@@ -291,8 +291,13 @@ slicer start S01 --render
 ```
 
 `start` records a claim on the item: who, and the time. `slicer list` names that owner
-in the CLAIM column; an in-progress item with no claim is marked `*`, and other rows are
-`-`. `--json` carries `claim` as `{"owner", "at"}` or null. The owner is `claim_owner` in
+in the CLAIM column; an in-progress item with no claim is marked `*`. Work started or
+claimed in a sibling worktree appears as `wt:NAME` (or `wt:NAME+N` for more worktrees)
+when there is no local claim or started state. Other rows are `-`. `--json` carries
+`claim` as `{"owner", "at"}` or null and `in_work_elsewhere` as an array of
+`{"worktree", "owner"}` objects, even when a local claim takes precedence in the text
+table. This reads local Git worktrees only; it cannot see work on another machine.
+The owner is `claim_owner` in
 config, otherwise the git user name, otherwise the worktree name. `slicer release S01`
 clears the claim and leaves the status. `done` clears it too, so a finished item is not
 shown as claimed.

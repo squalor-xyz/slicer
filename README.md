@@ -119,7 +119,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
 | `next [-n N] [--start] [--show\|--ready [--section NAME ...]]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids. Repeat `--section` with `--ready` to return the scope boundary and those sections only |
 | `next-id` | the id the next `add` or `import` would take, without allocating it |
-| `list [--all] [--status/--tree/--pass/--flag] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. The text table has a CLAIM column: the owner, `*` for in-progress with no claim, or `-`. `--json` includes `claim` (`{"owner", "at"}` or null). Done and retired items are omitted unless `--all` is set or `--status` names them. Repeat `--flag` to keep an item that has any of those flags. Flags are free-form labels set with `set --flag`. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
+| `list [--all] [--status/--tree/--pass/--flag] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. The text table has a CLAIM column: the local owner, `*` for locally in-progress with no claim, `wt:NAME` for work in a sibling worktree, or `-`. `wt:NAME+N` means N more worktrees. `--json` includes `claim` (`{"owner", "at"}` or null) and `in_work_elsewhere` (an array of `{worktree, owner}`). Done and retired items are omitted unless `--all` is set or `--status` names them. Repeat `--flag` to keep an item that has any of those flags. Flags are free-form labels set with `set --flag`. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
 | `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |
 | `show ID [--section NAME ...] [--context]` | print one slice or selected sections; `--context` adds title, dependencies, and scope boundary |
@@ -142,6 +142,9 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `stats` / `log [--item ID] [--action A]` | counts + completion % and per-tree progress; history (`--item`/`--action` scope it; `set` records old→new values) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`) |
 | `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
+
+The sibling worktree signal comes from local `git worktree list` and each checkout's
+`.slicer/index.json`. It sees worktrees on this machine only, not work on another machine.
 
 `slicer next -n 1` returns the item after the current next item. Offsets are
 nonnegative integers: `-n 0` is the same as `next`. Eligible started items come

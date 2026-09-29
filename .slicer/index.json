@@ -3065,7 +3065,7 @@
       "id": "S122",
       "title": "Surface items in-work in a sibling worktree in slicer list",
       "short_title": "Surface items in-work in a sibling worktree in slicer list",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

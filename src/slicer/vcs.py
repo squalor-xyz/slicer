@@ -167,6 +167,18 @@ def _worktree_paths(root: Path) -> list[Path]:
   return paths
 
 
+def sibling_worktrees(root: Path) -> list[Path]:
+  """Other checkouts of this repo, in stable path order."""
+  try:
+    here = _current_worktree(root)
+    if here is None:
+      return []
+    paths = _worktree_paths(root)
+    return sorted(path for path in paths if path.resolve() != here)
+  except (FileNotFoundError, OSError):
+    return []
+
+
 def _other_ref(ref: str, current: str | None) -> str | None:
   """The branch name to show, or None when it is this checkout's own branch.
 
