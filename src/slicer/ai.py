@@ -88,32 +88,32 @@ Validate an outline with `slicer import roadmap.md --dry-run --json`; resolve al
 reported problems before applying agreed work with
 `slicer import roadmap.md --render --json`. Then run `slicer check --json`.
 
-For one item, use `slicer add "Title" --render --json`. Add dependencies with
-repeated `--depends-on ID`. A row alone is not a specification: use
+Score every item you file instead of leaving the defaults, which rank nothing:
+importance and urgency (1-3), effort (1-3), and size, tree, and findings where the
+project uses them. Give a one-line reason for each score in your reply; the owner
+adjusts them with `set`. For one item, use
+`slicer add "Title" --importance 3 --urgency 2 --effort 1 --render --json`; an
+outline takes the same keys. Add dependencies with repeated `--depends-on ID`.
+A row alone is not a specification: use
 `slicer promote ID --stdin --render --json` with a one-item outline to supply its
 lead and sections. Use the project's configured sections, not assumed headings.
 
 ## Implement one slice
 
 """ + LOOP + SPEC_GAP + """
-`next` resumes eligible started work before open work; dependencies gate both.
-Within that pool, effective priority includes priority inherited from dependents.
+`next` resumes eligible started work before open work; dependencies gate both,
+and priority inherited from dependents counts. An empty queue matches `next`.
+Do not combine `--ready` and `--show`.
+
 `start` claims the item for you. `list` shows claims in its CLAIM column, and
 `wt:NAME` marks an item started in a sibling Git worktree; `next` does not skip
-those, so check `list` before taking work when several agents share a repo.
-`slicer release ID` hands a claim back without changing status.
-`slicer next --ready --json` returns item identity and, when the item has a
-slice, the full slice. Repeat `--section` to keep the scope boundary and those
-sections only. `--json --lean` drops `path` and other empty fields. An empty
-queue matches `next`. Do not combine `--ready` and `--show`.
-Use `slicer list --json` (omits done and retired, ordered as `next` walks the queue and then the other visible rows by score; `--all` or `--status` includes the hidden statuses), `slicer list --sort score --json` (same rows, flat effective-score order), `slicer stats --json`,
-and `slicer log --json` to inspect the roadmap. Use `slicer show ID --section NAME`
-to read one section, and `slicer edit ID --section NAME --text "Body" --render --strict` to
-replace it. To return only selected section bodies plus the title, dependencies,
-and scope boundary, repeat `--section` and add `--context`:
+those, so check `slicer list --json` before taking work when several agents share
+a repo. `slicer release ID` hands a claim back without changing status.
+
+To re-read part of a slice with its title, dependencies, and scope boundary, use
 `slicer show ID --section "Implement" --section "Check" --context --json`.
 Those headings are examples; use the section names the project configures.
-Use `--help` on a command for supported options.
+Run `--help` on any command for the rest of its options.
 
 ## State and command results
 

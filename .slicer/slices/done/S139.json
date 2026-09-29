@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Settle with the project before building, do not infer:\n\n- Whether the agent sets proposed values directly and reports them, or proposes them for the owner to confirm before filing.\n- Whether `add` or `import --dry-run` should also warn when an item is filed at the default 2/2 with no effort. That is a tool change, not a docs change, and may belong in its own slice.\n\nThen update the planning text and prompts. Keep the addition short: S138 is trimming the same `INSTRUCTIONS` text, so do the two together or rebase one on the other."
+      "body": "Settle with the project before building, do not infer:\n\n- Whether the agent sets proposed values directly and reports them, or proposes them for the owner to confirm before filing.\n- Whether `add` or `import --dry-run` should also warn when an item is filed at the default 2/2 with no effort. That is a tool change, not a docs change, and may belong in its own slice.\n\nThen update the planning text and prompts. Keep the addition short: S138 is trimming the same `INSTRUCTIONS` text, so do the two together or rebase one on the other.\n\nSettled with the owner (2026-09-29):\n\n- The agent sets its proposed values when it files the item and reports a one-line reason for each score in its reply; the owner adjusts with `set`.\n- Guidance only. A tool nudge for items filed at the default 2/2 with no effort is a separate post-1.0 item."
     },
     {
       "heading": "Check",

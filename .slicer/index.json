@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 140,
+  "next_id": 141,
   "preamble": "",
   "passes": [
     {
@@ -3458,7 +3458,7 @@
       "id": "S138",
       "title": "Trim the command catalogue out of ai instructions",
       "short_title": "Trim the command catalogue out of ai instructions",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -3483,7 +3483,7 @@
       "id": "S139",
       "title": "Tell agents to fill in priority and estimate fields when filing items",
       "short_title": "Tell agents to fill in priority and estimate fields when filing items",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -3501,6 +3501,31 @@
         "reason": "",
         "importance": 3,
         "urgency": 3,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S140",
+      "title": "Hint when an item is filed unscored",
+      "short_title": "Hint when an item is filed unscored",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "S139 decision: guidance only for 1.0.0, tool nudge later",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1
       }
     }
