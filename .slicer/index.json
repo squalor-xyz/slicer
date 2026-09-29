@@ -2738,7 +2738,7 @@
       "id": "S113",
       "title": "Detect concurrent work on a slice across branches and worktrees",
       "short_title": "Detect concurrent work on a slice across branches and worktrees",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

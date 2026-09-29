@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer start` warns on stderr when another branch or worktree name refers to that slice id. The current checkout is ignored, the exit code is unchanged, and `next` stays silent.
+
 ## [1.0.0]
 
 ### Added
