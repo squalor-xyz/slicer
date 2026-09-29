@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-113 items · — 6 · done 106 · retired 1
+113 items · — 5 · done 107 · retired 1
 
 v1.0.0 release
 
@@ -49,7 +49,7 @@ v1.0.0 release
 | 19 | [S92](slices/S92.md) | Add a lean JSON profile that drops empty and default fields | M | - | cli | AI credit-flow review | done |
 | 20 | [S94](slices/S94.md) | Point agents at the command, not the 21 KB reference doc | S | - | docs | AI credit-flow review | done |
 | 21 | [S106](slices/S106.md) | Return only the sections a pickup needs | M | 2 | slicer | credit review | done |
-| 22 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | — |
+| 22 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | done |
 | 23 | [S108](slices/S108.md) | Fold shipped notes into the 1.0.0 changelog | S | 1 | slicer | credit review | — |
 
 ---

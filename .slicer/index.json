@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 114,
+  "next_id": 115,
   "preamble": "",
   "passes": [
     {
@@ -2590,7 +2590,7 @@
       "id": "S107",
       "title": "Point the agent loop at the small commands",
       "short_title": "Point the agent loop at the small commands",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S106"

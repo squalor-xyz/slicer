@@ -17,9 +17,11 @@ from slicer import ai, cli
 
 class AiInstructionsTests(unittest.TestCase):
   def test_Instructions_UseOneCallSliceReadPath_AndPreserveReadBeforeStart(self) -> None:
-    expected = "slicer next --show --json"
+    expected = "slicer next --ready --section \"Implement\" --section \"Check\" --json --lean"
     self.assertIn(expected, ai.LOOP)
-    self.assertIn("item and its slice together", ai.LOOP)
+    self.assertIn("--section", ai.LOOP)
+    self.assertIn("The headings are examples", ai.LOOP)
+    self.assertIn("pass the section names the project configures", ai.LOOP)
     self.assertIn("Read its scope, dependencies, and acceptance checks", ai.LOOP)
     self.assertIn("before changing its status", ai.LOOP)
     self.assertIn("specification is\n   trusted and needs no clarification", ai.LOOP)
@@ -42,6 +44,18 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertLess(reference_flow.index("resolve any\nambiguity"),
                     reference_flow.index("slicer start ID"))
     self.assertIn("If the\nspecification is already trusted", reference_flow)
+
+  def test_Instructions_LeaveRenderUnread_AndDoNotLinkTheLongReference(self) -> None:
+    text = ai.INSTRUCTIONS
+    self.assertNotIn("docs/agents.md", text)
+    self.assertIn("Do not open or hand-merge `.slicer/render/`", text)
+    self.assertIn("run `slicer render` then `slicer check`", text)
+    self.assertIn("Do not invent the section body.", text)
+    self.assertIn("unspecified", text)
+    self.assertIn("--render --strict", text)
+    self.assertNotIn("--require-render", text)
+    agents = (Path(__file__).resolve().parents[1] / "docs" / "agents.md").read_text(encoding="utf-8")
+    self.assertLess(len(ai.skill_text()), len(agents) // 2)
 
   def test_Instructions_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -131,12 +145,16 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn(ai.LOOP, ai.INSTRUCTIONS)
     self.assertIn(ai.EXITS, ai.INSTRUCTIONS)
     for command in (
-      "slicer next --show --json",
-      "slicer start ID --render --json",
+      "slicer next --ready --section \"Implement\" --section \"Check\" --json --lean",
+      "slicer start ID --render --strict --json",
+      "slicer edit ID --section NAME --text \"Body\" --render --strict --json",
       "slicer check --json",
-      "slicer done ID --note",
+      "slicer done ID --note \"Describe the verified outcome\" --render --json",
     ):
       self.assertIn(command, text)
+    self.assertNotIn("--require-render", text)
+    self.assertNotIn("docs/agents.md", text)
+    self.assertNotIn(".slicer/render/", text)
     for code in ("Exit 0", "exit 1", "exit 2", "exit 3"):
       self.assertIn(code, text)
     self.assertNotIn("import --skeleton", text)

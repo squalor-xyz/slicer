@@ -6,14 +6,17 @@ from __future__ import annotations
 # The implement loop and the exit-code rules. The instructions and the agent
 # skill both use these sentences, so a wording change cannot land in only one.
 LOOP = """\
-1. Run `slicer next --show --json` to get the next item and its slice together.
+1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
+   to get the next item and only those sections. The headings are examples;
+   pass the section names the project configures.
    Read its scope, dependencies, and acceptance checks. Resolve missing or
    ambiguous specifications before changing its status. If the specification is
-   trusted and needs no clarification, `slicer next --start --show --json` may
+   trusted and needs no clarification, `slicer next --start --ready --section "Implement" --section "Check" --json --lean` may
    combine these first steps.
-2. Otherwise, run `slicer start ID --render --json` after reviewing the slice.
+2. Otherwise, run `slicer start ID --render --strict --json` after reviewing the slice.
    Implement the agreed scope, update
    affected documentation, and run the slice's checks and required project tests.
+   Edit a slice with `slicer edit ID --section NAME --text "Body" --render --strict --json`.
 3. Review the changes and run `slicer check --json`. Fix problems before marking
    work complete; this tracking check does not replace code tests.
 4. Run `slicer done ID --note "Describe the verified outcome" --render --json`,
@@ -95,13 +98,13 @@ lead and sections. Use the project's configured sections, not assumed headings.
 """ + LOOP + SPEC_GAP + """
 `next` resumes eligible started work before open work; dependencies gate both.
 Within that pool, effective priority includes priority inherited from dependents.
-`slicer next --ready --json` is that same selection as a bounded pickup: item
-identity (`id`, `title`, `status`, `depends_on`, `effective_score`, `path`),
-the slice when the item has one, and the blocked list. An empty queue matches
-`next`. Pass either `--ready` or `--show`.
+`slicer next --ready --json` returns item identity and, when the item has a
+slice, the full slice. Repeat `--section` to keep the scope boundary and those
+sections only. `--json --lean` drops `path` and other empty fields. An empty
+queue matches `next`. Do not combine `--ready` and `--show`.
 Use `slicer list --json` (omits done and retired, ordered as `next` walks the queue and then the other visible rows by score; `--all` or `--status` includes the hidden statuses), `slicer list --sort score --json` (same rows, flat effective-score order), `slicer stats --json`,
 and `slicer log --json` to inspect the roadmap. Use `slicer show ID --section NAME`
-to read one section, and `slicer edit ID --section NAME --text "Body" --render` to
+to read one section, and `slicer edit ID --section NAME --text "Body" --render --strict` to
 replace it. To return only selected section bodies plus the title, dependencies,
 and scope boundary, repeat `--section` and add `--context`:
 `slicer show ID --section "Implement" --section "Check" --context --json`.
@@ -111,10 +114,9 @@ Use `--help` on a command for supported options.
 ## State and command results
 
 Change tracking state through slicer commands. Never hand-edit tracking JSON or
-generated `.slicer/render/` markdown. Use `--render` on supported mutations, or
+generated `.slicer/render/` markdown. Do not open or hand-merge `.slicer/render/`.
+When `ROADMAP.md` or `ROADMAP.html` conflicts, run `slicer render` then `slicer check`.
+Use `--render` on supported mutations, or
 run `slicer render` separately, and finish with `slicer check`.
 
-""" + EXITS + """
-Full agent reference and reusable prompts:
-https://github.com/squalor-xyz/slicer/blob/main/docs/agents.md
-"""
+""" + EXITS

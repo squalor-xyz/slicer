@@ -150,7 +150,10 @@ dependents. The command returns one item, including rows without slice files;
 an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
 `slicer next --ready` is a bounded pickup of that same item: `id`, `title`,
 `status`, `depends_on`, `effective_score`, `path`, the slice when the item has
-one, and every blocked id. Repeat `--section NAME` with `--ready` to keep the
+one, and every blocked id. The agent loop uses
+`slicer next --ready --section "Implement" --section "Check" --json --lean`.
+The headings are examples; pass the section names the project configures.
+Repeat `--section NAME` with `--ready` to keep the
 scope boundary and those section bodies; omit it and the slice stays complete.
 `--section` without `--ready` is a usage error. A row with no slice still says
 to run `promote`. An empty queue uses the same exit 2 result as `next`.
@@ -237,7 +240,8 @@ Every command that changes state — `add`, `set`, `start`, `done`, `move`, `sor
 to regenerate `.slicer/render/` in the same step, so a mutation and its render are one
 command. By default the change is saved first and rendered after; add `--strict` to require
 the render to succeed first, so a change that cannot be rendered is rolled back rather than
-landed (this is how `done --render` already behaves).
+landed (this is how `done --render` already behaves). The agent loop passes
+`--render --strict` on `start` and on slice edits. `done` stays `--render`.
 
 Items carry an Eisenhower-style priority: an `--importance` and an `--urgency` (each 1–3),
 combined into a score (importance leads). A blocker of a critical item inherits its
