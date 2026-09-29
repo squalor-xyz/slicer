@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-134 items · — 9 · done 124 · retired 1
+135 items · — 10 · done 124 · retired 1
 
 v1.0.0 release
 
@@ -167,3 +167,4 @@ v1.0.0 release
 | 132 | [S129](slices/S129.md) | Make the suite independent of where TMPDIR points |  | 1 |  |  | — |
 | 133 | [S132](slices/S132.md) | Render empty slice metadata without broken emphasis |  | 1 |  |  | — |
 | 134 | S134 | Show pass membership in the list table |  | 1 |  |  | — |
+| 135 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | — |

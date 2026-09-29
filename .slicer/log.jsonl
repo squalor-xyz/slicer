@@ -617,3 +617,7 @@
 {"when": "2026-09-29T15:39:34Z", "item": "S129", "action": "set", "from": "", "to": "", "note": "importance 3→2"}
 {"when": "2026-09-29T15:39:34Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127,S130→S124,S125,S126,S127,S130,S131,S133"}
 {"when": "2026-09-29T15:42:39Z", "item": "S127", "action": "set", "from": "", "to": "", "note": "depends_on -→S131,S133"}
+{"when": "2026-09-29T15:52:57Z", "item": "S135", "action": "add", "from": "", "to": "open", "note": "Hand off a claimed slice as ready for review"}
+{"when": "2026-09-29T15:53:27Z", "item": "S135", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-29T15:54:03Z", "item": "S135", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-29T15:54:09Z", "item": "S135", "action": "edit", "from": "", "to": "", "note": "boundary"}
