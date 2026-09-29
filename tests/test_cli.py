@@ -1002,3 +1002,74 @@ class StrictRenderTests(unittest.TestCase):
       code, out, err = repo.run("done", "S01", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertIn("strict", err)
+
+
+class RenderWriteRollbackTests(unittest.TestCase):
+  """A render write that fails partway leaves render/ byte-for-byte unchanged and
+  the render-first mutation undone -- render and state roll back together (S110)."""
+
+  RENDER_FILES = ("ROADMAP.md", "ROADMAP.html", "slices/S01.md")
+
+  def _rendered(self) -> support.TempRepo:
+    """A project with a promoted, started, rendered slice, so `done --render`
+    rewrites more than one render file and can fail between them."""
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "One")
+    repo.run("promote", "S01")
+    repo.run("start", "S01")
+    repo.run("render")
+    return repo
+
+  @staticmethod
+  def _fail_on_second_write():
+    """Patch Path.write_bytes to raise OSError on its second call, so one render
+    file is replaced before the failure -- the real partial-write case."""
+    real = Path.write_bytes
+    state = {"n": 0}
+
+    def flaky(self: Path, data: bytes) -> int:
+      state["n"] += 1
+      if state["n"] == 2:
+        raise OSError("disk full")
+      return real(self, data)
+
+    return patch.object(Path, "write_bytes", flaky), state
+
+  def test_Done_RenderWriteFailsMidLoop_RestoresRenderAndStaysUndone(self) -> None:
+    with self._rendered() as repo:
+      before = {rel: repo.read(f".slicer/render/{rel}") for rel in self.RENDER_FILES}
+      index_before = repo.read(".slicer/index.json")
+      log_before = repo.read(".slicer/log.jsonl")
+      patcher, calls = self._fail_on_second_write()
+      with patcher:
+        code, out, err = repo.run("done", "S01", "--render", "--json")
+      # OSError mid-write surfaces as render (exit 2), not io (exit 3).
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertGreaterEqual(calls["n"], 2)  # a file really was replaced first
+      for rel, data in before.items():
+        self.assertEqual(repo.read(f".slicer/render/{rel}"), data, rel)
+      self.assertEqual(repo.state().index.require("S01").status, "started")
+      self.assertEqual(repo.read(".slicer/index.json"), index_before)
+      self.assertEqual(repo.read(".slicer/log.jsonl"), log_before)
+
+  def test_Done_RenderSucceeds_StillMarksDoneAndRenders(self) -> None:
+    with self._rendered() as repo:
+      code, _, err = repo.run("done", "S01", "--render")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(repo.state().index.require("S01").status, "done")
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_StrictSet_RenderWriteFailsMidLoop_RestoresRenderTree(self) -> None:
+    # The shared render-first path restores render for --strict too, not just done.
+    with self._rendered() as repo:
+      before = {rel: repo.read(f".slicer/render/{rel}") for rel in self.RENDER_FILES}
+      patcher, _ = self._fail_on_second_write()
+      with patcher:
+        code, out, err = repo.run("set", "S01", "--findings", "X", "--render", "--strict", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      for rel, data in before.items():
+        self.assertEqual(repo.read(f".slicer/render/{rel}"), data, rel)
+      self.assertEqual(repo.state().index.require("S01").findings, "")

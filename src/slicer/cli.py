@@ -141,7 +141,9 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
       state.discard_stage()
       return code
     expected = render.plan(state)
-    written = len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
+    # write_atomic, so a render write that fails partway restores render/ and the
+    # staged state rolls back with it -- --strict lands whole or not at all.
+    written = len(render.write_atomic(expected, state.render_dir, render.compare(expected, state.render_dir)))
     state.commit_stage()
   except BaseException:
     state.discard_stage()
