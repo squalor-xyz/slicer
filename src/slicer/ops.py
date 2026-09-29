@@ -933,8 +933,8 @@ def outline_report(
   report.items = len(specs)
   report.promoted = sum(1 for spec in specs if promote_all or spec.has_slice)
   for spec in specs:
-    label = cfg.status_label(spec.status or cfg.open_status)
-    report.by_status[label] = report.by_status.get(label, 0) + 1
+    status = spec.status or cfg.open_status
+    report.by_status[status] = report.by_status.get(status, 0) + 1
     report.depends_edges += len(spec.depends)
     for section in spec.sections:
       if section.heading not in cfg.sections:

@@ -3333,7 +3333,7 @@
       "id": "S133",
       "title": "Key JSON status tallies by status, not display label",
       "short_title": "Key JSON status tallies by status, not display label",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

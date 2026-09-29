@@ -142,7 +142,7 @@ class MigrateTests(unittest.TestCase):
     self.assertEqual(report.groups, 5)
     self.assertEqual(report.next_id, "S15")
     self.assertEqual(
-      report.by_status, {"done": 8, "parked": 2, "—": 3, "later": 1}
+      report.by_status, {"done": 8, "parked": 2, "open": 3, "later": 1}
     )
     self.assertEqual(
       [i.id for i in index.items if i.status == "open"], ["S12", "S13", "S14"]
