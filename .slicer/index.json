@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 122,
+  "next_id": 123,
   "preamble": "",
   "passes": [
     {
@@ -2954,6 +2954,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2976,6 +2977,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2998,6 +3000,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -3020,6 +3023,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -3042,6 +3046,30 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S122",
+      "title": "Surface items in-work in a sibling worktree in slicer list",
+      "short_title": "Surface items in-work in a sibling worktree in slicer list",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],

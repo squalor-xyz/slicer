@@ -1,0 +1,39 @@
+{
+  "id": "S122",
+  "title": "Surface items in-work in a sibling worktree in slicer list",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "slicer's state is per-branch, git-tracked JSON. S114 added a CLAIM column to `slicer list`, but it reads only the current branch's own started/claim state, so an item being worked in a parallel worktree still shows `-`/open on another branch -- e.g. S119 in progress in `.worktrees/S119` reads as idle on main. Parallel worktrees are this project's normal workflow, so `list` cannot tell you what is actually being worked. The robust signal is the real started/claim state recorded in each sibling worktree's `.slicer/index.json`, not a branch-name heuristic: name matching (S113 `vcs.elsewhere`) misses off-convention names, false-positives on stale or merged branches, and cannot tell active work from a leftover branch."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py` -- reuse `worktree list --porcelain` (already allow-listed) and `_current_worktree` to enumerate sibling worktree roots, excluding the current one.\n- `src/slicer/store.py` -- read a sibling worktree's index read-only (reuse `store.load` or a lightweight index read); skip a worktree with no `.slicer` or one that fails to read.\n- a small helper (in `ops.py` or a focused module) -- aggregate once into a map `item_id -> (worktree_name, owner)` for items started/claimed in a sibling worktree.\n- `src/slicer/cli.py` -- `cmd_list`, `_item_rows`, `_claim_cell`, `_claim_width`: thread the map through; a local claim/started wins, else show the sibling worktree name. Fold `_claim_width` to one computation (today it runs once in `_item_rows` and again in `cmd_list`).\n- tests (`tests/test_claim.py` or a new `tests/test_worktree_claims.py`).\n- `README.md`, `docs/getting-started.md`, `docs/agents.md` -- note that `list` surfaces cross-worktree in-work state, and its same-machine-only limit."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The same project in two worktrees A and B: `start` an item in B, then `slicer list` in A shows that item's CLAIM as B's worktree name, though A's own state has it open.\n2. Precedence: an item claimed locally shows the local owner, not an elsewhere marker.\n3. A sibling branch that is not checked out as a worktree, or a stale/merged one, produces no marker (detection reads worktree state, not names).\n4. Outside a git repo, or when a sibling worktree has no `.slicer` or fails to read, `list` still works and shows no markers; the lookup runs at most one `git worktree list` plus one index read per sibling worktree, not per item.\n5. `list --json` carries the elsewhere info as a derived per-row field (e.g. `in_work_elsewhere: {worktree, owner}`); `Item.to_dict`'s stored fields are unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Enumerate sibling worktrees once (via `worktree list --porcelain`, excluding the current), read each one's `.slicer/index.json` read-only, and build a map of `item_id -> (worktree_name, owner)` for items started or claimed there. Thread it into the list row builder: a local claim/started is unchanged and takes precedence; otherwise the CLAIM cell shows the sibling worktree name (basename, kept short; disambiguate from a local owner). Do the lookup once per `list`, default on inside a git repo, no-op gracefully outside git or on read failure. Add the derived field to the `--json` row payload without changing `Item`'s stored schema. Reuse S113's worktree enumeration; do not reuse `elsewhere`'s name matching for the in-work signal.\n\nProduct decisions to settle first, not to infer from the backlog: the exact CLAIM marker styling for the elsewhere case (worktree basename vs branch short name, and how to disambiguate from a local owner), and the `--json` derived-field name/shape. The same-machine limit is inherent -- only worktrees in `git worktree list` are seen; unpushed work on another machine is out of scope without a networked service."
+    },
+    {
+      "heading": "Check",
+      "body": "The five cases above pass. `slicer check` and the suite pass. A two-worktree manual test: `slicer start SNN` in one worktree, then `slicer list` in the other names the first worktree in CLAIM."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, or a small series. Builds on S114 (done) and reuses S113's worktree enumeration. Do not tag or push."
+    }
+  ],
+  "notes": []
+}
