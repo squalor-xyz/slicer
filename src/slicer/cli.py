@@ -447,6 +447,27 @@ def _unspecified_lines(result: ops.NextResult) -> list[str]:
   return lines
 
 
+def _sections_named(
+  sl: model.Slice, names: list[str], *, every_match: bool = False,
+) -> list[model.Section]:
+  """Sections for these headings, in slice order.
+
+  A slice may repeat a heading. One requested name returns the first match;
+  `show --context` and several names keep every repeat.
+  """
+  if len(names) == 1 and not every_match:
+    found = sl.section(names[0])
+    selected = [found] if found is not None else []
+  else:
+    wanted = set(names)
+    selected = [s for s in sl.sections if s.heading in wanted]
+  missing = [name for name in dict.fromkeys(names)
+             if not any(s.heading == name for s in sl.sections)]
+  if missing:
+    raise StateError(f"{sl.id} has no section {missing[0]!r}", code="no_such_section")
+  return selected
+
+
 def _emit_ready(
   args: argparse.Namespace, state: store.State, item: model.Item, result: ops.NextResult,
 ) -> None:
@@ -469,7 +490,13 @@ def _emit_ready(
     },
   }
   if sl is not None:
-    payload["slice"] = sl.to_dict()
+    if args.section:
+      payload["slice"] = {
+        "boundary": sl.boundary,
+        "sections": [s.to_dict() for s in _sections_named(sl, args.section)],
+      }
+    else:
+      payload["slice"] = sl.to_dict()
   blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
   payload["blocked"] = blocked
   skipped = _unspecified_payload(result)
@@ -504,6 +531,8 @@ def cmd_next(args: argparse.Namespace) -> int:
       "--ready and --show are separate output profiles; pass only one",
       code="usage",
     )
+  if args.section and not args.ready:
+    raise StateError("--section on next requires --ready", code="usage")
   state = _state(args)
   result = ops.next_item(state, args.n)
   if result.item is None:
@@ -522,6 +551,12 @@ def cmd_next(args: argparse.Namespace) -> int:
     _emit(args, payload, text)
     return USAGE
   item = result.item
+  if args.ready and args.section:
+    # Reject an unknown heading before --start writes, so a typo does not
+    # mark the item started.
+    sl = state.slices.get(item.id)
+    if sl is not None:
+      _sections_named(sl, args.section)
   if args.start:
     with store.project_lock(state.root):
       item = ops.start(state, item.id)
@@ -725,19 +760,9 @@ def cmd_show(args: argparse.Namespace) -> int:
       raise StateError(
         f"{args.id} has no slice; run `slicer promote {args.id}` first", code="no_slice"
       )
-    if args.context and len(args.section) == 1:
-      selected = [s for s in sl.sections if s.heading == args.section[0]]
-    elif len(args.section) == 1:
-      section = sl.section(args.section[0])
-      selected = [section] if section is not None else []
-    else:
-      wanted = set(args.section)
-      selected = [s for s in sl.sections if s.heading in wanted]
-    missing = [name for name in dict.fromkeys(args.section)
-               if not any(s.heading == name for s in sl.sections)]
-    if missing:
-      name = missing[0]
-      raise StateError(f"{args.id} has no section {name!r}", code="no_such_section")
+    selected = _sections_named(
+      sl, args.section, every_match=bool(args.context and len(args.section) == 1),
+    )
     if args.context:
       payload = {
         "id": args.id,
@@ -1324,6 +1349,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="also include the item's full slice, as `show` returns it")
   sp.add_argument("--ready", action="store_true",
                   help="bounded pickup: item identity, its slice, and blocked ids")
+  sp.add_argument("--section", action="append",
+                  help="with --ready, return only this section (repeatable)")
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 

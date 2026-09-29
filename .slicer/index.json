@@ -2566,7 +2566,7 @@
       "id": "S106",
       "title": "Return only the sections a pickup needs",
       "short_title": "Return only the sections a pickup needs",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
