@@ -1675,7 +1675,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--findings")
   sp.add_argument("--status")
   sp.add_argument("--pass", dest="pass_key",
-                  help="file the item under this pass group (default: the previous item's pass)")
+                  help="file the item under this pass group (default: the previous item's pass; '' for none)")
   sp.add_argument("--importance", type=int, help="1-3; how important (default 2)")
   sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate, omit to leave unset")

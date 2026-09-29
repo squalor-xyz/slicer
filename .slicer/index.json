@@ -3433,7 +3433,7 @@
       "id": "S137",
       "title": "Let add opt out of pass inheritance",
       "short_title": "Let add opt out of pass inheritance",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

@@ -131,6 +131,11 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
   cfg = state.config
   _reject_bad_text(title=title, **fields)
   new_id = ids.allocate(state.index, item_id)
+  # An omitted pass (None) inherits the previous item's; an explicit empty one
+  # files the item with no pass, the same meaning `set --pass ''` has.
+  pass_key = fields.get("pass_key")
+  if pass_key is None:
+    pass_key = state.index.items[-1].pass_key if state.index.items else ""
   item = Item(
     id=new_id,
     title=title,
@@ -140,7 +145,7 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
     size=str(fields.get("size") or ""),
     trees=_clean(list(fields.get("trees") or [])),
     findings=str(fields.get("findings") or ""),
-    pass_key=str(fields.get("pass_key") or (state.index.items[-1].pass_key if state.index.items else "")),
+    pass_key=str(pass_key),
     depends_on=_clean(list(fields.get("depends_on") or [])),
     importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
     urgency=_valid_score("urgency", fields["urgency"]) if fields.get("urgency") is not None else 2,

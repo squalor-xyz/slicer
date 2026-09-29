@@ -692,7 +692,8 @@ $ slicer set S03 --pass 2
 
 `slicer add` without `--pass` files the new item under the *previous* item's pass, so once
 the tail of the queue is in a pass, every later `add` lands there too. Name the pass you
-mean, or clear it with `slicer set ID --pass ''`. `import` never inherits a pass.
+mean, or pass `--pass ''` to file it with no pass (`slicer set ID --pass ''` clears one
+later). `import` never inherits a pass.
 
 A declared pass renders even with no items yet, so you can open a group before its first
 slice exists. `prose drop-pass 2` closes it, and refuses while any item is still filed

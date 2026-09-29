@@ -152,8 +152,8 @@ to change it.
 **Dependencies resolve to ids.** `depends: Parse the config file` becomes
 `depends_on: ["S01"]`.
 
-**Passes are not inherited.** `slicer add` files a new item under the previous item's
-pass; import does not, because an outline says where its own entries belong.
+**Passes are not inherited.** `slicer add` without `--pass` files a new item under the
+previous item's pass (`--pass ''` opts out); import does not, because an outline says where its own entries belong.
 
 ## When it refuses
 

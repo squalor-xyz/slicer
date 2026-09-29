@@ -57,6 +57,22 @@ class AddOptionsTests(unittest.TestCase):
       self.assertIn("added S02  Follow-up (pass: v1)", out)
       self.assertEqual(repo.state().index.require("S02").pass_key, "v1")
 
+  def test_Add_ExplicitEmptyPass_AfterAPassedTail_FilesWithNoPass(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Milestone", "--pass", "v1")
+      code, out, err = repo.run("add", "Unfiled", "--pass", "")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").pass_key, "")
+      self.assertEqual(out.strip(), "added S02  Unfiled")
+
+  def test_Add_OmittedPass_AfterAPassedTail_StillInherits(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Milestone", "--pass", "v1")
+      repo.run("add", "Follow-up")
+      self.assertEqual(repo.state().index.require("S02").pass_key, "v1")
+
   def test_Add_EmptyPass_OmitsThePassNote(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")
