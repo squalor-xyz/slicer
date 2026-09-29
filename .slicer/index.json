@@ -2856,7 +2856,7 @@
       "id": "S118",
       "title": "Configure the render merge driver in one step",
       "short_title": "Configure the render merge driver in one step",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

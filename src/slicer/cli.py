@@ -291,6 +291,18 @@ render/slices/*.md merge=slicer-generated
 """
 
 
+def _render_driver_setup() -> str:
+  """The one-time, per-clone git config that turns on the render merge driver
+  named in `.gitattributes` (S109). slicer's git allowlist cannot run `git config`
+  itself, so it prints the lines for a person to run once in each clone."""
+  return (
+    "render/ is pointed at a merge driver so parallel branches don't leave "
+    "conflict markers in it.\nEnable it once in this clone:\n"
+    '  git config merge.slicer-generated.name "keep the current branch\'s generated files"\n'
+    "  git config merge.slicer-generated.driver true"
+  )
+
+
 def cmd_init(args: argparse.Namespace) -> int:
   root = Path(args.root or ".").resolve()
   base = root / store.DIR_NAME
@@ -308,7 +320,12 @@ def cmd_init(args: argparse.Namespace) -> int:
     jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
   jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
-  _emit(args, {"root": str(root), "dir": str(base)}, f"initialised {base}")
+  text = f"initialised {base}"
+  # Point people at the one-time merge-driver setup where it is git-relevant. The
+  # JSON payload stays {root, dir}; the hint is human output only.
+  if vcs.is_repo(root):
+    text += "\n\n" + _render_driver_setup()
+  _emit(args, {"root": str(root), "dir": str(base)}, text)
   return OK
 
 
