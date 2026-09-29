@@ -412,7 +412,7 @@ class ListDoneDefaultTests(unittest.TestCase):
       code, out, err = repo.run("list")
       self.assertEqual((code, err), (0, ""))
       lines = out.splitlines()
-      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
+      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "CLAIM", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
       self.assertTrue(any(line[lines[0].index("EFFORT")] == "-" for line in lines[1:-1]))
       self.assertEqual(lines[-1], "2 items hidden (done or retired); use --all to show them")
       self.assertEqual([item["id"] for item in json.loads(repo.run("list", "--json")[1])],

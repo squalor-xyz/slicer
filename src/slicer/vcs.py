@@ -14,14 +14,14 @@ from pathlib import Path
 from slicer.errors import StateError
 
 ALLOWED = frozenset({
-  "rev-parse", "status", "log", "mv", "ls-files", "worktree", "branch",
+  "rev-parse", "status", "log", "mv", "ls-files", "worktree", "branch", "config",
 })
 
-# `worktree` and `branch` are listed only so `start` can see sibling names.
-# Any other form (`worktree add`, `branch -D`) is still refused.
+# These subcommands are allowlisted only for the exact read-only forms below.
 READ_ONLY = {
   "worktree": frozenset({("list", "--porcelain")}),
   "branch": frozenset({("--all", "--format=%(refname)")}),
+  "config": frozenset({("--get", "user.name")}),
 }
 
 
@@ -70,6 +70,21 @@ def subjects(root: Path, limit: int = 2000) -> list[str]:
     return []
   done = _run(root, "log", "--all", "--no-merges", f"--max-count={limit}", "--pretty=%h %s")
   return done.stdout.splitlines() if done.returncode == 0 else []
+
+
+def identity(root: Path, configured: str) -> str:
+  """Who a claim should name: config, then git user.name, then the worktree."""
+  chosen = configured.strip()
+  if chosen:
+    return chosen.splitlines()[0].strip()
+  if is_repo(root):
+    done = _run(root, "config", "--get", "user.name")
+    if done.returncode == 0 and done.stdout.strip():
+      return done.stdout.splitlines()[0].strip()
+    here = _current_worktree(root)
+    if here is not None and here.name:
+      return here.name
+  return root.name or "unknown"
 
 
 def elsewhere(root: Path, item_id: str) -> list[str]:

@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer start` records a claim on the item (owner and time). `slicer list` names the owner and marks other in-progress rows with `*`; `--json` includes `claim`. `slicer release` clears a claim without changing status, and `done` clears it too. The owner is config `claim_owner`, otherwise the git user name, otherwise the worktree name.
 - `slicer start` warns on stderr when another branch or worktree name refers to that slice id. The current checkout is ignored, the exit code is unchanged, and `next` stays silent.
 - Text `slicer list` now labels its columns and reports how many matching done or retired items the default filter hides, with a `--all` hint. JSON output remains an array.
 - `slicer check` also parses the backtick `slicer ...` examples written inside a live slice's sections and fails on a flag the real parser does not know, naming the slice id, section, and flag — so a removed or renamed flag (like `--require-render`) is caught before an agent copies it into a real command. Done and retired slices are not scanned, so history keeps its old flag names; a flag merely mentioned in prose is left alone.

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "id_prefix": "S",
   "id_width": 2,
   "next_id": 122,
@@ -21,6 +21,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -45,6 +46,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -69,6 +71,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -93,6 +96,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -117,6 +121,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -141,6 +146,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -165,6 +171,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -189,6 +196,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -215,6 +223,7 @@
       "notes": [
         "**2026-09-27** — Implemented: notes now live on the item (Item.notes); slicer note works on bare rows."
       ],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -239,6 +248,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -263,6 +273,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -287,6 +298,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -311,6 +323,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -335,6 +348,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -359,6 +373,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -388,6 +403,7 @@
         "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it.",
         "**2026-09-27** — Implemented on feature/S50-tui-roadmap-wizard: guided wizard (tui_wizard.py) landing items and slices via ops.apply_outline; text-input primitive delivered (S81)."
       ],
+      "claim": null,
       "fields": {
         "size": "L",
         "flags": [],
@@ -412,6 +428,7 @@
       "has_slice": false,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -436,6 +453,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -460,6 +478,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -484,6 +503,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -508,6 +528,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -532,6 +553,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -556,6 +578,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -582,6 +605,7 @@
         "S38"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -606,6 +630,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -630,6 +655,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -654,6 +680,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -678,6 +705,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -702,6 +730,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -726,6 +755,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -750,6 +780,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -774,6 +805,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -798,6 +830,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -822,6 +855,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -848,6 +882,7 @@
         "S13"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -872,6 +907,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -896,6 +932,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -920,6 +957,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -944,6 +982,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -968,6 +1007,7 @@
       "has_slice": false,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -992,6 +1032,7 @@
       "has_slice": false,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1024,6 +1065,7 @@
         "S89"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1048,6 +1090,7 @@
       "has_slice": false,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1072,6 +1115,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1096,6 +1140,7 @@
       "has_slice": false,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1120,6 +1165,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1144,6 +1190,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1168,6 +1215,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1192,6 +1240,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1216,6 +1265,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1240,6 +1290,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1264,6 +1315,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1288,6 +1340,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1312,6 +1365,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1336,6 +1390,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1360,6 +1415,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1384,6 +1440,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1408,6 +1465,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1432,6 +1490,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1456,6 +1515,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1480,6 +1540,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1504,6 +1565,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1528,6 +1590,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1552,6 +1615,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1576,6 +1640,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1598,6 +1663,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1620,6 +1686,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1642,6 +1709,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1666,6 +1734,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1690,6 +1759,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1714,6 +1784,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -1738,6 +1809,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1762,6 +1834,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1786,6 +1859,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1811,6 +1885,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1835,6 +1910,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1859,6 +1935,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1883,6 +1960,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -1907,6 +1985,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1935,6 +2014,7 @@
         "S06"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1961,6 +2041,7 @@
       "notes": [
         "**2026-09-27** — Delivered as the wizard's text_input primitive (tui_wizard.py), reused by the TUI search/jump/move prompts."
       ],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -1985,6 +2066,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2009,6 +2091,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2033,6 +2116,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2057,6 +2141,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2081,6 +2166,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2105,6 +2191,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2129,6 +2216,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2153,6 +2241,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2179,6 +2268,7 @@
         "S06"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2203,6 +2293,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2227,6 +2318,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2251,6 +2343,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2275,6 +2368,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2299,6 +2393,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2323,6 +2418,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2352,6 +2448,7 @@
         "S96"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2378,6 +2475,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2402,6 +2500,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2426,6 +2525,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2450,6 +2550,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2474,6 +2575,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2498,6 +2600,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2522,6 +2625,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2548,6 +2652,7 @@
       "notes": [
         "**2026-09-29** — Landed as --strict (render-first via State.staged() + ops.render_gated) in commit 37b0d79, superseding the earlier --require-render implementation. The done history entry's note predates that decision."
       ],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2570,6 +2675,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2596,6 +2702,7 @@
         "S106"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2622,6 +2729,7 @@
         "S107"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2646,6 +2754,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2670,6 +2779,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2696,6 +2806,7 @@
       "notes": [
         "**2026-09-29** — Implementation uses --strict, the current render-gated flag that replaced --require-render in S105. Migration snapshots its exact target .slicer directory, including config and templates, and restores it on render failure."
       ],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
@@ -2720,6 +2831,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2744,6 +2856,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2762,12 +2875,13 @@
       "id": "S114",
       "title": "Claim a slice and surface claimed / in-work items in list",
       "short_title": "Claim a slice and surface claimed / in-work items in list",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S113"
       ],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
@@ -2790,6 +2904,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -2814,6 +2929,7 @@
       "has_slice": true,
       "depends_on": [],
       "notes": [],
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],

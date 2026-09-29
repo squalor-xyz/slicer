@@ -290,6 +290,13 @@ slicer show S01
 slicer start S01 --render
 ```
 
+`start` records a claim on the item: who, and the time. `slicer list` names that owner
+in the CLAIM column; an in-progress item with no claim is marked `*`, and other rows are
+`-`. `--json` carries `claim` as `{"owner", "at"}` or null. The owner is `claim_owner` in
+config, otherwise the git user name, otherwise the worktree name. `slicer release S01`
+clears the claim and leaves the status. `done` clears it too, so a finished item is not
+shown as claimed.
+
 Implement S01 and run its acceptance checks and the project's tests. **Only after
 those pass**, record completion:
 

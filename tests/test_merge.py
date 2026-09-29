@@ -147,9 +147,11 @@ class RenderDriverSetupHintTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertNotIn("git config", out)
 
-  def test_Vcs_Allowlist_DoesNotIncludeConfig(self) -> None:
-    # slicer prints the config lines; it must never run `git config` itself.
-    self.assertNotIn("config", vcs.ALLOWED)
+  def test_Vcs_Config_IsReadOnlyUserNameOnly(self) -> None:
+    # S114 allowlisted `git config --get user.name` (read-only) so a claim can
+    # name the git user. slicer must still never *write* config -- e.g. to set
+    # the merge driver -- so the only permitted config form is that one read.
+    self.assertEqual(vcs.READ_ONLY.get("config"), frozenset({("--get", "user.name")}))
 
 
 if __name__ == "__main__":
