@@ -240,6 +240,9 @@ class StartConfigTests(unittest.TestCase):
   def test_Config_RoundTrips(self) -> None:
     cfg = Config.from_dict(Config().to_dict())
     self.assertEqual(cfg.started_status, "started")
+    self.assertTrue(cfg.render_driver_check)  # default on, survives round-trip
+    off = Config.from_dict({**Config().to_dict(), "render_driver_check": False})
+    self.assertFalse(off.render_driver_check)
 
 
 class StartTuiTests(unittest.TestCase):

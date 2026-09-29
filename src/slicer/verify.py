@@ -147,7 +147,15 @@ def against_git(state: State) -> VerifyReport:
   report = VerifyReport(checked=len(state.index.items))
   # Clone setup, not history: independent of git_check. Warn once here rather than
   # let an unconfigured render merge driver write conflict markers on the next merge.
-  if vcs.is_repo(state.root) and not vcs.render_driver_configured(state.root):
+  # Only when this checkout has sibling worktrees -- the parallel workflow the driver
+  # serves -- so a solo, single-worktree clone stays quiet. `render_driver_check` off
+  # silences it entirely.
+  if (
+    cfg.render_driver_check
+    and vcs.is_repo(state.root)
+    and not vcs.render_driver_configured(state.root)
+    and vcs.sibling_worktrees(state.root)
+  ):
     report.findings.append(Finding(
       "warn", "",
       "render merge driver not configured in this clone; run `slicer setup-git` so "

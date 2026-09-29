@@ -292,30 +292,55 @@ class SetupGitCommandTests(unittest.TestCase):
 
 class RenderDriverConfiguredWarningTests(unittest.TestCase):
   """`slicer verify` warns (never fails) when the render merge driver is not
-  configured in this clone, pointing at `slicer setup-git` (S123)."""
+  configured, but only when this checkout has sibling worktrees -- the parallel
+  workflow the driver serves -- and `render_driver_check` is on (S123, S125)."""
 
   MISSING = "render merge driver not configured"
 
   def _configure_driver(self, repo: support.TempRepo) -> None:
     repo._git("config", "merge.slicer-generated.driver", "true")
 
-  def _set_git_check(self, repo: support.TempRepo, value: bool) -> None:
+  def _add_sibling(self, repo: support.TempRepo) -> None:
+    repo.commit("base")  # `git worktree add` needs a commit
+    repo._git("worktree", "add", str(repo.root / "sib"), "-b", "sib")
+
+  def _set_config(self, repo: support.TempRepo, **changes: object) -> None:
     path = repo.root / ".slicer" / "config.json"
     cfg = json.loads(path.read_text(encoding="utf-8"))
-    cfg["git_check"] = value
+    cfg.update(changes)
     path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
 
-  def test_Verify_DriverNotConfigured_WarnsAndPointsAtSetupGit(self) -> None:
+  def test_Verify_SiblingWorktreeDriverUnset_WarnsAndPointsAtSetupGit(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")
+      self._add_sibling(repo)
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)  # a warning never fails verify
       self.assertIn(self.MISSING, out)
       self.assertIn("setup-git", out)
 
+  def test_Verify_SingleWorktree_StaysQuiet(self) -> None:
+    # The solo case: one worktree, driver unset -> no nag.
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      repo.commit("base")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertNotIn(self.MISSING, out)
+
+  def test_Verify_RenderDriverCheckOff_SilencesEvenWithSibling(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self._set_config(repo, render_driver_check=False)
+      self._add_sibling(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertNotIn(self.MISSING, out)
+
   def test_Verify_DriverConfigured_NoWarning(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")
+      self._add_sibling(repo)
       self._configure_driver(repo)
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
@@ -331,16 +356,18 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
   def test_Verify_DriverWarning_IsIndependentOfGitCheck(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")
-      self._set_git_check(repo, False)
+      self._set_config(repo, git_check=False)
+      self._add_sibling(repo)
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
       self.assertIn(self.MISSING, out)  # still warns with the history cross-check off
 
   def test_Check_StaysGitFree_NoDriverWarning(self) -> None:
     # The driver probe is a git query and must not leak into the git-free CI gate,
-    # even though the driver is unconfigured here.
+    # even with a sibling worktree and the driver unset.
     with support.TempRepo(git=True) as repo:
       repo.run("init")
+      self._add_sibling(repo)
       repo.run("render")  # so check is clean and any failure would be the warning
       code, out, _ = repo.run("check")
       self.assertEqual(code, 0, out)
