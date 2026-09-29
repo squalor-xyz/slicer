@@ -690,6 +690,10 @@ $ slicer add "Rotate the signing key" --pass 2
 $ slicer set S03 --pass 2
 ```
 
+`slicer add` without `--pass` files the new item under the *previous* item's pass, so once
+the tail of the queue is in a pass, every later `add` lands there too. Name the pass you
+mean, or clear it with `slicer set ID --pass ''`. `import` never inherits a pass.
+
 A declared pass renders even with no items yet, so you can open a group before its first
 slice exists. `prose drop-pass 2` closes it, and refuses while any item is still filed
 there:
@@ -770,6 +774,8 @@ nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
 | `stale render: …` / `check failed` | Run `slicer render` (and `slicer sync` if you have sync targets). |
 | `template missing; re-run \`slicer init --force\` to restore it` | A file under `.slicer/templates/` was deleted. |
 | `… written by a newer slicer (schema N; this build knows M). Upgrade slicer to open this project.` | The project was saved by a newer slicer. 1.0.0 writes index schema 2 (`config.json` stays at 1): it opens a schema-1 project with no migration step, and the first change it saves stamps schema 2, after which an older build refuses the project rather than dropping claims. Upgrade every clone that shares the project. Pre-release checkouts from before this guard (S72) do not refuse; they can drop claims and rewrite the file at schema 1. |
+| `Git merge in progress in …; finish or abort it before changing slicer state.` | slicer refuses state changes, including TUI saves, while this checkout has a merge to finish (`merge_in_progress`, exit 2). Read-only commands, dry runs, `render` and `sync` still work for the repair; finish or abort the merge, then retry. |
+| `running code from …, but this project is … -- a different worktree of the same repo` | A stderr note, not an error: an editable install from one worktree is running against another worktree's `.slicer/`, so that checkout's `src/` edits are not what runs. Use `PYTHONPATH=src python3 -m slicer` in the checkout you are editing, or set `SLICER_NO_CODE_WARNING=1` to silence it. |
 | `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
 | merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth — resolve a real overlap there by hand. For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see below) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. |
 

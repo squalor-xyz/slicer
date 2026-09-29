@@ -109,12 +109,13 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 |---|---|
 | `ai instructions` | agent quick start, available without a project; supports `--json` |
 | `ai skill` | the same loop and exit rules as a `SKILL.md` for Claude Code, Codex, and Grok |
-| `init` | create `.slicer/` with config and templates |
+| `init [--force]` | create `.slicer/` with config and templates; `--force` rewrites an existing config and templates only |
+| `setup-git` | print the two `git config` lines that enable the `slicer-generated` render merge driver in this clone (`slicer setup-git \| sh` applies them); needs no project |
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |
-| `migrate --from DIR [--dry-run]` | convert an existing legacy markdown tree |
+| `migrate --from DIR [--dry-run] [--force]` | convert an existing legacy markdown tree; `--force` replaces an existing roadmap |
 | `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--effort/--depends-on/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies. `--effort` is 1–3 and optional |
-| `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
+| `promote ID [--file/--stdin] [--boundary TEXT] [--force]` | give an item a slice file; a one-item outline fills its sections in one call. `--force` overwrites an existing slice |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
 | `next [-n N] [--start] [--show\|--ready [--section NAME ...]]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids. Repeat `--section` with `--ready` to return the scope boundary and those sections only |
@@ -129,17 +130,18 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `goals` | print the project's goals and non-goals together; supports `--json` |
-| `start ID [ID ...]` | mark an item in progress and claim it (owner and time). The owner is `claim_owner` in config, otherwise the git user name, otherwise the worktree name. A second start does not refresh the claim |
+| `start ID [ID ...] [--note TEXT]` | mark an item in progress and claim it (owner and time). The owner is `claim_owner` in config, otherwise the git user name, otherwise the worktree name. A second start does not refresh the claim |
 | `release ID [ID ...]` | clear a claim without changing status. An item that was in progress stays in progress and lists as `*` |
 | `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status; `--note` records a one-line *history* entry (for a durable note on the item, use `slicer note`); `done` moves the file with `git mv` and clears a claim |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `remove ID --purge/--reason --dry-run` | preview the removal and its fallout (dependents, id fate); write nothing |
+| `remove ID ... --force` | retire or purge despite dependents, or a done item |
 | `render` | regenerate `.slicer/render/` (ROADMAP.md, a browser-viewable ROADMAP.html, and one file per slice) |
 | `sync [--check]` | rewrite derived lines in other documents |
 | `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
-| `stats` / `log [--item ID] [--action A]` | counts + completion % and per-tree progress; history (`--item`/`--action` scope it; `set` records old→new values) |
+| `stats` / `log [--limit N] [--item ID] [--action A]` | counts + completion % and per-tree progress; history, newest first (`--limit` defaults to 20; `--item`/`--action` scope it; `set` records old→new values) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`) |
 | `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
 

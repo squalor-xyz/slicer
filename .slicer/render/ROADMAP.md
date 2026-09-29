@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-135 items · — 6 · done 128 · retired 1
+137 items · — 7 · done 129 · retired 1
 
 v1.0.0 release
 
@@ -52,7 +52,7 @@ v1.0.0 release
 | 22 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | done |
 | 23 | [S108](slices/S108.md) | Fold shipped notes into the 1.0.0 changelog | S | 1 | slicer | credit review | done |
 | 24 | [S126](slices/S126.md) | Verify and document the schema v1 to v2 upgrade contract |  | 2 |  |  | done |
-| 25 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | — |
+| 25 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | done |
 | 26 | [S128](slices/S128.md) | Cut and tag the 1.0.0 release |  | 1 |  |  | — |
 | 27 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | done |
 | 28 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 2 |  |  | done |
@@ -168,3 +168,5 @@ v1.0.0 release
 | 133 | [S132](slices/S132.md) | Render empty slice metadata without broken emphasis |  | 1 |  |  | — |
 | 134 | S134 | Show pass membership in the list table |  | 1 |  |  | — |
 | 135 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | — |
+| 136 | [S136](slices/S136.md) | Keep next from offering work started in a sibling worktree |  | 2 | slicer | S127 docs audit: next_item ignores claims and sibling worktrees | — |
+| 137 | [S137](slices/S137.md) | Let add opt out of pass inheritance |  | 1 | slicer | S127 docs audit: add --pass '' still inherits the previous item's pass | — |

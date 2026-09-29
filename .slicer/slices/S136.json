@@ -1,0 +1,41 @@
+{
+  "id": "S136",
+  "title": "Keep next from offering work started in a sibling worktree",
+  "lead": [
+    "`next` picks from the index of the checkout it runs in, so an item another worktree has already started still reads as open and is offered as the next slice."
+  ],
+  "depends_note": null,
+  "findings_note": "S127 docs audit: next_item ignores claims and sibling worktrees",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "With parallel worktrees, each checkout's `.slicer/index.json` records only its own starts. `slicer list` already reads sibling worktrees and marks such items `wt:NAME` (S122), and `start` warns when another branch or worktree name refers to the id (S113), but `ops.next_item` (`src/slicer/ops.py`) consults neither, so an agent following the documented `next --ready` loop in `main` is handed a slice another agent is implementing. The S127 docs pass now tells agents to check `list` first; the tool could do this itself."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`next_item`) and the sibling-worktree lookup `list` uses\n- `src/slicer/ai.py` and `docs/agents.md` (drop the \"check `list` first\" workaround once fixed)\n- tests for `next` against a sibling worktree"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. With an item started in a sibling worktree, `next` in another checkout skips it and returns the next eligible item, and `next --ready --json` reports the skip.\n2. With no sibling worktrees, `next` behaves exactly as today."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle with the project before building, do not infer: whether `next` skips such items by default or only flags them, how the skip appears in JSON, and the cost of reading sibling worktrees on every `next`. Relates to S135's review status, which also changes what `next` offers."
+    },
+    {
+      "heading": "Check",
+      "body": "The tests above pass; the suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

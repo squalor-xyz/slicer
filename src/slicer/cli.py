@@ -1674,14 +1674,15 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--tree", action="append")
   sp.add_argument("--findings")
   sp.add_argument("--status")
-  sp.add_argument("--pass", dest="pass_key", help="file the item under this pass group")
+  sp.add_argument("--pass", dest="pass_key",
+                  help="file the item under this pass group (default: the previous item's pass)")
   sp.add_argument("--importance", type=int, help="1-3; how important (default 2)")
   sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate, omit to leave unset")
 
   sp = _strict_flag(_render_flag(add("promote", _mutating(cmd_promote), "give an item a slice file")))
   sp.add_argument("id")
-  sp.add_argument("--force", action="store_true")
+  sp.add_argument("--force", action="store_true", help="overwrite an existing slice")
   sp.add_argument("--file", help="a one-item outline whose sections fill the slice")
   sp.add_argument("--stdin", action="store_true", help="read that outline from stdin")
   sp.add_argument("--boundary", help="full scope-boundary paragraph; overrides source/default; empty clears")
@@ -1800,8 +1801,8 @@ def build_parser() -> argparse.ArgumentParser:
 
   add("status", cmd_status, "next item, progress, and blockers in one view")
 
-  sp = add("log", cmd_log, "recent status changes")
-  sp.add_argument("--limit", type=int, default=20)
+  sp = add("log", cmd_log, "recent history, newest first")
+  sp.add_argument("--limit", type=int, default=20, help="how many entries (default 20)")
   sp.add_argument("--item", action="append", help="filter to these item ids (repeatable)")
   sp.add_argument("--action", action="append", help="filter to these actions, e.g. set, edit (repeatable)")
 
