@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-139 items · — 8 · done 130 · retired 1
+140 items · — 7 · done 132 · retired 1
 
 v1.0.0 release
 
@@ -59,8 +59,8 @@ v1.0.0 release
 | 29 | [S133](slices/S133.md) | Key JSON status tallies by status, not display label |  | 1 |  |  | done |
 | 30 | [S136](slices/S136.md) | Keep next from offering work started in a sibling worktree |  | 2 | slicer | S127 docs audit: next_item ignores claims and sibling worktrees | — |
 | 31 | [S137](slices/S137.md) | Let add opt out of pass inheritance |  | 1 | slicer | S127 docs audit: add --pass '' still inherits the previous item's pass | done |
-| 32 | [S138](slices/S138.md) | Trim the command catalogue out of ai instructions |  | 1 | slicer | S127 review: ai instructions length, owner question | — |
-| 33 | [S139](slices/S139.md) | Tell agents to fill in priority and estimate fields when filing items |  | 1 | slicer | owner request, 2026-09-29 v1.0.0 triage | — |
+| 32 | [S138](slices/S138.md) | Trim the command catalogue out of ai instructions |  | 1 | slicer | S127 review: ai instructions length, owner question | done |
+| 33 | [S139](slices/S139.md) | Tell agents to fill in priority and estimate fields when filing items |  | 1 | slicer | owner request, 2026-09-29 v1.0.0 triage | done |
 
 ---
 
@@ -172,3 +172,4 @@ v1.0.0 release
 | 137 | [S132](slices/S132.md) | Render empty slice metadata without broken emphasis |  | 1 |  |  | — |
 | 138 | S134 | Show pass membership in the list table |  | 1 |  |  | — |
 | 139 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | — |
+| 140 | [S140](slices/S140.md) | Hint when an item is filed unscored |  | 1 | slicer | S139 decision: guidance only for 1.0.0, tool nudge later | — |

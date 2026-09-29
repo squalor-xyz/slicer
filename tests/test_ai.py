@@ -218,3 +218,23 @@ class AiInstructionsTests(unittest.TestCase):
     done = 'slicer done <ID> --note "Describe the verified outcome" --render'
     self.assertIn(done, section)
     self.assertNotIn(done + " --strict", section)
+
+  def test_Instructions_ImplementSection_LeavesTheCommandCatalogueToHelp(self) -> None:
+    # S138: the loop keeps the reads it needs; the rest is `--help`'s job.
+    section = ai.INSTRUCTIONS.split("## Implement one slice", 1)[1].split("## State", 1)[0]
+    self.assertLess(len(section.split()), 350)
+    for catalogue in ("slicer list --sort score", "slicer stats --json", "slicer log --json"):
+      self.assertNotIn(catalogue, section)
+    self.assertIn("slicer list --json", section)  # still needed to see claims
+    self.assertIn("--help", section)
+
+  def test_Instructions_Planning_AsksForScoresWithReasons(self) -> None:
+    # S139: filed items arrive scored, so the queue sorts immediately.
+    section = ai.INSTRUCTIONS.split("## Plan and record agreed work", 1)[1].split("## ", 1)[0]
+    for flag in ("--importance", "--urgency", "--effort"):
+      self.assertIn(flag, section)
+    self.assertIn("reason", section)
+    agents = (Path(__file__).resolve().parents[1] / "docs" / "agents.md").read_text(encoding="utf-8")
+    convert = agents.split("### Convert an agreed roadmap", 1)[1].split("```", 2)[1]
+    for field in ("importance", "urgency", "effort"):
+      self.assertIn(field, convert)

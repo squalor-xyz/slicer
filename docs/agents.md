@@ -39,7 +39,8 @@ review findings and agree on scope before importing or implementing work.
 Read the project instructions. Help me turn the following goal, constraints, and
 acceptance criteria into a small roadmap: [describe them here]. Ask about missing
 requirements. Break the work into bounded slices with concrete checks and explicit
-dependencies. Detail the first slice; later items may remain roadmap rows. Identify
+dependencies. Propose importance, urgency, and effort (1-3) for every item, with a
+one-line reason each. Detail the first slice; later items may remain roadmap rows. Identify
 proposed files as proposed, rather than claiming they already exist. Present the plan
 for discussion before importing or implementing it.
 ```
@@ -52,7 +53,8 @@ the code for bugs, regressions, missing tests, and maintainability problems supp
 by evidence. For each finding, cite file locations, explain the impact and a concrete
 failure case or verification method, and distinguish confirmed behavior from open
 questions. Identify findings already covered by roadmap items. Propose bounded
-improvements with acceptance criteria; do not change code or import work yet.
+improvements with acceptance criteria and proposed importance, urgency, and effort
+(1-3) with reasons; do not change code or import work yet.
 ```
 
 ### Convert an agreed roadmap
@@ -62,8 +64,9 @@ Convert the accepted goals or review findings into a slicer markdown outline. Re
 docs/import.md from the slicer documentation and obtain the target project's template
 with `slicer import --skeleton`. Use unique ## item titles, supported metadata keys,
 and ### slice sections. Preserve finding references, scope boundaries, acceptance
-checks, and dependencies by exact item title. Propose importance and urgency values
-from 1 to 3 with reasons in your response. Do not invent findings or file locations.
+checks, and dependencies by exact item title. Set importance, urgency, and effort
+(1-3) on every item, and size, tree, and findings where the project uses them; give a
+one-line reason for each score in your response. Do not invent findings or file locations.
 Save the outline as roadmap.md and run `slicer import roadmap.md --dry-run --json`.
 Resolve validation errors and show me the outline and result before applying it.
 ```
@@ -308,7 +311,8 @@ matched field and a snippet (`match` in JSON), so you can answer "is there alrea
 about X?" — and see why each hit matched — before creating one.
 
 **Create a dependent item in one call.** For example,
-`slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.
+`slicer add "Implement the new loader" --short-title "New loader" --importance 3 --urgency 2 --effort 2 --depends-on S01 --render`.
+Score what you file rather than leaving the 2/2 defaults, and say why in your reply.
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)
 and a self-edge, a new cycle, or a dependency on a retired item (`state`). A dangling edge

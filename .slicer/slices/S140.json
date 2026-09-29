@@ -1,0 +1,41 @@
+{
+  "id": "S140",
+  "title": "Hint when an item is filed unscored",
+  "lead": [
+    "`add` and `import` accept an item at the default importance 2, urgency 2 and no effort without comment, so an unscored item is only noticed later when the queue does not sort."
+  ],
+  "depends_note": null,
+  "findings_note": "S139 decision: guidance only for 1.0.0, tool nudge later",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S139 changed the agent guidance to score every filed item, and the owner chose to keep 1.0.0 to guidance and file the tool side separately. A non-blocking hint at filing time would catch unscored items from any author, not only agents that read `ai instructions`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_add`, `cmd_import`) and the import report in `src/slicer/ops.py`\n- `docs/agents.md`, `README.md`\n- tests for `add` and `import`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `add` of an item left at 2/2 with no effort prints a stderr hint naming `--importance`, `--urgency` and `--effort`; the exit code and JSON payload are unchanged.\n2. `import --dry-run` lists unscored items in its `warnings`.\n3. A scored item produces no hint."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle with the project before building, do not infer: whether \"unscored\" means 2/2 with no effort or any of the three left at its default, whether a config switch turns the hint off, and whether it belongs in `add`, `import`, or both."
+    },
+    {
+      "heading": "Check",
+      "body": "The tests above pass; the suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
