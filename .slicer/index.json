@@ -2666,7 +2666,7 @@
       "id": "S110",
       "title": "Roll back a partial render when done --render fails",
       "short_title": "Roll back a partial render when done --render fails",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

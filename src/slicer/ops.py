@@ -386,7 +386,9 @@ def render_gated(state: State, mutate: Callable[[], object]) -> tuple[object, in
   with state.staged():
     result = mutate()
     expected = render.plan(state)
-    written = len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
+    # write_atomic, not write: a render write that fails partway restores the
+    # render tree, so state (staged) and render/ roll back together as one unit.
+    written = len(render.write_atomic(expected, state.render_dir, render.compare(expected, state.render_dir)))
   return result, written
 
 

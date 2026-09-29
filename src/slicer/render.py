@@ -401,6 +401,48 @@ def write(expected: Mapping[str, bytes], root: Path, diff: RenderDiff) -> list[s
   return touched
 
 
+def write_atomic(expected: Mapping[str, bytes], root: Path, diff: RenderDiff) -> list[str]:
+  """Like `write`, but leave `root` byte-for-byte unchanged if any write fails.
+
+  `write` replaces and deletes generated files one at a time, so a failure partway
+  leaves `.slicer/render/` matching neither the old state nor the new one. Snapshot
+  every file this write would replace or delete -- and note the ones that do not
+  exist yet -- run the write, and on failure restore the snapshot before re-raising.
+  An `OSError` becomes a `RenderError` so a render-gated mutation whose render cannot
+  be written exits 2 (render), the same as one whose render cannot be planned, rather
+  than 3 (io). This is what lets a render-first mutation roll back as a whole.
+  """
+  saved: dict[str, bytes] = {}
+  created: list[str] = []
+  for rel in sorted(set(diff.missing) | set(diff.differing) | set(diff.orphans)):
+    path = root / rel
+    if path.is_file():
+      saved[rel] = path.read_bytes()
+    else:
+      created.append(rel)  # a file the write creates; a rollback deletes it
+  try:
+    return write(expected, root, diff)
+  except OSError as exc:
+    _restore(root, saved, created)
+    raise RenderError(f"could not write render output, left it unchanged: {exc}") from exc
+  except BaseException:
+    _restore(root, saved, created)
+    raise
+
+
+def _restore(root: Path, saved: Mapping[str, bytes], created: list[str]) -> None:
+  """Undo a failed `write_atomic`: rewrite the bytes it replaced or deleted, and
+  delete the files it had newly created."""
+  for rel, data in saved.items():
+    path = root / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+  for rel in created:
+    path = root / rel
+    if path.is_file():
+      path.unlink()
+
+
 def unified(expected: Mapping[str, bytes], root: Path, rel: str, limit: int = 30) -> str:
   import difflib
 
