@@ -251,6 +251,12 @@ document — and the render failure is reported on stderr. The exit is 1 whateve
 cause, because the mutation itself succeeded and only the projection is stale. Re-run
 `slicer render` (after fixing the cause) to resolve it.
 
+`--require-render` changes that outcome. Pass it with `--render`. Rendering must
+succeed or the command publishes nothing: state and `.slicer/render/` stay as they
+were, stdout is the error envelope, and the exit is 2 with `code="render"`.
+`done --render` already works this way, with or without the flag. The TUI still
+saves first.
+
 **One case to special-case:** `slicer next`, including `--show` and `--ready`, exits **2** when nothing is runnable, with
 `{"item": null, "blocked": [...]}`. That is a normal empty queue, not a failure. Test for
 the `error` key rather than assuming exit 2 means something went wrong.

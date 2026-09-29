@@ -104,6 +104,9 @@ directory from the item's status, and `ops.set_status` moves the file with `git 
 the status crosses a folder boundary, so the change stays one tracked rename.
 For `done --render`, `ops` renders the proposed status before moving the slice or saving
 the index. A template or render write failure leaves the item's prior status in place.
+Every other `--render` saves first; a render failure leaves that save and exits 1.
+`--require-render` asks the shared wrapper for the `done` rule: it snapshots the
+index, log, slices, and render output, and restores them when rendering fails.
 
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
 `ls-files`. `commit`, `push` and `tag` are unreachable from the code — not by convention
