@@ -13,6 +13,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - Text `slicer list` now labels its columns and reports how many matching done or retired items the default filter hides, with a `--all` hint. JSON output remains an array.
 - `slicer check` also parses the backtick `slicer ...` examples written inside a live slice's sections and fails on a flag the real parser does not know, naming the slice id, section, and flag — so a removed or renamed flag (like `--require-render`) is caught before an agent copies it into a real command. Done and retired slices are not scanned, so history keeps its old flag names; a flag merely mentioned in prose is left alone.
 - `slicer init`, when run inside a git repo, prints the two `git config` lines that turn on the `slicer-generated` render merge driver, so the one-time per-clone setup is surfaced rather than buried in the docs. slicer still never runs `git config` itself. `--json` output is unchanged.
+- slicer warns on stderr when its own code and the project it discovers are different worktrees of one repo — an editable install run from a sibling checkout, whose `src/` edits are not what runs. The note names both paths and suggests `PYTHONPATH=src python3 -m slicer`. It never touches stdout or the exit code, stays silent for ordinary use (code under the project, or an unrelated install), and is silenced by `SLICER_NO_CODE_WARNING`.
 
 ### Changed
 

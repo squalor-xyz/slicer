@@ -1806,12 +1806,33 @@ def _cached_parser() -> argparse.ArgumentParser:
   return _parser
 
 
+_CODE_WARNING_ENV = "SLICER_NO_CODE_WARNING"
+
+
+def _warn_code_mismatch(args: argparse.Namespace) -> None:
+  """Warn on stderr when slicer's own code and the project it discovers are
+  different worktrees of one repo -- an editable install run from a sibling
+  checkout, whose own `src/` edits are therefore not what runs. Purely advisory:
+  it never raises, never touches stdout or the exit code, and is silenced by
+  the SLICER_NO_CODE_WARNING environment variable."""
+  if os.environ.get(_CODE_WARNING_ENV):
+    return
+  try:
+    root = store.discover(Path(args.root) if getattr(args, "root", None) else None)
+    message = vcs.foreign_worktree(root, Path(__file__).resolve().parent)
+  except Exception:
+    return  # no project here, or any probe failure -- stay silent
+  if message:
+    print(f"slicer: {message}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = _cached_parser()
   argv = list(sys.argv[1:] if argv is None else argv)
   args = argparse.Namespace()
   try:
     parser.parse_args(argv, namespace=args)
+    _warn_code_mismatch(args)
     # A mutating command holds an advisory lock for its whole run, so two
     # writers serialise instead of racing (a duplicated id, a half-applied
     # outline). Read-only commands need no lock.

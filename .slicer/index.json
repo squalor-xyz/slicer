@@ -3019,7 +3019,7 @@
       "id": "S120",
       "title": "Warn when slicer runs code from outside the discovered project",
       "short_title": "Warn when slicer runs code from outside the discovered project",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
