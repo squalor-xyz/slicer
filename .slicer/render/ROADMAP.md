@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-116 items · — 8 · done 107 · retired 1
+116 items · — 7 · done 108 · retired 1
 
 v1.0.0 release
 
@@ -147,5 +147,5 @@ v1.0.0 release
 | 112 | [S112](slices/S112.md) | Label list columns and say when rows are hidden | S | 1 | slicer | credit review | — |
 | 113 | [S113](slices/S113.md) | Detect concurrent work on a slice across branches and worktrees |  | - |  |  | — |
 | 114 | [S114](slices/S114.md) | Claim a slice and surface claimed / in-work items in list |  | - |  |  | — |
-| 115 | [S115](slices/S115.md) | Point the contributor guide at the bounded pickup | S | 1 | slicer | S107 | — |
+| 115 | [S115](slices/S115.md) | Point the contributor guide at the bounded pickup | S | 1 | slicer | S107 | done |
 | 116 | [S116](slices/S116.md) | Reject slice examples that name a removed flag | M | 2 | slicer | S107 | — |
