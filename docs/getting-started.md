@@ -296,7 +296,10 @@ claimed in a sibling worktree appears as `wt:NAME` (or `wt:NAME+N` for more work
 when there is no local claim or started state. Other rows are `-`. `--json` carries
 `claim` as `{"owner", "at"}` or null and `in_work_elsewhere` as an array of
 `{"worktree", "owner"}` objects, even when a local claim takes precedence in the text
-table. This reads local Git worktrees only; it cannot see work on another machine.
+table. `slicer next` and `slicer status` skip an item a sibling worktree has in work and
+report it (`skipped S03 (in work in wt:NAME)`, or `in_work_elsewhere` in JSON), unless
+this checkout has it started or claimed too. This reads local Git worktrees only; it
+cannot see work on another machine, and the rendered roadmap ignores it.
 The owner is `claim_owner` in
 config, otherwise the git user name, otherwise the worktree name. `slicer release S01`
 clears the claim and leaves the status. `done` clears it too, so a finished item is not

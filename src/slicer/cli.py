@@ -566,6 +566,30 @@ def _unspecified_lines(result: ops.NextResult) -> list[str]:
   return lines
 
 
+def _elsewhere_payload(result: ops.NextResult) -> list[dict[str, str]]:
+  """Skipped items, one row per sibling worktree, in list's `{worktree, owner}` shape plus the id."""
+  return [{"id": item_id} | entry for item_id, entries in result.elsewhere for entry in entries]
+
+
+def _elsewhere_lines(result: ops.NextResult) -> list[str]:
+  return [
+    f"skipped {item_id} (in work in {', '.join('wt:' + e['worktree'] for e in entries)})"
+    for item_id, entries in result.elsewhere
+  ]
+
+
+def _note_skips(payload: dict, lines: list[str], result: ops.NextResult) -> None:
+  """Add the unspecified and in-work-elsewhere skips, each only when non-empty."""
+  unspecified = _unspecified_payload(result)
+  if unspecified:
+    payload["unspecified"] = unspecified
+    lines.extend(_unspecified_lines(result))
+  elsewhere = _elsewhere_payload(result)
+  if elsewhere:
+    payload["in_work_elsewhere"] = elsewhere
+    lines.extend(_elsewhere_lines(result))
+
+
 def _sections_named(
   sl: model.Slice, names: list[str], *, every_match: bool = False,
 ) -> list[model.Section]:
@@ -618,9 +642,6 @@ def _emit_ready(
       payload["slice"] = sl.to_dict()
   blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
   payload["blocked"] = blocked
-  skipped = _unspecified_payload(result)
-  if skipped:
-    payload["unspecified"] = skipped
   inherited = "^" if eff > item.score else ""
   lines = [
     f"{item.id}  {item.display_title()}",
@@ -640,7 +661,7 @@ def _emit_ready(
     lines.extend(f"  {entry['id']} waits on {', '.join(entry['waiting_on'])}" for entry in blocked)
   else:
     lines.append("Blocked   none")
-  lines.extend(_unspecified_lines(result))
+  _note_skips(payload, lines, result)
   _emit(args, payload, "\n".join(lines))
 
 
@@ -653,17 +674,14 @@ def cmd_next(args: argparse.Namespace) -> int:
   if args.section and not args.ready:
     raise StateError("--section on next requires --ready", code="usage")
   state = _state(args)
-  result = ops.next_item(state, args.n)
+  result = ops.next_item(state, args.n, store.in_work_elsewhere(state.root))
   if result.item is None:
     payload = {
       "item": None,
       "blocked": [{"id": i, "waiting_on": b} for i, b in result.blocked],
     }
-    skipped = _unspecified_payload(result)
-    if skipped:
-      payload["unspecified"] = skipped
     parts = [f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked]
-    parts.extend(_unspecified_lines(result))
+    _note_skips(payload, parts, result)
     text = "\n".join(parts) if parts else "nothing unmarked"
     if args.n:
       text = f"no eligible item at offset {args.n}" + (f"\n{text}" if parts else "")
@@ -692,10 +710,7 @@ def cmd_next(args: argparse.Namespace) -> int:
   ]
   if path:
     lines.append(f"     {path}")
-  skipped = _unspecified_payload(result)
-  if skipped:
-    payload["unspecified"] = skipped
-    lines.extend(_unspecified_lines(result))
+  _note_skips(payload, lines, result)
   if args.show:
     # Fold the follow-up `show ID` into this one call: an agent picking up work
     # reads the slice in the same turn it learns the id, saving a round trip.
@@ -1470,7 +1485,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
   """The one-call front door: what is next, how far along, and what is blocked."""
   state = _state(args)
-  result = ops.next_item(state, 0)
+  result = ops.next_item(state, 0, store.in_work_elsewhere(state.root))
   census = _census(state)
   nxt = result.item
   blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
@@ -1492,9 +1507,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     lines.extend(f"  {b['id']} waits on {', '.join(b['waiting_on'])}" for b in blocked)
   else:
     lines.append("Blocked   none")
-  if result.unspecified:
-    lines.extend(_unspecified_lines(result))
-    payload["unspecified"] = _unspecified_payload(result)
+  _note_skips(payload, lines, result)
   _emit(args, payload, "\n".join(lines))
   return OK
 

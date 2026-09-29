@@ -106,9 +106,9 @@ and priority inherited from dependents counts. An empty queue matches `next`.
 Do not combine `--ready` and `--show`.
 
 `start` claims the item for you. `list` shows claims in its CLAIM column, and
-`wt:NAME` marks an item started in a sibling Git worktree; `next` does not skip
-those, so check `slicer list --json` before taking work when several agents share
-a repo. `slicer release ID` hands a claim back without changing status.
+`wt:NAME` marks an item started in a sibling Git worktree. `next` skips those
+and reports them in `in_work_elsewhere`; `slicer list --json` shows every claim.
+`slicer release ID` hands a claim back without changing status.
 
 To re-read part of a slice with its title, dependencies, and scope boundary, use
 `slicer show ID --section "Implement" --section "Check" --context --json`.
