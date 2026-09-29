@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 import os
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 import support
 
-from slicer import legacy, migrator
+from slicer import legacy, migrator, render
 from slicer.config import Config
 
 
@@ -333,3 +336,102 @@ class MigrateRenderFlagTests(unittest.TestCase):
       support.make_mini(repo)
       code, _, err = repo.run("migrate", "--from", "docs/slices", "--dry-run", "--render")
       self.assertEqual(code, 0, err)
+
+  def test_Migrate_StrictRenderFailsInEmptyProject_RemovesCreatedTree(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      with patch.object(render, "plan", side_effect=render.RenderError("boom")):
+        code, out, _ = repo.run(
+          "migrate", "--from", "docs/slices", "--render", "--strict", "--json"
+        )
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertFalse((repo.root / ".slicer").exists())
+
+  def test_Migrate_StrictRenderFailsInNestedProject_LeavesAncestorUntouched(self) -> None:
+    from slicer.cli import main
+
+    with support.TempRepo() as repo:
+      repo.run("init")
+      ancestor = repo.read(".slicer/index.json")
+      nested = repo.root / "nested"
+      support.make_mini(repo, "nested/docs/slices")
+      out, err = StringIO(), StringIO()
+      with patch.object(render, "plan", side_effect=render.RenderError("boom")):
+        with redirect_stdout(out), redirect_stderr(err):
+          code = main([
+            "--root", str(nested), "migrate", "--from", "docs/slices",
+            "--render", "--strict", "--json",
+          ])
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out.getvalue())["error"]["code"], "render")
+      self.assertFalse((nested / ".slicer").exists())
+      self.assertEqual(repo.read(".slicer/index.json"), ancestor)
+
+  def test_Migrate_ForceStrictRenderFails_RestoresConfigTemplatesAndState(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      repo.write(
+        "docs/slices/README.md",
+        repo.read("docs/slices/README.md").replace("| F9 | later |", "| F9 | — |"),
+      )
+      repo.run("init")
+      repo.run("add", "Existing", "--render")
+      repo.write(".slicer/templates/row.md", "custom row\n")
+      (repo.root / ".slicer/kept-empty").mkdir()
+      config = json.loads(repo.read(".slicer/config.json"))
+      config["statuses"].pop("later")
+      repo.write(".slicer/config.json", json.dumps(config) + "\n")
+      before = {
+        path.relative_to(repo.root): path.read_bytes()
+        for path in (repo.root / ".slicer").rglob("*") if path.is_file()
+      }
+      with patch.object(render, "plan", side_effect=render.RenderError("boom")):
+        code, out, _ = repo.run(
+          "migrate", "--from", "docs/slices", "--force", "--render", "--strict", "--json"
+        )
+      after = {
+        path.relative_to(repo.root): path.read_bytes()
+        for path in (repo.root / ".slicer").rglob("*") if path.is_file()
+      }
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertEqual(after, before)
+      self.assertTrue((repo.root / ".slicer/kept-empty").is_dir())
+
+  def test_Migrate_ForceStrictRenderWriteFails_RestoresOutputAndState(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      repo.run("init")
+      repo.run("add", "Existing", "--render")
+      before = {
+        path.relative_to(repo.root): path.read_bytes()
+        for path in (repo.root / ".slicer").rglob("*") if path.is_file()
+      }
+      original_write = render.write
+
+      def fail_after_write(expected, root, diff):
+        original_write(expected, root, diff)
+        raise OSError("write failed after output changed")
+
+      with patch.object(render, "write", side_effect=fail_after_write):
+        code, out, _ = repo.run(
+          "migrate", "--from", "docs/slices", "--force", "--render", "--strict", "--json"
+        )
+      after = {
+        path.relative_to(repo.root): path.read_bytes()
+        for path in (repo.root / ".slicer").rglob("*") if path.is_file()
+      }
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertEqual(after, before)
+
+  def test_Migrate_StrictRenderSucceeds_WritesProjectAndRender(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      code, out, err = repo.run(
+        "migrate", "--from", "docs/slices", "--render", "--strict", "--json"
+      )
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["items"], 4)
+      self.assertEqual(repo.run("check")[0], 0)
