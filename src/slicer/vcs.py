@@ -21,7 +21,10 @@ ALLOWED = frozenset({
 READ_ONLY = {
   "worktree": frozenset({("list", "--porcelain")}),
   "branch": frozenset({("--all", "--format=%(refname)")}),
-  "config": frozenset({("--get", "user.name")}),
+  "config": frozenset({
+    ("--get", "user.name"),
+    ("--get", "merge.slicer-generated.driver"),
+  }),
 }
 
 
@@ -85,6 +88,18 @@ def identity(root: Path, configured: str) -> str:
     if here is not None and here.name:
       return here.name
   return root.name or "unknown"
+
+
+def render_driver_configured(root: Path) -> bool:
+  """Whether this clone has the `slicer-generated` render merge driver set up --
+  the per-clone `git config` that `slicer setup-git` prints (S109/S121). Read-only;
+  an unset driver, a non-repo, or a failed query all read as not configured. The
+  caller gates on `is_repo` so a non-repo is not reported as a missing driver."""
+  try:
+    done = _run(root, "config", "--get", "merge.slicer-generated.driver")
+  except (FileNotFoundError, OSError):
+    return False
+  return done.returncode == 0 and done.stdout.strip() != ""
 
 
 def elsewhere(root: Path, item_id: str) -> list[str]:

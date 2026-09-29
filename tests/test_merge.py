@@ -148,11 +148,14 @@ class RenderDriverSetupHintTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertNotIn("git config", out)
 
-  def test_Vcs_Config_IsReadOnlyUserNameOnly(self) -> None:
-    # S114 allowlisted `git config --get user.name` (read-only) so a claim can
-    # name the git user. slicer must still never *write* config -- e.g. to set
-    # the merge driver -- so the only permitted config form is that one read.
-    self.assertEqual(vcs.READ_ONLY.get("config"), frozenset({("--get", "user.name")}))
+  def test_Vcs_Config_AllowsOnlyReadOnlyGets(self) -> None:
+    # config is allowlisted only for read-only `--get`s: the git user (S114, for
+    # claims) and the render driver (S123, to warn when it is unset). slicer must
+    # still never *write* config, so no other form is permitted.
+    self.assertEqual(
+      vcs.READ_ONLY.get("config"),
+      frozenset({("--get", "user.name"), ("--get", "merge.slicer-generated.driver")}),
+    )
 
 
 class SetupGitCommandTests(unittest.TestCase):
@@ -189,6 +192,63 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertEqual((code, err), (0, ""))
       self.assertIn(self.DRIVER, out)
       self.assertEqual(list(repo.root.iterdir()), [])  # created nothing
+
+
+class RenderDriverConfiguredWarningTests(unittest.TestCase):
+  """`slicer verify` warns (never fails) when the render merge driver is not
+  configured in this clone, pointing at `slicer setup-git` (S123)."""
+
+  MISSING = "render merge driver not configured"
+
+  def _configure_driver(self, repo: support.TempRepo) -> None:
+    repo._git("config", "merge.slicer-generated.driver", "true")
+
+  def _set_git_check(self, repo: support.TempRepo, value: bool) -> None:
+    path = repo.root / ".slicer" / "config.json"
+    cfg = json.loads(path.read_text(encoding="utf-8"))
+    cfg["git_check"] = value
+    path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
+
+  def test_Verify_DriverNotConfigured_WarnsAndPointsAtSetupGit(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)  # a warning never fails verify
+      self.assertIn(self.MISSING, out)
+      self.assertIn("setup-git", out)
+
+  def test_Verify_DriverConfigured_NoWarning(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self._configure_driver(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertNotIn(self.MISSING, out)
+
+  def test_Verify_OutsideGitRepo_NoDriverWarning(self) -> None:
+    with support.TempRepo() as repo:  # not a git repo
+      repo.run("init")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertNotIn(self.MISSING, out)
+
+  def test_Verify_DriverWarning_IsIndependentOfGitCheck(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self._set_git_check(repo, False)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertIn(self.MISSING, out)  # still warns with the history cross-check off
+
+  def test_Check_StaysGitFree_NoDriverWarning(self) -> None:
+    # The driver probe is a git query and must not leak into the git-free CI gate,
+    # even though the driver is unconfigured here.
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      repo.run("render")  # so check is clean and any failure would be the warning
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 0, out)
+      self.assertNotIn(self.MISSING, out)
 
 
 if __name__ == "__main__":
