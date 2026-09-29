@@ -527,3 +527,7 @@
 {"when": "2026-09-29T11:54:17Z", "item": "S114", "action": "purge", "from": "open", "to": "", "note": "S114 is named in 1 commit subject(s)"}
 {"when": "2026-09-29T11:50:16Z", "item": "S114", "action": "add", "from": "", "to": "open", "note": "Claim a slice and surface claimed / in-work items in list"}
 {"when": "2026-09-29T11:50:17Z", "item": "S114", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-29T11:54:54Z", "item": "S115", "action": "add", "from": "", "to": "open", "note": "Point the contributor guide at the bounded pickup"}
+{"when": "2026-09-29T11:54:55Z", "item": "S116", "action": "add", "from": "", "to": "open", "note": "Reject slice examples that name a removed flag"}
+{"when": "2026-09-29T11:54:55Z", "item": "S115", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-29T11:54:56Z", "item": "S116", "action": "promote", "from": "", "to": "", "note": ""}

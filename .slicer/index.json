@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 115,
+  "next_id": 117,
   "preamble": "",
   "passes": [
     {
@@ -2778,6 +2778,54 @@
         "importance": 2,
         "urgency": 2,
         "effort": null
+      }
+    },
+    {
+      "id": "S115",
+      "title": "Point the contributor guide at the bounded pickup",
+      "short_title": "Point the contributor guide at the bounded pickup",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "S107",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S116",
+      "title": "Reject slice examples that name a removed flag",
+      "short_title": "Reject slice examples that name a removed flag",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "S107",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2
       }
     }
   ],
