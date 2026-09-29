@@ -3541,7 +3541,7 @@
       "id": "S141",
       "title": "Move the TUI manual out of the README into docs/tui.md",
       "short_title": "Move the TUI manual out of the README into docs/tui.md",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
