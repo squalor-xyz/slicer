@@ -3593,14 +3593,11 @@
       "id": "S143",
       "title": "Cut and tag the 1.1.0 release",
       "short_title": "Cut and tag the 1.1.0 release",
-      "status": "started",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-09-29T20:01:24Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

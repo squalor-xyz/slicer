@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-143 items · done 141 · retired 1 · started 1
+143 items · done 142 · retired 1
 
 v1.0.0 release
 
@@ -75,7 +75,7 @@ v1.1.0 release
 | 38 | [S134](slices/S134.md) | Show pass membership in the list table |  | 1 |  |  | done |
 | 39 | [S141](slices/S141.md) | Move the TUI manual out of the README into docs/tui.md | S | 1 | slicer | docs review: README carries the only full TUI manual | done |
 | 40 | [S142](slices/S142.md) | Slim the README to a front page and give each doc topic one home | M | 2 | slicer | docs review: README duplicates install, batch, goals and next/list detail from docs | done |
-| 41 | [S143](slices/S143.md) | Cut and tag the 1.1.0 release | S | 1 | slicer | owner request: release the v1.1 pass | started |
+| 41 | [S143](slices/S143.md) | Cut and tag the 1.1.0 release | S | 1 | slicer | owner request: release the v1.1 pass | done |
 
 ---
 
