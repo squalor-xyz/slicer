@@ -2518,7 +2518,7 @@
       "id": "S104",
       "title": "Let set clear an optional field without a one-off sentinel",
       "short_title": "Let set clear an optional field without a one-off sentinel",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

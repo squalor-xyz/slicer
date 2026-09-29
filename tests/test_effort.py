@@ -7,7 +7,7 @@ import unittest
 
 import support
 
-from slicer import graph, tui, tui_wizard
+from slicer import graph, ops, tui, tui_wizard
 from slicer.errors import StateError
 from slicer.model import Item
 
@@ -55,6 +55,18 @@ class EffortStoreTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertIn("cannot be combined", err)
       self.assertIsNone(repo.state().index.require("S01").effort)
+
+  def test_Set_OmittedEffortPreservesValue_AndExplicitNullClears(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Weighed", "--effort", "2")
+      code, _, err = repo.run("set", "S01", "--size", "S")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").effort, 2)
+      ops.set_fields(repo.state(), "S01", effort=None)
+      code, out, err = repo.run("show", "S01", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertIsNone(json.loads(out)["fields"]["effort"])
 
   def test_Import_EffortKey_StoresAndRejectsOtherValues(self) -> None:
     with support.TempRepo() as repo:

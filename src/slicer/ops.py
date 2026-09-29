@@ -76,11 +76,6 @@ def _reject_bad_text(**fields: object) -> None:
       raise StateError("a flag cannot contain a newline", code="newline_in_field")
 
 
-# `set_fields_many` treats None as "this field was not in the request".
-# Clearing effort needs a value that is not None and is not a score.
-CLEAR_EFFORT = object()
-
-
 def _valid_score(name: str, value: object) -> int:
   """An Eisenhower axis is an integer 1-3. Reject anything else, naming it."""
   try:
@@ -331,21 +326,19 @@ def _batch_items(state: State, item_ids: list[str]) -> list[Item]:
 
 
 def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list[Item]:
-  """Validate the whole request before changing any item; save the index once."""
+  """Validate the request before saving once; omitted fields stay unchanged."""
   items = _batch_items(state, item_ids)
   known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency", "effort"}
   _reject_bad_text(**fields)
   values = {}
   for key, value in fields.items():
-    if value is None:
-      continue
     if key not in known:
       raise StateError(f"unknown field {key!r}; known: {sorted(known)}")
-    if value is CLEAR_EFFORT:
-      value = None
-    elif key == "status" and value not in state.config.statuses:
+    if value is None and key != "effort":
+      raise StateError(f"{key} cannot be null", code="state")
+    if key == "status" and value not in state.config.statuses:
       raise StateError(f"unknown status {value!r}; known: {sorted(state.config.statuses)}")
-    elif key in ("importance", "urgency", "effort"):
+    elif key in ("importance", "urgency", "effort") and value is not None:
       value = _valid_score(key, value)
     values[key] = _clean(value)
 
