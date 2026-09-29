@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 143,
+  "next_id": 144,
   "preamble": "",
   "passes": [
     {
@@ -3587,6 +3587,34 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2
+      }
+    },
+    {
+      "id": "S143",
+      "title": "Cut and tag the 1.1.0 release",
+      "short_title": "Cut and tag the 1.1.0 release",
+      "status": "started",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-09-29T20:01:24Z"
+      },
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request: release the v1.1 pass",
+        "pass": "v1.1",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 1
       }
     }
   ],

@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-29
+
 ### Added
 
 - The text table from `slicer list`, and the `find` and `deps` rows, show a PASS column after CLAIM when the roadmap declares or names any pass: the item's pass key, or `-`. A project without passes keeps the table unchanged, and JSON output is unchanged.
