@@ -3042,7 +3042,7 @@
       "id": "S121",
       "title": "Add slicer setup-git to configure the render merge driver on any clone",
       "short_title": "Add slicer setup-git to configure the render merge driver on any clone",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
