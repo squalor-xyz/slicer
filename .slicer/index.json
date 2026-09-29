@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 138,
+  "next_id": 139,
   "preamble": "",
   "passes": [
     {
@@ -3442,6 +3442,31 @@
         ],
         "trees_literal": false,
         "findings": "S127 docs audit: add --pass '' still inherits the previous item's pass",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S138",
+      "title": "Trim the command catalogue out of ai instructions",
+      "short_title": "Trim the command catalogue out of ai instructions",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "S127 review: ai instructions length, owner question",
         "pass": "",
         "group": "",
         "reason": "",
