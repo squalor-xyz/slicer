@@ -583,7 +583,9 @@ check passed: 4 items, render and sync current
 
 Or skip the separate render: every mutating command takes `--render`, so
 `slicer done S01 --render` marks it done *and* re-renders in one step. The same flag works
-on `add`, `set`, `move`, `edit`, `import`, and the rest.
+on `add`, `set`, `move`, `edit`, `import`, and the rest. By default the change is saved
+first and rendered after; add `--strict` to require the render to succeed first, so a
+change that cannot be rendered is rolled back instead of landing.
 
 **Commit `.slicer/` — all of it, including `render/`.** The markdown is generated, but
 it is what people read in a diff and in a pull request, and `check` fails when it is

@@ -894,53 +894,111 @@ class RenderAfterMutationTests(unittest.TestCase):
       json.loads(out)  # one parseable document
       self.assertEqual(len(repo.state().index.items), 1)
 
-  def test_RequireRender_Success_PublishesAndRenders(self) -> None:
-    with self._fresh() as repo:
-      code, out, err = repo.run("add", "Thing", "--render", "--require-render", "--json")
-      self.assertEqual((code, err), (0, ""))
-      self.assertIn("id", json.loads(out))
-      self.assertEqual(len(repo.state().index.items), 1)
-      self.assertEqual(repo.run("check")[0], 0)
 
-  def test_RequireRender_WriteFails_RestoresStateAndRender(self) -> None:
-    with self._fresh() as repo:
+class StrictRenderTests(unittest.TestCase):
+  """`--strict` makes any everyday mutation render-first: the change lands only
+  if the render of the proposed state succeeds, and nothing is printed if it
+  fails (S105). This generalises the policy `done --render` already follows."""
+
+  def _ready(self) -> support.TempRepo:
+    """A project with one item and a current render, so a strict mutation on it
+    has an existing rendered state to be compared against."""
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "One")
+    repo.run("render")
+    return repo
+
+  def test_Set_StrictRenderFails_NothingLands(self) -> None:
+    with self._ready() as repo:
       before = repo.read(".slicer/index.json")
-      with patch.object(render, "write", side_effect=render.RenderError("boom")):
-        code, out, err = repo.run("add", "Thing", "--render", "--require-render", "--json")
-      self.assertEqual(code, 2)
-      self.assertEqual(json.loads(out)["error"]["code"], "render")
-      self.assertIn("boom", err)
-      self.assertEqual(repo.read(".slicer/index.json"), before)
-      self.assertEqual(len(repo.state().index.items), 0)
-      self.assertFalse((repo.root / ".slicer/render/ROADMAP.md").exists())
-      self.assertFalse((repo.root / ".slicer/log.jsonl").exists())
-
-  def test_RequireRender_WithoutRender_IsUsage(self) -> None:
-    with self._fresh() as repo:
-      code, out, err = repo.run("add", "Thing", "--require-render", "--json")
-      self.assertEqual(code, 2)
-      self.assertEqual(json.loads(out)["error"]["code"], "usage")
-      self.assertIn("--require-render", err)
-      self.assertEqual(len(repo.state().index.items), 0)
-
-  def test_RequireRender_GitMove_RestoresTheSlicePath(self) -> None:
-    with support.TempRepo(git=True) as repo:
-      repo.run("init")
-      repo.run("add", "One")
-      repo.run("promote", "S01")
-      repo.run("render")
-      repo.commit("seed")
-      before = repo.read(".slicer/index.json")
+      history = repo.read(".slicer/log.jsonl")
       roadmap = repo.read(".slicer/render/ROADMAP.md")
       with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("set", "S01", "--findings", "NEW", "--render", "--strict", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")  # only the error doc
+      self.assertIn("boom", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.read(".slicer/log.jsonl"), history)
+      self.assertEqual(repo.read(".slicer/render/ROADMAP.md"), roadmap)
+      self.assertEqual(repo.state().index.require("S01").findings, "")
+
+  def test_Set_StrictRenderSucceeds_LandsAndRenders(self) -> None:
+    with self._ready() as repo:
+      code, out, err = repo.run("set", "S01", "--findings", "NEW", "--render", "--strict")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("rendered", out)
+      self.assertEqual(repo.state().index.require("S01").findings, "NEW")
+      self.assertEqual(repo.run("check")[0], 0)  # state and render/ in lockstep
+
+  def test_Set_StrictJson_OneCleanDocumentNoRenderedLine(self) -> None:
+    with self._ready() as repo:
+      code, out, err = repo.run("set", "S01", "--findings", "X", "--render", "--strict", "--json")
+      self.assertEqual(code, 0)
+      doc = json.loads(out)  # a single document, no trailing "rendered" line to break it
+      self.assertEqual(doc["id"], "S01")
+      self.assertNotIn("rendered", out)
+      self.assertEqual(repo.state().index.require("S01").findings, "X")
+
+  def test_Set_StrictRenderFails_PlainModePrintsNothingToStdout(self) -> None:
+    with self._ready() as repo:
+      before = repo.read(".slicer/index.json")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("set", "S01", "--findings", "X", "--render", "--strict")
+      self.assertEqual(code, 2)
+      self.assertEqual(out, "")  # no success output and no "rendered" line
+      self.assertIn("boom", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Move_StrictBrokenTemplate_QueueUnchanged(self) -> None:
+    with self._ready() as repo:
+      repo.run("add", "Two")
+      repo.run("render")
+      before = repo.read(".slicer/index.json")
+      repo.write(".slicer/templates/row.md", "| {{position}} | {{title}} |\n")
+      code, out, err = repo.run("move", "S02", "--to", "1", "--render", "--strict", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertIn("cells", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)  # order preserved
+
+  def test_Edit_StrictRenderFails_SliceUnchanged(self) -> None:
+    with self._ready() as repo:
+      repo.run("promote", "S01")
+      repo.run("render")
+      slice_before = repo.read(".slicer/slices/S01.json")
+      index_before = repo.read(".slicer/index.json")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
         code, out, err = repo.run(
-          "set", "S01", "--status", "done", "--render", "--require-render", "--json",
+          "edit", "S01", "--section", "Implement", "--text", "body", "--render", "--strict", "--json"
         )
-      self.assertEqual(code, 2, err)
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertEqual(repo.read(".slicer/slices/S01.json"), slice_before)
+      self.assertEqual(repo.read(".slicer/index.json"), index_before)
+
+  def test_ProseAddPass_StrictRenderFails_PassNotAdded(self) -> None:
+    with self._ready() as repo:
+      before = repo.read(".slicer/index.json")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("prose", "add-pass", "P1", "--render", "--strict", "--json")
+      self.assertEqual(code, 2)
       self.assertEqual(json.loads(out)["error"]["code"], "render")
       self.assertEqual(repo.read(".slicer/index.json"), before)
-      self.assertEqual(repo.read(".slicer/render/ROADMAP.md"), roadmap)
-      self.assertEqual(repo.state().index.require("S01").status, "open")
-      self.assertTrue((repo.root / ".slicer/slices/S01.json").exists())
-      self.assertFalse((repo.root / ".slicer/slices/done/S01.json").exists())
-      self.assertEqual(repo._git("status", "--porcelain").stdout, "")
+
+  def test_Strict_WithoutRender_IsUsageErrorAndDoesNotMutate(self) -> None:
+    with self._ready() as repo:
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("set", "S01", "--findings", "X", "--strict", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Done_DoesNotOfferStrict_ArgparseRejectsIt(self) -> None:
+    # done --render is already render-first, so --strict is not offered there;
+    # the excluded bulk/destructive commands reject it the same way.
+    with self._ready() as repo:
+      code, out, err = repo.run("done", "S01", "--render", "--strict")
+      self.assertEqual(code, 2)
+      self.assertIn("strict", err)

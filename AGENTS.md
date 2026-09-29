@@ -124,7 +124,9 @@ slicer check
 ```
 
 Every mutating command takes `--render`, which folds the separate `render` step into the
-mutation — `slicer done S07 --render` is the two middle steps in one.
+mutation — `slicer done S07 --render` is the two middle steps in one. It saves first and
+renders after by default; `--strict` (with `--render`) requires the render to succeed first
+and rolls the change back if it fails, the render-first policy `done --render` already uses.
 
 To file a fully-specified slice in one step rather than a `promote` plus one `edit` per
 section, hand `promote` a one-item outline (the same `##` item / `### section` shape

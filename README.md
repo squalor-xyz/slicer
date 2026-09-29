@@ -231,9 +231,9 @@ See [docs/agents.md](docs/agents.md).
 Every command that changes state — `add`, `set`, `start`, `done`, `move`, `sort`, `promote`,
 `edit`, `note`, `remove`, `park`, `unpark`, `import`, `migrate`, and the `prose` edits — takes `--render`
 to regenerate `.slicer/render/` in the same step, so a mutation and its render are one
-command. `--render` saves first; a render failure leaves the change and exits 1.
-Add `--require-render` to keep the change only when rendering succeeds. `done --render`
-already does that.
+command. By default the change is saved first and rendered after; add `--strict` to require
+the render to succeed first, so a change that cannot be rendered is rolled back rather than
+landed (this is how `done --render` already behaves).
 
 Items carry an Eisenhower-style priority: an `--importance` and an `--urgency` (each 1–3),
 combined into a score (importance leads). A blocker of a critical item inherits its

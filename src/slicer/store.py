@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterator
 
-from slicer import ids, jsonio
+from slicer import ids, jsonio, vcs
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import StateError
 from slicer.model import Index, LogEntry, Slice
@@ -115,6 +115,21 @@ def project_lock(start: Path | None = None, *, timeout: float | None = None) -> 
 
 
 @dataclass
+class _Stage:
+  """Buffered writes for a `State.staged()` transaction.
+
+  A staged mutation records what it would persist here instead of touching
+  disk, so a caller can render the proposed state first and either let the
+  whole batch land or drop it -- leaving disk untouched -- if the render fails.
+  """
+
+  index: bool = False
+  slices: dict[str, Slice] = field(default_factory=dict)
+  logs: list[LogEntry] = field(default_factory=list)
+  moves: list[tuple[Path, Path]] = field(default_factory=list)
+
+
+@dataclass
 class State:
   """Everything on disk for one project, loaded."""
 
@@ -125,6 +140,10 @@ class State:
   # Where each loaded slice was read from, keyed by its *contained* id, so
   # verify can tell a file whose id disagrees with its filename.
   slice_files: dict[str, Path] = field(default_factory=dict)
+  # Set only between begin_stage/commit_stage (see `staged`). While present,
+  # every persistence side effect buffers here instead of hitting disk, so a
+  # mutation can be rendered before it is allowed to land.
+  _stage: "_Stage | None" = field(default=None, init=False, repr=False, compare=False)
 
   @property
   def dir(self) -> Path:
@@ -195,16 +214,83 @@ class State:
     return path.read_text(encoding="utf-8")
 
   def save_index(self) -> None:
+    if self._stage is not None:
+      # The index is one object; a later save overwrites the same in-memory
+      # state, so a single flag stands in for any number of saves.
+      self._stage.index = True
+      return
     jsonio.write(self.dir / INDEX_NAME, self.index.to_dict())
 
   def save_slice(self, sl: Slice) -> Path:
     path = self.slice_path(sl.id)
-    jsonio.write(path, sl.to_dict())
     self.slices[sl.id] = sl
+    if self._stage is not None:
+      self._stage.slices[sl.id] = sl
+      return path
+    jsonio.write(path, sl.to_dict())
     return path
 
   def log(self, entry: LogEntry) -> None:
+    if self._stage is not None:
+      self._stage.logs.append(entry)
+      return
     jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())
+
+  def move_slice(self, src: Path, dst: Path) -> None:
+    """Rename a slice file to follow its item's status, buffering when staged.
+
+    The folder is the status made visible on disk, so a status change renames
+    the file. Routing it through here (rather than `vcs.move` directly) lets a
+    staged mutation defer the rename until its render has succeeded.
+    """
+    if self._stage is not None:
+      self._stage.moves.append((src, dst))
+      return
+    vcs.move(self.root, src, dst)
+
+  @contextmanager
+  def staged(self) -> Iterator[None]:
+    """Buffer every persistence side effect, flushing only on a clean exit.
+
+    A mutation runs against the in-memory index and slices as usual, but its
+    saves, history lines and slice-file moves are held back until the block
+    exits without raising. That lets a caller render the proposed state first
+    and abandon the whole batch -- leaving disk untouched -- if render fails.
+    Not re-entrant: a nested exit would flush the outer batch early.
+    """
+    self.begin_stage()
+    try:
+      yield
+    except BaseException:
+      self.discard_stage()
+      raise
+    self.commit_stage()
+
+  def begin_stage(self) -> None:
+    if self._stage is not None:
+      raise StateError("a staged mutation is already in progress", code="state")
+    self._stage = _Stage()
+
+  def discard_stage(self) -> None:
+    """Drop every buffered write. Disk was never touched, so nothing to undo."""
+    self._stage = None
+
+  def commit_stage(self) -> None:
+    """Flush buffered writes, in the order the unstaged paths use."""
+    stage = self._stage
+    self._stage = None
+    if stage is None:
+      return
+    # Moves and slice bodies before the index that names them, history last, so
+    # a crash mid-flush lands where an unstaged mutation would have left it.
+    for src, dst in stage.moves:
+      vcs.move(self.root, src, dst)
+    for sl in stage.slices.values():
+      jsonio.write(self.slice_path(sl.id), sl.to_dict())
+    if stage.index:
+      jsonio.write(self.dir / INDEX_NAME, self.index.to_dict())
+    for entry in stage.logs:
+      jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())
 
   def history(self) -> list[LogEntry]:
     path = self.dir / LOG_NAME

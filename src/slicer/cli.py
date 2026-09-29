@@ -11,13 +11,11 @@ Exit codes are stable because scripts depend on them:
 from __future__ import annotations
 
 import argparse
-import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
-from contextlib import redirect_stdout
 from pathlib import Path
 
 from slicer import check as check_mod
@@ -35,7 +33,6 @@ from slicer import (
   store,
   sync,
   templates,
-  vcs,
   verify,
 )
 from slicer import __version__
@@ -57,9 +54,22 @@ def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
   if getattr(args, "json", False):
     if getattr(args, "lean", False):
       payload = model.lean(payload)
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    _write_out(args, json.dumps(payload, ensure_ascii=False, indent=2))
   elif text:
-    print(text)
+    _write_out(args, text)
+
+
+def _write_out(args: argparse.Namespace, line: str) -> None:
+  """Print, or buffer under `--strict` so no success output escapes before the
+  render that gates the change has actually succeeded."""
+  if getattr(args, "_defer_output", False):
+    buf = getattr(args, "_deferred", None)
+    if buf is None:
+      buf = []
+      args._deferred = buf
+    buf.append(line)
+  else:
+    print(line)
 
 
 def _render_after_mutation(args: argparse.Namespace) -> int:
@@ -69,118 +79,33 @@ def _render_after_mutation(args: argparse.Namespace) -> int:
   return len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
 
 
-def _project_snapshot(root: Path) -> dict[str, bytes]:
-  """Bytes of the files a mutation publishes: index, log, slices, and render."""
-  base = root / store.DIR_NAME
-  files: dict[str, bytes] = {}
-  for name in (store.INDEX_NAME, store.LOG_NAME):
-    path = base / name
-    if path.is_file():
-      files[name] = path.read_bytes()
-  for folder in (store.SLICES_DIR, store.RENDER_DIR):
-    directory = base / folder
-    if not directory.is_dir():
-      continue
-    for path in directory.rglob("*"):
-      if path.is_file():
-        files[path.relative_to(base).as_posix()] = path.read_bytes()
-  return files
+def _mutating(fn):
+  """Wrap a mutating handler so `--render` renders it, from one place.
 
+  Default `--render` is render-*after*: the handler has already saved to disk and
+  printed its own result (an object, or a JSON array for a batch of ids). If the
+  follow-up render fails, the change is still committed, so we must not let the
+  failure reach `main` — that would print a *second* document after the handler's
+  result. Instead stdout stays the handler's single result unchanged, the render
+  failure goes to stderr, and the exit is DRIFT (1): state and `render/` are now
+  out of step, which is what `slicer render` resolves. The exit is DRIFT whatever
+  the cause, because the mutation the user asked for did succeed; only the
+  projection is stale.
 
-def _move_slices_back(root: Path, files: dict[str, bytes]) -> None:
-  """Put slice files back where the snapshot had them, including a git mv."""
-  base = root / store.DIR_NAME
-  prefix = store.SLICES_DIR + "/"
-  before = {rel for rel in files if rel.startswith(prefix)}
-  directory = base / store.SLICES_DIR
-  if not directory.is_dir():
-    return
-  current = {
-    path.relative_to(base).as_posix(): path
-    for path in directory.rglob("*")
-    if path.is_file()
-  }
-  missing: dict[str, list[str]] = {}
-  for rel in before:
-    if rel not in current:
-      missing.setdefault(Path(rel).name, []).append(rel)
-  for rel, path in current.items():
-    if rel in before:
-      continue
-    targets = missing.get(Path(rel).name)
-    if not targets:
-      continue
-    vcs.move(root, path, base / targets.pop())
-
-
-def _restore_project(root: Path, files: dict[str, bytes]) -> None:
-  """Put the published files back, and drop files the failed mutation added."""
-  base = root / store.DIR_NAME
-  _move_slices_back(root, files)
-  for rel, data in files.items():
-    path = base / rel
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(data)
-  for name in (store.INDEX_NAME, store.LOG_NAME):
-    path = base / name
-    if name not in files and path.is_file():
-      path.unlink()
-  for folder in (store.SLICES_DIR, store.RENDER_DIR):
-    directory = base / folder
-    if not directory.is_dir():
-      continue
-    for path in directory.rglob("*"):
-      if path.is_file() and path.relative_to(base).as_posix() not in files:
-        path.unlink()
-
-
-def _require_render(args: argparse.Namespace, fn) -> int:
-  """Save, render, and put the project back when rendering fails.
-
-  The handler's stdout is held until rendering succeeds, so a failure prints
-  only the error envelope and not a success document before it.
-  """
-  root = _state(args).root
-  files = _project_snapshot(root)
-  held = io.StringIO()
-  with redirect_stdout(held):
-    code = fn(args)
-  if code != OK:
-    sys.stdout.write(held.getvalue())
-    return code
-  try:
-    written = _render_after_mutation(args)
-  except (SlicerError, OSError) as exc:
-    _restore_project(root, files)
-    if isinstance(exc, render.RenderError):
-      raise
-    raise render.RenderError(str(exc)) from exc
-  sys.stdout.write(held.getvalue())
-  if not getattr(args, "json", False):
-    print(f"rendered {written} file(s)")
-  return code
-
-
-def _mutating(fn, *, render_required: bool = False):
-  """Wrap a mutating handler so `--render` is one shared decision.
-
-  The default renders after the handler has saved. A render failure leaves
-  that save in place, reports it on stderr, and exits DRIFT (1): stdout stays
-  the handler's single result. `slicer render` catches the projection up.
-
-  A `render_required` handler (today, `done`) renders the proposed state
-  before it publishes, and raises `RenderError` without saving when that
-  fails. `--require-render` asks the same of every other handler: the wrapper
-  snapshots the published files, and a render failure restores them.
+  `--strict` (with `--render`) flips this to render-*first*: `_mutate_strict`
+  buffers the mutation and its output, renders the proposed state, and only then
+  lets the change land — the render-first policy `done` already follows, offered
+  to any mutation. A render failure there rolls the whole change back and prints
+  nothing.
   """
   def wrapped(args: argparse.Namespace) -> int:
-    if getattr(args, "require_render", False) and not getattr(args, "render", False):
-      raise StateError("--require-render needs --render", code="usage")
-    rendering = getattr(args, "render", False) and not getattr(args, "dry_run", False)
-    if not rendering or render_required:
+    render_on = getattr(args, "render", False) and not getattr(args, "dry_run", False)
+    if getattr(args, "strict", False) and not render_on:
+      raise StateError("--strict has no effect without --render", code="usage")
+    if not render_on:
       return fn(args)
-    if getattr(args, "require_render", False):
-      return _require_render(args, fn)
+    if getattr(args, "strict", False):
+      return _mutate_strict(fn, args)
     code = fn(args)
     if code != OK:
       return code
@@ -199,11 +124,47 @@ def _mutating(fn, *, render_required: bool = False):
   return wrapped
 
 
+def _mutate_strict(fn, args: argparse.Namespace) -> int:
+  """Render the proposed change before letting it land (the `--strict` policy).
+
+  The handler runs against a staged state (begun in `_state`), so its saves and
+  slice moves buffer instead of hitting disk, and its success output buffers too.
+  Then the proposed state is rendered: on success the buffered writes and output
+  are flushed; on failure the batch is discarded and the error propagates, so a
+  change that cannot be rendered never lands and no success document is printed.
+  """
+  args._defer_output = True
+  state = _state(args)  # loads, caches on args, and begins the staging transaction
+  try:
+    code = fn(args)
+    if code != OK:
+      state.discard_stage()
+      return code
+    expected = render.plan(state)
+    written = len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
+    state.commit_stage()
+  except BaseException:
+    state.discard_stage()
+    raise
+  for line in getattr(args, "_deferred", []):
+    print(line)
+  if not getattr(args, "json", False):
+    print(f"rendered {written} file(s)")
+  return code
+
+
 def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   sp.add_argument("--render", action="store_true", help="render .slicer/render/ after the change")
+  return sp
+
+
+def _strict_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
+  """`--strict` gates a mutation on its render (with `--render`): the change is
+  rolled back, and nothing printed, if the render fails. Offered on the everyday
+  item mutations; `done --render` already behaves this way."""
   sp.add_argument(
-    "--require-render", action="store_true",
-    help="with --render, keep the change only when rendering succeeds",
+    "--strict", action="store_true",
+    help="with --render, require the render to succeed before the change lands",
   )
   return sp
 
@@ -214,7 +175,18 @@ def _render_hint(args: argparse.Namespace) -> str:
 
 
 def _state(args: argparse.Namespace) -> store.State:
-  return store.load(Path(args.root) if args.root else None)
+  # Under strict --render the whole mutation runs against one staged state that
+  # `_mutate_strict` renders and commits, so cache and stage it here and hand the
+  # same instance back to the handler that mutates it. Every other path loads
+  # fresh, unchanged.
+  cached = getattr(args, "_state", None)
+  if cached is not None:
+    return cached
+  state = store.load(Path(args.root) if args.root else None)
+  if getattr(args, "strict", False) and getattr(args, "render", False):
+    args._state = state
+    state.begin_stage()
+  return state
 
 
 def cmd_ai_instructions(args: argparse.Namespace) -> int:
@@ -989,6 +961,9 @@ def cmd_done(args: argparse.Namespace) -> int:
   return OK
 
 
+cmd_done.mutates = True
+
+
 def cmd_prose_list(args: argparse.Namespace) -> int:
   state = _state(args)
   entries = []
@@ -1384,7 +1359,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--context", action="store_true",
                   help="with --section, include title, dependencies, and scope boundary")
 
-  sp = _render_flag(add("add", _mutating(cmd_add), "append a roadmap item"))
+  sp = _strict_flag(_render_flag(add("add", _mutating(cmd_add), "append a roadmap item")))
   sp.add_argument("title")
   sp.add_argument("--depends-on", action="append", help="dependency id (repeatable)")
   sp.add_argument("--short-title", help="short title for the roadmap row")
@@ -1398,24 +1373,24 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate, omit to leave unset")
 
-  sp = _render_flag(add("promote", _mutating(cmd_promote), "give an item a slice file"))
+  sp = _strict_flag(_render_flag(add("promote", _mutating(cmd_promote), "give an item a slice file")))
   sp.add_argument("id")
   sp.add_argument("--force", action="store_true")
   sp.add_argument("--file", help="a one-item outline whose sections fill the slice")
   sp.add_argument("--stdin", action="store_true", help="read that outline from stdin")
   sp.add_argument("--boundary", help="full scope-boundary paragraph; overrides source/default; empty clears")
 
-  sp = _render_flag(add("move", _mutating(cmd_move), "reorder the queue"))
+  sp = _strict_flag(_render_flag(add("move", _mutating(cmd_move), "reorder the queue")))
   sp.add_argument("id")
   sp.add_argument("--before")
   sp.add_argument("--after")
   sp.add_argument("--to", type=int)
 
-  sp = _render_flag(add("sort", _mutating(cmd_sort), "reorder the whole queue by priority score"))
+  sp = _strict_flag(_render_flag(add("sort", _mutating(cmd_sort), "reorder the whole queue by priority score")))
   sp.add_argument("--by", choices=["score", "effort"], default="score",
                   help="score (default) or effort: lightest estimate first, unset last")
 
-  sp = _render_flag(add("set", _mutating(cmd_set), "change an item's fields"))
+  sp = _strict_flag(_render_flag(add("set", _mutating(cmd_set), "change an item's fields")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--title")
   sp.add_argument("--short-title", dest="short_title")
@@ -1433,7 +1408,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--effort", type=int, help="1-3; optional estimate")
   sp.add_argument("--no-effort", action="store_true", help="clear the effort estimate")
 
-  sp = _render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary"))
+  sp = _strict_flag(_render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary")))
   sp.add_argument("id")
   sp.add_argument("--section", help="section to edit; cannot combine with --boundary")
   sp.add_argument("--boundary", action="store_true", help="replace the full scope-boundary paragraph")
@@ -1442,25 +1417,25 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = _render_flag(add("note", _mutating(cmd_note), "append a dated note to an item"))
+  sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")
   sp.add_argument("--text", help="inline note; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = _render_flag(add("done", _mutating(cmd_done, render_required=True), "mark an item finished"))
+  sp = _render_flag(add("done", cmd_done, "mark an item finished"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
-  sp = _render_flag(add("start", _mutating(cmd_start), "mark an item in progress"))
+  sp = _strict_flag(_render_flag(add("start", _mutating(cmd_start), "mark an item in progress")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
-  sp = _render_flag(add("park", _mutating(cmd_park), "set an item aside"))
+  sp = _strict_flag(_render_flag(add("park", _mutating(cmd_park), "set an item aside")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
-  sp = _render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue"))
+  sp = _strict_flag(_render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
@@ -1476,18 +1451,18 @@ def build_parser() -> argparse.ArgumentParser:
   padd("list", cmd_prose_list, "every addressable block, in render order")
   padd("show", cmd_prose_show, "print one block").add_argument("ref")
 
-  inner = _render_flag(padd("edit", _mutating(cmd_prose_edit), "replace one block"))
+  inner = _strict_flag(_render_flag(padd("edit", _mutating(cmd_prose_edit), "replace one block")))
   inner.add_argument("ref")
   inner.add_argument("--text", help="inline body, preserved exactly; empty text clears it; cannot combine with --file/--stdin")
   inner.add_argument("--file")
   inner.add_argument("--stdin", action="store_true")
 
-  inner = _render_flag(padd("add-pass", _mutating(cmd_prose_add_pass), "declare a new pass group"))
+  inner = _strict_flag(_render_flag(padd("add-pass", _mutating(cmd_prose_add_pass), "declare a new pass group")))
   inner.add_argument("key")
   inner.add_argument("--heading", help="the markdown heading for the group")
   inner.add_argument("--after", help="insert after this pass instead of at the end")
 
-  _render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty pass group")).add_argument("key")
+  _strict_flag(_render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty pass group"))).add_argument("key")
 
   sp = _render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright"))
   sp.add_argument("id")

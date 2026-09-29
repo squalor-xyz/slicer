@@ -8,7 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
-- `--require-render`, with `--render`, keeps a mutation only when rendering succeeds. A render failure restores the previous state and generated output and exits 2 with `code="render"`. `--render` alone still saves first. `done --render` already requires a successful render.
+- `--strict`, with `--render`, keeps a mutation only when rendering succeeds. The change is rendered before it lands, and a render failure rolls the whole change back — leaving state and generated output untouched — and exits 2 with `code="render"`. `--render` alone still saves first. `done --render` already requires a successful render and now shares the same render-first path.
 - `slicer next --ready` returns a bounded pickup of the next eligible item: its id, title, status, dependencies, effective score, and slice path; the slice when it has one; and the blocked list. An empty queue matches `next` (exit 2, `item: null`). `--ready` with `--show` is a usage error.
 - `slicer list --flag` filters by a free-form flag. Repeat it to match any of the named flags. The TUI filter panel offers the same flag axis, including items with no flags.
 

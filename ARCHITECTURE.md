@@ -102,11 +102,11 @@ and the output says which happened and why.
 **The folder is the status, made visible on disk.** `State.slice_path` derives the
 directory from the item's status, and `ops.set_status` moves the file with `git mv` when
 the status crosses a folder boundary, so the change stays one tracked rename.
-For `done --render`, `ops` renders the proposed status before moving the slice or saving
-the index. A template or render write failure leaves the item's prior status in place.
-Every other `--render` saves first; a render failure leaves that save and exits 1.
-`--require-render` asks the shared wrapper for the `done` rule: it snapshots the
-index, log, slices, and render output, and restores them when rendering fails.
+For a render-first mutation — `done --render`, or any mutation run under `--strict` — `ops`
+renders the proposed state before it lands. `State.staged()` buffers every persistence side
+effect (index and slice writes, history lines, and slice-file moves) while `ops.render_gated`
+renders; a template or render failure discards the whole batch, leaving state and `render/`
+untouched, and re-raises. The default `--render` still saves first and renders after.
 
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
 `ls-files`. `commit`, `push` and `tag` are unreachable from the code — not by convention
