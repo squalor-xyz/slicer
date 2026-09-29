@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-113 items · — 6 · done 106 · retired 1
+114 items · — 7 · done 106 · retired 1
 
 v1.0.0 release
 
@@ -146,3 +146,4 @@ v1.0.0 release
 | 111 | [S111](slices/S111.md) | Roll migrate back when a required render fails | M | 2 | slicer | credit review | — |
 | 112 | [S112](slices/S112.md) | Label list columns and say when rows are hidden | S | 1 | slicer | credit review | — |
 | 113 | [S113](slices/S113.md) | Detect concurrent work on a slice across branches and worktrees |  | - |  |  | — |
+| 114 | [S114](slices/S114.md) | Claim a slice and surface claimed / in-work items in list |  | - |  |  | — |
