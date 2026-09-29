@@ -2642,7 +2642,7 @@
       "id": "S109",
       "title": "Stop generated roadmap files from conflict-marking on merge",
       "short_title": "Stop generated roadmap files from conflict-marking on merge",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

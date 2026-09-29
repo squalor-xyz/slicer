@@ -203,9 +203,18 @@ def cmd_ai_skill(args: argparse.Namespace) -> int:
 GITATTRIBUTES = """\
 # slicer manages this file. History is append-only, so union-merge combines the
 # lines both sides added instead of conflicting when branches land in parallel.
-# Generated render/ is a projection of index.json: after a merge, resolve
-# index.json and re-run `slicer render` rather than merging render/ by hand.
 log.jsonl merge=union
+
+# render/ is a generated projection of index.json, never merged by hand. The
+# slicer-generated driver keeps the current branch's copy on merge instead of
+# writing conflict markers; re-run `slicer render` after resolving index.json so
+# the kept files match it. The name resolves only once a clone defines the driver
+# (one-time, per clone -- slicer's git allowlist cannot run `git config` for you):
+#   git config merge.slicer-generated.name "keep the current branch's generated files"
+#   git config merge.slicer-generated.driver true
+render/ROADMAP.md merge=slicer-generated
+render/ROADMAP.html merge=slicer-generated
+render/slices/*.md merge=slicer-generated
 """
 
 

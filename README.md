@@ -266,7 +266,7 @@ slices/retired/<ID>.json obsolete slices, with the reason on the item
 templates/*.md       render templates, yours to edit
 render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), and one file per slice
 log.jsonl            append-only history of status changes
-.gitattributes       union-merges log.jsonl so parallel branches do not conflict on it
+.gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
 
 Sections are an ordered **list**, not a map: real slices carry headings no schema names,
@@ -278,6 +278,18 @@ survive without a conflict. `index.json` is the source of truth — a genuine ov
 yours to resolve. Anything under `render/` is a projection of `index.json`, so after resolving
 a merge just re-run `slicer render` (and `slicer check` will flag it if you forget) rather than
 merging the generated markdown by hand.
+
+The `.gitattributes` also points `render/` at a `slicer-generated` merge driver that keeps the
+current branch's copy instead of writing conflict markers — but a driver name only resolves
+once the clone defines it, so run these two lines once per clone (slicer's git allowlist cannot
+run `git config` for you):
+
+```sh
+git config merge.slicer-generated.name "keep the current branch's generated files"
+git config merge.slicer-generated.driver true
+```
+
+Either way, re-run `slicer render` after resolving `index.json` so the kept files match it.
 
 The scope boundary is a separate field on each slice. It renders after metadata and
 before sections, so section edits cannot remove it. Use `slicer edit ID --boundary`
