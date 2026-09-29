@@ -3566,7 +3566,7 @@
       "id": "S142",
       "title": "Slim the README to a front page and give each doc topic one home",
       "short_title": "Slim the README to a front page and give each doc topic one home",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S141"

@@ -11,6 +11,8 @@ This is the contributor install. To just *use* slicer, the no-clone path in the
 Editable, so the command tracks your worktree:
 
 ```sh
+git clone git@github.com:squalor-xyz/slicer.git
+cd slicer
 python3 -m venv .venv
 .venv/bin/pip install -e .
 ln -s "$PWD/.venv/bin/slicer" ~/.local/bin/slicer   # if ~/.local/bin is on PATH
@@ -50,6 +52,12 @@ inside a *different* worktree of the same repo, it runs that other checkout's co
 against this worktree's `.slicer/`. slicer warns on stderr when it detects this; run
 `PYTHONPATH=src python3 -m slicer` to exercise the worktree you are editing.
 `SLICER_NO_CODE_WARNING=1` silences the warning.
+
+`tests/fixtures/legacy/` is a synthetic 14-slice tree for a project that does not
+exist. It is shaped to exercise the awkward parts of the legacy format — a middot
+inside a findings value, singular and plural tree keys, a collective trees cell,
+headings no schema names, prose between the tables — and the suite proves every file
+round-trips through the parser byte for byte.
 
 Optional: `SLICER_LEGACY_TREE=/path/to/docs/slices` additionally proves the migrator
 against a live markdown tree. The test is skipped when the variable is unset. The
