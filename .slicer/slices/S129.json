@@ -1,0 +1,41 @@
+{
+  "id": "S129",
+  "title": "Make the suite independent of where TMPDIR points",
+  "lead": [
+    "AGENTS.md tells contributors to run the suite with `TMPDIR=\"$PWD/.venv/test-tmp\"`, and\nfollowing that instruction fails 28 tests."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "AGENTS.md documents an in-checkout temp directory so test files stay inside the project:\n`TMPDIR=\"$PWD/.venv/test-tmp\" python3 -m unittest discover -s tests -t tests`. Running\nthat today fails 28 tests across `test_cli`, `test_ready`, `test_ai`, `test_find`,\n`test_goals`, `test_status` and `test_merge`. The tests are correct and the tool is\ncorrect; the two just disagree about the fixture's location. Each fixture project is\ncreated under `TMPDIR`, so with that setting it lands inside the checkout, and slicer's\ncross-checkout code warning (`_CODE_WARNING_ENV` in `src/slicer/cli.py:1847`) reasonably\nconcludes the project is \"a different worktree of the same repo\" than the `src/` being\nrun. The warning goes to stderr, and these tests assert stderr is empty. With the default\n`TMPDIR` the suite is green, so the failures are an artifact of the documented command,\nnot a regression. A contributor who follows AGENTS.md sees 28 red tests on a clean\ncheckout and has no way to tell that from a real break. This is separate from S125, which\nis about the `verify` render-driver warning."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/support.py` (`TempRepo.run`, which calls `main()` in-process)\n- `AGENTS.md` (the documented test command, and the `SLICER_NO_CODE_WARNING` note at line 52)\n- `src/slicer/cli.py` only if the detector's gating is the thing that should change"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The full suite passes with `TMPDIR=\"$PWD/.venv/test-tmp\"` set, exactly as AGENTS.md\n   documents it.\n2. The full suite still passes with the default `TMPDIR`.\n3. A test that deliberately exercises the cross-checkout warning still sees it, so the\n   fix does not blanket-suppress the behavior S117 added."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle the approach with the project before building; do not infer. The leading candidate\nis to have `tests/support.py` set `SLICER_NO_CODE_WARNING=1` around its in-process `main()`\ncall, so fixture location never leaks into assertions and the suite is reproducible\nwherever `TMPDIR` points — with any test that covers the warning itself opting back in\nexplicitly. Alternatives to weigh: drop the in-checkout `TMPDIR` advice from AGENTS.md and\ndocument why; or narrow the detector so a project under a worktree's ignored scratch\ndirectory is not treated as a sibling checkout. Prefer the fix that keeps the documented\ncommand working, since the doc exists to keep test files out of the system temp dir."
+    },
+    {
+      "heading": "Check",
+      "body": "Suite green both with and without the in-checkout `TMPDIR`; `slicer check` passes; AGENTS.md\nand the code agree about how the suite is run."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

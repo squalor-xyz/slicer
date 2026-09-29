@@ -1,0 +1,41 @@
+{
+  "id": "S130",
+  "title": "Advertise Python 3.14 in the package classifiers",
+  "lead": [
+    "CI now tests 3.14 (S124) but `pyproject.toml` still stops at 3.13, so the published package\nunderstates what it supports."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S124 added 3.14 to the CI and publish matrices, so the suite is enforced on 3.11 through\n3.14. `pyproject.toml:13-21` still lists only `Programming Language :: Python :: 3.11`,\n3.12 and 3.13. `requires-python = \">=3.11\"` is correct and does not need changing, but the\nclassifiers are what PyPI renders on the project page, so a 1.0.0 release would ship\nmetadata claiming less than the project actually tests. It is a small fix, but it is only\ncorrect to make once CI genuinely covers 3.14, which it now does."
+    },
+    {
+      "heading": "Files",
+      "body": "- `pyproject.toml` (the `classifiers` list)"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `pyproject.toml` classifiers include `Programming Language :: Python :: 3.14`.\n2. The classifier list matches the CI matrix in `.github/workflows/ci.yml`, with\n   `requires-python` unchanged at `>=3.11`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add the 3.14 classifier. While there, confirm the list agrees with the CI matrix and that\nno stale version is advertised. Do not touch `requires-python`; 3.11 is still the floor.\nWorth wiring as a dependency of S128 so the release does not go out with understated\nmetadata — settle that with the owner rather than editing S128 unasked."
+    },
+    {
+      "heading": "Check",
+      "body": "Classifiers match the CI matrix; `slicer check` and the suite pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

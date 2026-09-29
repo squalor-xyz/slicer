@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-128 items · — 3 · done 124 · retired 1
+130 items · — 5 · done 124 · retired 1
 
 v1.0.0 release
 
@@ -161,3 +161,5 @@ v1.0.0 release
 | 126 | [S126](slices/S126.md) | Verify and document the schema v1 to v2 upgrade contract |  | 2 |  |  | — |
 | 127 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | — |
 | 128 | [S128](slices/S128.md) | Cut and tag the 1.0.0 release |  | 1 |  |  | — |
+| 129 | [S129](slices/S129.md) | Make the suite independent of where TMPDIR points |  | 1 |  |  | — |
+| 130 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | — |
