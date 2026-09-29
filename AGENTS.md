@@ -45,6 +45,12 @@ those tests rather than changing production discovery or using it suite-wide.
 `.github/workflows/ci.yml`. That step is the only place `src/slicer/__main__.py` is
 exercised, so leave it uninstalled.
 
+If the `slicer` command is an editable install pointing at one checkout and you run it
+inside a *different* worktree of the same repo, it runs that other checkout's code
+against this worktree's `.slicer/`. slicer warns on stderr when it detects this; run
+`PYTHONPATH=src python3 -m slicer` to exercise the worktree you are editing.
+`SLICER_NO_CODE_WARNING=1` silences the warning.
+
 Optional: `SLICER_LEGACY_TREE=/path/to/docs/slices` additionally proves the migrator
 against a live markdown tree. The test is skipped when the variable is unset. The
 committed fixture under `tests/fixtures/legacy/` is synthetic, so this is the only way

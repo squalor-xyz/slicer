@@ -172,3 +172,51 @@ def _other_ref(ref: str, current: str | None) -> str | None:
       return None
     return rest
   return None
+
+
+def _git_common_dir(path: Path) -> Path | None:
+  """The repo's shared git directory as seen from `path`, or None when `path`
+  is not in a git repo. Two worktrees of one repo report the same common dir,
+  which is how `foreign_worktree` tells same-repo siblings from an unrelated
+  install."""
+  try:
+    done = _run(path, "rev-parse", "--git-common-dir")
+  except (FileNotFoundError, OSError):
+    return None
+  out = done.stdout.strip()
+  if done.returncode != 0 or not out:
+    return None
+  common = Path(out)
+  if not common.is_absolute():
+    common = path / common
+  try:
+    return common.resolve()
+  except OSError:
+    return None
+
+
+def foreign_worktree(root: Path, code_dir: Path) -> str | None:
+  """A hint when slicer's own code lives in a *different worktree of the same
+  repo* as the project it is acting on -- the editable-install-in-a-worktree
+  trap, where edits in the project's own `src/` are not what actually runs.
+
+  Returns None for ordinary use: code under the project (normal dev or
+  `PYTHONPATH=src`), or code from an unrelated location such as a site-packages
+  install (a different repo, or no repo at all). Best-effort and read-only; any
+  failure yields None so it can never break a command.
+  """
+  try:
+    code_dir = code_dir.resolve()
+    root = root.resolve()
+  except OSError:
+    return None
+  if code_dir == root or code_dir.is_relative_to(root):
+    return None
+  code_common = _git_common_dir(code_dir)
+  if code_common is None or code_common != _git_common_dir(root):
+    return None
+  return (
+    f"running code from {code_dir}, but this project is {root} -- a different "
+    "worktree of the same repo, so edits in this checkout's src/ are not what "
+    "runs. Use `PYTHONPATH=src python3 -m slicer` to run this checkout's code."
+  )
