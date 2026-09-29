@@ -3208,7 +3208,7 @@
       "id": "S128",
       "title": "Cut and tag the 1.0.0 release",
       "short_title": "Cut and tag the 1.0.0 release",
-      "status": "started",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S124",
@@ -3228,10 +3228,7 @@
       "notes": [
         "**2026-09-29** — Release-workflow review: publish.yml publishes via PyPI trusted publishing (OIDC), so before the first v* tag a pending publisher must be configured on PyPI (owner: squalor-xyz, repo: slicer, workflow: publish.yml, environment: pypi) per the publish.yml header. Follow RELEASING.md to cut the tag. S124 must bump the matrix in BOTH ci.yml and publish.yml. pyproject reads the version from slicer.__version__, and the publish job asserts the tag equals v<version>."
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-09-29T18:49:20Z"
-      },
+      "claim": null,
       "fields": {
         "size": "",
         "flags": [],
