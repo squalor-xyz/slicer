@@ -275,8 +275,8 @@ class RetiredStatusConfigTests(unittest.TestCase):
     cfg = Config.from_dict(
       self.BASE | {"statuses": {"open": "—", "done": "done", "parked": "parked"}}
     )
-    # `started` is back-filled by the same rule as `retired`.
-    self.assertEqual(sorted(cfg.statuses), ["done", "open", "parked", "retired", "started"])
+    # `started` and `review` are back-filled by the same rule as `retired`.
+    self.assertEqual(sorted(cfg.statuses), ["done", "open", "parked", "retired", "review", "started"])
     self.assertNotIn("later", cfg.statuses)
     self.assertEqual(cfg.retired_status, "retired")
 
@@ -289,7 +289,7 @@ class RetiredStatusConfigTests(unittest.TestCase):
       }
     )
     self.assertEqual(cfg.retired_status, "dropped")
-    self.assertEqual(sorted(cfg.statuses), ["done", "dropped", "open", "started"])
+    self.assertEqual(sorted(cfg.statuses), ["done", "dropped", "open", "review", "started"])
 
   def test_Config_RetiredDirEqualToDoneDir_IsRejected(self) -> None:
     with self.assertRaises(ConfigError):

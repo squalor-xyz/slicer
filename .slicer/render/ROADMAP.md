@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-140 items · — 5 · done 134 · retired 1
+140 items · — 4 · done 135 · retired 1
 
 v1.0.0 release
 
@@ -57,7 +57,7 @@ v1.0.0 release
 | 27 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | done |
 | 28 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 2 |  |  | done |
 | 29 | [S133](slices/S133.md) | Key JSON status tallies by status, not display label |  | 1 |  |  | done |
-| 30 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | — |
+| 30 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | done |
 | 31 | [S136](slices/S136.md) | Keep next from offering work started in a sibling worktree |  | 2 | slicer | S127 docs audit: next_item ignores claims and sibling worktrees | done |
 | 32 | [S137](slices/S137.md) | Let add opt out of pass inheritance |  | 1 | slicer | S127 docs audit: add --pass '' still inherits the previous item's pass | done |
 | 33 | [S138](slices/S138.md) | Trim the command catalogue out of ai instructions |  | 1 | slicer | S127 review: ai instructions length, owner question | done |

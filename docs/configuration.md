@@ -18,6 +18,7 @@ and the slice files, the config is yours to hand-edit.
   "retired_status": "retired",
   "parked_status": "parked",
   "started_status": "started",
+  "review_status": "review",
   "sections": ["Why", "Files", "Failing tests", "Implement", "Check", "Git"],
   "boundary": "**Not in this slice:**",
   "done_dir": "done",
@@ -64,6 +65,7 @@ and the slice files, the config is yours to hand-edit.
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
 | `sync.targets` | `[]` | Derived lines in documents slicer does not own | **Yes** |
 | `parked_status` | `"parked"` | Which status `park` sets, and what an item returns *from*. **Empty string = the project has no park state, and `park` refuses cleanly** | Yes if nothing is parked |
+| `review_status` | `"review"` | Which status `handoff` sets: a started slice whose implementation is ready for someone else to review, merge, or clean up. `next` does not offer it (find it with `list --status review`), dependents stay blocked until `done`, and the slice file stays in `slices/`. **Empty string disables `handoff`** | Yes if nothing is in review |
 | `started_status` | `"started"` | Which status `start` sets. `next` returns a started item ahead of every open one. It gets no folder — the slice file stays in `slices/`. **Empty string = the project has no start state, and `start` refuses cleanly** | Yes if nothing is started |
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 | `render_driver_check` | `true` | Whether `slicer verify` reminds you to configure the `slicer-generated` render merge driver (via `slicer setup-git`). Only fires when this checkout has other worktrees, so a single-worktree clone is already quiet; set **off** to silence it entirely. There is no way to force it on for a single worktree | **Yes** |
@@ -106,6 +108,12 @@ stays without one. Note that a started item is absent from the `{{later}}` point
 you add a group for it to `pointers.later.groups` — the default groups list `open`,
 `parked` and `later` only.
 
+**A missing `review_status` is back-filled the same way,** for a project initialised before
+`handoff` existed, with one exception: if another status already renders as `review`, no
+review status is added (labels must stay unique) and `handoff` refuses until you set
+`review_status` yourself. The review status must differ from the open, done, retired,
+parked and started statuses.
+
 ## Statuses
 
 The key is what you type; the label is what renders.
@@ -116,8 +124,9 @@ The key is what you type; the label is what renders.
 "done_status": "done"
 ```
 
-`open_status`, `done_status`, `retired_status` and `started_status` must each name a key
-that exists in `statuses` (the last two may instead be `""`, switching the feature off). Delete `parked` and `later` if you do not want them — but remove them from
+`open_status`, `done_status`, `retired_status`, `started_status` and `review_status` must
+each name a key that exists in `statuses` (the last three may instead be `""`, switching
+the feature off). Delete `parked` and `later` if you do not want them — but remove them from
 `pointers.later.groups` too, or the pointer silently skips a group that can never match.
 
 ## Sections

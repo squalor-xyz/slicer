@@ -97,6 +97,9 @@ class Config:
   retired_status: str = "retired"
   parked_status: str = "parked"
   started_status: str = "started"
+  # Where `handoff` puts a started slice that is ready for someone else to
+  # review, merge, or clean up. Empty disables `handoff`.
+  review_status: str = "review"
   sections: list[str] = field(default_factory=lambda: list(DEFAULT_SECTIONS))
   boundary: str = "**Not in this slice:**"
   done_dir: str = "done"
@@ -137,6 +140,16 @@ class Config:
       raise ConfigError(f"parked_status {self.parked_status!r} is not in statuses")
     if self.started_status and self.started_status not in self.statuses:
       raise ConfigError(f"started_status {self.started_status!r} is not in statuses")
+    if self.review_status:
+      if self.review_status not in self.statuses:
+        raise ConfigError(f"review_status {self.review_status!r} is not in statuses")
+      others = {self.open_status, self.done_status, self.retired_status,
+                self.parked_status, self.started_status}
+      if self.review_status in others:
+        raise ConfigError(
+          f"review_status {self.review_status!r} is already another role's status; "
+          "give review its own status"
+        )
     if len({self.done_dir, self.retired_dir, ""}) != 3:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
     if len(set(self.statuses.values())) != len(self.statuses):
@@ -174,6 +187,7 @@ class Config:
       "retired_status": self.retired_status,
       "parked_status": self.parked_status,
       "started_status": self.started_status,
+      "review_status": self.review_status,
       "sections": list(self.sections),
       "boundary": self.boundary,
       "done_dir": self.done_dir,
@@ -217,6 +231,17 @@ class Config:
     started = d.get("started_status", "started")
     if started and started not in statuses:
       statuses[started] = started
+    # Back-filled like `started`, with one difference: a config written before
+    # `handoff` existed may already render some other status as "review", and
+    # two statuses may not share a label. Such a project gets no review status
+    # (`handoff` refuses cleanly) rather than a config that no longer loads.
+    review = d.get("review_status")
+    if review is None:
+      review = "review"
+      if review not in statuses and review in statuses.values():
+        review = ""
+    if review and review not in statuses:
+      statuses[review] = review
     cfg = Config(
       version=int(d.get("version", SCHEMA_VERSION)),
       id_prefix=ident.get("prefix", "S"),
@@ -227,6 +252,7 @@ class Config:
       retired_status=retired,
       parked_status=parked,
       started_status=started,
+      review_status=review,
       sections=list(d.get("sections", DEFAULT_SECTIONS)),
       boundary=d.get("boundary", "**Not in this slice:**"),
       done_dir=d.get("done_dir", "done"),

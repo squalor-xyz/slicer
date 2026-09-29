@@ -3385,7 +3385,7 @@
       "id": "S135",
       "title": "Hand off a claimed slice as ready for review",
       "short_title": "Hand off a claimed slice as ready for review",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

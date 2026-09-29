@@ -221,7 +221,7 @@ class AiInstructionsTests(unittest.TestCase):
 
   def test_Instructions_ImplementSection_LeavesTheCommandCatalogueToHelp(self) -> None:
     # S138: the loop keeps the reads it needs; the rest is `--help`'s job.
-    section = ai.INSTRUCTIONS.split("## Implement one slice", 1)[1].split("## State", 1)[0]
+    section = ai.INSTRUCTIONS.split("## Implement one slice", 1)[1].split("\n## ", 1)[0]
     self.assertLess(len(section.split()), 350)
     for catalogue in ("slicer list --sort score", "slicer stats --json", "slicer log --json"):
       self.assertNotIn(catalogue, section)
