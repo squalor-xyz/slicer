@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-128 items · — 5 · done 122 · retired 1
+128 items · — 4 · done 123 · retired 1
 
 v1.0.0 release
 
@@ -156,7 +156,7 @@ v1.0.0 release
 | 121 | [S121](slices/S121.md) | Add slicer setup-git to configure the render merge driver on any clone |  | - |  |  | done |
 | 122 | [S122](slices/S122.md) | Surface items in-work in a sibling worktree in slicer list |  | - |  |  | done |
 | 123 | [S123](slices/S123.md) | Warn in verify when the render merge driver is not configured |  | - |  |  | done |
-| 124 | [S124](slices/S124.md) | Add Python 3.14 to the CI test matrix |  | 1 |  |  | — |
+| 124 | [S124](slices/S124.md) | Add Python 3.14 to the CI test matrix |  | 1 |  |  | done |
 | 125 | [S125](slices/S125.md) | Tame the verify render-driver warning for solo projects |  | 2 |  |  | — |
 | 126 | [S126](slices/S126.md) | Verify and document the schema v1 to v2 upgrade contract |  | 2 |  |  | — |
 | 127 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | — |
