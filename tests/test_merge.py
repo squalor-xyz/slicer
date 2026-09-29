@@ -7,7 +7,103 @@ import unittest
 
 import support
 
-from slicer import store, vcs
+from slicer import store, tui, vcs
+
+
+def start_merge(repo: support.TempRepo) -> None:
+  """Leave a real, conflict-free Git merge awaiting its commit."""
+  repo.run("init")
+  repo.run("add", "base", "--render")
+  repo.commit("base")
+  base = repo._git("branch", "--show-current").stdout.strip()
+  repo._git("checkout", "-q", "-b", "feature")
+  repo.write("feature.txt", "feature\n")
+  repo.commit("feature")
+  repo._git("checkout", "-q", base)
+  merged = repo._git("merge", "--no-commit", "--no-ff", "feature")
+  if merged.returncode:
+    raise AssertionError(merged.stderr)
+
+
+class MergeGuardTests(unittest.TestCase):
+  def test_MergeInProgress_CliRefusesStateWritesWithoutChangingFiles(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      start_merge(repo)
+      self.assertTrue(vcs.merge_in_progress(repo.root))
+      before = repo.read(".slicer/index.json")
+      for command in (("add", "blocked"), ("init", "--force"), ("done", "S01")):
+        with self.subTest(command=command):
+          code, out, err = repo.run(*command, "--json")
+          self.assertEqual(code, 2)
+          self.assertEqual(json.loads(out)["error"]["code"], "merge_in_progress")
+          self.assertIn("finish or abort", err)
+          self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_MergeInProgress_ReadsPreviewsAndRenderRemainAvailable(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      start_merge(repo)
+      repo.write("draft.md", "## Preview only\n")
+      for command in (("show", "S01"), ("import", "--skeleton"),
+                      ("import", "draft.md", "--dry-run"),
+                      ("remove", "S01", "--purge", "--dry-run"),
+                      ("render",), ("sync", "--check")):
+        with self.subTest(command=command):
+          code, _, err = repo.run(*command)
+          self.assertEqual(code, 0, err)
+          self.assertNotIn("merge in progress", err)
+
+  def test_NoMerge_GuardIsSilentAndMutationSucceeds(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self.assertFalse(vcs.merge_in_progress(repo.root))
+      code, _, err = repo.run("add", "allowed")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(err, "")
+
+  def test_LinkedWorktree_MergeStateIsLocalToThatCheckout(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.write("base.txt", "base\n")
+      repo.commit("base")
+      linked = repo.root / "linked"
+      added = repo._git("worktree", "add", "-q", "-b", "linked", str(linked))
+      self.assertEqual(added.returncode, 0, added.stderr)
+      repo._git("-C", str(linked), "checkout", "-q", "-b", "feature")
+      (linked / "feature.txt").write_text("feature\n", encoding="utf-8")
+      repo._git("-C", str(linked), "add", "feature.txt")
+      repo._git("-C", str(linked), "commit", "-q", "-m", "feature")
+      repo._git("-C", str(linked), "checkout", "-q", "linked")
+      merged = repo._git("-C", str(linked), "merge", "--no-commit", "--no-ff", "feature")
+      self.assertEqual(merged.returncode, 0, merged.stderr)
+      self.assertTrue(vcs.merge_in_progress(linked))
+      self.assertFalse(vcs.merge_in_progress(repo.root))
+
+  def test_MergeInProgress_TuiSaveIsRefusedButRenderWorks(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      start_merge(repo)
+      state = repo.state()
+      before = repo.read(".slicer/index.json")
+      result = tui.act(state, "s", "S01")
+      self.assertEqual(result.severity, "error")
+      self.assertIn("merge in progress", result.message)
+      edit = tui.EditRequest("new", "", "new item", "")
+      result = tui.apply_edit_result(state, edit, "blocked")
+      self.assertEqual(result.severity, "error")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertNotEqual(tui.act(state, "r", "").severity, "error")
+
+  def test_MergeInProgress_TuiWizardSaveIsRefusedBeforeWriting(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      start_merge(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      view._open_wizard(state)
+      view.wizard.add_item()
+      view.wizard.items[0].values[0] = "blocked"
+      before = repo.read(".slicer/index.json")
+      view._save_wizard(state)
+      self.assertIn("merge in progress", view.wizard.error)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
 
 
 class GitattributesTests(unittest.TestCase):

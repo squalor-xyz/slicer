@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import graph, ops, prose, render, store, tui_style, tui_wizard
+from slicer import graph, ops, prose, render, store, tui_style, tui_wizard, vcs
 from slicer.errors import SlicerError
 from slicer.store import State
 
@@ -394,6 +394,7 @@ def act(
     if action in ("start", "done", "park", "unpark"):
       item = state.index.require(target)
       previous = item.status
+      vcs.require_no_merge(state.root)
       if action == "start":
         ops.start(state, target)
         message = f"{target} started"
@@ -410,21 +411,25 @@ def act(
     if action == "reorder_down":
       at = state.index.position(target)
       if at + 1 < len(state.index.items):
+        vcs.require_no_merge(state.root)
         ops.move(state, target, after=state.index.items[at + 1].id)
         return ActResult(f"{target} moved down", severity="success")
       return ActResult("already last")
     if action == "reorder_up":
       at = state.index.position(target)
       if at > 0:
+        vcs.require_no_merge(state.root)
         ops.move(state, target, before=state.index.items[at - 1].id)
         return ActResult(f"{target} moved up", severity="success")
       return ActResult("already first")
     if action == "reorder_top":
       if state.index.position(target) > 0:
+        vcs.require_no_merge(state.root)
         ops.move(state, target, to=1)
         return ActResult(f"{target} moved to top", severity="success")
       return ActResult("already first")
     if action == "promote":
+      vcs.require_no_merge(state.root)
       ops.promote(state, target)
       return ActResult(f"{target} promoted", severity="success")
   except (SlicerError, OSError) as exc:
@@ -443,30 +448,38 @@ def apply_edit_result(state: State, request: EditRequest, body: str | None) -> A
       title = body.strip()
       if not title:
         return ActResult("cancelled")
+      vcs.require_no_merge(state.root)
       return ActResult(f"added {ops.add(state, title).id}", severity="success")
     if request.kind == PROSE:
+      vcs.require_no_merge(state.root)
       ops.edit_prose(state, request.target, body)
     elif request.kind == "boundary":
+      vcs.require_no_merge(state.root)
       ops.edit_boundary(state, request.target, body)
     elif request.kind == "field":
       kwarg, parse = FIELD_SPEC[request.name]
       item = state.index.require(request.target)
       before = item.to_dict()
+      vcs.require_no_merge(state.root)
       ops.set_fields(state, request.target, **{kwarg: parse(body)})
       if item.to_dict() == before:
         return ActResult(f"{request.name} unchanged")
     elif request.kind == "note":
       if body.strip():
+        vcs.require_no_merge(state.root)
         ops.set_note(state, request.target, request.index, body)
         return ActResult("updated note; press r to render", severity="success")
+      vcs.require_no_merge(state.root)
       ops.remove_note(state, request.target, request.index)
       return ActResult("note removed; press r to render", severity="success")
     elif request.kind == "note_new":
       if not body.strip():
         return ActResult("cancelled")
+      vcs.require_no_merge(state.root)
       ops.add_note(state, request.target, body)
       return ActResult("added note; press r to render", severity="success")
     else:
+      vcs.require_no_merge(state.root)
       ops.edit_section(state, request.target, request.name, body)
   except (SlicerError, OSError) as exc:
     return ActResult(str(exc), severity="error")
@@ -742,7 +755,9 @@ class View:
       return
     try:
       specs = wizard.specs()
+      vcs.require_no_merge(state.root)
       with store.project_lock(state.root):
+        vcs.require_no_merge(state.root)
         fresh = store.load(state.root)
         warning = ""
         try:
@@ -823,6 +838,7 @@ class View:
         self.notify(f"already at {text}")  # no-op: don't move, save or log
       else:
         try:
+          vcs.require_no_merge(state.root)
           landed = ops.move(state, self.target, to=int(text))
           self.notify(f"{self.target} moved to {landed}", "success")
         except (SlicerError, OSError) as exc:

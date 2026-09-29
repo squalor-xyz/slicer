@@ -329,6 +329,15 @@ union-merges on its own; `index.json` is the source of truth (resolve real overl
 never hand-merge `render/` — run `slicer render` and `slicer check` so the generated markdown
 matches the resolved index.
 
+**Serialize integration into a shared checkout.** Only one actor should run `git merge`,
+resolve conflicts, and finish the merge there at a time. S114's proposed slice claims
+would coordinate authoring in separate worktrees; they do not reserve the integration
+checkout. While Git has a merge in progress, slicer refuses state changes, including
+TUI saves, with `merge_in_progress` (CLI exit 2). Read-only commands, dry runs,
+`slicer render`, and `slicer sync` remain available to inspect and repair the merge.
+Finish or abort the merge before changing slicer state again. The guard does not
+serialize Git commands.
+
 **`slicer next` is the queue.** It considers eligible started items first, then open
 items if none qualify. Within that pool it selects the highest effective score, with
 stored queue order breaking ties. All dependencies must be done. A

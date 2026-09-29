@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-121 items · — 4 · done 116 · retired 1
+121 items · — 3 · done 117 · retired 1
 
 v1.0.0 release
 
@@ -151,6 +151,6 @@ v1.0.0 release
 | 116 | [S116](slices/S116.md) | Reject slice examples that name a removed flag | M | 2 | slicer | S107 | done |
 | 117 | [S117](slices/S117.md) | Make the test suite robust to colorized argparse output |  | - |  |  | done |
 | 118 | [S118](slices/S118.md) | Configure the render merge driver in one step |  | - |  |  | done |
-| 119 | [S119](slices/S119.md) | Guard against parallel merges into the shared main checkout |  | - |  |  | — |
+| 119 | [S119](slices/S119.md) | Guard against parallel merges into the shared main checkout |  | - |  |  | done |
 | 120 | [S120](slices/S120.md) | Warn when slicer runs code from outside the discovered project |  | - |  |  | — |
 | 121 | [S121](slices/S121.md) | Add slicer setup-git to configure the render merge driver on any clone |  | - |  |  | — |
