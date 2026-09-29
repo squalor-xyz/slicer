@@ -751,13 +751,17 @@ def cmd_set(args: argparse.Namespace) -> int:
   if args.no_effort and args.effort is not None:
     raise StateError("--effort and --no-effort cannot be combined", code="usage")
   flags = [] if args.no_flags else args.flag
-  items = ops.set_fields_many(
-    state, item_ids, title=args.title, short_title=args.short_title, status=args.status,
+  fields = dict(
+    title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
     pass_key=args.pass_key, flags=flags, group=args.group,
     importance=args.importance, urgency=args.urgency,
-    effort=ops.CLEAR_EFFORT if args.no_effort else args.effort,
+    effort=args.effort,
   )
+  fields = {key: value for key, value in fields.items() if value is not None}
+  if args.no_effort:
+    fields["effort"] = None
+  items = ops.set_fields_many(state, item_ids, **fields)
   _emit_items(args, items, batch, [f"updated {item.id}" for item in items])
   return OK
 

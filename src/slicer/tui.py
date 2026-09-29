@@ -94,7 +94,7 @@ def _effort_edit(body: str) -> object:
   """Blank clears effort. Anything else is validated as 1, 2 or 3 on set."""
   text = body.strip()
   if not text:
-    return ops.CLEAR_EFFORT
+    return None
   return text
 
 
