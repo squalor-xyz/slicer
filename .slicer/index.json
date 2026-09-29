@@ -2494,7 +2494,7 @@
       "id": "S103",
       "title": "Keep a failed render from landing done",
       "short_title": "Keep a failed render from landing done",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-105 items · — 3 · done 101 · retired 1
+105 items · — 2 · done 102 · retired 1
 
 v1.0.0 release
 
@@ -135,6 +135,6 @@ v1.0.0 release
 | 100 | [S100](slices/S100.md) | Clarify when to start a slice in agent workflows | S | - | docs | AI credit-flow review | done |
 | 101 | [S101](slices/S101.md) | Add a compact ready-to-work CLI context bundle | M | - | cli | AI credit-flow review | done |
 | 102 | [S102](slices/S102.md) | Do not hand next a slice that does not say what done means |  | - | slicer |  | done |
-| 103 | [S103](slices/S103.md) | Keep a failed render from landing done |  | - | slicer |  | — |
+| 103 | [S103](slices/S103.md) | Keep a failed render from landing done |  | - | slicer |  | done |
 | 104 | [S104](slices/S104.md) | Let set clear an optional field without a one-off sentinel |  | - | slicer |  | — |
 | 105 | [S105](slices/S105.md) | Choose whether render success is required for a mutation |  | - |  |  | — |

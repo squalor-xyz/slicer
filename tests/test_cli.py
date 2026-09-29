@@ -815,8 +815,7 @@ class VersionFlagTests(unittest.TestCase):
 
 
 class RenderAfterMutationTests(unittest.TestCase):
-  """A --render failure after a saved mutation must not print a second document;
-  stdout keeps the handler's one result and the exit is DRIFT (saved, render stale)."""
+  """Render errors preserve the relevant command's save and output contract."""
 
   def _fresh(self) -> support.TempRepo:
     repo = support.TempRepo()
@@ -833,20 +832,51 @@ class RenderAfterMutationTests(unittest.TestCase):
       self.assertIn("render failed", err)
       self.assertEqual(len(repo.state().index.items), 1)  # the mutation persisted
 
-  def test_JsonMode_RenderFails_BatchArrayPayloadKeptAsArray(self) -> None:
-    # A batch of ids emits a JSON array; a render failure must not reshape it.
+  def test_Done_RenderWriteFails_BatchStaysUndone(self) -> None:
     with self._fresh() as repo:
       repo.run("add", "One")
       repo.run("add", "Two")
+      before = repo.read(".slicer/index.json")
       with patch.object(render, "write", side_effect=render.RenderError("boom")):
         code, out, err = repo.run("done", "S01", "S02", "--render", "--json")
-      self.assertEqual(code, 1)
+      self.assertEqual(code, 2)
       doc = json.loads(out)
-      self.assertIsInstance(doc, list)  # still an array, iterable as before
-      self.assertEqual({item["id"] for item in doc}, {"S01", "S02"})
-      self.assertIn("render failed", err)
+      self.assertEqual(doc["error"]["code"], "render")
+      self.assertIn("boom", err)
       done = {i.id for i in repo.state().index.items if i.status == "done"}
-      self.assertEqual(done, {"S01", "S02"})  # the batch mutation persisted
+      self.assertEqual(done, set())
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Done_BrokenRowTemplate_LeavesStartedStatusAndIndexUntouched(self) -> None:
+    with self._fresh() as repo:
+      repo.run("add", "One")
+      repo.run("promote", "S01")
+      repo.run("start", "S01")
+      repo.run("render")
+      before = repo.read(".slicer/index.json")
+      history = repo.read(".slicer/log.jsonl")
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      repo.write(".slicer/templates/row.md", "| {{position}} | {{title}} |\n")
+      code, out, err = repo.run("done", "S01", "--render", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertIn("cells", err)
+      self.assertEqual(repo.state().index.require("S01").status, "started")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.read(".slicer/log.jsonl"), history)
+      self.assertEqual(repo.read(".slicer/render/ROADMAP.md"), roadmap)
+      self.assertTrue((repo.root / ".slicer/slices/S01.json").exists())
+
+  def test_Done_WorkingRowTemplate_MarksDoneAndRenders(self) -> None:
+    with self._fresh() as repo:
+      repo.run("add", "One")
+      repo.run("promote", "S01")
+      repo.run("start", "S01")
+      code, _, err = repo.run("done", "S01", "--render")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(repo.state().index.require("S01").status, "done")
+      self.assertTrue((repo.root / ".slicer/slices/done/S01.json").exists())
+      self.assertEqual(repo.run("check")[0], 0)
 
   def test_PlainMode_RenderFails_StderrAndDriftExit(self) -> None:
     with self._fresh() as repo:
