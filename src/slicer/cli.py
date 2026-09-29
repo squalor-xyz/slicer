@@ -1444,6 +1444,15 @@ class _ParserError(Exception):
 
 
 class _ArgumentParser(argparse.ArgumentParser):
+  def __init__(self, *args: object, **kwargs: object) -> None:
+    # Python 3.14 colorizes usage/help/errors by default, and honors FORCE_COLOR
+    # even when output is piped -- which injects ANSI an agent then has to strip
+    # and makes slicer's diagnostics differ by environment. Keep them plain and
+    # deterministic. `color` is a 3.14+ argument, so only pass it there.
+    if sys.version_info >= (3, 14):
+      kwargs.setdefault("color", False)
+    super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+
   def error(self, message: str) -> None:
     raise _ParserError(self, message)
 

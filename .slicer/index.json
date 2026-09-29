@@ -2834,7 +2834,7 @@
       "id": "S117",
       "title": "Make the test suite robust to colorized argparse output",
       "short_title": "Make the test suite robust to colorized argparse output",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

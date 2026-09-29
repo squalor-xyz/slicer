@@ -12,6 +12,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - Text `slicer list` now labels its columns and reports how many matching done or retired items the default filter hides, with a `--all` hint. JSON output remains an array.
 - `slicer check` also parses the backtick `slicer ...` examples written inside a live slice's sections and fails on a flag the real parser does not know, naming the slice id, section, and flag — so a removed or renamed flag (like `--require-render`) is caught before an agent copies it into a real command. Done and retired slices are not scanned, so history keeps its old flag names; a flag merely mentioned in prose is left alone.
 
+### Changed
+
+- slicer's argparse usage, help, and error text stay uncolored on Python 3.14+ (which otherwise colorizes them by default and honors `FORCE_COLOR` even into a pipe), so diagnostics are deterministic across environments and free of ANSI an agent or test would have to strip.
+
 ## [1.0.0]
 
 ### Added
