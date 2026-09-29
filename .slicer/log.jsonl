@@ -642,3 +642,5 @@
 {"when": "2026-09-29T16:58:11Z", "item": "S139", "action": "add", "from": "", "to": "open", "note": "Tell agents to fill in priority and estimate fields when filing items"}
 {"when": "2026-09-29T16:59:56Z", "item": "S139", "action": "set", "from": "", "to": "", "note": "pass_key -→v1; urgency 2→3"}
 {"when": "2026-09-29T16:59:56Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "depends_on S124,S125,S126,S127,S130,S131,S133,S136,S137,S138→S124,S125,S126,S127,S130,S131,S133,S136,S137,S138,S139"}
+{"when": "2026-09-29T17:00:05Z", "item": "S137", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-29T17:01:41Z", "item": "S137", "action": "status", "from": "started", "to": "done", "note": "add distinguishes an omitted --pass (inherits the previous item's pass) from an explicit --pass '' (no pass), matching set --pass ''. Help, getting-started §7, import.md and CHANGELOG updated. 2 new tests in test_add_options.py. Suite 870 OK; check clean."}
