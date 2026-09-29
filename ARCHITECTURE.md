@@ -44,7 +44,8 @@ never pays for curses.
 Config schema stays `1` (`src/slicer/config.py`). Index schema is `2`
 (`SCHEMA_VERSION` in `src/slicer/model.py`): an item may carry a `claim`. A version-1
 index still loads, and the next save stamps `2`, so an older slicer refuses the file
-instead of dropping the claim. `done_dir` and `retired_dir` are config, not constants.
+instead of dropping the claim. A read never re-stamps, and no migration step exists;
+`tests/test_schema.py` covers the upgrade and the refusal. `done_dir` and `retired_dir` are config, not constants.
 
 ## Invariants
 
