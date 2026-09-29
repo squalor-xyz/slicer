@@ -1,0 +1,39 @@
+{
+  "id": "S105",
+  "title": "Choose whether render success is required for a mutation",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`--render` currently has different failure behavior across mutation commands. Most commands save the state change before rendering, so a render failure leaves the change applied. `done --render` must preserve the prior status when rendering fails. Callers need a clear, reusable way to choose whether render success is required for a mutation to take effect."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Define and document a consistent policy for render failures across mutation commands. Consider an explicit option that requires rendering to succeed before the change is published, and apply that behavior through the shared mutation path. Preserve the current default unless the project decides to change it."
+    },
+    {
+      "heading": "Check",
+      "body": "Tests show the documented behavior for both a successful render and a forced render failure, including whether state and generated output are left consistent."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

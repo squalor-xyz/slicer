@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 105,
+  "next_id": 106,
   "preamble": "",
   "passes": [
     {
@@ -2535,6 +2535,28 @@
         "reason": "",
         "importance": 2,
         "urgency": 1,
+        "effort": null
+      }
+    },
+    {
+      "id": "S105",
+      "title": "Choose whether render success is required for a mutation",
+      "short_title": "Choose whether render success is required for a mutation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": null
       }
     }
