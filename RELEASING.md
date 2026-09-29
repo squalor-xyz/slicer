@@ -5,8 +5,8 @@ plus `slicer.__version__` from `src/slicer/__init__.py`. `.github/workflows/publ
 runs the tests, refuses any other tag, builds the package, and uploads it.
 There is no API token. Later releases reuse the same publisher.
 
-The packaged version is 1.0.0. Pushing `v1.0.0` is a separate step. Do it from
-the commit the release should be, after the GitHub environment below exists.
+Pushing the tag is a separate step. Do it from the commit the release should be,
+after the GitHub environment below exists.
 
 ## First publish
 
@@ -39,11 +39,12 @@ you are releasing, and leave `[Unreleased]` empty.
 Set `__version__` in `src/slicer/__init__.py` to that version. `pyproject.toml`
 reads the attribute. Do not write a static version there.
 
-Commit. Then tag and push the tag, using the version you just set:
+Commit. Then tag and push the tag for the version you just set:
 
 ```sh
-git tag v1.0.0
-git push origin v1.0.0
+VERSION=$(PYTHONPATH=src python3 -c 'import slicer; print(slicer.__version__)')
+git tag "v$VERSION"
+git push origin "v$VERSION"
 ```
 
 Watch the Publish workflow. When it is green, the package is at
