@@ -615,9 +615,10 @@ def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
   cfg = state.config
   eff = graph.effective_scores(state.index)
   return [
-    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<2} "
-    f"{'-' if i.effort is None else i.effort} "
-    f"{eff[i.id]:>2}{'^' if eff[i.id] > i.score else ' '} {i.quadrant:<9} {i.display_title()}"
+    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<4} "
+    f"{'-' if i.effort is None else i.effort:<6} "
+    f"{str(eff[i.id]) + ('^' if eff[i.id] > i.score else ''):<5} "
+    f"{i.quadrant:<9} {i.display_title()}"
     for n, i in enumerate(items, 1)
   ]
 
@@ -635,19 +636,21 @@ def cmd_list(args: argparse.Namespace) -> int:
       code="usage",
     )
   items = state.index.items
-  if args.status:
-    items = [i for i in items if i.status in args.status]
-  elif not args.all:
-    hidden = {state.config.done_status}
-    if state.config.retired_status:
-      hidden.add(state.config.retired_status)
-    items = [i for i in items if i.status not in hidden]
   if args.tree:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
     items = [i for i in items if i.pass_key == args.pass_key]
   if args.flag:
     items = [i for i in items if set(args.flag) & set(i.flags)]
+  hidden_count = 0
+  if args.status:
+    items = [i for i in items if i.status in args.status]
+  elif not args.all:
+    hidden = {state.config.done_status}
+    if state.config.retired_status:
+      hidden.add(state.config.retired_status)
+    hidden_count = sum(i.status in hidden for i in items)
+    items = [i for i in items if i.status not in hidden]
   if getattr(args, "sort", None) == "score":
     # A read-only view: sort a copy by effective score, never the stored order.
     # Ties keep their manual position because Python's sort is stable.
@@ -658,7 +661,14 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_next_order(state, items)
-  _emit(args, [i.to_dict() for i in items], "\n".join(_item_rows(state, items)) or "no matching items")
+  header = f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'SIZE':<4} {'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
+  lines = [header, *_item_rows(state, items)]
+  if not items:
+    lines = ["no matching items"]
+  if hidden_count:
+    noun = "item" if hidden_count == 1 else "items"
+    lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
+  _emit(args, [i.to_dict() for i in items], "\n".join(lines))
   return OK
 
 

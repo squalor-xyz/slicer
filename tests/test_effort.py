@@ -131,7 +131,7 @@ class EffortSortTests(unittest.TestCase):
       before = repo.read(".slicer/index.json")
       code, out, err = repo.run("list", "--sort", "effort")
       self.assertEqual(code, 0, err)
-      ids = [line.split()[1] for line in out.splitlines()]
+      ids = [line.split()[1] for line in out.splitlines()[1:]]
       self.assertEqual(ids, ["S03", "S05", "S01", "S02", "S04"])
       self.assertIn(" 1 ", out)
       self.assertIn(" - ", out)
@@ -182,9 +182,9 @@ class EffortSortTests(unittest.TestCase):
       repo.run("add", "Blocker", "--importance", "1", "--urgency", "1")
       repo.run("add", "Depends on the blocker", "--importance", "3", "--urgency", "3",
                "--depends-on", "S03")
-      default_ids = [line.split()[1] for line in repo.run("list")[1].splitlines()]
-      score_ids = [line.split()[1] for line in repo.run("list", "--sort", "score")[1].splitlines()]
-      effort_ids = [line.split()[1] for line in repo.run("list", "--sort", "effort")[1].splitlines()]
+      default_ids = [line.split()[1] for line in repo.run("list")[1].splitlines()[1:]]
+      score_ids = [line.split()[1] for line in repo.run("list", "--sort", "score")[1].splitlines()[1:]]
+      effort_ids = [line.split()[1] for line in repo.run("list", "--sort", "effort")[1].splitlines()[1:]]
       nxt = repo.run("next")[1].splitlines()[0].split()[0]
       # Score order and next put the important item first. Effort order puts
       # the light item first, so the two sorts are not the same sequence.
