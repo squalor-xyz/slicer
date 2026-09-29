@@ -294,8 +294,8 @@ merging the generated markdown by hand.
 
 The `.gitattributes` also points `render/` at a `slicer-generated` merge driver that keeps the
 current branch's copy instead of writing conflict markers — but a driver name only resolves
-once the clone defines it, so run these two lines once per clone (slicer's git allowlist cannot
-run `git config` for you):
+once the clone defines it. Run `slicer setup-git` to print the two lines (or `slicer setup-git
+| sh` to apply them), once per clone — slicer's git allowlist cannot run `git config` for you:
 
 ```sh
 git config merge.slicer-generated.name "keep the current branch's generated files"

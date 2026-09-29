@@ -602,7 +602,8 @@ stale. That staleness check is the whole point: state and its rendering cannot d
 `render/` at a `slicer-generated` driver so a merge keeps the current branch's copy instead
 of writing conflict markers into those large files. A driver name only resolves once the
 clone defines it, and slicer's git allowlist cannot run `git config` for you, so run these
-two lines once in each clone (`slicer init` also prints them when it is run inside a git repo):
+two lines once in each clone. `slicer setup-git` prints them (`slicer setup-git | sh` applies
+them), and `slicer init` also prints them when it is run inside a git repo:
 
 ```sh
 git config merge.slicer-generated.name "keep the current branch's generated files"

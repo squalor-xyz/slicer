@@ -291,15 +291,22 @@ render/slices/*.md merge=slicer-generated
 """
 
 
+def _render_driver_commands() -> list[str]:
+  """The two per-clone `git config` commands that turn on the render merge driver
+  named in `.gitattributes` (S109). slicer's git allowlist cannot run them, so
+  `init` and `setup-git` print them for a person to run once in each clone."""
+  return [
+    'git config merge.slicer-generated.name "keep the current branch\'s generated files"',
+    "git config merge.slicer-generated.driver true",
+  ]
+
+
 def _render_driver_setup() -> str:
-  """The one-time, per-clone git config that turns on the render merge driver
-  named in `.gitattributes` (S109). slicer's git allowlist cannot run `git config`
-  itself, so it prints the lines for a person to run once in each clone."""
+  """The `init` hint: why the driver exists, plus the two commands to enable it."""
+  indented = "\n".join("  " + command for command in _render_driver_commands())
   return (
     "render/ is pointed at a merge driver so parallel branches don't leave "
-    "conflict markers in it.\nEnable it once in this clone:\n"
-    '  git config merge.slicer-generated.name "keep the current branch\'s generated files"\n'
-    "  git config merge.slicer-generated.driver true"
+    "conflict markers in it.\nEnable it once in this clone:\n" + indented
   )
 
 
@@ -326,6 +333,19 @@ def cmd_init(args: argparse.Namespace) -> int:
   if vcs.is_repo(root):
     text += "\n\n" + _render_driver_setup()
   _emit(args, {"root": str(root), "dir": str(base)}, text)
+  return OK
+
+
+def cmd_setup_git(args: argparse.Namespace) -> int:
+  """Print the per-clone git config that turns on the render merge driver.
+
+  Read-only and project-independent: it needs no `.slicer/`, so a fresh clone can
+  run it before anything else, and it never loads or locks state. slicer's git
+  allowlist forbids running `git config`, so this only prints the commands -- run
+  them, or `slicer setup-git | sh`. `--json` returns them as a list.
+  """
+  commands = _render_driver_commands()
+  _emit(args, commands, "\n".join(commands))
   return OK
 
 
@@ -1564,6 +1584,9 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
+
+  add("setup-git", cmd_setup_git,
+      "print the git config that turns on the render merge driver (run once per clone)")
 
   sp = _render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline"))
   sp.add_argument("file", nargs="?", help="the outline file")

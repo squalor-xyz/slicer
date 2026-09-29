@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 import support
 
@@ -152,6 +153,42 @@ class RenderDriverSetupHintTests(unittest.TestCase):
     # name the git user. slicer must still never *write* config -- e.g. to set
     # the merge driver -- so the only permitted config form is that one read.
     self.assertEqual(vcs.READ_ONLY.get("config"), frozenset({("--get", "user.name")}))
+
+
+class SetupGitCommandTests(unittest.TestCase):
+  """`slicer setup-git` prints (never runs) the per-clone merge-driver config,
+  works with no project, and never loads or locks state (S121)."""
+
+  NAME = "git config merge.slicer-generated.name"
+  DRIVER = "git config merge.slicer-generated.driver true"
+
+  def test_SetupGit_PrintsBothConfigLines(self) -> None:
+    with support.TempRepo() as repo:
+      code, out, err = repo.run("setup-git")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn(self.NAME, out)
+      self.assertIn(self.DRIVER, out)
+
+  def test_SetupGit_Json_ReturnsTheCommandsAsAList(self) -> None:
+    with support.TempRepo() as repo:
+      text = repo.run("setup-git")[1]
+      code, out, _ = repo.run("setup-git", "--json")
+      self.assertEqual(code, 0)
+      commands = json.loads(out)
+      self.assertEqual(commands, text.splitlines())
+      self.assertEqual(len(commands), 2)
+      # --lean must not choke on a list of plain strings.
+      self.assertEqual(json.loads(repo.run("setup-git", "--json", "--lean")[1]), commands)
+
+  def test_SetupGit_NeedsNoProject_NeverLoadsOrLocks(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      with patch("slicer.cli.store.discover", side_effect=AssertionError("discover")), \
+           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
+           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+        code, out, err = repo.run("setup-git")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn(self.DRIVER, out)
+      self.assertEqual(list(repo.root.iterdir()), [])  # created nothing
 
 
 if __name__ == "__main__":
