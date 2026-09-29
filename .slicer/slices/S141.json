@@ -1,0 +1,41 @@
+{
+  "id": "S141",
+  "title": "Move the TUI manual out of the README into docs/tui.md",
+  "lead": [
+    "The README carries the only complete TUI documentation (about 70 lines of keys, filters, wizard, colors and layout), buried inside the Commands section. getting-started.md mentions the TUI only in passing."
+  ],
+  "depends_note": null,
+  "findings_note": "docs review: README carries the only full TUI manual",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The TUI is a user-facing surface with its own vocabulary, and it has no page of its own. Readers looking for a key binding have to scroll through the CLI reference to find it, and the README is too long to scan as a front page. A dedicated page gives the TUI one home that the README and getting-started can link to."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/tui.md` (new): the TUI manual.\n- `README.md`: remove the TUI prose (currently the paragraphs from \"In the TUI, the queue opens…\" through the resize-prompt paragraph, plus the view-controls table) and link to `docs/tui.md`.\n- `docs/getting-started.md`: link to `docs/tui.md` where it introduces `slicer tui`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "None; documentation only. The acceptance checks are in Check."
+    },
+    {
+      "heading": "Implement",
+      "body": "Move the TUI content from the README into `docs/tui.md` verbatim, then organize it under headings (opening and ordering, editing, the wizard, view controls and filters, display and color). Correct wording only where the move breaks context. In the README, keep the `tui` / `ui` row in the command table and add a one-line pointer to the new page. Add the link in getting-started where the TUI is introduced."
+    },
+    {
+      "heading": "Check",
+      "body": "Every TUI key and behavior described in the README before the change appears in `docs/tui.md`, and the README no longer describes TUI keys. All relative links in README.md, docs/tui.md and docs/getting-started.md resolve. `PYTHONPATH=src python3 -m slicer check`, the unittest suite (in case any test reads the docs), and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Review the documentation, state, and generated markdown together. Leave commit, merge, push, and publication to the owner."
+    }
+  ],
+  "notes": []
+}

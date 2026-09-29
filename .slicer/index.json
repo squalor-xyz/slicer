@@ -2,12 +2,18 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 141,
+  "next_id": 143,
   "preamble": "",
   "passes": [
     {
       "key": "v1",
       "heading": "v1.0.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.1",
+      "heading": "v1.1.0 release",
       "intro": "",
       "outro": ""
     }
@@ -3258,7 +3264,7 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1.1",
         "group": "",
         "reason": "",
         "importance": 2,
@@ -3327,7 +3333,7 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1.1",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -3373,7 +3379,7 @@
         "trees": [],
         "trees_literal": false,
         "findings": "",
-        "pass": "",
+        "pass": "v1.1",
         "group": "",
         "reason": "",
         "importance": 2,
@@ -3529,6 +3535,58 @@
         "importance": 2,
         "urgency": 3,
         "effort": 1
+      }
+    },
+    {
+      "id": "S141",
+      "title": "Move the TUI manual out of the README into docs/tui.md",
+      "short_title": "Move the TUI manual out of the README into docs/tui.md",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "docs review: README carries the only full TUI manual",
+        "pass": "v1.1",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S142",
+      "title": "Slim the README to a front page and give each doc topic one home",
+      "short_title": "Slim the README to a front page and give each doc topic one home",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S141"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "docs review: README duplicates install, batch, goals and next/list detail from docs",
+        "pass": "v1.1",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2
       }
     }
   ],
