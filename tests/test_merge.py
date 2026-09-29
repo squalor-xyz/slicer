@@ -7,7 +7,7 @@ import unittest
 
 import support
 
-from slicer import store
+from slicer import store, vcs
 
 
 class GitattributesTests(unittest.TestCase):
@@ -117,6 +117,39 @@ class UnionMergeTests(unittest.TestCase):
       self.assertNotIn("<<<<<<<", log)
       self.assertIn("from feature", log)
       self.assertIn("from mainline", log)
+
+
+class RenderDriverSetupHintTests(unittest.TestCase):
+  """`slicer init` surfaces the one-time, per-clone git config that turns on the
+  render merge driver, and slicer never runs `git config` itself (S118)."""
+
+  NAME_LINE = 'git config merge.slicer-generated.name "keep the current branch\'s generated files"'
+  DRIVER_LINE = "git config merge.slicer-generated.driver true"
+
+  def test_Init_InGitRepo_PrintsMergeDriverConfigLines(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      code, out, err = repo.run("init")
+      self.assertEqual(code, 0, err)
+      self.assertIn(self.NAME_LINE, out)
+      self.assertIn(self.DRIVER_LINE, out)
+
+  def test_Init_Json_OmitsTheHintAndStaysTwoKeys(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      code, out, _ = repo.run("init", "--json")
+      self.assertEqual(code, 0)
+      doc = json.loads(out)  # one clean document, no hint appended
+      self.assertEqual(set(doc), {"root", "dir"})
+      self.assertNotIn("git config", out)
+
+  def test_Init_OutsideGitRepo_OmitsTheHint(self) -> None:
+    with support.TempRepo() as repo:  # not a git repo
+      code, out, _ = repo.run("init")
+      self.assertEqual(code, 0)
+      self.assertNotIn("git config", out)
+
+  def test_Vcs_Allowlist_DoesNotIncludeConfig(self) -> None:
+    # slicer prints the config lines; it must never run `git config` itself.
+    self.assertNotIn("config", vcs.ALLOWED)
 
 
 if __name__ == "__main__":
