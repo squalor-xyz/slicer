@@ -752,29 +752,43 @@ def _claim_width(
   return width
 
 
+def _pass_width(index: model.Index, items: list[model.Item]) -> int | None:
+  """The PASS column's width, or None when the roadmap uses no passes at all
+  (none declared and none named by an item), so such a project keeps the
+  table without the column."""
+  if not any(index.pass_keys()):
+    return None
+  return max([len("PASS"), *(len(i.pass_key or "-") for i in items)])
+
+
 def _item_rows(
   state: store.State, items: list[model.Item], *,
   claim_w: int | None = None,
+  pass_w: int | None = None,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
 ) -> list[str]:
-  """The shared queue-listing row format used by `list` and `find`.
+  """The shared queue-listing row format used by `list`, `find` and `deps`.
 
   `^` marks an effective score lifted above the item's own by a dependent, so a
   blocker of a critical item reads at that item's priority. The claim column
-  names the owner, or `*` when the item is in progress and unclaimed.
+  names the owner, or `*` when the item is in progress and unclaimed. The pass
+  column appears only when the roadmap uses passes.
   """
   cfg = state.config
   eff = graph.effective_scores(state.index)
   elsewhere = elsewhere or {}
   if claim_w is None:
     claim_w = _claim_width(cfg, items, elsewhere)
+  if pass_w is None:
+    pass_w = _pass_width(state.index, items)
   rows = []
   for n, item in enumerate(items, 1):
     score = str(eff[item.id]) + ("^" if eff[item.id] > item.score else "")
     effort = "-" if item.effort is None else str(item.effort)
+    pass_cell = "" if pass_w is None else f"{item.pass_key or '-':<{pass_w}} "
     rows.append(
       f"{n:>3}  {item.id:<5} {cfg.status_label(item.status):<7} "
-      f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {item.size:<4} "
+      f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
       f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
     )
   return rows
@@ -820,11 +834,15 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = _list_in_next_order(state, items)
   elsewhere = store.in_work_elsewhere(state.root)
   claim_w = _claim_width(state.config, items, elsewhere)
+  pass_w = _pass_width(state.index, items)
+  pass_head = "" if pass_w is None else f"{'PASS':<{pass_w}} "
   header = (
-    f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'CLAIM':<{claim_w}} {'SIZE':<4} "
+    f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'CLAIM':<{claim_w}} {pass_head}{'SIZE':<4} "
     f"{'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
   )
-  lines = [header, *_item_rows(state, items, claim_w=claim_w, elsewhere=elsewhere)]
+  lines = [header, *_item_rows(
+    state, items, claim_w=claim_w, pass_w=pass_w, elsewhere=elsewhere,
+  )]
   if not items:
     lines = ["no matching items"]
   if hidden_count:

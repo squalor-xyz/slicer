@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- The text table from `slicer list`, and the `find` and `deps` rows, show a PASS column after CLAIM when the roadmap declares or names any pass: the item's pass key, or `-`. A project without passes keeps the table unchanged, and JSON output is unchanged.
+
 ### Fixed
 
 - The different-worktree warning no longer fires for a project elsewhere in the code's own worktree (a nested subproject, or a test fixture under an ignored scratch directory). It now requires the two paths to be different worktrees, not merely the same repo. The suite passes with the in-checkout `TMPDIR` that AGENTS.md documents.

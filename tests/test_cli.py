@@ -412,7 +412,7 @@ class ListDoneDefaultTests(unittest.TestCase):
       code, out, err = repo.run("list")
       self.assertEqual((code, err), (0, ""))
       lines = out.splitlines()
-      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "CLAIM", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
+      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "CLAIM", "PASS", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
       self.assertTrue(any(line[lines[0].index("EFFORT")] == "-" for line in lines[1:-1]))
       self.assertEqual(lines[-1], "2 items hidden (done or retired); use --all to show them")
       self.assertEqual([item["id"] for item in json.loads(repo.run("list", "--json")[1])],
@@ -494,6 +494,56 @@ class ListDoneDefaultTests(unittest.TestCase):
     with support.TempRepo() as repo:
       repo.run("init")
       self.assertEqual(repo.run("list")[1].strip(), "no matching items")
+
+
+class PassColumnTests(unittest.TestCase):
+  """The text rows show pass membership only when the roadmap uses passes (S134)."""
+
+  LONG = "release-candidate"
+
+  def repo(self, *, passes: bool) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    if passes:
+      repo.run("prose", "add-pass", self.LONG)
+    repo.run("add", "first", *(("--pass", self.LONG) if passes else ()))
+    repo.run("add", "second")
+    if passes:
+      repo.run("set", "S02", "--pass", "")  # add inherits the previous pass
+    return repo
+
+  def test_List_WithPasses_ShowsKeyOrDashAligned(self) -> None:
+    with self.repo(passes=True) as repo:
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      header, first, second = out.splitlines()
+      self.assertEqual(header.split()[:6], ["#", "ID", "STATUS", "CLAIM", "PASS", "SIZE"])
+      col = header.index("PASS")
+      self.assertEqual(first[col:].split()[0], self.LONG)
+      self.assertEqual(second[col:].split()[0], "-")
+      # The widest key sets the column, so later columns line up with the header.
+      title = header.index("TITLE")
+      self.assertEqual((first[title:], second[title:]), ("first", "second"))
+
+  def test_List_WithoutPasses_KeepsTheTableUnchanged(self) -> None:
+    with self.repo(passes=False) as repo:
+      header = repo.run("list")[1].splitlines()[0]
+      self.assertEqual(header.split(), ["#", "ID", "STATUS", "CLAIM", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
+
+  def test_FindAndDeps_FollowTheSameRule(self) -> None:
+    for passes in (True, False):
+      with self.subTest(passes=passes), self.repo(passes=passes) as repo:
+        for argv in (("find", "first"), ("deps",)):
+          out = repo.run(*argv)[1]
+          self.assertEqual(self.LONG in out, passes, argv)
+          self.assertEqual(len(out.splitlines()[-1 if argv[0] == "deps" else 0].split()),
+                           8 + passes, argv)
+
+  def test_List_Json_Unchanged(self) -> None:
+    with self.repo(passes=True) as repo:
+      items = json.loads(repo.run("list", "--json")[1])
+      self.assertEqual([i["fields"]["pass"] for i in items], [self.LONG, ""])
+      self.assertNotIn("PASS", repo.run("list", "--json")[1])
 
 
 if __name__ == "__main__":
