@@ -537,7 +537,7 @@ $ slicer promote S01 --file draft.md
 promoted S01 -> ~/code/my-project/.slicer/slices/S01.json
 ```
 
-For anything more than one section, `slicer tui` (or its alias `slicer ui`) is also faster than repeated `edit`s:
+For anything more than one section, `slicer tui` (or its alias `slicer ui`) is also faster than repeated `edit`s. See the [TUI manual](tui.md) for the full key and filter reference:
 `tab` moves between the queue and the detail pane, and `e` opens `$EDITOR` on whatever is
 selected. Select a note and press `e` to edit it; saving an empty body removes that note.
 Select `+ add a note` and press `e` to add one. Press `J`/`K` to reorder down/up, `T` to
