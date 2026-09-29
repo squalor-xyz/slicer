@@ -717,6 +717,10 @@ the tail of the queue is in a pass, every later `add` lands there too. Name the 
 mean, or pass `--pass ''` to file it with no pass (`slicer set ID --pass ''` clears one
 later). `import` never inherits a pass.
 
+Once the roadmap has a pass, `slicer list` (and the `find` and `deps` rows) gains a PASS
+column after CLAIM, showing each item's pass or `-`. `slicer list --pass 2` narrows the
+table to one pass.
+
 A declared pass renders even with no items yet, so you can open a group before its first
 slice exists. `prose drop-pass 2` closes it, and refuses while any item is still filed
 there:

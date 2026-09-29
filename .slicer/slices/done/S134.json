@@ -1,0 +1,41 @@
+{
+  "id": "S134",
+  "title": "Show pass membership in the list table",
+  "lead": [
+    "The text table from `slicer list` has no pass column, so a row's pass is visible only through `--pass` filtering, `--json`, or the rendered ROADMAP."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a PASS column in the TUI queue, sorting or grouping `list` by pass, or any change to JSON output.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Passes group the queue into releases (currently v1.1), but the table everyone reads cannot show which release a row belongs to. You have to run `list --pass KEY` once per pass, or read JSON. The column should appear only where passes are in use, so projects that never declare a pass keep today's table."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: `_item_rows`, the shared row format for `list`, `find` and `deps`, plus the `list` header.\n- `README.md` (the list columns sentence and the `list` command row), `docs/getting-started.md` if it shows a list header, and `src/slicer/ai.py` if it describes the columns.\n- `tests/test_cli.py` and any `find`/`deps` tests that pin row text."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. In a roadmap that declares a pass, `list` has a PASS header and each row's pass key, with `-` for a row not assigned to a pass.\n2. The column is as wide as the longest pass key among the listed rows, but never narrower than `PASS`, so a longer key keeps the column aligned.\n3. In a roadmap with no declared passes, the `list` header and rows are the same as before this change.\n4. `find` and `deps` rows follow the same rule: a pass cell when the roadmap declares passes, none otherwise.\n5. `list --json` is unchanged; it already carries `fields.pass`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Decided with the owner (2026-09-29): show the PASS column only when the index declares at least one pass, and apply it to all three commands that share `_item_rows` (`list`, `find`, `deps`). Put it after CLAIM and before SIZE. Size the column the way CLAIM already is: compute the width once per listing and pass it into `_item_rows`, so the header and rows line up. Show `-` for a row with no pass. Leave JSON output unchanged. Update the docs that list the table's columns.\n\nRefined while building: \"uses passes\" follows `Index.pass_keys()`, which counts a pass declared in prose or named by any item, so a pass that only an item names still shows in the table instead of being hidden."
+    },
+    {
+      "heading": "Check",
+      "body": "Focused tests for the cases above; the full suite with both the default and the in-checkout `TMPDIR`; `PYTHONPATH=src python3 -m slicer check`; `git diff --check`. Check `slicer list` by eye on this repo (v1.1 rows) and on a temporary project with no passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Review the code, docs, state, and generated markdown together. Leave commit, merge, push, and publication to the owner."
+    }
+  ],
+  "notes": []
+}
