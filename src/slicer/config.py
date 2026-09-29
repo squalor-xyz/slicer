@@ -61,6 +61,12 @@ DEFAULT_STATUSES: dict[str, str] = {
 
 DEFAULT_SECTIONS = ["Why", "Files", "Failing tests", "Implement", "Check", "Git"]
 
+def _claim_owner(value: object) -> str:
+  if not isinstance(value, str):
+    raise ConfigError("claim_owner must be a string")
+  return value
+
+
 DEFAULT_LATER = {
   "group_sep": "; ",
   "item_sep": "/",
@@ -103,6 +109,9 @@ class Config:
   # `verify`'s git cross-check. Off for projects whose history cannot satisfy
   # it -- a repo split from another, where items were finished before it began.
   git_check: bool = True
+  # Who `start` records when it claims an item. Empty means git user.name,
+  # then the worktree directory name.
+  claim_owner: str = ""
 
   def status_label(self, status: str) -> str:
     return self.statuses.get(status, status)
@@ -140,6 +149,8 @@ class Config:
       )
     if self.id_width < 1:
       raise ConfigError(f"id.width must be at least 1, not {self.id_width}")
+    if "\n" in self.claim_owner or "\r" in self.claim_owner:
+      raise ConfigError("claim_owner must be a single line")
     for target in self.sync_targets:
       try:
         re.compile(target.match)
@@ -171,6 +182,7 @@ class Config:
       },
       "sync": {"targets": [t.to_dict() for t in self.sync_targets]},
       "git_check": self.git_check,
+      "claim_owner": self.claim_owner,
     }
 
   @staticmethod
@@ -220,6 +232,7 @@ class Config:
       later=pointers.get("later", json.loads(json.dumps(DEFAULT_LATER))),
       sync_targets=[SyncTarget.from_dict(t) for t in d.get("sync", {}).get("targets", [])],
       git_check=bool(d.get("git_check", True)),
+      claim_owner=_claim_owner(d.get("claim_owner", "")),
     )
     cfg.validate()
     return cfg

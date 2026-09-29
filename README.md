@@ -119,7 +119,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
 | `next [-n N] [--start] [--show\|--ready [--section NAME ...]]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids. Repeat `--section` with `--ready` to return the scope boundary and those sections only |
 | `next-id` | the id the next `add` or `import` would take, without allocating it |
-| `list [--all] [--status/--tree/--pass/--flag] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. Done and retired items are omitted unless `--all` is set or `--status` names them. Repeat `--flag` to keep an item that has any of those flags. Flags are free-form labels set with `set --flag`. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
+| `list [--all] [--status/--tree/--pass/--flag] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. The text table has a CLAIM column: the owner, `*` for in-progress with no claim, or `-`. `--json` includes `claim` (`{"owner", "at"}` or null). Done and retired items are omitted unless `--all` is set or `--status` names them. Repeat `--flag` to keep an item that has any of those flags. Flags are free-form labels set with `set --flag`. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
 | `deps [ID] [--format mermaid]` | dependencies: unblocked open items, or one item's waits-on/blocked-by/dependents; `--format mermaid` renders the graph |
 | `show ID [--section NAME ...] [--context]` | print one slice or selected sections; `--context` adds title, dependencies, and scope boundary |
@@ -129,8 +129,9 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `goals` | print the project's goals and non-goals together; supports `--json` |
-| `start ID [ID ...]` | mark an item in progress, so `next` knows it is in flight |
-| `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status; `--note` records a one-line *history* entry (for a durable note on the item, use `slicer note`); `done` moves the file with `git mv` |
+| `start ID [ID ...]` | mark an item in progress and claim it (owner and time). The owner is `claim_owner` in config, otherwise the git user name, otherwise the worktree name. A second start does not refresh the claim |
+| `release ID [ID ...]` | clear a claim without changing status. An item that was in progress stays in progress and lists as `*` |
+| `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status; `--note` records a one-line *history* entry (for a durable note on the item, use `slicer note`); `done` moves the file with `git mv` and clears a claim |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `remove ID --purge/--reason --dry-run` | preview the removal and its fallout (dependents, id fate); write nothing |
@@ -255,13 +256,14 @@ important work first, while the stored queue order stays whatever `move` set.
 
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
 `rev-parse`, `status`, `log`, `mv`, `ls-files`, and the read-only queries
-`worktree list --porcelain` and `branch --all`. `start` uses those to warn when another
-branch or worktree name already refers to the slice; the exit code does not change, and
+`worktree list --porcelain`, `branch --all`, and `config --get user.name`. `start` uses
+the branch and worktree queries to warn when another checkout already refers to the slice;
+the exit code does not change, and
 `next` stays silent. Writing subcommands cannot be reached from the code at all.
 
 ### Batch changes
 
-`done`, `start`, `park`, `unpark`, and `set` accept multiple IDs.
+`done`, `start`, `release`, `park`, `unpark`, and `set` accept multiple IDs.
 For example, `slicer set S01 S02 --urgency 3 --render` applies the same fields to
 both items. Use `slicer done -` to read whitespace-separated IDs from stdin.
 See [batch changes](docs/getting-started.md#batch-changes) for validation and output rules.

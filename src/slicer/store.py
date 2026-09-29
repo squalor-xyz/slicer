@@ -17,7 +17,7 @@ from typing import Iterator
 from slicer import ids, jsonio, vcs
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import StateError
-from slicer.model import Index, LogEntry, Slice
+from slicer.model import SCHEMA_VERSION, Index, LogEntry, Slice
 
 # flock is POSIX-only; on a platform without it the lock degrades to a no-op
 # rather than crashing, so a Windows user still gets a working (if unguarded)
@@ -214,6 +214,9 @@ class State:
     return path.read_text(encoding="utf-8")
 
   def save_index(self) -> None:
+    # Stamp the schema this build writes so an older slicer refuses the file
+    # instead of dropping claim fields it does not know.
+    self.index.version = SCHEMA_VERSION
     if self._stage is not None:
       # The index is one object; a later save overwrites the same in-memory
       # state, so a single flag stands in for any number of saves.

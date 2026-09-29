@@ -38,7 +38,8 @@ and the slice files, the config is yours to hand-edit.
     }
   },
   "sync": { "targets": [] },
-  "git_check": true
+  "git_check": true,
+  "claim_owner": ""
 }
 ```
 
@@ -64,6 +65,7 @@ and the slice files, the config is yours to hand-edit.
 | `parked_status` | `"parked"` | Which status `park` sets, and what an item returns *from*. **Empty string = the project has no park state, and `park` refuses cleanly** | Yes if nothing is parked |
 | `started_status` | `"started"` | Which status `start` sets. `next` returns a started item ahead of every open one. It gets no folder — the slice file stays in `slices/`. **Empty string = the project has no start state, and `start` refuses cleanly** | Yes if nothing is started |
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
+| `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name | **Yes** |
 
 ## The ones that will surprise you
 

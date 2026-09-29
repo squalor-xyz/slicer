@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass
@@ -140,6 +140,10 @@ class Item:
   urgency: int = 2
   # Optional implementation weight, 1-3. Unset stays out of priority.
   effort: int | None = None
+  # Who has this item, and when that was recorded. Empty means unclaimed.
+  # The time is stored on the item so render never invents one.
+  claim_owner: str = ""
+  claim_at: str = ""
 
   def display_title(self) -> str:
     return self.short_title or self.title
@@ -178,6 +182,9 @@ class Item:
       "has_slice": self.has_slice,
       "depends_on": list(self.depends_on),
       "notes": list(self.notes),
+      "claim": (
+        {"owner": self.claim_owner, "at": self.claim_at} if self.claim_owner else None
+      ),
       "fields": {
         "size": self.size,
         "flags": list(self.flags),
@@ -204,6 +211,8 @@ class Item:
       has_slice=bool(d.get("has_slice", False)),
       depends_on=list(d.get("depends_on", [])),
       notes=list(d.get("notes", [])),
+      claim_owner=_claim_owner(d.get("claim")),
+      claim_at=_claim_at(d.get("claim")),
       size=f.get("size", ""),
       flags=list(f.get("flags", [])),
       trees=list(f.get("trees", [])),
@@ -216,6 +225,29 @@ class Item:
       urgency=int(f.get("urgency", 2)),
       effort=_optional_effort(f["effort"]) if "effort" in f else None,
     )
+
+
+def _claim_parts(value: object) -> tuple[str, str]:
+  """Owner and time from a stored claim. Missing is unclaimed."""
+  if value is None:
+    return "", ""
+  if not isinstance(value, Mapping):
+    raise StateError(f"claim must be an object, not {value!r}", code="corrupt")
+  owner = value.get("owner", "")
+  at = value.get("at", "")
+  if not isinstance(owner, str) or not isinstance(at, str):
+    raise StateError("claim owner and at must be strings", code="corrupt")
+  if bool(owner) != bool(at):
+    raise StateError("claim needs both an owner and a time", code="corrupt")
+  return owner, at
+
+
+def _claim_owner(value: object) -> str:
+  return _claim_parts(value)[0]
+
+
+def _claim_at(value: object) -> str:
+  return _claim_parts(value)[1]
 
 
 def _optional_effort(value: object) -> int | None:

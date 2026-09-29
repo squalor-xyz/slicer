@@ -673,21 +673,47 @@ def cmd_next(args: argparse.Namespace) -> int:
   return OK
 
 
+def _claim_cell(cfg: Config, item: model.Item) -> str:
+  """Owner when claimed, `*` when in progress without one, otherwise `-`.
+
+  A finished item never reads as claimed.
+  """
+  if item.status == cfg.done_status:
+    return "-"
+  if item.claim_owner:
+    return item.claim_owner
+  if cfg.started_status and item.status == cfg.started_status:
+    return "*"
+  return "-"
+
+
+def _claim_width(cfg: Config, items: list[model.Item]) -> int:
+  width = len("CLAIM")
+  for item in items:
+    width = max(width, len(_claim_cell(cfg, item)))
+  return width
+
+
 def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
   """The shared queue-listing row format used by `list` and `find`.
 
   `^` marks an effective score lifted above the item's own by a dependent, so a
-  blocker of a critical item reads at that item's priority.
+  blocker of a critical item reads at that item's priority. The claim column
+  names the owner, or `*` when the item is in progress and unclaimed.
   """
   cfg = state.config
   eff = graph.effective_scores(state.index)
-  return [
-    f"{n:>3}  {i.id:<5} {cfg.status_label(i.status):<7} {i.size:<4} "
-    f"{'-' if i.effort is None else i.effort:<6} "
-    f"{str(eff[i.id]) + ('^' if eff[i.id] > i.score else ''):<5} "
-    f"{i.quadrant:<9} {i.display_title()}"
-    for n, i in enumerate(items, 1)
-  ]
+  claim_w = _claim_width(cfg, items)
+  rows = []
+  for n, item in enumerate(items, 1):
+    score = str(eff[item.id]) + ("^" if eff[item.id] > item.score else "")
+    effort = "-" if item.effort is None else str(item.effort)
+    rows.append(
+      f"{n:>3}  {item.id:<5} {cfg.status_label(item.status):<7} "
+      f"{_claim_cell(cfg, item):<{claim_w}} {item.size:<4} "
+      f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
+    )
+  return rows
 
 
 def _list_in_next_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
@@ -728,7 +754,11 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_next_order(state, items)
-  header = f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'SIZE':<4} {'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
+  claim_w = _claim_width(state.config, items)
+  header = (
+    f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'CLAIM':<{claim_w}} {'SIZE':<4} "
+    f"{'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
+  )
   lines = [header, *_item_rows(state, items)]
   if not items:
     lines = ["no matching items"]
@@ -1074,13 +1104,22 @@ def cmd_start(args: argparse.Namespace) -> int:
   status = state.config.started_status
   if not status:
     raise StateError("this project declares no started status; set started_status in config")
-  items = ops.set_status_many(state, item_ids, status, note=args.note or "")
+  items = ops.start_many(state, item_ids, note=args.note or "")
   _emit_items(args, items, batch,
               [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
   for item_id in item_ids:
     names = vcs.elsewhere(state.root, item_id)
     if names:
       _write_err(args, f"slicer: {item_id} is also named by {', '.join(names)}")
+  return OK
+
+
+def cmd_release(args: argparse.Namespace) -> int:
+  """Clear claims and leave status alone. Ids are read once."""
+  item_ids, batch = _batch_ids(args)
+  state = _state(args)
+  items = ops.release_many(state, item_ids)
+  _emit_items(args, items, batch, [f"{item.id} released" for item in items])
   return OK
 
 
@@ -1627,9 +1666,12 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
-  sp = _strict_flag(_render_flag(add("start", _mutating(cmd_start), "mark an item in progress")))
+  sp = _strict_flag(_render_flag(add("start", _mutating(cmd_start), "mark an item in progress and claim it")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
+
+  sp = _strict_flag(_render_flag(add("release", _mutating(cmd_release), "clear a claim without changing status")))
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
 
   sp = _strict_flag(_render_flag(add("park", _mutating(cmd_park), "set an item aside")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")

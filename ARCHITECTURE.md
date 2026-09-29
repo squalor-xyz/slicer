@@ -30,7 +30,7 @@ never pays for curses.
 ```
 .slicer/
   config.json              everything project-specific; "version": 1
-  index.json               the ordered queue; "version": 1
+  index.json               the ordered queue; "version": 2
   log.jsonl                append-only history, one LogEntry per line
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
@@ -41,8 +41,10 @@ never pays for curses.
   render/slices/<ID>.md    GENERATED
 ```
 
-`SCHEMA_VERSION = 1` (`src/slicer/model.py`) is stamped into both `config.json` and
-`index.json`. `done_dir` and `retired_dir` are config, not constants.
+Config schema stays `1` (`src/slicer/config.py`). Index schema is `2`
+(`SCHEMA_VERSION` in `src/slicer/model.py`): an item may carry a `claim`. A version-1
+index still loads, and the next save stamps `2`, so an older slicer refuses the file
+instead of dropping the claim. `done_dir` and `retired_dir` are config, not constants.
 
 ## Invariants
 
@@ -112,11 +114,12 @@ and templates and may create `.slicer/`, so the CLI snapshots that exact directo
 and restores it if rendering fails.
 
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
-`ls-files`, `worktree`, and `branch`. The last two are only the read-only forms
-`worktree list --porcelain` and `branch --all --format=%(refname)`, so `start` can see a
-sibling checkout; any other `worktree` or `branch` argument is refused. `commit`, `push`
-and `tag` are unreachable from the code — not by convention but because `vcs._run` refuses
-anything off the list, including for a caller that asks.
+`ls-files`, `worktree`, `branch`, and `config`. `worktree`, `branch`, and `config` are only
+the read-only forms `worktree list --porcelain`, `branch --all --format=%(refname)`, and
+`config --get user.name`. `start` uses the first two to notice another checkout, and the
+last to name a claim when `claim_owner` is empty. Any other argument is refused. `commit`,
+`push` and `tag` are unreachable from the code — not by convention but because `vcs._run`
+refuses anything off the list, including for a caller that asks.
 
 **Nothing project-specific is compiled in.** Status vocabulary, the section list
 `promote` seeds, the scope-boundary marker, which flags exclude an item from derived

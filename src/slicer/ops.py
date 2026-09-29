@@ -353,6 +353,8 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
       if old != new:
         changes.append(f"{key} {_fmt(old)}→{_fmt(new)}")
       setattr(item, key, new)
+    if item.status == state.config.done_status and item.claim_owner:
+      _clear_claim(item)
     moved = item.status != previous
     if moved:
       _relocate_slice(state, item.id)
@@ -392,24 +394,40 @@ def render_gated(state: State, mutate: Callable[[], object]) -> tuple[object, in
   return result, written
 
 
+def _clear_claim(item: Item) -> None:
+  item.claim_owner = ""
+  item.claim_at = ""
+
+
 def set_status_many(state: State, item_ids: list[str], status: str, *, note: str = "") -> list[Item]:
-  """Move a batch to one status, preserving no-op and per-item history semantics."""
+  """Move a batch to one status, preserving no-op and per-item history semantics.
+
+  Finishing clears a claim in the same save. A done item is never claimed.
+  """
   items = _batch_items(state, item_ids)
   if status not in state.config.statuses:
     raise StateError(f"unknown status {status!r}; known: {sorted(state.config.statuses)}")
+  finishing = status == state.config.done_status
   transitions = []
   for item in items:
     previous = item.status
-    if previous == status:
+    status_changed = previous != status
+    clear = finishing and bool(item.claim_owner)
+    if not status_changed and not clear:
       continue
-    item.status = status
-    transitions.append((item, previous))
+    if status_changed:
+      item.status = status
+    if clear:
+      _clear_claim(item)
+    transitions.append((item, previous, status_changed))
   if transitions:
-    for item, _ in transitions:
-      _relocate_slice(state, item.id)
+    for item, _previous, status_changed in transitions:
+      if status_changed:
+        _relocate_slice(state, item.id)
     state.save_index()
-    for item, previous in transitions:
-      _record(state, item.id, "status", frm=previous, to=status, note=note)
+    for item, previous, status_changed in transitions:
+      if status_changed:
+        _record(state, item.id, "status", frm=previous, to=status, note=note)
   return items
 
 
@@ -440,11 +458,73 @@ def unpark(state: State, item_id: str) -> Item:
   return set_status(state, item_id, state.config.open_status)
 
 
-def start(state: State, item_id: str, *, note: str = "") -> Item:
+def start_many(state: State, item_ids: list[str], *, note: str = "") -> list[Item]:
+  """Mark items started and claim any that do not already have an owner.
+
+  The claim time is taken once here and stored on the item. A later render
+  does not refresh it. Starting something already started and claimed writes
+  nothing, so a repeated `start` stays a silent no-op.
+  """
   cfg = state.config
   if not cfg.started_status:
     raise StateError("this project declares no started status; set started_status in config")
-  return set_status(state, item_id, cfg.started_status, note=note)
+  items = _batch_items(state, item_ids)
+  status = cfg.started_status
+  owner = vcs.identity(state.root, cfg.claim_owner)
+  at = _now()
+  changed: list[tuple[Item, str, bool]] = []
+  for item in items:
+    previous = item.status
+    status_changed = previous != status
+    if item.claim_owner:
+      claim_changed = False
+    else:
+      item.claim_owner = owner
+      item.claim_at = at
+      claim_changed = True
+    if not status_changed and not claim_changed:
+      continue
+    if status_changed:
+      item.status = status
+    changed.append((item, previous, status_changed))
+  if not changed:
+    return items
+  for item, _previous, status_changed in changed:
+    if status_changed:
+      _relocate_slice(state, item.id)
+  state.save_index()
+  for item, previous, status_changed in changed:
+    if status_changed:
+      _record(state, item.id, "status", frm=previous, to=status, note=note)
+    else:
+      _record(state, item.id, "claim", to=item.claim_owner, note=note)
+  return items
+
+
+def start(state: State, item_id: str, *, note: str = "") -> Item:
+  return start_many(state, [item_id], note=note)[0]
+
+
+def release_many(state: State, item_ids: list[str]) -> list[Item]:
+  """Drop claims without changing status. An item with no claim is left alone."""
+  items = _batch_items(state, item_ids)
+  released: list[tuple[Item, str]] = []
+  for item in items:
+    if not item.claim_owner:
+      continue
+    owner = item.claim_owner
+    _clear_claim(item)
+    released.append((item, owner))
+  if not released:
+    return items
+  state.save_index()
+  for item, owner in released:
+    _record(state, item.id, "release", frm=owner, to="")
+  return items
+
+
+def release(state: State, item_id: str) -> Item:
+  return release_many(state, [item_id])[0]
 
 
 @dataclass
