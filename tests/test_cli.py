@@ -405,6 +405,31 @@ class ListDoneDefaultTests(unittest.TestCase):
       self.assertEqual(self.ids(repo), ["S05", "S01", "S04", "S03"])
       self.assertEqual(self.ids(repo, "--status", "retired"), ["S06"])
 
+  def test_List_Text_LabelsColumnsAndCountsHiddenRows(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--no-effort")
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      lines = out.splitlines()
+      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
+      self.assertTrue(any(line[lines[0].index("EFFORT")] == "-" for line in lines[1:-1]))
+      self.assertEqual(lines[-1], "2 items hidden (done or retired); use --all to show them")
+      self.assertEqual([item["id"] for item in json.loads(repo.run("list", "--json")[1])],
+                       ["S05", "S01", "S04", "S03"])
+
+  def test_List_Text_OnlyCountsHiddenRowsMatchingOtherFilters(self) -> None:
+    with self.repo() as repo:
+      out = repo.run("list", "--tree", "beta")[1]
+      self.assertNotIn("items hidden", out)
+      out = repo.run("list", "--pass", "now")[1]
+      self.assertIn("2 items hidden", out)
+
+  def test_List_Text_ExplicitStatusAndAllDoNotReportHiddenRows(self) -> None:
+    with self.repo() as repo:
+      for args in (("--all",), ("--status", "done"), ("--status", "open")):
+        out = repo.run("list", *args)[1]
+        self.assertNotIn("hidden", out)
+
   def test_List_All_IncludesDone_AndOtherFiltersStillApply(self) -> None:
     with self.repo() as repo:
       self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S04", "S06", "S03"])
@@ -460,8 +485,14 @@ class ListDoneDefaultTests(unittest.TestCase):
       code, out, err = repo.run("list")
       self.assertEqual((code, err), (0, ""))
       self.assertIn("no matching items", out)
+      self.assertIn("1 item hidden (done or retired); use --all to show them", out)
       code, out, err = repo.run("list", "--json")
       self.assertEqual((code, err, json.loads(out)), (0, "", []))
+
+  def test_List_EmptyProject_DoesNotReportHiddenRows(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      self.assertEqual(repo.run("list")[1].strip(), "no matching items")
 
 
 if __name__ == "__main__":

@@ -81,6 +81,8 @@ class FindTests(unittest.TestCase):
     with self.repo() as repo:
       found = repo.run("find", "spelled out")[1]
       for row in repo.run("list")[1].splitlines():
+        if not row[:3].strip().isdigit():
+          continue
         self.assertIn(row.split(None, 1)[1], found)
       self.assertIn("matched in title:", found)
       self.assertIn("S01", found)

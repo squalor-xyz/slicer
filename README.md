@@ -148,6 +148,11 @@ before eligible open items; each group uses descending effective priority with
 roadmap order breaking ties. Skipping an item does not complete it or unblock its
 dependents. The command returns one item, including rows without slice files;
 an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
+The text form of `slicer list` labels its columns: number, id, status, size,
+effort, score, quadrant, and title. An unset effort appears as `-`. When the
+default status filter hides done or retired items, a final line counts the
+matching hidden rows and points to `--all`. `--all` and `--status` suppress that
+notice; `--json` remains an array of the visible item records.
 `slicer next --ready` is a bounded pickup of that same item: `id`, `title`,
 `status`, `depends_on`, `effective_score`, `path`, the slice when the item has
 one, and every blocked id. The agent loop uses

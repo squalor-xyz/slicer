@@ -2716,7 +2716,7 @@
       "id": "S112",
       "title": "Label list columns and say when rows are hidden",
       "short_title": "Label list columns and say when rows are hidden",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
