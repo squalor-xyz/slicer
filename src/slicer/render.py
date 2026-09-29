@@ -69,7 +69,7 @@ def slice_header(sl: Slice, cfg: Config, item_notes: "list[str]" = ()) -> str:
   flags = "".join(f" `[{f}]`" for f in sl.flags)
   treekey = "Trees" if sl.trees_plural else "Tree"
   meta = (
-    f"**Findings:** {sl.findings_note} {MIDDOT} **Size: {sl.size}**{flags} "
+    f"**Findings:** {sl.findings_note} {MIDDOT} **Size:** {sl.size}{flags} "
     f"{MIDDOT} **{treekey}:** {sl.trees_note}"
   )
   blocks = list(sl.lead) + [meta]

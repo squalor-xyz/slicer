@@ -3322,7 +3322,7 @@
       "id": "S132",
       "title": "Render empty slice metadata without broken emphasis",
       "short_title": "Render empty slice metadata without broken emphasis",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

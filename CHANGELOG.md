@@ -75,6 +75,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- Slice headers render the size value outside the bold label (`**Size:** M`),
+  so an empty size keeps valid emphasis instead of showing literal asterisks.
 - Empty `--depends-on` input now clears dependencies instead of storing a
   phantom dependency.
 - Mutating commands that render no longer print a redundant render hint.
