@@ -98,6 +98,10 @@ lead and sections. Use the project's configured sections, not assumed headings.
 """ + LOOP + SPEC_GAP + """
 `next` resumes eligible started work before open work; dependencies gate both.
 Within that pool, effective priority includes priority inherited from dependents.
+`start` claims the item for you. `list` shows claims in its CLAIM column, and
+`wt:NAME` marks an item started in a sibling Git worktree; `next` does not skip
+those, so check `list` before taking work when several agents share a repo.
+`slicer release ID` hands a claim back without changing status.
 `slicer next --ready --json` returns item identity and, when the item has a
 slice, the full slice. Repeat `--section` to keep the scope boundary and those
 sections only. `--json --lean` drops `path` and other empty fields. An empty

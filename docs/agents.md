@@ -106,6 +106,8 @@ $ slicer next --json
   "status": "open",
   "has_slice": true,
   "depends_on": [],
+  "notes": [],
+  "claim": null,
   "fields": {
     "size": "M",
     "flags": [],
@@ -121,11 +123,12 @@ $ slicer next --json
     "urgency": 2,
     "effort": null
   },
-  "path": "~/code/my-project/.slicer/slices/S01.json"
+  "path": "~/code/my-project/.slicer/slices/S01.json",
+  "effective_score": 22
 }
 ```
 
-Two shapes recur. An **item** is the object above minus `path`; its soft fields are
+Two shapes recur. An **item** is the object above minus `path` and `effective_score`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
 1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. The combined score and quadrant are derived, not stored, so
 they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
@@ -145,6 +148,9 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | Command | Payload |
 |---|---|
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
+| `ai skill` | `{skill}` containing the `SKILL.md` text |
+| `init` | `{root, dir}` |
+| `setup-git` | array of the `git config` command strings; needs no project |
 | `list` | array of items. Each item includes `claim`: `{"owner", "at"}` or null, plus derived `in_work_elsewhere`: an array of `{worktree, owner}` objects, or `[]`. Text adds a CLAIM column (local owner, `*` for local in-progress with no claim, `wt:NAME` for sibling work, `wt:NAME+N` for multiple siblings, otherwise `-`). Local claim or started state takes precedence in text; JSON still lists all siblings. A done item is never shown as locally claimed. Sibling detection uses only this machine's Git worktrees and their `.slicer/index.json` files. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. Repeatable `--flag` keeps an item that has any named flag and combines with `--status`, `--tree`, and `--pass`. `--sort score` is that same set in flat score order. `--sort effort` orders `fields.effort` from 1 to 3 and puts null last, without writing state. `sort --by effort` persists that order |
 | `show ID` | item, plus `slice` when it has one; with one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
 | `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); with `--ready`, `{item, slice, blocked}` where `item` is `{id, title, status, depends_on, effective_score, path}` and `slice` is included when the item has one; or `{"item": null, "blocked": [...]}`. Repeat `--section` with `--ready` and that slice is `{boundary, sections}` for those headings only. Omitting `--section` keeps the full slice. `--section` without `--ready` is `usage`. `unspecified` is present when a slice was skipped because Implement or Check is empty: `[{"id", "missing"}]`. Fill those with `slicer edit ID --section NAME`. A started item is returned ahead of every open one. `--ready` and `--show` together are `usage` |
@@ -153,6 +159,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
 | `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems, preamble}`. `preamble` is the leading prose, or null when the outline has none |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |
+| `remove` | retire: the item plus `mode: "retire"`; purge: `{id, mode, id_freed, reason, file_removed}`; `--dry-run`: `{id, mode, dry_run, blockers, file, id_freed, reason}` and nothing is written |
 | `move` | `{id, position}` |
 | `sort` | `{by, moved}` |
 | `edit` | `{id, section}`; boundary edits return `{id, boundary}` |

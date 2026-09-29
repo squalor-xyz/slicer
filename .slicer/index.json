@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 136,
+  "next_id": 138,
   "preamble": "",
   "passes": [
     {
@@ -3180,7 +3180,7 @@
       "id": "S127",
       "title": "Bring all docs up to date for the 1.0.0 release",
       "short_title": "Bring all docs up to date for the 1.0.0 release",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S131",
@@ -3398,6 +3398,56 @@
         "importance": 2,
         "urgency": 2,
         "effort": 3
+      }
+    },
+    {
+      "id": "S136",
+      "title": "Keep next from offering work started in a sibling worktree",
+      "short_title": "Keep next from offering work started in a sibling worktree",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "S127 docs audit: next_item ignores claims and sibling worktrees",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S137",
+      "title": "Let add opt out of pass inheritance",
+      "short_title": "Let add opt out of pass inheritance",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "S127 docs audit: add --pass '' still inherits the previous item's pass",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1
       }
     }
   ],

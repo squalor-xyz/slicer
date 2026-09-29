@@ -1,0 +1,41 @@
+{
+  "id": "S137",
+  "title": "Let add opt out of pass inheritance",
+  "lead": [
+    "`slicer add --pass ''` still files the item under the previous item's pass, so the only way to add an item with no pass after a passed tail is `add` then `set ID --pass ''`."
+  ],
+  "depends_note": null,
+  "findings_note": "S127 docs audit: add --pass '' still inherits the previous item's pass",
+  "size": "",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ops.add` computes `pass_key` as `fields.get(\"pass_key\") or <previous item's pass>` (`src/slicer/ops.py:105`), so an explicit empty string is treated as omitted. Verified in a scratch project: after `add a --pass v1`, `add b --pass '' --json` returned `\"pass\": \"v1\"`. `set --pass ''` does clear a pass, so the two commands disagree about what `--pass ''` means."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`add`), `src/slicer/cli.py` (`add --pass` help)\n- `docs/getting-started.md` §7, which documents the `set` workaround\n- tests for `add`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `add TITLE --pass ''` after a passed tail files the item with no pass.\n2. `add TITLE` with `--pass` omitted still inherits, as documented."
+    },
+    {
+      "heading": "Implement",
+      "body": "Distinguish an omitted `--pass` (None) from an explicit empty one in `add`, and update the help and §7."
+    },
+    {
+      "heading": "Check",
+      "body": "The tests above pass; the suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
