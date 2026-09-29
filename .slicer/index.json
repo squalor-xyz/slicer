@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 123,
+  "next_id": 124,
   "preamble": "",
   "passes": [
     {
@@ -3065,6 +3065,29 @@
       "id": "S122",
       "title": "Surface items in-work in a sibling worktree in slicer list",
       "short_title": "Surface items in-work in a sibling worktree in slicer list",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S123",
+      "title": "Warn in verify when the render merge driver is not configured",
+      "short_title": "Warn in verify when the render merge driver is not configured",
       "status": "open",
       "has_slice": true,
       "depends_on": [],
