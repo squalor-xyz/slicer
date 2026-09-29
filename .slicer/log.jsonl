@@ -554,3 +554,5 @@
 {"when": "2026-09-29T12:47:52Z", "item": "S118", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-09-29T12:48:04Z", "item": "S119", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-09-29T12:48:14Z", "item": "S120", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-29T12:51:40Z", "item": "S117", "action": "status", "from": "open", "to": "started", "note": ""}
+{"when": "2026-09-29T12:55:28Z", "item": "S117", "action": "status", "from": "started", "to": "done", "note": "Force color=False on the argparse parser (Python 3.14+), so slicer's usage/help/errors stay plain and deterministic regardless of FORCE_COLOR/tty. One override on _ArgumentParser covers the top parser and all subparsers. Suite now passes under FORCE_COLOR=3 without NO_COLOR (802 tests); added ColorRobustnessTests."}

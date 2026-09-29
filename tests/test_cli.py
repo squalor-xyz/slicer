@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -1155,3 +1156,29 @@ class SliceCommandFlagCheckTests(unittest.TestCase):
       code, out, _ = repo.run("check", "--json")
       self.assertEqual(code, 0, out)
       self.assertEqual(json.loads(out)["problems"], [])
+
+
+class ColorRobustnessTests(unittest.TestCase):
+  """slicer's usage/help/errors stay plain even when the environment forces color,
+  so the diagnostics are deterministic and free of ANSI an agent would parse (S117).
+  Trivially true before Python 3.14, which is where argparse learned to colorize."""
+
+  ESC = "\x1b"
+
+  def test_ParserError_WithForceColor_UsageIsPlain(self) -> None:
+    with patch.dict(os.environ, {"FORCE_COLOR": "3"}):
+      with support.TempRepo() as repo:
+        code, out, err = repo.run("show")  # missing required id -> usage error
+    self.assertEqual(code, 2)
+    self.assertNotIn(self.ESC, err)
+    self.assertNotIn(self.ESC, out)
+    self.assertIn("usage: slicer", err)
+
+  def test_Help_WithForceColor_IsPlain(self) -> None:
+    buf = io.StringIO()
+    with patch.dict(os.environ, {"FORCE_COLOR": "3"}):
+      with redirect_stdout(buf), self.assertRaises(SystemExit) as caught:
+        cli.main(["--help"])
+    self.assertEqual(caught.exception.code, 0)
+    self.assertNotIn(self.ESC, buf.getvalue())
+    self.assertTrue(buf.getvalue().startswith("usage: slicer"))
