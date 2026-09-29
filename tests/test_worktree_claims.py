@@ -137,5 +137,71 @@ class WorktreeClaimTests(unittest.TestCase):
       self.assertEqual(indexes.call_count, 3)  # local state plus two siblings
 
 
+class NextSkipsSiblingWorkTests(unittest.TestCase):
+  """`next` and `status` skip an item a sibling worktree has in work (S136)."""
+
+  repo = WorktreeClaimTests.repo
+  sibling = WorktreeClaimTests.sibling
+
+  def test_Next_SiblingStart_SkipsItAndReportsIt(self) -> None:
+    with self.repo() as repo:
+      _run(self.sibling(repo, "other"), "start", "S01")
+      code, out, err = repo.run("next")
+      self.assertEqual(code, 0, err)
+      self.assertTrue(out.startswith("S02"), out)
+      self.assertIn("skipped S01 (in work in wt:other)", out)
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S02")
+      self.assertEqual(payload["in_work_elsewhere"], [
+        {"id": "S01", "worktree": "other", "owner": "Test"},
+      ])
+
+  def test_NextReady_SiblingStart_ReportsTheSkip(self) -> None:
+    with self.repo() as repo:
+      _run(self.sibling(repo, "other"), "start", "S01")
+      payload = json.loads(repo.run("next", "--ready", "--json")[1])
+      self.assertEqual(payload["item"]["id"], "S02")
+      self.assertEqual([e["id"] for e in payload["in_work_elsewhere"]], ["S01"])
+
+  def test_Next_LocalStartToo_KeepsTheItem(self) -> None:
+    with self.repo() as repo:
+      _run(self.sibling(repo, "other"), "start", "S01")
+      repo.run("start", "S01")
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("in_work_elsewhere", payload)
+
+  def test_Next_EverythingElsewhere_ReturnsNothingAndSaysWhy(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "start", "S01")
+      _run(sibling, "start", "S02")
+      code, out, _ = repo.run("next", "--json")
+      self.assertEqual(code, 2)
+      payload = json.loads(out)
+      self.assertIsNone(payload["item"])
+      self.assertEqual([e["id"] for e in payload["in_work_elsewhere"]], ["S01", "S02"])
+
+  def test_Status_AgreesWithNext(self) -> None:
+    with self.repo() as repo:
+      _run(self.sibling(repo, "other"), "start", "S01")
+      payload = json.loads(repo.run("status", "--json")[1])
+      self.assertEqual(payload["next"]["id"], "S02")
+      self.assertEqual([e["id"] for e in payload["in_work_elsewhere"]], ["S01"])
+
+  def test_Next_NoSiblings_OmitsTheKey(self) -> None:
+    with self.repo() as repo:
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("in_work_elsewhere", payload)
+
+  def test_Render_StaysLocal_WhenASiblingHasWork(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      _run(self.sibling(repo, "other"), "start", "S01")
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)  # the ROADMAP next pointer ignores siblings
+
+
 if __name__ == "__main__":
   unittest.main()

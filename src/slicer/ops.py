@@ -11,7 +11,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Mapping
 
 from slicer import graph, ids, outline, prose, render, vcs
 from slicer.errors import StateError
@@ -579,9 +579,14 @@ class NextResult:
   item: Item | None
   blocked: list[tuple[str, list[str]]]
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  # Eligible items skipped because a sibling worktree has them in work.
+  elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
 
 
-def next_item(state: State, offset: int = 0) -> NextResult:
+def next_item(
+  state: State, offset: int = 0,
+  elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
+) -> NextResult:
   """The most critical startable item: highest effective score, unblocked.
 
   Started items precede open items, with effective score ordering each group.
@@ -591,6 +596,11 @@ def next_item(state: State, offset: int = 0) -> NextResult:
   returned, whatever its score or status -- so the score only orders the items
   that can actually be picked up. Stable sorting preserves manual queue order
   for ties.
+
+  `elsewhere` maps item ids to the sibling worktrees that have them started or
+  claimed (`store.in_work_elsewhere`). Such an item is skipped and reported,
+  unless this checkout has it started or claimed too: local work wins, as it
+  does in `list`. The caller supplies the map, so this stays free of git.
   """
   if offset < 0:
     raise StateError("next offset must be a nonnegative integer", code="usage")
@@ -603,6 +613,7 @@ def next_item(state: State, offset: int = 0) -> NextResult:
     active.add(cfg.started_status)
   blocked: list[tuple[str, list[str]]] = []
   unspecified: list[tuple[str, list[str]]] = []
+  skipped: list[tuple[str, list[dict[str, str]]]] = []
   started: list[Item] = []
   candidates: list[Item] = []
   for item in state.index.items:
@@ -616,9 +627,13 @@ def next_item(state: State, offset: int = 0) -> NextResult:
       unspecified.append((item.id, missing))
     if pending or missing:
       continue
+    local = bool(item.claim_owner) or item.status == cfg.started_status
+    if elsewhere and item.id in elsewhere and not local:
+      skipped.append((item.id, elsewhere[item.id]))
+      continue
     (started if item.status == cfg.started_status else candidates).append(item)
   if not started and not candidates:
-    return NextResult(item=None, blocked=blocked, unspecified=unspecified)
+    return NextResult(item=None, blocked=blocked, unspecified=unspecified, elsewhere=skipped)
   eff = graph.effective_scores(state.index)
   pool = (sorted(started, key=lambda it: -eff[it.id])
           + sorted(candidates, key=lambda it: -eff[it.id]))
@@ -626,6 +641,7 @@ def next_item(state: State, offset: int = 0) -> NextResult:
     item=pool[offset] if offset < len(pool) else None,
     blocked=blocked,
     unspecified=unspecified,
+    elsewhere=skipped,
   )
 
 
