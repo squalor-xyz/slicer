@@ -7,10 +7,27 @@ import unittest
 import support
 
 from slicer import render
+from slicer.config import Config
 from slicer.errors import RenderError
+from slicer.model import Slice
 
 
 class RenderTests(unittest.TestCase):
+  def test_Render_EmptySize_KeepsValidBoldLabel(self) -> None:
+    sl = Slice(id="S01", title="Empty metadata")
+    text = render.render_slice(sl, Config(), "{{header}}").decode("utf-8")
+    self.assertIn("**Findings:**  · **Size:**  · **Tree:**\n", text)
+
+  def test_Render_PopulatedSize_KeepsValueAndFlagsOutsideBold(self) -> None:
+    sl = Slice(
+      id="S01", title="Populated metadata", size="M", flags=["OWNER"],
+      findings_note="F1", trees_note="alpha, beta", trees_plural=True,
+    )
+    text = render.render_slice(sl, Config(), "{{header}}").decode("utf-8")
+    self.assertIn(
+      "**Findings:** F1 · **Size:** M `[OWNER]` · **Trees:** alpha, beta\n", text,
+    )
+
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo()
     support.make_mini(repo)

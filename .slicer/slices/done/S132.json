@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Settle the shape with the project before building; do not infer. The candidates are to move the value outside the bold like the other labels (`**Size:** M`), or to omit empty metadata fields. Either one changes the rendered bytes of every slice, so the change re-renders all slice files; weigh that churn and whether it belongs after 1.0.0."
+      "body": "Use **Size:** M, with the value outside the bold like Findings and Tree. Keep **Size:** when the size is empty. The owner approved this format and implementation now; regenerate all affected slice files."
     },
     {
       "heading": "Check",
