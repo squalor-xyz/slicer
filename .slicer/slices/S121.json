@@ -1,0 +1,39 @@
+{
+  "id": "S121",
+  "title": "Add slicer setup-git to configure the render merge driver on any clone",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S118 makes `slicer init` print the two per-clone `git config` lines that turn on the `slicer-generated` render merge driver, but a clone of an existing project never runs `init` -- that is exactly the case where the driver is unconfigured and every merge leaves ROADMAP stale. The setup then lives only in the docs. A dedicated command prints the lines on any clone and is scriptable."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (a new read-only `setup-git` command and its registration; reuse `_render_driver_setup`)\n- `tests/` for the command\n- `README.md` and `docs/getting-started.md` to point clones at it"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `slicer setup-git` prints both `git config merge.slicer-generated.*` lines and exits 0.\n2. It runs with no project present (reads no `.slicer/`), and slicer never executes `git config` (the vcs allowlist is unchanged).\n3. `slicer setup-git --json` returns the commands as data (a list) so a caller can eval them."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a read-only `setup-git` command that prints the two config lines, reusing the `_render_driver_setup` helper from S118. It needs no project state, so it must not call `store.load`. Offer `--json` returning the commands as a list. Do not add `config` to the vcs allowlist. Update the docs to send a fresh clone to `slicer setup-git`."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer setup-git` prints the lines and exits 0 with and without a project present; `--json` returns them as data; the suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

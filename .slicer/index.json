@@ -2,7 +2,7 @@
   "version": 1,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 121,
+  "next_id": 122,
   "preamble": "",
   "passes": [
     {
@@ -2900,6 +2900,28 @@
       "id": "S120",
       "title": "Warn when slicer runs code from outside the discovered project",
       "short_title": "Warn when slicer runs code from outside the discovered project",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S121",
+      "title": "Add slicer setup-git to configure the render merge driver on any clone",
+      "short_title": "Add slicer setup-git to configure the render merge driver on any clone",
       "status": "open",
       "has_slice": true,
       "depends_on": [],
