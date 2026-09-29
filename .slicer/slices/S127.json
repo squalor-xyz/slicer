@@ -1,0 +1,39 @@
+{
+  "id": "S127",
+  "title": "Bring all docs up to date for the 1.0.0 release",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The S104-S123 arc changed the command surface and behavior a lot -- render-failure policy and `--strict`, the render merge driver plus `setup-git`, claims (`start`/`release`, the CLAIM column, `--json` `claim`/`in_work_elsewhere`), `list` column labels and hidden-count, the merge-in-progress guard, the code/worktree mismatch warning, and the `verify` driver warning. Docs were updated piecemeal per slice; before 1.0.0 they need one holistic pass so the command reference, examples, and narrative are accurate and complete, with nothing stale or missing (e.g. `setup-git`, `release`)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `README.md`, `docs/getting-started.md`, `docs/agents.md`, `docs/configuration.md`, `AGENTS.md`\n- `src/slicer/ai.py` (the `ai instructions` / `ai skill` text, if it enumerates commands or workflow)\n- a doc-coverage test if one is warranted"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Every subcommand slicer registers appears in the docs command reference (add a test that diffs the parser's command list against the documented one, or verify by review).\n2. The doc `slicer ...` examples still parse (existing `test_ai` example-parser test stays green), and no doc names a removed flag.\n3. `ai instructions`/`ai skill` describe the current implement loop and commands."
+    },
+    {
+      "heading": "Implement",
+      "body": "Audit each document against the current command surface. Add the missing commands (`setup-git`, `release`, and any others), refresh the command table/list, update examples, and make the merge-driver, claim, `--strict`, and guard workflows read coherently as one story. Reconcile any drift between README, getting-started, agents.md, AGENTS.md, and the `ai` text. Prefer a review-plus-small-test approach over inventing new prose."
+    },
+    {
+      "heading": "Check",
+      "body": "Docs reviewed and consistent; the command reference matches the parser; examples parse; the suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit (or a small series)."
+    }
+  ],
+  "notes": []
+}

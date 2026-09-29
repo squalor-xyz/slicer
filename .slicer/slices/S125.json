@@ -1,0 +1,39 @@
+{
+  "id": "S125",
+  "title": "Tame the verify render-driver warning for solo projects",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S123 makes `slicer verify` warn whenever the `slicer-generated` render merge driver is not configured in the current clone. That is helpful for the parallel-worktree workflow, but for a broad 1.0.0 it nags every single-developer project that never has render conflicts and does not need the driver -- a persistent warning they cannot resolve except by configuring something they do not want. The warning should be quieter or opt-outable so it does not read as noise at release scale."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/verify.py` (`against_git`, the driver warning)\n- `src/slicer/config.py` if an opt-out flag is added\n- `src/slicer/cli.py` / `store.py` if gating reads more signal\n- tests and docs"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A project that opts out (however chosen) shows no driver warning from `verify`.\n2. The warning still appears by default for a project that has configured `.gitattributes` for the driver but not the git config (the real gap), so the useful case is preserved.\n3. Existing S123 tests still pass for the default-warn behavior."
+    },
+    {
+      "heading": "Implement",
+      "body": "Decide with the project how to quiet it, then do the least surprising thing. Candidates to weigh (settle before building, do not infer): a `config` opt-out flag (e.g. `render_driver_check`); only warning when there is more than one worktree of the repo (the situation the driver matters for); or downgrading it to an `info` finding. Keep it a warning, never an error. Preserve the caught case: `.gitattributes` names the driver but the clone has not configured it."
+    },
+    {
+      "heading": "Check",
+      "body": "The chosen gating/opt-out works; a solo single-worktree project is quiet by default or via one documented switch; `slicer check`/`verify` and the suite pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit, once the gating approach is agreed."
+    }
+  ],
+  "notes": []
+}

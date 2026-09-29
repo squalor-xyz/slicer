@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 124,
+  "next_id": 129,
   "preamble": "",
   "passes": [
     {
@@ -3091,6 +3091,126 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S124",
+      "title": "Add Python 3.14 to the CI test matrix",
+      "short_title": "Add Python 3.14 to the CI test matrix",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S125",
+      "title": "Tame the verify render-driver warning for solo projects",
+      "short_title": "Tame the verify render-driver warning for solo projects",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S126",
+      "title": "Verify and document the schema v1 to v2 upgrade contract",
+      "short_title": "Verify and document the schema v1 to v2 upgrade contract",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S127",
+      "title": "Bring all docs up to date for the 1.0.0 release",
+      "short_title": "Bring all docs up to date for the 1.0.0 release",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null
+      }
+    },
+    {
+      "id": "S128",
+      "title": "Cut and tag the 1.0.0 release",
+      "short_title": "Cut and tag the 1.0.0 release",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S124",
+        "S125",
+        "S126",
+        "S127"
+      ],
       "notes": [],
       "claim": null,
       "fields": {
