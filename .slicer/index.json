@@ -3157,7 +3157,7 @@
       "id": "S126",
       "title": "Verify and document the schema v1 to v2 upgrade contract",
       "short_title": "Verify and document the schema v1 to v2 upgrade contract",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

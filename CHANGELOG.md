@@ -20,6 +20,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- The index schema is now 2 (claims); `config.json` stays at schema 1. A schema-1 project opens with no migration step and reads as unclaimed; the first saved change stamps schema 2, after which an older slicer refuses the project (`schema_too_new`) instead of dropping claims. Read-only commands leave the file at schema 1. Pre-release checkouts from before the newer-schema guard (S72) do not refuse and can drop claims, so upgrade every clone that shares a project.
 - slicer's argparse usage, help, and error text stay uncolored on Python 3.14+ (which otherwise colorizes them by default and honors `FORCE_COLOR` even into a pipe), so diagnostics are deterministic across environments and free of ANSI an agent or test would have to strip.
 
 ## [1.0.0]
