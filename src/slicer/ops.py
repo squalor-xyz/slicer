@@ -574,6 +574,55 @@ def release(state: State, item_id: str) -> Item:
   return release_many(state, [item_id])[0]
 
 
+def handoff_many(state: State, item_ids: list[str], *, note: str = "") -> list[Item]:
+  """Mark started slices ready for review and clear their claims in one save.
+
+  Review sits between implementation and completion: the item leaves `next`
+  (which offers only open and started work) but stays unfinished, so its
+  dependents stay blocked until `done`. A reviewer claims it with `start`.
+  Every id is checked before anything is written. An item already in review
+  with no claim is a no-op.
+  """
+  cfg = state.config
+  if not cfg.review_status:
+    raise StateError("this project declares no review status; set review_status in config")
+  items = _batch_items(state, item_ids)
+  problems: list[str] = []
+  for item in items:
+    if item.status not in (cfg.started_status, cfg.review_status):
+      problems.append(
+        f"{item.id} is {cfg.status_label(item.status)!r}, not started; "
+        f"only started work can be handed off (run `slicer start {item.id}` first)"
+      )
+    elif not item.has_slice:
+      problems.append(f"{item.id} has no slice to review; run `slicer promote {item.id}` first")
+  if problems:
+    raise StateError("; ".join(problems) + ". Nothing was changed.", code="state")
+  changed: list[tuple[Item, str, str]] = []
+  for item in items:
+    if item.status == cfg.review_status and not item.claim_owner:
+      continue
+    previous, owner = item.status, item.claim_owner
+    item.status = cfg.review_status
+    _clear_claim(item)
+    changed.append((item, previous, owner))
+  if not changed:
+    return items
+  for item, previous, _owner in changed:
+    if previous != item.status:
+      _relocate_slice(state, item.id)
+  state.save_index()
+  for item, previous, owner in changed:
+    detail = f"claim {owner} cleared" if owner else ""
+    _record(state, item.id, "handoff", frm=previous, to=item.status,
+            note="; ".join(part for part in (note, detail) if part))
+  return items
+
+
+def handoff(state: State, item_id: str, *, note: str = "") -> Item:
+  return handoff_many(state, [item_id], note=note)[0]
+
+
 @dataclass
 class NextResult:
   item: Item | None

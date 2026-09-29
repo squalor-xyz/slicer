@@ -132,6 +132,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `goals` | print the project's goals and non-goals together; supports `--json` |
 | `start ID [ID ...] [--note TEXT]` | mark an item in progress and claim it (owner and time). The owner is `claim_owner` in config, otherwise the git user name, otherwise the worktree name. A second start does not refresh the claim |
 | `release ID [ID ...]` | clear a claim without changing status. An item that was in progress stays in progress and lists as `*` |
+| `handoff ID [ID ...] [--note TEXT]` | hand a started slice to review: status becomes `review_status` and the claim is cleared. `next` skips review items and dependents stay blocked until `done`; a reviewer finds them with `list --status review` and claims one with `start` |
 | `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status; `--note` records a one-line *history* entry (for a durable note on the item, use `slicer note`); `done` moves the file with `git mv` and clears a claim |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |

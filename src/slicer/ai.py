@@ -115,6 +115,14 @@ To re-read part of a slice with its title, dependencies, and scope boundary, use
 Those headings are examples; use the section names the project configures.
 Run `--help` on any command for the rest of its options.
 
+## Hand off for review
+
+When the implementation is ready for someone else to review, merge, or clean up, record
+the context with `slicer note ID --text "Ready for review: ..."`, then run
+`slicer handoff ID --render --json`. Reviewers find that work with
+`slicer list --status review --json` and claim it with `start`. Run `done` only after
+review and merge are complete.
+
 ## State and command results
 
 Change tracking state through slicer commands. Never hand-edit tracking JSON or

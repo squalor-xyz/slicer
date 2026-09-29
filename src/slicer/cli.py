@@ -1195,6 +1195,16 @@ def cmd_release(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_handoff(args: argparse.Namespace) -> int:
+  """Hand started slices to review: status to review, claim cleared. Ids are read once."""
+  item_ids, batch = _batch_ids(args)
+  state = _state(args)
+  items = ops.handoff_many(state, item_ids, note=args.note or "")
+  _emit_items(args, items, batch,
+              [f"{item.id} -> {state.config.status_label(item.status)}, unclaimed" for item in items])
+  return OK
+
+
 def cmd_done(args: argparse.Namespace) -> int:
   item_ids, batch = _batch_ids(args)
   state = _state(args)
@@ -1759,6 +1769,10 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = _strict_flag(_render_flag(add("release", _mutating(cmd_release), "clear a claim without changing status")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
+
+  sp = _strict_flag(_render_flag(add("handoff", _mutating(cmd_handoff), "hand a started slice to review and clear its claim")))
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
+  sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
   sp = _strict_flag(_render_flag(add("park", _mutating(cmd_park), "set an item aside")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")

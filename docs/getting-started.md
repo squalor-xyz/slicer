@@ -305,6 +305,22 @@ config, otherwise the git user name, otherwise the worktree name. `slicer releas
 clears the claim and leaves the status. `done` clears it too, so a finished item is not
 shown as claimed.
 
+To pass finished implementation to someone else for review, merge, or cleanup without
+marking it done, hand it off:
+
+```console
+$ slicer note S01 --text "Ready for review: branch feature/S01; suite green"
+$ slicer handoff S01 --render
+S01 -> review, unclaimed
+```
+
+The item moves to the `review` status and loses its claim. `next` no longer offers it,
+and anything that depends on it stays blocked. A reviewer runs `slicer list --status
+review`, reads the slice with `slicer show S01`, and runs `slicer start S01` to claim the
+review, which returns it to started. If fixes need another look, hand it off again. Run
+`slicer done S01 --render` only once review and merge are complete; slicer records the
+handoff but never merges anything.
+
 Implement S01 and run its acceptance checks and the project's tests. **Only after
 those pass**, record completion:
 
