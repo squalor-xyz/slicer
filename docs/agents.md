@@ -164,7 +164,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `sync` | array of `{target, path, stale, detail}` |
 | `check` | `{ok, stale_render, orphan_render, stale_sync, problems, warnings}` |
 | `verify` | `{checked, git, errors, findings: [{level, item, message}]}` |
-| `stats` | `{total, completion, by_status, by_size, by_tree, by_pass, by_tree_status}` |
+| `stats` | `{total, completion, by_status, by_size, by_tree, by_pass, by_tree_status}`. `by_status` and `by_tree_status` are keyed by status key (`open`, `done`, …), the same value as an item's `status`, never by its configured display label; text output shows the labels. `status --json` carries the same `census`, and `import`/`migrate` key their `by_status` the same way |
 | `status` | `{next, census, blocked}` |
 | `log` | array of `{when, item, action, from, to, note}`, newest first |
 | `prose list` | `[{ref, lines, preview}]` |

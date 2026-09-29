@@ -343,7 +343,7 @@ def build(
   report.next_id = ids.format_id(cfg.id_prefix, index.next_id, cfg.id_width)
   report.items = len(index.items)
   report.slices = len(slices)
-  report.by_status = _tally(cfg.status_label(it.status) for it in index.items)
+  report.by_status = _tally(it.status for it in index.items)
   report.by_size = _tally(
     it.size + ("".join(f" [{f}]" for f in it.flags)) for it in index.items if it.size
   )

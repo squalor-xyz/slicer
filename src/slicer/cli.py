@@ -443,7 +443,7 @@ def cmd_import(args: argparse.Namespace) -> int:
   lines = [
     f"source     {path}",
     f"outline    {report.items} items, {report.promoted} with slices",
-    "status     " + " · ".join(f"{k} {v}" for k, v in report.by_status.items()),
+    "status     " + _status_tally(state.config, report.by_status),
     f"depends    {report.depends_edges} edges",
   ]
   if report.preamble is not None:
@@ -506,7 +506,7 @@ def cmd_migrate(args: argparse.Namespace) -> int:
   lines = [
     f"source     {source}",
     f"index      {report.passes} passes, {report.groups} group rows, {report.items} items, next id {report.next_id}",
-    f"status     " + " · ".join(f"{k} {v}" for k, v in report.by_status.items()),
+    f"status     " + _status_tally(cfg, report.by_status),
     f"sizes      " + " · ".join(f"{k} {v}" for k, v in report.by_size.items()),
     f"slices     {report.slices} parsed, {report.roundtrip_ok} round-trip byte-identical",
     f"sections   {len(report.off_schema_sections)} off-schema: "
@@ -1420,20 +1420,22 @@ def cmd_check(args: argparse.Namespace) -> int:
   return OK if report.ok else DRIFT
 
 
+def _status_tally(cfg: Config, tally: dict[str, int]) -> str:
+  """A status tally for people: JSON keys by status, text shows each label."""
+  return " · ".join(f"{cfg.status_label(k)} {v}" for k, v in tally.items())
+
+
 def _census(state: store.State) -> dict:
   """The item census `stats` and `status` share, so they cannot disagree."""
   cfg = state.config
   items = state.index.items
   total = len(items)
   done = sum(1 for it in items if it.status == cfg.done_status)
-  by_tree_status = {
-    tree: {cfg.status_label(s): n for s, n in cols.items()}
-    for tree, cols in model.cross_counts(items, "trees", "status").items()
-  }
+  by_tree_status = model.cross_counts(items, "trees", "status")
   return {
     "total": total,
     "completion": {"done": done, "total": total, "percent": round(done * 100 / total) if total else 0},
-    "by_status": {cfg.status_label(k): v for k, v in model.counts(items, "status").items()},
+    "by_status": model.counts(items, "status"),
     "by_size": model.counts(items, "size"),
     "by_tree": model.counts(items, "trees"),
     "by_pass": model.counts(items, "pass_key"),
@@ -1454,11 +1456,12 @@ def cmd_stats(args: argparse.Namespace) -> int:
   lines = [f"{payload['total']} items · {done['done']} done ({done['percent']}%)"]
   for name, group in groups:
     if group:
-      lines.append(f"{name:<10} " + " · ".join(f"{k} {v}" for k, v in group.items()))
+      body = _status_tally(state.config, group) if name == "status" else " · ".join(f"{k} {v}" for k, v in group.items())
+      lines.append(f"{name:<10} " + body)
   if payload["by_tree_status"]:
     lines.append("progress by tree")
     for tree, cols in payload["by_tree_status"].items():
-      lines.append(f"  {tree:<10} " + " · ".join(f"{k} {v}" for k, v in cols.items()))
+      lines.append(f"  {tree:<10} " + _status_tally(state.config, cols))
   text = "\n".join(lines)
   _emit(args, payload, text)
   return OK
@@ -1478,7 +1481,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     "blocked": blocked,
   }
   next_line = f"{nxt.id}  {nxt.display_title()}" if nxt else "nothing unmarked"
-  progress = " · ".join(f"{k} {v}" for k, v in census["by_status"].items())
+  progress = _status_tally(state.config, census["by_status"])
   lines = [
     f"Next      {next_line}",
     f"Progress  {census['total']} items ({census['completion']['percent']}% done)"

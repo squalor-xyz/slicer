@@ -199,7 +199,7 @@ $ slicer import roadmap.md --json
   "items": 3,
   "promoted": 1,
   "by_status": {
-    "—": 2,
+    "open": 2,
     "parked": 1
   },
   "ids": [
