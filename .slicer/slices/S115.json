@@ -1,0 +1,41 @@
+{
+  "id": "S115",
+  "title": "Point the contributor guide at the bounded pickup",
+  "lead": [
+    "AGENTS.md is what an agent reads before the published skill, and it still fetches the whole slice."
+  ],
+  "depends_note": null,
+  "findings_note": "S107",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing `slicer next` or the skill text.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`AGENTS.md` tells a contributor to run `slicer next` and then `slicer show`, and to `start` and `done` with `--render` and no `--strict`. That guide is loaded as a project rule, so it undoes the bounded pickup in the skill. An agent following it reads every section and can leave a saved change behind when rendering fails."
+    },
+    {
+      "heading": "Files",
+      "body": "- `AGENTS.md` (the \"Working on the roadmap\" commands)\n- `tests/test_ai.py` or a small test that reads `AGENTS.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The pickup commands in `AGENTS.md` name `slicer next --ready` with repeatable `--section`, `--json`, and `--lean`.\n2. `start` and slice edits there use `--render --strict`. `done` stays `--render`.\n3. A test reads those sentences from `AGENTS.md`, so a later edit cannot put `slicer next` plus `slicer show` back as the pickup."
+    },
+    {
+      "heading": "Implement",
+      "body": "Update the roadmap commands in `AGENTS.md` to the same pickup, start, and edit lines the skill uses. Keep the install, invariants, and house-style sections. Do not paste the skill or `docs/agents.md` into the file."
+    },
+    {
+      "heading": "Check",
+      "body": "The three cases above pass. `python3 -m unittest discover -s tests -t tests` and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

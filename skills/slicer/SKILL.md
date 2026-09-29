@@ -3,14 +3,17 @@ name: slicer
 description: Drive a slicer roadmap. Use when asked to take a slice, implement the next slice, or drive slicer.
 ---
 
-1. Run `slicer next --show --json` to get the next item and its slice together.
+1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
+   to get the next item and only those sections. The headings are examples;
+   pass the section names the project configures.
    Read its scope, dependencies, and acceptance checks. Resolve missing or
    ambiguous specifications before changing its status. If the specification is
-   trusted and needs no clarification, `slicer next --start --show --json` may
+   trusted and needs no clarification, `slicer next --start --ready --section "Implement" --section "Check" --json --lean` may
    combine these first steps.
-2. Otherwise, run `slicer start ID --render --json` after reviewing the slice.
+2. Otherwise, run `slicer start ID --render --strict --json` after reviewing the slice.
    Implement the agreed scope, update
    affected documentation, and run the slice's checks and required project tests.
+   Edit a slice with `slicer edit ID --section NAME --text "Body" --render --strict --json`.
 3. Review the changes and run `slicer check --json`. Fix problems before marking
    work complete; this tracking check does not replace code tests.
 4. Run `slicer done ID --note "Describe the verified outcome" --render --json`,

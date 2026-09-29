@@ -1,0 +1,41 @@
+{
+  "id": "S116",
+  "title": "Reject slice examples that name a removed flag",
+  "lead": [
+    "S107's acceptance text still said `--require-render` after that flag had been renamed to `--strict`."
+  ],
+  "depends_note": null,
+  "findings_note": "S107",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** rewriting old done slices, or checking `docs/agents.md`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Nothing in `slicer check` reads the `slicer …` commands written inside a slice. A removed flag can sit in Failing tests until an agent copies it into the skill, where the parser then rejects it. S105 renamed `--require-render` to `--strict`, and the S107 slice filed afterward still spelled the old flag."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` or the check path that already walks slice text\n- `tests/` for the new check\n- `docs/agents.md` only if the check's problem shape needs a line"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. An open slice whose section body contains a backtick command `slicer next --require-render` makes `slicer check` fail. The problem names the slice id, the section heading, and the unknown flag.\n2. A backtick command the parser accepts, including `--render --strict`, is not a problem.\n3. Done and retired slices are not scanned, so history can keep the old flag name."
+    },
+    {
+      "heading": "Implement",
+      "body": "When checking an open slice, collect backtick spans that start with `slicer `, parse each with the real parser, and report unknown flags. Do not try to execute the command or require the id to exist. Leave prose that merely mentions a flag outside backticks alone."
+    },
+    {
+      "heading": "Check",
+      "body": "The three cases above pass. `python3 -m unittest discover -s tests -t tests` and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

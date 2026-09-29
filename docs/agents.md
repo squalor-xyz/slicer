@@ -77,19 +77,19 @@ the slices rather than relying on the temporary outline as the only record.
 ### Implement one slice
 
 ```text
-Read the project instructions. Run `slicer next --show --json` to get the next
-item and its slice together. `slicer next --ready --json` is the same selection
-as a bounded pickup: item identity, the slice, and blocked ids. Read the scope, dependencies, relevant source, and tests. If
+Read the project instructions. Run `slicer next --ready --section "Implement" --section "Check" --json --lean` to get the next
+item and only those sections. The headings are examples; pass the section names the project configures. Read the scope, dependencies, relevant source, and tests. If
 there is no slice or its acceptance criteria are ambiguous, resolve the specification
 with me first. If `next` includes `unspecified`, fill each missing section with
 `slicer edit ID --section NAME` before implementing that id. Do not invent the body.
 Once the specification is clear and trusted, mark it started with
-`slicer start ID --render`. Implement that slice, and run its acceptance checks and
-required project checks. Update affected documentation. Once verified, run
+`slicer start ID --render --strict`. Implement that slice, and run its acceptance checks and
+required project checks. Update affected documentation. Edit a slice with
+`slicer edit ID --section NAME --text "Body" --render --strict`. Once verified, run
 `slicer done ID --note "Describe the verified result"
 --render` and `slicer check`. Report changes and checks, and stop after this slice.
 Use commands to change tracking state; never hand-edit the index, slice JSON, or
-generated markdown. Do not commit or publish unless separately authorized.
+generated markdown. Do not open or hand-merge `.slicer/render/`. When `ROADMAP.md` or `ROADMAP.html` conflicts, run `slicer render` then `slicer check`. Do not commit or publish unless separately authorized.
 ```
 
 ## Everything takes `--json`
@@ -336,8 +336,9 @@ blocker of a critical item inherits that item's priority, so `next` naturally su
 blocker first; dependencies still hard-gate, so a blocked item is never returned whatever
 its score. `next` also reports the item's effective score (a `^` marks a score inherited from a
 dependent) and status; `slicer next --start` returns the item and marks it started in one call.
-Use `slicer next --show --json` as the standard read path: it returns the item and its
-full slice together, so picking up work takes one command instead of `next` then `show`.
+Use `slicer next --ready --section "Implement" --section "Check" --json --lean` as the
+pickup: the headings are examples, so pass the section names the project configures.
+That returns the item and only those sections, instead of `next` then `show`.
 `slicer next --ready --json` is the bounded form of that selection. `item` carries
 `id`, `title`, `status`, `depends_on`, `effective_score`, and `path`. `slice` is the
 same object `show` returns, and only when the item has one. Repeat `--section` with
@@ -354,10 +355,9 @@ including when `--section` is set.
 Goals stay on `slicer goals`, the progress census stays on `slicer status`, and one
 section stays on `slicer show ID --section`.
 Read the slice and inspect its scope, dependencies, and acceptance checks; resolve any
-ambiguity before starting it. Then run `slicer start ID --render`, implement and verify
+ambiguity before starting it. Then run `slicer start ID --render --strict`, implement and verify
 it, and use `slicer done ID --note "..." --render` followed by `slicer check`. If the
-specification is already trusted and needs no clarification, `slicer next --start --show
---json` may combine fetching, reading, and starting the item.
+specification is already trusted and needs no clarification, `slicer next --start --ready --section "Implement" --section "Check" --json --lean` may combine fetching, reading, and starting the item.
 
 **Read only the implementation sections.** Repeat `--section` to return just selected
 sections, and add `--context` to include the item title, dependencies, and scope boundary:
@@ -367,7 +367,7 @@ loading unrelated slice prose. The payload shapes stay in the command table abov
 
 For edits, `slicer edit ID --section "Why" --stdin` replaces one section's body, and
 `slicer show ID --section "Why"` reads that one body back. For short edits use
-`slicer edit ID --section "Why" --text "Updated explanation" --render`; roadmap prose
+`slicer edit ID --section "Why" --text "Updated explanation" --render --strict`; roadmap prose
 supports the same source, such as `slicer prose edit preamble --text "Current work"`.
 In replacement mode, inline text is exact, including whitespace and newlines;
 `--text ""` clears the body.
@@ -384,7 +384,7 @@ row), visible in `slicer show` and, once promoted, the rendered slice. This diff
 To add to a section:
 
 ```sh
-slicer edit ID --section "Why" --append --text "New finding" --render
+slicer edit ID --section "Why" --append --text "New finding" --render --strict
 ```
 
 Append requires exactly one of `--text`, `--file`, or `--stdin`; it never opens the editor. Trailing newline characters in the old body and

@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-114 items · — 7 · done 106 · retired 1
+116 items · — 8 · done 107 · retired 1
 
 v1.0.0 release
 
@@ -49,7 +49,7 @@ v1.0.0 release
 | 19 | [S92](slices/S92.md) | Add a lean JSON profile that drops empty and default fields | M | - | cli | AI credit-flow review | done |
 | 20 | [S94](slices/S94.md) | Point agents at the command, not the 21 KB reference doc | S | - | docs | AI credit-flow review | done |
 | 21 | [S106](slices/S106.md) | Return only the sections a pickup needs | M | 2 | slicer | credit review | done |
-| 22 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | — |
+| 22 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | done |
 | 23 | [S108](slices/S108.md) | Fold shipped notes into the 1.0.0 changelog | S | 1 | slicer | credit review | — |
 
 ---
@@ -147,3 +147,5 @@ v1.0.0 release
 | 112 | [S112](slices/S112.md) | Label list columns and say when rows are hidden | S | 1 | slicer | credit review | — |
 | 113 | [S113](slices/S113.md) | Detect concurrent work on a slice across branches and worktrees |  | - |  |  | — |
 | 114 | [S114](slices/S114.md) | Claim a slice and surface claimed / in-work items in list |  | - |  |  | — |
+| 115 | [S115](slices/S115.md) | Point the contributor guide at the bounded pickup | S | 1 | slicer | S107 | — |
+| 116 | [S116](slices/S116.md) | Reject slice examples that name a removed flag | M | 2 | slicer | S107 | — |
