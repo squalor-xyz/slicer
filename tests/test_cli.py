@@ -893,3 +893,54 @@ class RenderAfterMutationTests(unittest.TestCase):
       self.assertEqual(code, 0)
       json.loads(out)  # one parseable document
       self.assertEqual(len(repo.state().index.items), 1)
+
+  def test_RequireRender_Success_PublishesAndRenders(self) -> None:
+    with self._fresh() as repo:
+      code, out, err = repo.run("add", "Thing", "--render", "--require-render", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("id", json.loads(out))
+      self.assertEqual(len(repo.state().index.items), 1)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_RequireRender_WriteFails_RestoresStateAndRender(self) -> None:
+    with self._fresh() as repo:
+      before = repo.read(".slicer/index.json")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("add", "Thing", "--render", "--require-render", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertIn("boom", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(len(repo.state().index.items), 0)
+      self.assertFalse((repo.root / ".slicer/render/ROADMAP.md").exists())
+      self.assertFalse((repo.root / ".slicer/log.jsonl").exists())
+
+  def test_RequireRender_WithoutRender_IsUsage(self) -> None:
+    with self._fresh() as repo:
+      code, out, err = repo.run("add", "Thing", "--require-render", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertIn("--require-render", err)
+      self.assertEqual(len(repo.state().index.items), 0)
+
+  def test_RequireRender_GitMove_RestoresTheSlicePath(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      repo.run("add", "One")
+      repo.run("promote", "S01")
+      repo.run("render")
+      repo.commit("seed")
+      before = repo.read(".slicer/index.json")
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run(
+          "set", "S01", "--status", "done", "--render", "--require-render", "--json",
+        )
+      self.assertEqual(code, 2, err)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.read(".slicer/render/ROADMAP.md"), roadmap)
+      self.assertEqual(repo.state().index.require("S01").status, "open")
+      self.assertTrue((repo.root / ".slicer/slices/S01.json").exists())
+      self.assertFalse((repo.root / ".slicer/slices/done/S01.json").exists())
+      self.assertEqual(repo._git("status", "--porcelain").stdout, "")

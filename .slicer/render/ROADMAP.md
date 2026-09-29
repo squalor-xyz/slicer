@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-105 items · — 1 · done 103 · retired 1
+105 items · done 104 · retired 1
 
 v1.0.0 release
 
@@ -137,4 +137,4 @@ v1.0.0 release
 | 102 | [S102](slices/S102.md) | Do not hand next a slice that does not say what done means |  | - | slicer |  | done |
 | 103 | [S103](slices/S103.md) | Keep a failed render from landing done |  | - | slicer |  | done |
 | 104 | [S104](slices/S104.md) | Let set clear an optional field without a one-off sentinel |  | - | slicer |  | done |
-| 105 | [S105](slices/S105.md) | Choose whether render success is required for a mutation |  | - |  |  | — |
+| 105 | [S105](slices/S105.md) | Choose whether render success is required for a mutation |  | - |  |  | done |

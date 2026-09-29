@@ -2542,7 +2542,7 @@
       "id": "S105",
       "title": "Choose whether render success is required for a mutation",
       "short_title": "Choose whether render success is required for a mutation",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

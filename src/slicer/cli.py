@@ -11,11 +11,13 @@ Exit codes are stable because scripts depend on them:
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
+from contextlib import redirect_stdout
 from pathlib import Path
 
 from slicer import check as check_mod
@@ -33,6 +35,7 @@ from slicer import (
   store,
   sync,
   templates,
+  vcs,
   verify,
 )
 from slicer import __version__
@@ -66,21 +69,118 @@ def _render_after_mutation(args: argparse.Namespace) -> int:
   return len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
 
 
-def _mutating(fn):
-  """Wrap a mutating handler so `--render` renders after it, from one place.
+def _project_snapshot(root: Path) -> dict[str, bytes]:
+  """Bytes of the files a mutation publishes: index, log, slices, and render."""
+  base = root / store.DIR_NAME
+  files: dict[str, bytes] = {}
+  for name in (store.INDEX_NAME, store.LOG_NAME):
+    path = base / name
+    if path.is_file():
+      files[name] = path.read_bytes()
+  for folder in (store.SLICES_DIR, store.RENDER_DIR):
+    directory = base / folder
+    if not directory.is_dir():
+      continue
+    for path in directory.rglob("*"):
+      if path.is_file():
+        files[path.relative_to(base).as_posix()] = path.read_bytes()
+  return files
 
-  The handler has already saved to disk and printed its own result (an object,
-  or a JSON array for a batch of ids). If the follow-up render fails, the change
-  is still committed, so we must not let the failure reach `main` — that would
-  print a *second* document after the handler's result. Instead stdout stays the
-  handler's single result unchanged, the render failure goes to stderr, and the
-  exit is DRIFT (1): state and `render/` are now out of step, which is what
-  `slicer render` resolves. The exit is DRIFT whatever the cause, because the
-  mutation the user asked for did succeed; only the projection is stale.
+
+def _move_slices_back(root: Path, files: dict[str, bytes]) -> None:
+  """Put slice files back where the snapshot had them, including a git mv."""
+  base = root / store.DIR_NAME
+  prefix = store.SLICES_DIR + "/"
+  before = {rel for rel in files if rel.startswith(prefix)}
+  directory = base / store.SLICES_DIR
+  if not directory.is_dir():
+    return
+  current = {
+    path.relative_to(base).as_posix(): path
+    for path in directory.rglob("*")
+    if path.is_file()
+  }
+  missing: dict[str, list[str]] = {}
+  for rel in before:
+    if rel not in current:
+      missing.setdefault(Path(rel).name, []).append(rel)
+  for rel, path in current.items():
+    if rel in before:
+      continue
+    targets = missing.get(Path(rel).name)
+    if not targets:
+      continue
+    vcs.move(root, path, base / targets.pop())
+
+
+def _restore_project(root: Path, files: dict[str, bytes]) -> None:
+  """Put the published files back, and drop files the failed mutation added."""
+  base = root / store.DIR_NAME
+  _move_slices_back(root, files)
+  for rel, data in files.items():
+    path = base / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+  for name in (store.INDEX_NAME, store.LOG_NAME):
+    path = base / name
+    if name not in files and path.is_file():
+      path.unlink()
+  for folder in (store.SLICES_DIR, store.RENDER_DIR):
+    directory = base / folder
+    if not directory.is_dir():
+      continue
+    for path in directory.rglob("*"):
+      if path.is_file() and path.relative_to(base).as_posix() not in files:
+        path.unlink()
+
+
+def _require_render(args: argparse.Namespace, fn) -> int:
+  """Save, render, and put the project back when rendering fails.
+
+  The handler's stdout is held until rendering succeeds, so a failure prints
+  only the error envelope and not a success document before it.
+  """
+  root = _state(args).root
+  files = _project_snapshot(root)
+  held = io.StringIO()
+  with redirect_stdout(held):
+    code = fn(args)
+  if code != OK:
+    sys.stdout.write(held.getvalue())
+    return code
+  try:
+    written = _render_after_mutation(args)
+  except (SlicerError, OSError) as exc:
+    _restore_project(root, files)
+    if isinstance(exc, render.RenderError):
+      raise
+    raise render.RenderError(str(exc)) from exc
+  sys.stdout.write(held.getvalue())
+  if not getattr(args, "json", False):
+    print(f"rendered {written} file(s)")
+  return code
+
+
+def _mutating(fn, *, render_required: bool = False):
+  """Wrap a mutating handler so `--render` is one shared decision.
+
+  The default renders after the handler has saved. A render failure leaves
+  that save in place, reports it on stderr, and exits DRIFT (1): stdout stays
+  the handler's single result. `slicer render` catches the projection up.
+
+  A `render_required` handler (today, `done`) renders the proposed state
+  before it publishes, and raises `RenderError` without saving when that
+  fails. `--require-render` asks the same of every other handler: the wrapper
+  snapshots the published files, and a render failure restores them.
   """
   def wrapped(args: argparse.Namespace) -> int:
-    if not (getattr(args, "render", False) and not getattr(args, "dry_run", False)):
+    if getattr(args, "require_render", False) and not getattr(args, "render", False):
+      raise StateError("--require-render needs --render", code="usage")
+    rendering = getattr(args, "render", False) and not getattr(args, "dry_run", False)
+    if not rendering or render_required:
       return fn(args)
+    if getattr(args, "require_render", False):
+      return _require_render(args, fn)
     code = fn(args)
     if code != OK:
       return code
@@ -101,6 +201,10 @@ def _mutating(fn):
 
 def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   sp.add_argument("--render", action="store_true", help="render .slicer/render/ after the change")
+  sp.add_argument(
+    "--require-render", action="store_true",
+    help="with --render, keep the change only when rendering succeeds",
+  )
   return sp
 
 
@@ -885,9 +989,6 @@ def cmd_done(args: argparse.Namespace) -> int:
   return OK
 
 
-cmd_done.mutates = True
-
-
 def cmd_prose_list(args: argparse.Namespace) -> int:
   state = _state(args)
   entries = []
@@ -1347,7 +1448,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = _render_flag(add("done", cmd_done, "mark an item finished"))
+  sp = _render_flag(add("done", _mutating(cmd_done, render_required=True), "mark an item finished"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
