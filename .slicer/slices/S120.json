@@ -1,0 +1,39 @@
+{
+  "id": "S120",
+  "title": "Warn when slicer runs code from outside the discovered project",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Installed as an editable console script, `slicer` runs a fixed `src` path. Run inside a git worktree, it operates on the worktree's `.slicer/` (found by discovery) but executes the *main* checkout's code, so changes made to the worktree's source are not exercised. In this project a `slicer check` in a worktree silently ran stale code and appeared to do nothing until `PYTHONPATH=src python3 -m slicer` was used. Nothing signals the mismatch."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`main`) or `store.py`\n- a test"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. When the running module's file is not under the discovered project root, a one-line stderr note names both paths and suggests `PYTHONPATH=src python3 -m slicer`.\n2. When they match (ordinary use), nothing is printed."
+    },
+    {
+      "heading": "Implement",
+      "body": "In `main`, compare the package's location to the discovered project root; when the running code is not under the project (a worktree / editable-install mismatch), print a single stderr hint. Do not change stdout or exit codes, and keep it quiet for the common case. Consider an env var or flag to silence it."
+    },
+    {
+      "heading": "Check",
+      "body": "The note appears only on a mismatch; stdout and exit codes are unchanged. The suite and `slicer check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

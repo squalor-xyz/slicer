@@ -1,0 +1,39 @@
+{
+  "id": "S118",
+  "title": "Configure the render merge driver in one step",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S109 points `render/` at a `slicer-generated` merge driver in `.gitattributes`, but the driver name only resolves once each clone runs two `git config` lines. When it is not configured, every merge writes conflict markers into (or blends) the large ROADMAP files, and the merge then needs a manual `slicer render` -- this happened on every merge in this project's recent work. Nothing surfaces the one-time setup, and slicer's git allowlist forbids `git config`, so slicer cannot run it for the user."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_init`, or a small setup command)\n- `README.md` and `docs/getting-started.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `slicer init` output names the exact two `git config merge.slicer-generated.*` lines a clone runs once.\n2. slicer still never executes `git config` (the vcs allowlist is unchanged)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Surface the two `git config` lines where a person will see them: from `slicer init` (and the docs), or a dedicated `slicer setup-git` that prints -- does not run -- them. Do not add `config` to the vcs allowlist. Decide with the project whether `init` prints always or only inside a git repo, and whether to also hint at them when a render file conflicts."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer init` names the two lines; the suite and `slicer check` pass; a clone that runs them merges `render/` without markers (as S109's tests show)."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}

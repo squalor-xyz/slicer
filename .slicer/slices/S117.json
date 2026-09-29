@@ -1,0 +1,39 @@
+{
+  "id": "S117",
+  "title": "Make the test suite robust to colorized argparse output",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Python 3.14 colorizes argparse usage and error text when color is enabled (a tty, or `FORCE_COLOR`). Many tests assert plain substrings like `usage: slicer` and `unrecognized arguments`, so in a shell with `FORCE_COLOR` set (as this project's dev environment has), about 35 tests in `test_ai`, `test_cli`, and `test_errors` fail on embedded ANSI escapes even though the code is correct. CI or a developer with color forced on would see a red suite for no real reason."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/support.py` (the in-process `TempRepo.run`) or the affected assertions\n- `src/slicer/cli.py` if color is disabled at the parser instead"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. With `FORCE_COLOR=3` in the environment, `python3 -m unittest discover -s tests -t tests` passes: the usage/error assertions still match.\n2. A parser error's captured stderr contains a plain, uncolored `usage:` line and message."
+    },
+    {
+      "heading": "Implement",
+      "body": "Neutralize color for slicer's own parser output rather than stripping it after the fact. Prefer the source: have the in-process test runner clear `FORCE_COLOR` / set `NO_COLOR` for the call, or build the parser with color disabled when output is captured or not a tty. Keep colored help available for real interactive use if the project wants it. Do not weaken the assertions to accept ANSI."
+    },
+    {
+      "heading": "Check",
+      "body": "The suite passes both with and without `FORCE_COLOR` set, and no test asserts on ANSI escape codes. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit. Do not tag or push."
+    }
+  ],
+  "notes": []
+}
