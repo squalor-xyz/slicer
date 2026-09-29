@@ -177,6 +177,139 @@ class ReadyTests(unittest.TestCase):
       empty = json.loads(repo.run("next", "--ready", "--json", "--lean")[1])
       self.assertEqual(empty, {"item": None})
 
+  def test_Ready_Section_ReturnsBoundaryAndThoseBodiesOnly(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work", "--importance", "3", "--urgency", "1")
+      repo.run("promote", "S01", "--boundary", "Stay inside the loader.")
+      repo.run("edit", "S01", "--section", "Why", "--text", "Because.")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+      repo.run("note", "S01", "--text", "a durable note")
+      code, out, err = repo.run(
+        "next", "--ready", "--section", "Check", "--section", "Implement", "--json",
+      )
+      self.assertEqual((code, err), (0, ""))
+      payload = json.loads(out)
+      self.assertEqual(sorted(payload["item"]), ITEM_KEYS)
+      self.assertEqual(payload["item"]["id"], "S01")
+      self.assertEqual(payload["item"]["depends_on"], [])
+      self.assertEqual(payload["item"]["effective_score"], 31)
+      self.assertTrue(str(payload["item"]["path"]).endswith(".slicer/slices/S01.json"))
+      self.assertEqual(payload["slice"], {
+        "boundary": "Stay inside the loader.",
+        "sections": [
+          {"heading": "Implement", "body": "Do the thing."},
+          {"heading": "Check", "body": "The thing works."},
+        ],
+      })
+      self.assertNotIn("Because.", out)
+      self.assertNotIn("a durable note", out)
+      self.assertNotIn("lead", payload["slice"])
+      self.assertNotIn("notes", payload["slice"])
+      shown = repo.run("next", "--show", "--json")[1]
+      self.assertLess(len(out), len(shown))
+      self.assertIn("Because.", shown)
+      text = repo.run("next", "--ready", "--section", "Implement")[1]
+      self.assertIn("boundary  Stay inside the loader.", text)
+      self.assertIn("Implement", text)
+      self.assertNotIn("Do the thing.", text)
+
+  def test_Ready_WithoutSection_StillReturnsTheFullSlice(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")
+      repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+      payload = json.loads(repo.run("next", "--ready", "--json")[1])
+      shown = json.loads(repo.run("show", "S01", "--json")[1])
+      self.assertEqual(payload["slice"], shown["slice"])
+
+  def test_Ready_Section_UnknownHeadingMatchesShow(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")
+      repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+      ready = repo.run("next", "--ready", "--section", "Nope", "--json")
+      show = repo.run("show", "S01", "--section", "Nope", "--json")
+      self.assertEqual(ready[0], show[0])
+      self.assertEqual(ready[0], 2)
+      ready_error = json.loads(ready[1])["error"]
+      show_error = json.loads(show[1])["error"]
+      self.assertEqual(ready_error["code"], show_error["code"])
+      self.assertEqual(ready_error["message"], show_error["message"])
+      self.assertEqual(ready_error["code"], "no_such_section")
+      bare = repo.run("next", "--section", "Implement", "--json")
+      self.assertEqual(bare[0], 2)
+      self.assertEqual(json.loads(bare[1])["error"]["code"], "usage")
+      both = repo.run("next", "--ready", "--show", "--json")
+      self.assertEqual(both[0], 2)
+      self.assertEqual(json.loads(both[1])["error"]["code"], "usage")
+      repo.run("done", "S01")
+      code, out, _ = repo.run("next", "--ready", "--section", "Implement", "--json")
+      plain = repo.run("next", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out), json.loads(plain[1]))
+      self.assertEqual(repo.state().index.require("S01").status, repo.state().config.done_status)
+
+  def test_Ready_Section_UnknownHeadingDoesNotStart(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")
+      repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+      code, _, _ = repo.run("next", "--start", "--ready", "--section", "Nope", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(repo.state().index.require("S01").status, "open")
+
+  def test_Ready_Section_NoSlice_DoesNotInventSections(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "bare row")
+      code, out, err = repo.run("next", "--ready", "--section", "Implement", "--json")
+      self.assertEqual((code, err), (0, ""))
+      payload = json.loads(out)
+      self.assertNotIn("slice", payload)
+      self.assertIsNone(payload["item"]["path"])
+      self.assertIn("slicer promote S01", repo.run("next", "--ready", "--section", "Implement")[1])
+
+  def test_Ready_Section_Lean_DropsEmptyScaffoldingAndKeepsBodies(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work")
+      repo.run("promote", "S01", "--boundary", "Stay inside the loader.")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+      payload = json.loads(repo.run(
+        "next", "--ready", "--section", "Implement", "--section", "Check", "--json", "--lean",
+      )[1])
+      self.assertEqual(payload, {
+        "item": {
+          "id": "S01",
+          "title": "work",
+          "status": "open",
+          "effective_score": 22,
+        },
+        "slice": {
+          "boundary": "Stay inside the loader.",
+          "sections": [
+            {"heading": "Implement", "body": "Do the thing."},
+            {"heading": "Check", "body": "The thing works."},
+          ],
+        },
+      })
+      repo.run("add", "bare")
+      repo.run("done", "S01")
+      bare = json.loads(repo.run(
+        "next", "--ready", "--section", "Implement", "--json", "--lean",
+      )[1])
+      self.assertEqual(bare, {
+        "item": {
+          "id": "S02",
+          "title": "bare",
+          "status": "open",
+          "effective_score": 22,
+        },
+      })
+
 
 if __name__ == "__main__":
   unittest.main()

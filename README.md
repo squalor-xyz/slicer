@@ -117,7 +117,7 @@ real output. [docs/import.md](docs/import.md) is the outline format;
 | `promote ID [--file/--stdin] [--boundary TEXT]` | give an item a slice file; a one-item outline fills its sections in one call |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
-| `next [-n N] [--start] [--show\|--ready]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids |
+| `next [-n N] [--start] [--show\|--ready [--section NAME ...]]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids. Repeat `--section` with `--ready` to return the scope boundary and those sections only |
 | `next-id` | the id the next `add` or `import` would take, without allocating it |
 | `list [--all] [--status/--tree/--pass/--flag] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. Done and retired items are omitted unless `--all` is set or `--status` names them. Repeat `--flag` to keep an item that has any of those flags. Flags are free-form labels set with `set --flag`. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
 | `find PATTERN [--in FIELDS]` | search items by text (id, title, findings and slice bodies by default); shows the matched field and a snippet |
@@ -150,8 +150,12 @@ dependents. The command returns one item, including rows without slice files;
 an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
 `slicer next --ready` is a bounded pickup of that same item: `id`, `title`,
 `status`, `depends_on`, `effective_score`, `path`, the slice when the item has
-one, and every blocked id. An empty queue uses the same exit 2 result as `next`.
-Pass either `--ready` or `--show`.
+one, and every blocked id. Repeat `--section NAME` with `--ready` to keep the
+scope boundary and those section bodies; omit it and the slice stays complete.
+`--section` without `--ready` is a usage error. A row with no slice still says
+to run `promote`. An empty queue uses the same exit 2 result as `next`.
+Pass either `--ready` or `--show`. The text form of `--ready` stays the
+identity, the boundary, and the section headings.
 
 In the TUI, the queue opens in the same ranked order as `slicer list`: eligible
 started items, then eligible open items, then the other visible rows, each by
