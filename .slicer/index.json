@@ -3253,7 +3253,7 @@
       "id": "S129",
       "title": "Make the suite independent of where TMPDIR points",
       "short_title": "Make the suite independent of where TMPDIR points",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

@@ -24,6 +24,17 @@ class ForeignWorktreeTests(unittest.TestCase):
     with support.TempRepo(git=True) as repo, support.TempRepo() as other:
       self.assertIsNone(vcs.foreign_worktree(repo.root, other.root))
 
+  def test_ProjectNestedInCodeWorktree_NoWarning(self) -> None:
+    # A project elsewhere in the code's own worktree -- a subproject, or a
+    # test fixture under an ignored scratch dir (S129) -- runs this worktree's
+    # code, so it is not the sibling-worktree trap.
+    with support.TempRepo(git=True) as repo:
+      nested = repo.root / ".venv" / "test-tmp" / "fixture"
+      nested.mkdir(parents=True)
+      code = repo.root / "src"
+      code.mkdir()
+      self.assertIsNone(vcs.foreign_worktree(nested, code))
+
   def test_SiblingWorktreeSameRepo_Warns(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")

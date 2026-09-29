@@ -240,7 +240,8 @@ class RenderDriverSetupHintTests(unittest.TestCase):
       self.assertNotIn("git config", out)
 
   def test_Init_OutsideGitRepo_OmitsTheHint(self) -> None:
-    with support.TempRepo() as repo:  # not a git repo
+    # not a git repo, even when TMPDIR sits inside one
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, out, _ = repo.run("init")
       self.assertEqual(code, 0)
       self.assertNotIn("git config", out)
