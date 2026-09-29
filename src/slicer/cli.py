@@ -1864,25 +1864,39 @@ def _warn_code_mismatch(args: argparse.Namespace) -> None:
     print(f"slicer: {message}", file=sys.stderr)
 
 
+def _changes_state(args: argparse.Namespace) -> bool:
+  if args.command == "init":
+    return True
+  if not getattr(args.func, "mutates", False):
+    return False
+  if args.command in ("import", "migrate", "remove") and args.dry_run:
+    return False
+  return not (args.command == "import" and args.skeleton)
+
+
 def main(argv: list[str] | None = None) -> int:
   parser = _cached_parser()
   argv = list(sys.argv[1:] if argv is None else argv)
   args = argparse.Namespace()
   try:
     parser.parse_args(argv, namespace=args)
+    root = Path(args.root) if args.root else Path.cwd()
     _warn_code_mismatch(args)
+    if _changes_state(args):
+      vcs.require_no_merge(root)
     # A mutating command holds an advisory lock for its whole run, so two
     # writers serialise instead of racing (a duplicated id, a half-applied
     # outline). Read-only commands need no lock.
     if getattr(args.func, "mutates", False):
-      root = Path(args.root) if args.root else None
       # A create-path migrate targets its own new .slicer/, not an ancestor's.
       # There is no target project lock until that directory exists.
       creating_migrate = (
         args.command == "migrate"
-        and not ((root or Path.cwd()).resolve() / store.DIR_NAME / CONFIG_NAME).is_file()
+        and not (root.resolve() / store.DIR_NAME / CONFIG_NAME).is_file()
       )
       with (nullcontext() if creating_migrate else store.project_lock(root)):
+        if _changes_state(args):
+          vcs.require_no_merge(root)
         return int(args.func(args))
     return int(args.func(args))
   except _ParserError as exc:

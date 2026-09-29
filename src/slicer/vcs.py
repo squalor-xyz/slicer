@@ -51,6 +51,24 @@ def is_repo(root: Path) -> bool:
   return done.returncode == 0 and done.stdout.strip() == "true"
 
 
+def merge_in_progress(root: Path) -> bool:
+  """Whether this checkout has a merge to finish, including linked worktrees."""
+  if not is_repo(root):
+    return False
+  done = _run(root, "rev-parse", "-q", "--verify", "MERGE_HEAD")
+  return done.returncode == 0
+
+
+def require_no_merge(root: Path) -> None:
+  """Refuse slicer state changes while Git is merging this checkout."""
+  if merge_in_progress(root):
+    raise StateError(
+      f"Git merge in progress in {root}; finish or abort it before changing slicer state. "
+      "`slicer render` and `slicer sync` remain available for merge repair.",
+      code="merge_in_progress",
+    )
+
+
 def move(root: Path, src: Path, dst: Path) -> str:
   """`git mv` when possible so the move stays one tracked rename."""
   dst.parent.mkdir(parents=True, exist_ok=True)

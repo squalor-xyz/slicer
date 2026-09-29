@@ -2996,7 +2996,7 @@
       "id": "S119",
       "title": "Guard against parallel merges into the shared main checkout",
       "short_title": "Guard against parallel merges into the shared main checkout",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
