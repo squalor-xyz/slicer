@@ -565,8 +565,9 @@ class VerifyCompletenessTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("add", "base")
       repo.run("add", "dependent")
-      repo.run("remove", "S01", "--reason", "obsolete")
+      # `set` refuses a new edge onto a retired item, so retire it after the edge exists.
       repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 1)
       self.assertIn("retired", out)
@@ -611,8 +612,9 @@ class VerifyCompletenessTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("add", "base")
       repo.run("add", "dependent")
-      repo.run("remove", "S01", "--reason", "obsolete")
+      # `set` refuses a new edge onto a retired item, so retire it after the edge exists.
       repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
       repo.run("render")
       self.assertNotEqual(repo.run("check")[0], 0)
 

@@ -344,6 +344,9 @@ added S02  Fail loudly on a missing key
 item ids), and `--short-title` for a shorter roadmap label while retaining the full
 title. Omitted or empty short titles fall back to the full title. Use `set` to change
 these fields later; repeated `set --depends-on` flags replace the dependency list.
+Both refuse a dependency `check` would reject — an unknown id (a comma list such as
+`S01,S02` is one unknown id; repeat the flag instead), the item itself, a retired item, or
+an edge that closes a cycle — and write nothing.
 
 An item added this way is a roadmap row and nothing more. There is no slice file yet;
 that is [step 5](#5-turn-an-item-into-a-slice).

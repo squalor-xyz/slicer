@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-135 items · — 8 · done 126 · retired 1
+135 items · — 7 · done 127 · retired 1
 
 v1.0.0 release
 
@@ -55,7 +55,7 @@ v1.0.0 release
 | 25 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | — |
 | 26 | [S128](slices/S128.md) | Cut and tag the 1.0.0 release |  | 1 |  |  | — |
 | 27 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | done |
-| 28 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 2 |  |  | — |
+| 28 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 2 |  |  | done |
 | 29 | [S133](slices/S133.md) | Key JSON status tallies by status, not display label |  | 1 |  |  | — |
 
 ---

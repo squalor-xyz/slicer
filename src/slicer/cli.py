@@ -1701,7 +1701,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--size")
   sp.add_argument("--tree", action="append")
   sp.add_argument("--findings")
-  sp.add_argument("--depends-on", dest="depends_on", action="append")
+  sp.add_argument("--depends-on", dest="depends_on", action="append",
+                  help="dependency id (repeatable; replaces the list)")
   sp.add_argument("--pass", dest="pass_key", help="move the item to this pass group")
   sp.add_argument("--flag", dest="flag", action="append", help="set a flag (repeatable; replaces the list)")
   sp.add_argument("--no-flags", dest="no_flags", action="store_true", help="clear all flags")

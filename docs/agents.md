@@ -201,13 +201,13 @@ when the meaning does. Branch on the code.
 
 | Code | Means |
 |---|---|
-| `no_such_item` | No item with that id, from any command |
+| `no_such_item` | No item with that id, from any command, including a `--depends-on` id |
 | `no_slice` | The item exists but has not been promoted |
 | `no_such_section` | `show --section` named a heading the slice does not have |
 | `bad_promote_source` | A `promote` source is not one item, or names no sections |
 | `field_in_promote_source` | A `promote` source set an item field; those belong on `add`/`set` |
 | `already_exists` | `init` on an initialised project |
-| `state` | The operation does not apply — unknown status, already promoted, and similar |
+| `state` | The operation does not apply — unknown status, already promoted, a self, cycle, or retired dependency, and similar |
 | `config` | `.slicer/config.json` is missing, malformed or self-contradictory |
 | `outline` | An outline given to `import` could not be parsed |
 | `legacy_format` | Legacy markdown `migrate` could not read or round-trip |
@@ -259,7 +259,8 @@ cannot be rendered must not land at all. `done --render` already behaves this wa
 extends the same render-first policy to the everyday item mutations (`add`, `set`, `move`,
 `sort`, `promote`, `edit`, `note`, `start`, `park`, `unpark`, and the `prose` edits). It is
 not offered on `import`, `migrate`, or `remove`, and `--strict` without `--render` is a usage
-error.
+error. `--strict` guarantees only the render; it does not re-run `check`. Dependency
+integrity is enforced by `add` and `set` themselves, with or without `--strict`.
 
 **One case to special-case:** `slicer next`, including `--show` and `--ready`, exits **2** when nothing is runnable, with
 `{"item": null, "blocked": [...]}`. That is a normal empty queue, not a failure. Test for
@@ -301,7 +302,10 @@ about X?" — and see why each hit matched — before creating one.
 
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --depends-on S01 --render`.
-Repeat `--depends-on` for multiple ids. `park` and `unpark` accept `--note` to record
+Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
+an id that names no item (`no_such_item`, including a comma list passed as one value)
+and a self-edge, a new cycle, or a dependency on a retired item (`state`). A dangling edge
+or cycle already in the index is left for `check` to report. `park` and `unpark` accept `--note` to record
 why work is being deferred or resumed; read those notes with `slicer log --json`, and scope to
 one item with `slicer log --item ID --json` (repeat `--item` for several) or to a kind of change
 with `--action set` / `--action status`. `set` entries record old→new values, so
