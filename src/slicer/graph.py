@@ -50,6 +50,29 @@ def cycles(index: Index) -> list[list[str]]:
   return found
 
 
+def path(index: Index, start: str, goal: str) -> list[str] | None:
+  """The dependency path from `start` to `goal`, both ends included, or None.
+
+  Breadth-first over known edges, so the path is a shortest one. A new edge
+  X -> Y closes a cycle exactly when this finds a path from Y back to X.
+  """
+  edges = {it.id: [d for d in it.depends_on if index.get(d) is not None] for it in index.items}
+  parent: dict[str, str | None] = {start: None}
+  queue = [start]
+  while queue:
+    node = queue.pop(0)
+    if node == goal:
+      out = [node]
+      while parent[out[-1]] is not None:
+        out.append(parent[out[-1]])
+      return out[::-1]
+    for nxt in edges.get(node, []):
+      if nxt not in parent:
+        parent[nxt] = node
+        queue.append(nxt)
+  return None
+
+
 def blocked_by(index: Index, item: Item, done_status: str) -> list[str]:
   """Dependencies of `item` that are not finished yet, in declared order."""
   out: list[str] = []

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -88,6 +88,44 @@ def _valid_score(name: str, value: object) -> int:
   return n
 
 
+def _check_depends(state: State, proposed: dict[str, list[str]], new: Item | None = None) -> None:
+  """Refuse dependency lists that would leave state `check` rejects.
+
+  `proposed` maps each item id being changed to its new `depends_on`; `new` is
+  an item `add` has not appended yet. Every problem is collected before
+  anything is written, the all-or-nothing rule import already follows. Edges
+  the change does not touch are left alone, so a dangling edge or cycle that
+  predates it still reaches `check` instead of blocking unrelated edits.
+  """
+  index = state.index
+  after = replace(index, items=[
+    replace(it, depends_on=proposed[it.id]) if it.id in proposed else it
+    for it in index.items
+  ] + ([new] if new is not None else []))
+  problems: list[str] = []
+  code = "state"
+  dangling = {(item_id, dep) for item_id, dep in graph.dangling(after) if item_id in proposed}
+  for item_id, deps in proposed.items():
+    old = [] if new is not None and item_id == new.id else index.require(item_id).depends_on
+    for dep in deps:
+      if (item_id, dep) in dangling:
+        code = "no_such_item"
+        hint = ""
+        if "," in dep or " " in dep:
+          hint = "; --depends-on takes one id and is repeatable (--depends-on S1 --depends-on S2)"
+        problems.append(f"{item_id}: depends on unknown id {dep!r}{hint}")
+      elif dep == item_id:
+        problems.append(f"{item_id}: cannot depend on itself")
+      elif state.config.retired_status and after.require(dep).status == state.config.retired_status:
+        problems.append(f"{item_id}: {dep} is retired and can never be done; restore it or drop the dependency")
+      elif dep not in old:
+        loop = graph.path(after, dep, item_id)
+        if loop is not None:
+          problems.append(f"{item_id}: depending on {dep} closes a cycle: " + " -> ".join([item_id] + loop))
+  if problems:
+    raise StateError("; ".join(problems) + ". Nothing was changed.", code=code)
+
+
 def add(state: State, title: str, *, item_id: str | None = None, **fields: object) -> Item:
   """Append a roadmap entry. It has no slice file until it is promoted."""
   cfg = state.config
@@ -110,6 +148,8 @@ def add(state: State, title: str, *, item_id: str | None = None, **fields: objec
   )
   if item.status not in cfg.statuses:
     raise StateError(f"unknown status {item.status!r}; known: {sorted(cfg.statuses)}")
+  if item.depends_on:
+    _check_depends(state, {item.id: item.depends_on}, new=item)
   state.index.items.append(item)
   state.save_index()
   _record(state, item.id, "add", to=item.status, note=title)
@@ -342,6 +382,8 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
     elif key in ("importance", "urgency", "effort") and value is not None:
       value = _valid_score(key, value)
     values[key] = _clean(value)
+  if "depends_on" in values:
+    _check_depends(state, {item.id: list(values["depends_on"]) for item in items})
 
   transitions = []
   for item in items:

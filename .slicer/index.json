@@ -3287,7 +3287,7 @@
       "id": "S131",
       "title": "Reject unknown dependency ids at set time",
       "short_title": "Reject unknown dependency ids at set time",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
