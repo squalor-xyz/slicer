@@ -3111,7 +3111,7 @@
       "id": "S124",
       "title": "Add Python 3.14 to the CI test matrix",
       "short_title": "Add Python 3.14 to the CI test matrix",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
