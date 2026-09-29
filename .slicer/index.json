@@ -2446,7 +2446,7 @@
       "id": "S101",
       "title": "Add a compact ready-to-work CLI context bundle",
       "short_title": "Add a compact ready-to-work CLI context bundle",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

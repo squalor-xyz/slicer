@@ -371,7 +371,63 @@ def _unspecified_lines(result: ops.NextResult) -> list[str]:
   return lines
 
 
+def _emit_ready(
+  args: argparse.Namespace, state: store.State, item: model.Item, result: ops.NextResult,
+) -> None:
+  """One bounded pickup: who is next, the slice to implement, and who is blocked.
+
+  The item is the identity an agent needs to start work. The full item record,
+  the status census, and the goals prose stay on their own commands.
+  """
+  eff = graph.effective_scores(state.index)[item.id]
+  path = state.find_slice_file(item.id)
+  sl = state.slices.get(item.id)
+  payload: dict[str, object] = {
+    "item": {
+      "id": item.id,
+      "title": item.title,
+      "status": item.status,
+      "depends_on": list(item.depends_on),
+      "effective_score": eff,
+      "path": str(path) if path else None,
+    },
+  }
+  if sl is not None:
+    payload["slice"] = sl.to_dict()
+  blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
+  payload["blocked"] = blocked
+  skipped = _unspecified_payload(result)
+  if skipped:
+    payload["unspecified"] = skipped
+  inherited = "^" if eff > item.score else ""
+  lines = [
+    f"{item.id}  {item.display_title()}",
+    f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
+  ]
+  if path:
+    lines.append(f"     {path}")
+  if sl is None:
+    lines.append(f"     (no slice yet; run `slicer promote {item.id}`)")
+  else:
+    boundary = " ".join(sl.boundary.split()) or "(none)"
+    headings = ", ".join(section.heading for section in sl.sections) or "(none)"
+    lines.append(f"     boundary  {boundary}")
+    lines.append(f"     sections  {headings}")
+  if blocked:
+    lines.append("Blocked")
+    lines.extend(f"  {entry['id']} waits on {', '.join(entry['waiting_on'])}" for entry in blocked)
+  else:
+    lines.append("Blocked   none")
+  lines.extend(_unspecified_lines(result))
+  _emit(args, payload, "\n".join(lines))
+
+
 def cmd_next(args: argparse.Namespace) -> int:
+  if args.ready and args.show:
+    raise StateError(
+      "--ready and --show are separate output profiles; pass only one",
+      code="usage",
+    )
   state = _state(args)
   result = ops.next_item(state, args.n)
   if result.item is None:
@@ -393,6 +449,9 @@ def cmd_next(args: argparse.Namespace) -> int:
   if args.start:
     with store.project_lock(state.root):
       item = ops.start(state, item.id)
+  if args.ready:
+    _emit_ready(args, state, item, result)
+    return OK
   eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
   inherited = "^" if eff > item.score else ""
@@ -1166,6 +1225,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--start", action="store_true", help="mark the returned item started")
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
+  sp.add_argument("--ready", action="store_true",
+                  help="bounded pickup: item identity, its slice, and blocked ids")
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 

@@ -78,7 +78,8 @@ the slices rather than relying on the temporary outline as the only record.
 
 ```text
 Read the project instructions. Run `slicer next --show --json` to get the next
-item and its slice together. Read the scope, dependencies, relevant source, and tests. If
+item and its slice together. `slicer next --ready --json` is the same selection
+as a bounded pickup: item identity, the slice, and blocked ids. Read the scope, dependencies, relevant source, and tests. If
 there is no slice or its acceptance criteria are ambiguous, resolve the specification
 with me first. If `next` includes `unspecified`, fill each missing section with
 `slicer edit ID --section NAME` before implementing that id. Do not invent the body.
@@ -146,7 +147,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `ai instructions` | `{instructions}` containing the generic Markdown quick start |
 | `list` | array of items. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. Repeatable `--flag` keeps an item that has any named flag and combines with `--status`, `--tree`, and `--pass`. `--sort score` is that same set in flat score order. `--sort effort` orders `fields.effort` from 1 to 3 and puts null last, without writing state. `sort --by effort` persists that order |
 | `show ID` | item, plus `slice` when it has one; with one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
-| `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); or `{"item": null, "blocked": [...]}`. `unspecified` is present when a slice was skipped because Implement or Check is empty: `[{"id", "missing"}]`. Fill those with `slicer edit ID --section NAME`. A started item is returned ahead of every open one |
+| `next` | item plus `path` and `effective_score`; with `--show`, also `slice` (the same object `show` returns, when the item has one); with `--ready`, `{item, slice, blocked}` where `item` is `{id, title, status, depends_on, effective_score, path}` and `slice` is included when the item has one; or `{"item": null, "blocked": [...]}`. `unspecified` is present when a slice was skipped because Implement or Check is empty: `[{"id", "missing"}]`. Fill those with `slicer edit ID --section NAME`. A started item is returned ahead of every open one. `--ready` and `--show` together are `usage` |
 | `next-id` | `{"id": "S02"}` and nothing else; text is the bare id. Does not allocate, lock, log, or accept `--render` |
 | `add`, `set`, `start`, `done`, `park`, `unpark` | the item |
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
@@ -250,7 +251,7 @@ document — and the render failure is reported on stderr. The exit is 1 whateve
 cause, because the mutation itself succeeded and only the projection is stale. Re-run
 `slicer render` (after fixing the cause) to resolve it.
 
-**One case to special-case:** `slicer next` exits **2** when nothing is runnable, with
+**One case to special-case:** `slicer next`, including `--show` and `--ready`, exits **2** when nothing is runnable, with
 `{"item": null, "blocked": [...]}`. That is a normal empty queue, not a failure. Test for
 the `error` key rather than assuming exit 2 means something went wrong.
 
@@ -327,6 +328,14 @@ its score. `next` also reports the item's effective score (a `^` marks a score i
 dependent) and status; `slicer next --start` returns the item and marks it started in one call.
 Use `slicer next --show --json` as the standard read path: it returns the item and its
 full slice together, so picking up work takes one command instead of `next` then `show`.
+`slicer next --ready --json` is the bounded form of that selection. `item` carries
+`id`, `title`, `status`, `depends_on`, `effective_score`, and `path`. `slice` is the
+same object `show` returns, and only when the item has one. `blocked` is included on
+every response, including when an item is returned. `unspecified` uses the same shape
+as `next`. An empty or fully blocked queue exits 2 with `{"item": null, "blocked": [...]}`.
+`--start` and `-n` still apply. `--ready` together with `--show` exits 2 with `code="usage"`.
+Goals stay on `slicer goals`, the progress census stays on `slicer status`, and one
+section stays on `slicer show ID --section`.
 Read the slice and inspect its scope, dependencies, and acceptance checks; resolve any
 ambiguity before starting it. Then run `slicer start ID --render`, implement and verify
 it, and use `slicer done ID --note "..." --render` followed by `slicer check`. If the

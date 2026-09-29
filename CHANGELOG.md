@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer next --ready` returns a bounded pickup of the next eligible item: its id, title, status, dependencies, effective score, and slice path; the slice when it has one; and the blocked list. An empty queue matches `next` (exit 2, `item: null`). `--ready` with `--show` is a usage error.
 - `slicer list --flag` filters by a free-form flag. Repeat it to match any of the named flags. The TUI filter panel offers the same flag axis, including items with no flags.
 
 ### Changed

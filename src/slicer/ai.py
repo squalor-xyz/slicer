@@ -95,6 +95,10 @@ lead and sections. Use the project's configured sections, not assumed headings.
 """ + LOOP + SPEC_GAP + """
 `next` resumes eligible started work before open work; dependencies gate both.
 Within that pool, effective priority includes priority inherited from dependents.
+`slicer next --ready --json` is that same selection as a bounded pickup: item
+identity (`id`, `title`, `status`, `depends_on`, `effective_score`, `path`),
+the slice when the item has one, and the blocked list. An empty queue matches
+`next`. Pass either `--ready` or `--show`.
 Use `slicer list --json` (omits done and retired, ordered as `next` walks the queue and then the other visible rows by score; `--all` or `--status` includes the hidden statuses), `slicer list --sort score --json` (same rows, flat effective-score order), `slicer stats --json`,
 and `slicer log --json` to inspect the roadmap. Use `slicer show ID --section NAME`
 to read one section, and `slicer edit ID --section NAME --text "Body" --render` to
