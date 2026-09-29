@@ -808,6 +808,23 @@ cmd_park = _status_cmd("parked_status")
 cmd_start = _status_cmd("started_status")
 
 
+def cmd_done(args: argparse.Namespace) -> int:
+  item_ids, batch = _batch_ids(args)
+  state = _state(args)
+  if args.render:
+    items, written = ops.done_and_render(state, item_ids, note=args.note or "")
+  else:
+    items = ops.set_status_many(state, item_ids, state.config.done_status, note=args.note or "")
+  _emit_items(args, items, batch,
+              [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
+  if args.render and not args.json:
+    print(f"rendered {written} file(s)")
+  return OK
+
+
+cmd_done.mutates = True
+
+
 def cmd_prose_list(args: argparse.Namespace) -> int:
   state = _state(args)
   entries = []
@@ -1265,7 +1282,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = _render_flag(add("done", _mutating(_status_cmd("done_status")), "mark an item finished"))
+  sp = _render_flag(add("done", cmd_done, "mark an item finished"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 

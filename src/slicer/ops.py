@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from slicer import graph, ids, outline, prose, vcs
+from slicer import graph, ids, outline, prose, render, vcs
 from slicer.errors import StateError
 from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary
 from slicer.store import State
@@ -378,8 +378,10 @@ def set_fields(state: State, item_id: str, **fields: object) -> Item:
   return set_fields_many(state, [item_id], **fields)[0]
 
 
-def set_status_many(state: State, item_ids: list[str], status: str, *, note: str = "") -> list[Item]:
-  """Prevalidate a status batch, preserving no-op and per-item history semantics."""
+def _set_status_many(
+  state: State, item_ids: list[str], status: str, *, note: str = "", render_first: bool = False
+) -> tuple[list[Item], int]:
+  """Validate a status batch and optionally render before publishing it."""
   items = _batch_items(state, item_ids)
   if status not in state.config.statuses:
     raise StateError(f"unknown status {status!r}; known: {sorted(state.config.statuses)}")
@@ -389,13 +391,33 @@ def set_status_many(state: State, item_ids: list[str], status: str, *, note: str
     if previous == status:
       continue
     item.status = status
-    _relocate_slice(state, item.id)
     transitions.append((item, previous))
+  written = 0
+  if render_first:
+    try:
+      expected = render.plan(state)
+      written = len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
+    except Exception:
+      for item, previous in transitions:
+        item.status = previous
+      raise
   if transitions:
+    for item, _ in transitions:
+      _relocate_slice(state, item.id)
     state.save_index()
     for item, previous in transitions:
       _record(state, item.id, "status", frm=previous, to=status, note=note)
-  return items
+  return items, written
+
+
+def set_status_many(state: State, item_ids: list[str], status: str, *, note: str = "") -> list[Item]:
+  """Prevalidate a status batch, preserving no-op and per-item history semantics."""
+  return _set_status_many(state, item_ids, status, note=note)[0]
+
+
+def done_and_render(state: State, item_ids: list[str], *, note: str = "") -> tuple[list[Item], int]:
+  """Render the proposed done state before moving slices or saving the index."""
+  return _set_status_many(state, item_ids, state.config.done_status, note=note, render_first=True)
 
 
 def set_status(state: State, item_id: str, status: str, *, note: str = "") -> Item:
