@@ -16,7 +16,7 @@ from typing import Iterator
 
 from slicer import ids, jsonio, vcs
 from slicer.config import CONFIG_NAME, Config
-from slicer.errors import StateError
+from slicer.errors import SlicerError, StateError
 from slicer.model import SCHEMA_VERSION, Index, LogEntry, Slice
 
 # flock is POSIX-only; on a platform without it the lock degrades to a no-op
@@ -314,6 +314,29 @@ def _from_dict(path: Path, loader, data):
     raise StateError(f"{path}: not usable, a required field is missing or malformed: {e}", code="corrupt") from None
 
 
+def read_index(root: Path) -> Index:
+  """Read only a worktree's index, without discovering or loading slice files."""
+  path = root / DIR_NAME / INDEX_NAME
+  return _from_dict(path, Index.from_dict, jsonio.read(path))
+
+
+def in_work_elsewhere(root: Path) -> dict[str, list[dict[str, str]]]:
+  """Started or claimed items in sibling worktrees, ordered by worktree path."""
+  found: dict[str, list[dict[str, str]]] = {}
+  for sibling in vcs.sibling_worktrees(root):
+    try:
+      config = Config.load(sibling / DIR_NAME / CONFIG_NAME)
+      index = read_index(sibling)
+    except (OSError, SlicerError, AttributeError, KeyError, TypeError, ValueError):
+      continue
+    for item in index.items:
+      if item.claim_owner or (config.started_status and item.status == config.started_status):
+        found.setdefault(item.id, []).append({
+          "worktree": sibling.name, "owner": item.claim_owner,
+        })
+  return found
+
+
 def load(root: Path | None = None) -> State:
   base = discover(root)
   sdir = base / DIR_NAME
@@ -324,7 +347,7 @@ def load(root: Path | None = None) -> State:
   index_path = sdir / INDEX_NAME
   if not index_path.is_file():
     raise StateError(f"{index_path}: not found; run `slicer init` first")
-  index = _from_dict(index_path, Index.from_dict, jsonio.read(index_path))
+  index = read_index(base)
   # `ids.format_id` reads the index's copy of the scheme, not the config's, so
   # validating the config alone leaves a hand-edited index able to crash the
   # formatter. Checked before the reconciliation below, so the same bad value

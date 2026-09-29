@@ -690,28 +690,38 @@ def cmd_next(args: argparse.Namespace) -> int:
   return OK
 
 
-def _claim_cell(cfg: Config, item: model.Item) -> str:
+def _claim_cell(
+  cfg: Config, item: model.Item, elsewhere: list[dict[str, str]] | None = None,
+) -> str:
   """Owner when claimed, `*` when in progress without one, otherwise `-`.
 
-  A finished item never reads as claimed.
+  A finished item's local claim is hidden, but sibling work remains visible.
   """
-  if item.status == cfg.done_status:
-    return "-"
-  if item.claim_owner:
+  if item.status != cfg.done_status and item.claim_owner:
     return item.claim_owner
   if cfg.started_status and item.status == cfg.started_status:
     return "*"
+  if elsewhere:
+    extra = f"+{len(elsewhere) - 1}" if len(elsewhere) > 1 else ""
+    return f"wt:{elsewhere[0]['worktree']}{extra}"
   return "-"
 
 
-def _claim_width(cfg: Config, items: list[model.Item]) -> int:
+def _claim_width(
+  cfg: Config, items: list[model.Item],
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
+) -> int:
   width = len("CLAIM")
   for item in items:
-    width = max(width, len(_claim_cell(cfg, item)))
+    width = max(width, len(_claim_cell(cfg, item, (elsewhere or {}).get(item.id))))
   return width
 
 
-def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
+def _item_rows(
+  state: store.State, items: list[model.Item], *,
+  claim_w: int | None = None,
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
+) -> list[str]:
   """The shared queue-listing row format used by `list` and `find`.
 
   `^` marks an effective score lifted above the item's own by a dependent, so a
@@ -720,14 +730,16 @@ def _item_rows(state: store.State, items: list[model.Item]) -> list[str]:
   """
   cfg = state.config
   eff = graph.effective_scores(state.index)
-  claim_w = _claim_width(cfg, items)
+  elsewhere = elsewhere or {}
+  if claim_w is None:
+    claim_w = _claim_width(cfg, items, elsewhere)
   rows = []
   for n, item in enumerate(items, 1):
     score = str(eff[item.id]) + ("^" if eff[item.id] > item.score else "")
     effort = "-" if item.effort is None else str(item.effort)
     rows.append(
       f"{n:>3}  {item.id:<5} {cfg.status_label(item.status):<7} "
-      f"{_claim_cell(cfg, item):<{claim_w}} {item.size:<4} "
+      f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {item.size:<4} "
       f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
     )
   return rows
@@ -771,18 +783,21 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_next_order(state, items)
-  claim_w = _claim_width(state.config, items)
+  elsewhere = store.in_work_elsewhere(state.root)
+  claim_w = _claim_width(state.config, items, elsewhere)
   header = (
     f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'CLAIM':<{claim_w}} {'SIZE':<4} "
     f"{'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
   )
-  lines = [header, *_item_rows(state, items)]
+  lines = [header, *_item_rows(state, items, claim_w=claim_w, elsewhere=elsewhere)]
   if not items:
     lines = ["no matching items"]
   if hidden_count:
     noun = "item" if hidden_count == 1 else "items"
     lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
-  _emit(args, [i.to_dict() for i in items], "\n".join(lines))
+  _emit(args, [
+    i.to_dict() | {"in_work_elsewhere": elsewhere.get(i.id, [])} for i in items
+  ], "\n".join(lines))
   return OK
 
 
