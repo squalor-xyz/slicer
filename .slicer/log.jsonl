@@ -586,3 +586,9 @@
 {"when": "2026-09-29T14:57:28Z", "item": "S126", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-09-29T14:57:44Z", "item": "S127", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-09-29T14:57:59Z", "item": "S128", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-09-29T15:05:11Z", "item": "S124", "action": "set", "from": "", "to": "", "note": "importance 2→3; urgency 2→3; effort -→1"}
+{"when": "2026-09-29T15:05:11Z", "item": "S125", "action": "set", "from": "", "to": "", "note": "effort -→2"}
+{"when": "2026-09-29T15:05:11Z", "item": "S126", "action": "set", "from": "", "to": "", "note": "importance 2→3; effort -→2"}
+{"when": "2026-09-29T15:05:11Z", "item": "S127", "action": "set", "from": "", "to": "", "note": "importance 2→3; effort -→3"}
+{"when": "2026-09-29T15:05:11Z", "item": "S128", "action": "set", "from": "", "to": "", "note": "importance 2→3; effort -→1"}
+{"when": "2026-09-29T15:06:16Z", "item": "S128", "action": "note", "from": "", "to": "", "note": "Release-workflow review: publish.yml publishes via PyPI trus"}
