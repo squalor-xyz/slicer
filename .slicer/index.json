@@ -3218,6 +3218,7 @@
         "S130",
         "S131",
         "S133",
+        "S135",
         "S136",
         "S137",
         "S138",
@@ -3397,11 +3398,11 @@
         ],
         "trees_literal": false,
         "findings": "user request: implementation-to-review agent handoff",
-        "pass": "",
+        "pass": "v1",
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 3
       }
     },
