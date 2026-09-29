@@ -85,20 +85,21 @@ the concise, canonical quick start and works without project state. The
 [agent reference](docs/agents.md) is for detailed command/JSON contracts and reusable
 prompts.
 
-To pick up existing work, run these from the checkout root; no installation is needed:
+To pick up existing work, run this from the checkout root; no installation is needed.
+The headings are examples; pass the section names the project configures:
 
 ```sh
-PYTHONPATH=src python3 -m slicer next
-PYTHONPATH=src python3 -m slicer show <ID>
+PYTHONPATH=src python3 -m slicer next --ready --section "Implement" --section "Check" --json --lean
 ```
 
-Replace `<ID>` with the returned id. Read the full slice, its dependencies and scope
-boundary, then inspect the relevant source and tests. Resolve missing acceptance
-criteria before implementation. A row without a slice needs `promote` and a written
-specification first. `next` resumes eligible started work before choosing open work.
+Replace `<ID>` with the returned id. Read its scope, dependencies, and acceptance
+checks before changing its status. Then inspect the relevant source and tests.
+Resolve missing acceptance criteria before implementation. A row without a slice
+needs `promote` and a written specification first. `next` resumes eligible started
+work before choosing open work.
 
 ```sh
-PYTHONPATH=src python3 -m slicer start <ID> --render
+PYTHONPATH=src python3 -m slicer start <ID> --render --strict
 # Implement the slice and run its focused tests, then the repository checks:
 python3 -m unittest discover -s tests -t tests
 PYTHONPATH=src python3 -m slicer check
@@ -117,7 +118,7 @@ instructions; a slice's Git section does not itself authorize them.
 
 ```sh
 slicer add "Some title"
-slicer edit S07 --section Why --file note.md
+slicer edit S07 --section Why --file note.md --render --strict
 slicer done S07
 slicer render
 slicer check

@@ -202,3 +202,19 @@ class AiInstructionsTests(unittest.TestCase):
     for command in commands:
       with self.subTest(command=command):
         parser.parse_args(shlex.split(command)[1:])
+
+  def test_AgentsGuide_UsesTheBoundedPickup_NotNextThenShow(self) -> None:
+    text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
+    section = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
+    pickup = section.split("To pick up existing work", 1)[1].split("```", 2)[1]
+    self.assertIn(
+      'slicer next --ready --section "Implement" --section "Check" --json --lean',
+      pickup,
+    )
+    self.assertGreaterEqual(pickup.count("--section"), 2)
+    self.assertNotIn("slicer show", pickup)
+    self.assertIn("slicer start <ID> --render --strict", section)
+    self.assertIn("slicer edit S07 --section Why --file note.md --render --strict", section)
+    done = 'slicer done <ID> --note "Describe the verified outcome" --render'
+    self.assertIn(done, section)
+    self.assertNotIn(done + " --strict", section)
