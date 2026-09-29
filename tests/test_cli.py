@@ -1073,3 +1073,54 @@ class RenderWriteRollbackTests(unittest.TestCase):
       for rel, data in before.items():
         self.assertEqual(repo.read(f".slicer/render/{rel}"), data, rel)
       self.assertEqual(repo.state().index.require("S01").findings, "")
+
+
+class SliceCommandFlagCheckTests(unittest.TestCase):
+  """`slicer check` rejects a removed/renamed flag written in a live slice's own
+  `slicer ...` examples, before an agent copies it into a real command (S116)."""
+
+  def _promoted(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "One")
+    repo.run("promote", "S01")
+    return repo
+
+  def test_Check_OpenSliceBacktickRemovedFlag_FailsNamingIdSectionAndFlag(self) -> None:
+    with self._promoted() as repo:
+      repo.run("edit", "S01", "--section", "Failing tests",
+               "--text", "Run `slicer next --require-render` first.", "--render")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 1)  # DRIFT: a problem was found
+      problems = json.loads(out)["problems"]
+      self.assertTrue(
+        any("S01" in p and "Failing tests" in p and "--require-render" in p for p in problems),
+        problems,
+      )
+
+  def test_Check_OpenSliceAcceptedFlags_NotAProblem(self) -> None:
+    with self._promoted() as repo:
+      repo.run("edit", "S01", "--section", "Implement",
+               "--text", "Then `slicer set S01 --render --strict`.", "--render")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_FlagMentionedInProseNotACommand_NotAProblem(self) -> None:
+    with self._promoted() as repo:
+      # A flag named in prose, or in backticks but not as a `slicer ...` command,
+      # is left alone -- only backtick commands are parsed.
+      repo.run("edit", "S01", "--section", "Why",
+               "--text", "The old --require-render flag became `--strict`.", "--render")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_DoneSliceRemovedFlag_NotScanned(self) -> None:
+    with self._promoted() as repo:
+      repo.run("edit", "S01", "--section", "Failing tests",
+               "--text", "old `slicer next --require-render`", "--render")
+      repo.run("done", "S01", "--render")  # archived: history keeps the old name
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])

@@ -11,11 +11,15 @@ Exit codes are stable because scripts depend on them:
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
+import re
+import shlex
 import subprocess
 import sys
 import tempfile
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from slicer import check as check_mod
@@ -1145,9 +1149,70 @@ def cmd_verify(args: argparse.Namespace) -> int:
   return DRIFT if report.problems else OK
 
 
+_BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
+
+
+def _unknown_flags(parser: argparse.ArgumentParser, tokens: list[str]) -> list[str]:
+  """The flag-looking tokens the real parser does not recognise in `tokens`.
+
+  `parse_known_args` returns unrecognised options rather than erroring on them,
+  so an unknown flag comes back in the extras. A command that fails for another
+  reason -- a missing positional, an unknown subcommand, `-h` -- is not a flag
+  problem, so those raise or exit and are swallowed. Output is redirected because
+  argparse writes usage on the way out.
+  """
+  sink = io.StringIO()
+  try:
+    with redirect_stdout(sink), redirect_stderr(sink):
+      _, extras = parser.parse_known_args(tokens)
+  except (_ParserError, SystemExit):
+    return []
+  return [tok for tok in extras if tok.startswith("-") and tok != "-"]
+
+
+def _slice_flag_problems(state: store.State) -> list[str]:
+  """`slicer ...` examples in live slices whose flags the parser rejects.
+
+  A removed or renamed flag can sit in a slice's Failing tests until an agent
+  copies it into a real command; `check` catches it first. Done and retired
+  slices are skipped -- they keep their history, old flag names and all. Only
+  backtick commands are parsed; a flag merely mentioned in prose is left alone,
+  and the command is never executed.
+  """
+  cfg = state.config
+  skip = {cfg.done_status}
+  if cfg.retired_status:
+    skip.add(cfg.retired_status)
+  parser = _cached_parser()
+  problems: list[str] = []
+  for item in state.index.items:
+    if item.status in skip:
+      continue
+    sl = state.slices.get(item.id)
+    if sl is None:
+      continue
+    for section in sl.sections:
+      for span in _BACKTICK_SPAN.findall(section.body):
+        command = span.strip()
+        if not command.startswith("slicer "):
+          continue
+        try:
+          tokens = shlex.split(command)
+        except ValueError:
+          continue  # unbalanced quotes -- not a flag problem
+        for flag in _unknown_flags(parser, tokens[1:]):
+          problems.append(
+            f"{item.id} / {section.heading}: unknown flag {flag} in `{command}`"
+          )
+  return problems
+
+
 def cmd_check(args: argparse.Namespace) -> int:
   state = _state(args)
   report, expected, diff = check_mod.run(state)
+  # A removed flag in a slice's own `slicer ...` examples is drift too: fold it
+  # into the report so `check` fails and its exit code reflects it.
+  report.problems.extend(_slice_flag_problems(state))
   lines: list[str] = []
   for rel in report.stale_render:
     lines.append(f"stale render: {rel}")

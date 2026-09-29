@@ -2808,7 +2808,7 @@
       "id": "S116",
       "title": "Reject slice examples that name a removed flag",
       "short_title": "Reject slice examples that name a removed flag",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
