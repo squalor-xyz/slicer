@@ -1,0 +1,41 @@
+{
+  "id": "S147",
+  "title": "Keep an unset short title in step when set changes the title",
+  "lead": [
+    "`set ID --title \"New\"` updates the title but leaves `short_title` at the old text, even when the short title was never set separately. So `list` and the ROADMAP row keep showing the old title while the slice H1 shows the new one."
+  ],
+  "depends_note": null,
+  "findings_note": "dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** re-syncing short titles that already drifted; changing how the ROADMAP chooses between title and short title; the slice H1.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Hit while re-titling S144. After `set S144 --title …` the index held the new `title` but `short_title` was still \"Let a retired item depend on a retired item\". `list` showed the old title until a separate `set --short-title`. Nothing warned that the two now disagreed.\n\n`add` defaults `short_title` to the title (`ops.py:142`). `set_fields_many` (`ops.py:374`) sets each requested field independently, so `--title` alone never touches `short_title`. The `_sync_slice` docstring (`ops.py:340`) says the two differ on purpose, which is right when someone chose a short title. When `short_title == title` before the change, though, nobody chose one: it is only the default, and it should follow."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`set_fields_many`)\n- tests covering `set` (for example `tests/test_cli.py`)\n- `docs/agents.md` or `set --help` text if either describes `--title`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. When an item's `short_title` equals its `title`, `set ID --title New` makes both \"New\", and `list` and the rendered ROADMAP row show \"New\".\n2. When an item has a distinct short title, `set ID --title New` leaves the short title unchanged.\n3. `set ID --title New --short-title Short` sets exactly those two values.\n4. A multi-id `set` applies the rule to each item separately.\n5. The log note records the short-title change along with the title change.\n6. The TUI title edit, which goes through the same op, follows the same rule."
+    },
+    {
+      "heading": "Implement",
+      "body": "In `set_fields_many`, when `title` is being set, `short_title` is not in the request, and the item's current `short_title` equals its current `title`, also set `short_title` to the new title. Do it before the change list is built, so the log shows it."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased (fix)."
+    }
+  ],
+  "notes": []
+}

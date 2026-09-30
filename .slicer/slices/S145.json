@@ -1,0 +1,41 @@
+{
+  "id": "S145",
+  "title": "Change the id prefix for new ids",
+  "lead": [
+    "Let a project switch the prefix new ids get, for example `S` to `s`, without renaming any existing id and without the case-collision hole that mixing prefixes opens today."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request: lowercase ids (s145) going forward; prefix is locked once items exist; mixed-case explicit ids can collide",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** renaming or re-casing existing ids; tracking a history of past prefixes beyond what a case change needs; switching this repo's prefix (done after merge).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner wants new slices filed in lowercase (`s145`, not `S145`). slicer can't do that for a project that already has items:\n\n- The prefix lives in the index. `store.py:367` only adopts a changed config prefix while the index is empty. After that, `verify.py:53` reports the mismatch and says to restore the config or start a new project. Changing the prefix would mean hand-editing `index.json`, which is not allowed.\n- Filing explicit ids (`add --id s145`) is unsafe. `ids.allocate` (`ids.py:86`) only advances `next_id` when `parse_id` matches the configured prefix exactly, so `s145` leaves `next_id` at 145. `format_next` (`ids.py:42`) then checks only for an exact-match id, so the next auto-allocated id is `S145`. On a case-insensitive filesystem (macOS default) `S145.json` and `s145.json` are the same file, and one slice silently overwrites the other. The casefold check at `ids.py:79` only covers explicit ids."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ids.py` (`parse_id`, `high_water`, `format_next`)\n- `src/slicer/ops.py` (new prefix-change op)\n- `src/slicer/cli.py` (command wiring; `--json`, `--render`, `--strict` like other mutations)\n- `src/slicer/verify.py` (scheme-mismatch finding stays correct)\n- `tests/test_ids.py`, `tests/test_config.py`\n- `docs/agents.md`, `README.md` or the doc that covers ids, `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. In a project with S01..S03, changing the prefix to `s` updates the index and config, the next `add` allocates `s04`, and `check` passes.\n2. After the change, `show S02`, `list`, `render` and dependency edges onto old `S` ids still work, and no slice file is renamed.\n3. Under prefix `S`, `add --id s05` when `next_id` is 5 advances `next_id` to 6 (prefix compared case-insensitively).\n4. `format_next` refuses to hand out an id that differs from an existing id only in case, with `code=\"case_collision\"`, instead of allocating it.\n5. The change is refused (nothing written) when the new prefix would produce an invalid id (`ids.require_valid`) or is empty.\n6. A config edited by hand to a different prefix without running the command is still reported by `verify` as a scheme mismatch.\n7. `high_water` counts ids under the old prefix and the new one, so `verify`'s next_id check doesn't regress after the switch."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add an op in `ops.py` that sets `index.id_prefix` and the config's `id.prefix` together and records the change in the log. Save both, or neither. Propose the CLI as `slicer id-prefix NEW` (confirm the name at start). The owner has asked only for a case change; decide at start whether to allow any prefix or only one that matches the old prefix case-insensitively. If an arbitrary prefix is allowed, `parse_id`/`high_water` need to know about past prefixes, which is more than a casefold comparison.\n\nMake `parse_id` compare the prefix case-insensitively. Reuse the casefold clash check from `allocate` (`ids.py:79`) in `format_next`.\n\nOnce this lands, switch this repo to `s` so new slices are lowercase."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`. Try it on a scratch copy of a project before switching this repo."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch: code, tests, docs, re-rendered roadmap and a CHANGELOG entry under Unreleased. Switching this repo's own prefix is a separate commit after merge."
+    }
+  ],
+  "notes": []
+}

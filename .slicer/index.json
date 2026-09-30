@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 144,
+  "next_id": 148,
   "preamble": "",
   "passes": [
     {
@@ -14,6 +14,12 @@
     {
       "key": "v1.1",
       "heading": "v1.1.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.2",
+      "heading": "v1.2.0 release",
       "intro": "",
       "outro": ""
     }
@@ -3611,6 +3617,106 @@
         "reason": "",
         "importance": 3,
         "urgency": 3,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S144",
+      "title": "Don't flag retired or done items that depend on a retired item",
+      "short_title": "Don't flag retired or done items that depend on a retired item",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user report: check flags retired items that depend on retired items; user cleared the edges to pass",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S145",
+      "title": "Change the id prefix for new ids",
+      "short_title": "Change the id prefix for new ids",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request: lowercase ids (s145) going forward; prefix is locked once items exist; mixed-case explicit ids can collide",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S146",
+      "title": "Lift a scope boundary out of an outline item's lead",
+      "short_title": "Lift a scope boundary out of an outline item's lead",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S144: promote --file left the boundary line in the lead and the boundary field as the bare marker",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S147",
+      "title": "Keep an unset short title in step when set changes the title",
+      "short_title": "Keep an unset short title in step when set changes the title",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 1
       }
     }
