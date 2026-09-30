@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 148,
+  "next_id": 149,
   "preamble": "",
   "passes": [
     {
@@ -3718,6 +3718,31 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1
+      }
+    },
+    {
+      "id": "S148",
+      "title": "Offer --strict on import and remove",
+      "short_title": "Offer --strict on import and remove",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfooding S146/S147: `import --render --strict` failed with \"unrecognized arguments: --strict\"",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2
       }
     }
   ],

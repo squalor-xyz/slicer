@@ -698,3 +698,5 @@
 {"when": "2026-09-30T00:14:55Z", "item": "S144", "action": "set", "from": "", "to": "", "note": "short_title Let a retired item depend on a retired item→Don't flag retired or done items that depend on a retired item"}
 {"when": "2026-09-30T00:17:17Z", "item": "S146", "action": "add", "from": "", "to": "open", "note": "Lift a scope boundary out of an outline item's lead"}
 {"when": "2026-09-30T00:17:17Z", "item": "S147", "action": "add", "from": "", "to": "open", "note": "Keep an unset short title in step when set changes the title"}
+{"when": "2026-09-30T00:18:57Z", "item": "S148", "action": "add", "from": "", "to": "open", "note": "Offer --strict on import and remove"}
+{"when": "2026-09-30T00:19:18Z", "item": "S148", "action": "edit", "from": "", "to": "", "note": "Why"}

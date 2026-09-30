@@ -1,0 +1,41 @@
+{
+  "id": "S148",
+  "title": "Offer --strict on import and remove",
+  "lead": [
+    "`import` and `remove` take `--render` but not `--strict`, so the render-first policy every other mutation offers is missing on the two commands that change the most at once."
+  ],
+  "depends_note": null,
+  "findings_note": "dogfooding S146/S147: `import --render --strict` failed with \"unrecognized arguments: --strict\"",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `done`, which is already render-first; making `--strict` the default; re-running `check` under `--strict`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Hit while filing S146/S147. Running `import friction.md --render --strict` exited 2 with argparse's \"unrecognized arguments: --strict\", after the same flags had just worked on `promote` and `set`. The AI instructions and `docs/agents.md` teach `--render --strict` as the habit, so an agent following them runs into this.\n\nIn `cli.py`, `import` (`cli.py:1655`) and `remove` (`cli.py:1828`) are registered with `_render_flag` only. Every other mutating command, `migrate` included (`cli.py:1664`), also gets `_strict_flag`. `docs/agents.md:271` still says `--strict` is \"not offered on `import`, `migrate`, or `remove`\", which is already wrong for `migrate`.\n\nWhat each command needs:\n- `import`: `apply_outline` (`ops.py:1082`) writes through `state.save_slice`/`save_index`/`_record`, which `_mutate_strict` (`cli.py:145`) already stages. Its unwind (`ops.py:1156`) unlinks written paths, which is harmless under staging because nothing was written. The `OutlineCommittedError` path (a log write failing after the index landed) needs a look, since under staging the log is flushed in `commit_stage`.\n- `remove --retire` moves the slice file through `state.move_slice`, which already stages.\n- `remove --purge` calls `path.unlink()` directly (`ops.py:951`). That bypasses the stage, so a failed render would still have deleted the file. It needs a staged delete in `store.py` (`_Stage` plus `commit_stage`), flushed in the same order the unstaged path uses: index first, then the file.\n\nThis slice's own examples leave off the `slicer` prefix, because `check` (S116) rejects a live slice whose `slicer …` example uses a flag the parser doesn't know yet."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (register `_strict_flag` on `import` and `remove`)\n- `src/slicer/store.py` (a staged slice-file delete)\n- `src/slicer/ops.py` (`purge` uses it)\n- `tests/test_import.py`, `tests/test_remove.py`, and the tests that cover `_mutate_strict`\n- `docs/agents.md` (the `--strict` paragraph, including the stale `migrate` claim)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `import OUTLINE --render --strict` adds the items and renders, printing the same report as `--render`.\n2. `import --render --strict` with a render forced to fail writes nothing: no new index items, slice files or log lines. It exits 2 with `{\"error\": {\"code\": \"render\"}}` under `--json`.\n3. `remove ID --reason R --render --strict` retires and renders. With a render forced to fail, the item stays at its old status and its slice file stays in place.\n4. `remove ID --purge --render --strict` with a failing render leaves the index row and the slice file on disk.\n5. `import --dry-run --strict` and `remove --dry-run --strict` behave like other commands' `--strict` without an effective `--render`: a usage error, or the same as today's dry-run (match what `_mutating` does now).\n6. `--strict` without `--render` on either command is the existing usage error."
+    },
+    {
+      "heading": "Implement",
+      "body": "Wrap `import` and `remove` with `_strict_flag` in `cli.py`. Add a staged delete to `State` (record the path in `_Stage`, then unlink in `commit_stage` after the index write) and have `purge` call it instead of `path.unlink()`. Leave its id-reclaim logic as it is. Check that the import report and `OutlineCommittedError` still come out right when output is deferred. Update the `docs/agents.md` paragraph to list the commands that actually take `--strict`."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}
