@@ -3649,7 +3649,7 @@
       "id": "S145",
       "title": "Change the id prefix for new ids",
       "short_title": "Change the id prefix for new ids",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

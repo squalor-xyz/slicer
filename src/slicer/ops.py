@@ -321,6 +321,25 @@ def sort_queue(state: State, by: str = "score") -> int:
   return moved
 
 
+def set_id_prefix(state: State, new: str) -> tuple[str, bool]:
+  """Change the prefix new ids get, in the index and the config together.
+
+  Only the case can change (`ids.check_prefix_change`), so every existing id
+  stays in the scheme and none is renamed. Returns the old prefix and whether
+  anything was written. Running it again when the config lags the index (a
+  hand edit, or a crash between the two writes) brings the config back in step.
+  """
+  ids.check_prefix_change(state.index, new)
+  old = state.index.id_prefix
+  if old == new and state.config.id_prefix == new:
+    return old, False
+  state.index.id_prefix = new
+  state.save_index()
+  state.save_config_prefix(new)
+  _record(state, "*", "id_prefix", frm=old, to=new)
+  return old, True
+
+
 def _relocate_slice(state: State, item_id: str) -> None:
   """Move a slice file to wherever its item's status now says it belongs.
 

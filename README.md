@@ -73,6 +73,7 @@ reproduce is never half-migrated.
 | `migrate` | convert an existing markdown slice tree |
 | `next` | the highest-priority startable item |
 | `next-id` | the id the next add would take, without allocating it |
+| `id-prefix` | show the id prefix, or change its case for new ids |
 | `list` | list items in next's order, omitting done and retired unless asked |
 | `deps` | dependencies: unblocked items, or one item's edges |
 | `find` | search items by text |

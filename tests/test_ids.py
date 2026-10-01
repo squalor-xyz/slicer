@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 import support
+
+from slicer import ids, model
+from slicer.errors import RenderError, StateError
 
 
 def set_scheme(repo: support.TempRepo, prefix: str, width: int) -> None:
@@ -341,3 +345,132 @@ class NextIdCommandTests(unittest.TestCase):
       code, _, err = repo.run("next-id", "--render")
       self.assertEqual(code, 2)
       self.assertIn("render", err)
+
+
+class IdPrefixTests(unittest.TestCase):
+  """`id-prefix` changes the case of the prefix new ids get, and nothing else (S145)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    for title in ("one", "two", "three"):
+      repo.run("add", title)
+    return repo
+
+  def test_IdPrefix_CaseChange_UpdatesIndexAndConfigAndNextAdd(self) -> None:
+    with self.repo() as repo:
+      before = json.loads(repo.read(".slicer/config.json"))
+      code, out, err = repo.run("id-prefix", "s", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(
+        json.loads(out), {"from": "S", "to": "s", "changed": True, "next_id": "s04"}
+      )
+      self.assertEqual(json.loads(repo.read(".slicer/index.json"))["id_prefix"], "s")
+      after = json.loads(repo.read(".slicer/config.json"))
+      before["id"]["prefix"] = "s"
+      self.assertEqual(after, before)
+      repo.run("add", "four")
+      self.assertEqual([i.id for i in repo.state().index.items][-1], "s04")
+      code, _, err = repo.run("render")
+      code, _, err = repo.run("check")
+      self.assertEqual(code, 0, err)
+
+  def test_IdPrefix_AfterChange_OldIdsStillWork(self) -> None:
+    with self.repo() as repo:
+      repo.run("promote", "S02")
+      repo.run("id-prefix", "s")
+      repo.run("add", "four", "--depends-on", "S02")
+      self.assertEqual(repo.run("show", "S02")[0], 0)
+      self.assertEqual(repo.run("list")[0], 0)
+      self.assertEqual(repo.run("render")[0], 0)
+      self.assertEqual(repo.state().index.require("s04").depends_on, ["S02"])
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0, out)
+
+  def test_IdPrefix_ExplicitOtherCaseId_AdvancesNextId(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "five", "--id", "s05")
+      self.assertEqual(repo.state().index.next_id, 6)
+
+  def test_FormatNext_IdDifferingOnlyInCase_IsRefused(self) -> None:
+    index = model.Index(id_prefix="s", id_width=2, next_id=2)
+    index.items.append(model.Item(id="S02", title="two", status="open"))
+    with self.assertRaises(StateError) as ctx:
+      ids.format_next(index)
+    self.assertEqual(ctx.exception.code, "case_collision")
+
+  def test_IdPrefix_Refusals_WriteNothing(self) -> None:
+    for prefix, code_name in (("", "usage"), ("T", "usage"), ("s/", "usage")):
+      with self.subTest(prefix=prefix), self.repo() as repo:
+        index, config = repo.read(".slicer/index.json"), repo.read(".slicer/config.json")
+        code, out, _ = repo.run("id-prefix", prefix, "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(out)["error"]["code"], code_name)
+        self.assertEqual(repo.read(".slicer/index.json"), index)
+        self.assertEqual(repo.read(".slicer/config.json"), config)
+
+  def test_IdPrefix_CasefoldMatchThatIsNotAUsableId_IsBadId(self) -> None:
+    # "ß" casefolds to "ss", so it passes the case test against "SS"; only the
+    # id rule stands between it and a prefix that cannot be a filename.
+    index = model.Index(id_prefix="SS", id_width=2)
+    with self.assertRaises(StateError) as ctx:
+      ids.check_prefix_change(index, "ß")
+    self.assertEqual(ctx.exception.code, "bad_id")
+
+  def test_IdPrefix_HandEditedConfig_IsStillAVerifyError(self) -> None:
+    with self.repo() as repo:
+      set_scheme(repo, "s", 2)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("does not match", out)
+      self.assertIn("slicer id-prefix s", out)
+
+  def test_IdPrefix_HandEditedConfig_RerunRepairs(self) -> None:
+    with self.repo() as repo:
+      set_scheme(repo, "s", 2)
+      code, _, err = repo.run("id-prefix", "s")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("verify")[0], 0)
+
+  def test_HighWater_CountsBothCases(self) -> None:
+    self.assertEqual(ids.high_water(["S03", "s05"], "s"), 6)
+
+  def test_IdPrefix_StrictRenderFailure_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      index, config = repo.read(".slicer/index.json"), repo.read(".slicer/config.json")
+      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+        code, out, _ = repo.run("id-prefix", "s", "--render", "--strict")
+      self.assertEqual(code, 2)
+      self.assertEqual(out, "")
+      self.assertEqual(repo.read(".slicer/index.json"), index)
+      self.assertEqual(repo.read(".slicer/config.json"), config)
+
+  def test_IdPrefix_NoArgument_PrintsThePrefix(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("id-prefix")
+      self.assertEqual((code, out), (0, "S\n"))
+      self.assertEqual(json.loads(repo.run("id-prefix", "--json")[1]), {"prefix": "S"})
+
+  def test_IdPrefix_SamePrefix_IsANoOpThatLogsNothing(self) -> None:
+    with self.repo() as repo:
+      log = repo.read(".slicer/log.jsonl")
+      code, out, _ = repo.run("id-prefix", "S", "--json")
+      self.assertEqual(code, 0)
+      self.assertFalse(json.loads(out)["changed"])
+      self.assertEqual(repo.read(".slicer/log.jsonl"), log)
+
+  def test_IdPrefix_DryRun_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      index = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("id-prefix", "s", "--dry-run", "--json")
+      self.assertEqual(code, 0)
+      self.assertTrue(json.loads(out)["dry_run"])
+      self.assertEqual(repo.read(".slicer/index.json"), index)
+
+  def test_IdPrefix_Change_IsLogged(self) -> None:
+    with self.repo() as repo:
+      repo.run("id-prefix", "s")
+      code, out, _ = repo.run("log", "--action", "id_prefix", "--json")
+      entries = json.loads(out)
+      self.assertEqual([(e["from"], e["to"]) for e in entries], [("S", "s")])

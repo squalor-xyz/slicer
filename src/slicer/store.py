@@ -127,6 +127,7 @@ class _Stage:
   slices: dict[str, Slice] = field(default_factory=dict)
   logs: list[LogEntry] = field(default_factory=list)
   moves: list[tuple[Path, Path]] = field(default_factory=list)
+  config: dict | None = None
 
 
 @dataclass
@@ -233,6 +234,23 @@ class State:
     jsonio.write(path, sl.to_dict())
     return path
 
+  def save_config_prefix(self, prefix: str) -> None:
+    """Write a new id prefix into config.json, touching no other key.
+
+    The file is patched rather than rewritten from `Config.to_dict()`: loading
+    back-fills statuses and roles the file may not spell out, and a prefix
+    change should not also rewrite those into someone's hand-kept config.
+    """
+    path = self.dir / CONFIG_NAME
+    raw = jsonio.read(path)
+    ident = raw.get("id")
+    raw["id"] = (dict(ident) if isinstance(ident, dict) else {}) | {"prefix": prefix}
+    self.config.id_prefix = prefix
+    if self._stage is not None:
+      self._stage.config = raw
+      return
+    jsonio.write(path, raw)
+
   def log(self, entry: LogEntry) -> None:
     if self._stage is not None:
       self._stage.logs.append(entry)
@@ -292,6 +310,10 @@ class State:
       jsonio.write(self.slice_path(sl.id), sl.to_dict())
     if stage.index:
       jsonio.write(self.dir / INDEX_NAME, self.index.to_dict())
+    # After the index, which owns the id scheme: a crash between the two leaves
+    # a mismatch `verify` reports and re-running `id-prefix` repairs.
+    if stage.config is not None:
+      jsonio.write(self.dir / CONFIG_NAME, stage.config)
     for entry in stage.logs:
       jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())
 
