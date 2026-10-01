@@ -3826,7 +3826,7 @@
       "id": "S152",
       "title": "Reject a review back to the queue with a verdict",
       "short_title": "Reject a review back to the queue with a verdict",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S150"

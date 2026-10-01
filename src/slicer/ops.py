@@ -671,6 +671,61 @@ def handoff(state: State, item_id: str, *, note: str = "", owner: str | None = N
   return handoff_many(state, [item_id], note=note, owner=owner)[0]
 
 
+def reject_many(
+  state: State, item_ids: list[str], *, note: str, to: str | None = None,
+  owner: str | None = None,
+) -> list[Item]:
+  """Send failed reviews back, with the verdict recorded, in one save.
+
+  The counterpart of `handoff`. The verdict becomes a dated note on the item
+  and the note of a single `reject` history entry, and the reviewer's claim is
+  cleared so the item goes back to the queue unclaimed. The target defaults to
+  the open status; it may be any other configured status that is not a
+  lifecycle role (a project's own `blocked`, say). Every id is checked before
+  anything is written.
+  """
+  cfg = state.config
+  verdict = note.strip()
+  if not verdict:
+    raise StateError("a reject needs a verdict; pass --note", code="usage")
+  target = to if to is not None else cfg.open_status
+  roles = {cfg.done_status, cfg.retired_status, cfg.started_status,
+           cfg.review_status, cfg.reviewing_status} - {""}
+  if target not in cfg.statuses or target in roles:
+    allowed = sorted(set(cfg.statuses) - roles)
+    raise StateError(
+      f"cannot reject to {target!r}; choose one of {allowed}", code="usage"
+    )
+  reviewable = {cfg.review_status, cfg.reviewing_status} - {""}
+  items = _batch_items(state, item_ids)
+  by = actor(state, owner)
+  problems = [
+    f"{item.id} is {cfg.status_label(item.status)!r}, not in review; only review work can be rejected"
+    for item in items if item.status not in reviewable
+  ]
+  if problems:
+    raise StateError("; ".join(problems) + ". Nothing was changed.", code="state")
+  changed: list[tuple[Item, str]] = []
+  for item in items:
+    previous = item.status
+    item.status = target
+    _clear_claim(item)
+    item.notes.append(_dated(verdict))
+    changed.append((item, previous))
+  for item, previous in changed:
+    if previous != item.status:
+      _relocate_slice(state, item.id)
+  state.save_index()
+  for item, previous in changed:
+    _record(state, item.id, "reject", frm=previous, to=item.status, note=verdict, by=by)
+  return items
+
+
+def reject(state: State, item_id: str, *, note: str, to: str | None = None,
+           owner: str | None = None) -> Item:
+  return reject_many(state, [item_id], note=note, to=to, owner=owner)[0]
+
+
 @dataclass
 class NextResult:
   item: Item | None
@@ -782,6 +837,11 @@ def edit_section(state: State, item_id: str, heading: str, body: str, *, append:
   return sl
 
 
+def _dated(text: str) -> str:
+  """An item note as `note` writes it: the date in bold, then the text."""
+  return f"**{_now()[:10]}** — {text}"
+
+
 def add_note(state: State, item_id: str, text: str) -> Item:
   """Append a dated note to the item itself — no slice required — visible in
   `show` and (once promoted) the rendered slice."""
@@ -789,7 +849,7 @@ def add_note(state: State, item_id: str, text: str) -> Item:
   text = text.strip()
   if not text:
     raise StateError("a note cannot be blank", code="usage")
-  item.notes.append(f"**{_now()[:10]}** — {text}")
+  item.notes.append(_dated(text))
   state.save_index()
   _record(state, item_id, "note", note=text.splitlines()[0][:60])
   return item

@@ -391,3 +391,108 @@ class NextReviewTests(unittest.TestCase):
   def test_PlainNext_IgnoresTheReviewQueue(self) -> None:
     with self.repo() as repo:
       self.assertEqual(json.loads(repo.run("next", "--json")[1])["id"], "S02")
+
+
+class RejectTests(unittest.TestCase):
+  """`reject`: a failed review goes back to the queue with its verdict (S152)."""
+
+  VERDICT = "VERDICT: FAIL - missing test"
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    _config(repo, claim_owner="Ada")
+    repo.run("add", "build it", "--effort", "1")
+    repo.run("promote", "S01")
+    repo.run("add", "other work", "--effort", "1")
+    repo.run("start", "S01")
+    repo.run("handoff", "S01")
+    _config(repo, claim_owner="Bea")
+    return repo
+
+  def item(self, repo: support.TempRepo, item_id: str = "S01"):
+    return repo.state().index.require(item_id)
+
+  def index_bytes(self, repo: support.TempRepo) -> bytes:
+    return (repo.root / DIR_NAME / INDEX_NAME).read_bytes()
+
+  def test_Reject_FromReview_ReopensClearsClaimAndRecordsTheVerdict(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("reject", "S01", "--note", self.VERDICT)
+      self.assertEqual(code, 0, err)
+      item = self.item(repo)
+      self.assertEqual((item.status, item.claim_owner), ("open", ""))
+      self.assertTrue(item.notes[-1].endswith(self.VERDICT))
+      entries = json.loads(repo.run("log", "--item", "S01", "--action", "reject", "--json")[1])
+      self.assertEqual(len(entries), 1)
+      self.assertEqual(
+        {k: entries[0][k] for k in ("from", "to", "note", "by")},
+        {"from": "review", "to": "open", "note": self.VERDICT, "by": "Bea"},
+      )
+
+  def test_Reject_FromReviewing_WorksTheSame(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      self.assertEqual(self.item(repo).claim_owner, "Bea")
+      code, _, err = repo.run("reject", "S01", "--note", self.VERDICT)
+      self.assertEqual(code, 0, err)
+      self.assertEqual((self.item(repo).status, self.item(repo).claim_owner), ("open", ""))
+      entry = json.loads(repo.run("log", "--action", "reject", "--json")[1])[0]
+      self.assertEqual(entry["from"], "reviewing")
+
+  def test_Reject_ToCustomStatus_LandsThere(self) -> None:
+    with self.repo() as repo:
+      cfg = json.loads((repo.root / DIR_NAME / "config.json").read_text(encoding="utf-8"))
+      _config(repo, statuses=cfg["statuses"] | {"blocked": "blocked"})
+      code, _, err = repo.run("reject", "S01", "--note", self.VERDICT, "--to", "blocked")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(self.item(repo).status, "blocked")
+
+  def test_Reject_ToALifecycleRole_IsAUsageError(self) -> None:
+    with self.repo() as repo:
+      for target in ("done", "retired", "started", "review", "reviewing"):
+        with self.subTest(target=target):
+          before = self.index_bytes(repo)
+          code, out, _ = repo.run("reject", "S01", "--note", self.VERDICT, "--to", target, "--json")
+          self.assertEqual(code, 2)
+          self.assertEqual(json.loads(out)["error"]["code"], "usage")
+          self.assertEqual(self.index_bytes(repo), before)
+
+  def test_Reject_NotInReview_IsRefusedWithTheHandoffCode(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "started one", "--effort", "1")
+      repo.run("start", "S03")
+      for item_id in ("S02", "S03"):  # open, started
+        with self.subTest(item=item_id):
+          before = self.index_bytes(repo)
+          code, out, _ = repo.run("reject", item_id, "--note", self.VERDICT, "--json")
+          self.assertEqual(code, 2)
+          self.assertEqual(json.loads(out)["error"]["code"], "state")
+          self.assertEqual(self.index_bytes(repo), before)
+
+  def test_Reject_BatchWithOneBadId_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      before = self.index_bytes(repo)
+      code, _, _ = repo.run("reject", "S01", "S02", "--note", self.VERDICT)
+      self.assertEqual(code, 2)
+      self.assertEqual(self.index_bytes(repo), before)
+      self.assertEqual(self.item(repo).status, "review")
+
+  def test_Reject_WithoutAVerdict_IsAUsageError(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("reject", "S01", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      code, out, _ = repo.run("reject", "S01", "--note", "   ", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertEqual(self.item(repo).status, "review")
+
+  def test_Reject_StrictRenderFailure_LeavesItInReview(self) -> None:
+    with self.repo() as repo:
+      before = self.index_bytes(repo)
+      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+        code, out, _ = repo.run("reject", "S01", "--note", self.VERDICT, "--render", "--strict")
+      self.assertEqual(code, 2)
+      self.assertEqual(out, "")
+      self.assertEqual(self.index_bytes(repo), before)
