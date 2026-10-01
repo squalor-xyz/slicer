@@ -109,6 +109,9 @@ Do not combine `--ready` and `--show`.
 `wt:NAME` marks an item started in a sibling Git worktree. `next` skips those
 and reports them in `in_work_elsewhere`; `slicer list --json` shows every claim.
 `slicer release ID` hands a claim back without changing status.
+When several agents share one checkout, give each its own name with
+`--owner NAME` on `start`, `next --start`, `handoff`, `release` and `done`, or
+set `SLICER_CLAIM_OWNER`; `slicer log --by NAME` then shows what each did.
 
 To re-read part of a slice with its title, dependencies, and scope boundary, use
 `slicer show ID --section "Implement" --section "Check" --context --json`.

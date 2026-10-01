@@ -292,8 +292,11 @@ table. `slicer next` and `slicer status` skip an item a sibling worktree has in 
 report it (`skipped S03 (in work in wt:NAME)`, or `in_work_elsewhere` in JSON), unless
 this checkout has it started or claimed too. This reads local Git worktrees only; it
 cannot see work on another machine, and the rendered roadmap ignores it.
-The owner is `claim_owner` in
-config, otherwise the git user name, otherwise the worktree name. `slicer release S01`
+The owner is `--owner NAME` on
+the command, otherwise the `SLICER_CLAIM_OWNER` environment variable, otherwise
+`claim_owner` in config, otherwise the git user name, otherwise the worktree name, so
+agents sharing one checkout can each claim under their own name. History records the
+same name as `by` on start, release, handoff and done. `slicer release S01`
 clears the claim and leaves the status. `done` clears it too, so a finished item is not
 shown as claimed.
 

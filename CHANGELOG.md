@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `--owner NAME` on `start`, `next --start`, `handoff`, `release` and `done`, and a `SLICER_CLAIM_OWNER` environment variable, name who claims or acts per call, ahead of `claim_owner` and the git user. Those history entries record it as `by`, and `log --by NAME` filters on it. Other history lines are unchanged.
 - `slicer id-prefix [NEW]` prints the id prefix, or changes its case for new ids (for example `S` to `s`) in the index and config together. Existing ids keep their case and no slice file is renamed. A prefix that differs by more than case is refused. It takes `--dry-run`, `--json`, `--render` and `--strict`.
 
 ### Fixed

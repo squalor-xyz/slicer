@@ -697,6 +697,8 @@ def cmd_next(args: argparse.Namespace) -> int:
     )
   if args.section and not args.ready:
     raise StateError("--section on next requires --ready", code="usage")
+  if args.owner is not None and not args.start:
+    raise StateError("--owner on next requires --start", code="usage")
   state = _state(args)
   result = ops.next_item(state, args.n, store.in_work_elsewhere(state.root))
   if result.item is None:
@@ -720,7 +722,7 @@ def cmd_next(args: argparse.Namespace) -> int:
       _sections_named(sl, args.section)
   if args.start:
     with store.project_lock(state.root):
-      item = ops.start(state, item.id)
+      item = ops.start(state, item.id, owner=args.owner)
   if args.ready:
     _emit_ready(args, state, item, result)
     return OK
@@ -1218,7 +1220,7 @@ def cmd_start(args: argparse.Namespace) -> int:
   status = state.config.started_status
   if not status:
     raise StateError("this project declares no started status; set started_status in config")
-  items = ops.start_many(state, item_ids, note=args.note or "")
+  items = ops.start_many(state, item_ids, note=args.note or "", owner=args.owner)
   _emit_items(args, items, batch,
               [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
   for item_id in item_ids:
@@ -1232,7 +1234,7 @@ def cmd_release(args: argparse.Namespace) -> int:
   """Clear claims and leave status alone. Ids are read once."""
   item_ids, batch = _batch_ids(args)
   state = _state(args)
-  items = ops.release_many(state, item_ids)
+  items = ops.release_many(state, item_ids, owner=args.owner)
   _emit_items(args, items, batch, [f"{item.id} released" for item in items])
   return OK
 
@@ -1241,7 +1243,7 @@ def cmd_handoff(args: argparse.Namespace) -> int:
   """Hand started slices to review: status to review, claim cleared. Ids are read once."""
   item_ids, batch = _batch_ids(args)
   state = _state(args)
-  items = ops.handoff_many(state, item_ids, note=args.note or "")
+  items = ops.handoff_many(state, item_ids, note=args.note or "", owner=args.owner)
   _emit_items(args, items, batch,
               [f"{item.id} -> {state.config.status_label(item.status)}, unclaimed" for item in items])
   return OK
@@ -1250,10 +1252,13 @@ def cmd_handoff(args: argparse.Namespace) -> int:
 def cmd_done(args: argparse.Namespace) -> int:
   item_ids, batch = _batch_ids(args)
   state = _state(args)
+  by = ops.actor(state, args.owner)
   if args.render:
-    items, written = ops.done_and_render(state, item_ids, note=args.note or "")
+    items, written = ops.done_and_render(state, item_ids, note=args.note or "", by=by)
   else:
-    items = ops.set_status_many(state, item_ids, state.config.done_status, note=args.note or "")
+    items = ops.set_status_many(
+      state, item_ids, state.config.done_status, note=args.note or "", by=by
+    )
   _emit_items(args, items, batch,
               [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
   if args.render and not args.json:
@@ -1578,15 +1583,19 @@ def cmd_log(args: argparse.Namespace) -> int:
   if args.action:
     actions = set(args.action)
     history = [e for e in history if e.action in actions]
+  if args.by:
+    actors = set(args.by)
+    history = [e for e in history if e.by in actors]
   # Newest first by timestamp so union-merged history (which can interleave the
   # lines two branches appended) still reads in order. Reverse the append order
   # first so that, among entries sharing a timestamp, the later-appended one is
   # shown first -- a stable sort then keeps that tie-break.
   entries = sorted(reversed(history), key=lambda e: e.when, reverse=True)[: args.limit]
-  filters = (args.item or []) + (args.action or [])
+  filters = (args.item or []) + (args.action or []) + (args.by or [])
   empty = ("no history for " + " ".join(filters)) if filters else "no history yet"
   text = "\n".join(
-    f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
+    (f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
+     + (f"  by {e.by}" if e.by else ""))
     for e in entries
   ) or empty
   _emit(args, [e.to_dict() for e in entries], text)
@@ -1700,6 +1709,7 @@ def build_parser() -> argparse.ArgumentParser:
                   help="bounded pickup: item identity, its slice, and blocked ids")
   sp.add_argument("--section", action="append",
                   help="with --ready, return only this section (repeatable)")
+  sp.add_argument("--owner", help="with --start, who to claim as (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 
@@ -1811,17 +1821,21 @@ def build_parser() -> argparse.ArgumentParser:
   sp = _render_flag(add("done", cmd_done, "mark an item finished"))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
+  sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = _strict_flag(_render_flag(add("start", _mutating(cmd_start), "mark an item in progress and claim it")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
+  sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = _strict_flag(_render_flag(add("release", _mutating(cmd_release), "clear a claim without changing status")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
+  sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = _strict_flag(_render_flag(add("handoff", _mutating(cmd_handoff), "hand a started slice to review and clear its claim")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
+  sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = _strict_flag(_render_flag(add("park", _mutating(cmd_park), "set an item aside")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
@@ -1886,6 +1900,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--limit", type=int, default=20, help="how many entries (default 20)")
   sp.add_argument("--item", action="append", help="filter to these item ids (repeatable)")
   sp.add_argument("--action", action="append", help="filter to these actions, e.g. set, edit (repeatable)")
+  sp.add_argument("--by", action="append", help="filter to actions recorded by these owners (repeatable)")
 
   add("tui", cmd_tui, "browse and reorder interactively (also: ui)",
       json_flag=False, aliases=("ui",))

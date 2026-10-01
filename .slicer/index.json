@@ -3749,7 +3749,7 @@
       "id": "S149",
       "title": "Claim as a named actor per invocation",
       "short_title": "Claim as a named actor per invocation",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

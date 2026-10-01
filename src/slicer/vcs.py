@@ -7,6 +7,7 @@ here even by a caller that asks for them.
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -93,8 +94,32 @@ def subjects(root: Path, limit: int = 2000) -> list[str]:
   return done.stdout.splitlines() if done.returncode == 0 else []
 
 
-def identity(root: Path, configured: str) -> str:
-  """Who a claim should name: config, then git user.name, then the worktree."""
+CLAIM_OWNER_ENV = "SLICER_CLAIM_OWNER"
+
+
+def _named(value: str | None, source: str) -> str:
+  """A per-call owner, stripped; empty means "fall through to the next source".
+
+  A newline is refused rather than cut: the value names who did something in the
+  log, and silently keeping only its first line would record a different name.
+  """
+  chosen = (value or "").strip()
+  if "\n" in chosen or "\r" in chosen:
+    raise StateError(f"{source} must be one line", code="usage")
+  return chosen
+
+
+def identity(root: Path, configured: str, override: str | None = None) -> str:
+  """Who a claim or a lifecycle action should name.
+
+  A per-call `--owner`, then SLICER_CLAIM_OWNER, then `claim_owner` in config,
+  then git user.name, then the worktree. The first two let several agents in one
+  checkout claim under their own names.
+  """
+  for value, source in ((override, "--owner"), (os.environ.get(CLAIM_OWNER_ENV), CLAIM_OWNER_ENV)):
+    chosen = _named(value, source)
+    if chosen:
+      return chosen
   chosen = configured.strip()
   if chosen:
     return chosen.splitlines()[0].strip()
