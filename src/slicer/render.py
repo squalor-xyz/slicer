@@ -255,6 +255,7 @@ _HTML_STYLE = """\
 def _status_class(status: str, cfg: Config) -> str:
   """A CSS class per status, keyed off the config's role pointers."""
   return {
+    cfg.reviewing_status: "started",
     cfg.open_status: "open", cfg.started_status: "started", cfg.done_status: "done",
     cfg.parked_status: "parked", cfg.retired_status: "retired",
   }.get(status, "other")

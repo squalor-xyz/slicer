@@ -146,14 +146,14 @@ def effective_scores(index: Index) -> dict[str, int]:
 def ranked_order(
   index: Index, cfg: Config, items: list[Item], *, descending: bool = True,
 ) -> list[Item]:
-  """The order `list` shows: unblocked started, unblocked open, then the rest.
+  """The order `list` shows: unblocked started (or reviewing), unblocked open, then the rest.
 
   Parked items are a last group, still by effective score. Each other group
   is by effective score too. Descending is the list order. Ascending reverses
   the groups and sorts score upward. Ties keep stored queue order.
   """
   eff = effective_scores(index)
-  started = cfg.started_status
+  in_work = cfg.in_work()
   parked = cfg.parked_status
   place = {it.id: n for n, it in enumerate(index.items)}
 
@@ -162,7 +162,7 @@ def ranked_order(
       return 3
     if blocked_by(index, item, cfg.done_status):
       return 2
-    if started and item.status == started:
+    if item.status in in_work:
       return 0
     if item.status == cfg.open_status:
       return 1

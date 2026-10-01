@@ -100,6 +100,10 @@ class Config:
   # Where `handoff` puts a started slice that is ready for someone else to
   # review, merge, or clean up. Empty disables `handoff`.
   review_status: str = "review"
+  # Where `start` puts a review item a reviewer has claimed. It keeps a review in
+  # progress out of `next`, which would otherwise resume it as started work.
+  # Empty makes `start` on a review item move it to started, as before.
+  reviewing_status: str = "reviewing"
   sections: list[str] = field(default_factory=lambda: list(DEFAULT_SECTIONS))
   boundary: str = "**Not in this slice:**"
   done_dir: str = "done"
@@ -119,6 +123,10 @@ class Config:
   # Who `start` records when it claims an item. Empty means git user.name,
   # then the worktree directory name.
   claim_owner: str = ""
+
+  def in_work(self) -> set[str]:
+    """Statuses that mean someone is on an item: started, or reviewing."""
+    return {self.started_status, self.reviewing_status} - {""}
 
   def status_label(self, status: str) -> str:
     return self.statuses.get(status, status)
@@ -149,6 +157,16 @@ class Config:
         raise ConfigError(
           f"review_status {self.review_status!r} is already another role's status; "
           "give review its own status"
+        )
+    if self.reviewing_status:
+      if self.reviewing_status not in self.statuses:
+        raise ConfigError(f"reviewing_status {self.reviewing_status!r} is not in statuses")
+      others = {self.open_status, self.done_status, self.retired_status,
+                self.parked_status, self.started_status, self.review_status}
+      if self.reviewing_status in others:
+        raise ConfigError(
+          f"reviewing_status {self.reviewing_status!r} is already another role's status; "
+          "give reviewing its own status"
         )
     if len({self.done_dir, self.retired_dir, ""}) != 3:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
@@ -188,6 +206,7 @@ class Config:
       "parked_status": self.parked_status,
       "started_status": self.started_status,
       "review_status": self.review_status,
+      "reviewing_status": self.reviewing_status,
       "sections": list(self.sections),
       "boundary": self.boundary,
       "done_dir": self.done_dir,
@@ -242,6 +261,15 @@ class Config:
         review = ""
     if review and review not in statuses:
       statuses[review] = review
+    # Back-filled like `review`, for a config written before reviewing existed.
+    # A project without review has nothing to review, so it gets none either.
+    reviewing = d.get("reviewing_status")
+    if reviewing is None:
+      reviewing = "reviewing" if review else ""
+      if reviewing and reviewing not in statuses and reviewing in statuses.values():
+        reviewing = ""
+    if reviewing and reviewing not in statuses:
+      statuses[reviewing] = reviewing
     cfg = Config(
       version=int(d.get("version", SCHEMA_VERSION)),
       id_prefix=ident.get("prefix", "S"),
@@ -253,6 +281,7 @@ class Config:
       parked_status=parked,
       started_status=started,
       review_status=review,
+      reviewing_status=reviewing,
       sections=list(d.get("sections", DEFAULT_SECTIONS)),
       boundary=d.get("boundary", "**Not in this slice:**"),
       done_dir=d.get("done_dir", "done"),

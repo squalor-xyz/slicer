@@ -536,7 +536,8 @@ class TuiDrawingTests(unittest.TestCase):
             for hint in hints:
               self.assertIn(hint, text)
             self.assertIn((height - rows - 1, view.feedback()), screen.writes)
-            self.assertIn((height - rows - 2, view.status(state)), screen.writes)
+            # The status line is clipped to the screen like every other line.
+            self.assertIn((height - rows - 2, view.status(state)[:width - 1]), screen.writes)
 
   def test_Shortcuts_BindingLabelChanges_AreReflectedInHints(self) -> None:
     bindings = tuple(tui.Binding(('x',), 'x', b.action, b.description)
