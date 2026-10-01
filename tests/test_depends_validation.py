@@ -83,6 +83,36 @@ class DependsValidationTests(unittest.TestCase):
       message = self.assertRefused(repo, "state", "set", "S02", "--depends-on", "S01")
       self.assertIn("retired", message)
 
+  def test_Set_RetiredItem_MayDependOnRetired(self) -> None:
+    with self.repo() as repo:
+      repo.run("remove", "S01", "--reason", "obsolete")
+      repo.run("remove", "S02", "--reason", "obsolete")
+      code, _, err = repo.run("set", "S02", "--depends-on", "S01")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Set_DoneItem_MayDependOnRetired(self) -> None:
+    with self.repo() as repo:
+      repo.run("done", "S02", "--note", "landed")
+      repo.run("remove", "S01", "--reason", "obsolete")
+      code, _, err = repo.run("set", "S02", "--depends-on", "S01")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Set_RetiredItem_UnknownDependency_IsStillRefused(self) -> None:
+    with self.repo() as repo:
+      repo.run("remove", "S02", "--reason", "obsolete")
+      message = self.assertRefused(repo, "no_such_item", "set", "S02", "--depends-on", "S99")
+      self.assertIn("S99", message)
+
+  def test_Set_RetiredItems_Cycle_IsStillRefused(self) -> None:
+    with self.repo() as repo:
+      repo.run("remove", "S01", "--reason", "obsolete")
+      repo.run("remove", "S02", "--reason", "obsolete")
+      self.assertEqual(repo.run("set", "S02", "--depends-on", "S01")[0], 0)
+      message = self.assertRefused(repo, "state", "set", "S01", "--depends-on", "S02")
+      self.assertIn("cycle", message)
+
   def test_Set_UnrelatedField_IgnoresAPreexistingDanglingEdge(self) -> None:
     with self.repo() as repo:
       path = repo.root / DIR_NAME / INDEX_NAME
