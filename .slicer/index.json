@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 161,
+  "next_id": 162,
   "preamble": "",
   "passes": [
     {
@@ -4053,6 +4053,31 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1
+      }
+    },
+    {
+      "id": "s161",
+      "title": "Select the unit tests that hit a diff",
+      "short_title": "Select the unit tests that hit a diff",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-10-01, after S144: the full suite was 972 tests in 558s; 31 tests that matched the change took 27s",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2
       }
     }
   ],

@@ -1,0 +1,41 @@
+{
+  "id": "s161",
+  "title": "Select the unit tests that hit a diff",
+  "lead": [
+    "While a slice is being edited, run the tests that actually execute the changed lines. The full `unittest discover` stays the gate before `done`."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request 2026-10-01, after S144: the full suite was 972 tests in 558s; 31 tests that matched the change took 27s",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a `slicer test` subcommand; pytest, coverage.py, or any new dependency; choosing tests by filename or by `-k`; removing the full `unittest discover` from a slice's Check section or from the step before `done`; changing `ai.LOOP` or the published skill.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S144's edit loop did not need 972 tests. A name filter, `-k Retired`, ran 31 tests in 27 seconds. The full suite took 558 seconds. That wait is the cost the agent pays on every slice, and the suite is almost all temp repos running the CLI in-process.\n\nThat name filter is not this slice. Picking tests by filename or by a `-k` substring misses a fixture that never uses the changed word, and it misses a shared module. `ops.py`, `verify.py` and `cli.py` sit under most commands. The tests call `main()` in-process (`tests/support.py`), so a stdlib tracer can see which test executed which line.\n\nThe map is a local cache, not a second gate. A missing or stale map says to run the full suite. It does not guess."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/affected.py` (record a map, select tests for a diff, optionally run them)\n- `tests/test_affected.py`\n- `AGENTS.md` (the edit-loop command; the full suite before `done` stays)\n- `.venv/affected-map.json` is the map's home. `.venv/` is already gitignored, so the map is not committed"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Recording a two-test fixture maps each test to the lines it executed and stores the HEAD sha. A diff that touches a line only test A ran selects A and not B. A line both ran selects both.\n2. A changed `tests/test_*.py` selects the tests in that module even when the map has no hit on those lines.\n3. A missing map exits 2 and tells the caller to run `python3 -m unittest discover -s tests -t tests`. It does not choose tests by filename.\n4. A diff that touches a `src/slicer/` file the map has never seen exits 2 with the same full-suite instruction, rather than a partial list that looks complete.\n5. A diff that touches only docs, changelog, or `.slicer/` exits 0 and reports that there is nothing to run.\n6. The tool imports nothing outside the standard library. The tests fail if `coverage` or `pytest` is imported.\n7. If HEAD is not the sha stored by `record`, selection exits 2 and names the full `discover` command. Uncommitted edits on that same commit stay valid.\n8. A change to `tests/support.py` or a fixture exits 2 with that same instruction."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `tests/affected.py`, run as `python3 tests/affected.py`. It stays out of `src/slicer/`. Three modes:\n\n- `record` runs `python3 -m unittest discover -s tests -t tests` under `sys.settrace`, and writes `.venv/affected-map.json`. The map is `{test id: [\"path:line\", ...]}` for lines under `src/slicer/` and `tests/` only, plus the HEAD sha that `record` traced. Start the trace in the test's start and stop it at the test's end, so lines land on one test. This command is for a person or an agent to run locally. CI does not run it, and the suite's own tests must not record the real 972-test tree.\n- With no mode, read the working tree against `HEAD` (`git diff -U0 HEAD`) plus untracked files under `src/` and `tests/`. Print the selected unittest ids, one per line. `--run` executes that list and exits with its status. An empty selection exits 0 and runs nothing.\n- `--lines PATH:START-END` (repeatable) supplies the diff instead of git, so the tests do not need a repository. Those tests supply the map and the recorded sha directly, so the staleness check does not need a repository either.\n\nSelection: a test is selected when one of its mapped lines is in the diff. A changed `tests/test_*.py` selects that module in full. The map is valid only for uncommitted edits on the commit `record` traced. If HEAD is not that sha, exit 2 and name the full `discover` command. The same exit applies when the map is missing, when a `src/slicer/` file is not in the map, and when something under `tests/` changed that is not a `tests/test_*.py` module (`support.py`, fixtures). Docs, changelog, and `.slicer/` changes select nothing.\n\nIn `AGENTS.md`, under the implement steps, say to run `python3 tests/affected.py --run` while editing, and to run the full `discover` when that command exits 2. The full `discover` before `done` stays as written. Do not add a CHANGELOG entry: this is contributor tooling, not a user-facing command."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap. No CHANGELOG entry."
+    }
+  ],
+  "notes": []
+}
