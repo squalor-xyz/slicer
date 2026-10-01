@@ -42,6 +42,21 @@ class WorktreeClaimTests(unittest.TestCase):
     self.assertEqual(made.returncode, 0, made.stderr)
     return root
 
+  def test_NextReview_ItemReviewingInSibling_IsSkipped(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--status", "review")
+      repo.commit("in review")
+      sibling = self.sibling(repo, "reviewer")
+      code, _, err = _run(sibling, "set", "S01", "--status", "reviewing")
+      self.assertEqual(code, 0, err)
+      code, out, _ = repo.run("next", "--status", "review", "--json")
+      self.assertEqual(code, 2)
+      payload = json.loads(out)
+      self.assertIsNone(payload["item"])
+      self.assertEqual(
+        payload["in_work_elsewhere"], [{"id": "S01", "worktree": "reviewer", "owner": ""}]
+      )
+
   def test_SiblingReviewing_IsInWorkElsewhere(self) -> None:
     with self.repo() as repo:
       sibling = self.sibling(repo, "other")

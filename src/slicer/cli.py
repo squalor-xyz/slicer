@@ -700,7 +700,12 @@ def cmd_next(args: argparse.Namespace) -> int:
   if args.owner is not None and not args.start:
     raise StateError("--owner on next requires --start", code="usage")
   state = _state(args)
-  result = ops.next_item(state, args.n, store.in_work_elsewhere(state.root))
+  review = args.status is not None
+  if review and (not state.config.review_status or args.status != state.config.review_status):
+    supported = (f"only {state.config.review_status!r}, the review status, is supported"
+                 if state.config.review_status else "this project declares no review status")
+    raise StateError(f"next --status {args.status!r}: {supported}", code="usage")
+  result = ops.next_item(state, args.n, store.in_work_elsewhere(state.root), review=review)
   if result.item is None:
     payload = {
       "item": None,
@@ -708,7 +713,7 @@ def cmd_next(args: argparse.Namespace) -> int:
     }
     parts = [f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked]
     _note_skips(payload, parts, result)
-    text = "\n".join(parts) if parts else "nothing unmarked"
+    text = "\n".join(parts) if parts else ("nothing in review" if review else "nothing unmarked")
     if args.n:
       text = f"no eligible item at offset {args.n}" + (f"\n{text}" if parts else "")
     _emit(args, payload, text)
@@ -1720,6 +1725,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--section", action="append",
                   help="with --ready, return only this section (repeatable)")
   sp.add_argument("--owner", help="with --start, who to claim as (overrides SLICER_CLAIM_OWNER and claim_owner)")
+  sp.add_argument("--status", help="draw from this queue instead; only the review status is supported")
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 
