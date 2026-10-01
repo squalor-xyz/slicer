@@ -17,6 +17,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- `check` and dependency edits no longer treat an edge from a retired or done item onto a retired item as drift. An open, started, or parked item that depends on a retired item still fails.
 - An explicit id whose prefix differs from the configured one only in case (`add --id s05` under `S`) now advances `next_id`, and the high-water check counts it. Allocation refuses a generated id that differs from an existing id only in case (`case_collision`) instead of writing a second slice over the first on a case-insensitive filesystem.
 
 ## [1.1.0] - 2026-09-29

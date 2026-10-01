@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-160 items · — 11 · done 147 · later 1 · retired 1
+160 items · — 10 · done 148 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -83,7 +83,7 @@ v1.2.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 42 | [S144](slices/S144.md) | Don't flag retired or done items that depend on a retired item | S | 1 | slicer | user report: check flags retired items that depend on retired items; user cleared the edges to pass | — |
+| 42 | [S144](slices/S144.md) | Don't flag retired or done items that depend on a retired item | S | 1 | slicer | user report: check flags retired items that depend on retired items; user cleared the edges to pass | done |
 | 43 | [S145](slices/S145.md) | Change the id prefix for new ids | M | 2 | slicer | owner request: lowercase ids (s145) going forward; prefix is locked once items exist; mixed-case explicit ids can collide | done |
 | 44 | [S146](slices/S146.md) | Lift a scope boundary out of an outline item's lead | S | 1 | slicer | dogfooding S144: promote --file left the boundary line in the lead and the boundary field as the bare marker | — |
 | 45 | [S147](slices/S147.md) | Keep an unset short title in step when set changes the title | S | 1 | slicer | dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title | — |

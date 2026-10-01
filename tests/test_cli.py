@@ -668,6 +668,82 @@ class VerifyCompletenessTests(unittest.TestCase):
       repo.run("render")
       self.assertNotEqual(repo.run("check")[0], 0)
 
+  def test_Verify_RetiredDependsOnRetired_IsClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
+      repo.run("remove", "S02", "--reason", "obsolete", "--force")
+      repo.run("render")
+      code, out, err = repo.run("verify")
+      self.assertEqual(code, 0, out + err)
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)
+
+  def test_Verify_DoneDependsOnRetired_IsClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("done", "S02", "--note", "landed")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
+      repo.run("render")
+      code, out, err = repo.run("verify")
+      self.assertEqual(code, 0, out + err)
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)
+
+  def test_Verify_StartedDependsOnRetired_IsReported(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("start", "S02")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("S02", out)
+      self.assertIn("retired", out)
+
+  def test_Verify_ParkedDependsOnRetired_IsReported(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("park", "S02")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 1)
+      self.assertIn("S02", out)
+      self.assertIn("retired", out)
+
+  def test_Check_RetiringDependentOfRetired_IsClean(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
+      repo.run("remove", "S02", "--reason", "also obsolete", "--force")
+      repo.run("render")
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)
+
+  def test_Check_UnretireWhileDependingOnRetired_IsReported(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "base")
+      repo.run("add", "dependent")
+      repo.run("set", "S02", "--depends-on", "S01")
+      repo.run("remove", "S01", "--reason", "obsolete", "--force")
+      repo.run("remove", "S02", "--reason", "also obsolete", "--force")
+      code, _, err = repo.run("set", "S02", "--status", "open")
+      self.assertEqual(code, 0, err)
+      repo.run("render")
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("S02", out)
+      self.assertIn("retired", out)
+
 
 class TuiCreateAndFieldTests(unittest.TestCase):
   """The TUI can create an item and set fields, through the same ops (S40)."""

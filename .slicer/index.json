@@ -3624,7 +3624,7 @@
       "id": "S144",
       "title": "Don't flag retired or done items that depend on a retired item",
       "short_title": "Don't flag retired or done items that depend on a retired item",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

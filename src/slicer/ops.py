@@ -123,7 +123,13 @@ def _check_depends(state: State, proposed: dict[str, list[str]], new: Item | Non
         problems.append(f"{item_id}: depends on unknown id {dep!r}{hint}")
       elif dep == item_id:
         problems.append(f"{item_id}: cannot depend on itself")
-      elif state.config.retired_status and after.require(dep).status == state.config.retired_status:
+      elif (
+        state.config.retired_status
+        and after.require(dep).status == state.config.retired_status
+        and after.require(item_id).status not in {
+          status for status in (state.config.retired_status, state.config.done_status) if status
+        }
+      ):
         problems.append(f"{item_id}: {dep} is retired and can never be done; restore it or drop the dependency")
       elif dep not in old:
         loop = graph.path(after, dep, item_id)
