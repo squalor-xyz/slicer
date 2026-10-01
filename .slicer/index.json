@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 160,
+  "next_id": 161,
   "preamble": "",
   "passes": [
     {
@@ -4022,6 +4022,31 @@
         ],
         "trees_literal": false,
         "findings": "agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1
+      }
+    },
+    {
+      "id": "s160",
+      "title": "Show the project URL from the CLI",
+      "short_title": "Show the project URL from the CLI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-10-01: repo URL (https://github.com/squalor-xyz/slicer) reachable from -h or --about; today only pyproject.toml has it",
         "pass": "v1.2",
         "group": "",
         "reason": "",
