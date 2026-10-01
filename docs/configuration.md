@@ -49,7 +49,7 @@ and the slice files, the config is yours to hand-edit.
 
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
-| `id.prefix` | `"S"` | The id scheme | **Until the first item exists.** See below |
+| `id.prefix` | `"S"` | The id scheme | **Until the first item exists**; after that, only its case, with `slicer id-prefix`. See below |
 | `id.width` | `2` → `S01` | As above | **Until the first item exists** |
 | `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |
 | `open_status` | `"open"` | Which items `next` considers, what `unpark` returns to, the sync pointers | Only with migration |
@@ -82,6 +82,11 @@ break every commit message and review that cites one. Editing the config then do
 renumber anything, and `slicer verify` and `slicer check` report the disagreement naming
 both schemes rather than letting it pass quietly. Restore the config, or start a new
 project.
+
+The one change slicer supports later is the case of the prefix: `slicer id-prefix s`
+switches new ids from `S160` to `s160`, updating the index and config together. Existing
+ids keep their case and no file is renamed. Because the prefix is compared without case,
+old and new ids stay one scheme and are never reused.
 
 **`done_status`, `done_dir` and `retired_dir` strand existing files.** The folder a slice
 lives in is derived from its status, so changing either side of that mapping leaves

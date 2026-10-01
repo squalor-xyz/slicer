@@ -6,6 +6,14 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer id-prefix [NEW]` prints the id prefix, or changes its case for new ids (for example `S` to `s`) in the index and config together. Existing ids keep their case and no slice file is renamed. A prefix that differs by more than case is refused. It takes `--dry-run`, `--json`, `--render` and `--strict`.
+
+### Fixed
+
+- An explicit id whose prefix differs from the configured one only in case (`add --id s05` under `S`) now advances `next_id`, and the high-water check counts it. Allocation refuses a generated id that differs from an existing id only in case (`case_collision`) instead of writing a second slice over the first on a case-insensitive filesystem.
+
 ## [1.1.0] - 2026-09-29
 
 ### Added

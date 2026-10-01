@@ -552,6 +552,30 @@ def cmd_next_id(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_id_prefix(args: argparse.Namespace) -> int:
+  state = _state(args)
+  if args.prefix is None:
+    _emit(args, {"prefix": state.index.id_prefix}, state.index.id_prefix)
+    return OK
+  if args.dry_run:
+    ids.check_prefix_change(state.index, args.prefix)
+    old = state.index.id_prefix
+    changed = (old, state.config.id_prefix) != (args.prefix, args.prefix)
+  else:
+    old, changed = ops.set_id_prefix(state, args.prefix)
+  next_id = ids.format_id(args.prefix, state.index.next_id, state.index.id_width)
+  payload = {"from": old, "to": args.prefix, "changed": changed, "next_id": next_id}
+  if args.dry_run:
+    payload["dry_run"] = True
+  if not changed:
+    text = f"id prefix is already {args.prefix}; next id {next_id}"
+  else:
+    verb = "would change" if args.dry_run else "changed"
+    text = f"id prefix {verb} {old} -> {args.prefix}; next id {next_id}"
+  _emit(args, payload, text)
+  return OK
+
+
 def _unspecified_payload(result: ops.NextResult) -> list[dict[str, object]]:
   return [{"id": item_id, "missing": missing} for item_id, missing in result.unspecified]
 
@@ -1679,6 +1703,13 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 
+  sp = _strict_flag(_render_flag(add(
+    "id-prefix", _mutating(cmd_id_prefix),
+    "show the id prefix, or change its case for new ids",
+  )))
+  sp.add_argument("prefix", nargs="?", help="the new prefix; only its case may differ")
+  sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
+
   sp = add("list", cmd_list, "list items in next's order, omitting done and retired unless asked")
   sp.add_argument("--all", action="store_true",
                   help="include done and retired items (default: omit them)")
@@ -1925,6 +1956,8 @@ def _changes_state(args: argparse.Namespace) -> bool:
   if not getattr(args.func, "mutates", False):
     return False
   if args.command in ("import", "migrate", "remove") and args.dry_run:
+    return False
+  if args.command == "id-prefix" and (args.prefix is None or args.dry_run):
     return False
   return not (args.command == "import" and args.skeleton)
 

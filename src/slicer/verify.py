@@ -51,13 +51,22 @@ def offline(state: State) -> VerifyReport:
   report = VerifyReport(checked=len(index.items))
 
   if index.items and (index.id_prefix, index.id_width) != (cfg.id_prefix, cfg.id_width):
+    case_only = (
+      index.id_width == cfg.id_width
+      and index.id_prefix.casefold() == cfg.id_prefix.casefold()
+    )
+    fix = (
+      f"Restore the config, or run `slicer id-prefix {cfg.id_prefix}` to change the case "
+      f"of the prefix in both."
+      if case_only else "Restore the config, or start a new project."
+    )
     report.findings.append(
       Finding(
         "error",
         "",
         f"id scheme in config ({cfg.id_prefix!r} width {cfg.id_width}) does not match "
         f"the index ({index.id_prefix!r} width {index.id_width}); the index wins, "
-        f"because ids are never reused. Restore the config, or start a new project.",
+        f"because ids are never reused. {fix}",
       )
     )
 

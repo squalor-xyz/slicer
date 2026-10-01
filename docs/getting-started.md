@@ -116,7 +116,8 @@ is a trap:
 exists. Run `init`, look at what `S01` would be, decide you want `TASK-001` instead,
 edit the config — the first `add` obeys it. Once an id has been handed out the index
 owns the scheme, because ids are never reused, and `slicer check` reports a config that
-disagrees rather than ignoring it.
+disagrees rather than ignoring it. The one exception is the prefix's case:
+`slicer id-prefix s` makes new ids lowercase, and existing ids keep theirs.
 
 The full key-by-key reference, including which changes strand existing files, is in
 [configuration.md](configuration.md).
