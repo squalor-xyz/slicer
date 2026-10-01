@@ -310,3 +310,84 @@ class ReviewingTests(unittest.TestCase):
       for line in lines[1:3]:
         self.assertEqual(line[claim_at - 1], " ", line)
         self.assertNotEqual(line[claim_at], " ", line)
+
+
+class NextReviewTests(unittest.TestCase):
+  """`next --status review`: the reviewer's one-call pickup (S151)."""
+
+  SLICE = (
+    "## build it\n\n"
+    "### Files\n- src/x.py\n\n"
+    "### Implement\nDo it.\n\n"
+    "### Check\nRun the tests.\n"
+  )
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    _config(repo, claim_owner="Ada")
+    repo.run("add", "build it", "--effort", "1")
+    draft = repo.write("s01.md", self.SLICE)
+    repo.run("promote", "S01", "--file", str(draft))
+    repo.run("add", "other work", "--effort", "1")
+    repo.run("start", "S01")
+    repo.run("handoff", "S01")
+    _config(repo, claim_owner="Bea")
+    return repo
+
+  def test_Ready_ReturnsTheReviewItemWithOnlyTheNamedSections(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run(
+        "next", "--status", "review", "--ready", "--section", "Check", "--section", "Files", "--json"
+      )
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      # The documented `--ready` shape, as plain `next --ready` returns it.
+      self.assertEqual(set(payload), {"item", "slice", "blocked"})
+      self.assertEqual(payload["item"]["id"], "S01")
+      self.assertEqual([s["heading"] for s in payload["slice"]["sections"]], ["Files", "Check"])
+
+  def test_Start_MovesToReviewing_AndALaterCallResumesIt(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("next", "--status", "review", "--start", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual((payload["id"], payload["status"]), ("S01", "reviewing"))
+      self.assertEqual(payload["claim"]["owner"], "Bea")
+      again = json.loads(repo.run("next", "--status", "review", "--json")[1])
+      self.assertEqual(again["id"], "S01")
+
+  def test_ReviewItemWithUnfinishedDependency_IsBlocked(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--depends-on", "S02")
+      code, out, _ = repo.run("next", "--status", "review", "--json")
+      self.assertEqual(code, 2)
+      payload = json.loads(out)
+      self.assertIsNone(payload["item"])
+      self.assertEqual(payload["blocked"], [{"id": "S01", "waiting_on": ["S02"]}])
+
+  def test_EmptyReviewQueue_IsExit2WithNullItem(self) -> None:
+    with self.repo() as repo:
+      repo.run("done", "S01")
+      code, out, _ = repo.run("next", "--status", "review", "--json")
+      self.assertEqual(code, 2)
+      self.assertIsNone(json.loads(out)["item"])
+      self.assertIn("nothing in review", repo.run("next", "--status", "review")[1])
+
+  def test_OtherStatus_IsAUsageError(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("next", "--status", "parked", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+
+  def test_NoReviewStatus_IsAUsageError(self) -> None:
+    with self.repo() as repo:
+      repo.run("done", "S01")
+      _config(repo, review_status="")
+      code, out, _ = repo.run("next", "--status", "review", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+
+  def test_PlainNext_IgnoresTheReviewQueue(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(json.loads(repo.run("next", "--json")[1])["id"], "S02")

@@ -3799,7 +3799,7 @@
       "id": "S151",
       "title": "Pick up the next review item in one call",
       "short_title": "Pick up the next review item in one call",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S150"

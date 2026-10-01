@@ -310,10 +310,12 @@ S01 -> review, unclaimed
 ```
 
 The item moves to the `review` status and loses its claim. `next` no longer offers it,
-and anything that depends on it stays blocked. A reviewer runs `slicer list --status
-review`, reads the slice with `slicer show S01`, and runs `slicer start S01` to claim the
-review, which moves it to `reviewing`: still out of `next`, so no implementer picks it up
-as resumable work. To send it back for more work, `slicer set S01 --status started`, then
+and anything that depends on it stays blocked. A reviewer runs `slicer next --status
+review --start`, which returns the highest-priority review item, claims it and moves it
+to `reviewing` (the same as `slicer start S01` on a review item). Reviewing is still out
+of plain `next`, so no implementer picks it up as resumable work, and running the
+reviewer's command again resumes it. `--ready --section NAME` trims the slice to the
+sections a review needs. To send it back for more work, `slicer set S01 --status started`, then
 hand it off again once it is ready. Run
 `slicer done S01 --render` only once review and merge are complete; slicer records the
 handoff but never merges anything.

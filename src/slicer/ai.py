@@ -122,10 +122,10 @@ Run `--help` on any command for the rest of its options.
 
 When the implementation is ready for someone else to review, merge, or clean up, record
 the context with `slicer note ID --text "Ready for review: ..."`, then run
-`slicer handoff ID --render --json`. Reviewers find that work with
-`slicer list --status review --json` and claim it with `start`, which moves it to
-`reviewing` so `next` never hands it to an implementer. Run `done` only after
-review and merge are complete.
+`slicer handoff ID --render --json`. A reviewer picks up the next review item with
+`slicer next --status review --start --ready --section "Check" --json`: it claims the
+item and moves it to `reviewing`, so `next` never hands it to an implementer, and the
+same command resumes it later. Run `done` only after review and merge are complete.
 
 ## State and command results
 

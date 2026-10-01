@@ -683,10 +683,13 @@ class NextResult:
 def next_item(
   state: State, offset: int = 0,
   elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
+  *, review: bool = False,
 ) -> NextResult:
   """The most critical startable item: highest effective score, unblocked.
 
   Started items precede open items, with effective score ordering each group.
+  With `review`, the pool is the review queue instead: reviewing items (a
+  review someone already holds) precede review items, by the same rules.
   Offset skips currently eligible items without simulating their completion.
 
   Dependencies still hard-gate what is startable -- a blocked item is never
@@ -705,9 +708,12 @@ def next_item(
   # A whitelist, so parked, done, retired and any project-specific status stay
   # out. An empty started_status means the project has no start state, and the
   # set is just the open one.
-  active = {cfg.open_status}
-  if cfg.started_status:
-    active.add(cfg.started_status)
+  if review:
+    active = {cfg.review_status, cfg.reviewing_status} - {""}
+  else:
+    active = {cfg.open_status}
+    if cfg.started_status:
+      active.add(cfg.started_status)
   blocked: list[tuple[str, list[str]]] = []
   unspecified: list[tuple[str, list[str]]] = []
   skipped: list[tuple[str, list[dict[str, str]]]] = []
@@ -728,7 +734,7 @@ def next_item(
     if elsewhere and item.id in elsewhere and not local:
       skipped.append((item.id, elsewhere[item.id]))
       continue
-    (started if item.status == cfg.started_status else candidates).append(item)
+    (started if item.status in cfg.in_work() else candidates).append(item)
   if not started and not candidates:
     return NextResult(item=None, blocked=blocked, unspecified=unspecified, elsewhere=skipped)
   eff = graph.effective_scores(state.index)
