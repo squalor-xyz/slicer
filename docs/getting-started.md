@@ -312,7 +312,9 @@ S01 -> review, unclaimed
 The item moves to the `review` status and loses its claim. `next` no longer offers it,
 and anything that depends on it stays blocked. A reviewer runs `slicer list --status
 review`, reads the slice with `slicer show S01`, and runs `slicer start S01` to claim the
-review, which returns it to started. If fixes need another look, hand it off again. Run
+review, which moves it to `reviewing`: still out of `next`, so no implementer picks it up
+as resumable work. To send it back for more work, `slicer set S01 --status started`, then
+hand it off again once it is ready. Run
 `slicer done S01 --render` only once review and merge are complete; slicer records the
 handoff but never merges anything.
 

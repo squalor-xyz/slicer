@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-160 items · — 14 · done 144 · later 1 · retired 1
+160 items · — 13 · done 145 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -89,7 +89,7 @@ v1.2.0 release
 | 45 | [S147](slices/S147.md) | Keep an unset short title in step when set changes the title | S | 1 | slicer | dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title | — |
 | 46 | [S148](slices/S148.md) | Offer --strict on import and remove | M | 2 | slicer | dogfooding S146/S147: `import --render --strict` failed with "unrecognized arguments: --strict" | — |
 | 47 | [S149](slices/S149.md) | Claim as a named actor per invocation | M | 2 | slicer | agents-repo request R1: claims always record the git user; per-call owner wanted | done |
-| 48 | [S150](slices/S150.md) | Add a reviewing status for a claimed review | M | 2 | slicer | agents-repo request R2: start on a review item turns it into started, which next then offers to implementers | — |
+| 48 | [S150](slices/S150.md) | Add a reviewing status for a claimed review | M | 2 | slicer | agents-repo request R2: start on a review item turns it into started, which next then offers to implementers | done |
 | 49 | [S151](slices/S151.md) | Pick up the next review item in one call | M | 2 | slicer | agents-repo request R2: next skips review items; a reviewer needs list + show + client-side ranking | — |
 | 50 | [S152](slices/S152.md) | Reject a review back to the queue with a verdict | M | 2 | slicer | agents-repo request R3: set --status open records a field change, not a review verdict, and keeps the claim | — |
 | 51 | [S153](slices/S153.md) | Count attempts on an item | M | 2 | slicer | agents-repo request R4: escalation policy needs a restart-safe attempt count; log counting is fragile | — |

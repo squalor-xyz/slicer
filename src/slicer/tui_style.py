@@ -15,8 +15,8 @@ MIN_WIDTH, MIN_HEIGHT = 80, 10
 def status_role(status: str, blocked: bool, config: Config) -> str:
   if blocked and status in (config.open_status, config.started_status):
     return "blocked"
-  for role, value in (("started", config.started_status), ("done", config.done_status),
-                      ("parked", config.parked_status)):
+  for role, value in (("started", config.started_status), ("started", config.reviewing_status),
+                      ("done", config.done_status), ("parked", config.parked_status)):
     if value and status == value:
       return role
   return "normal"

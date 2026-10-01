@@ -760,7 +760,7 @@ def _claim_cell(
   """
   if item.status != cfg.done_status and item.claim_owner:
     return item.claim_owner
-  if cfg.started_status and item.status == cfg.started_status:
+  if item.status in cfg.in_work():
     return "*"
   if elsewhere:
     extra = f"+{len(elsewhere) - 1}" if len(elsewhere) > 1 else ""
@@ -778,6 +778,12 @@ def _claim_width(
   return width
 
 
+def _status_width(cfg: Config, items: list[model.Item]) -> int:
+  """At least the historical 7, wider when a label needs it (`reviewing`, or a
+  project's own status), so a long label never pushes the rest of its row."""
+  return max([7, *(len(cfg.status_label(item.status)) for item in items)])
+
+
 def _pass_width(index: model.Index, items: list[model.Item]) -> int | None:
   """The PASS column's width, or None when the roadmap uses no passes at all
   (none declared and none named by an item), so such a project keeps the
@@ -791,6 +797,7 @@ def _item_rows(
   state: store.State, items: list[model.Item], *,
   claim_w: int | None = None,
   pass_w: int | None = None,
+  status_w: int | None = None,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
 ) -> list[str]:
   """The shared queue-listing row format used by `list`, `find` and `deps`.
@@ -807,13 +814,15 @@ def _item_rows(
     claim_w = _claim_width(cfg, items, elsewhere)
   if pass_w is None:
     pass_w = _pass_width(state.index, items)
+  if status_w is None:
+    status_w = _status_width(cfg, items)
   rows = []
   for n, item in enumerate(items, 1):
     score = str(eff[item.id]) + ("^" if eff[item.id] > item.score else "")
     effort = "-" if item.effort is None else str(item.effort)
     pass_cell = "" if pass_w is None else f"{item.pass_key or '-':<{pass_w}} "
     rows.append(
-      f"{n:>3}  {item.id:<5} {cfg.status_label(item.status):<7} "
+      f"{n:>3}  {item.id:<5} {cfg.status_label(item.status):<{status_w}} "
       f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
       f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
     )
@@ -861,13 +870,14 @@ def cmd_list(args: argparse.Namespace) -> int:
   elsewhere = store.in_work_elsewhere(state.root)
   claim_w = _claim_width(state.config, items, elsewhere)
   pass_w = _pass_width(state.index, items)
+  status_w = _status_width(state.config, items)
   pass_head = "" if pass_w is None else f"{'PASS':<{pass_w}} "
   header = (
-    f"{'#':>3}  {'ID':<5} {'STATUS':<7} {'CLAIM':<{claim_w}} {pass_head}{'SIZE':<4} "
+    f"{'#':>3}  {'ID':<5} {'STATUS':<{status_w}} {'CLAIM':<{claim_w}} {pass_head}{'SIZE':<4} "
     f"{'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
   )
   lines = [header, *_item_rows(
-    state, items, claim_w=claim_w, pass_w=pass_w, elsewhere=elsewhere,
+    state, items, claim_w=claim_w, pass_w=pass_w, status_w=status_w, elsewhere=elsewhere,
   )]
   if not items:
     lines = ["no matching items"]

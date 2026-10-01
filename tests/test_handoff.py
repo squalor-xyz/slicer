@@ -66,15 +66,13 @@ class HandoffTests(unittest.TestCase):
       self.assertIsNone(payload["item"])
       self.assertEqual(payload["blocked"], [{"id": "S02", "waiting_on": ["S01"]}])
 
-  def test_Reviewer_StartsHandsOffAgainAndDone(self) -> None:
+  def test_Reviewer_StartsReviewingAndDone(self) -> None:
     with self.repo() as repo:
       repo.run("handoff", "S01")
       _config(repo, claim_owner="Bea")
       repo.run("start", "S01")
       item = repo.state().index.require("S01")
-      self.assertEqual((item.status, item.claim_owner), ("started", "Bea"))
-      self.assertEqual(repo.run("handoff", "S01")[0], 0)
-      repo.run("start", "S01")
+      self.assertEqual((item.status, item.claim_owner), ("reviewing", "Bea"))
       repo.run("done", "S01")
       item = repo.state().index.require("S01")
       self.assertEqual((item.status, item.claim_owner), ("done", ""))
@@ -198,3 +196,117 @@ class ReviewStatusConfigTests(unittest.TestCase):
 
 if __name__ == "__main__":
   unittest.main()
+
+
+class ReviewingTests(unittest.TestCase):
+  """A reviewer's `start` moves review work to reviewing, out of `next` (S150)."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    _config(repo, claim_owner="Ada")
+    repo.run("add", "build it", "--effort", "1")
+    repo.run("promote", "S01")
+    repo.run("add", "other work", "--effort", "1")
+    repo.run("start", "S01")
+    repo.run("handoff", "S01")
+    _config(repo, claim_owner="Bea")
+    return repo
+
+  def item(self, repo: support.TempRepo, item_id: str = "S01"):
+    return repo.state().index.require(item_id)
+
+  def test_Start_ReviewItem_MovesToReviewingAndClaims_AndNextSkipsIt(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("start", "S01")
+      self.assertEqual(code, 0, err)
+      self.assertEqual((self.item(repo).status, self.item(repo).claim_owner), ("reviewing", "Bea"))
+      entry = json.loads(repo.run("log", "--item", "S01", "--json")[1])[0]
+      self.assertEqual((entry["action"], entry["from"], entry["to"]), ("status", "review", "reviewing"))
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S02")
+      code, out, _ = repo.run("next", "-n", "1", "--json")
+      self.assertEqual(code, 2)
+      self.assertNotIn("S01", [b["id"] for b in json.loads(out)["blocked"]])
+
+  def test_Start_OtherStatuses_StillGoToStarted(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "parked one", "--effort", "1", "--status", "parked")
+      for item_id in ("S02", "S03"):
+        repo.run("start", item_id)
+        self.assertEqual(self.item(repo, item_id).status, "started")
+      repo.run("start", "S02")
+      self.assertEqual(self.item(repo, "S02").status, "started")
+
+  def test_Config_Backfill_FollowsTheReviewRule(self) -> None:
+    base = {"statuses": {"open": "—", "done": "done"}}
+    self.assertEqual(Config.from_dict(base).statuses["reviewing"], "reviewing")
+    self.assertEqual(Config.from_dict(base).reviewing_status, "reviewing")
+    taken = Config.from_dict({"statuses": {"open": "—", "done": "done", "busy": "reviewing"}})
+    self.assertEqual(taken.reviewing_status, "")
+    self.assertNotIn("reviewing", taken.statuses)
+    no_review = Config.from_dict(base | {"review_status": ""})
+    self.assertEqual(no_review.reviewing_status, "")
+    self.assertNotIn("reviewing", no_review.statuses)
+
+  def test_Disabled_StartOnReviewGoesToStartedAsBefore(self) -> None:
+    with self.repo() as repo:
+      _config(repo, reviewing_status="")
+      repo.run("start", "S01")
+      self.assertEqual(self.item(repo).status, "started")
+
+  def test_Config_ReviewingSharedWithAnotherRole_IsRejected(self) -> None:
+    with self.assertRaises(ConfigError):
+      Config.from_dict({"statuses": {"open": "—", "done": "done"}, "reviewing_status": "started"})
+    with self.repo() as repo:
+      _config(repo, reviewing_status="review")
+      code, out, _ = repo.run("list", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "config")
+
+  def test_Handoff_ReviewingItem_IsRefusedAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      before = (repo.root / DIR_NAME / INDEX_NAME).read_bytes()
+      code, out, _ = repo.run("handoff", "S01", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertEqual((repo.root / DIR_NAME / INDEX_NAME).read_bytes(), before)
+
+  def test_Done_FromReviewing_ClearsTheClaim(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      repo.run("done", "S01")
+      self.assertEqual((self.item(repo).status, self.item(repo).claim_owner), ("done", ""))
+
+  def test_Start_ReleasedReviewingItem_StaysReviewingAndReclaims(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      repo.run("release", "S01")
+      self.assertEqual((self.item(repo).status, self.item(repo).claim_owner), ("reviewing", ""))
+      self.assertIn("*", next(l for l in repo.run("list")[1].splitlines() if "S01" in l.split()))
+      _config(repo, claim_owner="Cy")
+      repo.run("start", "S01")
+      self.assertEqual((self.item(repo).status, self.item(repo).claim_owner), ("reviewing", "Cy"))
+
+  def test_List_RanksReviewingWithStarted(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      rows = [i["id"] for i in json.loads(repo.run("list", "--json")[1])]
+      self.assertEqual(rows[0], "S01")
+
+  def test_Handoff_ReviewingItem_SaysHowToFinishOrSendBack(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      _, _, err = repo.run("handoff", "S01")
+      self.assertIn("already being reviewed", err)
+      self.assertIn("slicer done S01", err)
+
+  def test_List_ReviewingLabel_KeepsColumnsAligned(self) -> None:
+    with self.repo() as repo:
+      repo.run("start", "S01")
+      lines = repo.run("list")[1].splitlines()
+      claim_at = lines[0].index("CLAIM")
+      for line in lines[1:3]:
+        self.assertEqual(line[claim_at - 1], " ", line)
+        self.assertNotEqual(line[claim_at], " ", line)

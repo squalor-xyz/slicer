@@ -352,7 +352,7 @@ def in_work_elsewhere(root: Path) -> dict[str, list[dict[str, str]]]:
     except (OSError, SlicerError, AttributeError, KeyError, TypeError, ValueError):
       continue
     for item in index.items:
-      if item.claim_owner or (config.started_status and item.status == config.started_status):
+      if item.claim_owner or item.status in config.in_work():
         found.setdefault(item.id, []).append({
           "worktree": sibling.name, "owner": item.claim_owner,
         })

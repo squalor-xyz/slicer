@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- A `reviewing` status (`reviewing_status` in config, back-filled like `review`). `start` on a review item now moves it to `reviewing` and claims it, instead of back to `started`, so an implementer's `next` no longer resumes a review in progress. `list` ranks reviewing items with started ones, sibling worktrees count them as in work, and `handoff` refuses them. Set `reviewing_status` to `""` to keep the old behaviour.
+- The STATUS column in `list`, `find` and `deps` widens to fit its longest label (`reviewing`, or a project's own status), so a long label no longer shifts the rest of its row. Tables whose labels fit in 7 characters are unchanged.
 - `--owner NAME` on `start`, `next --start`, `handoff`, `release` and `done`, and a `SLICER_CLAIM_OWNER` environment variable, name who claims or acts per call, ahead of `claim_owner` and the git user. Those history entries record it as `by`, and `log --by NAME` filters on it. Other history lines are unchanged.
 - `slicer id-prefix [NEW]` prints the id prefix, or changes its case for new ids (for example `S` to `s`) in the index and config together. Existing ids keep their case and no slice file is renamed. A prefix that differs by more than case is refused. It takes `--dry-run`, `--json`, `--render` and `--strict`.
 

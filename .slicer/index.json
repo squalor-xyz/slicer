@@ -3774,7 +3774,7 @@
       "id": "S150",
       "title": "Add a reviewing status for a claimed review",
       "short_title": "Add a reviewing status for a claimed review",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

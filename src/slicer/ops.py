@@ -540,7 +540,8 @@ def start_many(
 ) -> list[Item]:
   """Mark items started and claim any that do not already have an owner.
 
-  The claim time is taken once here and stored on the item. A later render
+  A review item (or a reviewing one whose claim was released) goes to
+  `reviewing_status` instead, when the project has one. The claim time is taken once here and stored on the item. A later render
   does not refresh it. Starting something already started and claimed writes
   nothing, so a repeated `start` stays a silent no-op.
   """
@@ -548,12 +549,18 @@ def start_many(
   if not cfg.started_status:
     raise StateError("this project declares no started status; set started_status in config")
   items = _batch_items(state, item_ids)
-  status = cfg.started_status
   owner = actor(state, owner)
+  # A reviewer claiming review work moves it to reviewing, not started, so an
+  # implementer's `next` never resumes a review in progress.
+  reviewable = {cfg.review_status, cfg.reviewing_status} - {""}
   at = _now()
   changed: list[tuple[Item, str, bool]] = []
   for item in items:
     previous = item.status
+    status = (
+      cfg.reviewing_status if cfg.reviewing_status and previous in reviewable
+      else cfg.started_status
+    )
     status_changed = previous != status
     if item.claim_owner:
       claim_changed = False
@@ -574,7 +581,7 @@ def start_many(
   state.save_index()
   for item, previous, status_changed in changed:
     if status_changed:
-      _record(state, item.id, "status", frm=previous, to=status, note=note, by=owner)
+      _record(state, item.id, "status", frm=previous, to=item.status, note=note, by=owner)
     else:
       _record(state, item.id, "claim", to=item.claim_owner, note=note, by=owner)
   return items
@@ -625,7 +632,12 @@ def handoff_many(
   by = actor(state, owner)
   problems: list[str] = []
   for item in items:
-    if item.status not in (cfg.started_status, cfg.review_status):
+    if cfg.reviewing_status and item.status == cfg.reviewing_status:
+      problems.append(
+        f"{item.id} is already being reviewed; finish it with `slicer done {item.id}`, "
+        f"or send it back with `slicer set {item.id} --status {cfg.started_status}`"
+      )
+    elif item.status not in (cfg.started_status, cfg.review_status):
       problems.append(
         f"{item.id} is {cfg.status_label(item.status)!r}, not started; "
         f"only started work can be handed off (run `slicer start {item.id}` first)"
@@ -712,7 +724,7 @@ def next_item(
       unspecified.append((item.id, missing))
     if pending or missing:
       continue
-    local = bool(item.claim_owner) or item.status == cfg.started_status
+    local = bool(item.claim_owner) or item.status in cfg.in_work()
     if elsewhere and item.id in elsewhere and not local:
       skipped.append((item.id, elsewhere[item.id]))
       continue
