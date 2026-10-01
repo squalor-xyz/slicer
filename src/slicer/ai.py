@@ -125,7 +125,10 @@ the context with `slicer note ID --text "Ready for review: ..."`, then run
 `slicer handoff ID --render --json`. A reviewer picks up the next review item with
 `slicer next --status review --start --ready --section "Check" --json`: it claims the
 item and moves it to `reviewing`, so `next` never hands it to an implementer, and the
-same command resumes it later. Run `done` only after review and merge are complete.
+same command resumes it later. If the review fails, run
+`slicer reject ID --note "VERDICT: FAIL - reason" --render --json`: it sends the item back
+to open (or `--to STATUS`), records the verdict, and clears the claim. Run `done` only
+after review and merge are complete.
 
 ## State and command results
 

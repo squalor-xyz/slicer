@@ -89,6 +89,7 @@ reproduce is never half-migrated.
 | `start` | mark an item in progress and claim it |
 | `release` | clear a claim without changing status |
 | `handoff` | hand a started slice to review and clear its claim |
+| `reject` | send a review back with a verdict and clear its claim |
 | `park` | set an item aside |
 | `unpark` | return a parked item to the queue |
 | `prose` | read and edit the roadmap's own prose |

@@ -315,8 +315,10 @@ review --start`, which returns the highest-priority review item, claims it and m
 to `reviewing` (the same as `slicer start S01` on a review item). Reviewing is still out
 of plain `next`, so no implementer picks it up as resumable work, and running the
 reviewer's command again resumes it. `--ready --section NAME` trims the slice to the
-sections a review needs. To send it back for more work, `slicer set S01 --status started`, then
-hand it off again once it is ready. Run
+sections a review needs. If the review fails, `slicer reject S01 --note "VERDICT: FAIL -
+missing test"` sends it back to the open queue, unclaimed, with the verdict added to its
+notes and history (`--to STATUS` picks another non-lifecycle status, such as a project's
+own `blocked`). Run
 `slicer done S01 --render` only once review and merge are complete; slicer records the
 handoff but never merges anything.
 

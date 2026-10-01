@@ -1264,6 +1264,16 @@ def cmd_handoff(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_reject(args: argparse.Namespace) -> int:
+  """Send failed reviews back with a verdict: status to open (or --to), claim cleared."""
+  item_ids, batch = _batch_ids(args)
+  state = _state(args)
+  items = ops.reject_many(state, item_ids, note=args.note, to=args.to, owner=args.owner)
+  _emit_items(args, items, batch,
+              [f"{item.id} -> {state.config.status_label(item.status)}, unclaimed" for item in items])
+  return OK
+
+
 def cmd_done(args: argparse.Namespace) -> int:
   item_ids, batch = _batch_ids(args)
   state = _state(args)
@@ -1851,6 +1861,12 @@ def build_parser() -> argparse.ArgumentParser:
   sp = _strict_flag(_render_flag(add("handoff", _mutating(cmd_handoff), "hand a started slice to review and clear its claim")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
+  sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
+
+  sp = _strict_flag(_render_flag(add("reject", _mutating(cmd_reject), "send a review back with a verdict and clear its claim")))
+  sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
+  sp.add_argument("--note", required=True, help="the verdict: added to the item's notes and its history entry")
+  sp.add_argument("--to", help="the status to send it back to (default: the open status)")
   sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = _strict_flag(_render_flag(add("park", _mutating(cmd_park), "set an item aside")))
