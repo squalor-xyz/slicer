@@ -23,8 +23,15 @@ def _now() -> str:
   return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _record(state: State, item: str, action: str, frm: str = "", to: str = "", note: str = "") -> None:
-  state.log(LogEntry(when=_now(), item=item, action=action, frm=frm, to=to, note=note))
+def _record(
+  state: State, item: str, action: str, frm: str = "", to: str = "", note: str = "", by: str = ""
+) -> None:
+  state.log(LogEntry(when=_now(), item=item, action=action, frm=frm, to=to, note=note, by=by))
+
+
+def actor(state: State, override: str | None = None) -> str:
+  """Who a claim or lifecycle action names; see `vcs.identity` for the order."""
+  return vcs.identity(state.root, state.config.claim_owner, override)
 
 
 def _fmt(value: object) -> str:
@@ -465,7 +472,9 @@ def _clear_claim(item: Item) -> None:
   item.claim_at = ""
 
 
-def set_status_many(state: State, item_ids: list[str], status: str, *, note: str = "") -> list[Item]:
+def set_status_many(
+  state: State, item_ids: list[str], status: str, *, note: str = "", by: str = ""
+) -> list[Item]:
   """Move a batch to one status, preserving no-op and per-item history semantics.
 
   Finishing clears a claim in the same save. A done item is never claimed.
@@ -493,14 +502,16 @@ def set_status_many(state: State, item_ids: list[str], status: str, *, note: str
     state.save_index()
     for item, previous, status_changed in transitions:
       if status_changed:
-        _record(state, item.id, "status", frm=previous, to=status, note=note)
+        _record(state, item.id, "status", frm=previous, to=status, note=note, by=by)
   return items
 
 
-def done_and_render(state: State, item_ids: list[str], *, note: str = "") -> tuple[list[Item], int]:
+def done_and_render(
+  state: State, item_ids: list[str], *, note: str = "", by: str = ""
+) -> tuple[list[Item], int]:
   """Render the proposed done state before moving slices or saving the index."""
   items, written = render_gated(
-    state, lambda: set_status_many(state, item_ids, state.config.done_status, note=note)
+    state, lambda: set_status_many(state, item_ids, state.config.done_status, note=note, by=by)
   )
   return items, written  # type: ignore[return-value]
 
@@ -509,8 +520,8 @@ def set_status(state: State, item_id: str, status: str, *, note: str = "") -> It
   return set_status_many(state, [item_id], status, note=note)[0]
 
 
-def done(state: State, item_id: str, *, note: str = "") -> Item:
-  return set_status(state, item_id, state.config.done_status, note=note)
+def done(state: State, item_id: str, *, note: str = "", by: str = "") -> Item:
+  return set_status_many(state, [item_id], state.config.done_status, note=note, by=by)[0]
 
 
 def park(state: State, item_id: str, *, note: str = "") -> Item:
@@ -524,7 +535,9 @@ def unpark(state: State, item_id: str) -> Item:
   return set_status(state, item_id, state.config.open_status)
 
 
-def start_many(state: State, item_ids: list[str], *, note: str = "") -> list[Item]:
+def start_many(
+  state: State, item_ids: list[str], *, note: str = "", owner: str | None = None
+) -> list[Item]:
   """Mark items started and claim any that do not already have an owner.
 
   The claim time is taken once here and stored on the item. A later render
@@ -536,7 +549,7 @@ def start_many(state: State, item_ids: list[str], *, note: str = "") -> list[Ite
     raise StateError("this project declares no started status; set started_status in config")
   items = _batch_items(state, item_ids)
   status = cfg.started_status
-  owner = vcs.identity(state.root, cfg.claim_owner)
+  owner = actor(state, owner)
   at = _now()
   changed: list[tuple[Item, str, bool]] = []
   for item in items:
@@ -561,39 +574,42 @@ def start_many(state: State, item_ids: list[str], *, note: str = "") -> list[Ite
   state.save_index()
   for item, previous, status_changed in changed:
     if status_changed:
-      _record(state, item.id, "status", frm=previous, to=status, note=note)
+      _record(state, item.id, "status", frm=previous, to=status, note=note, by=owner)
     else:
-      _record(state, item.id, "claim", to=item.claim_owner, note=note)
+      _record(state, item.id, "claim", to=item.claim_owner, note=note, by=owner)
   return items
 
 
-def start(state: State, item_id: str, *, note: str = "") -> Item:
-  return start_many(state, [item_id], note=note)[0]
+def start(state: State, item_id: str, *, note: str = "", owner: str | None = None) -> Item:
+  return start_many(state, [item_id], note=note, owner=owner)[0]
 
 
-def release_many(state: State, item_ids: list[str]) -> list[Item]:
+def release_many(state: State, item_ids: list[str], *, owner: str | None = None) -> list[Item]:
   """Drop claims without changing status. An item with no claim is left alone."""
   items = _batch_items(state, item_ids)
+  by = actor(state, owner)
   released: list[tuple[Item, str]] = []
   for item in items:
     if not item.claim_owner:
       continue
-    owner = item.claim_owner
+    held_by = item.claim_owner
     _clear_claim(item)
-    released.append((item, owner))
+    released.append((item, held_by))
   if not released:
     return items
   state.save_index()
-  for item, owner in released:
-    _record(state, item.id, "release", frm=owner, to="")
+  for item, held_by in released:
+    _record(state, item.id, "release", frm=held_by, to="", by=by)
   return items
 
 
-def release(state: State, item_id: str) -> Item:
-  return release_many(state, [item_id])[0]
+def release(state: State, item_id: str, *, owner: str | None = None) -> Item:
+  return release_many(state, [item_id], owner=owner)[0]
 
 
-def handoff_many(state: State, item_ids: list[str], *, note: str = "") -> list[Item]:
+def handoff_many(
+  state: State, item_ids: list[str], *, note: str = "", owner: str | None = None
+) -> list[Item]:
   """Mark started slices ready for review and clear their claims in one save.
 
   Review sits between implementation and completion: the item leaves `next`
@@ -606,6 +622,7 @@ def handoff_many(state: State, item_ids: list[str], *, note: str = "") -> list[I
   if not cfg.review_status:
     raise StateError("this project declares no review status; set review_status in config")
   items = _batch_items(state, item_ids)
+  by = actor(state, owner)
   problems: list[str] = []
   for item in items:
     if item.status not in (cfg.started_status, cfg.review_status):
@@ -621,25 +638,25 @@ def handoff_many(state: State, item_ids: list[str], *, note: str = "") -> list[I
   for item in items:
     if item.status == cfg.review_status and not item.claim_owner:
       continue
-    previous, owner = item.status, item.claim_owner
+    previous, held_by = item.status, item.claim_owner
     item.status = cfg.review_status
     _clear_claim(item)
-    changed.append((item, previous, owner))
+    changed.append((item, previous, held_by))
   if not changed:
     return items
   for item, previous, _owner in changed:
     if previous != item.status:
       _relocate_slice(state, item.id)
   state.save_index()
-  for item, previous, owner in changed:
-    detail = f"claim {owner} cleared" if owner else ""
+  for item, previous, held_by in changed:
+    detail = f"claim {held_by} cleared" if held_by else ""
     _record(state, item.id, "handoff", frm=previous, to=item.status,
-            note="; ".join(part for part in (note, detail) if part))
+            note="; ".join(part for part in (note, detail) if part), by=by)
   return items
 
 
-def handoff(state: State, item_id: str, *, note: str = "") -> Item:
-  return handoff_many(state, [item_id], note=note)[0]
+def handoff(state: State, item_id: str, *, note: str = "", owner: str | None = None) -> Item:
+  return handoff_many(state, [item_id], note=note, owner=owner)[0]
 
 
 @dataclass

@@ -69,7 +69,7 @@ and the slice files, the config is yours to hand-edit.
 | `started_status` | `"started"` | Which status `start` sets. `next` returns a started item ahead of every open one. It gets no folder — the slice file stays in `slices/`. **Empty string = the project has no start state, and `start` refuses cleanly** | Yes if nothing is started |
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 | `render_driver_check` | `true` | Whether `slicer verify` reminds you to configure the `slicer-generated` render merge driver (via `slicer setup-git`). Only fires when this checkout has other worktrees, so a single-worktree clone is already quiet; set **off** to silence it entirely. There is no way to force it on for a single worktree | **Yes** |
-| `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name | **Yes** |
+| `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name. A per-call `--owner` or the `SLICER_CLAIM_OWNER` environment variable overrides it | **Yes** |
 
 ## The ones that will surprise you
 

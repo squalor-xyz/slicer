@@ -45,6 +45,12 @@ class AiInstructionsTests(unittest.TestCase):
                     reference_flow.index("slicer start ID"))
     self.assertIn("If the\nspecification is already trusted", reference_flow)
 
+  def test_Instructions_NamePerCallOwnerForSharedCheckouts(self) -> None:
+    text = ai.INSTRUCTIONS
+    self.assertIn("--owner NAME", text)
+    self.assertIn("SLICER_CLAIM_OWNER", text)
+    self.assertIn("slicer log --by NAME", text)
+
   def test_Instructions_LeaveRenderUnread_AndDoNotLinkTheLongReference(self) -> None:
     text = ai.INSTRUCTIONS
     self.assertNotIn("docs/agents.md", text)

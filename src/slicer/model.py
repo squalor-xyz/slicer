@@ -406,9 +406,12 @@ class LogEntry:
   frm: str = ""
   to: str = ""
   note: str = ""
+  # Who acted, on lifecycle actions (start, claim, handoff, release, done).
+  # Written only when set, so every other line keeps its old shape.
+  by: str = ""
 
   def to_dict(self) -> dict[str, Any]:
-    return {
+    out = {
       "when": self.when,
       "item": self.item,
       "action": self.action,
@@ -416,6 +419,9 @@ class LogEntry:
       "to": self.to,
       "note": self.note,
     }
+    if self.by:
+      out["by"] = self.by
+    return out
 
   @staticmethod
   def from_dict(d: Mapping[str, Any]) -> "LogEntry":
@@ -426,6 +432,7 @@ class LogEntry:
       frm=d.get("from", ""),
       to=d.get("to", ""),
       note=d.get("note", ""),
+      by=d.get("by", ""),
     )
 
 
