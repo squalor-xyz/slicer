@@ -1,0 +1,41 @@
+{
+  "id": "S154",
+  "title": "Add or remove one flag without replacing the list",
+  "lead": [
+    "`set --flag` replaces every flag, so a project that keeps independent flag families loses one family whenever it changes the other."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R5: set --flag replaces every flag and clobbers independent flag families",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** add/remove for trees or dependencies; changing what --flag itself does.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R5 from the squalor-xyz/agents orchestrator, observed against 1.1.0:\n\n```\n$ slicer set S21 --flag tier-small --flag risk-security   -> [\"tier-small\",\"risk-security\"]\n$ slicer set S21 --flag tier-mid                          -> [\"tier-mid\"]\n```\n\n`--flag` is `action=\"append\"` with \"replaces the list\" in its help (`cli.py:1757`). `set_fields_many` overwrites the value outright (`ops.py:397-401`). They keep tier and risk flags side by side, so an orchestrator that bumps the tier silently drops the risk. The workaround is a read-modify-write through `show --json`, which can race with another writer between the read and the write."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`set` options; `cmd_set` at `cli.py:1061-1079`)\n- `src/slicer/ops.py` (apply the add/remove per item inside the locked mutation)\n- `docs/commands.md` (the `set` row)\n- `tests/test_cli.py`, `tests/test_ops.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Flags `[tier-small, risk-security]`, with `tier-mid` added and `tier-small` removed: the result is `[risk-security, tier-mid]`.\n2. Adding a flag that is already present, or removing one that is absent, leaves the list unchanged and logs nothing.\n3. On `set S1 S2` with an add, each item gains it and keeps its own other flags.\n4. Combining `--add-flag` or `--remove-flag` with `--flag` or `--no-flags` exits 2 with code `usage`.\n5. An added flag containing a newline is refused, like `--flag` (`ops.py:75-77`)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Register repeatable `--add-flag` and `--remove-flag` options on `set`, mutually exclusive with `--flag` and `--no-flags`. Compute the new list per item inside the ops mutation, not in the CLI from a stale read: keep the existing order, drop the removed flags, then append the added ones not already present. Then go through the same comparison and `set` log entry as a `--flag` change, so an unchanged list is a no-op."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

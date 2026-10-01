@@ -1,0 +1,41 @@
+{
+  "id": "S152",
+  "title": "Reject a review back to the queue with a verdict",
+  "lead": [
+    "When a review fails, the only way back is a generic `set --status`, which records a field change, not a verdict. A `reject` command makes the failed review a first-class, queryable event."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R3: set --status open records a field change, not a review verdict, and keeps the claim",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the attempt counter (S153); a structured verdict schema beyond free-text notes; rejecting from statuses other than review and reviewing.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R3 from the squalor-xyz/agents orchestrator. `set S21 --status open` works but logs only `set status review→open` (`ops.py:415`). The orchestrator wants the reason recorded as a review verdict it can query later, and a cold restart has to be able to find it.\n\n`set --status` also leaves the reviewer's claim in place (it clears a claim only on done, `ops.py:403-404`). The rejected item then sits in the open queue still claimed by the reviewer.\n\nTheir workaround is `set --status open` followed by `note --text \"VERDICT: FAIL ...\"`: two writes, two log lines, and no single action to filter on."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`reject_many`, modelled on `handoff_many` at `ops.py:577-619`)\n- `src/slicer/cli.py` (register `reject` with `_render_flag` and `_strict_flag`)\n- `src/slicer/ai.py`, `docs/agents.md`, `docs/commands.md`\n- `tests/` (a reject test module, or beside the handoff tests); `tests/test_docs_coverage.py` if it enumerates commands\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. S21 in review, rejected with the note \"VERDICT: FAIL - missing test\": status becomes `open`, the claim is cleared, the note is appended to the item's notes, and `log --item S21 --action reject --json` returns one entry with `from: review`, `to: open` and that note.\n2. The same from `reviewing` works identically.\n3. With a custom `blocked` status configured, rejecting with `--to blocked` lands in `blocked`.\n4. A target of `done`, `retired`, `started`, `review` or `reviewing` exits 2 with code `usage`.\n5. Rejecting an open or started item exits 2 with the same error code `handoff` uses for a wrong source status, and writes nothing.\n6. `reject S21 S22` where S22 is open writes nothing for either.\n7. Omitting `--note` is a usage error.\n8. `--render --strict` with a failing render leaves S21 in review."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `ops.reject_many(state, ids, note, to=None, owner=...)`. Validate every id first: it must exist and be in `review_status` or `reviewing_status`. The target defaults to `cfg.open_status`, and must be a configured status that is none of done, retired, started, review or reviewing.\n\nThen for each item, in one save: set the status, call `_clear_claim`, append the note through the same path `note` uses, and `_record(..., \"reject\", frm=old, to=new, note=note)` with `by` once S149 has landed. Register `reject` in `cli.py` with a required `--note`, plus `--to`, `--json`, `--render` and `--strict`. Add the review-failure step to the reviewer loop in `ai.py` and `docs/agents.md`."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

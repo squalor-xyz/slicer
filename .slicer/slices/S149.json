@@ -1,0 +1,41 @@
+{
+  "id": "S149",
+  "title": "Claim as a named actor per invocation",
+  "lead": [
+    "A claim always names the configured or git identity, so an orchestrator that runs the implementer on one vendor's model and the reviewer on another cannot record which agent holds an item, or which one acted."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R1: claims always record the git user; per-call owner wanted",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** re-claiming an item another owner already holds (start keeps the existing claim); a by field on non-lifecycle actions; any authentication of the owner name.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R1 from the squalor-xyz/agents orchestrator (`slicer-feature-requests.md`), observed against 1.1.0:\n\n```\n$ slicer start S21 --json --lean\n  \"claim\": { \"owner\": \"Jon Robbins\", \"at\": \"2026-10-01T12:08:16Z\" }\n```\n\nThe owner comes from one place. `vcs.identity(root, configured)` (`vcs.py:96-108`) tries `config.claim_owner`, then git `user.name`, then the worktree name. Its only caller is `ops.start_many` (`ops.py:520`). `claim_owner` is per project (`config.py:119-121`), so several agents working from one checkout all claim as the same person. No per-call flag or env var exists. The env vars slicer reads today are `SLICER_LOCK_TIMEOUT` (`store.py:41`) and `SLICER_NO_CODE_WARNING` (`cli.py:1902`).\n\nThe log has no actor either. `LogEntry` (`model.py:399-429`) is `when, item, action, from, to, note`. The owner surfaces only in `to` for `claim`, in `from` for `release`, or inside the `handoff` note text. So `log` can't answer \"what did grok/implementer do?\".\n\nTheir workaround is `--note \"by grok/implementer\"` on every transition."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py` (`identity` takes an override)\n- `src/slicer/ops.py` (`start_many`, `handoff_many`, `release_many`, `set_status_many` take an owner; `_record` takes `by`)\n- `src/slicer/model.py` (`LogEntry.by`)\n- `src/slicer/cli.py` (`--owner` on `start`, `next`, `handoff`, `release`, `done`; `log --by`)\n- `src/slicer/ai.py`, `docs/agents.md`, `docs/commands.md`\n- `tests/test_cli.py` and the claim tests\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `start S1 --owner grok/implementer --json` records `claim.owner == \"grok/implementer\"`. `list --json` and the CLAIM column show it.\n2. With `SLICER_CLAIM_OWNER=codex/reviewer` and no flag, `start` claims as `codex/reviewer`. The flag beats the env var, and the env var beats `config.claim_owner`.\n3. `next --start --owner grok/implementer` claims as that owner.\n4. An owner containing a newline (flag or env var) exits 2 with code `usage` and writes nothing. A blank value falls through to the next source.\n5. Entries written by `start`, `next --start`, `handoff`, `release` and `done` carry `\"by\": \"<owner>\"`. `log --by grok/implementer --json` returns only those.\n6. Log lines without `by` still load, and other actions' lines are byte-identical to today's (no `by` key)."
+    },
+    {
+      "heading": "Implement",
+      "body": "Give `vcs.identity` an `override` argument. Resolution is the override (from the flag), then `SLICER_CLAIM_OWNER`, then `configured`, then git, then the worktree, using the same first-line/strip rule. Reject a newline in the flag or env var with a usage error, as `config.py:169` does for config.\n\nThread the resolved owner through the lifecycle ops. Add an optional `by` field to `LogEntry`, serialised last and only when non-empty so existing lines and non-lifecycle actions don't change. Set it on the `status`, `claim`, `handoff`, `release` and done entries. Add the `--owner` option to `start`, `next` (only meaningful with `--start`), `handoff`, `release` and `done`, plus a `--by` filter on `log`, matched the way `--action` is (`cli.py:1548-1569`).\n\n`start` still keeps an existing claim rather than replacing it (`ops.py:526-531`). Document the precedence order in `docs/agents.md` and one line in the AI instructions."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

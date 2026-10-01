@@ -1,0 +1,41 @@
+{
+  "id": "S158",
+  "title": "Accept near-miss legacy layouts in migrate",
+  "lead": [
+    "`migrate` accepts one exact legacy layout, so a tree that is close but hand-written differently has to be edited by hand before it will import."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** anything that weakens byte-exact round-tripping of the files migrate accepts; the error-message work (S157).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R8 from the squalor-xyz/agents orchestrator (failures listed in the error-message slice). They asked for:\n\n1. An option to name the index file (hardcoded `README.md`, `legacy.py:274`).\n2. Skipping files that don't look like slices. Today every `*.md` except `README.md` is parsed (`legacy.py:281-291`), so an index under another name is read as a slice.\n3. Accepting ASCII ` -- ` for the em dash in the H1 (`legacy.py:26`).\n4. Normalising trailing blank lines before the round-trip comparison (`legacy.py:237-251`).\n5. Mapping other index column layouts onto the 6-column header (`legacy.py:23-24`).\n\nThe requester is freezing their old tree rather than migrating it, so the owner parked this as `later`. It is recorded so the next user with a near-miss tree finds the analysis already done."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/legacy.py`, `src/slicer/migrator.py`, `src/slicer/cli.py` (`migrate` options)\n- `docs/migrate-format.md`\n- `tests/test_legacy_slice.py`, `tests/test_legacy_index.py`, `tests/test_migrate.py`, `tests/fixtures/legacy/`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A `migrate` index option naming `INDEX.md` reads that file and does not parse it as a slice.\n2. With the index renamed, a non-slice `.md` in the tree is skipped and reported as an info line, not an error.\n3. An H1 of `# S15 -- Title` parses, and the migrated title is `Title`.\n4. A slice differing only by trailing blank lines migrates.\n5. A 7-column `ID | Title | Size | Status | Findings | Depends on | Tree(s)` table migrates when given a column mapping.\n6. The fixture tree still round-trips byte for byte."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle each sub-request when the item is picked up. The constraint they share: the round-trip guarantee is what makes migration safe. Every loosening must be a normalisation applied to both sides of the comparison, or one recorded so `emit` reproduces the original bytes, never a silent drop of content. `legacy.py` stays a pure parser. The CLI resolves paths, and migration stays all-or-nothing. Split this into separate slices before starting if it is more than one commit's worth."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`. Also run against a live tree via `SLICER_LEGACY_TREE`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit per sub-change on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

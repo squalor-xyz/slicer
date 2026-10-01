@@ -1,0 +1,41 @@
+{
+  "id": "S157",
+  "title": "Point migrate errors at the expected format",
+  "lead": [
+    "Each `migrate` refusal says what was wrong but not what was expected, so a user with a near-miss layout fixes the problems one at a time, by trial."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R8: five successive migrate refusals on a near-miss tree; the format is in docs/migrate-format.md but no message says so",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** accepting any new layout (S158); changing error codes or exit codes.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R8 from the squalor-xyz/agents orchestrator. On their real `agent-workflow/plan/` tree, `migrate` failed five times in a row, each fix exposing the next:\n\n1. `README.md: no index found`. Their index is `INDEX.md`.\n2. `INDEX.md: first line is not '# <id> — <title>'`.\n3. `S15-record-s07.md: first line is not '# <id> — <title>'`. Their headers use ASCII ` -- `.\n4. `done/S09-...md: does not round-trip; slicer would lose content`. The only diff was one trailing blank line.\n5. `slice file has no index row` for every slice, with their 7-column table and with the `row.md` template's 8 columns.\n\nAll of this is specified in `docs/migrate-format.md`:\n- the `README.md` name (`legacy.py:274-276`);\n- the exact 6-column header `| # | Slice | Size | Trees | Findings | Status |` (`legacy.py:23-24`, matched byte for byte at `:191`);\n- the U+2014 em dash (`legacy.py:21,26`);\n- the exact round-trip (`legacy.py:237-251`).\n\n`row.md` is a render template, not the migrate format. That explains failure 5, where the table was read as prose because its header didn't match. None of the messages name that document, the header or the dash.\n\nThe requester won't migrate, so this is low priority. Loosening the format is a separate `later` item."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/legacy.py` (message text only; it stays a parser)\n- `src/slicer/migrator.py` (the \"no index row\" message, `migrator.py:338-340`; a hint when no table was detected at all)\n- `docs/migrate-format.md` (a short \"common near misses\" list, if useful)\n- `tests/test_legacy_slice.py`, `tests/test_legacy_index.py`, `tests/test_migrate.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A missing `README.md`: the message names the expected file and `docs/migrate-format.md`.\n2. An H1 using ` -- `: the message says an em dash (U+2014) is required.\n3. A slice that differs only by an extra trailing blank line: the round-trip message adds a trailing-blank-lines hint. Other diffs get no hint.\n4. An index whose table header doesn't match: each \"slice file has no index row\" report is preceded by one problem saying no index table was found, quoting the expected header.\n5. Every error code stays `legacy_format`, the exit codes are unchanged, and the fixture tree in `tests/fixtures/legacy/` still migrates cleanly."
+    },
+    {
+      "heading": "Implement",
+      "body": "Reword the messages at `legacy.py:145` (H1), `:250` (round-trip) and `:276` (index), and the no-row report in `migrator.py`. Each names the expected token and `docs/migrate-format.md`.\n\nFor the round-trip hint, compare the text with trailing newlines stripped. If that matches, append \"only trailing blank lines differ\". The comparison itself stays exact.\n\nIn `build`, when the index parsed to zero item rows, add one problem that quotes `TABLE_HEADER`, so the cascade of no-row reports is explained. Keep it in the same all-or-nothing report. Run the migrator against a live tree through `SLICER_LEGACY_TREE` if one is available, as AGENTS.md asks before touching these files."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

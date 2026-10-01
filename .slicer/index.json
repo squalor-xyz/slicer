@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "S",
   "id_width": 2,
-  "next_id": 149,
+  "next_id": 160,
   "preamble": "",
   "passes": [
     {
@@ -3743,6 +3743,291 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2
+      }
+    },
+    {
+      "id": "S149",
+      "title": "Claim as a named actor per invocation",
+      "short_title": "Claim as a named actor per invocation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R1: claims always record the git user; per-call owner wanted",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S150",
+      "title": "Add a reviewing status for a claimed review",
+      "short_title": "Add a reviewing status for a claimed review",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R2: start on a review item turns it into started, which next then offers to implementers",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S151",
+      "title": "Pick up the next review item in one call",
+      "short_title": "Pick up the next review item in one call",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S150"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R2: next skips review items; a reviewer needs list + show + client-side ranking",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S152",
+      "title": "Reject a review back to the queue with a verdict",
+      "short_title": "Reject a review back to the queue with a verdict",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S150"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R3: set --status open records a field change, not a review verdict, and keeps the claim",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S153",
+      "title": "Count attempts on an item",
+      "short_title": "Count attempts on an item",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S152"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R4: escalation policy needs a restart-safe attempt count; log counting is fragile",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S154",
+      "title": "Add or remove one flag without replacing the list",
+      "short_title": "Add or remove one flag without replacing the list",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R5: set --flag replaces every flag and clobbers independent flag families",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S155",
+      "title": "Batch pickup of small same-tree slices",
+      "short_title": "Batch pickup of small same-tree slices",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S151"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "L",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R6: batching K size-S slices per session means reimplementing next's eligibility client-side",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 3
+      }
+    },
+    {
+      "id": "S156",
+      "title": "Document statuses, next eligibility and verify's git checks",
+      "short_title": "Document statuses, next eligibility and verify's git checks",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R7 and Q1: custom statuses undocumented; exclude_flags assumed to filter next; verify's git checks unexplained",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S157",
+      "title": "Point migrate errors at the expected format",
+      "short_title": "Point migrate errors at the expected format",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R8: five successive migrate refusals on a near-miss tree; the format is in docs/migrate-format.md but no message says so",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1
+      }
+    },
+    {
+      "id": "S158",
+      "title": "Accept near-miss legacy layouts in migrate",
+      "short_title": "Accept near-miss legacy layouts in migrate",
+      "status": "later",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 2
+      }
+    },
+    {
+      "id": "S159",
+      "title": "Set the starting id at init",
+      "short_title": "Set the starting id at init",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "S145"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1
       }
     }
   ],

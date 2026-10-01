@@ -1,0 +1,41 @@
+{
+  "id": "S155",
+  "title": "Batch pickup of small same-tree slices",
+  "lead": [
+    "An orchestrator that hands one agent session several small slices in the same tree, to save on session startup, has to re-implement `next`'s eligibility rules client-side to choose them."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R6: batching K size-S slices per session means reimplementing next's eligibility client-side",
+  "size": "L",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** batches of review items; cross-tree batches; size ranges or ordering beyond an exact match; a size filter on list.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R6 from the squalor-xyz/agents orchestrator. To save per-session startup cost, they give one session up to K size-S slices in the same tree, one commit each. Choosing them needs the same rules as `next`: dependencies satisfied, not claimed elsewhere, in priority order.\n\nToday that is `deps --json` (unblocked) intersected with `list --tree T --json`, then filtered by size, with ranking, claim skipping and started-first resumption all reimplemented. That duplication is what they want removed.\n\n`next` already has every rule in `ops.next_item` (`ops.py:635-694`), but it returns one item. It has no tree or size filter (`cli.py:1669-1678`), and `list` has no size filter either (`cli.py:1682-1692`)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (a batch selector over `next_item`'s pool; tree/size filtering)\n- `src/slicer/cli.py` (`next --batch`, `--tree`, `--size`; the batch payload; batched `--start`)\n- `src/slicer/ai.py` (one line), `docs/agents.md` (payload shape), `docs/commands.md`\n- `tests/` (next/batch tests)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Given five ready size-S items in tree `core` and others elsewhere, the batch option with K=3, tree `core` and size `S` returns `items` holding the first three in `next` order.\n2. With A→B (B depends on A), both open and ready apart from that edge, a batch containing A also returns B after A. A batch with A excluded (filtered out, or claimed elsewhere) does not return B, and B appears in `blocked`.\n3. Items claimed in a sibling worktree are skipped and reported in `in_work_elsewhere`.\n4. `--ready --section Implement` gives each element as `{item, slice}`, with the same per-item shape as single `--ready`.\n5. `--start` claims every returned item under one lock. If one fails, none are claimed.\n6. An empty batch: exit 2 with `\"items\": []` and `blocked`.\n7. `--tree` and `--size` without the batch option narrow single `next`.\n8. The batch option together with `--show` or `-n` is a usage error. K < 1 is a usage error."
+    },
+    {
+      "heading": "Implement",
+      "body": "Reuse `next_item`'s pool construction: the status whitelist, started first, `-effective_score` ranking, elsewhere skipping and `unspecified`. Factor it so the batch walks the same ordered pool. Apply the tree filter (the item's trees include T) and the size filter (exact match) before ranking.\n\nWalk the pool greedily. An item is eligible if every unmet dependency is already in the batch, so items enter in dependency order automatically. Stop at K. Emit `{\"items\": [...], \"blocked\": [...]}` plus the usual skip notes. For `--start`, take the project lock once and start each id through the same op, rolling back as one mutation on failure. Pass `--owner` through once S149 has landed."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

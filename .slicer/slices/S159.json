@@ -1,0 +1,41 @@
+{
+  "id": "S159",
+  "title": "Set the starting id at init",
+  "lead": [
+    "A project that continues numbering from an earlier tracker has to know that `add --id` advances the counter. `init` can't start the counter where it should be."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** an init option for the prefix or width (S145's territory); moving the counter on a project that already has items.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R9 from the squalor-xyz/agents orchestrator. Their old tree ends at S20, and new work should start at S21.\n\nThe counter is `Index.next_id` (`model.py:314`), written by `init` as `model.Index(id_prefix=..., id_width=...)` with the default 1 (`cli.py:313-336`). `init` takes only `--force` (`cli.py:1649-1650`).\n\nThe working workaround: `add \"...\" --id S21`. `ids.allocate` then raises `next_id` to 22 (`ids.py:68-89`), and later adds continue from there. It works, but only if you know `allocate` does that.\n\nThis depends on S145, which changes how `ids.parse_id` matches the prefix (case-insensitively) and touches the same `ids.py` code. Validating the starting id should use the rule S145 settles on."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`init` option; `cmd_init`)\n- `src/slicer/ids.py` (reuse `parse_id` / `require_valid`)\n- `docs/getting-started.md` (init), `docs/commands.md`\n- `tests/test_cli.py`, `tests/test_ids.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `init` with a starting id of S21, then `add \"x\"`, allocates S21. The next add allocates S22.\n2. A starting id with another prefix, or one that isn't valid under the configured width rules, exits 2 with code `bad_id` and writes nothing.\n3. On an existing project with items, `init --force` with a starting id refuses (the counter would step back or skip over live ids), with a message pointing at `add --id`.\n4. `init --force` with a starting id over an index with no items sets the counter."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add the option to `init`. Validate the value with `ids.require_valid` and `ids.parse_id` against the configured prefix, then construct the new `Index` with `next_id` set to the parsed number. When an index already exists, only allow it if that index has no items. Mention it beside the one-way-door note in `docs/getting-started.md` (lines 114-118)."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

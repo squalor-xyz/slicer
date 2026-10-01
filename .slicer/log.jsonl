@@ -700,3 +700,25 @@
 {"when": "2026-09-30T00:17:17Z", "item": "S147", "action": "add", "from": "", "to": "open", "note": "Keep an unset short title in step when set changes the title"}
 {"when": "2026-09-30T00:18:57Z", "item": "S148", "action": "add", "from": "", "to": "open", "note": "Offer --strict on import and remove"}
 {"when": "2026-09-30T00:19:18Z", "item": "S148", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-01T13:25:44Z", "item": "S149", "action": "add", "from": "", "to": "open", "note": "Claim as a named actor per invocation"}
+{"when": "2026-10-01T13:25:44Z", "item": "S149", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:44Z", "item": "S150", "action": "add", "from": "", "to": "open", "note": "Add a reviewing status for a claimed review"}
+{"when": "2026-10-01T13:25:44Z", "item": "S150", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:44Z", "item": "S151", "action": "add", "from": "", "to": "open", "note": "Pick up the next review item in one call"}
+{"when": "2026-10-01T13:25:45Z", "item": "S151", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:45Z", "item": "S152", "action": "add", "from": "", "to": "open", "note": "Reject a review back to the queue with a verdict"}
+{"when": "2026-10-01T13:25:45Z", "item": "S152", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:45Z", "item": "S153", "action": "add", "from": "", "to": "open", "note": "Count attempts on an item"}
+{"when": "2026-10-01T13:25:45Z", "item": "S153", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:45Z", "item": "S154", "action": "add", "from": "", "to": "open", "note": "Add or remove one flag without replacing the list"}
+{"when": "2026-10-01T13:25:45Z", "item": "S154", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:45Z", "item": "S155", "action": "add", "from": "", "to": "open", "note": "Batch pickup of small same-tree slices"}
+{"when": "2026-10-01T13:25:46Z", "item": "S155", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:46Z", "item": "S156", "action": "add", "from": "", "to": "open", "note": "Document statuses, next eligibility and verify's git checks"}
+{"when": "2026-10-01T13:25:46Z", "item": "S156", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:46Z", "item": "S157", "action": "add", "from": "", "to": "open", "note": "Point migrate errors at the expected format"}
+{"when": "2026-10-01T13:25:46Z", "item": "S157", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:46Z", "item": "S158", "action": "add", "from": "", "to": "later", "note": "Accept near-miss legacy layouts in migrate"}
+{"when": "2026-10-01T13:25:46Z", "item": "S158", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-01T13:25:46Z", "item": "S159", "action": "add", "from": "", "to": "open", "note": "Set the starting id at init"}
+{"when": "2026-10-01T13:25:47Z", "item": "S159", "action": "promote", "from": "", "to": "", "note": ""}

@@ -1,0 +1,41 @@
+{
+  "id": "S153",
+  "title": "Count attempts on an item",
+  "lead": [
+    "An orchestrator's escalation policy (one repair, then block) needs the attempt count from the item itself, so a cold restart does not lose it."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R4: escalation policy needs a restart-safe attempt count; log counting is fragile",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** auto-blocking after N attempts (an orchestrator policy); per-attempt history; an attempts column in list or the rendered roadmap.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R4 from the squalor-xyz/agents orchestrator. Their policy: attempt 1 fails, so they allow one repair; attempt 2 fails, so the item goes to `blocked`. They run headless and stop and resume cold, so the count has to live in slicer state, not in the orchestrator's memory.\n\nThe workaround is counting `start` entries in `log --item ID --action start --json`. That is fragile:\n- `start` from open and a resumed `start` both log `status`.\n- A claim-only start logs `claim` (`ops.py:543-547`).\n- The log is a merged, append-only JSONL with no schema, which a fresh clone or a hand-pruned log can shorten.\n\nAdding a field to `Item` follows the claim-field precedent. `store.py:216-219` stamps the index schema on every save \"so an older slicer refuses the file instead of dropping claim fields it does not know\", and `Index.from_dict` refuses a future version through `reject_future_schema` (`model.py:383-384`, `errors.py:74-89`). The owner approved bumping `SCHEMA_VERSION` from 2 to 3 (`model.py:15`) for this."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/model.py` (`Item.attempts`, `to_dict`/`from_dict`, `SCHEMA_VERSION = 3`)\n- `src/slicer/ops.py` (increment in `start_many` and `reject_many`; `attempts` in `set_fields_many`'s known fields, `ops.py:377`)\n- `src/slicer/cli.py` (`set --attempts`)\n- `src/slicer/model.py` `lean` (drop `attempts: 0` under `--lean`, like other empty fields)\n- `docs/agents.md` (item JSON shape), `docs/commands.md`\n- `tests/test_schema.py`, `tests/test_ops.py`, `tests/test_lean.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A new item has `fields.attempts == 0`.\n2. `start` from open gives 1. A second `start` while started leaves it at 1.\n3. A `reject` gives 2, and `start` from open again gives 3.\n4. `start` from review to reviewing does not change it.\n5. `set S1 --attempts 0` resets it and logs a `set` entry. `--attempts -1` exits 2 with code `usage`.\n6. A version-2 `index.json` with no `attempts` loads with 0 everywhere and is saved back as version 3.\n7. A version-4 `index.json` exits 3 with code `schema_too_new`.\n8. `list --json`, `show --json` and the `next --ready` item carry `attempts`. The `list` table, ROADMAP.md and slice renders are byte-identical to before for this repo."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `attempts: int = 0` to `Item`. Serialise it inside `fields` after `effort`, and read it with `.get(\"attempts\", 0)`, validating a non-negative int (anything else is `corrupt`). Bump `SCHEMA_VERSION` to 3. No reader shim is needed, because a missing key defaults.\n\nIn `start_many`, increment only when the previous status was `cfg.open_status`. In `reject_many`, increment on every reject. Accept `attempts` in `set_fields_many`, with `--attempts` registered on `set` and validated as an int of at least 0. Include it in the `next --ready` item dict (`cli.py:614-665`). Leave render templates and the list table alone."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased that calls out the index schema bump."
+    }
+  ],
+  "notes": []
+}

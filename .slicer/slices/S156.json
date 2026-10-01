@@ -1,0 +1,41 @@
+{
+  "id": "S156",
+  "title": "Document statuses, next eligibility and verify's git checks",
+  "lead": [
+    "Users rely on custom statuses as approval gates without any document saying how `next` treats them. `exclude_flags` reads like a `next` filter but isn't one, and nothing says what `verify` checks inside git."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R7 and Q1: custom statuses undocumented; exclude_flags assumed to filter next; verify's git checks unexplained",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** any behaviour change to exclude_flags, next or verify.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R7 and question Q1 from the squalor-xyz/agents orchestrator.\n\nCustom statuses work. Adding `\"blocked\": \"blocked\"` to `config.statuses` lets `set --status blocked` through, and `next` skips the item because its pool is a whitelist of open and started (`ops.py:657-662`). `slicer ai instructions` (`src/slicer/ai.py`) never mentions it. `docs/configuration.md` has a `blocked` example under `## Statuses` (lines 117-130) but doesn't state the eligibility rule.\n\nThey set `\"exclude_flags\": [\"draft\"]` expecting `next` to skip drafts, and it didn't. That is by design: only `sync._eligible` reads it (`sync.py:28-31`), and `docs/configuration.md:62` says \"sync pointers only\". But nothing points users at the status-based gate that does work. The owner chose to document this, not change it.\n\nQ1: they saw `git checks skipped` outside a repo and asked what `verify` checks inside one. `verify.against_git` (`verify.py:144-185`) does two warn-level checks:\n- The render merge driver is unconfigured while sibling worktrees exist (`:153-163`).\n- With `git_check` on, a done item has no commit subject matching its id (`:164-184`, scanning `git log --all --no-merges --max-count=2000`).\n\nRender freshness is `check`'s job, not `verify`'s. None of this is written down in one place."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py` (a statuses paragraph after the `next` paragraph)\n- `docs/configuration.md` (`## Statuses`; the `exclude_flags` and `git_check` rows)\n- `docs/commands.md` or `docs/getting-started.md` (what `verify` checks inside git)\n- `tests/test_ai.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_ai.py`: the instructions mention custom statuses and say `next` offers only open and started work.\n2. `tests/test_docs_coverage.py` still passes."
+    },
+    {
+      "heading": "Implement",
+      "body": "In `ai.py`, after \"Do not combine `--ready` and `--show`.\", add two or three sentences:\n- Projects can add statuses in `config.statuses`.\n- `next` offers only open work and resumes started work. Every other status (parked, review, custom ones such as `draft` or `blocked`) stays out of the queue.\n- Use a custom status, not a flag, to hold an item back.\n\nIn `docs/configuration.md`, add that rule to `## Statuses`. In the `exclude_flags` row, say it does not affect `next` or `list` and point at custom statuses.\n\nIn the `verify` docs, list the two git checks, their level (warn, so exit 0), the `git_check` and `render_driver_check` keys, the 2000-commit window, and that `check` owns render freshness. Keep the wording consistent with the reviewing role and `next --status` if those slices have landed first."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

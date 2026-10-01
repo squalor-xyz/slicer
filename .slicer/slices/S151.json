@@ -1,0 +1,41 @@
+{
+  "id": "S151",
+  "title": "Pick up the next review item in one call",
+  "lead": [
+    "`next` gives an implementer a bounded, one-call pickup. A reviewer gets nothing like it, and has to list, choose and show by hand."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R2: next skips review items; a reviewer needs list + show + client-side ranking",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** picking from arbitrary statuses; batch pickup (S155); changing plain next output.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R2 from the squalor-xyz/agents orchestrator, observed against 1.1.0:\n\n```\n$ slicer handoff S21 --json --lean      -> \"status\": \"review\"\n$ slicer next --json --lean             -> S22 (skips S21, as designed)\n$ slicer list --status review           -> S21\n```\n\n`next`'s pool is a whitelist of open and started (`ops.py:660-662`). Its arguments are `-n`, `--start`, `--show`, `--ready` and `--section` (`cli.py:1669-1678`), with no status filter. A reviewer needs the same ranking, dependency gating, worktree skipping and section-trimmed payload. Today that takes `list --status review --json`, picking the first item client-side, then `show ID --section ... --context --json`. That is two calls plus re-implementing the ordering.\n\nThis builds on the `reviewing` role: a reviewer's pickup claims the item and moves it to `reviewing`, and a later call resumes it first, the way `next` resumes started work."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` (`next_item` takes the queue to draw from)\n- `src/slicer/cli.py` (`next --status`; `--start` routing)\n- `src/slicer/ai.py`, `docs/agents.md`, `docs/commands.md`\n- `tests/test_cli.py` and the next/ready tests\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. With S21 in review, `next --status review --ready --section Check --section Files --json` returns S21. Its `slice` holds only those two sections, and the payload has the same keys as today's `--ready`.\n2. Adding `--start` returns S21 with status `reviewing` and a claim. Calling it again returns the same S21 (resume first).\n3. A review item whose dependency is not done lands in `blocked`, not `item`.\n4. A review item claimed in a sibling worktree is skipped and listed in `in_work_elsewhere`.\n5. With no review items: exit 2 with `\"item\": null`, the same as an empty `next`.\n6. `--status parked` (or any status other than the configured review status) exits 2 with code `usage`.\n7. With `review_status` set to empty in config, `--status review` exits 2 with code `usage`.\n8. Plain `next` output is unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Give `next_item` a parameter for the pool it draws from. By default it is open plus started, as now. For review it is `reviewing_status` then `review_status`: reviewing ranks first, each group by `-effective_score`. Everything else is shared, including dependency gating, `unspecified`, elsewhere skipping and the offset.\n\nIn `cmd_next`, accept a `--status` option. Any value other than `cfg.review_status` is a usage error, which keeps it from becoming a general status picker without a design. With `--start`, call the same `ops.start` path, so the S150 transition applies and an `--owner` (S149) passes through when present. Document the reviewer loop in `ai.py` and `docs/agents.md`, replacing the \"list then start\" advice."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

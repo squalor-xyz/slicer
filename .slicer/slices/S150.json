@@ -1,0 +1,41 @@
+{
+  "id": "S150",
+  "title": "Add a reviewing status for a claimed review",
+  "lead": [
+    "A reviewer who claims a review item with `start` turns it into `started`, and an implementer's `next` then offers it as resumable work. A `reviewing` role keeps a claimed review out of the implementer queue."
+  ],
+  "depends_note": null,
+  "findings_note": "agents-repo request R2: start on a review item turns it into started, which next then offers to implementers",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a status filter on next (S151); reject (S152); converting existing started items that were picked up from review.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Request R2 from the squalor-xyz/agents orchestrator asks that a reviewer's claim not change the item's status away from review. Today it does.\n\n`ops.start_many` (`ops.py:508-548`) has no source-status guard. It moves any item, `review` included, to `started_status` and claims it. The AI instructions and `ops.py:582` tell reviewers to do exactly that (\"claim it with `start`\").\n\n`next` whitelists open and started (`ops.py:660-662`) and resumes started first (`ops.py:687-688`). Its local-claim test (`local = bool(item.claim_owner) or item.status == cfg.started_status`) does not compare owners, so a reviewer's claimed item comes back to the next implementer that asks. Once that has happened, `list` cannot tell an item under review from one being implemented.\n\nThe owner chose a dedicated role over \"claim but stay in review\". That gives a distinct, visible status for \"a reviewer holds this\" that `list --status` can filter and that the next-review pickup (the following slice) can resume first."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` (`reviewing_status` role: default, back-fill, validation, serialisation)\n- `src/slicer/ops.py` (`start_many` transition; `handoff_many` source statuses; `next_item` local test)\n- `src/slicer/store.py` (`in_work_elsewhere` counts it)\n- `src/slicer/graph.py` (`ranked_order` tier)\n- `src/slicer/cli.py` (`_claim_cell`, if it keys on started)\n- `src/slicer/ai.py`, `docs/agents.md`, `docs/configuration.md`\n- `tests/test_status_keys.py`, `tests/test_config.py`, the handoff/claim tests\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Handoff S1, then `start S1`: the status is `reviewing` and the claim is set. A plain `next` does not return S1 and does not report it as blocked.\n2. `start` on an open, parked or started item behaves exactly as today.\n3. A config without `reviewing` in `statuses` loads with it back-filled (`\"reviewing\": \"reviewing\"`), the same way `review` is back-filled. A config whose label `reviewing` is already used by another status does not get it, mirroring the `review` rule.\n4. `\"reviewing_status\": \"\"` disables the role, and `start` on a review item then moves it to `started` as today.\n5. A config where `reviewing_status` equals another role fails validation with code `config`.\n6. `handoff` on a `reviewing` item is refused, the same as on an open item.\n7. `done S1` from `reviewing` clears the claim.\n8. An item `reviewing` in a sibling worktree shows as `wt:NAME` in `list` and in `next`'s `in_work_elsewhere`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `reviewing_status: str = \"reviewing\"` beside `review_status` (`config.py:95-102`), with the same back-fill, distinct-role validation (`config.py:143-152`) and `to_dict`/`from_dict` handling.\n\nIn `start_many`, when the item's status is `review_status` and `reviewing_status` is set, the target is `reviewing_status`. Log it as the usual `status` entry. `handoff_many` keeps accepting started and review only. `done` needs no change.\n\nCount `reviewing_status` wherever \"started\" means \"someone is on it\": `next_item`'s local test, `store.in_work_elsewhere`, `graph.ranked_order` (same tier as started) and the CLAIM column. Rewrite the \"Hand off for review\" paragraph in `ai.py` and `docs/agents.md`: `start` on a review item moves it to reviewing, and `done` finishes it."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}
