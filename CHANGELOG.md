@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- Migrate errors name the expected token and `docs/migrate-format.md`. A round-trip that differs only by trailing blank lines says so. An index with no item rows reports that no index table was found and quotes the expected header, before each "slice file has no index row" line.
 - `import` and `remove` take `--render --strict`. A failed render writes nothing, including a purge that would have deleted the slice file. `--strict` without `--render`, including with `--dry-run`, is a usage error. `done` stays render-first without the flag.
 - Roadmap markdown and HTML show version-shaped pass groups newest first (`v1.10` above `v1.2`, a bare `v1` below `v1.1`), then other passes in declaration order. Items with no pass follow: those that are not done, then done items. The stored queue and `next` are unchanged.
 - A status change moves a slice file in the worktree only. `git mv` is no longer used, so `done`, `retire`, and `set --status` leave the index untouched. Add the old path and the new path together to record the rename.

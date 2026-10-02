@@ -102,7 +102,7 @@ A typo reads as a deliberate zero.
 
 ```console
 $ slicer migrate --from docs/slices --dry-run
-slicer: docs/slices/S13-atlas-tables-must-split.md: first line is not '# <id> — <title>'
+slicer: docs/slices/S13-atlas-tables-must-split.md: first line is not '# <id> — <title>'; an em dash (U+2014) is required (see docs/migrate-format.md)
 ```
 
 Also in this tier: CRLF line endings, a missing final newline, the wrong number of
@@ -128,6 +128,18 @@ table but not under `done/`, or the reverse).
 
 Warnings do not block. `--dry-run` always exits 0 when there are no problems, and writes
 nothing either way.
+
+## Common near misses
+
+These are still refused. The message names the token the parser expected.
+
+- The index file is `README.md` in the source directory. `INDEX.md` is not read.
+- The H1 separator is an em dash (U+2014), not `--` or a hyphen.
+- The table header is exactly `| # | Slice | Size | Trees | Findings | Status |`.
+  `templates/row.md` is a render template, not this format. A different header is prose,
+  so the file is read and then every slice reports that it has no index row.
+- One extra trailing blank line fails the round-trip. The message says only trailing
+  blank lines differ, and still prints the diff.
 
 ## A minimal tree that migrates
 

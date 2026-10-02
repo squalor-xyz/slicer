@@ -43,6 +43,17 @@ class IndexTableTests(unittest.TestCase):
   def test_EmitIndex_ParsedIndex_ReproducesInputBytes(self) -> None:
     self.assertEqual(self.parse().emit(), support.MINI_INDEX)
 
+  def test_ReadTree_MissingReadme_NamesTheExpectedFile(self) -> None:
+    with support.TempRepo() as repo:
+      folder = repo.root / "docs" / "slices"
+      folder.mkdir(parents=True)
+      with self.assertRaises(LegacyImportError) as caught:
+        legacy.read_tree(folder)
+    message = str(caught.exception)
+    self.assertIn("README.md", message)
+    self.assertIn("docs/migrate-format.md", message)
+    self.assertEqual(caught.exception.code, "legacy_format")
+
 
 if __name__ == "__main__":
   unittest.main()

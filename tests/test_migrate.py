@@ -112,6 +112,38 @@ class MigrateTests(unittest.TestCase):
       self.assertIn("disagrees with its location", out)
       self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
 
+  def test_Migrate_MissingIndex_NamesReadmeAndAborts(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      (repo.root / "docs/slices/README.md").unlink()
+      repo.run("init")
+      code, _, err = repo.run("migrate", "--from", "docs/slices")
+      self.assertEqual(code, 2)
+      self.assertIn("README.md", err)
+      self.assertIn("docs/migrate-format.md", err)
+      self.assertFalse((repo.root / ".slicer/slices/S01.json").exists())
+
+  def test_Migrate_WrongTableHeader_ReportsMissingTableBeforeRows(self) -> None:
+    with support.TempRepo() as repo:
+      support.make_mini(repo)
+      text = repo.read("docs/slices/README.md").replace(
+        legacy.TABLE_HEADER,
+        "| # | Slice | Size | Trees | Findings | Status | Extra |",
+      )
+      repo.write("docs/slices/README.md", text)
+      repo.run("init")
+      code, out, _ = repo.run("migrate", "--from", "docs/slices")
+      self.assertEqual(code, 1)
+      problems = [line for line in out.splitlines() if line.startswith("PROBLEM")]
+      table = [i for i, line in enumerate(problems) if "no index table was found" in line]
+      self.assertEqual(len(table), 1)
+      self.assertIn(legacy.TABLE_HEADER, problems[table[0]])
+      rows = [i for i, line in enumerate(problems) if "slice file has no index row" in line]
+      self.assertGreaterEqual(len(rows), 1)
+      self.assertLess(table[0], min(rows))
+      self.assertTrue(all("docs/migrate-format.md" in problems[i] for i in rows))
+      self.assertFalse((repo.root / ".slicer/slices/S01.json").exists())
+
   def test_Migrate_UnparsableFile_AbortsWithoutWriting(self) -> None:
     with support.TempRepo() as repo:
       support.make_mini(repo)
