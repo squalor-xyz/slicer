@@ -654,6 +654,7 @@ def _emit_ready(
       "title": item.title,
       "status": item.status,
       "depends_on": list(item.depends_on),
+      "attempts": item.attempts,
       "effective_score": eff,
       "path": str(path) if path else None,
     },
@@ -1112,7 +1113,7 @@ def cmd_set(args: argparse.Namespace) -> int:
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
     pass_key=args.pass_key, flags=flags, group=args.group,
     importance=args.importance, urgency=args.urgency,
-    effort=args.effort,
+    effort=args.effort, attempts=args.attempts,
   )
   fields = {key: value for key, value in fields.items() if value is not None}
   if args.no_effort:
@@ -1830,6 +1831,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--urgency", type=int, help="1-3")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate")
   sp.add_argument("--no-effort", action="store_true", help="clear the effort estimate")
+  sp.add_argument("--attempts", type=int, help="restart count; an integer >= 0")
 
   sp = _strict_flag(_render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary")))
   sp.add_argument("id")

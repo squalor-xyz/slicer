@@ -406,7 +406,7 @@ def _batch_items(state: State, item_ids: list[str]) -> list[Item]:
 def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list[Item]:
   """Validate the request before saving once; omitted fields stay unchanged."""
   items = _batch_items(state, item_ids)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency", "effort"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency", "effort", "attempts"}
   _reject_bad_text(**fields)
   values = {}
   for key, value in fields.items():
@@ -418,6 +418,8 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
       raise StateError(f"unknown status {value!r}; known: {sorted(state.config.statuses)}")
     elif key in ("importance", "urgency", "effort") and value is not None:
       value = _valid_score(key, value)
+    elif key == "attempts" and (isinstance(value, bool) or not isinstance(value, int) or value < 0):
+      raise StateError(f"attempts must be an integer >= 0, not {value!r}", code="usage")
     values[key] = _clean(value)
   if "depends_on" in values:
     _check_depends(state, {item.id: list(values["depends_on"]) for item in items})
@@ -586,6 +588,10 @@ def start_many(
       claim_changed = True
     if not status_changed and not claim_changed:
       continue
+    # Only a fresh start from the queue counts. Resuming, and claiming a
+    # review, leave the count where it is.
+    if previous == cfg.open_status:
+      item.attempts += 1
     if status_changed:
       item.status = status
     changed.append((item, previous, status_changed))
@@ -727,6 +733,7 @@ def reject_many(
     item.status = target
     _clear_claim(item)
     item.notes.append(_dated(verdict))
+    item.attempts += 1
     changed.append((item, previous))
   for item, previous in changed:
     if previous != item.status:

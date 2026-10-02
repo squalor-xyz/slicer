@@ -7,7 +7,7 @@ import unittest
 
 import support
 
-ITEM_KEYS = ["depends_on", "effective_score", "id", "path", "status", "title"]
+ITEM_KEYS = ["attempts", "depends_on", "effective_score", "id", "path", "status", "title"]
 
 
 class ReadyTests(unittest.TestCase):

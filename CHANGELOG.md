@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- Items record `attempts`. `start` from open and every `reject` increment it, and `set --attempts` sets it. The index schema is now 3. A version-2 index with no `attempts` key still loads, as 0.
 - `slicer reject ID --note VERDICT [--to STATUS]` sends a review or reviewing item back to the open status (or another non-lifecycle status), clears its claim, adds the verdict to the item's notes, and logs one `reject` entry carrying it. Every id is checked before anything is written. It takes `--owner`, `--json`, `--render` and `--strict`.
 - `next --status review` is the reviewer's one-call pickup: the highest-priority review item, ranked and dependency-gated like `next`, with the same `--ready`/`--section`/`--lean` payloads. `--start` claims it and moves it to `reviewing`, and a later call resumes it first. Only the configured review status is accepted.
 - A `reviewing` status (`reviewing_status` in config, back-filled like `review`). `start` on a review item now moves it to `reviewing` and claims it, instead of back to `started`, so an implementer's `next` no longer resumes a review in progress. `list` ranks reviewing items with started ones, sibling worktrees count them as in work, and `handoff` refuses them. Set `reviewing_status` to `""` to keep the old behaviour.
