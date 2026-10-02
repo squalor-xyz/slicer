@@ -157,6 +157,9 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
     code = fn(args)
     if code != OK:
       state.discard_stage()
+      # The handler already explained the refusal. Discarding the stage must
+      # not also discard that report.
+      _flush_deferred(args)
       return code
     expected = render.plan(state)
     # write_atomic, so a render write that fails partway restores render/ and the
@@ -166,13 +169,18 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
   except BaseException:
     state.discard_stage()
     raise
+  _flush_deferred(args)
+  if not getattr(args, "json", False):
+    print(f"rendered {written} file(s)")
+  return code
+
+
+def _flush_deferred(args: argparse.Namespace) -> None:
+  """Print the output a strict handler held back until its fate was known."""
   for line in getattr(args, "_deferred", []):
     print(line)
   for line in getattr(args, "_deferred_err", []):
     print(line, file=sys.stderr)
-  if not getattr(args, "json", False):
-    print(f"rendered {written} file(s)")
-  return code
 
 
 def _migrate_strict(fn, args: argparse.Namespace) -> int:
@@ -233,8 +241,9 @@ def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 def _strict_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   """`--strict` gates a mutation on its render (with `--render`): the change is
-  rolled back, and nothing printed, if the render fails. Offered on everyday
-  item mutations and migrate; `done --render` already behaves this way."""
+  rolled back, and nothing printed, if the render fails. Offered on the
+  mutating commands, including import, migrate, and remove. `done --render`
+  already behaves this way and does not take the flag."""
   sp.add_argument(
     "--strict", action="store_true",
     help="with --render, require the render to succeed before the change lands",
@@ -1720,7 +1729,7 @@ def build_parser() -> argparse.ArgumentParser:
   add("setup-git", cmd_setup_git,
       "print the git config that turns on the render merge driver (run once per clone)")
 
-  sp = _render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline"))
+  sp = _strict_flag(_render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline")))
   sp.add_argument("file", nargs="?", help="the outline file")
   sp.add_argument("--skeleton", action="store_true", help="print a template and exit")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
@@ -1915,7 +1924,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   _strict_flag(_render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty pass group"))).add_argument("key")
 
-  sp = _render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright"))
+  sp = _strict_flag(_render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright")))
   sp.add_argument("id")
   mode = sp.add_mutually_exclusive_group(required=True)
   mode.add_argument("--reason", help="retire it, recording why; the id stays claimed")

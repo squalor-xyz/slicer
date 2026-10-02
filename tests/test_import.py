@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 import support
+
+from slicer import jsonio, render
 
 OUTLINE = """\
 # Roadmap
@@ -432,6 +435,90 @@ class ImportRenderFlagTests(unittest.TestCase):
       repo.write("r.md", "## A thing\n")
       code, _, err = repo.run("import", "r.md", "--dry-run", "--render")
       self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.items, [])
+
+  def test_Import_StrictRender_PrintsTheSameReportAsRender(self) -> None:
+    def report(flag: list[str]) -> tuple[int, str, str]:
+      with self.repo() as repo:
+        repo.write("r.md", OUTLINE)
+        code, out, err = repo.run("import", "r.md", *flag)
+        self.assertEqual(repo.run("check")[0], 0)
+        return code, out, err
+
+    def comparable(text: str) -> str:
+      # The source line names the temp directory. The rest of the report is the contract.
+      return "\n".join(line for line in text.splitlines() if not line.startswith("source "))
+
+    plain = report(["--render"])
+    strict = report(["--render", "--strict"])
+    self.assertEqual(plain[0], 0)
+    self.assertEqual(strict[0], 0)
+    self.assertEqual(strict[2], plain[2])
+    self.assertEqual(comparable(strict[1]), comparable(plain[1]))
+    self.assertIn("rendered", strict[1])
+    self.assertNotIn("now run", strict[1])
+
+  def test_Import_StrictRenderFails_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Existing")
+      repo.run("render")
+      index = repo.read(".slicer/index.json")
+      history = repo.read(".slicer/log.jsonl")
+      repo.write("r.md", "## A new thing\n\n### Why\nbecause\n")
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run("import", "r.md", "--render", "--strict", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertNotIn("added", out)
+      self.assertEqual(repo.read(".slicer/index.json"), index)
+      self.assertEqual(repo.read(".slicer/log.jsonl"), history)
+      self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
+
+  def test_Import_StrictProblems_PrintsTheReportAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Existing")
+      index = repo.read(".slicer/index.json")
+      repo.write("r.md", "## Existing\n")
+      code, out, err = repo.run("import", "r.md", "--render", "--strict")
+      self.assertEqual(code, 1, err)
+      self.assertIn("PROBLEM", out)
+      self.assertIn("refusing to write", out)
+      self.assertNotIn("rendered", out)
+      self.assertEqual(repo.read(".slicer/index.json"), index)
+
+  def test_Import_HistoryWriteFails_NamesTheCommittedBatch(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\n")
+      with patch.object(jsonio, "append_jsonl", side_effect=OSError("disk full")):
+        code, out, err = repo.run("import", "r.md", "--json")
+      self.assertEqual(code, 3)
+      message = json.loads(out)["error"]["message"]
+      self.assertEqual(json.loads(out)["error"]["code"], "io")
+      self.assertIn("history could not be written", message)
+      self.assertIn("disk full", message)
+      self.assertNotIn('"ids"', out)
+      self.assertEqual([item.title for item in repo.state().index.items], ["A thing"])
+
+  def test_Import_StrictHistoryWriteFails_KeepsTheItemsAndWithholdsTheReport(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\n")
+      with patch.object(jsonio, "append_jsonl", side_effect=OSError("disk full")):
+        code, out, err = repo.run("import", "r.md", "--render", "--strict", "--json")
+      self.assertEqual(code, 3)
+      doc = json.loads(out)
+      self.assertEqual(doc["error"]["code"], "io")
+      self.assertIn("history could not be written", doc["error"]["message"])
+      self.assertNotIn("added", out)
+      self.assertEqual([item.title for item in repo.state().index.items], ["A thing"])
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Import_StrictWithoutRender_IsUsageError(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A thing\n")
+      for extra in ([], ["--dry-run"]):
+        code, out, err = repo.run("import", "r.md", *extra, "--strict", "--json")
+        self.assertEqual(code, 2, err)
+        self.assertEqual(json.loads(out)["error"]["code"], "usage")
       self.assertEqual(repo.state().index.items, [])
 
   def test_Import_WithoutRender_LeavesStale(self) -> None:

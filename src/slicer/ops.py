@@ -1113,7 +1113,7 @@ def purge(state: State, item_id: str, *, force: bool = False) -> PurgeResult:
   state.save_index()
   removed = False
   if path is not None:
-    path.unlink()
+    state.delete_slice(path)
     removed = True
 
   _record(state, item_id, "purge", frm=item.status, note=why)
@@ -1275,6 +1275,10 @@ def apply_outline(
   original = state
   state = State(state.root, cfg, deepcopy(state.index), dict(state.slices),
                 dict(state.slice_files))
+  # A strict import renders this draft before anything hits disk. The copy
+  # has to share the caller's stage, or save_slice writes immediately.
+  if original._stage is not None:
+    state._stage = original._stage
   if preamble is not None:
     state.index.preamble = preamble
 
@@ -1322,8 +1326,11 @@ def apply_outline(
       written.append(state.save_slice(sl))
     state.save_index()
   except BaseException:
-    for path in written:
-      path.unlink(missing_ok=True)
+    # A staged save recorded the path and wrote nothing. Unlink would delete
+    # a file that was already there.
+    if state._stage is None:
+      for path in written:
+        path.unlink(missing_ok=True)
     raise
   original.index, original.slices = state.index, state.slices
   try:

@@ -3871,7 +3871,7 @@
       "id": "S148",
       "title": "Offer --strict on import and remove",
       "short_title": "Offer --strict on import and remove",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -3890,7 +3890,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
