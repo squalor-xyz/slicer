@@ -60,7 +60,7 @@ and the slice files, the config is yours to hand-edit.
 | `boundary` | `"**Not in this slice:**"` | Seeds the separate boundary field; identifies inline boundaries in older input; `check` warns when the field is empty | Yes, but noisy |
 | `done_dir` | `"done"` | `.slicer/slices/done/`, and the subdirectory `migrate` reads finished slices from | **No — breaking** |
 | `retired_dir` | `"retired"` | `.slicer/slices/retired/` | **No — breaking** |
-| `exclude_flags` | `[]` | Flags that drop an item from the **sync pointers only**. Does not affect `next`, `list` or render | **Yes**, re-run `sync` |
+| `exclude_flags` | `[]` | Flags that drop an item from the **sync pointers only**. Does not affect `next`, `list` or render. To hold an item out of `next`, give it a custom status (see [Statuses](#statuses)) | **Yes**, re-run `sync` |
 | `pointers.next_format` | `"**{{id}}** {{title}}"` | The `{{next}}` substitution. `{{id}}` and `{{title}}` only | **Yes**, re-run `sync` |
 | `pointers.next_empty` | `"nothing unmarked"` | `{{next}}` when nothing qualifies | **Yes** |
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
@@ -139,6 +139,12 @@ The key is what you type; the label is what renders.
 `reviewing_status` must each name a key that exists in `statuses` (the last four may
 instead be `""`, switching the feature off). Delete `parked` and `later` if you do not want them — but remove them from
 `pointers.later.groups` too, or the pointer silently skips a group that can never match.
+
+Plain `next` offers only `open_status` and resumes `started_status`. Every other
+status — parked, review, reviewing, and any key you add, such as `draft` or
+`blocked` — stays out of that queue. A reviewer picks review work up with
+`next --status review`. A custom status is how you hold an item back; `exclude_flags`
+does not.
 
 ## Sections
 

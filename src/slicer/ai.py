@@ -136,19 +136,22 @@ lead and sections. Use the project's configured sections, not assumed headings.
 ## Implement one slice
 
 """ + LOOP + SPEC_GAP + """
-`next` resumes eligible started work before open work; dependencies gate both,
-and priority inherited from dependents counts. An empty queue matches `next`.
+Dependencies gate open and started work, and inherited priority counts. An empty
+queue matches `next`.
 Do not combine `--ready` and `--show`.
 
-`start` claims the item for you. `list` shows claims in its CLAIM column, and
-`wt:NAME` marks an item started in a sibling Git worktree. `next` skips those
-and reports them in `in_work_elsewhere`; `slicer list --json` shows every claim.
-`slicer release ID` hands a claim back without changing status.
-When several agents share one checkout, give each its own name with
-`--owner NAME` on `start`, `next --start`, `handoff`, `release` and `done`, or
-set `SLICER_CLAIM_OWNER`; `slicer log --by NAME` then shows what each did.
+Projects can add statuses in `config.statuses`. `next` offers only open work and
+resumes started work; parked, review, reviewing, and custom statuses `draft` or
+`blocked` stay out. Hold an item back with a custom status, not a flag.
 
-To re-read part of a slice with its title, dependencies, and scope boundary, use
+`start` claims the item. `wt:NAME` marks one started in a sibling worktree;
+`next` skips those and reports them in `in_work_elsewhere`. `slicer list --json`
+shows every claim, and `slicer release ID` clears a claim without changing status.
+Use `--owner NAME` on `start`, `next --start`, `handoff`,
+`release` and `done`, or set `SLICER_CLAIM_OWNER`; `slicer log --by NAME` shows
+what each did.
+
+Re-read one slice with its title, dependencies, and scope boundary using
 `slicer show ID --section "Implement" --section "Check" --context --json`.
 Those headings are examples; use the section names the project configures.
 Run `--help` on any command for the rest of its options.

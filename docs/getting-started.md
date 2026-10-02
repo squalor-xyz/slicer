@@ -812,8 +812,19 @@ nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
 `slicer verify` is the broader health check — dangling dependencies, cycles, a dependency
 on a retired item, slices in the wrong folder for their status, a slice file whose name
 and contained id disagree, `has_slice` out of step with the files on disk, an id that is
-not a usable filename, and a `next_id` that would reuse an id. It also cross-checks status
-against `git log` unless `git_check` is off in config. It reports and never rewrites.
+not a usable filename, and a `next_id` that would reuse an id. It reports and never
+rewrites. Render freshness belongs to `slicer check`, not `verify`.
+
+Inside a git checkout it adds two checks. Both are warnings, so `verify` still exits 0:
+
+- With `render_driver_check` on (the default), it warns when this clone has sibling
+  worktrees and the `slicer-generated` merge driver is not configured. A single-worktree
+  clone stays quiet. Set `render_driver_check` to `false` to silence the reminder.
+- With `git_check` on (the default), it warns when a done item has no commit subject
+  mentioning its id. The scan is `git log --all --no-merges`, at most 2000 commits.
+  Set `git_check` to `false` when the history cannot contain those commits, such as a
+  repo split from another. Outside a repository, or with no history, it reports
+  `git checks skipped` and stops there.
 
 ---
 
