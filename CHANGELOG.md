@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `set --add-flag` and `set --remove-flag` edit one flag without replacing the rest of the list. They cannot be combined with `--flag` or `--no-flags`.
 - Items record `attempts`. `start` from open and every `reject` increment it, and `set --attempts` sets it. The index schema is now 3. A version-2 index with no `attempts` key still loads, as 0.
 - `slicer reject ID --note VERDICT [--to STATUS]` sends a review or reviewing item back to the open status (or another non-lifecycle status), clears its claim, adds the verdict to the item's notes, and logs one `reject` entry carrying it. Every id is checked before anything is written. It takes `--owner`, `--json`, `--render` and `--strict`.
 - `next --status review` is the reviewer's one-call pickup: the highest-priority review item, ranked and dependency-gated like `next`, with the same `--ready`/`--section`/`--lean` payloads. `--start` claims it and moves it to `reviewing`, and a later call resumes it first. Only the configured review status is accepted.

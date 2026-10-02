@@ -4033,7 +4033,7 @@
       "id": "S154",
       "title": "Add or remove one flag without replacing the list",
       "short_title": "Add or remove one flag without replacing the list",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4052,7 +4052,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
