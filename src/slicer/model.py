@@ -30,16 +30,28 @@ class Section:
     return Section(heading=d["heading"], body=d.get("body", ""))
 
 
-def extract_boundary(sections: list[Section], marker: str) -> str:
-  """Lift the first inline boundary out of sections at an input-format boundary."""
-  if marker:
-    for section in sections:
-      paragraphs = section.body.split("\n\n")
-      for at, paragraph in enumerate(paragraphs):
-        if paragraph.startswith(marker):
-          del paragraphs[at]
-          section.body = "\n\n".join(paragraphs)
-          return paragraph
+def extract_boundary(
+  sections: list[Section], marker: str, lead: list[str] | None = None,
+) -> str:
+  """Lift the first inline boundary out of a lead, then out of section bodies.
+
+  An empty marker lifts nothing. `lead` defaults to empty so callers that only
+  have sections, including the migrator, keep the old scan.
+  """
+  if not marker:
+    return ""
+  if lead:
+    for at, paragraph in enumerate(lead):
+      if paragraph.startswith(marker):
+        del lead[at]
+        return paragraph
+  for section in sections:
+    paragraphs = section.body.split("\n\n")
+    for at, paragraph in enumerate(paragraphs):
+      if paragraph.startswith(marker):
+        del paragraphs[at]
+        section.body = "\n\n".join(paragraphs)
+        return paragraph
   return ""
 
 

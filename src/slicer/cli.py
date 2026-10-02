@@ -366,8 +366,10 @@ SKELETON_HEAD = """\
     effort:     1, 2 or 3; optional, omit to leave unset
 
   A paragraph after the keys and before the first `###` becomes the slice's
-  lead. Each `### ` heading is a section of the slice; an item with no
-  sections is a roadmap row only.
+  lead. A lead paragraph that starts with the project's boundary marker is
+  the scope boundary, not lead prose; put that paragraph in the lead or in
+  one section, not both. Each `### ` heading is a section of the slice; an
+  item with no sections is a roadmap row only.
 
   This project's configured sections are:
     {sections}

@@ -1166,6 +1166,11 @@ def outline_report(
     for dep in spec.depends:
       if dep not in known:
         problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
+    heading = _boundary_in_both(spec.lead, spec.sections, cfg.boundary)
+    if heading:
+      problems.append(
+        f"{spec.title!r}: boundary paragraph in the lead and in section {heading!r}"
+      )
   active = {cfg.open_status, cfg.started_status}
   unscored = [
     spec.title for spec in specs
@@ -1284,6 +1289,17 @@ def apply_outline(
   return report
 
 
+def _boundary_in_both(lead: list[str], sections: list[object], marker: str) -> str:
+  """The section heading that also carries a boundary, when the lead does too."""
+  if not marker or not any(paragraph.startswith(marker) for paragraph in lead):
+    return ""
+  for section in sections:
+    for paragraph in section.body.split("\n\n"):
+      if paragraph.startswith(marker):
+        return section.heading
+  return ""
+
+
 def _slice_from_spec(spec: object, item: Item, cfg: object) -> Slice:
   """Build a slice from an outline entry, filling in the configured sections.
 
@@ -1297,7 +1313,13 @@ def _slice_from_spec(spec: object, item: Item, cfg: object) -> Slice:
   order = [h for h in cfg.sections]
   order += [s.heading for s in spec.sections if s.heading not in cfg.sections]
   sections = [Section(heading=h, body=supplied.get(h, "")) for h in order]
-  boundary = extract_boundary(sections, cfg.boundary) or cfg.boundary
+  heading = _boundary_in_both(spec.lead, sections, cfg.boundary)
+  if heading:
+    raise StateError(
+      f"{item.id}: boundary paragraph in the lead and in section {heading!r}",
+      code="bad_promote_source",
+    )
+  boundary = extract_boundary(sections, cfg.boundary, spec.lead) or cfg.boundary
   return Slice(
     id=item.id,
     title=item.title,

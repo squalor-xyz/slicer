@@ -74,6 +74,74 @@ class BoundaryTests(unittest.TestCase):
         self.assertEqual("Outside:" in sl.section("Why").body, not bool(marker))
         self.assertFalse(verify.offline(repo.state()).findings)
 
+  def test_Boundary_LeadParagraph_IsLiftedAndRenderedOnce(self) -> None:
+    with self.repo() as repo:
+      path = repo.write(
+        "outline.md",
+        "## Example\n\n" + self.marker + " other work.\n\nThe work itself.\n\n### Why\nBecause.\n",
+      )
+      code, _, err = repo.run("promote", "S01", "--file", str(path), "--render")
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S01"]
+      self.assertEqual(sl.boundary, self.marker + " other work.")
+      self.assertEqual(sl.lead, ["The work itself."])
+      rendered = repo.read(".slicer/render/slices/S01.md")
+      self.assertEqual(rendered.count(self.marker), 1)
+
+  def test_Boundary_LeadAndSection_IsRefusedAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      path = repo.write(
+        "outline.md",
+        "## Example\n\n" + self.marker + " from the lead.\n\n### Why\nBecause.\n\n"
+        + self.marker + " from the section.\n",
+      )
+      before = (repo.root / ".slicer/index.json").read_bytes()
+      code, out, err = repo.run("promote", "S01", "--file", str(path), "--json")
+      self.assertEqual(code, 2, err)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "bad_promote_source")
+      self.assertIn("lead", error["message"])
+      self.assertIn("Why", error["message"])
+      self.assertEqual((repo.root / ".slicer/index.json").read_bytes(), before)
+      self.assertFalse(repo.state().index.require("S01").has_slice)
+
+  def test_Boundary_PromoteFlag_OverridesALeadBoundary(self) -> None:
+    with self.repo() as repo:
+      path = repo.write(
+        "outline.md",
+        "## Example\n\n" + self.marker + " from the lead.\n\nStill the lead.\n\n### Why\nBecause.\n",
+      )
+      override = self.marker + " override."
+      code, _, err = repo.run("promote", "S01", "--file", str(path), "--boundary", override)
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S01"]
+      self.assertEqual(sl.boundary, override)
+      self.assertEqual(sl.lead, ["Still the lead."])
+
+  def test_Boundary_LeadWithoutMarker_KeepsProseAndBareMarker(self) -> None:
+    with self.repo() as repo:
+      path = repo.write("outline.md", "## Example\n\nJust the lead.\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("promote", "S01", "--file", str(path))
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S01"]
+      self.assertEqual(sl.lead, ["Just the lead."])
+      self.assertEqual(sl.boundary, repo.state().config.boundary)
+
+  def test_Boundary_EmptyMarker_LeavesTheLeadAlone(self) -> None:
+    with self.repo() as repo:
+      cfg = repo.state().config
+      cfg.boundary = ""
+      jsonio.write(repo.root / ".slicer/config.json", cfg.to_dict())
+      path = repo.write(
+        "outline.md",
+        "## Example\n\n" + self.marker + " still prose.\n\n### Why\nBecause.\n",
+      )
+      code, _, err = repo.run("promote", "S01", "--file", str(path))
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S01"]
+      self.assertEqual(sl.boundary, "")
+      self.assertEqual(sl.lead, [self.marker + " still prose."])
+
   def test_Boundary_PromoteOverrideAndClear_AreAuthoritative(self) -> None:
     for value in ("", self.marker + " override."):
       with self.subTest(value=value), self.repo() as repo:

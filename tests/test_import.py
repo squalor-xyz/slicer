@@ -118,6 +118,35 @@ class ImportTests(unittest.TestCase):
       sl = repo.state().slices["S01"]
       self.assertEqual(sl.boundary, "**Not in this slice:**")
 
+  def test_Import_LeadBoundary_IsLiftedLikePromote(self) -> None:
+    with self.repo() as repo:
+      repo.write(
+        "r.md",
+        "## A thing\n\n**Not in this slice:** other things.\n\nThe work itself.\n\n### Why\nBecause.\n",
+      )
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S01"]
+      self.assertEqual(sl.boundary, "**Not in this slice:** other things.")
+      self.assertEqual(sl.lead, ["The work itself."])
+
+  def test_Import_LeadAndSectionBoundary_IsAProblemAndWritesNothing(self) -> None:
+    outline = (
+      "## A thing\n\n**Not in this slice:** from the lead.\n\n### Why\nBecause.\n\n"
+      "**Not in this slice:** from the section.\n"
+    )
+    with self.repo() as repo:
+      repo.write("r.md", outline)
+      before = (repo.root / ".slicer/index.json").read_bytes()
+      for args in (("import", "r.md", "--dry-run"), ("import", "r.md")):
+        code, out, _ = repo.run(*args)
+        self.assertEqual(code, 1, out)
+        self.assertIn("PROBLEM", out)
+        self.assertIn("lead", out)
+        self.assertIn("Why", out)
+        self.assertEqual((repo.root / ".slicer/index.json").read_bytes(), before)
+        self.assertIsNone(repo.state().index.get("S01"))
+
   def test_Import_BoundaryAlreadyPresent_IsNotDuplicated(self) -> None:
     with self.repo() as repo:
       repo.write("r.md", "## A thing\n\n### Why\nBecause.\n\n**Not in this slice:** other things.\n")
@@ -331,6 +360,7 @@ class SkeletonTests(unittest.TestCase):
       self.assertIn("### Context", out, err)
       self.assertIn("### Plan", out)
       self.assertNotIn("### Failing tests", out)
+      self.assertIn("boundary marker", out)
 
   def test_Skeleton_NamesImportanceAndUrgency_BesideTheOtherKeys(self) -> None:
     with support.TempRepo() as repo:

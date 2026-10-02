@@ -3674,7 +3674,7 @@
       "id": "S146",
       "title": "Lift a scope boundary out of an outline item's lead",
       "short_title": "Lift a scope boundary out of an outline item's lead",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
