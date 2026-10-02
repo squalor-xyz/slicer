@@ -4193,7 +4193,7 @@
       "id": "s160",
       "title": "Show the project URL from the CLI",
       "short_title": "Show the project URL from the CLI",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
