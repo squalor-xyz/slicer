@@ -47,7 +47,11 @@ def parse_ref(ref: str) -> BlockRef:
 
 
 def refs(index: Index) -> list[str]:
-  """Every addressable block, in the order it appears in the rendered roadmap."""
+  """Every addressable block, in declaration order.
+
+  Roadmap markdown and HTML display versioned passes newest first. This
+  list does not follow that display order.
+  """
   out = ["preamble", "goals", "non_goals"]
   for info in index.passes:
     out.extend(f"pass.{info.key}.{field}" for field in PASS_FIELDS)

@@ -1899,7 +1899,7 @@ def build_parser() -> argparse.ArgumentParser:
     _json_flags(inner)
     return inner
 
-  padd("list", cmd_prose_list, "every addressable block, in render order")
+  padd("list", cmd_prose_list, "every addressable block, in declaration order")
   padd("show", cmd_prose_show, "print one block").add_argument("ref")
 
   inner = _strict_flag(_render_flag(padd("edit", _mutating(cmd_prose_edit), "replace one block")))

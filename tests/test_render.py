@@ -6,10 +6,10 @@ import unittest
 
 import support
 
-from slicer import render
+from slicer import render, templates
 from slicer.config import Config
 from slicer.errors import RenderError
-from slicer.model import Slice
+from slicer.model import Index, Item, PassInfo, Slice
 
 
 class RenderTests(unittest.TestCase):
@@ -153,6 +153,76 @@ class RenderTests(unittest.TestCase):
       first = (repo.root / ".slicer/render/ROADMAP.html").read_bytes()
       repo.run("render")
       self.assertEqual((repo.root / ".slicer/render/ROADMAP.html").read_bytes(), first)
+
+  def _release_index(self) -> Index:
+    """Declaration order is not display order. Empty pass holds one done item
+    and one retired item, so the archive is not 'everything with no pass'."""
+    return Index(
+      passes=[
+        PassInfo(key="v1", heading="«v1»", intro="intro-v1", outro="outro-v1"),
+        PassInfo(key="beta", heading="«beta»"),
+        PassInfo(key="v1.10", heading="«v110»"),
+        PassInfo(key="later", heading="«later»"),
+        PassInfo(key="v1.2", heading="«v12»"),
+        PassInfo(key="v1.1", heading="«v11»"),
+        PassInfo(key="v9", heading="«v9»"),
+      ],
+      items=[
+        Item(id="S01", title="legacy", status="done"),
+        Item(id="S02", title="one", status="done", pass_key="v1"),
+        Item(id="S03", title="deferred", status="retired"),
+        Item(id="S04", title="current", status="open", pass_key="v1.2"),
+        Item(id="S05", title="side", status="open", pass_key="beta"),
+        Item(id="S06", title="patch", status="done", pass_key="v1.1"),
+        Item(id="S07", title="ten", status="open", pass_key="v1.10"),
+        Item(id="S08", title="one-b", status="done", pass_key="v1"),
+        Item(id="S09", title="after", status="parked", pass_key="later"),
+      ],
+    )
+
+  def _rendered_pair(self, index: Index, cfg: Config | None = None) -> tuple[str, str]:
+    cfg = cfg or Config()
+    md = render.render_roadmap(
+      index, cfg, templates.default("roadmap.md"), templates.default("row.md"),
+    ).decode("utf-8")
+    html_out = render.render_html(index, cfg).decode("utf-8")
+    return md, html_out
+
+  def test_Render_ReleaseGroups_NewestVersionThenUnassignedThenDoneArchive(self) -> None:
+    index = self._release_index()
+    self.assertEqual(
+      index.pass_keys(), ["v1", "beta", "v1.10", "later", "v1.2", "v1.1", "v9", ""],
+    )
+    md, html_out = self._rendered_pair(index)
+    self.assertEqual(md, self._rendered_pair(index)[0])
+    headings = ["«v9»", "«v110»", "«v12»", "«v11»", "«v1»", "«beta»", "«later»"]
+    ids = ["S07", "S04", "S06", "S02", "S08", "S05", "S09", "S03", "S01"]
+    for text in (md, html_out):
+      places = [text.index(label) for label in headings]
+      self.assertEqual(places, sorted(places))
+      id_places = [text.index(item_id) for item_id in ids]
+      self.assertEqual(id_places, sorted(id_places))
+      for item_id in ids:
+        self.assertEqual(text.count(item_id), 1)
+      self.assertLess(text.index("intro-v1"), text.index("S02"))
+      self.assertLess(text.index("S08"), text.index("outro-v1"))
+      self.assertLess(text.index("outro-v1"), text.index("«beta»"))
+      self.assertNotIn("pre-v1", text)
+
+  def test_Render_EmptyPassSplit_UsesConfiguredDoneStatus(self) -> None:
+    cfg = Config(done_status="shipped")
+    index = Index(
+      passes=[PassInfo(key="v1", heading="«v1»")],
+      items=[
+        Item(id="S01", title="shipped-loose", status="shipped"),
+        Item(id="S02", title="still-open", status="done"),
+        Item(id="S03", title="versioned", status="open", pass_key="v1"),
+      ],
+    )
+    md, html_out = self._rendered_pair(index, cfg)
+    for text in (md, html_out):
+      self.assertLess(text.index("S03"), text.index("S02"))
+      self.assertLess(text.index("S02"), text.index("S01"))
 
   def test_Html_StaleEdit_IsCaughtByCheck(self) -> None:
     with self.repo() as repo:

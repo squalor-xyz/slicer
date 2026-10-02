@@ -737,13 +737,22 @@ $ slicer prose drop-pass 2
 slicer: pass '2' still has 2 item(s): S03, S05. Move them first with `slicer set <id> --pass <other>`.
 ```
 
-Declared passes render first, in the order you declared them; anything still carrying no
-pass forms a trailing group with no heading. So once you start using passes, file
-everything, or live with that untitled group at the bottom.
+Version-shaped pass keys (`v1.2`, `v1.10`, `v1`) render newest first in the markdown
+and HTML roadmaps. A missing component sorts as older, so `v1` renders below `v1.1`
+and `v1.10` renders above `v1.2`. Any other non-empty key keeps the order you
+declared it, after those version groups. A declared pass still renders when it has
+no items yet. Row order inside a group is the stored queue, and `next` does not
+use this display order.
+
+Items with no pass stay out of those groups. Ones that are not done render next,
+with no heading. Done ones render last, also with no heading. That last group is
+finished unassigned work. An open, parked, or retired item with no pass is not
+placed there.
 
 Each pass carries its own prose — `pass.2.heading`, `pass.2.intro`, `pass.2.outro` —
 alongside the roadmap's `preamble`, `goals`, `non_goals`, and `epilogue`. `slicer prose
-list` names every block in render order; `slicer prose edit REF` changes one. See
+list` names every block in declaration order, which is not the roadmap display
+order; `slicer prose edit REF` changes one. See
 [Roadmap prose](commands.md#roadmap-prose) in the command reference.
 
 A pass is one milestone, and trees name subsystems. Flags are the other axis: free-form
