@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 163,
+  "next_id": 165,
   "preamble": "",
   "passes": [
     {
@@ -4264,6 +4264,58 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s163",
+      "title": "Require agents to use the slicer CLI for all roadmap reads and edits",
+      "short_title": "Require agents to use the slicer CLI for all roadmap reads and edits",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "Owner request during 2026-10-02 roadmap review: the agent read tracking files directly instead of dogfooding slicer",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s164",
+      "title": "Render release groups newest first in HTML and Markdown",
+      "short_title": "Render release groups newest first in HTML and Markdown",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "Owner request 2026-10-02: show the latest release at the top of both roadmap renders, earlier releases below, and pre-v1.0 items at the bottom",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
         "attempts": 0
       }
     }

@@ -1,0 +1,41 @@
+{
+  "id": "s164",
+  "title": "Render release groups newest first in HTML and Markdown",
+  "lead": [
+    "Both generated roadmap views should lead with the newest version and place successively older releases below it. Historical work from before v1.0 belongs at the very bottom."
+  ],
+  "depends_note": null,
+  "findings_note": "Owner request 2026-10-02: show the latest release at the top of both roadmap renders, earlier releases below, and pre-v1.0 items at the bottom",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing CLI priority, next eligibility, or the stored work queue; sorting items inside a release by a new rule; hand-editing generated files; changing individual slice content.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner wants the HTML and Markdown roadmap to show the most relevant release work first. The recorded release passes are v1, v1.1, and v1.2. Display them as v1.2, v1.1, then v1.0, followed by the pre-v1.0 archive. Keep the latest active version first even before it is released."
+    },
+    {
+      "heading": "Files",
+      "body": "The shared roadmap rendering and grouping logic; Markdown and HTML render tests; configuration and rendering documentation if a display-order setting is introduced; CHANGELOG.md; regenerated roadmap output through slicer render."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The Markdown and HTML roadmaps show the same release-group sequence: latest active version, then older versions in descending version order, then pre-v1.0 historical work.\n2. Version ordering is numeric rather than lexical: v1.10 appears above v1.2, and the project's v1 pass representing v1.0 appears below v1.1.\n3. Each release retains its existing heading, intro, outro, item membership, and internal item order; every item appears exactly once.\n4. Pre-v1.0 historical items appear below every v1.0-or-later release.\n5. Contemporary unassigned work is not classified as pre-v1.0 solely because it has no pass. In this roadmap S158 is deferred contemporary work; it must not be silently moved into the historical archive.\n6. Existing non-version pass keys remain supported with deterministic ordering.\n7. Rendering changes neither the stored item order nor CLI pickup behavior. Repeated renders are byte-identical and slicer check passes."
+    },
+    {
+      "heading": "Implement",
+      "body": "Apply one shared display-order policy to the Markdown and HTML roadmap renderers. Show the highest versioned release or active release pass first, then successively older releases. Preserve item order within each group. Place the actual pre-v1.0 archive last, while keeping contemporary unassigned/deferred work separate from that archive.\n\nUse project-neutral configuration or existing pass metadata where needed; do not hardcode this repository's version names or identify all unassigned rows as pre-v1.0. Preserve deterministic handling of non-version pass groups. Inspect the existing grouping representation and resolve how historical unassigned items are identified before implementation rather than guessing from an empty pass field. Keep display grouping separate from the stored queue and next's ranking. Update documentation and the changelog, and regenerate both outputs through the CLI."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused Markdown and HTML render tests including mixed version keys, legacy items, and contemporary unassigned work. Confirm both outputs have matching group and item order. Run the required project suite, slicer check, and git diff --check. Inspect roadmap state through slicer commands; do not hand-edit tracking JSON or generated output."
+    },
+    {
+      "heading": "Git",
+      "body": "Leave changes reviewable. Commit and publish only when explicitly authorized by the owner."
+    }
+  ],
+  "notes": []
+}
