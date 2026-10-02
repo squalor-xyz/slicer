@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-164 items · — 9 · done 153 · later 1 · retired 1
+164 items · — 9 · done 153 · retired 2
 
 v1.0.0 release
 
@@ -210,4 +210,4 @@ v1.2.0 release
 | 161 | [S123](slices/S123.md) | Warn in verify when the render merge driver is not configured |  | - |  |  | done |
 | 162 | [S124](slices/S124.md) | Add Python 3.14 to the CI test matrix |  | 1 |  |  | done |
 | 163 | [S125](slices/S125.md) | Tame the verify render-driver warning for solo projects |  | 2 |  |  | done |
-| 164 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating | later |
+| 164 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
