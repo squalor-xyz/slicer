@@ -261,8 +261,9 @@ class State:
     """Rename a slice file to follow its item's status, buffering when staged.
 
     The folder is the status made visible on disk, so a status change renames
-    the file. Routing it through here (rather than `vcs.move` directly) lets a
-    staged mutation defer the rename until its render has succeeded.
+    the file in the worktree only. The git index is left untouched. Routing it
+    through here (rather than `vcs.move` directly) lets a staged mutation defer
+    the rename until its render has succeeded.
     """
     if self._stage is not None:
       self._stage.moves.append((src, dst))

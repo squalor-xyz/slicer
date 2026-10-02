@@ -109,8 +109,8 @@ Every flag, the `.slicer/` layout, removing items, and roadmap prose are in the
 Every command except `tui`/`ui` takes `--json`, failures included; the
 [agent reference](docs/agents.md) has the payloads and exit codes.
 
-**slicer never commits, pushes or tags.** Its `git` access is a read-only allowlist plus
-`git mv`; see [Git access](docs/commands.md#git-access).
+**slicer never commits, pushes or tags.** Its `git` access is a read-only allowlist, and
+a mutation leaves the index untouched; see [Git access](docs/commands.md#git-access).
 
 ## Documentation
 

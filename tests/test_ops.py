@@ -271,13 +271,58 @@ class OpsTests(unittest.TestCase):
       self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
       self.assertEqual(repo.state().index.require("S02").status, "done")
 
-  def test_Done_InAGitRepo_UsesGitMvSoTheMoveStaysARename(self) -> None:
+  def test_Done_InAGitRepo_LeavesTheIndexUntouched(self) -> None:
     with self.repo(git=True) as repo:
       repo.commit("import")
-      repo.run("done", "S02")
+      before = (repo.root / ".slicer/slices/S02.json").read_bytes()
+      code, _, err = repo.run("done", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo._git("diff", "--cached").stdout, "")
+      moved = repo.root / ".slicer/slices/done/S02.json"
+      self.assertEqual(moved.read_bytes(), before)
+      status = repo._git("status", "--short").stdout
+      self.assertIn(".slicer/index.json", status)
+      self.assertIn(".slicer/log.jsonl", status)
+      self.assertIn(".slicer/slices/S02.json", status)
+      self.assertIn(".slicer/slices/done/S02.json", status)
+      added = repo._git(
+        "add", "--", ".slicer/slices/S02.json", ".slicer/slices/done/S02.json"
+      )
+      self.assertEqual(added.returncode, 0, added.stderr)
       staged = repo._git("diff", "--cached", "--name-status", "-M")
-      self.assertIn("S02.json", staged.stdout)
       self.assertTrue(staged.stdout.lstrip().startswith("R"), staged.stdout)
+      self.assertIn("S02.json", staged.stdout)
+
+  def test_DoneRender_InAGitRepo_LeavesTheIndexUntouched(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("import")
+      code, _, err = repo.run("done", "S02", "--render")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo._git("diff", "--cached").stdout, "")
+      self.assertTrue((repo.root / ".slicer/slices/done/S02.json").is_file())
+      self.assertIn(".slicer/index.json", repo._git("status", "--short").stdout)
+
+  def test_SetStatus_AcrossFolders_LeavesTheIndexUntouched(self) -> None:
+    with self.repo(git=True) as repo:
+      repo.commit("import")
+      code, _, err = repo.run("set", "S02", "--status", "done")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo._git("diff", "--cached").stdout, "")
+      self.assertTrue((repo.root / ".slicer/slices/done/S02.json").is_file())
+      repo.commit("marked done")
+      code, _, err = repo.run("set", "S02", "--status", "open")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo._git("diff", "--cached").stdout, "")
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+      self.assertFalse((repo.root / ".slicer/slices/done/S02.json").exists())
+
+  def test_Allowlist_RejectsCommitResetAndAdd(self) -> None:
+    with self.repo(git=True) as repo:
+      for command in ("commit", "reset", "add", "mv"):
+        with self.subTest(command=command):
+          with self.assertRaises(StateError) as caught:
+            vcs._run(repo.root, command)
+          self.assertIn("not permitted", str(caught.exception))
 
   def test_Done_OutsideAGitRepo_StillMovesTheFile(self) -> None:
     with self.repo(git=False) as repo:

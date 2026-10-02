@@ -15,7 +15,7 @@ from pathlib import Path
 from slicer.errors import StateError
 
 ALLOWED = frozenset({
-  "rev-parse", "status", "log", "mv", "ls-files", "worktree", "branch", "config",
+  "rev-parse", "status", "log", "worktree", "branch", "config",
 })
 
 # These subcommands are allowlisted only for the exact read-only forms below.
@@ -70,20 +70,16 @@ def require_no_merge(root: Path) -> None:
     )
 
 
-def move(root: Path, src: Path, dst: Path) -> str:
-  """`git mv` when possible so the move stays one tracked rename."""
+def move(_root: Path, src: Path, dst: Path) -> str:
+  """Rename `src` to `dst` on disk. Git is not consulted.
+
+  The same move works in a linked worktree, in the main checkout, and in a
+  directory that is not a repository. The index stays untouched. A later
+  `git add` of the old path and the new path together still records one rename.
+  """
   dst.parent.mkdir(parents=True, exist_ok=True)
-  if is_repo(root) and _tracked(root, src):
-    done = _run(root, "mv", str(src.relative_to(root)), str(dst.relative_to(root)))
-    if done.returncode == 0:
-      return "git mv"
   src.replace(dst)
   return "move"
-
-
-def _tracked(root: Path, path: Path) -> bool:
-  done = _run(root, "ls-files", "--error-unmatch", str(path.relative_to(root)))
-  return done.returncode == 0
 
 
 def subjects(root: Path, limit: int = 2000) -> list[str]:

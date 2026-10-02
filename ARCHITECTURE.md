@@ -103,8 +103,10 @@ most recently allocated *and* no commit subject mentions it; anything else stays
 and the output says which happened and why.
 
 **The folder is the status, made visible on disk.** `State.slice_path` derives the
-directory from the item's status, and `ops.set_status` moves the file with `git mv` when
-the status crosses a folder boundary, so the change stays one tracked rename.
+directory from the item's status, and `ops.set_status` moves the file in the worktree
+when the status crosses a folder boundary. The git index is left untouched, so a bare
+commit cannot record the move alone. Adding the old path and the new path together
+still records one rename.
 For a render-first item mutation — `done --render`, or one run under `--strict` — `ops`
 renders the proposed state before it lands. `State.staged()` buffers every persistence side
 effect (index and slice writes, history lines, and slice-file moves) while `ops.render_gated`
