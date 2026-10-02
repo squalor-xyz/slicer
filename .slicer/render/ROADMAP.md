@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-164 items · — 10 · done 152 · later 1 · retired 1
+164 items · — 9 · done 153 · later 1 · retired 1
 
 v1.0.0 release
 
@@ -101,7 +101,7 @@ v1.2.0 release
 | 57 | [s160](slices/s160.md) | Show the project URL from the CLI | S | 1 | slicer | owner request 2026-10-01: repo URL (https://github.com/squalor-xyz/slicer) reachable from -h or --about; today only pyproject.toml has it | — |
 | 58 | [s161](slices/s161.md) | Select the unit tests that hit a diff | M | 2 | slicer | owner request 2026-10-01, after S144: the full suite was 972 tests in 558s; 31 tests that matched the change took 27s | — |
 | 59 | [s162](slices/s162.md) | Leave a slice move unstaged | S | 1 | slicer | owner request 2026-10-02, after S144 and S146: done staged only the slice rename | — |
-| 60 | [s163](slices/s163.md) | Require agents to use the slicer CLI for all roadmap reads and edits | S | 1 | docs | Owner request during 2026-10-02 roadmap review: the agent read tracking files directly instead of dogfooding slicer | — |
+| 60 | [s163](slices/s163.md) | Require agents to use the slicer CLI for all roadmap reads and edits | S | 1 | docs | Owner request during 2026-10-02 roadmap review: the agent read tracking files directly instead of dogfooding slicer | done |
 | 61 | [s164](slices/s164.md) | Render release groups newest first in HTML and Markdown | M | 2 | slicer | Owner request 2026-10-02: show the latest release at the top of both roadmap renders, earlier releases below, and pre-v1.0 items at the bottom | — |
 
 ---

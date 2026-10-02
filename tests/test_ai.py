@@ -45,6 +45,57 @@ class AiInstructionsTests(unittest.TestCase):
                     reference_flow.index("slicer start ID"))
     self.assertIn("If the\nspecification is already trusted", reference_flow)
 
+  def test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill(self) -> None:
+    self.assertIn(ai.TRACKING, ai.INSTRUCTIONS)
+    self.assertIn(ai.TRACKING, ai.skill_text())
+    text = ai.TRACKING
+    self.assertIn("read and to change", text)
+    for noun in ("goals", "items", "slices", "notes", "history", "roadmap prose"):
+      self.assertIn(noun, text)
+    self.assertIn("reviewing a roadmap", text)
+    self.assertIn("planning work", text)
+    for verb in ("open", "search", "parse", "edit"):
+      self.assertIn(verb, text)
+    self.assertIn("tracking JSON", text)
+    self.assertIn("history file", text)
+    self.assertIn("generated roadmap and slice output", text)
+    for command in (
+      "slicer goals --json",
+      "slicer list --json",
+      "slicer status --json",
+      "slicer stats --json",
+      "slicer show ID --json",
+      "slicer next --ready --json",
+      "slicer find topic --json",
+      "slicer prose list --json",
+      "slicer prose show goals --json",
+      "slicer log --json",
+      "slicer check --json",
+      "slicer handoff ID --render --json",
+    ):
+      self.assertIn(command, text)
+    self.assertIn("propose a roadmap item", text)
+    self.assertIn("Do not switch to the tracking files.", text)
+    self.assertIn("Source code", text)
+    self.assertIn("ordinary project documentation", text)
+    self.assertIn("templates", text)
+    self.assertIn("this skill", text)
+    self.assertIn("explicitly asks you to inspect or", text)
+    self.assertIn("repair tracking internals", text)
+    self.assertIn("PYTHONPATH=src python3 -m slicer", text)
+    self.assertIn("ready for review", text)
+    self.assertIn("only after review and merge are complete", text)
+    self.assertNotIn(".slicer/render/", text)
+    skill = ai.skill_text()
+    self.assertIn("review a roadmap", skill)
+    self.assertIn("plan work", skill)
+    agents = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
+    self.assertIn("Read and change tracking state through the slicer CLI.", agents)
+    reference = (Path(__file__).resolve().parents[1] / "docs" / "agents.md").read_text(encoding="utf-8")
+    review = reference.split("### Review an existing project", 1)[1].split("```", 2)[1]
+    self.assertIn("slicer goals", review)
+    self.assertNotIn("existing roadmap", review)
+
   def test_Instructions_NamePerCallOwnerForSharedCheckouts(self) -> None:
     text = ai.INSTRUCTIONS
     self.assertIn("--owner NAME", text)
@@ -164,7 +215,6 @@ class AiInstructionsTests(unittest.TestCase):
     for code in ("Exit 0", "exit 1", "exit 2", "exit 3"):
       self.assertIn(code, text)
     self.assertNotIn("import --skeleton", text)
-    self.assertNotIn("slicer goals", text)
     path = Path(__file__).resolve().parents[1] / "skills" / "slicer" / "SKILL.md"
     self.assertEqual(path.read_text(encoding="utf-8"), text)
 

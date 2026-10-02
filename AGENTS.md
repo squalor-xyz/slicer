@@ -123,10 +123,19 @@ git diff --check
 git status --short
 ```
 
-Review code, documentation, state and generated markdown together. `check` verifies
-tracking consistency; the unit suite verifies code behavior. Mark done only after the
-slice's acceptance checks pass. Leave committing and publishing to the owner's
-instructions; a slice's Git section does not itself authorize them.
+Review code, documentation, and tracking state together. Read that state with the
+CLI (`slicer show`, `slicer list`, `slicer prose list`, `slicer check`). `check`
+verifies tracking consistency; the unit suite verifies code behavior. Mark done only
+after the slice's acceptance checks pass. Leave committing and publishing to the
+owner's instructions; a slice's Git section does not itself authorize them.
+
+**Read and change tracking state through the slicer CLI.** That covers goals, items,
+slices, notes, history, and roadmap prose, during review, planning, implementation,
+and validation. Do not open, search, parse, or edit `.slicer` JSON, the history file,
+or generated roadmap and slice output to obtain or change that state. If a command
+is missing or fails, report it and propose a roadmap item. Source, ordinary
+documentation, templates, and the skill stay readable. Inspect or repair tracking
+internals only when the task explicitly asks for that.
 
 **Never hand-edit `.slicer/*.json`.** Use the commands, then re-render:
 

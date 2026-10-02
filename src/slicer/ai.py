@@ -39,9 +39,42 @@ If `next` JSON includes `unspecified`, those ids are not ready. Fill each missin
 """
 
 SKILL_DESCRIPTION = (
-  "Drive a slicer roadmap. Use when asked to take a slice, implement the next "
-  "slice, or drive slicer."
+  "Drive a slicer roadmap. Use when asked to review a roadmap, plan work, "
+  "take a slice, implement the next slice, or drive slicer."
 )
+
+# Reads and edits of tracking state. The instructions and the skill both use
+# this block, so the rule cannot land in only one of them.
+TRACKING = """\
+## Read and change tracking state through the CLI
+
+Use the slicer CLI to read and to change goals, items, slices, notes, history,
+and roadmap prose. This applies while reviewing a roadmap, planning work,
+implementing a slice, and validating the result.
+
+Do not open, search, parse, or edit tracking JSON, the history file, or generated roadmap and slice output to obtain or change that state.
+
+- Goals: `slicer goals --json`.
+- Inventory: `slicer list --json`, `slicer status --json`, and `slicer stats --json`.
+- Slice detail: `slicer show ID --json` and `slicer next --ready --json`.
+- Search: `slicer find topic --json`.
+- Roadmap prose: `slicer prose list --json` and `slicer prose show goals --json`.
+- History: `slicer log --json`. Notes on an item come back with `slicer show ID --json`.
+- Validation: `slicer check --json`.
+
+If a CLI read or edit is missing or fails, report that and propose a roadmap item.
+Do not switch to the tracking files.
+
+Source code, ordinary project documentation, templates, and this skill stay
+readable when you are implementing. A task that explicitly asks you to inspect or
+repair tracking internals is the only exception.
+
+When slicer warns that the running code belongs to another worktree, run
+`PYTHONPATH=src python3 -m slicer` for this checkout.
+
+`slicer handoff ID --render --json` records work ready for review. Mark that work done
+only after review and merge are complete.
+"""
 
 
 def skill_text() -> str:
@@ -55,6 +88,7 @@ def skill_text() -> str:
     f"{LOOP}\n"
     f"{SPEC_GAP}\n"
     f"{EXITS}\n"
+    f"{TRACKING}\n"
     "The rest of the guide is `slicer ai instructions`.\n"
   )
 
@@ -98,6 +132,7 @@ A row alone is not a specification: use
 `slicer promote ID --stdin --render --json` with a one-item outline to supply its
 lead and sections. Use the project's configured sections, not assumed headings.
 
+""" + TRACKING + """
 ## Implement one slice
 
 """ + LOOP + SPEC_GAP + """
