@@ -4219,7 +4219,7 @@
       "id": "s161",
       "title": "Select the unit tests that hit a diff",
       "short_title": "Select the unit tests that hit a diff",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4238,7 +4238,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

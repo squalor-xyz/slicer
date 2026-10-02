@@ -114,6 +114,8 @@ work before choosing open work.
 
 ```sh
 PYTHONPATH=src python3 -m slicer start <ID> --render --strict
+# While editing, run the tests that hit this diff. If that command exits 2, run the full discover.
+python3 tests/affected.py --run
 # Implement the slice and run its focused tests, then the repository checks:
 python3 -m unittest discover -s tests -t tests
 PYTHONPATH=src python3 -m slicer check
