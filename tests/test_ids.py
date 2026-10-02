@@ -19,6 +19,19 @@ def set_scheme(repo: support.TempRepo, prefix: str, width: int) -> None:
   path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+class StartingNumberTests(unittest.TestCase):
+  def test_StartingNumber_CanonicalId_ReturnsTheNumber(self) -> None:
+    self.assertEqual(ids.starting_number("S21", "S", 2), 21)
+    self.assertEqual(ids.starting_number("TASK-021", "TASK-", 3), 21)
+
+  def test_StartingNumber_OtherPrefixCaseOrWidth_IsBadId(self) -> None:
+    for text in ("TASK-021", "S2", "S021", "s21"):
+      with self.subTest(text=text):
+        with self.assertRaises(StateError) as caught:
+          ids.starting_number(text, "S", 2)
+        self.assertEqual(caught.exception.code, "bad_id")
+
+
 class IdSchemeTests(unittest.TestCase):
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo()

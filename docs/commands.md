@@ -10,7 +10,7 @@ run see [getting started](getting-started.md); for JSON shapes and exit codes se
 |---|---|
 | `ai instructions` | agent quick start, available without a project; supports `--json` |
 | `ai skill` | the same loop and exit rules as a `SKILL.md` for Claude Code, Codex, and Grok |
-| `init [--force]` | create `.slicer/` with config and templates; `--force` rewrites an existing config and templates only |
+| `init [--force] [--id ID]` | create `.slicer/` with config and templates; `--force` rewrites an existing config and templates only. `--id` sets the id the first `add` allocates (`S21`), and is refused when the index already has items |
 | `setup-git` | print the two `git config` lines that enable the `slicer-generated` render merge driver in this clone (`slicer setup-git \| sh` applies them); needs no project |
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline |
 | `import --skeleton` | print an outline template built from your config |

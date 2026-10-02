@@ -30,6 +30,44 @@ class CliTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertIn("--force", err)
 
+  def test_Init_StartingId_FirstAddsContinueFromIt(self) -> None:
+    with support.TempRepo() as repo:
+      code, out, err = repo.run("init", "--id", "S21")
+      self.assertEqual(code, 0, err)
+      self.assertIn("next id S21", out)
+      repo.run("add", "x")
+      repo.run("add", "y")
+      self.assertEqual([i.id for i in repo.state().index.items], ["S21", "S22"])
+
+  def test_Init_BadStartingId_ExitsBadIdAndWritesNothing(self) -> None:
+    for bad in ("TASK-021", "S2", "../S21"):
+      with self.subTest(bad=bad), support.TempRepo() as repo:
+        code, out, _ = repo.run("init", "--id", bad, "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(out)["error"]["code"], "bad_id")
+        self.assertFalse((repo.root / ".slicer").exists())
+
+  def test_Init_StartingIdOnItems_RefusesAndLeavesTheIndex(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "x")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("init", "--force", "--id", "S21", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertIn("add --id", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Init_StartingIdOnEmptyIndex_SetsTheCounter(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, _, err = repo.run("init", "--force", "--id", "S21")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.next_id, 21)
+      self.assertEqual(repo.state().index.items, [])
+      repo.run("add", "x")
+      self.assertEqual(repo.state().index.items[0].id, "S21")
+
   def test_AnyCommand_OutsideATrackedProject_ExitsTwoWithAnInitHint(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, _, err = repo.run("next")

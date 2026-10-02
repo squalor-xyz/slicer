@@ -118,6 +118,8 @@ edit the config — the first `add` obeys it. Once an id has been handed out the
 owns the scheme, because ids are never reused, and `slicer check` reports a config that
 disagrees rather than ignoring it. The one exception is the prefix's case:
 `slicer id-prefix s` makes new ids lowercase, and existing ids keep theirs.
+A project that continues an earlier sequence can set that first id up front:
+`slicer init --id S21` makes the next `add` take S21.
 
 The full key-by-key reference, including which changes strand existing files, is in
 [configuration.md](configuration.md).
