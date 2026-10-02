@@ -429,7 +429,9 @@ field is persisted on the next slice save; read commands do not rewrite JSON.
 
 To fill a whole slice at once, hand `promote`
 a one-item outline: `slicer promote ID --file draft.md` — the same `##` item / `###`
-section shape `import` reads, sections and lead only.
+section shape `import` reads, sections and lead only. A lead paragraph that starts
+with the project's boundary marker is stored as the scope boundary; put it in the
+lead or in one section, not both.
 
 **Ids are never reused.** Adding an item claims its id for the life of the project.
 

@@ -70,7 +70,9 @@ status: parked
 - **Key lines** come directly under the heading. The block ends at the first line that is
   not `key: value`.
 - **Prose** after the keys and before the first `###` becomes the slice's lead — the
-  paragraph that renders above the metadata line.
+  paragraph that renders above the metadata line. A paragraph in that lead that starts
+  with the project's boundary marker is stored as the scope boundary instead, and it
+  belongs in the lead or in one section, not both.
 - **`###` opens a section** of the slice. An item with no `###` sections is a roadmap row
   and nothing more, exactly what `slicer add` produces.
 

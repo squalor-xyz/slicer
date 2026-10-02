@@ -17,6 +17,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- `promote --file` and `import` lift a boundary paragraph out of an item's lead into the scope boundary. The same paragraph in both the lead and a section is refused, and nothing is written.
 - `check` and dependency edits no longer treat an edge from a retired or done item onto a retired item as drift. An open, started, or parked item that depends on a retired item still fails.
 - An explicit id whose prefix differs from the configured one only in case (`add --id s05` under `S`) now advances `next_id`, and the high-water check counts it. Allocation refuses a generated id that differs from an existing id only in case (`case_collision`) instead of writing a second slice over the first on a case-insensitive filesystem.
 
