@@ -124,7 +124,8 @@ $ slicer next --json
     "reason": "",
     "importance": 2,
     "urgency": 2,
-    "effort": null
+    "effort": null,
+    "attempts": 0
   },
   "path": "~/code/my-project/.slicer/slices/S01.json",
   "effective_score": 22
@@ -133,12 +134,12 @@ $ slicer next --json
 
 Two shapes recur. An **item** is the object above minus `path` and `effective_score`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
-1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. The combined score and quadrant are derived, not stored, so
+1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts each `start` from open and each `reject`, the index schema is 3, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
 they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
 `list --sort score`. `--json` without `--lean` is always this full shape.
 
 `--json --lean` omits empty strings, empty lists, empty objects, and nulls, plus
-`trees_literal` when it is false, `short_title` when it equals `title`, and `path` on an
+`trees_literal` when it is false, `short_title` when it equals `title`, `attempts` when it is 0, and `path` on an
 item. A missing key means empty or that default, not unknown. `has_slice: false` and the
 importance and urgency numbers stay, including the default 2. `item: null` stays, so an
 empty `next` is still recognisable. `path` is only in the full profile. Text output

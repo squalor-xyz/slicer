@@ -73,6 +73,44 @@ class SchemaGuardTests(unittest.TestCase):
         Config.load(path)
       self.assertEqual(cm.exception.code, "schema_too_new")
 
+  def test_Index_Version2WithoutAttempts_LoadsAsZeroUntilSave(self) -> None:
+    with self._repo() as repo:
+      repo.run("add", "One")
+      path = repo.root / DIR_NAME / INDEX_NAME
+      data = json.loads(path.read_text(encoding="utf-8"))
+      data["version"] = 2
+      for item in data["items"]:
+        item["fields"].pop("attempts", None)
+      path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+      before = path.read_bytes()
+      state = store.load(repo.root)
+      self.assertEqual(state.index.version, 2)
+      self.assertTrue(all(item.attempts == 0 for item in state.index.items))
+      self.assertEqual(path.read_bytes(), before)
+      code, _, err = repo.run("set", "S01", "--findings", "noted")
+      self.assertEqual(code, 0, err)
+      saved = json.loads(path.read_text(encoding="utf-8"))
+      self.assertEqual(saved["version"], INDEX_SCHEMA_VERSION)
+      self.assertTrue(all(item["fields"]["attempts"] == 0 for item in saved["items"]))
+
+  def test_Index_BadAttempts_IsCorrupt(self) -> None:
+    with self._repo() as repo:
+      repo.run("add", "One")
+      path = repo.root / DIR_NAME / INDEX_NAME
+      data = json.loads(path.read_text(encoding="utf-8"))
+      data["items"][0]["fields"]["attempts"] = True
+      path.write_text(json.dumps(data), encoding="utf-8")
+      code, out, _ = repo.run("list", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+
+  def test_Cli_Version4_ExitsSchemaTooNew(self) -> None:
+    with self._repo() as repo:
+      _set_version(repo, f"{DIR_NAME}/{INDEX_NAME}", 4)
+      code, out, _ = repo.run("list", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "schema_too_new")
+
   def test_Cli_NewerSchema_ExitsInternalWithEnvelope(self) -> None:
     with self._repo() as repo:
       _set_version(repo, f"{DIR_NAME}/{INDEX_NAME}", INDEX_SCHEMA_VERSION + 1)

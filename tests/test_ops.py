@@ -20,6 +20,85 @@ class OpsTests(unittest.TestCase):
     repo.run("migrate", "--from", "docs/slices")
     return repo
 
+  def test_Add_NewItem_StartsWithZeroAttempts(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "fresh")
+      item = repo.state().index.require("S05")
+      self.assertEqual(item.attempts, 0)
+      self.assertEqual(item.to_dict()["fields"]["attempts"], 0)
+
+  def _fresh(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "Work")
+    repo.run("promote", "S01")
+    return repo
+
+  def test_Start_FromOpen_CountsOnceAndARepeatDoesNot(self) -> None:
+    with self._fresh() as repo:
+      self.assertEqual(repo.run("start", "S01")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
+      self.assertEqual(repo.run("start", "S01")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
+
+  def test_Reject_ThenStart_CountsEachReturnToTheQueue(self) -> None:
+    with self._fresh() as repo:
+      repo.run("start", "S01")
+      repo.run("handoff", "S01")
+      code, _, err = repo.run("reject", "S01", "--note", "try again")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").attempts, 2)
+      repo.run("start", "S01")
+      self.assertEqual(repo.state().index.require("S01").attempts, 3)
+
+  def test_Start_FromReview_DoesNotCount(self) -> None:
+    with self._fresh() as repo:
+      repo.run("start", "S01")
+      repo.run("handoff", "S01")
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
+      code, _, err = repo.run("start", "S01")
+      self.assertEqual(code, 0, err)
+      item = repo.state().index.require("S01")
+      self.assertEqual(item.status, "reviewing")
+      self.assertEqual(item.attempts, 1)
+
+  def test_Set_Attempts_ResetsAndLogs(self) -> None:
+    with self._fresh() as repo:
+      repo.run("start", "S01")
+      before = (repo.root / ".slicer/index.json").read_bytes()
+      code, out, _ = repo.run("set", "S01", "--attempts", "-1", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertEqual((repo.root / ".slicer/index.json").read_bytes(), before)
+      code, _, err = repo.run("set", "S01", "--attempts", "0")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").attempts, 0)
+      entry = repo.state().history()[-1]
+      self.assertEqual(entry.action, "set")
+      self.assertIn("attempts", entry.note)
+
+  def test_ShowListAndReady_CarryAttempts_AndRenderIgnoresThem(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Work")
+      repo.run("promote", "S01")
+      repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+      repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+      repo.run("render")
+      listed = repo.run("list")[1]
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      rendered = repo.read(".slicer/render/slices/S01.md")
+      code, _, err = repo.run("set", "S01", "--attempts", "4", "--render")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("list")[1], listed)
+      self.assertEqual(repo.read(".slicer/render/ROADMAP.md"), roadmap)
+      self.assertEqual(repo.read(".slicer/render/slices/S01.md"), rendered)
+      self.assertEqual(json.loads(repo.run("show", "S01", "--json")[1])["fields"]["attempts"], 4)
+      rows = json.loads(repo.run("list", "--json")[1])
+      self.assertEqual(rows[0]["fields"]["attempts"], 4)
+      ready = json.loads(repo.run("next", "--ready", "--json")[1])
+      self.assertEqual(ready["item"]["attempts"], 4)
+
   def test_Add_NoSliceFile_AppendsAnIdeaAndBumpsNextId(self) -> None:
     with self.repo() as repo:
       code, out, err = repo.run("add", "a new idea", "--size", "M", "--tree", "alpha")

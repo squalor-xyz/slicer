@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass
@@ -161,6 +161,8 @@ class Item:
   urgency: int = 2
   # Optional implementation weight, 1-3. Unset stays out of priority.
   effort: int | None = None
+  # Starts from open, plus rejected reviews. Restart-safe; the log is not.
+  attempts: int = 0
   # Who has this item, and when that was recorded. Empty means unclaimed.
   # The time is stored on the item so render never invents one.
   claim_owner: str = ""
@@ -223,6 +225,7 @@ class Item:
         "importance": self.importance,
         "urgency": self.urgency,
         "effort": self.effort,
+        "attempts": self.attempts,
       },
     }
 
@@ -250,6 +253,7 @@ class Item:
       importance=int(f.get("importance", 2)),
       urgency=int(f.get("urgency", 2)),
       effort=_optional_effort(f["effort"]) if "effort" in f else None,
+      attempts=_attempts(f["attempts"]) if "attempts" in f else 0,
     )
 
 
@@ -274,6 +278,15 @@ def _claim_owner(value: object) -> str:
 
 def _claim_at(value: object) -> str:
   return _claim_parts(value)[1]
+
+
+def _attempts(value: object) -> int:
+  """Load a stored attempt count. Missing is handled by the caller."""
+  if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+    raise StateError(
+      f"attempts must be a non-negative integer, not {value!r}", code="corrupt",
+    )
+  return value
 
 
 def _optional_effort(value: object) -> int | None:
@@ -454,8 +467,9 @@ def lean(payload: Any) -> Any:
   Files on disk keep the full `to_dict` shape. This only drops values that
   say nothing: empty strings, lists, and dicts, nulls other than the
   `item: null` sentinel, `trees_literal: false`, a `short_title` that
-  repeats `title`, and `path` on an item. Other false booleans and every
-  number stay, so `has_slice: false` and a default score are still visible.
+  repeats `title`, `attempts` when it is 0, and `path` on an item. Other
+  false booleans and every other number stay, so `has_slice: false` and a
+  default score are still visible.
   """
   if isinstance(payload, list):
     return [lean(item) for item in payload]
@@ -470,6 +484,8 @@ def lean(payload: Any) -> Any:
     if key == "trees_literal" and value is False:
       continue
     if key == "short_title" and value == title:
+      continue
+    if key == "attempts" and value == 0:
       continue
     cleaned = lean(value)
     if cleaned == "" or cleaned == [] or cleaned == {}:

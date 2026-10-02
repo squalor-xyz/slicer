@@ -746,3 +746,5 @@
 {"when": "2026-10-02T11:28:51Z", "item": "s162", "action": "add", "from": "", "to": "open", "note": "Leave a slice move unstaged"}
 {"when": "2026-10-02T11:38:12Z", "item": "S147", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-02T12:01:42Z", "item": "S147", "action": "status", "from": "started", "to": "done", "note": "set --title keeps a short title that still matches the title in step; a distinct short title stays put", "by": "Jon Robbins"}
+{"when": "2026-10-02T12:08:26Z", "item": "S153", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-02T12:14:47Z", "item": "S153", "action": "status", "from": "started", "to": "done", "note": "items record attempts; start from open and reject increment the count, and the index schema is 3", "by": "Jon Robbins"}

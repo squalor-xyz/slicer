@@ -122,6 +122,17 @@ class LeanCommandTests(unittest.TestCase):
       self.assertNotIn("short_title", payload)
       self.assertNotIn("notes", payload)
 
+  def test_Show_Lean_DropsZeroAttemptsAndKeepsACount(self) -> None:
+    with self.repo() as repo:
+      full = json.loads(repo.run("show", "S01", "--json")[1])
+      self.assertEqual(full["fields"]["attempts"], 0)
+      lean = json.loads(repo.run("show", "S01", "--json", "--lean")[1])
+      self.assertNotIn("attempts", lean["fields"])
+      code, _, err = repo.run("set", "S01", "--attempts", "2")
+      self.assertEqual(code, 0, err)
+      lean = json.loads(repo.run("show", "S01", "--json", "--lean")[1])
+      self.assertEqual(lean["fields"]["attempts"], 2)
+
   def test_Show_Lean_DropsEmptySliceScaffoldingAndKeepsHeadings(self) -> None:
     with self.repo() as repo:
       payload = json.loads(repo.run("show", "S01", "--json", "--lean")[1])
