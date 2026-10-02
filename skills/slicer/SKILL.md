@@ -29,6 +29,7 @@ details must be inspected; exit 2 means a usage or validation error, or no next 
 exit 3 means an internal or state error (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).
 In particular, `next` can return exit 2 with `{"item": null, "blocked": [...]}`
 and no error object: inspect the blocked items rather than assuming work is done.
+An empty `next --batch` is exit 2 with `{"items": [], "blocked": [...]}` and no error object.
 
 ## Read and change tracking state through the CLI
 

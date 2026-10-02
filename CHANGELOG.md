@@ -16,6 +16,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `next --batch K` returns up to K items from the same pool as `next`, optionally narrowed with one `--tree` and an exact `--size`. A dependent follows its dependency when that dependency is in the batch. `--start` claims the whole batch under one lock and passes `--owner` through; a failure leaves every id unclaimed. An empty batch exits 2 with `{"items": [], "blocked": [...]}` and no error object. `--batch` with `--show`, `-n`, or `--status` is a usage error, as is K < 1.
 - `set --add-flag` and `set --remove-flag` edit one flag without replacing the rest of the list. They cannot be combined with `--flag` or `--no-flags`.
 - Items record `attempts`. `start` from open and every `reject` increment it, and `set --attempts` sets it. The index schema is now 3. A version-2 index with no `attempts` key still loads, as 0.
 - `slicer reject ID --note VERDICT [--to STATUS]` sends a review or reviewing item back to the open status (or another non-lifecycle status), clears its claim, adds the verdict to the item's notes, and logs one `reject` entry carrying it. Every id is checked before anything is written. It takes `--owner`, `--json`, `--render` and `--strict`.
