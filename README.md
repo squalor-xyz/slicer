@@ -27,6 +27,8 @@ python3 -m venv ~/.slicer-venv
 ln -s ~/.slicer-venv/bin/slicer ~/.local/bin/slicer   # or anywhere on your PATH
 ```
 
+`slicer --about` prints the version, description, source URL, and issues URL.
+
 `slicer --help` confirms it. Other ways in — `pip --user`, pipx, uv, unreleased main — are
 in [getting started](docs/getting-started.md#1-install); the editable install for working on
 slicer itself is in [AGENTS.md](AGENTS.md#install).
