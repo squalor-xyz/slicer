@@ -163,6 +163,59 @@ def _check_row(row: str, header: str) -> None:
     raise RenderError(f"generated table row has {got} cells, header has {want}: {row}")
 
 
+# Optional leading v, then integers. `v1.2-rc1` and `beta` are not versions.
+_VERSION_KEY = re.compile(r"^[vV]?\d+(?:\.\d+)*$")
+
+
+def _version_parts(key: str) -> tuple[int, ...] | None:
+  """The numeric components of a version-shaped pass key, or None."""
+  if _VERSION_KEY.fullmatch(key) is None:
+    return None
+  body = key[1:] if key[0] in "vV" else key
+  return tuple(int(part) for part in body.split("."))
+
+
+@dataclass(frozen=True)
+class DisplayGroup:
+  """One roadmap table. `prose` is false on a second table for the same key,
+  so a heading is not printed twice when an empty pass is split."""
+
+  key: str
+  members: list[Item]
+  prose: bool = True
+
+
+def display_groups(index: Index, cfg: Config) -> list[DisplayGroup]:
+  """Tables in roadmap display order. The stored queue is not this order.
+
+  Version-shaped keys go newest first. A shorter tuple sorts as older, so
+  `v1` is below `v1.1` and `v1.10` is above `v1.2`. Equal versions keep
+  discovery order. Every other non-empty key keeps `pass_keys()` order,
+  after the versions. A declared pass with no items still gets a table.
+
+  An empty pass is not a version and is not one archive. Items that are
+  not `done_status` come first, then done items. Both keep queue order
+  and, unless that empty key was declared, no heading.
+  """
+  keys = index.pass_keys()
+  versions = [key for key in keys if key and _version_parts(key) is not None]
+  versions.sort(key=lambda key: _version_parts(key) or (), reverse=True)
+  others = [key for key in keys if key and _version_parts(key) is None]
+  groups = [
+    DisplayGroup(key, [it for it in index.items if it.pass_key == key])
+    for key in [*versions, *others]
+  ]
+  unassigned = [it for it in index.items if it.pass_key == ""]
+  contemporary = [it for it in unassigned if it.status != cfg.done_status]
+  archive = [it for it in unassigned if it.status == cfg.done_status]
+  declared_empty = index.pass_info("") is not None
+  if contemporary or (declared_empty and not archive):
+    groups.append(DisplayGroup("", contemporary))
+  if archive:
+    groups.append(DisplayGroup("", archive, prose=not contemporary))
+  return groups
+
+
 def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) -> bytes:
   # Effort is a placeholder a template may adopt. One that never names it keeps
   # the previous seven columns, so an existing row.md still renders.
@@ -175,18 +228,17 @@ def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) 
     header = "| # | Slice | Title | Size | Trees | Findings | Status |"
     sep = "|---|---|---|---|---|---|---|"
     group_gap = "| | | | | | |"
-  ordered_keys = index.pass_keys()
 
   chunks: list[str] = []
   position = 0
-  for key in ordered_keys:
-    info = index.pass_info(key)
-    members = [it for it in index.items if it.pass_key == key]
+  for shown in display_groups(index, cfg):
+    info = index.pass_info(shown.key) if shown.prose else None
+    members = shown.members
     lines: list[str] = []
     if info is not None and info.heading:
       lines.append(info.heading)
-    elif key:
-      lines.append(f"## {key}")
+    elif shown.key:
+      lines.append(f"## {shown.key}")
     if info is not None and info.intro:
       lines.append(info.intro)
     rows: list[str] = []
@@ -297,13 +349,13 @@ def render_html(index: Index, cfg: Config) -> bytes:
   parts.append(f'<p class="summary">{summary}</p>')
 
   position = 0
-  for key in index.pass_keys():
-    info = index.pass_info(key)
-    members = [it for it in index.items if it.pass_key == key]
+  for shown in display_groups(index, cfg):
+    info = index.pass_info(shown.key) if shown.prose else None
+    members = shown.members
     if info is not None and info.heading:
       parts.append(f"<h2>{e(info.heading)}</h2>")
-    elif key:
-      parts.append(f"<h2>{e(key)}</h2>")
+    elif shown.key:
+      parts.append(f"<h2>{e(shown.key)}</h2>")
     if info is not None and info.intro:
       parts.append(f'<div class="prose">{_prose_html(info.intro)}</div>')
     parts.append(

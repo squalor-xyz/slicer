@@ -4297,7 +4297,7 @@
       "id": "s164",
       "title": "Render release groups newest first in HTML and Markdown",
       "short_title": "Render release groups newest first in HTML and Markdown",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4316,7 +4316,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

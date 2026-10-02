@@ -216,7 +216,10 @@ A pass group is opened with `prose add-pass 6 --heading
 it. Items are filed with `slicer add --pass 6` or moved with `slicer set <id> --pass 6`.
 
 A declared pass renders even with no items yet, so a group can be opened before its first
-slice exists.
+slice exists. Markdown and HTML show version-shaped keys newest first (`v1.10` above
+`v1.2`, a bare `v1` below `v1.1`), then other keys in declaration order. Items with
+no pass follow: those that are not done, then done items. `prose list` stays in
+declaration order.
 
 Goals and non-goals, and how agents should treat them, are covered in
 [getting started](getting-started.md#goals-and-non-goals).
