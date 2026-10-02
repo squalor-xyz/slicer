@@ -1,0 +1,41 @@
+{
+  "id": "s162",
+  "title": "Leave a slice move unstaged",
+  "lead": [
+    "A status change that moves a slice file must leave the git index alone. The rename stays in the worktree with the rest of the mutation, and `git add` of both paths still records it as one rename."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request 2026-10-02, after S144 and S146: done staged only the slice rename",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** teaching slicer to commit, add, or reset; changing rename thresholds; rewriting history that is already staged.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Hit while committing S144 and S146. `done` had moved `.slicer/slices/S144.json` to `.slicer/slices/done/S144.json`, and `git status` showed that rename staged (`R ` in the first column) while the code, tests, changelog, index, log, and render were unstaged. `git diff` hid the rename. A `git commit` with no path would have committed the move alone.\n\n`vcs.move` (`vcs.py`) runs `git mv` whenever the source is tracked. `store.move_slice` and `commit_stage` are the only callers, and `_relocate_slice` is what reaches them. That runs for every status change that changes folder: `done`, `park`, `start`, `set --status`, `handoff`, `reject`, and `retire`. The allowlist forbids `commit`, but `git mv` still writes the index.\n\nThe rename itself is worth keeping. On those two commits the slice file was a 100% rename. A worktree move, followed by the owner adding the old path and the new path together, is still one rename. `git add -u` alone would stage the deletion and miss an untracked new file, so the note in `docs/agents.md` has to say to add both paths."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py` (`move`; drop `mv` from the allowlist once nothing calls it)\n- `src/slicer/store.py` (the comment on `move_slice` that promises a tracked rename via `git mv`)\n- `tests/` for a repo that actually has a git index\n- `docs/agents.md`, next to the sentence that slicer never commits\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. In a temporary git repo, `done` on a promoted item leaves `git diff --cached` empty. The worktree shows the slice path change, and the other edits from that command are unstaged too.\n2. Adding the old path and the new path together then shows a rename in `git diff --cached -M`, not a delete plus an add, when the slice bytes did not change.\n3. `retire` and `set --status` (a move into `done/` and a move back out) also leave `git diff --cached` empty.\n4. A directory that is not a git repo still moves the file, as the plain fallback does today.\n5. The git allowlist still rejects `commit`, `reset`, and `add`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Stop `vcs.move` from running `git mv`. Move the file in the worktree only, which is the fallback already used when the path is untracked or the directory is not a repo. Do not add `reset` or `add` to the allowlist. Remove `mv` from the allowlist when no caller remains, so a later change cannot stage a rename by accident.\n\n`_relocate_slice` stays the one place a status change moves a file. Staged mutations (`done --render --strict` and the other `--strict` commands) still defer the move until `commit_stage`, and that flush uses the same worktree-only move.\n\nIn `docs/agents.md`, where it says slicer never commits, say that a mutation also leaves the index untouched. Recording the slice move as a rename means adding the old path and the new path together."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check` and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased (fixed)."
+    }
+  ],
+  "notes": []
+}
