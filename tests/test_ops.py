@@ -332,6 +332,50 @@ class OpsTests(unittest.TestCase):
       repo.run("set", "S02", "--title", "A clearer title")
       self.assertEqual(repo.state().slices["S02"].title, "A clearer title")
 
+  def test_Set_Title_MovesAnUnchosenShortTitle(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Old title")
+      code, _, err = repo.run("set", "S05", "--title", "New title", "--render")
+      self.assertEqual(code, 0, err)
+      item = repo.state().index.require("S05")
+      self.assertEqual((item.title, item.short_title), ("New title", "New title"))
+      _, listed, _ = repo.run("list")
+      self.assertIn("New title", listed)
+      self.assertNotIn("Old title", listed)
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      self.assertIn("New title", roadmap)
+      self.assertNotIn("Old title", roadmap)
+      note = repo.state().history()[-1].note
+      self.assertIn("title Old title→New title", note)
+      self.assertIn("short_title Old title→New title", note)
+
+  def test_Set_Title_LeavesADistinctShortTitle(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Full title", "--short-title", "Brief")
+      code, _, err = repo.run("set", "S05", "--title", "New title")
+      self.assertEqual(code, 0, err)
+      item = repo.state().index.require("S05")
+      self.assertEqual((item.title, item.short_title), ("New title", "Brief"))
+
+  def test_Set_TitleAndShortTitle_StoresBoth(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Full title")
+      code, _, err = repo.run("set", "S05", "--title", "New title", "--short-title", "Short")
+      self.assertEqual(code, 0, err)
+      item = repo.state().index.require("S05")
+      self.assertEqual((item.title, item.short_title), ("New title", "Short"))
+
+  def test_Set_Title_FollowsShortTitlePerItem(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Same")
+      repo.run("add", "Full", "--short-title", "Brief")
+      code, _, err = repo.run("set", "S05", "S06", "--title", "New")
+      self.assertEqual(code, 0, err)
+      same = repo.state().index.require("S05")
+      distinct = repo.state().index.require("S06")
+      self.assertEqual((same.title, same.short_title), ("New", "New"))
+      self.assertEqual((distinct.title, distinct.short_title), ("New", "Brief"))
+
   def test_Set_ShortTitle_LeavesTheSliceTitleAlone(self) -> None:
     # The index cell and the slice H1 differ on purpose.
     with self.repo() as repo:

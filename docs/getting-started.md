@@ -362,7 +362,8 @@ added S02  Fail loudly on a missing key
 `add` takes `--size`, `--tree` (repeatable), `--findings`, `--status`, `--pass`, `--id`,
 `--importance`/`--urgency` (the priority axes, 1–3), `--depends-on` (repeatable, using
 item ids), and `--short-title` for a shorter roadmap label while retaining the full
-title. Omitted or empty short titles fall back to the full title. Use `set` to change
+title. Omitted or empty short titles fall back to the full title. `set --title` also
+updates a short title that still matches the title; a distinct short title stays put. Use `set` to change
 these fields later; repeated `set --depends-on` flags replace the dependency list.
 An open item left at importance 2, urgency 2 and no effort ranks on nothing, so `add`
 prints a stderr hint to score it and `import` lists such items under `warn`; neither

@@ -143,7 +143,8 @@ class TuiStyleTests(unittest.TestCase):
     self.assertTrue(any(text == "> Details" for _, _, text, _ in screen.styled))
     self.assertTrue(any("S04" in text and attr == palette.inactive
                         for _, x, text, attr in screen.styled if x == 0))
-    self.assertTrue(any(text.startswith("> size") and attr == palette.focused
+    first = next(iter(tui.FIELD_SPEC))
+    self.assertTrue(any(text.startswith(f"> {first}") and attr == palette.focused
                         for _, _, text, attr in screen.styled))
 
   def test_Draw_Feedback_PrefixAndColorFollowExplicitSeverity(self) -> None:

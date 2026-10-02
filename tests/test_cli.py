@@ -339,7 +339,8 @@ class TuiTests(unittest.TestCase):
     # Fields live on the item, so they are editable before promotion.
     with self.repo() as repo:
       repo.run("add", "an idea")
-      result = tui.act(repo.state(), "e", "S05", focus="right", entry=0)
+      size = list(tui.FIELD_SPEC).index("size")
+      result = tui.act(repo.state(), "e", "S05", focus="right", entry=size)
       self.assertIsNotNone(result.edit)
       self.assertEqual(result.edit.kind, "field")
       self.assertEqual(result.edit.name, "size")
@@ -780,7 +781,8 @@ class TuiCreateAndFieldTests(unittest.TestCase):
   def test_ApplyEdit_Field_SetsSizeThroughOps(self) -> None:
     with self.repo() as repo:
       state = repo.state()
-      request = tui.act(state, "e", "S01", entry=0, focus="right").edit  # size
+      size = list(tui.FIELD_SPEC).index("size")
+      request = tui.act(state, "e", "S01", entry=size, focus="right").edit
       self.assertEqual(request.kind, "field")
       tui.apply_edit(state, request, "L")
       self.assertEqual(repo.state().index.require("S01").size, "L")

@@ -99,6 +99,7 @@ def _effort_edit(body: str) -> object:
 
 
 FIELD_SPEC: dict[str, tuple[str, object]] = {
+  "title": ("title", lambda b: b.strip()),
   "size": ("size", lambda b: b.strip()),
   "trees": ("trees", _csv),
   "findings": ("findings", lambda b: b.strip()),

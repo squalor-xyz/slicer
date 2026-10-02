@@ -426,7 +426,17 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
   for item in items:
     previous = item.status
     changes = []
-    for key, value in values.items():
+    # A short title that still equals the title was never chosen. Keep it in
+    # step, per item, so a batch does not turn the follow-on into an explicit
+    # short-title edit for the next id.
+    item_values = dict(values)
+    if (
+      "title" in item_values
+      and "short_title" not in values
+      and item.short_title == item.title
+    ):
+      item_values["short_title"] = item_values["title"]
+    for key, value in item_values.items():
       old = getattr(item, key)
       new = list(value) if isinstance(value, list) else value
       if old != new:
