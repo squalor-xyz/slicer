@@ -4165,7 +4165,7 @@
       "id": "S159",
       "title": "Set the starting id at init",
       "short_title": "Set the starting id at init",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S145"
@@ -4186,7 +4186,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

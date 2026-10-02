@@ -77,6 +77,26 @@ def _refuse_case_clash(index, new_id: str) -> None:
     )
 
 
+def starting_number(item_id: str, prefix: str, width: int) -> int:
+  """The counter `init --id` stores, or `bad_id` when the text is not that id.
+
+  The value has to be the id `format_id` would emit for this prefix and width.
+  A foreign prefix, the wrong case, or a different number of digits is refused
+  before a project is created. New ids use the configured prefix's case.
+  """
+  require_valid(item_id)
+  number = parse_id(item_id, prefix)
+  canonical = format_id(prefix, number, width) if number is not None else None
+  if canonical != item_id:
+    expected = canonical or format_id(prefix, 1, width)
+    raise StateError(
+      f"{item_id!r} is not an id of this scheme; expected the form {expected} "
+      f"(prefix {prefix!r}, width {width})",
+      code="bad_id",
+    )
+  return number
+
+
 def parse_id(item_id: str, prefix: str) -> int | None:
   """Return the numeric part, or None if `item_id` is not of this scheme.
 

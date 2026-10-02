@@ -327,16 +327,41 @@ def cmd_init(args: argparse.Namespace) -> int:
       f"{base} already exists; pass --force to overwrite its config and templates",
       code="already_exists",
     )
+  index_path = base / store.INDEX_NAME
+  existing = model.Index.from_dict(jsonio.read(index_path)) if index_path.is_file() else None
+  if existing is None:
+    scheme = Config()
+    prefix, width = scheme.id_prefix, scheme.id_width
+  else:
+    prefix, width = existing.id_prefix, existing.id_width
+  # Resolve --id before any write. A bad id, or a counter move over live items,
+  # leaves config, templates, and the index untouched.
+  next_id = None
+  if args.id is not None:
+    next_id = ids.starting_number(args.id, prefix, width)
+    if existing is not None and existing.items:
+      raise StateError(
+        f"{base} already has items; a starting id would move the counter over live ids. "
+        "Use `add --id` instead",
+        code="state",
+      )
   cfg = Config()
   jsonio.write(base / CONFIG_NAME, cfg.to_dict())
-  index_path = base / store.INDEX_NAME
-  if not index_path.exists():
-    jsonio.write(index_path, model.Index(id_prefix=cfg.id_prefix, id_width=cfg.id_width).to_dict())
+  if existing is None:
+    index = model.Index(id_prefix=cfg.id_prefix, id_width=cfg.id_width)
+    if next_id is not None:
+      index.next_id = next_id
+    jsonio.write(index_path, index.to_dict())
+  elif next_id is not None:
+    existing.next_id = next_id
+    jsonio.write(index_path, existing.to_dict())
   for name, text in templates.defaults().items():
     jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
   jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   text = f"initialised {base}"
+  if args.id is not None:
+    text += f"\nnext id {args.id}"
   # Point people at the one-time merge-driver setup where it is git-relevant. The
   # JSON payload stays {root, dir}; the hint is human output only.
   if vcs.is_repo(root):
@@ -1814,6 +1839,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
+  sp.add_argument("--id", help="id the first add allocates, such as S21")
 
   add("setup-git", cmd_setup_git,
       "print the git config that turns on the render merge driver (run once per clone)")

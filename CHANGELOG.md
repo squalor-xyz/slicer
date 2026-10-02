@@ -17,6 +17,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `init --id ID` sets the id the first `add` allocates, so a project can continue an earlier sequence (`slicer init --id S21`). The id must match the configured prefix and width. On an index that already has items it is refused; use `add --id` instead. `--force` over an empty index still sets the counter.
 - `next --batch K` returns up to K items from the same pool as `next`, optionally narrowed with one `--tree` and an exact `--size`. A dependent follows its dependency when that dependency is in the batch. `--start` claims the whole batch under one lock and passes `--owner` through; a failure leaves every id unclaimed. An empty batch exits 2 with `{"items": [], "blocked": [...]}` and no error object. `--batch` with `--show`, `-n`, or `--status` is a usage error, as is K < 1.
 - `set --add-flag` and `set --remove-flag` edit one flag without replacing the rest of the list. They cannot be combined with `--flag` or `--no-flags`.
 - Items record `attempts`. `start` from open and every `reject` increment it, and `set --attempts` sets it. The index schema is now 3. A version-2 index with no `attempts` key still loads, as 0.

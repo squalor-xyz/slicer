@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-164 items · — 2 · done 160 · retired 2
+164 items · — 1 · done 161 · retired 2
 
 v1.2.0 release
 
@@ -42,7 +42,7 @@ v1.2.0 release
 | 12 | [S155](slices/S155.md) | Batch pickup of small same-tree slices | L | 3 | slicer | agents-repo request R6: batching K size-S slices per session means reimplementing next's eligibility client-side | done |
 | 13 | [S156](slices/S156.md) | Document statuses, next eligibility and verify's git checks | S | 1 | slicer | agents-repo request R7 and Q1: custom statuses undocumented; exclude_flags assumed to filter next; verify's git checks unexplained | done |
 | 14 | [S157](slices/S157.md) | Point migrate errors at the expected format | S | 1 | slicer | agents-repo request R8: five successive migrate refusals on a near-miss tree; the format is in docs/migrate-format.md but no message says so | done |
-| 15 | [S159](slices/S159.md) | Set the starting id at init | S | 1 | slicer | agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround | — |
+| 15 | [S159](slices/S159.md) | Set the starting id at init | S | 1 | slicer | agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround | done |
 | 16 | [s160](slices/s160.md) | Show the project URL from the CLI | S | 1 | slicer | owner request 2026-10-01: repo URL (https://github.com/squalor-xyz/slicer) reachable from -h or --about; today only pyproject.toml has it | — |
 | 17 | [s161](slices/s161.md) | Select the unit tests that hit a diff | M | 2 | slicer | owner request 2026-10-01, after S144: the full suite was 972 tests in 558s; 31 tests that matched the change took 27s | done |
 | 18 | [s162](slices/s162.md) | Leave a slice move unstaged | S | 1 | slicer | owner request 2026-10-02, after S144 and S146: done staged only the slice rename | done |
