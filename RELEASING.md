@@ -3,6 +3,10 @@
 A version tag on `main` publishes `squalor-slicer` to PyPI. The tag must be `v`
 plus `slicer.__version__` from `src/slicer/__init__.py`. `.github/workflows/publish.yml`
 runs the tests, refuses any other tag, builds the package, and uploads it.
+After publishing succeeds, it creates a GitHub Release using the version's dated
+changelog section. The release job uses GitHub's automatic token; no local GitHub
+CLI authentication is needed. A failed release job can be rerun without republishing
+the package, and an existing GitHub Release is left unchanged.
 There is no API token. Later releases reuse the same publisher.
 
 Pushing the tag is a separate step. Do it from the commit the release should be,
@@ -47,7 +51,7 @@ git tag "v$VERSION"
 git push origin "v$VERSION"
 ```
 
-Watch the Publish workflow. When it is green, the package is at
+Watch the Publish workflow, including its GitHub Release job. When it is green, the package is at
 <https://pypi.org/project/squalor-slicer/>. `pip install squalor-slicer` then
 `slicer --version` should print that version. A version number cannot be
 uploaded again.

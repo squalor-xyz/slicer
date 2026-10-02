@@ -1,4 +1,4 @@
-# Publish squalor-slicer to PyPI when a version tag is pushed.
+# Publish squalor-slicer to PyPI and create a GitHub Release on a version tag.
 #
 # Trusted publishing (OIDC). No API token lives in this repo. Before the first
 # tag, add a pending publisher on PyPI for the project `squalor-slicer`:
@@ -64,3 +64,35 @@ jobs:
           python -m build
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release from the changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          sections = changelog.split("\n## ")
+          matches = [s for s in sections[1:] if s.splitlines()[0].startswith(f"[{version}] - ")]
+          if len(matches) != 1:
+            raise SystemExit(f"Expected one dated changelog section for {version}")
+          notes = matches[0].split("\n", 1)[1].strip()
+          if not notes:
+            raise SystemExit(f"Changelog section for {version} is empty")
+          Path("release-notes.md").write_text(notes + "\n", encoding="utf-8")
+          PY
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag \
+              --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+          fi

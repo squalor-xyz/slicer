@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-02
+
 ### Changed
 
 - Migrate errors name the expected token and `docs/migrate-format.md`. A round-trip that differs only by trailing blank lines says so. An index with no item rows reports that no index table was found and quotes the expected header, before each "slice file has no index row" line.
@@ -17,8 +19,9 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- Version-tag publication now creates a GitHub Release from the dated changelog after PyPI publication succeeds.
+- Contributor tooling: `python3 tests/affected.py --run` selects tests that executed changed lines using a locally recorded map; a missing or stale map requires the full suite.
 - Top-level `--about` prints the version, description, source URL, and issues URL without a project, with `--json` support. Help shows the project description and both URLs.
-
 - `init --id ID` sets the id the first `add` allocates, so a project can continue an earlier sequence (`slicer init --id S21`). The id must match the configured prefix and width. On an index that already has items it is refused; use `add --id` instead. `--force` over an empty index still sets the counter.
 - `next --batch K` returns up to K items from the same pool as `next`, optionally narrowed with one `--tree` and an exact `--size`. A dependent follows its dependency when that dependency is in the batch. `--start` claims the whole batch under one lock and passes `--owner` through; a failure leaves every id unclaimed. An empty batch exits 2 with `{"items": [], "blocked": [...]}` and no error object. `--batch` with `--show`, `-n`, or `--status` is a usage error, as is K < 1.
 - `set --add-flag` and `set --remove-flag` edit one flag without replacing the rest of the list. They cannot be combined with `--flag` or `--no-flags`.
