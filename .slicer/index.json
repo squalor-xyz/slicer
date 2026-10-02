@@ -4271,7 +4271,7 @@
       "id": "s163",
       "title": "Require agents to use the slicer CLI for all roadmap reads and edits",
       "short_title": "Require agents to use the slicer CLI for all roadmap reads and edits",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4290,7 +4290,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -48,7 +48,9 @@ for discussion before importing or implementing it.
 ### Review an existing project
 
 ```text
-Read the project instructions, relevant source, tests, and existing roadmap. Review
+Read the project instructions, relevant source, and tests. Read the roadmap with
+`slicer goals`, `slicer list`, `slicer show`, and `slicer prose list`. Do not open
+tracking JSON, the history file, or generated roadmap output. Review
 the code for bugs, regressions, missing tests, and maintainability problems supported
 by evidence. For each finding, cite file locations, explain the impact and a concrete
 failure case or verification method, and distinguish confirmed behavior from open
@@ -88,11 +90,17 @@ with me first. If `next` includes `unspecified`, fill each missing section with
 Once the specification is clear and trusted, mark it started with
 `slicer start ID --render --strict`. Implement that slice, and run its acceptance checks and
 required project checks. Update affected documentation. Edit a slice with
-`slicer edit ID --section NAME --text "Body" --render --strict`. Once verified, run
-`slicer done ID --note "Describe the verified result"
---render` and `slicer check`. Report changes and checks, and stop after this slice.
-Use commands to change tracking state; never hand-edit the index, slice JSON, or
-generated markdown. Do not open or hand-merge `.slicer/render/`. When `ROADMAP.md` or `ROADMAP.html` conflicts, run `slicer render` then `slicer check`. Do not commit or publish unless separately authorized.
+`slicer edit ID --section NAME --text "Body" --render --strict`. Once verified, record
+it for review with `slicer handoff ID --render` and `slicer check`. Report changes and
+checks, and stop after this slice.
+Use the slicer CLI to read and to change goals, items, slices, notes, history, and
+roadmap prose, including during review and planning. Do not open, search, parse, or
+edit tracking JSON, the history file, or generated roadmap and slice output to obtain
+or change that state. If a command is missing or fails, report it and propose a
+roadmap item. Do not open or hand-merge generated roadmap files. When `ROADMAP.md` or
+`ROADMAP.html` conflicts, run `slicer render` then `slicer check`. `slicer handoff`
+records work ready for review; run `slicer done` only after review and merge are
+complete. Do not commit or publish unless separately authorized.
 ```
 
 ## Everything takes `--json`

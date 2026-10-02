@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- Agent guidance requires the slicer CLI for reading and changing goals, items, slices, notes, history, and roadmap prose, including during review and planning. A missing command is reported as a roadmap item. `slicer ai skill` now covers roadmap review and planning, and distinguishes handing work off for review from marking it done.
+
 ### Added
 
 - `set --add-flag` and `set --remove-flag` edit one flag without replacing the rest of the list. They cannot be combined with `--flag` or `--no-flags`.

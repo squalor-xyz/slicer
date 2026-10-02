@@ -1,6 +1,6 @@
 ---
 name: slicer
-description: Drive a slicer roadmap. Use when asked to take a slice, implement the next slice, or drive slicer.
+description: Drive a slicer roadmap. Use when asked to review a roadmap, plan work, take a slice, implement the next slice, or drive slicer.
 ---
 
 1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
@@ -29,5 +29,34 @@ details must be inspected; exit 2 means a usage or validation error, or no next 
 exit 3 means an internal or state error (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).
 In particular, `next` can return exit 2 with `{"item": null, "blocked": [...]}`
 and no error object: inspect the blocked items rather than assuming work is done.
+
+## Read and change tracking state through the CLI
+
+Use the slicer CLI to read and to change goals, items, slices, notes, history,
+and roadmap prose. This applies while reviewing a roadmap, planning work,
+implementing a slice, and validating the result.
+
+Do not open, search, parse, or edit tracking JSON, the history file, or generated roadmap and slice output to obtain or change that state.
+
+- Goals: `slicer goals --json`.
+- Inventory: `slicer list --json`, `slicer status --json`, and `slicer stats --json`.
+- Slice detail: `slicer show ID --json` and `slicer next --ready --json`.
+- Search: `slicer find topic --json`.
+- Roadmap prose: `slicer prose list --json` and `slicer prose show goals --json`.
+- History: `slicer log --json`. Notes on an item come back with `slicer show ID --json`.
+- Validation: `slicer check --json`.
+
+If a CLI read or edit is missing or fails, report that and propose a roadmap item.
+Do not switch to the tracking files.
+
+Source code, ordinary project documentation, templates, and this skill stay
+readable when you are implementing. A task that explicitly asks you to inspect or
+repair tracking internals is the only exception.
+
+When slicer warns that the running code belongs to another worktree, run
+`PYTHONPATH=src python3 -m slicer` for this checkout.
+
+`slicer handoff ID --render --json` records work ready for review. Mark that work done
+only after review and merge are complete.
 
 The rest of the guide is `slicer ai instructions`.
