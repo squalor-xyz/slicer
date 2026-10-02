@@ -39,14 +39,14 @@
   through git.</p></div></section>
 <section><h2>Non-goals</h2><div class="prose"><p>- Not a real-time collaboration or multi-user concurrent-editing tool; coordination<br>
   happens through git, not a live shared service.</p></div></section>
-<p class="summary">164 items · — 6 · done 156 · retired 2</p>
+<p class="summary">164 items · — 5 · done 157 · retired 2</p>
 <h2>v1.2.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>S144</td><td>Don&#x27;t flag retired or done items that depend on a retired item</td><td>S</td><td>1</td><td>slicer</td><td>user report: check flags retired items that depend on retired items; user cleared the edges to pass</td><td class="status">done</td></tr>
 <tr class="done"><td>2</td><td>S145</td><td>Change the id prefix for new ids</td><td>M</td><td>2</td><td>slicer</td><td>owner request: lowercase ids (s145) going forward; prefix is locked once items exist; mixed-case explicit ids can collide</td><td class="status">done</td></tr>
 <tr class="done"><td>3</td><td>S146</td><td>Lift a scope boundary out of an outline item&#x27;s lead</td><td>S</td><td>1</td><td>slicer</td><td>dogfooding S144: promote --file left the boundary line in the lead and the boundary field as the bare marker</td><td class="status">done</td></tr>
 <tr class="done"><td>4</td><td>S147</td><td>Keep an unset short title in step when set changes the title</td><td>S</td><td>1</td><td>slicer</td><td>dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title</td><td class="status">done</td></tr>
-<tr class="open"><td>5</td><td>S148</td><td>Offer --strict on import and remove</td><td>M</td><td>2</td><td>slicer</td><td>dogfooding S146/S147: `import --render --strict` failed with &quot;unrecognized arguments: --strict&quot;</td><td class="status">—</td></tr>
+<tr class="done"><td>5</td><td>S148</td><td>Offer --strict on import and remove</td><td>M</td><td>2</td><td>slicer</td><td>dogfooding S146/S147: `import --render --strict` failed with &quot;unrecognized arguments: --strict&quot;</td><td class="status">done</td></tr>
 <tr class="done"><td>6</td><td>S149</td><td>Claim as a named actor per invocation</td><td>M</td><td>2</td><td>slicer</td><td>agents-repo request R1: claims always record the git user; per-call owner wanted</td><td class="status">done</td></tr>
 <tr class="done"><td>7</td><td>S150</td><td>Add a reviewing status for a claimed review</td><td>M</td><td>2</td><td>slicer</td><td>agents-repo request R2: start on a review item turns it into started, which next then offers to implementers</td><td class="status">done</td></tr>
 <tr class="done"><td>8</td><td>S151</td><td>Pick up the next review item in one call</td><td>M</td><td>2</td><td>slicer</td><td>agents-repo request R2: next skips review items; a reviewer needs list + show + client-side ranking</td><td class="status">done</td></tr>

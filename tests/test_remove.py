@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 import support
+
+from slicer import render
 
 from slicer import ops, sync
 from slicer.config import Config
@@ -236,6 +239,68 @@ class RemoveCliTests(unittest.TestCase):
     repo.run("init")
     repo.run("migrate", "--from", "docs/slices")
     return repo
+
+  def test_Remove_StrictRetire_RendersAndMovesTheFile(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run(
+        "remove", "S02", "--reason", "superseded", "--render", "--strict",
+      )
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("rendered", out)
+      self.assertIn("retired", out)
+      self.assertEqual(repo.state().index.require("S02").status, "retired")
+      self.assertTrue((repo.root / ".slicer/slices/retired/S02.json").is_file())
+      self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Remove_StrictRetireRenderFails_LeavesStatusAndFile(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/index.json")
+      blob = (repo.root / ".slicer/slices/S02.json").read_bytes()
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run(
+          "remove", "S02", "--reason", "superseded", "--render", "--strict", "--json",
+        )
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual((repo.root / ".slicer/slices/S02.json").read_bytes(), blob)
+      self.assertFalse((repo.root / ".slicer/slices/retired/S02.json").exists())
+
+  def test_Remove_StrictPurge_DeletesTheFile(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("remove", "S02", "--purge", "--render", "--strict")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("rendered", out)
+      self.assertIsNone(repo.state().index.get("S02"))
+      self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Remove_StrictPurgeRenderFails_LeavesIndexAndFile(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/index.json")
+      blob = (repo.root / ".slicer/slices/S02.json").read_bytes()
+      with patch.object(render, "write", side_effect=render.RenderError("boom")):
+        code, out, err = repo.run(
+          "remove", "S02", "--purge", "--render", "--strict", "--json",
+        )
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "render")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual((repo.root / ".slicer/slices/S02.json").read_bytes(), blob)
+
+  def test_Remove_StrictWithoutRender_IsUsageError(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/index.json")
+      for argv in (
+        ["remove", "S02", "--reason", "superseded", "--strict", "--json"],
+        ["remove", "S02", "--reason", "superseded", "--dry-run", "--strict", "--json"],
+        ["remove", "S02", "--purge", "--dry-run", "--strict", "--json"],
+      ):
+        code, out, err = repo.run(*argv)
+        self.assertEqual(code, 2, err)
+        self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
 
   def test_Remove_WithNeitherReasonNorPurge_ExitsTwo(self) -> None:
     with self.repo() as repo:

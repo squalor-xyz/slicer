@@ -127,6 +127,9 @@ class _Stage:
   slices: dict[str, Slice] = field(default_factory=dict)
   logs: list[LogEntry] = field(default_factory=list)
   moves: list[tuple[Path, Path]] = field(default_factory=list)
+  # Slice files to unlink after the index write. A purge records the path
+  # here so a failed render never deletes a file the index still names.
+  deletes: list[Path] = field(default_factory=list)
   config: dict | None = None
 
 
@@ -270,6 +273,17 @@ class State:
       return
     vcs.move(self.root, src, dst)
 
+  def delete_slice(self, path: Path) -> None:
+    """Unlink a slice file, after the index write when this change is staged.
+
+    Purge saves the index first and deletes the file second. Buffering the
+    unlink keeps that order, and lets a failed render drop the delete.
+    """
+    if self._stage is not None:
+      self._stage.deletes.append(path)
+      return
+    path.unlink()
+
   @contextmanager
   def staged(self) -> Iterator[None]:
     """Buffer every persistence side effect, flushing only on a clean exit.
@@ -311,12 +325,21 @@ class State:
       jsonio.write(self.slice_path(sl.id), sl.to_dict())
     if stage.index:
       jsonio.write(self.dir / INDEX_NAME, self.index.to_dict())
+    # After the index, matching an unstaged purge: a crash here leaves an
+    # orphan file, not a row whose slice was already deleted.
+    for path in stage.deletes:
+      path.unlink()
     # After the index, which owns the id scheme: a crash between the two leaves
     # a mismatch `verify` reports and re-running `id-prefix` repairs.
     if stage.config is not None:
       jsonio.write(self.dir / CONFIG_NAME, stage.config)
-    for entry in stage.logs:
-      jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())
+    try:
+      for entry in stage.logs:
+        jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())
+    except OSError as exc:
+      raise StateError(
+        f"saved, but history could not be written: {exc}", code="io",
+      ) from exc
 
   def history(self) -> list[LogEntry]:
     path = self.dir / LOG_NAME

@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `import` and `remove` take `--render --strict`. A failed render writes nothing, including a purge that would have deleted the slice file. `--strict` without `--render`, including with `--dry-run`, is a usage error. `done` stays render-first without the flag.
 - Roadmap markdown and HTML show version-shaped pass groups newest first (`v1.10` above `v1.2`, a bare `v1` below `v1.1`), then other passes in declaration order. Items with no pass follow: those that are not done, then done items. The stored queue and `next` are unchanged.
 - A status change moves a slice file in the worktree only. `git mv` is no longer used, so `done`, `retire`, and `set --status` leave the index untouched. Add the old path and the new path together to record the rename.
 - Documented that plain `next` offers only open and started work, so a custom status (not `exclude_flags`) holds an item out of the queue, and that `verify`'s two git checks are warnings: an unconfigured render merge driver when sibling worktrees exist, and a done item with no commit subject in the last 2000 non-merge commits. `check` still owns render freshness.

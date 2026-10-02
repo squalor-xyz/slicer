@@ -1158,12 +1158,27 @@ class StrictRenderTests(unittest.TestCase):
       self.assertEqual(repo.read(".slicer/index.json"), before)
 
   def test_Done_DoesNotOfferStrict_ArgparseRejectsIt(self) -> None:
-    # done --render is already render-first, so --strict is not offered there;
-    # the excluded bulk/destructive commands reject it the same way.
+    # done --render is already render-first, so --strict is not offered there.
     with self._ready() as repo:
       code, out, err = repo.run("done", "S01", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertIn("strict", err)
+
+  def test_ImportAndRemove_StrictWithoutRender_IsUsageError(self) -> None:
+    with self._ready() as repo:
+      before = repo.read(".slicer/index.json")
+      repo.write("r.md", "## Another\n")
+      for argv in (
+        ["import", "r.md", "--strict", "--json"],
+        ["import", "r.md", "--dry-run", "--strict", "--json"],
+        ["remove", "S01", "--reason", "nope", "--strict", "--json"],
+        ["remove", "S01", "--purge", "--dry-run", "--strict", "--json"],
+      ):
+        code, out, err = repo.run(*argv)
+        self.assertEqual(code, 2, err)
+        self.assertEqual(json.loads(out)["error"]["code"], "usage")
+        self.assertIn("strict", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
 
 
 class RenderWriteRollbackTests(unittest.TestCase):

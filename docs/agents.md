@@ -275,11 +275,12 @@ That save-then-render order is the default. Add `--strict` (with `--render`) to 
 the render to succeed *first*: the mutation is rendered before it is allowed to land, and a
 render failure rolls the whole change back — nothing is written, and nothing is printed to
 stdout — exiting **2** with `{"error": {"code": "render"}}`. Use it when a change that
-cannot be rendered must not land at all. `done --render` already behaves this way; `--strict`
-extends the same render-first policy to the everyday item mutations (`add`, `set`, `move`,
-`sort`, `promote`, `edit`, `note`, `start`, `park`, `unpark`, and the `prose` edits). It is
-not offered on `import`, `migrate`, or `remove`, and `--strict` without `--render` is a usage
-error. `--strict` guarantees only the render; it does not re-run `check`. Dependency
+cannot be rendered must not land at all. `done --render` already behaves this way and does
+not take `--strict`. The flag is offered on the other mutating commands, including `add`,
+`set`, `move`, `sort`, `promote`, `edit`, `note`, `start`, `park`, `unpark`, the `prose`
+edits, `import`, `migrate`, and `remove`. `--strict` without `--render` is a usage error,
+including together with `--dry-run`. `--strict` guarantees only the render; it does not
+re-run `check`. Dependency
 integrity is enforced by `add` and `set` themselves, with or without `--strict`.
 
 **One case to special-case:** `slicer next`, including `--show` and `--ready`, exits **2** when nothing is runnable, with
