@@ -438,6 +438,17 @@ class TuiNavigationTests(unittest.TestCase):
       self.assertNotEqual(view.message_severity, 'success')
       self.assertEqual(repo.read('.slicer/log.jsonl'), log_before)
 
+  def test_EditTitle_Field_MovesAnUnchosenShortTitle(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Old title")
+      state = repo.state()
+      request = tui.EditRequest(kind="field", target="S01", name="title", body="Old title")
+      result = tui.apply_edit_result(state, request, "New title")
+      self.assertEqual(result.severity, "success")
+      item = repo.state().index.require("S01")
+      self.assertEqual((item.title, item.short_title), ("New title", "New title"))
+
   def test_EditPriority_Field_AdjustsScore(self) -> None:
     with support.TempRepo() as repo:
       repo.run('init')

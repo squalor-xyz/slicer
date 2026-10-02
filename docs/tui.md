@@ -14,7 +14,7 @@ search is active.
 ## Editing
 
 `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
-whatever is selected there — an item field (size, trees, findings, depends, importance,
+whatever is selected there — an item field (title, size, trees, findings, depends, importance,
 urgency), a slice section, its scope boundary, a note (edit it, or empty to remove; the
 `+ add a note` line adds one), or a prose block — `s` starts the selected item and `a` adds a
 new one. Press `w` for the guided roadmap wizard; an empty roadmap offers it once

@@ -3699,7 +3699,7 @@
       "id": "S147",
       "title": "Keep an unset short title in step when set changes the title",
       "short_title": "Keep an unset short title in step when set changes the title",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],

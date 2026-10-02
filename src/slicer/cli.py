@@ -1814,7 +1814,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = _strict_flag(_render_flag(add("set", _mutating(cmd_set), "change an item's fields")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
-  sp.add_argument("--title")
+  sp.add_argument("--title", help="also updates a short title that still matches the title")
   sp.add_argument("--short-title", dest="short_title")
   sp.add_argument("--status")
   sp.add_argument("--size")
