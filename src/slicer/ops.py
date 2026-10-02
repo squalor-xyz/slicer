@@ -403,8 +403,28 @@ def _batch_items(state: State, item_ids: list[str]) -> list[Item]:
   return [state.index.require(item_id) for item_id in dict.fromkeys(item_ids)]
 
 
-def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list[Item]:
+def _merged_flags(current: list[str], remove: list[str], add: list[str]) -> list[str]:
+  """Keep `current` order, drop `remove`, then append new flags from `add`."""
+  dropped = set(remove)
+  merged = [flag for flag in current if flag not in dropped]
+  for flag in add:
+    if flag not in merged:
+      merged.append(flag)
+  return merged
+
+
+def set_fields_many(
+  state: State, item_ids: list[str], *,
+  add_flags: list[str] | None = None, remove_flags: list[str] | None = None,
+  **fields: object,
+) -> list[Item]:
   """Validate the request before saving once; omitted fields stay unchanged."""
+  adjusting = add_flags is not None or remove_flags is not None
+  for flag in (add_flags or []) + (remove_flags or []):
+    if "\n" in str(flag):
+      raise StateError("a flag cannot contain a newline", code="newline_in_field")
+  add_flags = list(_clean(add_flags or []))
+  remove_flags = list(_clean(remove_flags or []))
   items = _batch_items(state, item_ids)
   known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency", "effort", "attempts"}
   _reject_bad_text(**fields)
@@ -438,6 +458,8 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
       and item.short_title == item.title
     ):
       item_values["short_title"] = item_values["title"]
+    if adjusting:
+      item_values["flags"] = _merged_flags(item.flags, remove_flags, add_flags)
     for key, value in item_values.items():
       old = getattr(item, key)
       new = list(value) if isinstance(value, list) else value
@@ -451,8 +473,14 @@ def set_fields_many(state: State, item_ids: list[str], **fields: object) -> list
       _relocate_slice(state, item.id)
     _sync_slice(state, item)
     transitions.append((item, previous, moved, changes))
+  # An add/remove that matches every item's list is a no-op: no save, no log.
+  # A plain `set` of the same value still records the field names.
+  if adjusting and not values and not any(changes for _, _, _, changes in transitions):
+    return items
   state.save_index()
   for item, previous, moved, changes in transitions:
+    if adjusting and not values and not changes:
+      continue
     # Record what changed, not just which fields, so metadata history replays
     # from slicer; a no-op set falls back to the field names it was asked to set.
     note = "; ".join(changes) if changes else ",".join(sorted(values))

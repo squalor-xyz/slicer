@@ -1107,6 +1107,11 @@ def cmd_set(args: argparse.Namespace) -> int:
   state = _state(args)
   if args.no_effort and args.effort is not None:
     raise StateError("--effort and --no-effort cannot be combined", code="usage")
+  if (args.add_flag or args.remove_flag) and (args.flag is not None or args.no_flags):
+    raise StateError(
+      "cannot combine --add-flag or --remove-flag with --flag or --no-flags",
+      code="usage",
+    )
   flags = [] if args.no_flags else args.flag
   fields = dict(
     title=args.title, short_title=args.short_title, status=args.status,
@@ -1118,7 +1123,9 @@ def cmd_set(args: argparse.Namespace) -> int:
   fields = {key: value for key, value in fields.items() if value is not None}
   if args.no_effort:
     fields["effort"] = None
-  items = ops.set_fields_many(state, item_ids, **fields)
+  items = ops.set_fields_many(
+    state, item_ids, add_flags=args.add_flag, remove_flags=args.remove_flag, **fields,
+  )
   _emit_items(args, items, batch, [f"updated {item.id}" for item in items])
   return OK
 
@@ -1825,6 +1832,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="dependency id (repeatable; replaces the list)")
   sp.add_argument("--pass", dest="pass_key", help="move the item to this pass group")
   sp.add_argument("--flag", dest="flag", action="append", help="set a flag (repeatable; replaces the list)")
+  sp.add_argument("--add-flag", action="append", help="add a flag without replacing the list (repeatable)")
+  sp.add_argument("--remove-flag", action="append", help="remove a flag without replacing the list (repeatable)")
   sp.add_argument("--no-flags", dest="no_flags", action="store_true", help="clear all flags")
   sp.add_argument("--group", help="the phase-label group; --group '' clears it")
   sp.add_argument("--importance", type=int, help="1-3")

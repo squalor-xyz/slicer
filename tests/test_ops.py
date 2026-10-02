@@ -828,6 +828,62 @@ class SetFlagGroupTests(unittest.TestCase):
       st = repo.state()
       self.assertEqual(sync.next_item(st.index, st.config).id, "S02")
 
+  def test_Set_AddAndRemoveFlag_EditsTheListInPlace(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "tier-small", "--flag", "risk-security")
+      code, _, err = repo.run(
+        "set", "S01", "--remove-flag", "tier-small", "--add-flag", "tier-mid",
+      )
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").flags, ["risk-security", "tier-mid"])
+      self.assertIn("flags", repo.state().history()[-1].note)
+
+  def test_Set_AddOrRemoveFlag_NoOp_LeavesTheLogAlone(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "tier-small", "--flag", "risk-security")
+      before_index = (repo.root / ".slicer/index.json").read_bytes()
+      before_log = (repo.root / ".slicer/log.jsonl").read_bytes()
+      code, _, err = repo.run("set", "S01", "--add-flag", "tier-small")
+      self.assertEqual(code, 0, err)
+      code, _, err = repo.run("set", "S01", "--remove-flag", "missing")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").flags, ["tier-small", "risk-security"])
+      self.assertEqual((repo.root / ".slicer/index.json").read_bytes(), before_index)
+      self.assertEqual((repo.root / ".slicer/log.jsonl").read_bytes(), before_log)
+
+  def test_Set_AddFlag_KeepsEachItemsOwnFlags(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "another")
+      repo.run("set", "S01", "--flag", "tier-small")
+      repo.run("set", "S02", "--flag", "risk-security")
+      code, _, err = repo.run("set", "S01", "S02", "--add-flag", "shared")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").flags, ["tier-small", "shared"])
+      self.assertEqual(repo.state().index.require("S02").flags, ["risk-security", "shared"])
+
+  def test_Set_AddFlag_WithReplaceFlags_IsUsage(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--flag", "kept")
+      before = (repo.root / ".slicer/index.json").read_bytes()
+      for args in (
+        ("--add-flag", "extra", "--flag", "other"),
+        ("--remove-flag", "kept", "--flag", "other"),
+        ("--add-flag", "extra", "--no-flags"),
+        ("--remove-flag", "kept", "--no-flags"),
+      ):
+        code, out, _ = repo.run("set", "S01", *args, "--json")
+        self.assertEqual(code, 2, args)
+        self.assertEqual(json.loads(out)["error"]["code"], "usage")
+        self.assertEqual((repo.root / ".slicer/index.json").read_bytes(), before)
+
+  def test_Set_AddFlagWithNewline_IsRefused(self) -> None:
+    with self.repo() as repo:
+      before = (repo.root / ".slicer/index.json").read_bytes()
+      code, _, err = repo.run("set", "S01", "--add-flag", "a\nb")
+      self.assertEqual(code, 2)
+      self.assertIn("newline", err)
+      self.assertEqual((repo.root / ".slicer/index.json").read_bytes(), before)
+
   def test_Set_Flag_ReplacesTheList(self) -> None:
     with self.repo() as repo:
       repo.run("set", "S01", "--flag", "A", "--flag", "B")
