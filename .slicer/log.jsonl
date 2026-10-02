@@ -743,3 +743,4 @@
 {"when": "2026-10-01T22:31:42Z", "item": "s161", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-02T11:02:34Z", "item": "S146", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-02T11:11:13Z", "item": "S146", "action": "status", "from": "started", "to": "done", "note": "promote --file and import lift a boundary paragraph out of the lead; a paragraph in both the lead and a section is refused and nothing is written", "by": "Jon Robbins"}
+{"when": "2026-10-02T11:28:51Z", "item": "s162", "action": "add", "from": "", "to": "open", "note": "Leave a slice move unstaged"}

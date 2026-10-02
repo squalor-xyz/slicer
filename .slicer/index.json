@@ -2,7 +2,7 @@
   "version": 2,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 162,
+  "next_id": 163,
   "preamble": "",
   "passes": [
     {
@@ -4078,6 +4078,31 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2
+      }
+    },
+    {
+      "id": "s162",
+      "title": "Leave a slice move unstaged",
+      "short_title": "Leave a slice move unstaged",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-10-02, after S144 and S146: done staged only the slice rename",
+        "pass": "v1.2",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1
       }
     }
   ],
