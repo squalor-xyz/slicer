@@ -4059,7 +4059,7 @@
       "id": "S155",
       "title": "Batch pickup of small same-tree slices",
       "short_title": "Batch pickup of small same-tree slices",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "S151"
@@ -4080,7 +4080,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -556,6 +556,16 @@ def _nonnegative_int(value: str) -> int:
   return number
 
 
+def _positive_int(value: str) -> int:
+  try:
+    number = int(value)
+  except ValueError:
+    raise argparse.ArgumentTypeError("must be an integer >= 1") from None
+  if number < 1:
+    raise argparse.ArgumentTypeError("must be an integer >= 1")
+  return number
+
+
 def cmd_next_id(args: argparse.Namespace) -> int:
   state = _state(args)
   item_id = ids.format_next(state.index)
@@ -587,11 +597,11 @@ def cmd_id_prefix(args: argparse.Namespace) -> int:
   return OK
 
 
-def _unspecified_payload(result: ops.NextResult) -> list[dict[str, object]]:
+def _unspecified_payload(result: ops.NextResult | ops.BatchResult) -> list[dict[str, object]]:
   return [{"id": item_id, "missing": missing} for item_id, missing in result.unspecified]
 
 
-def _unspecified_lines(result: ops.NextResult) -> list[str]:
+def _unspecified_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
   lines: list[str] = []
   for item_id, missing in result.unspecified:
     names = " and ".join(missing)
@@ -601,19 +611,19 @@ def _unspecified_lines(result: ops.NextResult) -> list[str]:
   return lines
 
 
-def _elsewhere_payload(result: ops.NextResult) -> list[dict[str, str]]:
+def _elsewhere_payload(result: ops.NextResult | ops.BatchResult) -> list[dict[str, str]]:
   """Skipped items, one row per sibling worktree, in list's `{worktree, owner}` shape plus the id."""
   return [{"id": item_id} | entry for item_id, entries in result.elsewhere for entry in entries]
 
 
-def _elsewhere_lines(result: ops.NextResult) -> list[str]:
+def _elsewhere_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
   return [
     f"skipped {item_id} (in work in {', '.join('wt:' + e['worktree'] for e in entries)})"
     for item_id, entries in result.elsewhere
   ]
 
 
-def _note_skips(payload: dict, lines: list[str], result: ops.NextResult) -> None:
+def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.BatchResult) -> None:
   """Add the unspecified and in-work-elsewhere skips, each only when non-empty."""
   unspecified = _unspecified_payload(result)
   if unspecified:
@@ -646,14 +656,39 @@ def _sections_named(
   return selected
 
 
-def _emit_ready(
-  args: argparse.Namespace, state: store.State, item: model.Item, result: ops.NextResult,
-) -> None:
-  """One bounded pickup: who is next, the slice to implement, and who is blocked.
+def _blocked_payload(pairs: list[tuple[str, list[str]]]) -> list[dict[str, object]]:
+  return [{"id": item_id, "waiting_on": waiting} for item_id, waiting in pairs]
 
-  The item is the identity an agent needs to start work. The full item record,
-  the status census, and the goals prose stay on their own commands.
-  """
+
+def _append_blocked(lines: list[str], blocked: list[dict[str, object]]) -> None:
+  if blocked:
+    lines.append("Blocked")
+    lines.extend(
+      f"  {entry['id']} waits on {', '.join(entry['waiting_on'])}" for entry in blocked
+    )
+  else:
+    lines.append("Blocked   none")
+
+
+def _next_fields(state: store.State, item: model.Item) -> tuple[dict[str, object], list[str]]:
+  """The plain `next` object (item record, path, effective score) and its lines."""
+  eff = graph.effective_scores(state.index)[item.id]
+  path = state.find_slice_file(item.id)
+  inherited = "^" if eff > item.score else ""
+  payload = item.to_dict() | {"path": str(path) if path else None, "effective_score": eff}
+  lines = [
+    f"{item.id}  {item.display_title()}",
+    f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
+  ]
+  if path:
+    lines.append(f"     {path}")
+  return payload, lines
+
+
+def _ready_entry(
+  args: argparse.Namespace, state: store.State, item: model.Item,
+) -> tuple[dict[str, object], list[str]]:
+  """One `{item, slice?}` pickup. `blocked` stays with the caller."""
   eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
   sl = state.slices.get(item.id)
@@ -668,7 +703,15 @@ def _emit_ready(
       "path": str(path) if path else None,
     },
   }
-  if sl is not None:
+  lines = [
+    f"{item.id}  {item.display_title()}",
+    f"     score {eff}{'^' if eff > item.score else ''} · {state.config.status_label(item.status)}",
+  ]
+  if path:
+    lines.append(f"     {path}")
+  if sl is None:
+    lines.append(f"     (no slice yet; run `slicer promote {item.id}`)")
+  else:
     if args.section:
       payload["slice"] = {
         "boundary": sl.boundary,
@@ -676,29 +719,37 @@ def _emit_ready(
       }
     else:
       payload["slice"] = sl.to_dict()
-  blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
-  payload["blocked"] = blocked
-  inherited = "^" if eff > item.score else ""
-  lines = [
-    f"{item.id}  {item.display_title()}",
-    f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
-  ]
-  if path:
-    lines.append(f"     {path}")
-  if sl is None:
-    lines.append(f"     (no slice yet; run `slicer promote {item.id}`)")
-  else:
     boundary = " ".join(sl.boundary.split()) or "(none)"
     headings = ", ".join(section.heading for section in sl.sections) or "(none)"
     lines.append(f"     boundary  {boundary}")
     lines.append(f"     sections  {headings}")
-  if blocked:
-    lines.append("Blocked")
-    lines.extend(f"  {entry['id']} waits on {', '.join(entry['waiting_on'])}" for entry in blocked)
-  else:
-    lines.append("Blocked   none")
+  return payload, lines
+
+
+def _emit_ready(
+  args: argparse.Namespace, state: store.State, item: model.Item, result: ops.NextResult,
+) -> None:
+  """One bounded pickup: who is next, the slice to implement, and who is blocked.
+
+  The item is the identity an agent needs to start work. The full item record,
+  the status census, and the goals prose stay on their own commands.
+  """
+  payload, lines = _ready_entry(args, state, item)
+  blocked = _blocked_payload(result.blocked)
+  payload["blocked"] = blocked
+  _append_blocked(lines, blocked)
   _note_skips(payload, lines, result)
   _emit(args, payload, "\n".join(lines))
+
+
+def _reject_unknown_sections(args: argparse.Namespace, state: store.State, items: list[model.Item]) -> None:
+  """A typo in `--section` must fail before `--start` claims anything."""
+  if not (args.ready and args.section):
+    return
+  for item in items:
+    sl = state.slices.get(item.id)
+    if sl is not None:
+      _sections_named(sl, args.section)
 
 
 def cmd_next(args: argparse.Namespace) -> int:
@@ -711,48 +762,41 @@ def cmd_next(args: argparse.Namespace) -> int:
     raise StateError("--section on next requires --ready", code="usage")
   if args.owner is not None and not args.start:
     raise StateError("--owner on next requires --start", code="usage")
+  if args.batch is not None and (args.show or args.n is not None):
+    raise StateError("--batch cannot be combined with --show or -n", code="usage")
+  if args.batch is not None and args.status is not None:
+    raise StateError("--batch cannot be combined with --status", code="usage")
   state = _state(args)
   review = args.status is not None
   if review and (not state.config.review_status or args.status != state.config.review_status):
     supported = (f"only {state.config.review_status!r}, the review status, is supported"
                  if state.config.review_status else "this project declares no review status")
     raise StateError(f"next --status {args.status!r}: {supported}", code="usage")
-  result = ops.next_item(state, args.n, store.in_work_elsewhere(state.root), review=review)
+  elsewhere = store.in_work_elsewhere(state.root)
+  if args.batch is not None:
+    return _cmd_next_batch(args, state, elsewhere)
+  offset = 0 if args.n is None else args.n
+  result = ops.next_item(
+    state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
+  )
   if result.item is None:
-    payload = {
-      "item": None,
-      "blocked": [{"id": i, "waiting_on": b} for i, b in result.blocked],
-    }
+    payload = {"item": None, "blocked": _blocked_payload(result.blocked)}
     parts = [f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked]
     _note_skips(payload, parts, result)
     text = "\n".join(parts) if parts else ("nothing in review" if review else "nothing unmarked")
-    if args.n:
-      text = f"no eligible item at offset {args.n}" + (f"\n{text}" if parts else "")
+    if offset:
+      text = f"no eligible item at offset {offset}" + (f"\n{text}" if parts else "")
     _emit(args, payload, text)
     return USAGE
   item = result.item
-  if args.ready and args.section:
-    # Reject an unknown heading before --start writes, so a typo does not
-    # mark the item started.
-    sl = state.slices.get(item.id)
-    if sl is not None:
-      _sections_named(sl, args.section)
+  _reject_unknown_sections(args, state, [item])
   if args.start:
     with store.project_lock(state.root):
       item = ops.start(state, item.id, owner=args.owner)
   if args.ready:
     _emit_ready(args, state, item, result)
     return OK
-  eff = graph.effective_scores(state.index)[item.id]
-  path = state.find_slice_file(item.id)
-  inherited = "^" if eff > item.score else ""
-  payload = item.to_dict() | {"path": str(path) if path else None, "effective_score": eff}
-  lines = [
-    f"{item.id}  {item.display_title()}",
-    f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
-  ]
-  if path:
-    lines.append(f"     {path}")
+  payload, lines = _next_fields(state, item)
   _note_skips(payload, lines, result)
   if args.show:
     # Fold the follow-up `show ID` into this one call: an agent picking up work
@@ -764,6 +808,51 @@ def cmd_next(args: argparse.Namespace) -> int:
       payload = payload | {"slice": sl.to_dict()}
       lines.append(render.render_slice(
         sl, state.config, state.template("slice.md"), item.notes).decode("utf-8"))
+  _emit(args, payload, "\n".join(lines))
+  return OK
+
+
+def _cmd_next_batch(
+  args: argparse.Namespace, state: store.State,
+  elsewhere: dict[str, list[dict[str, str]]],
+) -> int:
+  """Several items from one tree and size. One lock covers the whole start."""
+  result = ops.next_batch(state, args.batch, elsewhere, tree=args.tree, size=args.size)
+  blocked = _blocked_payload(result.blocked)
+  if not result.items:
+    payload: dict[str, object] = {"items": [], "blocked": blocked}
+    parts = [f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked]
+    _note_skips(payload, parts, result)
+    text = "\n".join(parts) if parts else "nothing unmarked"
+    _emit(args, payload, text)
+    return USAGE
+  _reject_unknown_sections(args, state, result.items)
+  items = result.items
+  if args.start:
+    # Empty batches never reach this. One lock and one staged start_many, so a
+    # failure keeps every id unclaimed: no status, move, or log line.
+    with store.project_lock(state.root):
+      with state.staged():
+        started = ops.start_many(state, [item.id for item in items], owner=args.owner)
+    by_id = {item.id: item for item in started}
+    items = [by_id[item.id] for item in items]
+  lines: list[str] = []
+  if args.ready:
+    entries = []
+    for item in items:
+      entry, item_lines = _ready_entry(args, state, item)
+      entries.append(entry)
+      lines.extend(item_lines)
+    payload = {"items": entries, "blocked": blocked}
+  else:
+    entries = []
+    for item in items:
+      entry, item_lines = _next_fields(state, item)
+      entries.append(entry)
+      lines.extend(item_lines)
+    payload = {"items": entries, "blocked": blocked}
+  _append_blocked(lines, blocked)
+  _note_skips(payload, lines, result)
   _emit(args, payload, "\n".join(lines))
   return OK
 
@@ -1744,9 +1833,13 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
   sp = add("next", cmd_next, "the highest-priority startable item")
-  sp.add_argument("-n", type=_nonnegative_int, default=0, metavar="N",
+  sp.add_argument("-n", type=_nonnegative_int, default=None, metavar="N",
                   help="skip N currently eligible items (default 0); return one item")
-  sp.add_argument("--start", action="store_true", help="mark the returned item started")
+  sp.add_argument("--batch", type=_positive_int, default=None, metavar="K",
+                  help="return up to K items; a dependent follows its dependency")
+  sp.add_argument("--tree", help="only items in this tree (one tree; not repeatable)")
+  sp.add_argument("--size", help="only items of this exact size")
+  sp.add_argument("--start", action="store_true", help="mark the returned item or batch started")
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
   sp.add_argument("--ready", action="store_true",

@@ -19,7 +19,7 @@ run see [getting started](getting-started.md); for JSON shapes and exit codes se
 | `promote ID [--file/--stdin] [--boundary TEXT] [--force]` | give an item a slice file; a one-item outline fills its sections in one call. `--force` overwrites an existing slice |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
-| `next [-n N] [--status REVIEW] [--start [--owner NAME]] [--show\|--ready [--section NAME ...]]` | one eligible item at offset N (default 0), with its effective score and status; `--start` marks it started, claiming as `--owner` when given. `--status` set to the review status draws from the review queue instead (reviewing items first, then review), and `--start` then moves the item to reviewing; any other value is `usage`. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids. Repeat `--section` with `--ready` to return the scope boundary and those sections only. An item started or claimed in a sibling Git worktree is skipped and reported (`in_work_elsewhere`), unless this checkout has it too |
+| `next [-n N] [--batch K] [--tree TREE] [--size SIZE] [--status REVIEW] [--start [--owner NAME]] [--show\|--ready [--section NAME ...]]` | one eligible item at offset N (default 0), or up to K with `--batch`, with its effective score and status. `--tree` and `--size` narrow that pool to one tree and one exact size. `--start` marks the item or the whole batch started, claiming as `--owner` when given; a failed batch start claims nothing. `--status` set to the review status draws from the review queue instead (reviewing items first, then review), and `--start` then moves the item to reviewing; any other value is `usage`. `--batch` cannot be combined with `--show`, `-n`, or `--status`. `--show` adds the full item and its slice. `--ready` returns item identity, the slice, and blocked ids. Repeat `--section` with `--ready` to return the scope boundary and those sections only. An item started or claimed in a sibling Git worktree is skipped and reported (`in_work_elsewhere`), unless this checkout has it too |
 | `next-id` | the id the next `add` or `import` would take, without allocating it |
 | `id-prefix [NEW] [--dry-run]` | print the id prefix, or change its case for new ids (`S` to `s`), in the index and config together. Existing ids keep theirs and no file is renamed. Any change other than case is refused (`usage`), and `--dry-run` reports without writing |
 | `list [--all] [--status/--tree/--pass/--flag] [--sort score\|effort]` | the queue in `next`'s order: unblocked started, then unblocked open, then the other visible rows, each by effective score. The text table has a CLAIM column: the local owner, `*` for locally in-progress with no claim, `wt:NAME` for work in a sibling worktree, or `-`. `wt:NAME+N` means N more worktrees. When the roadmap uses passes, a PASS column shows each row's pass key, or `-`. `--json` includes `claim` (`{"owner", "at"}` or null) and `in_work_elsewhere` (an array of `{worktree, owner}`). Done and retired items are omitted unless `--all` is set or `--status` names them. Repeat `--flag` to keep an item that has any of those flags. Flags are free-form labels set with `set --flag`. `--sort score` is a flat score sort. `--sort effort` orders estimates 1–3 and puts unset items last, without writing state |
@@ -98,6 +98,21 @@ scope boundary and those section bodies; omit it and the slice stays complete.
 to run `promote`. An empty queue uses the same exit 2 result as `next`.
 Pass either `--ready` or `--show`. The text form of `--ready` stays the
 identity, the boundary, and the section headings.
+`slicer next --batch 3 --tree core --size S` returns up to three items from that
+same pool: one tree, one exact size, started work before open work, highest
+effective score first. A dependent follows its dependency when the dependency
+is in the batch, even when the dependent ranks higher. Items still waiting on
+a dependency outside the batch are listed in `blocked`. Items omitted only
+because the batch is full are not. JSON is `{"items": [...], "blocked": [...]}`,
+plus `unspecified` and `in_work_elsewhere` only when those skips happened.
+With `--ready`, each element is the `{item, slice}` object one `--ready` call
+returns, and `blocked` stays on the batch. `--section` trims every slice the
+same way and is checked before `--start`. `--start` claims the whole batch
+under one lock; `--owner` sets that claim. If starting fails, no id is claimed.
+An empty batch exits 2 with `items` empty and the blocked list, and it does
+not lock or start. `--batch` cannot be combined with `--show`, `-n`, or
+`--status`, and K must be at least 1. `--tree` and `--size` without `--batch`
+narrow a single `next`, including `-n`.
 
 ## Priority
 

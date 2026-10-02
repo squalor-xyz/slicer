@@ -786,30 +786,46 @@ class NextResult:
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
 
 
-def next_item(
-  state: State, offset: int = 0,
-  elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
-  *, review: bool = False,
-) -> NextResult:
-  """The most critical startable item: highest effective score, unblocked.
+@dataclass
+class BatchResult:
+  """Up to K items from one filtered pool, plus the same skip lists as `next`."""
 
-  Started items precede open items, with effective score ordering each group.
-  With `review`, the pool is the review queue instead: reviewing items (a
-  review someone already holds) precede review items, by the same rules.
-  Offset skips currently eligible items without simulating their completion.
+  items: list[Item]
+  blocked: list[tuple[str, list[str]]]
+  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
 
-  Dependencies still hard-gate what is startable -- a blocked item is never
-  returned, whatever its score or status -- so the score only orders the items
-  that can actually be picked up. Stable sorting preserves manual queue order
-  for ties.
 
-  `elsewhere` maps item ids to the sibling worktrees that have them started or
-  claimed (`store.in_work_elsewhere`). Such an item is skipped and reported,
-  unless this checkout has it started or claimed too: local work wins, as it
-  does in `list`. The caller supplies the map, so this stays free of git.
+@dataclass
+class _NextPool:
+  items: list[Item]
+  blocked: list[tuple[str, list[str]]]
+  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
+
+
+def _ranked_pool(
+  state: State,
+  elsewhere: Mapping[str, list[dict[str, str]]] | None,
+  *,
+  review: bool = False,
+  tree: str | None = None,
+  size: str | None = None,
+  include_blocked: bool = False,
+) -> _NextPool:
+  """Open or started work in next's order, after tree, size, and skip rules.
+
+  Started items precede open ones. Each group is descending effective score,
+  and queue order breaks ties. With `review`, reviewing items precede review
+  items by those same rules. `tree` keeps an item when that tree is one of
+  its trees. `size` keeps an exact size match. Omit either and it does not
+  narrow the pool.
+
+  A blocked item stays out unless `include_blocked`, which is how a batch can
+  take a dependency before the item that waits on it. Unspecified slices and
+  work held in another checkout stay out either way. A blocked item is not
+  also reported as elsewhere.
   """
-  if offset < 0:
-    raise StateError("next offset must be a nonnegative integer", code="usage")
   cfg = state.config
   # A whitelist, so parked, done, retired and any project-specific status stay
   # out. An empty started_status means the project has no start state, and the
@@ -828,29 +844,113 @@ def next_item(
   for item in state.index.items:
     if item.status not in active:
       continue
+    if tree is not None and tree not in item.trees:
+      continue
+    if size is not None and item.size != size:
+      continue
     pending = graph.blocked_by(state.index, item, cfg.done_status)
     if pending:
       blocked.append((item.id, pending))
     missing = _missing_spec(state, item)
     if missing:
       unspecified.append((item.id, missing))
-    if pending or missing:
+    if missing or (pending and not include_blocked):
       continue
     local = bool(item.claim_owner) or item.status in cfg.in_work()
     if elsewhere and item.id in elsewhere and not local:
-      skipped.append((item.id, elsewhere[item.id]))
+      # Pending already recorded this item as blocked. Do not also skip it
+      # as elsewhere, and do not offer it in the pool.
+      if not pending:
+        skipped.append((item.id, elsewhere[item.id]))
       continue
     (started if item.status in cfg.in_work() else candidates).append(item)
-  if not started and not candidates:
-    return NextResult(item=None, blocked=blocked, unspecified=unspecified, elsewhere=skipped)
   eff = graph.effective_scores(state.index)
-  pool = (sorted(started, key=lambda it: -eff[it.id])
-          + sorted(candidates, key=lambda it: -eff[it.id]))
+  ranked = (sorted(started, key=lambda it: -eff[it.id])
+            + sorted(candidates, key=lambda it: -eff[it.id]))
+  return _NextPool(items=ranked, blocked=blocked, unspecified=unspecified, elsewhere=skipped)
+
+
+def next_item(
+  state: State, offset: int = 0,
+  elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
+  *, review: bool = False, tree: str | None = None, size: str | None = None,
+) -> NextResult:
+  """The most critical startable item: highest effective score, unblocked.
+
+  Started items precede open items, with effective score ordering each group.
+  With `review`, the pool is the review queue instead: reviewing items (a
+  review someone already holds) precede review items, by the same rules.
+  Offset skips currently eligible items without simulating their completion.
+  `tree` and `size` narrow that pool; omit them and the pool is unchanged.
+
+  Dependencies still hard-gate what is startable -- a blocked item is never
+  returned, whatever its score or status -- so the score only orders the items
+  that can actually be picked up. Stable sorting preserves manual queue order
+  for ties.
+
+  `elsewhere` maps item ids to the sibling worktrees that have them started or
+  claimed (`store.in_work_elsewhere`). Such an item is skipped and reported,
+  unless this checkout has it started or claimed too: local work wins, as it
+  does in `list`. The caller supplies the map, so this stays free of git.
+  """
+  if offset < 0:
+    raise StateError("next offset must be a nonnegative integer", code="usage")
+  pool = _ranked_pool(state, elsewhere, review=review, tree=tree, size=size)
   return NextResult(
-    item=pool[offset] if offset < len(pool) else None,
+    item=pool.items[offset] if offset < len(pool.items) else None,
+    blocked=pool.blocked,
+    unspecified=pool.unspecified,
+    elsewhere=pool.elsewhere,
+  )
+
+
+def next_batch(
+  state: State, count: int,
+  elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
+  *, tree: str | None = None, size: str | None = None,
+) -> BatchResult:
+  """Up to `count` items from the next pool, dependencies before dependents.
+
+  The pool includes items that are still blocked. Each pick is the first item
+  not yet chosen whose unmet dependencies are already in the batch, so a
+  dependent follows its dependency even when the dependent ranks higher.
+  Selection stops at `count`. An item left out only because the batch is full
+  is not reported as blocked. An item still waiting on something outside the
+  batch is, and the reported dependencies are the ones the batch did not take.
+  """
+  if isinstance(count, bool) or not isinstance(count, int) or count < 1:
+    raise StateError("next --batch must be an integer >= 1", code="usage")
+  pool = _ranked_pool(
+    state, elsewhere, tree=tree, size=size, include_blocked=True,
+  )
+  chosen: list[Item] = []
+  chosen_ids: set[str] = set()
+  done = state.config.done_status
+  while len(chosen) < count:
+    pick: Item | None = None
+    for item in pool.items:
+      if item.id in chosen_ids:
+        continue
+      unmet = [dep for dep in graph.blocked_by(state.index, item, done) if dep not in chosen_ids]
+      if not unmet:
+        pick = item
+        break
+    if pick is None:
+      break
+    chosen.append(pick)
+    chosen_ids.add(pick.id)
+  blocked: list[tuple[str, list[str]]] = []
+  for item_id, pending in pool.blocked:
+    if item_id in chosen_ids:
+      continue
+    unmet = [dep for dep in pending if dep not in chosen_ids]
+    if unmet:
+      blocked.append((item_id, unmet))
+  return BatchResult(
+    items=chosen,
     blocked=blocked,
-    unspecified=unspecified,
-    elsewhere=skipped,
+    unspecified=pool.unspecified,
+    elsewhere=pool.elsewhere,
   )
 
 
