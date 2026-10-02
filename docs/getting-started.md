@@ -599,15 +599,19 @@ $ slicer done S01 --note "loader now refuses a missing key"
 S01 -> done
 ```
 
-`done` moves the slice file into `slices/done/` with `git mv`, so the status change
-stays one tracked rename:
+`done` moves the slice file into `slices/done/` and leaves the index untouched:
 
 ```console
 $ git status --short
  M .slicer/index.json
  M .slicer/log.jsonl
-R  .slicer/slices/S01.json -> .slicer/slices/done/S01.json
+ D .slicer/slices/S01.json
+?? .slicer/slices/done/
 ```
+
+Add the old path and the new file together to record that as one rename.
+`git add -u` stages only the deletion. A directory that already holds tracked
+slices lists the new file on its own instead of the whole directory.
 
 Now re-render. `check` will tell you if you forget:
 

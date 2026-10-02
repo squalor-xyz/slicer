@@ -36,7 +36,7 @@ run see [getting started](getting-started.md); for JSON shapes and exit codes se
 | `release ID [ID ...] [--owner NAME]` | clear a claim without changing status; `--owner` names who released it in history (`by`). An item that was in progress stays in progress and lists as `*` |
 | `handoff ID [ID ...] [--note TEXT] [--owner NAME]` | hand a started slice to review (`--owner` names who handed it off, as `by` in history): status becomes `review_status` and the claim is cleared. `next` skips review items and dependents stay blocked until `done`; a reviewer picks one up with `next --status review --start` (or `start ID`), which moves it to `reviewing_status` (also out of plain `next`). `handoff` refuses a reviewing item |
 | `reject ID [ID ...] --note TEXT [--to STATUS] [--owner NAME]` | send a review back: the item must be in `review_status` or `reviewing_status`, and goes to the open status (or `--to` any configured status that is not done, retired, started, review or reviewing). The claim is cleared, and the required `--note` verdict is added to the item's notes and to a single `reject` history entry. Every id is checked first; a non-review item is refused (`state`) and nothing is written |
-| `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status; `--note` records a one-line *history* entry (for a durable note on the item, use `slicer note`); `done` moves the file with `git mv` and clears a claim, and takes `--owner NAME` to name who finished it (`by` in history) |
+| `done ID [ID ...]` / `park ID [ID ...]` / `unpark ID [ID ...]` `[--note TEXT]` | change status; `--note` records a one-line *history* entry (for a durable note on the item, use `slicer note`); `done` moves the slice file in the worktree and leaves it unstaged, and clears a claim. It takes `--owner NAME` to name who finished it (`by` in history) |
 | `remove ID --reason "…"` | retire an obsolete item; the id stays claimed |
 | `remove ID --purge` | delete outright, for something that never should have existed |
 | `remove ID --purge/--reason --dry-run` | preview the removal and its fallout (dependents, id fate); write nothing |
@@ -116,9 +116,9 @@ See [batch changes](getting-started.md#batch-changes) for validation and output 
 ## Git access
 
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
-`rev-parse`, `status`, `log`, `mv`, `ls-files`, and the read-only queries
+`rev-parse`, `status`, `log`, and the read-only queries
 `worktree list --porcelain`, `branch --all`, and `config --get` of `user.name` and
-`merge.slicer-generated.driver`. `start` uses
+`merge.slicer-generated.driver`. A mutation does not stage. `start` uses
 the branch and worktree queries to warn when another checkout already refers to the slice;
 the exit code does not change, and
 `next` stays silent. Writing subcommands cannot be reached from the code at all.

@@ -449,8 +449,10 @@ run, so a fan-out of concurrent `slicer` processes cannot mint duplicate ids or 
 an outline. A second writer waits, then fails with `code="locked"` (exit 3) after a
 timeout; set `SLICER_LOCK_TIMEOUT` (seconds) to tune it. Read-only commands never lock.
 
-**slicer never commits.** `git` access is allowlisted to read-only subcommands plus `mv`.
-Committing is the human's.
+**slicer never commits.** `git` access is an allowlist of read-only subcommands, and a
+mutation leaves the index untouched. Committing is the human's. A status change moves
+the slice file in the worktree only. To record that move as a rename, add the old path
+and the new path together. `git add -u` stages only the deletion.
 
 ## History and dependencies
 

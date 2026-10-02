@@ -4245,7 +4245,7 @@
       "id": "s162",
       "title": "Leave a slice move unstaged",
       "short_title": "Leave a slice move unstaged",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4264,7 +4264,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

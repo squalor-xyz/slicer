@@ -36,13 +36,17 @@ class RetireTests(unittest.TestCase):
       self.assertEqual((entry.item, entry.action, entry.to), ("S02", "retire", "retired"))
       self.assertEqual(entry.note, "superseded by S03")
 
-  def test_Retire_InAGitRepo_UsesGitMvSoTheMoveStaysARename(self) -> None:
+  def test_Retire_InAGitRepo_LeavesTheIndexUntouched(self) -> None:
     with self.repo(git=True) as repo:
       repo.commit("import")
-      repo.run("remove", "S02", "--reason", "obsolete")
-      staged = repo._git("diff", "--cached", "--name-status", "-M")
-      self.assertIn("S02.json", staged.stdout)
-      self.assertTrue(staged.stdout.lstrip().startswith("R"), staged.stdout)
+      code, _, err = repo.run("remove", "S02", "--reason", "obsolete")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo._git("diff", "--cached").stdout, "")
+      self.assertTrue((repo.root / ".slicer/slices/retired/S02.json").is_file())
+      self.assertFalse((repo.root / ".slicer/slices/S02.json").exists())
+      status = repo._git("status", "--short").stdout
+      self.assertIn(".slicer/slices/S02.json", status)
+      self.assertIn(".slicer/slices/retired/", status)
 
   def test_Retire_BlankReason_IsRefused(self) -> None:
     with self.repo() as repo:
