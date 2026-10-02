@@ -41,11 +41,13 @@ from slicer import (
   verify,
   vcs,
 )
-from slicer import __version__
+from slicer import __doc__ as _package_doc, __url__, __version__
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import SlicerError, StateError, is_internal
 
 OK, DRIFT, USAGE, INTERNAL = 0, 1, 2, 3
+_DESCRIPTION = _package_doc.splitlines()[0].split(" — ", 1)[1].removesuffix(".")
+_ISSUES_URL = __url__ + "/issues"
 
 
 def _json_flags(parser: argparse.ArgumentParser) -> None:
@@ -1799,11 +1801,16 @@ def build_parser() -> argparse.ArgumentParser:
     default=argparse.SUPPRESS,
     help="project root (default: discovered from the working directory)",
   )
-  p = _ArgumentParser(prog="slicer", description=__doc__.splitlines()[0])
+  p = _ArgumentParser(
+    prog="slicer", description=_DESCRIPTION,
+    epilog=f"Source: {__url__}\nIssues: {_ISSUES_URL}",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+  )
   p.add_argument(
     "--root", default=None, help="project root (default: discovered from the working directory)"
   )
   p.add_argument("--version", action="version", version=f"slicer {__version__}")
+  p.add_argument("--about", action="store_true", help="show version, description, source and issues URLs")
   sub = p.add_subparsers(dest="command", required=True)
 
   def add(name: str, fn, help_: str, *, json_flag: bool = True,
@@ -2155,6 +2162,18 @@ def main(argv: list[str] | None = None) -> int:
   argv = list(sys.argv[1:] if argv is None else argv)
   args = argparse.Namespace()
   try:
+    options = argv[:argv.index("--")] if "--" in argv else argv
+    if "--about" in options:
+      about = _ArgumentParser(prog="slicer", description=_DESCRIPTION)
+      about.add_argument("--about", action="store_true")
+      about.add_argument("--root", default=None)
+      _json_flags(about)
+      about.parse_args(argv, namespace=args)
+      _emit(args, {
+        "name": "slicer", "version": __version__, "description": _DESCRIPTION,
+        "url": __url__, "issues": _ISSUES_URL,
+      }, f"slicer {__version__}\n{_DESCRIPTION}\nSource: {__url__}\nIssues: {_ISSUES_URL}")
+      return OK
     parser.parse_args(argv, namespace=args)
     root = Path(args.root) if args.root else Path.cwd()
     _warn_code_mismatch(args)

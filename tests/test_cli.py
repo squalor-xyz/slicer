@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import __version__, cli, render, tui
+from slicer import __url__, __version__, cli, render, tui
 from slicer.store import State
 
 
@@ -1010,8 +1010,54 @@ class VersionFlagTests(unittest.TestCase):
     with self.assertRaises(SystemExit) as cm, redirect_stdout(out):
       cli.build_parser().parse_args(["--version"])
     self.assertEqual(cm.exception.code, 0)
-    self.assertIn(__version__, out.getvalue())
-    self.assertIn("slicer", out.getvalue())
+    self.assertEqual(out.getvalue(), f"slicer {__version__}\n")
+
+
+class AboutFlagTests(unittest.TestCase):
+  def test_Help_DescriptionAndEpilog_NameTheProject(self) -> None:
+    out = io.StringIO()
+    with self.assertRaises(SystemExit) as cm, redirect_stdout(out):
+      cli.main(["-h"])
+    self.assertEqual(cm.exception.code, 0)
+    text = out.getvalue()
+    self.assertIn("roadmap and slice manager", text)
+    self.assertNotIn("Command line entry point.", text)
+    self.assertTrue(text.rstrip().endswith(f"Source: {__url__}\nIssues: {__url__}/issues"))
+
+  def test_About_NoProject_PrintsTextWithoutDiscovery(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root), patch(
+      "slicer.store.discover", side_effect=AssertionError("about must not discover a project")
+    ):
+      code, out, err = repo.run("--about")
+    self.assertEqual(code, 0)
+    self.assertEqual(err, "")
+    self.assertEqual(out, f"slicer {__version__}\nroadmap and slice manager\n"
+                         f"Source: {__url__}\nIssues: {__url__}/issues\n")
+
+  def test_About_JsonInEitherOrder_ReturnsTheContract(self) -> None:
+    for flags in (("--about", "--json"), ("--json", "--about")):
+      with self.subTest(flags=flags), support.TempRepo() as repo, support.isolated_discovery(repo.root):
+        code, out, err = repo.run(*flags)
+      self.assertEqual(code, 0)
+      self.assertEqual(err, "")
+      self.assertEqual(json.loads(out), {
+        "name": "slicer", "version": __version__, "description": "roadmap and slice manager",
+        "url": __url__, "issues": __url__ + "/issues",
+      })
+
+  def test_About_UnexpectedArgument_ReturnsUsageError(self) -> None:
+    with support.TempRepo() as repo:
+      code, out, err = repo.run("--about", "--unknown", "--json")
+    self.assertEqual(code, 2)
+    self.assertEqual(json.loads(out)["error"]["code"], "usage")
+    self.assertIn("--unknown", err)
+
+  def test_Main_MissingSubcommand_StillRequiresOne(self) -> None:
+    with support.TempRepo() as repo:
+      code, out, err = repo.run("--json")
+    self.assertEqual(code, 2)
+    self.assertEqual(json.loads(out)["error"]["code"], "usage")
+    self.assertIn("command", err)
 
 
 class RenderAfterMutationTests(unittest.TestCase):

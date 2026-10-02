@@ -13,7 +13,7 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from slicer import templates
+from slicer import __url__, templates
 
 PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
@@ -42,6 +42,11 @@ class PackagingTests(unittest.TestCase):
     self.assertIn("version", project["dynamic"])
     dynamic = self.pyproject["tool"]["setuptools"]["dynamic"]
     self.assertEqual(dynamic["version"], {"attr": "slicer.__version__"})
+
+  def test_Urls_PackageConstant_AgreesWithProjectMetadata(self) -> None:
+    urls = self.pyproject["project"]["urls"]
+    self.assertEqual(__url__, urls["Source"])
+    self.assertEqual(__url__ + "/issues", urls["Issues"])
 
   def test_Defaults_EveryBundledTemplate_LoadsThroughThePackage(self) -> None:
     loaded = templates.defaults()

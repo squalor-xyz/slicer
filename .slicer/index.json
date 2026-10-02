@@ -4193,7 +4193,7 @@
       "id": "s160",
       "title": "Show the project URL from the CLI",
       "short_title": "Show the project URL from the CLI",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4212,7 +4212,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

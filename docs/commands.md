@@ -4,6 +4,11 @@ Every slicer command and flag, and the behavior that spans commands. For a guide
 run see [getting started](getting-started.md); for JSON shapes and exit codes see the
 [agent reference](agents.md); for keys and screens see the [TUI manual](tui.md).
 
+Top-level `--help` shows the project description and source and issues URLs.
+`--about` prints the name, version, description, source URL, and issues URL without
+requiring a subcommand or project. `--about --json` returns `name`, `version`,
+`description`, `url`, and `issues`. `--version` prints only `slicer VERSION`.
+
 ## Commands
 
 | | |
