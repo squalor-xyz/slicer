@@ -96,6 +96,19 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn("slicer goals", review)
     self.assertNotIn("existing roadmap", review)
 
+  def test_Instructions_SayNextOffersOnlyOpenAndStartedWork(self) -> None:
+    text = ai.INSTRUCTIONS
+    start = text.index("Do not combine `--ready` and `--show`.")
+    window = text[start:start + 600]
+    self.assertIn("config.statuses", window)
+    self.assertIn("custom status", window)
+    self.assertIn("open work", window)
+    self.assertIn("started work", window)
+    self.assertIn("`draft`", window)
+    self.assertIn("`blocked`", window)
+    self.assertIn("not a flag", window)
+    self.assertIn("reviewing", window)
+
   def test_Instructions_NamePerCallOwnerForSharedCheckouts(self) -> None:
     text = ai.INSTRUCTIONS
     self.assertIn("--owner NAME", text)

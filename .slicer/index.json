@@ -4087,7 +4087,7 @@
       "id": "S156",
       "title": "Document statuses, next eligibility and verify's git checks",
       "short_title": "Document statuses, next eligibility and verify's git checks",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4106,7 +4106,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

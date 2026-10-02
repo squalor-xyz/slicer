@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- Documented that plain `next` offers only open and started work, so a custom status (not `exclude_flags`) holds an item out of the queue, and that `verify`'s two git checks are warnings: an unconfigured render merge driver when sibling worktrees exist, and a done item with no commit subject in the last 2000 non-merge commits. `check` still owns render freshness.
 - Agent guidance requires the slicer CLI for reading and changing goals, items, slices, notes, history, and roadmap prose, including during review and planning. A missing command is reported as a roadmap item. `slicer ai skill` now covers roadmap review and planning, and distinguishes handing work off for review from marking it done.
 
 ### Added

@@ -43,7 +43,7 @@ run see [getting started](getting-started.md); for JSON shapes and exit codes se
 | `remove ID ... --force` | retire or purge despite dependents, or a done item |
 | `render` | regenerate `.slicer/render/` (ROADMAP.md, a browser-viewable ROADMAP.html, and one file per slice) |
 | `sync [--check]` | rewrite derived lines in other documents |
-| `verify` | check the index for consistency, and against `git log` (unless `git_check` is off) |
+| `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render merge driver (`render_driver_check`) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). Render freshness is `check`'s job. See [getting started](getting-started.md#9-when-something-goes-wrong) |
 | `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
 | `stats` / `log [--limit N] [--item ID] [--action A] [--by NAME]` | counts + completion % and per-tree progress; history, newest first (`--limit` defaults to 20; `--item`/`--action`/`--by` scope it; `set` records old→new values; `by` is who started, claimed, released, handed off or finished an item) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`) |
