@@ -142,7 +142,10 @@ def parse_slice(text: str, *, path: str) -> LegacySlice:
   lines = text[:-1].split("\n")
   m = H1_RE.match(lines[0]) if lines else None
   if m is None:
-    raise LegacyImportError(f"{path}: first line is not '# <id> {EMDASH} <title>'")
+    raise LegacyImportError(
+      f"{path}: first line is not '# <id> {EMDASH} <title>'; "
+      "an em dash (U+2014) is required (see docs/migrate-format.md)"
+    )
 
   first_section = next((i for i, l in enumerate(lines) if l.startswith("## ")), len(lines))
   head_blocks = _blocks(lines[1:first_section])
@@ -237,18 +240,27 @@ def parse_meta(meta: str, *, path: str) -> dict[str, object]:
 def roundtrip_slice(text: str, *, path: str) -> LegacySlice:
   """Parse, then refuse to return unless re-emitting reproduces the input."""
   parsed = parse_slice(text, path=path)
-  again = parsed.emit()
-  if again != text:
-    raise LegacyImportError(f"{path}: does not round-trip; slicer would lose content\n{_diff(text, again)}")
+  _require_roundtrip(text, parsed.emit(), path=path)
   return parsed
 
 
 def roundtrip_index(text: str, *, path: str) -> LegacyIndex:
   parsed = parse_index(text, path=path)
-  again = parsed.emit()
-  if again != text:
-    raise LegacyImportError(f"{path}: does not round-trip; slicer would lose content\n{_diff(text, again)}")
+  _require_roundtrip(text, parsed.emit(), path=path)
   return parsed
+
+
+def _require_roundtrip(text: str, again: str, *, path: str) -> None:
+  """Refuse unless `again` is `text`. A trailing-newline miss is named, not accepted."""
+  if again == text:
+    return
+  hint = ""
+  if text.rstrip("\n") == again.rstrip("\n"):
+    hint = "; only trailing blank lines differ"
+  raise LegacyImportError(
+    f"{path}: does not round-trip; slicer would lose content{hint} "
+    f"(see docs/migrate-format.md)\n{_diff(text, again)}"
+  )
 
 
 def _diff(want: str, got: str, limit: int = 20) -> str:
@@ -273,7 +285,9 @@ def read_tree(source: Path, done_dir: str = "done") -> tuple[LegacyIndex, dict[s
   """
   index_path = source / "README.md"
   if not index_path.exists():
-    raise LegacyImportError(f"{index_path}: no index found")
+    raise LegacyImportError(
+      f"{index_path}: no index found; expected README.md (see docs/migrate-format.md)"
+    )
   index = roundtrip_index(_read(index_path), path=str(index_path))
 
   slices: dict[str, LegacySlice] = {}

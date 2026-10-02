@@ -76,6 +76,32 @@ class SliceFileTests(unittest.TestCase):
     with self.assertRaises(LegacyImportError):
       legacy.parse_slice("# S1 — t", path="bad.md")
 
+  def test_ParseSlice_AsciiDoubleDash_RequiresEmDash(self) -> None:
+    text = "# S99 -- ascii dash\n\n**Findings:** A · **Size: S** · **Tree:** t\n\n## Why\n\nbecause\n"
+    with self.assertRaises(LegacyImportError) as caught:
+      legacy.parse_slice(text, path="bad.md")
+    message = str(caught.exception)
+    self.assertIn("an em dash (U+2014) is required", message)
+    self.assertIn("docs/migrate-format.md", message)
+    self.assertEqual(caught.exception.code, "legacy_format")
+
+  def test_RoundtripSlice_ExtraTrailingBlank_NamesThatDifference(self) -> None:
+    text = support.MINI_SLICES["S04-fourth-thing.md"] + "\n"
+    with self.assertRaises(LegacyImportError) as caught:
+      legacy.roundtrip_slice(text, path="S04.md")
+    message = str(caught.exception)
+    self.assertIn("only trailing blank lines differ", message)
+    self.assertIn("docs/migrate-format.md", message)
+    self.assertEqual(caught.exception.code, "legacy_format")
+
+  def test_RoundtripSlice_InteriorBlankLine_OmitsTrailingBlankHint(self) -> None:
+    text = support.MINI_SLICES["S04-fourth-thing.md"].replace(
+      "\n\n**Findings:", "\n\n\n**Findings:", 1
+    )
+    with self.assertRaises(LegacyImportError) as caught:
+      legacy.roundtrip_slice(text, path="S04.md")
+    self.assertNotIn("only trailing blank lines differ", str(caught.exception))
+
   def test_EmitSlice_ParsedFile_ReproducesInputBytes(self) -> None:
     for name, text in support.MINI_SLICES.items():
       with self.subTest(name):

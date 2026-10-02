@@ -336,8 +336,17 @@ def build(
         report.problems.append(f"{item.id}: depends on unknown id {sid}")
 
   known = set(index.get(i).id for i in [it.id for it in index.items])
+  item_rows = sum(1 for table in legacy_index.tables() for row in table.rows if row.kind == "item")
+  if item_rows == 0:
+    report.problems.append(
+      "no index table was found; expected a header "
+      f"'{legacy.TABLE_HEADER}' (see docs/migrate-format.md)"
+    )
   for sid in sorted(set(legacy_slices) - known):
-    report.problems.append(f"{sid}: slice file has no index row")
+    report.problems.append(
+      f"{sid}: slice file has no index row; expected an index row for {sid} "
+      "(see docs/migrate-format.md)"
+    )
 
   index.next_id = ids.high_water([it.id for it in index.items], cfg.id_prefix)
   report.next_id = ids.format_id(cfg.id_prefix, index.next_id, cfg.id_width)

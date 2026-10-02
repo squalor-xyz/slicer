@@ -4113,7 +4113,7 @@
       "id": "S157",
       "title": "Point migrate errors at the expected format",
       "short_title": "Point migrate errors at the expected format",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4132,7 +4132,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
