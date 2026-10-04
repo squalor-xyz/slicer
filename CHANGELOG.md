@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- The TUI status column is as wide as the longest visible label, and at least seven characters, so `reviewing` stays aligned with `started`. Every blocked row shows `!`, including review and parked. The detail pane shows the claim owner, or `-` when the item has none. Review uses magenta when the terminal has a spare color pair, and bold otherwise. `NO_COLOR` stays monochrome. The queue row has no claim column.
 - `in_work_elsewhere` entries include `status`, the sibling's status key. A sibling in review or done counts when this checkout's copy has a different status and is not done, so `list` shows `wt:NAME` and `next` skips the item. The same status on both sides is not reported. Claimed and in-work siblings still count. The rendered roadmap stays local.
 
 ### Added

@@ -75,10 +75,15 @@ Queue and Details headings mark the focused pane with `>`. Focused selections us
 reverse/bold; inactive selections retain a marker and bold text. Queue rows show
 `P:22`-style base priority scores (importance × 10 + urgency); an axis of 3 emphasizes
 the score without reordering items. The detail pane retains the score and quadrant.
+The status column is as wide as the longest visible label, and at least seven
+characters, so `reviewing` stays aligned with `started`. Every blocked row shows
+`!`, including review and parked. The detail pane shows the claim owner, or `-`
+when the item has none. The queue row has no claim column.
 
 When supported, cyan marks headings/started work, green marks done/success, yellow
-marks parked/blocked work and high priority, and red marks errors. Labels and `!`
-blocked markers remain visible without color. Feedback uses `OK:`, `Error:`, and
-`Info:` prefixes; unchanged actions and cancellations are informational. Set
-`NO_COLOR=1` for monochrome; unsupported terminals also fall back automatically.
+marks parked/blocked work and high priority, magenta marks review, and red marks
+errors. With no spare color pair, review is bold. Labels and `!` blocked markers
+remain visible without color. Feedback uses `OK:`, `Error:`, and `Info:` prefixes;
+unchanged actions and cancellations are informational. Set `NO_COLOR=1` for
+monochrome; unsupported terminals also fall back automatically.
 Below 80 columns or 10 rows, the TUI shows a resize prompt and preserves the session.

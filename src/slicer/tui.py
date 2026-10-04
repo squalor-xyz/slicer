@@ -234,15 +234,14 @@ def sort_items(state: State, items: list, field: str, descending: bool) -> list:
 def item_rows(state: State, items: list) -> list[Row]:
   """Queue rows in the given order. The number is the position in that view."""
   cfg = state.config
+  # At least the historical 7, wider for the longest visible label (`reviewing`).
+  status_w = max([7, *(len(cfg.status_label(item.status)) for item in items)])
   out: list[Row] = []
   for n, item in enumerate(items, 1):
     pending = graph.blocked_by(state.index, item, cfg.done_status)
-    active = item.status == cfg.open_status or (
-      bool(cfg.started_status) and item.status == cfg.started_status
-    )
-    marker = "!" if pending and active else " "
+    marker = "!" if pending else " "
     label = cfg.status_label(item.status)
-    prefix = f"{n:>3}{marker} {item.id:<5} {label:<7} {item.size:<2} "
+    prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} {item.size:<2} "
     out.append(
       Row(
         kind=ITEM,
@@ -315,6 +314,7 @@ def panel(state: State, target: str) -> list[PanelLine]:
     PanelLine(f"status     {state.config.status_label(item.status)}",
               role=tui_style.status_role(item.status, bool(graph.blocked_by(
                 state.index, item, state.config.done_status)), state.config)),
+    PanelLine(f"{'claim':<11}{item.claim_owner or '-'}"),
   ]
   for n, label in enumerate(FIELD_SPEC):
     role = "priority" if label in ("importance", "urgency") and getattr(item, label) == 3 else "field"
