@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer ai instructions --rest` (and `slicer ai --rest`) prints only the parts of the guide the skill does not already carry, about 4 KB instead of 7.8 KB. It does not read the project. The skill's last line now points at it instead of the full guide. Without `--rest`, the output is unchanged.
 - Bare `slicer ai` and `slicer ai --json` print the same text and JSON as `slicer ai instructions`. An unknown subcommand is still a usage error. `slicer ai skill` is unchanged.
 - Text from `next`, `next --ready`, `next --show`, and `next --batch` names `slicer show ID` when the item has a slice, instead of printing the slice path. `--path` prints that path line as well and does not change JSON. A row with no slice does not gain a show hint. The promote hint stays on `next --ready` and `next --show`.
 - `slicer sections` lists the configured section names and marks the ones `next` requires. `required_sections` chooses those headings. A missing key still means Implement and Check. An empty list means an empty section does not hold a slice out of `next`.
