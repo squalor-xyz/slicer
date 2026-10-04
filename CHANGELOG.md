@@ -15,6 +15,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer list --in-work` and `slicer list --review` show those queues in one step. `--in-work` is started plus reviewing when that role is set. `--review` is only the review status. The TUI `v` key cycles the same views around the unfinished set.
 - `implement_finish` chooses how the agent loop finishes: `done` (the default, including when the key is missing) or `handoff`. `handoff` is a config error when `review_status` is empty. `slicer ai instructions` and `slicer ai skill` use that choice when the project can be read, and otherwise print the generic text with a stderr warning. Both start with the rule to use slicer commands instead of opening tracking files.
 
+### Fixed
+
+- The affected-map test no longer fails on macOS with the default `TMPDIR`. The tracer now resolves its root, which `/var` (a symlink to `/private/var`) had left unresolved. A regression test covers a symlinked root on any platform.
+
 ## [1.2.0] - 2026-10-02
 
 ### Changed

@@ -6,6 +6,7 @@ import ast
 import importlib.util
 import io
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -99,6 +100,26 @@ class AffectedTests(unittest.TestCase):
 
     self.assertEqual(chosen(sorted(only_a)[0]), [by_method["test_a"]])
     self.assertEqual(chosen(sorted(shared)[0]), sorted([by_method["test_a"], by_method["test_b"]]))
+
+  @unittest.skipUnless(hasattr(os, "symlink"), "needs symlinks")
+  def test_Record_SymlinkedRoot_StillMapsLines(self) -> None:
+    # macOS TMPDIR is under /var, a symlink to /private/var.
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    real = directory / "real"
+    real.mkdir()
+    link = directory / "link"
+    os.symlink(real, link, target_is_directory=True)
+    module = _load_sample(link)
+
+    class One(unittest.TestCase):
+      def test_a(self) -> None:
+        module.only_a()
+
+    traced = affected.trace_suite(unittest.defaultTestLoader.loadTestsFromTestCase(One), link)
+    lines = next(iter(traced.values()))
+    self.assertTrue(lines)
+    self.assertTrue(all(line.startswith("src/slicer/sample.py:") for line in lines))
 
   def test_Select_ChangedTestModule_IncludesItsTestsWithoutAMapHit(self) -> None:
     path = self.map_file({"not.a.Real.test_one": ["src/slicer/ops.py:1"]})

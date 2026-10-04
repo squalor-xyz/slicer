@@ -4749,7 +4749,7 @@
       "id": "s181",
       "title": "Resolve the trace root so the affected-map test passes under a symlinked TMPDIR",
       "short_title": "Resolve the trace root so the affected-map test passes under a symlinked TMPDIR",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4768,7 +4768,7 @@
         "importance": 2,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
