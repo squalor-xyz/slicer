@@ -1,0 +1,41 @@
+{
+  "id": "s183",
+  "title": "Let a slice quote the exact text that names a flag it adds",
+  "lead": [
+    "`check` rejects every backticked `slicer ...` command in an open slice whose flags the parser doesn't know yet. That includes the exact text a slice tells the implementer to write. Skip backtick spans inside fenced code blocks, which hold literal text to write, and keep checking inline commands, which are commands to run."
+  ],
+  "depends_note": null,
+  "findings_note": "dogfood 2026-10-04: filing s176 and s177 failed check because their target text names --rest and --check, the flags those slices add",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** declaring a slice's new flags in a field; scanning done or retired slices; checking docs files; changing the problem message shape.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "S116 added `_slice_flag_problems` (`src/slicer/cli.py:1682-1717`) so that a removed flag in a slice's Failing tests could not be copied into the skill. It scans every `` `slicer ...` `` span in every section of every open slice, using `_BACKTICK_SPAN` (`src/slicer/cli.py:1661`) line by line, and fenced blocks are no exception.\n\nOn 2026-10-04 that blocked filing s176 and s177. Their Implement sections quote the exact skill and loop lines to write, which name the new `--rest` flag of `ai instructions` and the new `--check` flag of `done`. `check` failed with one problem per command, for example `s176 / Implement: unknown flag --rest`, followed by the quoted command.\n\nThe workaround was to write those commands as `[[...]]` and tell the implementer to turn the markers into backticks. That is harder to follow for exactly the reader the spec is written for.\n\nA fenced block in a slice is text to write verbatim. An inline span in Failing tests or Implement is a command to run, which is the S116 case and stays checked."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: `_slice_flag_problems`.\n- `tests/test_cli.py`: `SliceCommandFlagCheckTests` (`:1442-1495`).\n- `docs/agents.md` or `docs/commands.md`, wherever the `check` row describes the slice-flag scan (search for `removed`).\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Add these to `SliceCommandFlagCheckTests`, following the existing `edit ... --text` setup in `test_Check_OpenSliceBacktickRemovedFlag_FailsNamingIdSectionAndFlag`:\n\n1. `test_Check_FencedBlockUnknownFlag_NotAProblem`: an open slice's Implement body has a line of three backticks, then a line containing a backticked `slicer next` command with the flag `--not-yet`, then a closing line of three backticks. `check` exits 0.\n2. `test_Check_InlineUnknownFlagOutsideFence_StillFails`: the same body plus an inline backticked `slicer next` command with `--require-render`, outside the fence. `check` fails and names `--require-render` but not `--not-yet`.\n3. `test_Check_UnclosedFence_ScansToEndAsFenced`: an opening fence with no closing fence. Everything after it counts as fenced, which matches how CommonMark renders an unclosed fence. Assert exit 0 for an unknown flag after it.\n4. A fence opened with three tildes behaves the same as one opened with three backticks.\n5. The existing four tests in the class still pass unchanged.\n\nBuild the test bodies with string concatenation (`\"`\" * 3`) where a literal fence would end the Python string awkwardly."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add a small pure helper next to `_BACKTICK_SPAN`: `def _outside_fences(body: str) -> str`. It returns `body` with every line inside a fenced code block replaced by an empty line, so line numbers stay put. A fence opens on a line whose stripped text starts with three or more backticks or tildes. It closes on a later line whose stripped text starts with at least as many of the same character and has nothing else after them. An unclosed fence runs to the end of the body. Drop the fence lines themselves too.\n2. In `_slice_flag_problems`, scan `_BACKTICK_SPAN.findall(_outside_fences(section.body))` instead of `section.body`.\n3. Update the docstring of `_slice_flag_problems` to say that fenced blocks are literal text and are skipped.\n4. Docs: one clause on the `check` row saying commands inside fenced blocks are not checked.\n5. After this lands, if s176 or s177 is still open, replace their `[[` / `]]` markers with real backticks and delete the sentence that explains the markers. Use `slicer edit ID --section Implement --file ...`, then run `slicer check`.\n6. CHANGELOG: Unreleased → Changed."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

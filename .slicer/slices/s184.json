@@ -1,0 +1,41 @@
+{
+  "id": "s184",
+  "title": "Show review and unmerged done work from a sibling worktree",
+  "lead": [
+    "On the main checkout, a slice handed off in a sibling worktree shows as open and unclaimed, and `next` offers it again. `store.in_work_elsewhere` counts a sibling item only when it is claimed or its status is in `config.in_work()`. `handoff` moves the item to review and clears its claim, so the item drops out. `done` in a sibling is invisible on main in the same way until the branch merges."
+  ],
+  "depends_note": null,
+  "findings_note": "bug report: a slice handed off in a worktree shows as open and unclaimed on main, and next offers it",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a `start` warning or refusal based on sibling state (today it warns only on a branch or worktree name match); sibling rows in `list --in-work` and `list --review` (s165 left them out); showing the sibling status in the STATUS column or the CLAIM cell; sibling parked, retired or custom statuses; reading another branch's committed state through git; the uncommitted-state hint after handoff (s175).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Reproduced on 1.3-dev in a scratch repo with two worktrees. `start S01` and then `handoff S01` ran in `.worktrees/S01`, and `start S02` ran in `.worktrees/S02`. On main:\n\n- `list` showed `S01  —  -` and `S02  —  wt:S02`.\n- `next --json` returned S01 as `open` and reported only S02 in `in_work_elsewhere`.\n- Committing on `slice/S01` changed nothing, because siblings are read from their working tree.\n- After `done S01` in the sibling, main still showed S01 as open and unclaimed.\n\nThe filter is `item.claim_owner or item.status in config.in_work()` (`src/slicer/store.py:378-379`). `in_work()` is started plus reviewing (`src/slicer/config.py:155-157`). `handoff_many` sets `review_status` and clears the claim (`src/slicer/ops.py:704-705`). After a handoff, nothing marks the row on main. The CLAIM cell falls back to `-` (`src/slicer/cli.py:923-936`), and `_ranked_pool` offers the item as open work (`src/slicer/ops.py:860-864`). S136 and S150 built this on `in_work()` before review existed as a sibling case. No earlier slice excluded review on purpose.\n\nThe report: \"A slice in review looks like unstarted work in the main view. That invites duplicate work, or slicer next picking it up.\""
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py` (`in_work_elsewhere`: what counts, and the `status` on each entry)\n- `src/slicer/ops.py` (`_ranked_pool`, where the local status decides whether a sibling row suppresses the item)\n- `src/slicer/cli.py` (`_claim_cell` keeps its `wt:NAME` fallback; the JSON entries for list, next and status)\n- `src/slicer/ai.py` (the `wt:NAME` paragraph)\n- `docs/agents.md`, `docs/commands.md` and `docs/getting-started.md` (the `in_work_elsewhere` shape and what counts)\n- `tests/test_worktree_claims.py`, `tests/test_next_batch.py` (exact-dict assertions gain `status`)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A sibling hands off S01, so its status is review and it has no claim. On main, `list` shows `wt:NAME` in S01's CLAIM cell. `list --json` gives S01 `in_work_elsewhere: [{\"worktree\", \"owner\": \"\", \"status\": \"review\"}]`. `next` skips S01 and reports it in `in_work_elsewhere` with the same `status`. `status` prints `skipped S01 (in work in wt:NAME)`.\n2. A sibling marks S01 done while main still has it open. Main shows `wt:NAME`, `next` skips it, and the entry's `status` is `done`.\n3. After the branch merges, main and the sibling both say review. S01 is not reported, so `next --status review` on main still offers it and its CLAIM cell is `-`. The same applies when both say done.\n4. A sibling that still has S01 open, when main has it done or in review, reports nothing. A stale worktree does not add noise.\n5. Existing started, reviewing and claimed sibling cases still report, and each entry carries the sibling's status key, not its label. Every exact `{id, worktree, owner}` assertion becomes `{id, worktree, owner, status}`.\n6. `render` output is unchanged when a sibling has review or done work. Sibling reads stay out of render."
+    },
+    {
+      "heading": "Implement",
+      "body": "Widen what a sibling row counts as. Keep the existing claimed or in-work rule. Also report a sibling item whose status is `review_status` or `done_status`, but only when this checkout's copy of the item has a different status and is not done. That comparison needs main's index, so pass it to `in_work_elsewhere` or filter in its caller. Keep `ops` git-free. Skip an empty `review_status`. Add the sibling's status key to every entry as `status`, after `owner`. Keep the `in_work_elsewhere` key name, since this is an additive change to the JSON contract. Text output is unchanged: CLAIM shows `wt:NAME`, local state still wins, and STATUS stays the local status. Update the docs to say which sibling statuses count, and add a sentence to the `ai.py` paragraph on what main shows after a handoff."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`. Dogfood it: with a worktree that has handed off a slice, `PYTHONPATH=src python3 -m slicer list` from main shows `wt:NAME` for that slice."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}
