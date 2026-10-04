@@ -673,7 +673,7 @@ def _unspecified_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
 
 
 def _elsewhere_payload(result: ops.NextResult | ops.BatchResult) -> list[dict[str, str]]:
-  """Skipped items, one row per sibling worktree, in list's `{worktree, owner}` shape plus the id."""
+  """Skipped items, one row per sibling, in list's `{worktree, owner, status}` shape plus the id."""
   return [{"id": item_id} | entry for item_id, entries in result.elsewhere for entry in entries]
 
 
@@ -844,7 +844,7 @@ def cmd_next(args: argparse.Namespace) -> int:
     supported = (f"only {state.config.review_status!r}, the review status, is supported"
                  if state.config.review_status else "this project declares no review status")
     raise StateError(f"next --status {args.status!r}: {supported}", code="usage")
-  elsewhere = store.in_work_elsewhere(state.root)
+  elsewhere = store.in_work_elsewhere(state.root, state.index)
   if args.batch is not None:
     return _cmd_next_batch(args, state, elsewhere)
   offset = 0 if args.n is None else args.n
@@ -1082,7 +1082,7 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_next_order(state, items)
-  elsewhere = store.in_work_elsewhere(state.root)
+  elsewhere = store.in_work_elsewhere(state.root, state.index)
   claim_w = _claim_width(state.config, items, elsewhere)
   pass_w = _pass_width(state.index, items)
   status_w = _status_width(state.config, items)
@@ -1800,7 +1800,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
   """The one-call front door: what is next, how far along, and what is blocked."""
   state = _state(args)
-  result = ops.next_item(state, 0, store.in_work_elsewhere(state.root))
+  result = ops.next_item(state, 0, store.in_work_elsewhere(state.root, state.index))
   census = _census(state)
   nxt = result.item
   blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]

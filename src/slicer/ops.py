@@ -824,7 +824,7 @@ def _ranked_pool(
   A blocked item stays out unless `include_blocked`, which is how a batch can
   take a dependency before the item that waits on it. Unspecified slices and
   work held in another checkout stay out either way. A blocked item is not
-  also reported as elsewhere.
+  also reported as elsewhere. The caller decides which sibling rows count.
   """
   cfg = state.config
   # A whitelist, so parked, done, retired and any project-specific status stay
@@ -888,10 +888,11 @@ def next_item(
   that can actually be picked up. Stable sorting preserves manual queue order
   for ties.
 
-  `elsewhere` maps item ids to the sibling worktrees that have them started or
-  claimed (`store.in_work_elsewhere`). Such an item is skipped and reported,
-  unless this checkout has it started or claimed too: local work wins, as it
-  does in `list`. The caller supplies the map, so this stays free of git.
+  `elsewhere` maps item ids to sibling rows (`store.in_work_elsewhere`):
+  claimed, in work, or review and done when this checkout differs and is not
+  done. Such an item is skipped and reported, unless this checkout has it
+  started or claimed too: local work wins, as it does in `list`. The caller
+  supplies the map, so this stays free of git.
   """
   if offset < 0:
     raise StateError("next offset must be a nonnegative integer", code="usage")

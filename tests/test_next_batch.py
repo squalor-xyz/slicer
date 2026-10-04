@@ -104,7 +104,8 @@ class NextBatchTests(unittest.TestCase):
       self.assertEqual(_ids(payload), ["S03"])
       self.assertEqual(payload["blocked"], [{"id": "S02", "waiting_on": ["S01"]}])
       self.assertEqual(
-        payload["in_work_elsewhere"], [{"id": "S01", "worktree": "other", "owner": "Test"}],
+        payload["in_work_elsewhere"],
+        [{"id": "S01", "worktree": "other", "owner": "Test", "status": "started"}],
       )
 
   def test_NextBatch_ReadySection_MatchesOneReadyCall(self) -> None:

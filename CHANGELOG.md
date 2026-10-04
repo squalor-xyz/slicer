@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `in_work_elsewhere` entries include `status`, the sibling's status key. A sibling in review or done counts when this checkout's copy has a different status and is not done, so `list` shows `wt:NAME` and `next` skips the item. The same status on both sides is not reported. Claimed and in-work siblings still count. The rendered roadmap stays local.
+
 ### Added
 
 - `slicer ai instructions --rest` (and `slicer ai --rest`) prints only the parts of the guide the skill does not already carry, about 4 KB instead of 7.8 KB. It does not read the project. The skill's last line now points at it instead of the full guide. Without `--rest`, the output is unchanged.

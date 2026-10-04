@@ -17,7 +17,7 @@ from typing import Iterator
 from slicer import ids, jsonio, vcs
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import SlicerError, StateError
-from slicer.model import SCHEMA_VERSION, Index, LogEntry, Slice
+from slicer.model import SCHEMA_VERSION, Index, Item, LogEntry, Slice
 
 # flock is POSIX-only; on a platform without it the lock degrades to a no-op
 # rather than crashing, so a Windows user still gets a working (if unguarded)
@@ -366,20 +366,52 @@ def read_index(root: Path) -> Index:
   return _from_dict(path, Index.from_dict, jsonio.read(path))
 
 
-def in_work_elsewhere(root: Path) -> dict[str, list[dict[str, str]]]:
-  """Started or claimed items in sibling worktrees, ordered by worktree path."""
+def _elsewhere_counts(
+  config: Config, item: Item, local: Item | None, local_done: str,
+) -> bool:
+  """Whether one sibling row is work this checkout should see.
+
+  Claimed and in-work rows always count. Review and done count only when this
+  checkout's copy has a different status and is not itself done. An empty
+  review status is not that extra case.
+  """
+  if item.claim_owner or item.status in config.in_work():
+    return True
+  if local is None or local.status == local_done or local.status == item.status:
+    return False
+  if item.status == config.done_status:
+    return True
+  return bool(config.review_status) and item.status == config.review_status
+
+
+def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]]]:
+  """Sibling work this checkout has not reached, ordered by worktree path.
+
+  Each entry is `{worktree, owner, status}` with the sibling's status key.
+  `index` is this checkout's copy, used to tell a real handoff or done from
+  the same state already here.
+  """
+  # A directory inside some other checkout is not that checkout's project.
+  # Reading its worktrees would treat another index's done items as this one.
+  if not vcs.at_worktree_root(root):
+    return {}
+  local_done = Config.load(root / DIR_NAME / CONFIG_NAME).done_status
+  local_by_id = {item.id: item for item in index.items}
   found: dict[str, list[dict[str, str]]] = {}
   for sibling in vcs.sibling_worktrees(root):
     try:
       config = Config.load(sibling / DIR_NAME / CONFIG_NAME)
-      index = read_index(sibling)
+      sibling_index = read_index(sibling)
     except (OSError, SlicerError, AttributeError, KeyError, TypeError, ValueError):
       continue
-    for item in index.items:
-      if item.claim_owner or item.status in config.in_work():
-        found.setdefault(item.id, []).append({
-          "worktree": sibling.name, "owner": item.claim_owner,
-        })
+    for item in sibling_index.items:
+      if not _elsewhere_counts(config, item, local_by_id.get(item.id), local_done):
+        continue
+      found.setdefault(item.id, []).append({
+        "worktree": sibling.name,
+        "owner": item.claim_owner,
+        "status": item.status,
+      })
   return found
 
 

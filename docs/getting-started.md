@@ -285,15 +285,18 @@ slicer start S01 --render
 ```
 
 `start` records a claim on the item: who, and the time. `slicer list` names that owner
-in the CLAIM column; an in-progress item with no claim is marked `*`. Work started or
-claimed in a sibling worktree appears as `wt:NAME` (or `wt:NAME+N` for more worktrees)
-when there is no local claim or started state. Other rows are `-`. `--json` carries
+in the CLAIM column; an in-progress item with no claim is marked `*`. A sibling worktree
+shows as `wt:NAME` (or `wt:NAME+N` for more worktrees) when it has the item claimed or
+in work, or in review or done while this checkout's copy has a different status and is
+not done. The same status on both sides, and a sibling that is still open, do not mark
+the row. Other rows are `-`. `--json` carries
 `claim` as `{"owner", "at"}` or null and `in_work_elsewhere` as an array of
-`{"worktree", "owner"}` objects, even when a local claim takes precedence in the text
-table. `slicer next` and `slicer status` skip an item a sibling worktree has in work and
-report it (`skipped S03 (in work in wt:NAME)`, or `in_work_elsewhere` in JSON), unless
-this checkout has it started or claimed too. This reads local Git worktrees only; it
-cannot see work on another machine, and the rendered roadmap ignores it.
+`{"worktree", "owner", "status"}` objects (`status` is the sibling's status key), even
+when a local claim takes precedence in the text table. `slicer next` and `slicer status`
+skip an item reported that way (`skipped S03 (in work in wt:NAME)`, or
+`in_work_elsewhere` in JSON), unless this checkout has it started or claimed too. This
+reads local Git worktrees only; it cannot see work on another machine, and the rendered
+roadmap ignores it.
 The owner is `--owner NAME` on
 the command, otherwise the `SLICER_CLAIM_OWNER` environment variable, otherwise
 `claim_owner` in config, otherwise the git user name, otherwise the worktree name, so
