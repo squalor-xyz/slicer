@@ -805,3 +805,15 @@
 {"when": "2026-10-04T18:25:43Z", "item": "s174", "action": "add", "from": "", "to": "open", "note": "Keep the slice path out of next --show text"}
 {"when": "2026-10-04T18:34:42Z", "item": "s167", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-04T18:49:18Z", "item": "s167", "action": "status", "from": "started", "to": "done", "note": "Bare slicer ai and slicer ai --json print the same text and JSON as slicer ai instructions, including when --json comes before the subcommand. An unknown subcommand is still usage. slicer ai skill is unchanged.", "by": "Jon Robbins"}
+{"when": "2026-10-04T18:59:15Z", "item": "s175", "action": "add", "from": "", "to": "open", "note": "Hint to commit slicer state after a handoff in a worktree"}
+{"when": "2026-10-04T18:59:15Z", "item": "s176", "action": "add", "from": "", "to": "open", "note": "Let the skill point at only the instructions it does not already carry"}
+{"when": "2026-10-04T18:59:15Z", "item": "s177", "action": "add", "from": "", "to": "open", "note": "Check tracking state as part of done and handoff"}
+{"when": "2026-10-04T18:59:15Z", "item": "s178", "action": "add", "from": "", "to": "open", "note": "Print lean JSON without indentation"}
+{"when": "2026-10-04T18:59:15Z", "item": "s179", "action": "add", "from": "", "to": "open", "note": "Steer agent reads to lean output and slim lean find rows"}
+{"when": "2026-10-04T18:59:15Z", "item": "s180", "action": "add", "from": "", "to": "open", "note": "Print one command's JSON contract on demand"}
+{"when": "2026-10-04T18:59:15Z", "item": "s181", "action": "add", "from": "", "to": "open", "note": "Resolve the trace root so the affected-map test passes under a symlinked TMPDIR"}
+{"when": "2026-10-04T18:59:15Z", "item": "s182", "action": "add", "from": "", "to": "open", "note": "Tighten AGENTS.md for agent sessions"}
+{"when": "2026-10-04T18:59:15Z", "item": "s183", "action": "add", "from": "", "to": "open", "note": "Let a slice quote the exact text that names a flag it adds"}
+{"when": "2026-10-04T18:59:15Z", "item": "s184", "action": "add", "from": "", "to": "open", "note": "Show review and unmerged done work from a sibling worktree"}
+{"when": "2026-10-04T18:59:15Z", "item": "s175", "action": "set", "from": "", "to": "", "note": "short_title Hint to commit slicer state after a handoff in a worktree→Hint to commit worktree handoff state"}
+{"when": "2026-10-04T18:59:15Z", "item": "s184", "action": "set", "from": "", "to": "", "note": "short_title Show review and unmerged done work from a sibling worktree→Show sibling review and done work"}

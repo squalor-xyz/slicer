@@ -1,0 +1,41 @@
+{
+  "id": "s179",
+  "title": "Steer agent reads to lean output and slim lean find rows",
+  "lead": [
+    "The skill and instructions list the read commands as plain `--json`, and agents copy them as written. Change them to `--json --lean`. Also slim `find --json --lean` to what a duplicate check needs: id, title, status, whether it has a slice, and the match."
+  ],
+  "depends_note": null,
+  "findings_note": "efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** making `--lean` a default or adding a config key for it; changing full `find --json`; dropping fields from other commands' lean output; compact whitespace (s178).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`TRACKING` (`src/slicer/ai.py:61-91`) lists `slicer list --json`, `slicer status --json`, `slicer stats --json`, `slicer show ID --json`, `slicer next --ready --json`, `slicer find topic --json` and `slicer log --json`. Measured on this repo on 2026-10-04:\n\n- `list --json` is 5,364 bytes and `--lean` 3,416.\n- `status --json` is 1,586 bytes and `--lean` 1,307. The full form includes `next.path`, an absolute path to the slice JSON (`src/slicer/cli.py:1800`), which invites the file read the tracking rule forbids. `--lean` already drops it.\n- `find worktree --json` is 15,143 bytes for 20 hits, and `--lean` 9,792. Each row is a whole item (`src/slicer/cli.py:1158`), when a search only needs to identify the hit. `show ID` gives the rest."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: `TRACKING`, the read list.\n- `src/slicer/cli.py`: `cmd_find` (`:1136-1164`).\n- `skills/slicer/SKILL.md` and `.claude/skills/slicer/SKILL.md`: regenerate.\n- `docs/agents.md`: the `find` row (`:184`) and the lean paragraph (`:152-157`).\n- `docs/commands.md`: the `find` row.\n- `tests/test_find.py`, `tests/test_ai.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_FindLean_RowIsIdTitleStatusSliceAndMatch` in `tests/test_find.py`: with an item that matches by title and has no slice, `find <word> --json --lean` gives rows whose keys are exactly `{\"id\", \"title\", \"status\", \"has_slice\", \"match\"}`, with `has_slice: false` kept. With a promoted item, `has_slice` is `true`.\n2. `test_FindFull_KeepsTheWholeItem`: `find <word> --json` rows still contain `fields`, `claim` and `depends_on`.\n3. `test_FindText_IsUnchanged`: text output for the same query is byte-identical before and after. Assert it against the current format: the row line, then `      matched in {field}: {snippet}`.\n4. In `tests/test_ai.py`, `test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill` keeps passing, because `assertIn(\"slicer list --json\", ...)` still matches `slicer list --json --lean`. Add assertions that each read command in `TRACKING` (goals, list, status, stats, show, next --ready, find, prose list, prose show, log) is followed by `--json --lean`, and that `slicer check --json` is not."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. In `TRACKING`, append ` --lean` to every read command: goals, list, status, stats, show, next --ready, find, prose list, prose show, and log. Leave `slicer check --json` and `slicer handoff ID --render --json` as they are. Add this sentence after the list:\n\n   ```\n   Use --lean on reads; it drops empty fields and paths. Drop it only when you need the full shape.\n   ```\n2. In `cmd_find`, when `args.json and args.lean`, build each row as `{\"id\": i.id, \"title\": i.title, \"status\": i.status, \"has_slice\": i.has_slice, \"match\": {\"field\": f, \"snippet\": s}}`. Otherwise keep the current row. `_emit` still applies `lean()`, which removes nothing more from this shape, since `has_slice: false` is kept by design. `Item.has_slice` is at `src/slicer/model.py:145`.\n3. In docs/agents.md, change the `find` row's payload cell to:\n\n   ```\n   array of items with `match: {field, snippet}`; with `--lean`, each row is only `{id, title, status, has_slice, match}`\n   ```\n\n   Then add `find` to the lean paragraph's list of exceptions.\n4. Regenerate both SKILL.md files. CHANGELOG: Unreleased → Changed."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`. Confirm that `PYTHONPATH=src python3 -m slicer find worktree --json --lean | wc -c` is under 4,000."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the regenerated skill files, the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

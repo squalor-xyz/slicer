@@ -1,0 +1,41 @@
+{
+  "id": "s176",
+  "title": "Let the skill point at only the instructions it does not already carry",
+  "lead": [
+    "The skill ends with \"The rest of the guide is `slicer ai instructions`.\" An agent that follows that line reads 7.8 KB, and 3.6 KB of it is the skill again. Add `slicer ai instructions --rest`, which prints only the parts the skill leaves out, and point the skill at it."
+  ],
+  "depends_note": null,
+  "findings_note": "efficiency review 2026-10-04: 46% of ai instructions repeats the skill the agent just loaded",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the wording of any block; changing what `ai instructions` prints without `--rest`; topic flags such as `--plan` or `--review`; the bare `slicer ai` default (done in s167); installing the skill (s170); trimming AGENTS.md (s182).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Measured on this repo on 2026-10-04. `ai.skill_text()` is 3,865 bytes and `ai.instructions_text()` is 7,771 bytes. The five blocks `TRACKING_RULE`, `LOOP`, `SPEC_GAP`, `EXITS` and `TRACKING` (`src/slicer/ai.py:8-91`) are 3,645 bytes, and every one of them appears in both texts. `skill_text` (`src/slicer/ai.py:101-120`) is made of nothing else, plus frontmatter and the closing pointer line. An agent that loads the skill and then follows its last line therefore pays for about 900 tokens twice, every session.\n\n`--rest` gives that agent about 4.1 KB of new material instead of 7.8 KB. The full `ai instructions` stays the entry point for an agent that has no skill."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: split `INSTRUCTIONS` into named parts, add `rest_text()`, change the skill's last line.\n- `src/slicer/cli.py`: `cmd_ai_instructions` (`:298-301`), the `instructions` subparser (`:1914-1924`) and, since s167, the parent `ai` parser (`:1908-1913`) gain `--rest`.\n- `skills/slicer/SKILL.md` and `.claude/skills/slicer/SKILL.md`: regenerate both with `PYTHONPATH=src python3 -m slicer ai skill > skills/slicer/SKILL.md`, then copy the file to the second path. They must stay byte-identical to `ai.skill_text()`, which `test_Skill_MatchesTheInstructionsLoop_AndTheCommittedFile` asserts.\n- `docs/commands.md`: the `ai instructions` row (`:16`) names `--rest`. `tests/test_docs_coverage.py` fails until it does.\n- `docs/agents.md`: one sentence where it describes the skill and the instructions.\n- `tests/test_ai.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Add these to `tests/test_ai.py`, named in the house style (`test_<Subject>_<Condition>_<Expectation>`):\n\n1. `test_Instructions_Rest_LeavesOutEverySkillBlock`: `ai.rest_text()` contains none of `ai.TRACKING_RULE`, `ai.TRACKING`, `ai.LOOP`, `ai.SPEC_GAP`, `ai.EXITS`, `ai.HANDOFF_STEP`. It does contain the headings `## Read the project first`, `## Plan and record agreed work`, `## Hand off for review` and `## State and command results`, plus this sentence, which opens the implement-only part:\n\n   ```\n   Do not combine `--ready` and `--show`.\n   ```\n2. `test_Instructions_Rest_IsSmallerThanHalfOfTheFullText`: `len(ai.rest_text()) < len(ai.INSTRUCTIONS) * 0.6`.\n3. `test_Instructions_Full_IsUnchangedByTheSplit`: build the expected full text the old way inside the test, by concatenating the parts in the order given under Implement, and assert it equals `ai.INSTRUCTIONS`. Also assert that `ai.instructions_text(\"handoff\")` still contains `ai.loop_text(\"handoff\")`.\n4. `test_Instructions_RestFlag_TextAndJson`: run `repo.run(\"ai\", \"instructions\", \"--rest\")` inside `support.TempRepo()` with `support.isolated_discovery`, copying `test_Instructions_OutsideProject_TextAndJsonHaveIdenticalContent`. Exit 0, stdout equals `ai.rest_text()`, and `--json` gives `{\"instructions\": <same text>}`. Bare `ai --rest` and `ai --rest instructions` give the same output.\n5. `test_Skill_LastLine_PointsAtRest`: the last non-empty line of `ai.skill_text()` is exactly the new pointer line given in Implement step 5. The existing `test_Instructions_CommandExamples_AreAcceptedByTheParser` already proves that every backticked `slicer ...` command in `ai.INSTRUCTIONS` parses. Extend it to scan `ai.skill_text()` too, so the new flag in the pointer has to parse."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. In `src/slicer/ai.py`, cut the `INSTRUCTIONS` literal (`:123-203`) into module constants at its headings. Keep every byte. Name the constants after their headings:\n   - `INTRO`: from `# Getting started with slicer` through the `## Read the project first` paragraph.\n   - `PLAN`: the `## Plan and record agreed work` section, up to where `TRACKING` is inserted today.\n   - `IMPLEMENT_MORE`: the text after `SPEC_GAP` inside `## Implement one slice`. It runs from the line that starts `Do not combine` through the line that ends `for the rest of its options.`, and its trailing blank line.\n   - `HANDOFF_SECTION`: `## Hand off for review` with its paragraph.\n   - `STATE`: `## State and command results` with its paragraph.\n2. Rebuild the full text as `INTRO + PLAN + TRACKING + \"## Implement one slice\\n\\n\" + LOOP + SPEC_GAP + IMPLEMENT_MORE + HANDOFF_SECTION + STATE + EXITS`. Put `TRACKING_RULE` in front of it, as `:213` does today. Check that the result is byte-identical: save `PYTHONPATH=src python3 -m slicer ai instructions` output before the change, then diff it with the output after. The diff must be empty.\n3. Add `REST_LEAD`, one line of plain text:\n\n   ```\n   This is the part of the guide the slicer skill does not carry. The skill has the tracking rule, the implement loop, and the exit codes.\n   ```\n4. Add `def rest_text() -> str:` returning `REST_LEAD + \"\\n\\n\" + INTRO + PLAN + \"## Implement one slice\\n\\n\" + IMPLEMENT_MORE + HANDOFF_SECTION + STATE`. End the string with exactly one newline (`.rstrip(\"\\n\") + \"\\n\"`), so the CLI output, which `rstrip`s and prints, equals it. It takes no `finish` argument, because nothing in it depends on `implement_finish`. Give it a one-line docstring that says why it exists.\n5. Replace the last line of `skill_text` (currently: The rest of the guide is ... ai instructions) with exactly:\n\n   In the literal text below, `[[` and `]]` stand for a backtick. Write real backticks in the source; slicer check would reject a backticked command that uses a flag this slice adds.\n\n   ```\n   For planning, filing, claims, and review, run [[slicer ai instructions --rest]]; it leaves out what this skill already says.\n   ```\n6. In `src/slicer/cli.py`, add `--rest` (`action=\"store_true\"`, help `print only what the slicer skill does not already carry`) to both the parent `ai` parser and the `instructions` subparser. Since s167, a bare `slicer ai` runs `cmd_ai_instructions`, so the parent needs the flag too. Follow `_json_flags(..., suppress=True)`: the parent copy defaults to `False`, and the subparser copy defaults to `argparse.SUPPRESS`, so a flag typed before the subcommand isn't reset. In `cmd_ai_instructions`, when `args.rest` is set, use `ai.rest_text()` and skip `_ai_finish`, which avoids a project read the output does not need. Otherwise behaviour is unchanged.\n7. Regenerate both SKILL.md files as described under Files. Update the docs rows and add a CHANGELOG line under Unreleased → Added."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`. Confirm by hand that `PYTHONPATH=src python3 -m slicer ai instructions --rest | wc -c` is under 4,500, and that `diff <(PYTHONPATH=src python3 -m slicer ai skill) skills/slicer/SKILL.md` is empty."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the regenerated skill files, the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

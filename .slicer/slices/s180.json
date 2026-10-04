@@ -1,0 +1,41 @@
+{
+  "id": "s180",
+  "title": "Print one command's JSON contract on demand",
+  "lead": [
+    "An agent that needs the JSON shape of one command reads all of `docs/agents.md`, which is 36 KB. It also isn't installed with the package, so it is missing outside a clone. Move the \"Everything takes `--json`\" command table into the package and add `slicer ai reference [COMMAND ...]`, which prints only the rows asked for. A test keeps the docs table identical to the package copy."
+  ],
+  "depends_note": null,
+  "findings_note": "efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the error-code and exit-code tables (`docs/agents.md:227-259`); generating docs/agents.md from code; rewording any row; changing `--help`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The payload table (`docs/agents.md:163-194`) has 30 rows totalling about 10 KB. The longest rows are `next` (2.3 KB), `list` (1.9 KB) and the shared mutation row (1.2 KB). The instructions avoid linking the long reference on purpose: `test_Instructions_LeaveRenderUnread_AndDoNotLinkTheLongReference` asserts that `docs/agents.md` does not appear. So an agent that needs a contract has to find the file itself, and it reads the whole thing. In a project that installed slicer from PyPI, the file isn't there at all. `slicer ai reference next` would cost about 600 tokens instead of about 9k."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/reference.py` (new): the table rows as data.\n- `src/slicer/ai.py`: no change, unless you add a pointer line (see Implement step 6).\n- `src/slicer/cli.py`: a `reference` subparser under `ai` (next to `:1908-1935`) and `cmd_ai_reference`.\n- `docs/commands.md`: an `ai reference` row, which `test_docs_coverage` requires.\n- `docs/agents.md`: one sentence above the table saying `slicer ai reference COMMAND` prints a row.\n- `tests/test_reference.py` (new)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Add these to the new `tests/test_reference.py`:\n\n1. `test_Reference_MatchesTheDocsTable`: read `docs/agents.md` and take the lines between `| Command | Payload |` plus its `|---|---|` separator and the first blank line. Assert they equal `[f\"| {key} | {payload} |\" for key, payload in reference.COMMANDS]`, in order. This is what keeps the two copies in step.\n2. `test_Reference_OneCommand_PrintsItsRow`: `ai reference next` prints the payload for the row whose key is `` `next` ``. It does not print the `next-id` row.\n3. `test_Reference_SharedRow_MatchesEachNamedCommand`: `ai reference handoff` and `ai reference done` both print the shared mutation row (key `` `add`, `set`, `start`, `done`, ... ``).\n4. `test_Reference_MultiWordCommand`: `ai reference prose list` prints the `prose list` row, and `ai reference show` prints the `show ID` row.\n5. `test_Reference_NoArgs_ListsCommandNames`: prints every command name, one per line, in table order.\n6. `test_Reference_Unknown_IsUsageWithKnownNames`: `ai reference nope --json` exits 2 with error code `usage`. The message names the known commands.\n7. `test_Reference_Json`: `ai reference next --json` gives `{\"reference\": [{\"commands\": [\"next\"], \"payload\": \"...\"}]}`.\n8. `test_Reference_NeedsNoProject`: it works inside `support.isolated_discovery` with no `.slicer/`, does not warn on stderr, and writes nothing."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Create `src/slicer/reference.py`. Use `from __future__ import annotations`, a module docstring that says why it exists (\"so an agent can read one command's JSON contract without the whole agent reference, including from a PyPI install\"), and `COMMANDS: tuple[tuple[str, str], ...]`. Each entry is `(key_cell, payload_cell)`, copied verbatim from `docs/agents.md:165-194`. Write a one-off script in your scratch space to extract the rows; do not commit it. Keep two-space indent.\n2. Add `def names(key: str) -> list[str]`. It returns the command names a key cell covers: take each backtick span with `re.findall(r\"`([^`]+)`\", key)`, then drop trailing all-caps placeholder words such as `ID` (`show ID` → `show`, `prose list` → `prose list`).\n3. Add `def lookup(words: list[str]) -> list[tuple[list[str], str]]`. Join `words` with a space and return each row whose `names()` contains that exact string. Raise `StateError(..., code=\"usage\")` naming the known names when nothing matches.\n4. In `cli.py`, add `aisub.add_parser(\"reference\", ...)` with `nargs=\"*\"` positional `command`, `_json_flags(inner, suppress=True)` (the pattern s167 set for `ai` subcommands, so a parent-level `--json` is not reset), and `set_defaults(func=cmd_ai_reference)`. Like the other `ai` commands it needs no project, so do not call `_state`.\n5. `cmd_ai_reference`: with no words, the text is the names one per line and the JSON is `{\"commands\": [...]}`. With words, the text is each matching payload cell, and the JSON is as in test 7.\n6. Optional, only if `test_Instructions_LeaveRenderUnread_AndDoNotLinkTheLongReference` still passes: add one sentence to `IMPLEMENT_MORE` (or the matching part of `INSTRUCTIONS`, if s176 has not landed) saying `slicer ai reference COMMAND prints that command's JSON contract.`\n7. Add the docs rows. CHANGELOG: Unreleased → Added."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`. Confirm that `PYTHONPATH=src python3 -m slicer ai reference next | wc -c` is under 2,500."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

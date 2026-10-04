@@ -1,0 +1,41 @@
+{
+  "id": "s175",
+  "title": "Hint to commit slicer state after a handoff in a worktree",
+  "lead": [
+    "After `handoff` or `done` in a linked worktree, the new status exists only as uncommitted changes to `.slicer/` on that branch. If the worktree goes away before a commit, the review or done marker goes with it. Say so once, on stderr, when it happens."
+  ],
+  "depends_note": null,
+  "findings_note": "bug report: handoff state exists only as uncommitted .slicer changes in the worktree",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** committing, staging or otherwise writing git state (the `vcs.py` allowlist stays read-only); refusing the command; a warning on the main checkout or on any command other than `handoff` and `done`; detecting worktree removal; showing sibling state on main (s184).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "From the same bug report as s184: \"The handoff state exists only as uncommitted changes in the worktree. Removing the worktree or branch before committing loses both the work and the review marker, and main gives no sign that anything is pending.\" The repro showed `M .slicer/index.json` and `M .slicer/log.jsonl` in the worktree after the handoff.\n\nThis is low priority. By default, `git worktree remove` already refuses a worktree with modified tracked files, so the loss needs `--force`, a plain `rm -rf`, or a branch deleted after a reset. The hint is for an agent that hands off and then cleans up in the same session.\n\n`start` already writes stderr-only warnings through `_write_err` (`src/slicer/cli.py:1449-1452`). `vcs.py` allows `rev-parse` and `status` (`src/slicer/vcs.py:17-19`). `rev-parse --git-dir` against `--git-common-dir` tells a linked worktree from the main checkout without new git verbs."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py` (whether this checkout is a linked worktree; whether `.slicer/` has uncommitted changes, read-only)\n- `src/slicer/cli.py` (`cmd_handoff`, `cmd_done`)\n- `docs/commands.md` and `docs/agents.md` (the stderr hint)\n- `tests/test_worktree_claims.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Run `handoff S01` in a linked worktree. Afterwards `.slicer/` has uncommitted changes, and stderr carries one line naming the branch. The line says to commit the `.slicer/` change with the work before removing the worktree. The exit code and stdout, text and `--json`, are unchanged.\n2. `done S01` in a linked worktree gives the same hint.\n3. The same commands on the main checkout, outside git, or after the `.slicer/` change is already committed print no hint.\n4. A failed `handoff` (wrong status) prints its error and no hint."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a read-only `vcs` helper for each check. One says whether the root is in a linked worktree, which is the case when the git dir differs from the common dir. The other says whether `git status --porcelain -- .slicer` is non-empty. Both are false when the root is not a repo or a query fails. After a successful `handoff` or `done`, when both are true, write one stderr line through `_write_err`. Name the branch from `_current_branch`. Do not add a git verb or an exact form beyond what the allowlist already permits."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

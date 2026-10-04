@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 175,
+  "next_id": 185,
   "preamble": "",
   "passes": [
     {
@@ -4586,6 +4586,266 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s175",
+      "title": "Hint to commit slicer state after a handoff in a worktree",
+      "short_title": "Hint to commit worktree handoff state",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "bug report: handoff state exists only as uncommitted .slicer changes in the worktree",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s176",
+      "title": "Let the skill point at only the instructions it does not already carry",
+      "short_title": "Let the skill point at only the instructions it does not already carry",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: 46% of ai instructions repeats the skill the agent just loaded",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s177",
+      "title": "Check tracking state as part of done and handoff",
+      "short_title": "Check tracking state as part of done and handoff",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: the implement loop runs slicer check twice around done, an extra tool call or two per slice",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s178",
+      "title": "Print lean JSON without indentation",
+      "short_title": "Print lean JSON without indentation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22%",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s179",
+      "title": "Steer agent reads to lean output and slim lean find rows",
+      "short_title": "Steer agent reads to lean output and slim lean find rows",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s180",
+      "title": "Print one command's JSON contract on demand",
+      "short_title": "Print one command's JSON contract on demand",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s181",
+      "title": "Resolve the trace root so the affected-map test passes under a symlinked TMPDIR",
+      "short_title": "Resolve the trace root so the affected-map test passes under a symlinked TMPDIR",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: test_affected fails on macOS with the default TMPDIR because /var is a symlink to /private/var",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 3,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s182",
+      "title": "Tighten AGENTS.md for agent sessions",
+      "short_title": "Tighten AGENTS.md for agent sessions",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s183",
+      "title": "Let a slice quote the exact text that names a flag it adds",
+      "short_title": "Let a slice quote the exact text that names a flag it adds",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfood 2026-10-04: filing s176 and s177 failed check because their target text names --rest and --check, the flags those slices add",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s184",
+      "title": "Show review and unmerged done work from a sibling worktree",
+      "short_title": "Show sibling review and done work",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "bug report: a slice handed off in a worktree shows as open and unclaimed on main, and next offers it",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
         "attempts": 0
       }
     }

@@ -1,0 +1,41 @@
+{
+  "id": "s177",
+  "title": "Check tracking state as part of done and handoff",
+  "lead": [
+    "The loop runs `slicer check --json` in step 3, then `done --render` and `check --json` again in step 4. Add `--check` to `done` and `handoff`. After the change lands and renders, it runs the same check, stays silent when the check passes, and exits 1 with the findings on stderr when it does not. The loop then makes one call where it made three."
+  ],
+  "depends_note": null,
+  "findings_note": "efficiency review 2026-10-04: the implement loop runs slicer check twice around done, an extra tool call or two per slice",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `--check` on any other mutating command; a check that runs before the change lands or rolls it back; changing what `check` verifies; changing the stdout JSON of `done` or `handoff`; running the unit suite.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`LOOP` step 3 and step 4 (`src/slicer/ai.py:20-24`) and AGENTS.md (`:122-124`) all bracket `done` with `check`. Each call is another model turn: a tool call, its output, and re-reading the context. `done --render` already renders first and refuses on a render failure (`ops.done_and_render`, `src/slicer/ops.py:555-562`). After it, `check` can still find two things: stale sync targets, since render does not run `sync`, and offline verify problems (`check.run`, `src/slicer/check.py:39-57`). The first `check` in step 3 is checking tracking state that `done` is about to change anyway.\n\nThe project already has a convention for \"the change landed but a follow-up failed\": `_mutating` prints the handler's own result, writes the failure to stderr, and exits DRIFT (1) (`src/slicer/cli.py:135-144`). `--check` reuses it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`:\n  - `cmd_check` (`:1719-1741`): extract the report-building part into a helper.\n  - `cmd_done` (`:1485-1498`): add the post-land check.\n  - `_mutating` (`:125-150`) and `_mutate_strict` (`:153-182`): run the check for `handoff` after the render.\n  - The `done` and `handoff` subparsers (`:2093` and `:2107`): add the flag.\n- `src/slicer/ai.py`: `LOOP` steps 3 and 4, and `HANDOFF_STEP`.\n- `skills/slicer/SKILL.md` and `.claude/skills/slicer/SKILL.md`: regenerate.\n- `AGENTS.md` (`:116-127`): the pickup block.\n- `docs/commands.md` (the `done` and `handoff` rows, which `test_docs_coverage` requires), `docs/agents.md` (the mutation row at `:175` and the Implement prompt at `:85-107`).\n- `tests/test_cli.py` (near the `done --render --json` tests at `:1190-1215`), `tests/test_handoff.py`, `tests/test_ai.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Done_CheckFlag_CleanProject_ExitsZeroAndPrintsOnlyTheItem`: in a `support.TempRepo` with S01 started, run `done S01 --render --check --json`. It exits 0. Stdout parses to the same object that `done S01 --render --json` returns. Stderr is empty.\n2. `test_Done_CheckFlag_StaleSync_ExitsOneWithFindingsOnStderr`: configure a sync target, copying the shape from `tests/test_sync.py`, and make it stale. `done S01 --render --check --json` exits 1. Stdout is still the single item object. S01 is done on disk. Stderr contains `stale sync:` and this final line:\n\n   ```\n   slicer: done landed, but check failed; run `slicer check` for the report\n   ```\n3. `test_Done_CheckWithoutRender_IsUsage`: `done S01 --check --json` exits 2 with error code `usage` and changes nothing.\n4. `test_Handoff_CheckFlag_CleanProject_ExitsZero` and `test_Handoff_CheckFlag_WithStrict_RunsAfterCommit`: the same as 1, for `handoff S01 --render --check --json` and for `handoff S01 --render --strict --check --json`.\n5. `test_Done_CheckFlag_TextMode_PrintsRenderedLineThenNothingElse`: without `--json`, a clean run prints the existing `S01 -> done` and `rendered N file(s)` lines and nothing more.\n6. Update `test_Skill_MatchesTheInstructionsLoop_AndTheCommittedFile` and `test_AgentsGuide_UsesTheBoundedPickup_NotNextThenShow` (`tests/test_ai.py`) to the new command strings in Implement steps 7 and 8. The handoff-variant test `test_Skill_HandoffProject_DropsTheDoneCommand_AndKeepsTheReviewStep` must still pass. Its assertion that the handoff step does not contain `done` still holds, because the handoff step text names only handoff."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Extract `_check_report(state) -> tuple[CheckReport, list[str]]` from `cmd_check`. It returns the report, with `_slice_flag_problems` folded in, and the same text lines `cmd_check` prints, except the final passed / failed line. `cmd_check` calls it, so its output stays byte-identical.\n2. Add `_post_check(args, verb: str) -> int`. It loads fresh state with `store.load(Path(args.root) if args.root else None)`, not `_state(args)`, which may be the cached staged instance. It calls `_check_report` and returns `OK` when `report.ok`. Otherwise it writes each line to stderr, then the final line from Failing test 2 with `{verb}` in place of `done`, and returns `DRIFT`. Warnings alone do not fail, which matches `cmd_check`.\n3. Add a `_check_flag(sp)` helper next to `_strict_flag` that adds `--check` with help `with --render, run slicer check after the change lands; exit 1 if it fails`. Apply it to `done` and `handoff` only.\n4. `--check` without `--render` raises `StateError(\"--check has no effect without --render\", code=\"usage\")`. That is the same pattern as `--strict` at `src/slicer/cli.py:127-128`. Validate it before any mutation: in `cmd_done` at the top, and in `_mutating.wrapped` before `fn(args)`.\n5. `cmd_done`: after `_emit_items` and the rendered-files line, return `_post_check(args, \"done\")` when `args.check` is set.\n6. `_mutating.wrapped`: after a successful render-after, or after `_mutate_strict` returns OK, return `_post_check(args, args.command)` when `getattr(args, \"check\", False)` is set. The check runs only once the change has landed, so a refused handoff never checks.\n7. `src/slicer/ai.py`, `LOOP`. Replace step 3 and step 4 with exactly this text (keep the three-space continuation indent the block uses):\n\n   In the literal text below, `[[` and `]]` stand for a backtick. Write real backticks in the source; slicer check would reject a backticked command that uses a flag this slice adds.\n\n   ```\n   3. Review the changes. Fix problems before marking work complete. The tracking\n      check in step 4 does not replace code tests.\n   4. Run [[slicer done ID --note \"Describe the verified outcome\" --render --check --json]].\n      Exit 1 means it landed but the tracking check failed: fix what stderr names,\n      then run `slicer check --json`. If `implement_finish` is `handoff`, run\n      [[slicer handoff ID --render --check --json]] instead and do not run done.\n   ```\n\n   Replace `HANDOFF_STEP` with:\n\n   ```\n   4. Run [[slicer handoff ID --render --check --json]]. Exit 1 means it landed but\n      the tracking check failed: fix what stderr names, then run `slicer check --json`.\n   ```\n\n   `loop_text` splits on the string `4. `, so the step must still start with that string.\n8. AGENTS.md pickup block: replace lines 122-124 (`check`, `done ... --render`, `check`) with one line:\n\n   ```\n   PYTHONPATH=src python3 -m slicer done <ID> --note \"Describe the verified outcome\" --render --check\n   ```\n9. Regenerate both SKILL.md files and update the docs rows. CHANGELOG: Unreleased → Added."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`. Dogfood it: finish this slice itself with `done <ID> --render --check` and confirm exit 0."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the regenerated skill files, the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

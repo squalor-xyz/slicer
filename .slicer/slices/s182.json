@@ -1,0 +1,41 @@
+{
+  "id": "s182",
+  "title": "Tighten AGENTS.md for agent sessions",
+  "lead": [
+    "Every agent session in this repo reads AGENTS.md, because CLAUDE.md points to it. Its roadmap section restates rules the skill and `ai instructions` already carry, and it says nothing about how long the suite takes. Cut the restatements to pointers and add a short note on running tests within tool timeouts."
+  ],
+  "depends_note": null,
+  "findings_note": "efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing `ai.py`, the skill, or docs/agents.md; changing the House style or \"What a change must not break\" sections; changing CI.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "- AGENTS.md is 9,306 bytes. Its \"Working on the roadmap\" section (`AGENTS.md:90-200`) is 4,857 bytes.\n- Lines 156-162 restate `ai.TRACKING`. Lines 164-177 restate the `--render` / `--strict` behaviour that `slicer --help` and the instructions cover.\n- The test run is not described anywhere. Measured on 2026-10-04: `python3 -m unittest discover -s tests -t tests` took 53 s wall time alone and 168 s while other work ran. Running it twice in one shell call hit the 120 s default tool timeout in Claude Code. An agent that doesn't know this retries or waits, and pays for it.\n- `tests/affected.py --run` exists for exactly this case (`AGENTS.md:118-119`), but nothing says to prefer it while iterating."
+    },
+    {
+      "heading": "Files",
+      "body": "- `AGENTS.md`\n- `tests/test_ai.py`: keep the AGENTS assertions in `test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill` (`:93-94`) and `test_AgentsGuide_UsesTheBoundedPickup_NotNextThenShow` (`:328-342`) passing."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_AgentsGuide_NamesSuiteDurationAndBackgroundRun` in `tests/test_ai.py`: the `## Commands` section of AGENTS.md mentions `tests/affected.py --run` and the word `background`, and gives a duration for the full suite.\n2. `test_AgentsGuide_RoadmapSection_IsShorter`: the `## Working on the roadmap` section, up to `## House style`, is under 3,800 bytes.\n3. The two existing AGENTS assertions above still pass. Keep the sentence `Read and change tracking state through the slicer CLI.`, the pickup block's `next --ready` command, `slicer start <ID> --render --strict`, the `edit S07 ... --render --strict` example, and the `done <ID>` line. If s177 has landed, the `done <ID>` line is its `--check` form; adjust the test string to match."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. In `## Commands`, after the TMPDIR block, add a short paragraph: the full suite takes about one minute alone and longer under load, so in an agent session run it in the background or with a timeout over 180 s. While iterating, run `python3 tests/affected.py --run` first, and run the full discover once before done.\n2. In `## Working on the roadmap`:\n   - Replace the paragraph at `:156-162` with this one line:\n\n     ```\n     **Read and change tracking state through the slicer CLI.** The full rule is in `slicer ai instructions`; inspect tracking internals only when the task asks.\n     ```\n   - Delete the never-hand-edit code block and the `--render` paragraph (`:164-177`). Keep the bold never-hand-edit sentence on its own line.\n   - Keep the promote and import examples, the pickup block, and `### Landing a slice`, which are repo-specific.\n3. Re-read the result top to bottom for anything that now refers to a deleted paragraph."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`. `wc -c AGENTS.md` should drop by at least 1,000 bytes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch."
+    }
+  ],
+  "notes": []
+}
