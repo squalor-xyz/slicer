@@ -1,0 +1,41 @@
+{
+  "id": "s169",
+  "title": "Put the tracking rule first and let a project choose how work finishes",
+  "lead": [
+    "The skill leads with a loop whose last step is `slicer done`. The rule against opening tracking files, and the rule that done waits for review and merge, come later. A review project cannot install that skill."
+  ],
+  "depends_note": null,
+  "findings_note": "another project: the tracking rule is buried, and the skill's last step is done, which their AGENTS.md forbids",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** switching the loop because `review_status` is set; installing the skill file; removing the full tracking section.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`review_status` defaults to `review`, and this repo's own implementers run `done`. Treating \"has a review status\" as \"finish with handoff\" would change this repo's loop. The finish has to be a config choice. The default text must still say the choice exists, and a handoff project's generated skill must not contain the done command in its last step.\n\n`ai instructions` and `ai skill` are tested to never discover or load a project. Adapting the text means those tests change. Onboarding still has to work with no project and with a corrupt config, without locking or writing."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` (optional `implement_finish`)\n- `src/slicer/ai.py` and `src/slicer/cli.py` (load when a project is readable)\n- `skills/slicer/SKILL.md` regenerated from the generic `skill_text()`\n- `docs/configuration.md`, `docs/agents.md`, `docs/commands.md`\n- `tests/test_ai.py`, `tests/test_config.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A missing `implement_finish` means `done`. No schema bump. `handoff` is the only other value. `handoff` with an empty `review_status` is a config error.\n2. The generic instructions and the generic skill start with one line: do not open, search, parse, or edit tracking files; use the slicer commands. The full tracking section remains.\n3. Generic step 4 is still the done command, and it says that `implement_finish` of `handoff` means the implementer runs handoff and does not run done.\n4. When a project loads with `handoff`, the generated loop's step 4 is only handoff. That skill text does not contain the done command. Done stays described, outside that step, as what happens after review and merge.\n5. With no project, or with a config or index that cannot be read, the command prints the generic text, warns on stderr, and exits 0. It does not lock or write.\n6. The \"Implement one slice\" section stays under 350 words. The committed skill file equals the generic `skill_text()`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `implement_finish` with the validation above. Put the one-line tracking rule before the loop in both outputs. Keep the generic done step and add the handoff alternative there. When a readable project sets `handoff`, build the loop so step 4 is handoff only. Fall back to the generic text on any read failure. Replace the tests that forbid discovery. Do not change the sections command from the slice this depends on."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

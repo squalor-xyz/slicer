@@ -1,0 +1,41 @@
+{
+  "id": "s171",
+  "title": "Accept a dotted pass key in prose addresses",
+  "lead": [
+    "`parse_ref` splits on every dot and requires three parts. `refs()` emits `pass.v1.1.heading` for the pass key `v1.1`, and `slicer prose list` exits 2 with an unknown-block error. The skill tells agents to run that command."
+  ],
+  "depends_note": null,
+  "findings_note": "slicer prose list exits 2 on this repo because pass v1.1 becomes pass.v1.1.heading",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing pass display order; renaming existing pass keys; accepting a field other than heading, intro, or outro.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The address form is `pass.<key>.<field>`, and the key is allowed to contain dots. Taking the last segment as the field keeps `pass.5.intro` working and makes `pass.v1.1.heading` work. The list command on this repo is the regression check."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/prose.py` (`parse_ref`)\n- `tests/test_prose.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `pass.v1.1.heading` parses as pass key `v1.1` and field `heading`. `pass.5.intro` still parses as key `5` and field `intro`.\n2. An unknown last segment, or an empty key, is still an error and names the valid forms.\n3. `slicer prose list` on this repo exits 0 and includes `pass.v1.1.heading`. `prose show` and `prose edit` accept that reference."
+    },
+    {
+      "heading": "Implement",
+      "body": "Parse the field from the last segment and the pass key from everything between the `pass` prefix and that field. Leave the valid field names as they are."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

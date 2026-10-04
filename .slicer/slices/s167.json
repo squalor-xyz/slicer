@@ -1,0 +1,41 @@
+{
+  "id": "s167",
+  "title": "Default bare slicer ai to instructions",
+  "lead": [
+    "The parent help says \"onboarding instructions for coding agents\", but the subcommand is required, so a bare call exits 2 with a usage error."
+  ],
+  "depends_note": null,
+  "findings_note": "another project: bare slicer ai exits 2 even though its help offers onboarding instructions",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing what `instructions` or `skill` print; reading the project; installing the skill.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ai` registers subparsers with `required=True`. `slicer ai` and `slicer ai --json` never reach the instructions command. `test_Instructions_InvalidSyntax` currently expects that failure."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (the `ai` parser)\n- `tests/test_ai.py` (`test_Instructions_InvalidSyntax` and the help test)\n- `docs/commands.md` (the `ai` row)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `slicer ai` and `slicer ai --json` print the same text and JSON as `slicer ai instructions` with the same flags, and exit 0.\n2. `slicer ai skill` is unchanged.\n3. `slicer ai --help` still lists `instructions` and `skill` and exits 0.\n4. `slicer ai unknown` stays exit 2 with code `usage`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Make a missing `ai` subcommand select `instructions`. Do not give the parent parser a `--json` that means something else. An unknown subcommand still fails usage."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

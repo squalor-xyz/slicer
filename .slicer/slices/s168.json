@@ -1,0 +1,41 @@
+{
+  "id": "s168",
+  "title": "Name the project's sections and use them for readiness",
+  "lead": [
+    "Readiness ignores `config.sections` and always requires the headings Implement and Check. A project that renames those sections is told the guide's names are examples, then graded against the old names."
+  ],
+  "depends_note": null,
+  "findings_note": "another project: section names in the agent guide are only examples, and next hardcodes Implement and Check",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing which body counts as empty; a per-item override; making `show` list sections.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`_missing_spec` loops over the two literal headings. `config.sections` is already the project's list, and the package rule is that a heading belongs in config. The guide can keep Implement and Check as examples only if a command reports the real names and `next` uses the same list."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py` (optional `required_sections`)\n- `src/slicer/ops.py` (`_missing_spec`)\n- `src/slicer/cli.py` (a `sections` command)\n- `src/slicer/ai.py`, `skills/slicer/SKILL.md`, `docs/agents.md`, and `AGENTS.md` where they say the headings are examples\n- `docs/configuration.md`, `docs/commands.md`\n- `tests/test_config.py`, `tests/test_ai.py`, and the next-readiness tests\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. A missing `required_sections` key behaves as Implement and Check. No schema bump. Existing projects do not change readiness.\n2. A configured list replaces that pair. `next` reports those headings in `unspecified` when the body is empty, and does not require a heading that was removed from the list.\n3. An empty list means `next` does not skip a slice for an empty section.\n4. A required heading that is not in `sections` is a config error.\n5. The sections command prints every configured section, one per line, with the word `required` on the required rows. JSON is an object with `sections` and `required` arrays. It does not write, lock, or read the index.\n6. The agent guide still calls Implement and Check examples, and it tells the reader to run the sections command for this project's names. The existing \"headings are examples\" assertions stay true."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add optional `required_sections`, back-filled to Implement and Check when absent. Validate every entry against `sections`. Use that list in `_missing_spec`. Add a read-only sections command with the text and JSON shapes above. Point the guide at that command without dropping the example headings."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,41 @@
+{
+  "id": "s166",
+  "title": "Hint at show instead of printing the slice path",
+  "lead": [
+    "Plain `next` prints the slice JSON path under the id. That path is why an agent opens the tracking file instead of calling show."
+  ],
+  "depends_note": null,
+  "findings_note": "another project opened a slice JSON file because next printed its path",
+  "size": "S",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** removing `path` from JSON; changing `list`, `show`, or `status`; hiding the path when `--json` is set.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`_next_fields` and `_ready_entry` append the slice path whenever the file exists. `next`, `next --ready`, `next --show`, and `next --batch` all use those helpers, so every text result ends with a path such as `.slicer/slices/S15.json`. `--json --lean` already drops `path` on an item object. The text line is the footgun."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`_next_fields`, `_ready_entry`, the `next` options)\n- `docs/commands.md` and `docs/agents.md` (the `next` text shape)\n- `tests/test_cli.py` and any next-batch text test that asserts the path line\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Text for `next`, `next --ready`, `next --show`, and a batch prints `slicer show ID` when the item has a slice, and does not print the slice path.\n2. An item with no slice keeps the existing promote hint and does not gain a show hint.\n3. A text-only flag, `--path`, adds the path line back. JSON still includes `path`. `--lean` still drops it on an item object.\n4. `list`, `show`, and `status` text are unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Stop appending the path in the text helpers. When the item has a slice, print a show hint that names the id. Keep the promote hint when it does not. Add `--path` to print the path line as well. Leave the JSON object, including `path`, as it is."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

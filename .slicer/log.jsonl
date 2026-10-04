@@ -776,3 +776,21 @@
 {"when": "2026-10-02T21:49:43Z", "item": "s160", "action": "status", "from": "review", "to": "done", "note": "Reviewed and merged; help and about expose source/issues URLs, JSON contract verified, 1057 tests passed (1 skipped).", "by": "Jon Robbins"}
 {"when": "2026-10-04T15:02:26Z", "item": "s165", "action": "add", "from": "", "to": "open", "note": "Show the in-work and review queues in one step"}
 {"when": "2026-10-04T15:02:52Z", "item": "s165", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-04T15:32:20Z", "item": "s166", "action": "add", "from": "", "to": "open", "note": "Hint at show instead of printing the slice path"}
+{"when": "2026-10-04T15:32:20Z", "item": "s167", "action": "add", "from": "", "to": "open", "note": "Default bare slicer ai to instructions"}
+{"when": "2026-10-04T15:32:20Z", "item": "s168", "action": "add", "from": "", "to": "open", "note": "Name the project's sections and use them for readiness"}
+{"when": "2026-10-04T15:32:20Z", "item": "s169", "action": "add", "from": "", "to": "open", "note": "Put the tracking rule first and let a project choose how work finishes"}
+{"when": "2026-10-04T15:32:20Z", "item": "s170", "action": "add", "from": "", "to": "open", "note": "Install the agent skill into the project"}
+{"when": "2026-10-04T15:32:20Z", "item": "s171", "action": "add", "from": "", "to": "open", "note": "Accept a dotted pass key in prose addresses"}
+{"when": "2026-10-04T15:32:20Z", "item": "s172", "action": "add", "from": "", "to": "open", "note": "Show claim, blocked work, and review status in the TUI"}
+{"when": "2026-10-04T15:32:20Z", "item": "s173", "action": "add", "from": "", "to": "open", "note": "Hand off, reject, and release from the TUI"}
+{"when": "2026-10-04T16:06:31Z", "item": "pass.v1.3", "action": "prose", "from": "", "to": "v1.3", "note": "add-pass"}
+{"when": "2026-10-04T16:06:31Z", "item": "s165", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s166", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s167", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s168", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s169", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s170", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s171", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s172", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}
+{"when": "2026-10-04T16:06:31Z", "item": "s173", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.3"}

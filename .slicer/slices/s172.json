@@ -1,0 +1,41 @@
+{
+  "id": "s172",
+  "title": "Show claim, blocked work, and review status in the TUI",
+  "lead": [
+    "The queue status column is seven characters, so `reviewing` overflows. A blocked review or parked row has no `!`. Review uses the normal color. The detail pane does not show the claim."
+  ],
+  "depends_note": null,
+  "findings_note": "user request: the TUI cannot show who has a slice, and review rows are easy to miss",
+  "size": "M",
+  "flags": [],
+  "trees_note": "tui",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a claim column on the queue row; the `v` view cycle (s165); handoff, reject, and release keys.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Someone looking at the queue cannot tell a ready review from ordinary open work, and cannot tell a blocked review from an unblocked one. The detail pane is where the claim owner fits. The half-width queue is already too narrow for another column. s165 owns the view key."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` (row layout, blocked marker, detail pane)\n- `src/slicer/tui_style.py` (a review role)\n- `docs/tui.md`\n- `tests/test_tui.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The detail pane shows the claim owner, or `-` when the item has none.\n2. The status column is as wide as the longest visible label, and a `reviewing` row stays aligned with a `started` row.\n3. A blocked review row and a blocked parked row show `!`. An unblocked row does not.\n4. `review_status` uses a role that is not the started role and not the parked role. With no spare color pair, that role is bold. The status word is still drawn. `NO_COLOR` stays monochrome.\n5. The queue row has no claim column, and `v` is not bound by this slice."
+    },
+    {
+      "heading": "Implement",
+      "body": "Widen the status column from the visible labels. Mark every blocked visible row. Add the claim line to the detail pane. Give the review status its own role, using a spare color pair when the terminal has one and bold otherwise. Do not add a queue claim column or a view binding."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

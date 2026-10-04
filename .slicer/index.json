@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 166,
+  "next_id": 174,
   "preamble": "",
   "passes": [
     {
@@ -20,6 +20,12 @@
     {
       "key": "v1.2",
       "heading": "v1.2.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.3",
+      "heading": "v1.3.0 release",
       "intro": "",
       "outro": ""
     }
@@ -4336,7 +4342,219 @@
         ],
         "trees_literal": false,
         "findings": "user request: list and the TUI can show these queues only by naming each status",
-        "pass": "",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s166",
+      "title": "Hint at show instead of printing the slice path",
+      "short_title": "Hint at show instead of printing the slice path",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "another project opened a slice JSON file because next printed its path",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s167",
+      "title": "Default bare slicer ai to instructions",
+      "short_title": "Default bare slicer ai to instructions",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "another project: bare slicer ai exits 2 even though its help offers onboarding instructions",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s168",
+      "title": "Name the project's sections and use them for readiness",
+      "short_title": "Name the project's sections and use them for readiness",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "another project: section names in the agent guide are only examples, and next hardcodes Implement and Check",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s169",
+      "title": "Put the tracking rule first and let a project choose how work finishes",
+      "short_title": "Put the tracking rule first and let a project choose how work finishes",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s168"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "another project: the tracking rule is buried, and the skill's last step is done, which their AGENTS.md forbids",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s170",
+      "title": "Install the agent skill into the project",
+      "short_title": "Install the agent skill into the project",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s169"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "another project: slicer ai skill prints a SKILL.md and does not write it anywhere",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s171",
+      "title": "Accept a dotted pass key in prose addresses",
+      "short_title": "Accept a dotted pass key in prose addresses",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "slicer prose list exits 2 on this repo because pass v1.1 becomes pass.v1.1.heading",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s172",
+      "title": "Show claim, blocked work, and review status in the TUI",
+      "short_title": "Show claim, blocked work, and review status in the TUI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "tui"
+        ],
+        "trees_literal": false,
+        "findings": "user request: the TUI cannot show who has a slice, and review rows are easy to miss",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s173",
+      "title": "Hand off, reject, and release from the TUI",
+      "short_title": "Hand off, reject, and release from the TUI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "tui"
+        ],
+        "trees_literal": false,
+        "findings": "user request: handoff is CLI-only, so the TUI cannot finish or return a review",
+        "pass": "v1.3",
         "group": "",
         "reason": "",
         "importance": 2,
