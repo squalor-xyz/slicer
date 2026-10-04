@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 165,
+  "next_id": 166,
   "preamble": "",
   "passes": [
     {
@@ -4317,6 +4317,32 @@
         "urgency": 2,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s165",
+      "title": "Show the in-work and review queues in one step",
+      "short_title": "Show the in-work and review queues in one step",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request: list and the TUI can show these queues only by naming each status",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

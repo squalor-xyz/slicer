@@ -774,3 +774,5 @@
 {"when": "2026-10-02T21:44:34Z", "item": "s160", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-02T21:48:08Z", "item": "s160", "action": "handoff", "from": "started", "to": "review", "note": "Implemented help URLs and project-independent about text/JSON; 1057 tests passed (1 skipped), check and diff check passed.; claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-02T21:49:43Z", "item": "s160", "action": "status", "from": "review", "to": "done", "note": "Reviewed and merged; help and about expose source/issues URLs, JSON contract verified, 1057 tests passed (1 skipped).", "by": "Jon Robbins"}
+{"when": "2026-10-04T15:02:26Z", "item": "s165", "action": "add", "from": "", "to": "open", "note": "Show the in-work and review queues in one step"}
+{"when": "2026-10-04T15:02:52Z", "item": "s165", "action": "edit", "from": "", "to": "", "note": "Implement"}
