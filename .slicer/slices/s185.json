@@ -1,0 +1,41 @@
+{
+  "id": "s185",
+  "title": "Warn when a sibling worktree files a different item under the same id",
+  "lead": [
+    "Two checkouts that file items in parallel can allocate the same id to different items, and nothing says so until the merge conflicts in `.slicer/index.json`. That conflict can't be resolved through the CLI. Make `check` warn when a sibling worktree holds the same id with a different title. Make `add` and `import` allocate above the highest id any sibling worktree has already used."
+  ],
+  "depends_note": null,
+  "findings_note": "dogfood 2026-10-04: a filing branch and main each filed a different s174; check stayed green and slicer has no renumber",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a renumber command or any other way to change an existing id; reading other branches' committed state through git (the `vcs.py` allowlist has no `show`); remote branches; failing `check` on a collision (it stays a warning); changing `--id`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Hit while dogfooding on 2026-10-04. A filing branch in `.worktrees/wt-state` allocated s174 for \"Show review and unmerged done work from a sibling worktree\", at about 14:15–14:20 EDT. Another session filed a different s174 on main (\"Keep the slice path out of next --show text\"), committed at 14:25:54 EDT as `4e384e6`. The branch's `slicer check` kept passing. The clash showed up only when preparing the merge, and slicer has no command to change an id. The fix was to rebuild the outline from `slicer show --json` and re-import it on a fresh branch from main, so the item became s184.\n\nAllocation is local only: `ids.allocate` (`src/slicer/ids.py:111-126`) takes `index.next_id` from this checkout's index. Both callers, `ops.add` (`src/slicer/ops.py:146`) and `_allocate_outline_ids` (`src/slicer/ops.py:1251-1253`), pass only the local index. slicer already reads sibling worktrees' indexes for claims: `store.in_work_elsewhere` (`src/slicer/store.py:369-383`) uses `vcs.sibling_worktrees` and `read_index(sibling)`, and skips any sibling it can't read. On this machine the main checkout counts as a sibling of every linked worktree, which is where the colliding filing lived.\n\nIn the case above, raising the allocation floor alone might not have helped, because main's s174 may not have existed yet when the branch allocated. The `check` warning would have caught it at the branch's next `check`, before the merge. The floor prevents the other order, where the sibling filed first."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py`: `sibling_ids(root)`, a new helper next to `in_work_elsewhere`.\n- `src/slicer/check.py`: `run` adds collision warnings.\n- `src/slicer/ids.py`: `allocate` and `format_next` accept a floor.\n- `src/slicer/ops.py`: `add` and `_allocate_outline_ids`, plus the import path that calls it, accept the floor and pass it through. `ops` stays git-free.\n- `src/slicer/cli.py`: `cmd_add`, `cmd_import` and `cmd_next_id` compute the floor and pass it in.\n- `docs/agents.md` and `docs/commands.md`: the `check`, `add`, `import` and `next-id` rows. Say that ids also skip past numbers a sibling worktree has used, and that `check` warns on a cross-worktree collision.\n- `tests/test_id_collisions.py` (new)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Create `tests/test_id_collisions.py`. Copy the `_run` helper and the `repo()` / `sibling()` methods from `tests/test_worktree_claims.py:18-43`, which make a git `TempRepo` with two items and a linked worktree under `siblings/NAME`.\n\n1. `test_Check_SameIdDifferentTitleInSibling_Warns`: in the sibling, `add \"sibling item\"` (it gets S03). In the main repo, `add \"main item\"` (also S03). `check --json` in the main repo exits 0. `warnings` contains one entry naming `S03`, the sibling's worktree name, and both titles. The text output shows it as a `warn:` line.\n2. `test_Check_SameIdSameTitle_NoWarning`: S01 and S02 exist in both checkouts with the same titles, so there is no warning.\n3. `test_Check_IdOnlyInSibling_NoWarning`: an item that exists only in the sibling is not a collision.\n4. `test_Check_UnreadableSibling_Skipped`: corrupt the sibling's `.slicer/index.json`. `check` still exits 0 with no collision warning and no traceback.\n5. `test_Check_OutsideGit_NoSiblingRead`: a `support.TempRepo()` without git warns about nothing, and does not call `vcs.sibling_worktrees`, or calls it and gets an empty list. Follow `test_List_OutsideGit_HasNoSiblingLookup`.\n6. `test_Add_SiblingAlreadyUsedNextId_SkipsPastIt`: the sibling adds S03 and S04. In the main repo, `next-id` prints `S05` and `add \"x\"` returns `S05`. Then `check` in the main repo warns about nothing, since S03 and S04 do not exist here.\n7. `test_Import_SiblingFloor_AppliesToEveryOutlineItem`: with the sibling at S04 as in test 6, a two-item outline imported in the main repo gets `S05` and `S06`. `import --dry-run` reports the same ids.\n8. `test_Add_ExplicitId_IgnoresTheFloor`: `add \"x\" --id S03` in the main repo still works while the sibling has S03 and S04, and `check` then warns if the titles differ."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. `store.sibling_ids(root) -> list[tuple[str, Index]]`: for each path in `vcs.sibling_worktrees(root)`, return `(path.name, read_index(path))`. Skip unreadable ones with the same `except` tuple as `in_work_elsewhere`. Then refactor `in_work_elsewhere` to use it, so each sibling index is read the same way. Keep its existing behaviour and tests green.\n2. In `ids.py`, add `def floor_from(indexes, prefix: str) -> int`. It returns the largest `next_id` among the sibling indexes whose `id_prefix` equals `prefix` ignoring case, or 0 when there are none. Change `allocate(index, explicit=None, *, floor: int = 0)` and `format_next(index, *, floor: int = 0)` so the number used is `max(index.next_id, floor)`. `allocate` also sets `index.next_id` past the number it used. Leave the explicit-id branch unchanged.\n3. `ops.add(..., id_floor: int = 0)` passes `floor=id_floor` to `ids.allocate`. Thread an `id_floor` the same way through the import entry point that calls `_allocate_outline_ids`, for both the dry-run and the real path, so their reported ids agree.\n4. In `cli.py`, add a helper `_id_floor(state) -> int` that returns `ids.floor_from([ix for _, ix in store.sibling_ids(state.root)], state.index.id_prefix)`. `cmd_add`, `cmd_import` and `cmd_next_id` call it and pass the floor. It costs one `git worktree list` plus one index read per sibling, which is the same cost `list` already pays.\n5. In `check.run`, after the existing warnings, compare titles. For each `(name, ix)` from `store.sibling_ids(state.root)` and each item in `ix.items` whose id is also in `state.index` with a different `title`, append this warning, wrapping the titles with `!r`:\n\n   ```\n   {id} is {local title} here but {their title} in worktree {name}; the two will collide on merge. File this checkout's item under a new id before merging.\n   ```\n\n   Do this only when `vcs.is_repo(state.root)`, so a plain directory does no git work. Warnings do not fail `check`, so CI stays green.\n6. Docs rows and a CHANGELOG entry under Unreleased → Added."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `PYTHONPATH=src python3 -m slicer check`, and `git diff --check`. Dogfood it: with two worktrees of this repo, `slicer add` a placeholder with a different title in each, so both get the same id, and confirm that `check` warns. Remove the placeholders with `slicer remove` afterwards."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}

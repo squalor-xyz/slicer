@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 185,
+  "next_id": 186,
   "preamble": "",
   "passes": [
     {
@@ -4844,6 +4844,32 @@
         "group": "",
         "reason": "",
         "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s185",
+      "title": "Warn when a sibling worktree files a different item under the same id",
+      "short_title": "Warn on cross-worktree id collisions",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "dogfood 2026-10-04: a filing branch and main each filed a different s174; check stayed green and slicer has no renumber",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 2,
         "effort": 2,
         "attempts": 0

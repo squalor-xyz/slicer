@@ -817,3 +817,5 @@
 {"when": "2026-10-04T18:59:15Z", "item": "s184", "action": "add", "from": "", "to": "open", "note": "Show review and unmerged done work from a sibling worktree"}
 {"when": "2026-10-04T18:59:15Z", "item": "s175", "action": "set", "from": "", "to": "", "note": "short_title Hint to commit slicer state after a handoff in a worktree→Hint to commit worktree handoff state"}
 {"when": "2026-10-04T18:59:15Z", "item": "s184", "action": "set", "from": "", "to": "", "note": "short_title Show review and unmerged done work from a sibling worktree→Show sibling review and done work"}
+{"when": "2026-10-04T19:01:56Z", "item": "s185", "action": "add", "from": "", "to": "open", "note": "Warn when a sibling worktree files a different item under the same id"}
+{"when": "2026-10-04T19:01:57Z", "item": "s185", "action": "promote", "from": "", "to": "", "note": ""}
