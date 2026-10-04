@@ -535,6 +535,109 @@ class ListDoneDefaultTests(unittest.TestCase):
       self.assertEqual(repo.run("list")[1].strip(), "no matching items")
 
 
+class ListQueueTests(unittest.TestCase):
+  """`--in-work` and `--review` name roles, not status labels."""
+
+  def ids(self, repo: support.TempRepo, *argv: str) -> list[str]:
+    code, out, err = repo.run("list", *argv, "--json")
+    self.assertEqual(code, 0, err)
+    return [item["id"] for item in json.loads(out)]
+
+  def test_List_InWork_KeepsStartedAndReviewing_IncludingAnUnclaimedRow(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "open item")
+      repo.run("add", "started item")
+      repo.run("add", "review item")
+      repo.run("add", "parked item")
+      repo.run("add", "done item")
+      repo.run("start", "S02")
+      repo.run("release", "S02")
+      repo.run("set", "S03", "--status", "review")
+      repo.run("park", "S04")
+      repo.run("done", "S05")
+      repo.run("add", "reviewing item")
+      repo.run("set", "S06", "--status", "review")
+      repo.run("start", "S06")
+      self.assertEqual(self.ids(repo, "--in-work"), ["S02", "S06"])
+      row = next(line for line in repo.run("list", "--in-work")[1].splitlines() if "S02" in line.split())
+      self.assertIn("*", row.split())
+      self.assertNotIn("hidden", repo.run("list", "--in-work")[1])
+      payload = json.loads(repo.run("list", "--in-work", "--json")[1])
+      self.assertIn("claim", payload[0])
+      self.assertEqual(payload[0]["claim"], None)
+
+  def test_List_Review_KeepsOnlyTheReviewStatus_ByKeyNotLabel(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "review item")
+      repo.run("add", "started item")
+      repo.run("set", "S01", "--status", "review")
+      repo.run("start", "S02")
+      path = repo.root / ".slicer/config.json"
+      cfg = json.loads(path.read_text())
+      cfg["statuses"]["review"] = "ready"
+      path.write_text(json.dumps(cfg) + "\n")
+      self.assertEqual(self.ids(repo, "--review"), ["S01"])
+      text = repo.run("list", "--review")[1]
+      self.assertIn("ready", text)
+      self.assertNotIn("S02", text)
+
+  def test_List_QueueFlags_RejectCombinationsAndAnEmptyRole(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "one")
+      for argv in (
+        ("--in-work", "--review"),
+        ("--in-work", "--status", "open"),
+        ("--in-work", "--all"),
+        ("--review", "--status", "review"),
+        ("--review", "--all"),
+      ):
+        code, out, err = repo.run("list", *argv, "--json")
+        self.assertEqual(code, 2, argv)
+        self.assertEqual(json.loads(out)["error"]["code"], "usage")
+        self.assertNotIn("Traceback", err)
+      path = repo.root / ".slicer/config.json"
+      cfg = json.loads(path.read_text())
+      cfg["review_status"] = ""
+      path.write_text(json.dumps(cfg) + "\n")
+      code, out, _ = repo.run("list", "--review", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      cfg["started_status"] = ""
+      cfg["reviewing_status"] = ""
+      path.write_text(json.dumps(cfg) + "\n")
+      code, out, _ = repo.run("list", "--in-work", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+
+  def test_List_QueueFlag_WithNoRows_ExitsZeroWithoutTheHiddenLine(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "open item")
+      code, out, err = repo.run("list", "--review")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(out.strip(), "no matching items")
+      self.assertNotIn("hidden", out)
+      self.assertEqual(json.loads(repo.run("list", "--review", "--json")[1]), [])
+
+  def test_List_QueueFlag_StillHonorsTreePassFlagAndSort(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "light", "--tree", "beta", "--importance", "1", "--urgency", "1")
+      repo.run("add", "heavy", "--tree", "alpha", "--importance", "3", "--urgency", "3")
+      repo.run("start", "S01")
+      repo.run("start", "S02")
+      repo.run("set", "S01", "--flag", "security")
+      repo.run("prose", "add-pass", "now")
+      repo.run("set", "S02", "--pass", "now")
+      self.assertEqual(self.ids(repo, "--in-work", "--tree", "beta"), ["S01"])
+      self.assertEqual(self.ids(repo, "--in-work", "--flag", "security"), ["S01"])
+      self.assertEqual(self.ids(repo, "--in-work", "--pass", "now"), ["S02"])
+      self.assertEqual(self.ids(repo, "--in-work", "--sort", "score")[0], "S02")
+
+
 class PassColumnTests(unittest.TestCase):
   """The text rows show pass membership only when the roadmap uses passes (S134)."""
 

@@ -39,7 +39,7 @@ separate outline file. The project must already be initialized with `slicer init
 
 The main TUI screen keeps common shortcuts visible below the status and feedback
 lines: pane switching, editing, adding, starting/completing items, search, filters,
-show all, jump, movement, help, and quit. Hints use one row when they fit or two at
+show all, jump, movement, help, quit, and `v view`. Hints use one row when they fit or two at
 80 columns, and stay visible after actions. These are fixed defaults; `?` opens
 the complete shortcut list. Prompts and overlays show their own instructions.
 
@@ -48,8 +48,9 @@ The TUI initially hides the project's configured done status. View controls:
 | Key | Action |
 |---|---|
 | `/` | Search IDs, full titles, and short titles as you type; Enter accepts, Esc cancels |
-| `f` | Filter by status, tree, pass, importance, and urgency |
-| `c` | Clear search and all filters, including the default hide-done filter |
+| `f` | Filter by status, tree, pass, importance, and urgency. Opening it shows the current view's statuses checked; applying it drops the view name and keeps the checks |
+| `v` | Cycle the status preset: unfinished, then in-work, then review, then the initial unfinished set. Search and the other filters stay. The status line shows `view=in-work` or `view=review`. A disabled role is skipped. If neither role is configured, `v` does nothing and says so. `J` and `K` stay disabled while a preset is active |
+| `c` | Clear search and all filters, including the default hide-done filter and any view preset |
 | `g` | Jump to an ID; hidden targets are revealed by clearing search and filters |
 | `J` / `K` | Reorder the selected item down / up |
 | `T` | Move the selected item to the top |

@@ -986,8 +986,43 @@ def _list_in_next_order(state: store.State, items: list[model.Item]) -> list[mod
   return graph.ranked_order(state.index, state.config, items)
 
 
+def _list_status_view(args: argparse.Namespace, cfg: Config) -> set[str] | None:
+  """The status keys a queue flag keeps, or None to use the default list.
+
+  `--in-work` and `--review` name roles, not labels. An empty role is usage.
+  """
+  chosen = []
+  if args.in_work:
+    chosen.append("--in-work")
+  if args.review:
+    chosen.append("--review")
+  if args.status:
+    chosen.append("--status")
+  if args.all:
+    chosen.append("--all")
+  if (args.in_work or args.review) and len(chosen) > 1:
+    raise StateError(f"{' and '.join(chosen)} cannot be combined", code="usage")
+  if args.in_work:
+    wanted = cfg.in_work()
+    if not wanted:
+      raise StateError(
+        "this project has no in-work status; set started_status or reviewing_status",
+        code="usage",
+      )
+    return wanted
+  if args.review:
+    if not cfg.review_status:
+      raise StateError(
+        "this project has no review status; set review_status before using --review",
+        code="usage",
+      )
+    return {cfg.review_status}
+  return None
+
+
 def cmd_list(args: argparse.Namespace) -> int:
   state = _state(args)
+  view = _list_status_view(args, state.config)
   if args.all and args.status:
     raise StateError(
       "--all and --status cannot be combined; --status already chooses which statuses to show",
@@ -1001,7 +1036,9 @@ def cmd_list(args: argparse.Namespace) -> int:
   if args.flag:
     items = [i for i in items if set(args.flag) & set(i.flags)]
   hidden_count = 0
-  if args.status:
+  if view is not None:
+    items = [i for i in items if i.status in view]
+  elif args.status:
     items = [i for i in items if i.status in args.status]
   elif not args.all:
     hidden = {state.config.done_status}
@@ -1927,6 +1964,10 @@ def build_parser() -> argparse.ArgumentParser:
                   help="include done and retired items (default: omit them)")
   sp.add_argument("--status", action="append",
                   help="filter by status (repeatable); replaces the default of omitting done and retired")
+  sp.add_argument("--in-work", action="store_true",
+                  help="only started items, plus reviewing when that status is set")
+  sp.add_argument("--review", action="store_true",
+                  help="only items in the review status")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--flag", action="append",
