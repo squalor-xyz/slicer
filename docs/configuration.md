@@ -43,7 +43,8 @@ and the slice files, the config is yours to hand-edit.
   "sync": { "targets": [] },
   "git_check": true,
   "render_driver_check": true,
-  "claim_owner": ""
+  "claim_owner": "",
+  "implement_finish": "done"
 }
 ```
 
@@ -74,6 +75,7 @@ and the slice files, the config is yours to hand-edit.
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 | `render_driver_check` | `true` | Whether `slicer verify` reminds you to configure the `slicer-generated` render merge driver (via `slicer setup-git`). Only fires when this checkout has other worktrees, so a single-worktree clone is already quiet; set **off** to silence it entirely. There is no way to force it on for a single worktree | **Yes** |
 | `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name. A per-call `--owner` or the `SLICER_CLAIM_OWNER` environment variable overrides it | **Yes** |
+| `implement_finish` | `"done"` | How `slicer ai instructions` and `slicer ai skill` finish the implement loop. `done` keeps step 4 as `done` and mentions the handoff alternative. `handoff` makes step 4 handoff only, and that skill text does not contain the done command. A missing key means `done`. `handoff` is a config error when `review_status` is empty. The commands do not switch to handoff just because a review status is set | **Yes** |
 
 ## The ones that will surprise you
 
@@ -126,6 +128,10 @@ parked and started statuses.
 **A missing `reviewing_status` is back-filled by the same rule as `review_status`,** and is
 left empty when the project has no review status. It must differ from every other role,
 review included.
+
+**A missing `implement_finish` stays `done`.** The only other value is `handoff`. That
+value needs a review status, because handoff has nowhere to put the item when
+`review_status` is empty. Setting a review status does not by itself change the loop.
 
 ## Statuses
 

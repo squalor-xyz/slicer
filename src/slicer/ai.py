@@ -20,8 +20,20 @@ LOOP = """\
 3. Review the changes and run `slicer check --json`. Fix problems before marking
    work complete; this tracking check does not replace code tests.
 4. Run `slicer done ID --note "Describe the verified outcome" --render --json`,
-   then `slicer check --json`. Report results and any remaining limitations.
+   then `slicer check --json`. If `implement_finish` is `handoff`, run
+   `slicer handoff ID --render --json` instead and do not run done.
 """
+
+# Step 4 when implement_finish is handoff. The done command stays out of this text.
+HANDOFF_STEP = """\
+4. Run `slicer handoff ID --render --json`,
+   then `slicer check --json`.
+"""
+
+# The one line both outputs lead with. The full tracking section still follows.
+TRACKING_RULE = (
+  "Do not open, search, parse, or edit tracking files; use the slicer commands."
+)
 
 EXITS = """\
 Use `--json` for automation and inspect both the exit code and payload. Failures
@@ -78,15 +90,29 @@ only after review and merge are complete.
 """
 
 
-def skill_text() -> str:
-  """The SKILL.md Claude Code, Codex, and Grok all load."""
+def loop_text(finish: str = "done") -> str:
+  """The implement loop. `handoff` replaces step 4 and drops the done command."""
+  if finish == "handoff":
+    head, _step = LOOP.rsplit("4. ", 1)
+    return head + HANDOFF_STEP
+  return LOOP
+
+
+def skill_text(finish: str = "done") -> str:
+  """The SKILL.md Claude Code, Codex, and Grok all load.
+
+  `finish` is the project's `implement_finish` when that project can be read.
+  The committed file is the generic `done` text.
+  """
   return (
     "---\n"
     "name: slicer\n"
     f"description: {SKILL_DESCRIPTION}\n"
     "---\n"
     "\n"
-    f"{LOOP}\n"
+    f"{TRACKING_RULE}\n"
+    "\n"
+    f"{loop_text(finish)}\n"
     f"{SPEC_GAP}\n"
     f"{EXITS}\n"
     f"{TRACKING}\n"
@@ -99,8 +125,7 @@ INSTRUCTIONS = """\
 
 slicer is a local roadmap and slice manager. You supply the reasoning, planning,
 and implementation; slicer stores, prioritizes, validates, and renders the agreed
-work. It does not call an AI service. This guide is generic and reads no project
-state, so it also works before a project is initialized.
+work. It does not call an AI service. It also works before a project is initialized.
 
 ## Read the project first
 
@@ -137,8 +162,6 @@ lead and sections. Use the project's configured sections, not assumed headings.
 ## Implement one slice
 
 """ + LOOP + SPEC_GAP + """
-Dependencies gate open and started work, and inherited priority counts. An empty
-queue matches `next`.
 Do not combine `--ready` and `--show`.
 
 Projects can add statuses in `config.statuses`. `next` offers only open work and
@@ -178,3 +201,13 @@ Use `--render` on supported mutations, or
 run `slicer render` separately, and finish with `slicer check`.
 
 """ + EXITS
+
+
+def instructions_text(finish: str = "done") -> str:
+  """The quick start. `handoff` uses that loop; anything else is `INSTRUCTIONS`."""
+  if finish == "handoff":
+    return INSTRUCTIONS.replace(LOOP, loop_text("handoff"), 1)
+  return INSTRUCTIONS
+
+
+INSTRUCTIONS = f"{TRACKING_RULE}\n\n" + INSTRUCTIONS

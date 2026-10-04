@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-173 items · — 8 · done 163 · retired 2
+173 items · — 7 · done 164 · retired 2
 
 v1.3.0 release
 
@@ -32,7 +32,7 @@ v1.3.0 release
 | 2 | [s166](slices/s166.md) | Hint at show instead of printing the slice path | S | 1 | cli | another project opened a slice JSON file because next printed its path | — |
 | 3 | [s167](slices/s167.md) | Default bare slicer ai to instructions | S | 1 | cli | another project: bare slicer ai exits 2 even though its help offers onboarding instructions | — |
 | 4 | [s168](slices/s168.md) | Name the project's sections and use them for readiness | M | 2 | slicer | another project: section names in the agent guide are only examples, and next hardcodes Implement and Check | done |
-| 5 | [s169](slices/s169.md) | Put the tracking rule first and let a project choose how work finishes | M | 2 | slicer | another project: the tracking rule is buried, and the skill's last step is done, which their AGENTS.md forbids | — |
+| 5 | [s169](slices/s169.md) | Put the tracking rule first and let a project choose how work finishes | M | 2 | slicer | another project: the tracking rule is buried, and the skill's last step is done, which their AGENTS.md forbids | done |
 | 6 | [s170](slices/s170.md) | Install the agent skill into the project | M | 2 | slicer | another project: slicer ai skill prints a SKILL.md and does not write it anywhere | — |
 | 7 | [s171](slices/s171.md) | Accept a dotted pass key in prose addresses | S | 1 | slicer | slicer prose list exits 2 on this repo because pass v1.1 becomes pass.v1.1.heading | — |
 | 8 | [s172](slices/s172.md) | Show claim, blocked work, and review status in the TUI | M | 2 | tui | user request: the TUI cannot show who has a slice, and review rows are easy to miss | — |

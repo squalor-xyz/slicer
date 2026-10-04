@@ -131,31 +131,48 @@ class AiInstructionsTests(unittest.TestCase):
   def test_Instructions_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, err = repo.run("ai", "instructions")
-      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
       code, out, err = repo.run("ai", "instructions", "--json")
-      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
       self.assertEqual(json.loads(out), {"instructions": text})
       self.assertEqual(text, ai.INSTRUCTIONS)
-      self.assertTrue(text.startswith("# Getting started with slicer\n"))
+      self.assertTrue(text.startswith(ai.TRACKING_RULE + "\n"))
+      self.assertLess(text.index(ai.TRACKING_RULE), text.index(ai.LOOP))
       self.assertEqual(list(repo.root.iterdir()), [])
 
-  def test_Instructions_RootAtEveryLevel_NeverDiscoversLoadsOrLocks(self) -> None:
+  def test_Instructions_ReadsConfigAndIndex_WithoutLockingOrWriting(self) -> None:
     with support.TempRepo() as repo:
-      root = str(repo.root / "does-not-exist")
-      cases = (
-        ("--root", root, "ai", "instructions"),
-        ("ai", "--root", root, "instructions"),
-        ("ai", "instructions", "--root", root),
-        ("ai", "instructions"),
-      )
-      with patch("slicer.cli.store.discover", side_effect=AssertionError("discovery")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
-           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
-        for argv in cases:
-          with self.subTest(argv=argv), redirect_stdout(io.StringIO()) as out:
-            self.assertEqual(cli.main([*argv, "--json"]), 0)
-            self.assertEqual(json.loads(out.getvalue())["instructions"], ai.INSTRUCTIONS)
-      self.assertEqual(list(repo.root.iterdir()), [])
+      self.assertEqual(repo.run("init")[0], 0)
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      data["implement_finish"] = "handoff"
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      before = {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+           patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+        code, text, err = repo.run("ai", "instructions")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("slicer handoff ID --render --json", text)
+      self.assertNotIn("slicer done", text.split("## Hand off for review", 1)[0].split("4. Run", 1)[1])
+      after = {p.relative_to(repo.root): p.read_bytes()
+               for p in repo.root.rglob("*") if p.is_file()}
+      self.assertEqual(after, before)
+
+  def test_Instructions_UnreadableIndex_WarnsAndStaysGeneric(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      repo.write(".slicer/index.json", "{")
+      before = {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      code, text, err = repo.run("ai", "instructions")
+      self.assertEqual(code, 0)
+      self.assertEqual(text, ai.INSTRUCTIONS)
+      self.assertIn("printing the generic guide", err)
+      after = {p.relative_to(repo.root): p.read_bytes()
+               for p in repo.root.rglob("*") if p.is_file()}
+      self.assertEqual(after, before)
 
   def test_Instructions_ValidAndCorruptState_LeaveAllFilesUnchanged(self) -> None:
     with support.TempRepo() as repo:
@@ -168,8 +185,14 @@ class AiInstructionsTests(unittest.TestCase):
                   for p in repo.root.rglob("*") if p.is_file()}
         for flags in ((), ("--json",)):
           with self.subTest(corrupt=corrupt, flags=flags):
-            code, _, err = repo.run("ai", "instructions", *flags)
-            self.assertEqual((code, err), (0, ""))
+            code, text, err = repo.run("ai", "instructions", *flags)
+            self.assertEqual(code, 0)
+            body = json.loads(text)["instructions"] if flags else text
+            self.assertEqual(body, ai.INSTRUCTIONS)
+            if corrupt:
+              self.assertIn("printing the generic guide", err)
+            else:
+              self.assertEqual(err, "")
         after = {p.relative_to(repo.root): p.read_bytes()
                  for p in repo.root.rglob("*") if p.is_file()}
         self.assertEqual(after, before)
@@ -178,7 +201,7 @@ class AiInstructionsTests(unittest.TestCase):
     for argv, expected in (
       (("--help",), "onboarding instructions for coding agents"),
       (("ai", "--help"), "instructions"),
-      (("ai", "instructions", "--json", "--help"), "--root is accepted but unused"),
+      (("ai", "instructions", "--json", "--help"), "warns on stderr"),
     ):
       with self.subTest(argv=argv), redirect_stdout(io.StringIO()) as out, \
            redirect_stderr(io.StringIO()) as err:
@@ -235,22 +258,36 @@ class AiInstructionsTests(unittest.TestCase):
   def test_Skill_OutsideProject_TextAndJsonMatch(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, err = repo.run("ai", "skill")
-      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
       self.assertEqual(text, ai.skill_text())
+      self.assertTrue(text.split("---\n", 2)[2].lstrip().startswith(ai.TRACKING_RULE + "\n"))
       code, out, err = repo.run("ai", "skill", "--json")
-      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
       self.assertEqual(json.loads(out), {"skill": text})
       self.assertEqual(list(repo.root.iterdir()), [])
 
-  def test_Skill_RootFlag_DoesNotDiscover(self) -> None:
+  def test_Skill_HandoffProject_DropsTheDoneCommand_AndKeepsTheReviewStep(self) -> None:
     with support.TempRepo() as repo:
-      root = str(repo.root / "does-not-exist")
-      with patch("slicer.cli.store.discover", side_effect=AssertionError("discovery")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
-           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
-        with redirect_stdout(io.StringIO()) as out:
-          self.assertEqual(cli.main(["ai", "skill", "--root", root, "--json"]), 0)
-        self.assertEqual(json.loads(out.getvalue())["skill"], ai.skill_text())
+      self.assertEqual(repo.run("init")[0], 0)
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      del data["implement_finish"]
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      code, text, err = repo.run("ai", "skill")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(text, ai.skill_text())
+      self.assertIn("slicer done ID", text)
+      data["implement_finish"] = "handoff"
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      code, text, err = repo.run("ai", "skill")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(text, ai.skill_text("handoff"))
+      step = text.split("4. Run", 1)[1].split("If `next` JSON", 1)[0]
+      self.assertIn("slicer handoff ID --render --json", step)
+      self.assertNotIn("done", step)
+      self.assertNotIn("slicer done", text)
+      self.assertIn("only after review and merge are complete", text)
 
   def test_Instructions_TargetedRead_DocumentsRepeatedSectionAndContext(self) -> None:
     text = ai.INSTRUCTIONS

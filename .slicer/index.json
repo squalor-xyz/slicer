@@ -4433,7 +4433,7 @@
       "id": "s169",
       "title": "Put the tracking rule first and let a project choose how work finishes",
       "short_title": "Put the tracking rule first and let a project choose how work finishes",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s168"
@@ -4454,7 +4454,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

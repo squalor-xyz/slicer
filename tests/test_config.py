@@ -71,6 +71,35 @@ class ConfigValidationTests(unittest.TestCase):
       self.assertEqual(code, 3)
       self.assertIn("repeats", err)
 
+  def test_MissingImplementFinish_StaysDone(self) -> None:
+    with self.repo() as repo:
+      path = repo.root / ".slicer/config.json"
+      data = json.loads(path.read_text())
+      data.pop("implement_finish", None)
+      path.write_text(json.dumps(data) + "\n")
+      self.assertEqual(repo.state().config.implement_finish, "done")
+      self.assertEqual(repo.state().config.version, 1)
+
+  def test_HandoffWithoutReviewStatus_IsAConfigError(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", implement_finish="handoff", review_status="")
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("implement_finish", err)
+      self.assertIn("review_status", err)
+
+  def test_ImplementFinish_MustBeDoneOrHandoff(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", implement_finish="ship")
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("done", err)
+      self.assertIn("handoff", err)
+      poke(repo, "config.json", implement_finish=["done"])
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("implement_finish", err)
+
   def test_RequiredSections_MustBeAListOfNames(self) -> None:
     with self.repo() as repo:
       poke(repo, "config.json", required_sections="Check")
