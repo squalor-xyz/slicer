@@ -131,6 +131,27 @@ verifies tracking consistency; the unit suite verifies code behavior. Mark done 
 after the slice's acceptance checks pass. Leave committing and publishing to the
 owner's instructions; a slice's Git section does not itself authorize them.
 
+### Landing a slice
+
+Follow this only when the owner asks to commit and merge. Do not push unless they
+ask for that too.
+
+Commit any uncommitted roadmap filings on `main` before cutting a worktree. The
+worktree is cut from `HEAD` and does not see those filings. One slice per worktree:
+
+```sh
+git worktree add -b feature/<id>-<slug> .worktrees/<id> main
+```
+
+Run `PYTHONPATH=src python3 -m slicer` inside that worktree. An editable `slicer`
+on `PATH` may be another checkout. Implement only that slice. Run its tests,
+`python3 -m unittest discover -s tests -t tests`, `slicer check`, and
+`git diff --check`. Mark it done with `--render` only after those pass.
+
+Review the diff before committing. Commit on the feature branch. Merge into
+`main` with `git merge --no-ff`. Remove the worktree and delete the feature
+branch. Leave `main` clean.
+
 **Read and change tracking state through the slicer CLI.** That covers goals, items,
 slices, notes, history, and roadmap prose, during review, planning, implementation,
 and validation. Do not open, search, parse, or edit `.slicer` JSON, the history file,
