@@ -64,6 +64,14 @@ def _json_flags(parser: argparse.ArgumentParser, *, suppress: bool = False) -> N
   )
 
 
+def _rest_flag(parser: argparse.ArgumentParser, *, suppress: bool = False) -> None:
+  """`--rest` on `ai` and `ai instructions`, suppressed on the subcommand like `--json`."""
+  parser.add_argument(
+    "--rest", action="store_true", default=argparse.SUPPRESS if suppress else False,
+    help="print only what the slicer skill does not already carry",
+  )
+
+
 def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
   if getattr(args, "json", False):
     if getattr(args, "lean", False):
@@ -296,7 +304,8 @@ def _ai_finish(args: argparse.Namespace) -> str:
 
 
 def cmd_ai_instructions(args: argparse.Namespace) -> int:
-  text = ai.instructions_text(_ai_finish(args))
+  # `--rest` is the guide minus the skill, which never reads the project.
+  text = ai.rest_text() if args.rest else ai.instructions_text(_ai_finish(args))
   _emit(args, {"instructions": text}, text.rstrip("\n"))
   return OK
 
@@ -1909,6 +1918,7 @@ def build_parser() -> argparse.ArgumentParser:
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
   _json_flags(sp)
+  _rest_flag(sp)
   sp.set_defaults(func=cmd_ai_instructions)
   aisub = sp.add_subparsers(dest="ai_command", required=False)
   inner = aisub.add_parser(
@@ -1922,6 +1932,7 @@ def build_parser() -> argparse.ArgumentParser:
   )
   inner.set_defaults(func=cmd_ai_instructions)
   _json_flags(inner, suppress=True)
+  _rest_flag(inner, suppress=True)
   inner = aisub.add_parser(
     "skill", help="print the agent skill for Claude Code, Codex, and Grok",
     description=(

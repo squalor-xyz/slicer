@@ -116,11 +116,12 @@ def skill_text(finish: str = "done") -> str:
     f"{SPEC_GAP}\n"
     f"{EXITS}\n"
     f"{TRACKING}\n"
-    "The rest of the guide is `slicer ai instructions`.\n"
+    "For planning, filing, claims, and review, run `slicer ai instructions --rest`; "
+    "it leaves out what this skill already says.\n"
   )
 
 
-INSTRUCTIONS = """\
+INTRO = """\
 # Getting started with slicer
 
 slicer is a local roadmap and slice manager. You supply the reasoning, planning,
@@ -136,6 +137,9 @@ scope, or acceptance criteria; do not infer product direction from the backlog.
 Only perform work the user has authorized. Commit or publish only when authorized;
 slicer itself never commits, pushes, or tags.
 
+"""
+
+PLAN = """\
 ## Plan and record agreed work
 
 For a new project, agree on goals and acceptance criteria. For an existing
@@ -158,10 +162,10 @@ A row alone is not a specification: use
 `slicer promote ID --stdin --render --json` with a one-item outline to supply its
 lead and sections. Use the project's configured sections, not assumed headings.
 
-""" + TRACKING + """
-## Implement one slice
+"""
 
-""" + LOOP + SPEC_GAP + """
+# What follows SPEC_GAP inside "Implement one slice". Only the full text has it.
+IMPLEMENT_MORE = """\
 Do not combine `--ready` and `--show`.
 
 Projects can add statuses in `config.statuses`. `next` offers only open work and
@@ -180,6 +184,9 @@ Re-read one slice with its title, dependencies, and scope boundary using
 Those headings are examples; use the section names the project configures.
 Run `--help` on any command for the rest of its options.
 
+"""
+
+HANDOFF_SECTION = """\
 ## Hand off for review
 
 When the implementation is ready for someone else to review, merge, or clean up, record
@@ -192,6 +199,9 @@ same command resumes it later. If the review fails, run
 to open (or `--to STATUS`), records the verdict, and clears the claim. Run `done` only
 after review and merge are complete.
 
+"""
+
+STATE = """\
 ## State and command results
 
 Change tracking state through slicer commands. Never hand-edit tracking JSON or
@@ -200,7 +210,30 @@ When `ROADMAP.md` or `ROADMAP.html` conflicts, run `slicer render` then `slicer 
 Use `--render` on supported mutations, or
 run `slicer render` separately, and finish with `slicer check`.
 
-""" + EXITS
+"""
+
+IMPLEMENT_HEADING = "## Implement one slice\n\n"
+
+INSTRUCTIONS = (
+  f"{TRACKING_RULE}\n\n"
+  + INTRO + PLAN + TRACKING + "\n"
+  + IMPLEMENT_HEADING + LOOP + SPEC_GAP + "\n" + IMPLEMENT_MORE
+  + HANDOFF_SECTION + STATE + EXITS
+)
+
+REST_LEAD = (
+  "This is the part of the guide the slicer skill does not carry. "
+  "The skill has the tracking rule, the implement loop, and the exit codes."
+)
+
+
+def rest_text() -> str:
+  """What `INSTRUCTIONS` says beyond the skill, for an agent that loaded the skill."""
+  body = (
+    REST_LEAD + "\n\n" + INTRO + PLAN + IMPLEMENT_HEADING + IMPLEMENT_MORE
+    + HANDOFF_SECTION + STATE
+  )
+  return body.rstrip("\n") + "\n"
 
 
 def instructions_text(finish: str = "done") -> str:
@@ -208,6 +241,3 @@ def instructions_text(finish: str = "done") -> str:
   if finish == "handoff":
     return INSTRUCTIONS.replace(LOOP, loop_text("handoff"), 1)
   return INSTRUCTIONS
-
-
-INSTRUCTIONS = f"{TRACKING_RULE}\n\n" + INSTRUCTIONS

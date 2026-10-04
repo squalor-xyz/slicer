@@ -318,12 +318,61 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertNotIn("all projects", window.lower())
 
   def test_Instructions_CommandExamples_AreAcceptedByTheParser(self) -> None:
-    commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS)
+    commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS + ai.skill_text())
     self.assertTrue(commands)
     parser = cli.build_parser()
     for command in commands:
       with self.subTest(command=command):
         parser.parse_args(shlex.split(command)[1:])
+
+  def test_Instructions_Rest_LeavesOutEverySkillBlock(self) -> None:
+    text = ai.rest_text()
+    for block in (ai.TRACKING_RULE, ai.TRACKING, ai.LOOP, ai.SPEC_GAP, ai.EXITS, ai.HANDOFF_STEP):
+      self.assertNotIn(block, text)
+    for heading in (
+      "## Read the project first",
+      "## Plan and record agreed work",
+      "## Hand off for review",
+      "## State and command results",
+    ):
+      self.assertIn(heading, text)
+    self.assertIn("Do not combine `--ready` and `--show`.", text)
+
+  def test_Instructions_Rest_IsSmallerThanHalfOfTheFullText(self) -> None:
+    self.assertLess(len(ai.rest_text()), len(ai.INSTRUCTIONS) * 0.6)
+
+  def test_Instructions_Full_IsUnchangedByTheSplit(self) -> None:
+    expected = (
+      f"{ai.TRACKING_RULE}\n\n"
+      + ai.INTRO + ai.PLAN + ai.TRACKING + "\n"
+      + "## Implement one slice\n\n" + ai.LOOP + ai.SPEC_GAP + "\n" + ai.IMPLEMENT_MORE
+      + ai.HANDOFF_SECTION + ai.STATE + ai.EXITS
+    )
+    self.assertEqual(ai.INSTRUCTIONS, expected)
+    self.assertIn(ai.loop_text("handoff"), ai.instructions_text("handoff"))
+
+  def test_Instructions_RestFlag_TextAndJson(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, err = repo.run("ai", "instructions", "--rest")
+      self.assertEqual(code, 0)
+      self.assertEqual(err, "")
+      self.assertEqual(text, ai.rest_text())
+      code, out, _err = repo.run("ai", "instructions", "--rest", "--json")
+      self.assertEqual(code, 0)
+      self.assertEqual(json.loads(out), {"instructions": text})
+      for argv in (("ai", "--rest"), ("ai", "--rest", "instructions")):
+        with self.subTest(argv=argv):
+          code, again, _err = repo.run(*argv)
+          self.assertEqual(code, 0)
+          self.assertEqual(again, text)
+
+  def test_Skill_LastLine_PointsAtRest(self) -> None:
+    last = [line for line in ai.skill_text().splitlines() if line.strip()][-1]
+    self.assertEqual(
+      last,
+      "For planning, filing, claims, and review, run `slicer ai instructions --rest`; "
+      "it leaves out what this skill already says.",
+    )
 
   def test_AgentsGuide_UsesTheBoundedPickup_NotNextThenShow(self) -> None:
     text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")

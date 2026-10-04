@@ -4619,7 +4619,7 @@
       "id": "s176",
       "title": "Let the skill point at only the instructions it does not already carry",
       "short_title": "Let the skill point at only the instructions it does not already carry",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4638,7 +4638,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
