@@ -668,6 +668,54 @@ class NotesPanelTests(unittest.TestCase):
     self.assertTrue(any(l.text == "a note" and l.entry == note_entry for l in panel))
 
 
+class ClaimDisplayTests(unittest.TestCase):
+  def test_Panel_ClaimOwnerOrDash_IsNotAnEntry(self) -> None:
+    state = example()
+    state.index.require("S02").claim_owner = "Ada Lovelace"
+    claimed = tui.panel(state, "S02")
+    line = next(l for l in claimed if l.text.startswith("claim"))
+    self.assertEqual(line.text, "claim      Ada Lovelace")
+    self.assertIsNone(line.entry)
+    self.assertEqual(line.role, "normal")
+    plain = tui.panel(state, "S04")
+    self.assertTrue(any(l.text == "claim      -" and l.entry is None for l in plain))
+    self.assertNotIn("claim", [e.name for e in tui.entries(state, "S02")])
+
+  def test_Rows_LongestVisibleLabel_KeepsColumnsAligned(self) -> None:
+    state = example()
+    state.index.require("S04").status = "reviewing"
+    state.index.require("S02").status = "started"
+    rows = tui.item_rows(state, list(state.index.items))
+    by_id = {r.target: r for r in rows}
+    wide = by_id["S02"].text.index("P:")
+    self.assertEqual(by_id["S04"].text.index("P:"), wide)
+    self.assertLess(by_id["S04"].text.index("reviewing"), wide)
+    short = tui.item_rows(state, [state.index.require("S02")])
+    self.assertEqual(wide - short[0].text.index("P:"), len("reviewing") - 7)
+
+  def test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn(self) -> None:
+    state = example()
+    state.index.require("S02").claim_owner = "Ada Lovelace"
+    state.index.require("S03").depends_on = ["S02"]
+    state.index.items.append(Item(
+      "S05", "Ready for review", "review", depends_on=["S02"], claim_owner="Ada Lovelace",
+    ))
+    state.index.require("S04").status = "reviewing"
+    rows = tui.item_rows(state, [
+      state.index.require(i) for i in ("S02", "S03", "S04", "S05")
+    ])
+    by_id = {r.target: r for r in rows}
+    self.assertIn("!", by_id["S03"].text)
+    self.assertIn("!", by_id["S05"].text)
+    self.assertNotIn("!", by_id["S02"].text)
+    self.assertNotIn("!", by_id["S04"].text)
+    for row in rows:
+      self.assertNotIn("Ada", row.text)
+      self.assertNotIn("claim", row.text)
+    self.assertEqual(tui.key_action("v"), "view")
+    self.assertEqual([b.action for b in tui.BINDINGS if "v" in b.keys], ["view"])
+
+
 class QueueViewTests(unittest.TestCase):
   def test_View_CyclesInWorkAndReview_AndReturnsToTheInitialSet(self) -> None:
     state = example()

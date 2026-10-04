@@ -15,7 +15,7 @@ from test_tui import Screen, example, type_keys
 
 class Terminal:
   A_NORMAL, A_BOLD, A_REVERSE, A_DIM = 0, 1, 2, 4
-  COLOR_CYAN, COLOR_GREEN, COLOR_YELLOW, COLOR_RED = 6, 2, 3, 1
+  COLOR_CYAN, COLOR_GREEN, COLOR_YELLOW, COLOR_RED, COLOR_MAGENTA = 6, 2, 3, 1, 5
   COLORS, COLOR_PAIRS = 8, 8
   error = curses.error
 
@@ -70,18 +70,49 @@ class TuiStyleTests(unittest.TestCase):
       ("working", False, "started"), ("working", True, "blocked"),
       ("shipped", True, "done"), ("waiting", True, "parked"),
       ("done", False, "normal"), ("custom", True, "normal"),
+      ("review", False, "review"), ("review", True, "review"),
     ):
       with self.subTest(status=status, blocked=blocked):
         self.assertEqual(tui_style.status_role(status, blocked, cfg), expected)
+    cfg.review_status = ""
+    self.assertEqual(tui_style.status_role("review", True, cfg), "normal")
+    cfg.review_status = "ready"
+    self.assertEqual(tui_style.status_role("ready", False, cfg), "review")
+    self.assertEqual(tui_style.status_role("reviewing", True, cfg), "started")
 
   def test_Palette_BasicColors_UsesDefaultBackground(self) -> None:
     terminal = Terminal()
     palette = tui_style.setup_palette(terminal, {})
     pairs = [args for name, args in terminal.calls if name == "init_pair"]
-    self.assertEqual(pairs, [(1, 6, -1), (2, 2, -1), (3, 3, -1), (4, 1, -1)])
+    self.assertEqual(pairs, [(1, 6, -1), (2, 2, -1), (3, 3, -1), (4, 1, -1), (5, 5, -1)])
     self.assertEqual(palette.attr("started"), terminal.color_pair(1))
     self.assertEqual(palette.attr("success"), palette.attr("done"))
     self.assertEqual(palette.attr("priority"), terminal.color_pair(3) | terminal.A_BOLD)
+    self.assertEqual(palette.attr("review"), terminal.A_BOLD | terminal.color_pair(5))
+    self.assertNotEqual(palette.attr("review"), palette.attr("started"))
+    self.assertNotEqual(palette.attr("review"), palette.attr("parked"))
+
+  def test_Palette_FivePairs_KeepsReviewBoldWithoutAFifthColor(self) -> None:
+    terminal = Terminal()
+    terminal.COLOR_PAIRS = 5
+    palette = tui_style.setup_palette(terminal, {})
+    pairs = [args for name, args in terminal.calls if name == "init_pair"]
+    self.assertEqual(pairs, [(1, 6, -1), (2, 2, -1), (3, 3, -1), (4, 1, -1)])
+    self.assertEqual(palette.attr("started"), terminal.color_pair(1))
+    self.assertEqual(palette.attr("review"), terminal.A_BOLD)
+
+  def test_Palette_FifthPairFailure_KeepsTheFourColorPalette(self) -> None:
+    class FifthPairFails(Terminal):
+      def init_pair(self, *args):
+        self.call("init_pair", *args)
+        if args[0] == 5:
+          raise curses.error("pair")
+
+    terminal = FifthPairFails()
+    palette = tui_style.setup_palette(terminal, {})
+    self.assertEqual(palette.attr("started"), terminal.color_pair(1))
+    self.assertEqual(palette.attr("review"), terminal.A_BOLD)
+    self.assertNotEqual(palette, tui_style.monochrome(terminal))
 
   def test_Palette_NoColor_SkipsAllColorInitialization(self) -> None:
     for value in ("1", "0", " "):
@@ -145,6 +176,27 @@ class TuiStyleTests(unittest.TestCase):
                         for _, x, text, attr in screen.styled if x == 0))
     first = next(iter(tui.FIELD_SPEC))
     self.assertTrue(any(text.startswith(f"> {first}") and attr == palette.focused
+                        for _, _, text, attr in screen.styled))
+
+  def test_Draw_ReviewStatus_DrawsTheWordInItsOwnRole(self) -> None:
+    state = example()
+    state.index.require("S04").status = "review"
+    view = tui.View.initial(state)
+    palette = tui_style.setup_palette(Terminal(), {})
+    screen = StyledScreen()
+    tui.draw(screen, state, view, palette)
+    self.assertTrue(any("S04" in text and "review" in text and attr == palette.attr("review")
+                        for _, _, text, attr in screen.styled))
+    while view.target != "S04":
+      view.handle(state, "j")
+    tui.draw(screen, state, view, palette)
+    self.assertTrue(any("status     review" in text and attr == palette.attr("review")
+                        for _, _, text, attr in screen.styled))
+    mono = tui_style.setup_palette(Terminal(), {"NO_COLOR": "1"})
+    self.assertEqual(mono.attr("review"), Terminal.A_BOLD)
+    screen = StyledScreen()
+    tui.draw(screen, state, view, mono)
+    self.assertTrue(any("status     review" in text and attr == Terminal.A_BOLD
                         for _, _, text, attr in screen.styled))
 
   def test_Draw_Feedback_PrefixAndColorFollowExplicitSeverity(self) -> None:

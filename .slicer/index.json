@@ -4515,7 +4515,7 @@
       "id": "s172",
       "title": "Show claim, blocked work, and review status in the TUI",
       "short_title": "Show claim, blocked work, and review status in the TUI",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4534,7 +4534,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

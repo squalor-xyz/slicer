@@ -16,7 +16,8 @@ def status_role(status: str, blocked: bool, config: Config) -> str:
   if blocked and status in (config.open_status, config.started_status):
     return "blocked"
   for role, value in (("started", config.started_status), ("started", config.reviewing_status),
-                      ("done", config.done_status), ("parked", config.parked_status)):
+                      ("done", config.done_status), ("parked", config.parked_status),
+                      ("review", config.review_status)):
     if value and status == value:
       return role
   return "normal"
@@ -40,7 +41,9 @@ def monochrome(terminal=None) -> Palette:
   roles = {name: terminal.A_NORMAL for name in (
     "normal", "started", "done", "parked", "success", "info"
   )}
-  roles.update({name: terminal.A_BOLD for name in ("heading", "field", "blocked", "priority", "error")})
+  roles.update({name: terminal.A_BOLD for name in (
+    "heading", "field", "blocked", "priority", "error", "review"
+  )})
   roles["dim"] = terminal.A_DIM
   return Palette(roles, terminal.A_REVERSE | terminal.A_BOLD, terminal.A_BOLD)
 
@@ -70,9 +73,21 @@ def setup_palette(terminal=None, environ=None) -> Palette:
     ), 1):
       for name in names:
         roles[name] |= terminal.color_pair(pair)
+    _review_color(terminal, roles)
     return Palette(roles, mono.focused, mono.inactive)
   except terminal.error:
     return mono
+
+
+def _review_color(terminal, roles: dict[str, int]) -> None:
+  """Magenta is optional. A failed fifth pair keeps the four-color palette."""
+  if terminal.COLOR_PAIRS < 6 or not hasattr(terminal, "COLOR_MAGENTA"):
+    return
+  try:
+    terminal.init_pair(5, terminal.COLOR_MAGENTA, -1)
+    roles["review"] |= terminal.color_pair(5)
+  except terminal.error:
+    return
 
 
 def clipped(text: str, width: int) -> str:
