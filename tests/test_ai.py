@@ -201,6 +201,7 @@ class AiInstructionsTests(unittest.TestCase):
     for argv, expected in (
       (("--help",), "onboarding instructions for coding agents"),
       (("ai", "--help"), "instructions"),
+      (("ai", "--help"), "skill"),
       (("ai", "instructions", "--json", "--help"), "warns on stderr"),
     ):
       with self.subTest(argv=argv), redirect_stdout(io.StringIO()) as out, \
@@ -215,11 +216,9 @@ class AiInstructionsTests(unittest.TestCase):
   def test_Instructions_InvalidSyntax_ReturnsAiUsageEnvelope(self) -> None:
     with support.TempRepo() as repo:
       for argv in (
-        ("ai", "--json"),
         ("ai", "unknown", "--json"),
         ("ai", "instructions", "--unknown", "--json"),
         ("ai", "instructions", "--render", "--json"),
-        ("ai", "--json", "instructions"),
       ):
         with self.subTest(argv=argv):
           code, out, err = repo.run(*argv)
@@ -228,9 +227,25 @@ class AiInstructionsTests(unittest.TestCase):
           self.assertEqual(error["code"], "usage")
           self.assertEqual(error["command"], "ai")
           self.assertIn("usage: slicer", err)
-      code, out, err = repo.run("ai")
-      self.assertEqual((code, out), (2, ""))
-      self.assertIn("usage: slicer", err)
+
+  def test_Ai_BareCommand_MatchesInstructions_IncludingJsonBeforeTheSubcommand(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      for flags in ((), ("--json",), ("--json", "--lean")):
+        with self.subTest(flags=flags):
+          bare = repo.run("ai", *flags)
+          named = repo.run("ai", "instructions", *flags)
+          self.assertEqual(bare[0], 0)
+          self.assertEqual(bare, named)
+      before = repo.run("ai", "--json", "instructions")
+      after = repo.run("ai", "instructions", "--json")
+      self.assertEqual(before[0], 0)
+      self.assertEqual(before, after)
+      skill = repo.run("ai", "skill", "--json")
+      skill_first = repo.run("ai", "--json", "skill")
+      self.assertEqual(skill[0], 0)
+      self.assertEqual(skill_first, skill)
+      self.assertNotEqual(skill[1], repo.run("ai", "--json")[1])
 
   def test_Skill_MatchesTheInstructionsLoop_AndTheCommittedFile(self) -> None:
     text = ai.skill_text()

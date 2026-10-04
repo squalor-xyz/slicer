@@ -4381,7 +4381,7 @@
       "id": "s167",
       "title": "Default bare slicer ai to instructions",
       "short_title": "Default bare slicer ai to instructions",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4400,7 +4400,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

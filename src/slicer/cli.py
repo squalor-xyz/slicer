@@ -50,10 +50,16 @@ _DESCRIPTION = _package_doc.splitlines()[0].split(" — ", 1)[1].removesuffix(".
 _ISSUES_URL = __url__ + "/issues"
 
 
-def _json_flags(parser: argparse.ArgumentParser) -> None:
-  parser.add_argument("--json", action="store_true", help="machine-readable output")
+def _json_flags(parser: argparse.ArgumentParser, *, suppress: bool = False) -> None:
+  """`--json` and `--lean`. A suppressed default does not overwrite an earlier one.
+
+  A flag typed before the subcommand is parsed by the parent. The copy on the
+  subcommand must not reset that value when the flag is absent there.
+  """
+  default = argparse.SUPPRESS if suppress else False
+  parser.add_argument("--json", action="store_true", default=default, help="machine-readable output")
   parser.add_argument(
-    "--lean", action="store_true",
+    "--lean", action="store_true", default=default,
     help="with --json, omit empty fields, a repeated short title, and an item path",
   )
 
@@ -1900,7 +1906,11 @@ def build_parser() -> argparse.ArgumentParser:
     return sp
 
   sp = sub.add_parser("ai", help="onboarding instructions for coding agents", parents=[common])
-  aisub = sp.add_subparsers(dest="ai_command", required=True)
+  # A missing subcommand is `instructions`. `--json` here is that command's
+  # flag, not a second payload. The subcommand copy suppresses its default.
+  _json_flags(sp)
+  sp.set_defaults(func=cmd_ai_instructions)
+  aisub = sp.add_subparsers(dest="ai_command", required=False)
   inner = aisub.add_parser(
     "instructions", help="print the agent quick start (no project needed)",
     description=(
@@ -1911,7 +1921,7 @@ def build_parser() -> argparse.ArgumentParser:
     parents=[common],
   )
   inner.set_defaults(func=cmd_ai_instructions)
-  _json_flags(inner)
+  _json_flags(inner, suppress=True)
   inner = aisub.add_parser(
     "skill", help="print the agent skill for Claude Code, Codex, and Grok",
     description=(
@@ -1921,7 +1931,7 @@ def build_parser() -> argparse.ArgumentParser:
     parents=[common],
   )
   inner.set_defaults(func=cmd_ai_skill)
-  _json_flags(inner)
+  _json_flags(inner, suppress=True)
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
