@@ -172,9 +172,10 @@ Projects can add statuses in `config.statuses`. `next` offers only open work and
 resumes started work; parked, review, reviewing, and custom statuses `draft` or
 `blocked` stay out. Hold an item back with a custom status, not a flag.
 
-`start` claims the item. `wt:NAME` marks one started in a sibling worktree;
-`next` skips those and reports them in `in_work_elsewhere`. `slicer list --json`
-shows every claim, and `slicer release ID` clears a claim without changing status.
+`start` claims the item. `wt:NAME` marks sibling work; `next` skips it
+(`in_work_elsewhere`). After a sibling handoff, main shows `wt:NAME` and
+`next` skips that item too. `slicer list --json` shows every claim, and
+`slicer release ID` clears a claim without changing status.
 Use `--owner NAME` on `start`, `next --start`, `handoff`,
 `release` and `done`, or set `SLICER_CLAIM_OWNER`; `slicer log --by NAME` shows
 what each did.

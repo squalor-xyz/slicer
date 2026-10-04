@@ -206,6 +206,20 @@ def _worktree_paths(root: Path) -> list[Path]:
   return paths
 
 
+def at_worktree_root(root: Path) -> bool:
+  """True when `root` is the git worktree, not a directory inside one.
+
+  Sibling checkouts are other roots of this repo. A project below the
+  worktree root is not those checkouts, and reading them would mix in
+  another project's items.
+  """
+  try:
+    here = _current_worktree(root)
+  except (FileNotFoundError, OSError):
+    return False
+  return here is not None and here == Path(root).resolve()
+
+
 def sibling_worktrees(root: Path) -> list[Path]:
   """Other checkouts of this repo, in stable path order."""
   try:

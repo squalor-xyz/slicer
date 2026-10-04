@@ -26,6 +26,10 @@ def _row(text: str, item_id: str) -> str:
   return next(line for line in text.splitlines() if item_id in line.split())
 
 
+def _claim(text: str, item_id: str) -> str:
+  return _row(text, item_id).split()[3]
+
+
 class WorktreeClaimTests(unittest.TestCase):
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo(git=True)
@@ -54,7 +58,8 @@ class WorktreeClaimTests(unittest.TestCase):
       payload = json.loads(out)
       self.assertIsNone(payload["item"])
       self.assertEqual(
-        payload["in_work_elsewhere"], [{"id": "S01", "worktree": "reviewer", "owner": ""}]
+        payload["in_work_elsewhere"],
+        [{"id": "S01", "worktree": "reviewer", "owner": "", "status": "reviewing"}],
       )
 
   def test_SiblingReviewing_IsInWorkElsewhere(self) -> None:
@@ -66,7 +71,8 @@ class WorktreeClaimTests(unittest.TestCase):
       payload = json.loads(repo.run("next", "--json")[1])
       self.assertEqual(payload["id"], "S02")
       self.assertEqual(
-        payload["in_work_elsewhere"], [{"id": "S01", "worktree": "other", "owner": ""}]
+        payload["in_work_elsewhere"],
+        [{"id": "S01", "worktree": "other", "owner": "", "status": "reviewing"}],
       )
 
   def test_List_SiblingStart_ShowsWorktreeAndJsonWithoutChangingStoredItem(self) -> None:
@@ -80,7 +86,7 @@ class WorktreeClaimTests(unittest.TestCase):
       self.assertEqual(repo.state().index.require("S01").status, "open")
       rows = {i["id"]: i for i in json.loads(repo.run("list", "--json")[1])}
       self.assertEqual(rows["S01"]["in_work_elsewhere"], [
-        {"worktree": "other", "owner": "Test"},
+        {"worktree": "other", "owner": "Test", "status": "started"},
       ])
       self.assertEqual(rows["S02"]["in_work_elsewhere"], [])
       self.assertNotIn("in_work_elsewhere", repo.state().index.require("S01").to_dict())
@@ -103,7 +109,9 @@ class WorktreeClaimTests(unittest.TestCase):
       _run(sibling, "release", "S01")
       self.assertIn("wt:other", _row(repo.run("list")[1], "S01"))
       row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S01")
-      self.assertEqual(row["in_work_elsewhere"], [{"worktree": "other", "owner": ""}])
+      self.assertEqual(row["in_work_elsewhere"], [
+        {"worktree": "other", "owner": "", "status": "started"},
+      ])
       repo.run("start", "S01")
       repo.run("release", "S01")
       line = _row(repo.run("list")[1], "S01")
@@ -143,6 +151,22 @@ class WorktreeClaimTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertEqual(json.loads(out)[0]["in_work_elsewhere"], [])
 
+  def test_ProjectBelowTheWorktreeRoot_IgnoresTheEnclosingIndex(self) -> None:
+    with self.repo() as repo:
+      _run(self.sibling(repo, "other"), "set", "S01", "--status", "done")
+      nested = repo.root / "nested"
+      nested.mkdir()
+      with support.isolated_discovery(nested):
+        code, _, err = _run(nested, "init")
+        self.assertEqual(code, 0, err)
+        code, _, err = _run(nested, "add", "one")
+        self.assertEqual(code, 0, err)
+        row = json.loads(_run(nested, "list", "--json")[1])[0]
+        self.assertEqual(row["in_work_elsewhere"], [])
+        payload = json.loads(_run(nested, "next", "--json")[1])
+        self.assertEqual(payload["id"], "S01")
+        self.assertNotIn("in_work_elsewhere", payload)
+
   def test_List_OutsideGit_HasNoSiblingLookup(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")
@@ -150,6 +174,110 @@ class WorktreeClaimTests(unittest.TestCase):
       code, out, err = repo.run("list", "--json")
       self.assertEqual(code, 0, err)
       self.assertEqual(json.loads(out)[0]["in_work_elsewhere"], [])
+
+  def test_ListAndNext_SiblingReview_ShowsWorktreeAndSkips(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      code, _, err = _run(sibling, "set", "S01", "--status", "review")
+      self.assertEqual(code, 0, err)
+      path = sibling / ".slicer/config.json"
+      cfg = json.loads(path.read_text(encoding="utf-8"))
+      cfg["statuses"]["review"] = "ready"
+      path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(_claim(out, "S01"), "wt:other")
+      self.assertEqual(_row(out, "S01").split()[2], "—")
+      rows = {i["id"]: i for i in json.loads(repo.run("list", "--json")[1])}
+      self.assertEqual(rows["S01"]["in_work_elsewhere"], [
+        {"worktree": "other", "owner": "", "status": "review"},
+      ])
+      code, out, err = repo.run("next")
+      self.assertEqual(code, 0, err)
+      self.assertTrue(out.startswith("S02"), out)
+      self.assertIn("skipped S01 (in work in wt:other)", out)
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S02")
+      self.assertEqual(payload["in_work_elsewhere"], [
+        {"id": "S01", "worktree": "other", "owner": "", "status": "review"},
+      ])
+      code, text, err = repo.run("status")
+      self.assertEqual(code, 0, err)
+      self.assertIn("skipped S01 (in work in wt:other)", text)
+      status = json.loads(repo.run("status", "--json")[1])
+      self.assertEqual(status["next"]["id"], "S02")
+      self.assertEqual(status["in_work_elsewhere"], payload["in_work_elsewhere"])
+
+  def test_ListAndNext_SiblingDone_ShowsWorktreeAndSkips(self) -> None:
+    with self.repo() as repo:
+      code, _, err = _run(self.sibling(repo, "other"), "set", "S01", "--status", "done")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(_claim(repo.run("list")[1], "S01"), "wt:other")
+      row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S01")
+      self.assertEqual(row["status"], "open")
+      self.assertEqual(row["in_work_elsewhere"], [
+        {"worktree": "other", "owner": "", "status": "done"},
+      ])
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S02")
+      self.assertEqual(payload["in_work_elsewhere"], [
+        {"id": "S01", "worktree": "other", "owner": "", "status": "done"},
+      ])
+
+  def test_MergedReviewAndDone_AreNotReported(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "set", "S01", "--status", "review")
+      repo.run("set", "S01", "--status", "review")
+      row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S01")
+      self.assertEqual(row["in_work_elsewhere"], [])
+      self.assertEqual(_claim(repo.run("list")[1], "S01"), "-")
+      payload = json.loads(repo.run("next", "--status", "review", "--json")[1])
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("in_work_elsewhere", payload)
+      _run(sibling, "set", "S01", "--status", "done")
+      repo.run("set", "S01", "--status", "done")
+      listed = json.loads(repo.run("list", "--status", "done", "--json")[1])
+      row = next(i for i in listed if i["id"] == "S01")
+      self.assertEqual(row["in_work_elsewhere"], [])
+      self.assertEqual(_claim(repo.run("list", "--status", "done")[1], "S01"), "-")
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual(payload["id"], "S02")
+      self.assertNotIn("in_work_elsewhere", payload)
+
+  def test_StaleOpenSibling_DoesNotMarkDoneOrReviewHere(self) -> None:
+    with self.repo() as repo:
+      self.sibling(repo, "other")
+      repo.run("set", "S01", "--status", "done")
+      listed = json.loads(repo.run("list", "--status", "done", "--json")[1])
+      row = next(i for i in listed if i["id"] == "S01")
+      self.assertEqual(row["in_work_elsewhere"], [])
+      self.assertEqual(_claim(repo.run("list", "--status", "done")[1], "S01"), "-")
+    with self.repo() as repo:
+      self.sibling(repo, "other")
+      repo.run("set", "S01", "--status", "review")
+      row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S01")
+      self.assertEqual(row["in_work_elsewhere"], [])
+      self.assertEqual(_claim(repo.run("list")[1], "S01"), "-")
+      payload = json.loads(repo.run("next", "--status", "review", "--json")[1])
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("in_work_elsewhere", payload)
+
+  def test_EmptyReviewStatus_DoesNotCountReview_ButDoneStillCounts(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "set", "S01", "--status", "review")
+      path = sibling / ".slicer/config.json"
+      cfg = json.loads(path.read_text(encoding="utf-8"))
+      cfg["review_status"] = ""
+      path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
+      row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S01")
+      self.assertEqual(row["in_work_elsewhere"], [])
+      _run(sibling, "set", "S02", "--status", "done")
+      row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S02")
+      self.assertEqual(row["in_work_elsewhere"], [
+        {"worktree": "other", "owner": "", "status": "done"},
+      ])
 
   def test_List_EnumeratesOnceAndReadsEachSiblingIndexOnce(self) -> None:
     with self.repo() as repo:
@@ -180,7 +308,7 @@ class NextSkipsSiblingWorkTests(unittest.TestCase):
       payload = json.loads(repo.run("next", "--json")[1])
       self.assertEqual(payload["id"], "S02")
       self.assertEqual(payload["in_work_elsewhere"], [
-        {"id": "S01", "worktree": "other", "owner": "Test"},
+        {"id": "S01", "worktree": "other", "owner": "Test", "status": "started"},
       ])
 
   def test_NextReady_SiblingStart_ReportsTheSkip(self) -> None:
@@ -225,9 +353,16 @@ class NextSkipsSiblingWorkTests(unittest.TestCase):
   def test_Render_StaysLocal_WhenASiblingHasWork(self) -> None:
     with self.repo() as repo:
       repo.run("render")
-      _run(self.sibling(repo, "other"), "start", "S01")
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "start", "S01")
       code, out, err = repo.run("check")
       self.assertEqual(code, 0, out + err)  # the ROADMAP next pointer ignores siblings
+      _run(sibling, "set", "S01", "--status", "review")
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)
+      _run(sibling, "set", "S01", "--status", "done")
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)
 
 
 if __name__ == "__main__":
