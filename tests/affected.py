@@ -220,7 +220,11 @@ def run_suite(suite: unittest.TestSuite) -> int:
 class _TracingResult(unittest.TestResult):
   def __init__(self, root: Path) -> None:
     super().__init__()
-    self.root = root
+    # `_relative` compares resolved paths, so resolve the root the same way.
+    try:
+      self.root = root.resolve()
+    except OSError:
+      self.root = root
     self.seen: dict[str, set[str]] = {}
     self._current: set[str] | None = None
 
