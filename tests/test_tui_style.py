@@ -155,7 +155,9 @@ class TuiStyleTests(unittest.TestCase):
       view.notify("same wording", severity)
       screen = StyledScreen()
       tui.draw(screen, state, view, palette)
-      self.assertIn((22, 0, prefix + "same wording", palette.attr(severity)), screen.styled)
+      # Feedback sits one row above the shortcut strip. `v view` wraps that strip at 120.
+      feedback_y = screen.height - 1 - len(tui.shortcut_lines(screen.width))
+      self.assertIn((feedback_y, 0, prefix + "same wording", palette.attr(severity)), screen.styled)
 
   def test_Canvas_WideCombiningAndControlText_StaysInBounds(self) -> None:
     screen = StyledScreen(10, 12)

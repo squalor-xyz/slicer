@@ -33,6 +33,7 @@ BINDINGS = (
   Binding(("\t",), "Tab", "pane", "Switch queue/detail pane"),
   Binding(("/",), "/", "search", "Search item IDs and titles; Enter accepts, Esc cancels"),
   Binding(("f",), "f", "filter", "Filter items; Space toggles, Enter applies, Esc cancels"),
+  Binding(("v",), "v", "view", "Cycle the unfinished, in-work, and review queues"),
   Binding(("o",), "o", "sort", "Sort the view; j/k choose a field, Space flips direction, Enter applies"),
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
@@ -69,6 +70,7 @@ SHORTCUTS = (
   (("start",), "start"), (("done",), "done"), (("search",), "search"),
   (("filter",), "filters"), (("sort",), "sort"), (("clear",), "show all"), (("jump",), "jump"),
   (("down", "up"), "move"), (("help",), "help"), (("quit",), "quit"),
+  (("view",), "view"),
 )
 
 
@@ -593,6 +595,8 @@ class View:
   """Session-only interaction state; no terminal calls or persisted preferences."""
 
   filters: Filters
+  # "" is the unfinished stop. "in-work" and "review" name the status preset.
+  view_preset: str = ""
   sort_field: str = "ranked"
   sort_desc: bool = True
   sort_draft_desc: bool = True
@@ -657,7 +661,8 @@ class View:
     direction = "desc" if self.sort_desc else "asc"
     label = dict(SORT_FIELDS)[self.sort_field]
     summary = self.filters.summary()
-    return f"{count}/{len(state.index.items)} items  sort={label} {direction}  {summary}"
+    view = f"view={self.view_preset}  " if self.view_preset else ""
+    return f"{count}/{len(state.index.items)} items  sort={label} {direction}  {view}{summary}"
 
   def handle(self, state: State, key: str) -> ActResult:
     self.refresh(state)
@@ -714,8 +719,11 @@ class View:
       self.mode = "sort"
       self.sort_draft_desc = self.sort_desc
       self.choice_at = next(i for i, (name, _) in enumerate(SORT_FIELDS) if name == self.sort_field)
+    elif action == "view":
+      self._cycle_view(state)
     elif action == "clear":
       self.filters = Filters()
+      self.view_preset = ""
       self.notify("search and filters cleared; showing all items")
     elif action == "pane":
       self.focus = "right" if self.focus == "left" and entries(state, self.target) else "left"
@@ -729,7 +737,9 @@ class View:
         if self.selected in targets:
           at = max(0, min(targets.index(self.selected) + delta, len(targets) - 1))
           self.select(targets[at])
-    elif action in ("reorder_up", "reorder_down", "reorder_top", "move_to") and self.filters.active:
+    elif action in ("reorder_up", "reorder_down", "reorder_top", "move_to") and (
+      self.filters.active or self.view_preset
+    ):
       self.notify("reordering disabled while filtered; press c to clear search and filters")
     elif action == "move_to":
       if self.selected:
@@ -778,7 +788,7 @@ class View:
         state.config, state.index = fresh.config, fresh.index
         state.slices, state.slice_files = fresh.slices, fresh.slice_files
         self.wizard, self.mode = None, "normal"
-        self.filters, self.focus = Filters(), "left"
+        self.filters, self.focus, self.view_preset = Filters(), "left", ""
         self.refresh(state)
         self.select((ITEM, report.ids[0]))
         outcome = act(state, "r", "")
@@ -807,6 +817,7 @@ class View:
           hidden = not self.filters.matches(item)
           if hidden:
             self.filters = Filters()
+            self.view_preset = ""
           self.select((ITEM, item.id))
           self.focus = "left"
           self.notify(f"selected {item.id}" + (
@@ -879,6 +890,7 @@ class View:
     elif key in ("\n", "\r", "KEY_ENTER"):
       if self.draft is not None:
         self.filters = self.draft
+      self.view_preset = ""
       self.mode, self.draft = "normal", None
       self.notify("filters applied")
     elif key in ("j", "KEY_DOWN"):
@@ -896,6 +908,35 @@ class View:
         selected.add(value)
     self.refresh(state)
     return ActResult()
+
+  def _view_stops(self, state: State) -> list[str]:
+    """The cycle `v` walks. Empty roles are skipped, not shown as empty queues."""
+    stops = [""]
+    if state.config.in_work():
+      stops.append("in-work")
+    if state.config.review_status:
+      stops.append("review")
+    return stops
+
+  def _apply_view(self, state: State, name: str) -> None:
+    """Replace only the status filter. Search and the other groups stay."""
+    self.view_preset = name
+    if name == "":
+      self.filters.values["status"] = set(Filters.initial(state).values["status"])
+    elif name == "in-work":
+      self.filters.values["status"] = set(state.config.in_work())
+    else:
+      self.filters.values["status"] = {state.config.review_status}
+
+  def _cycle_view(self, state: State) -> None:
+    stops = self._view_stops(state)
+    if len(stops) == 1:
+      self.notify("no in-work or review status is configured")
+      return
+    at = stops.index(self.view_preset) if self.view_preset in stops else 0
+    name = stops[(at + 1) % len(stops)]
+    self._apply_view(state, name)
+    self.notify("showing unfinished items" if name == "" else f"view={name}")
 
 
 def draw(screen, state: State, view: View, palette: tui_style.Palette | None = None) -> None:

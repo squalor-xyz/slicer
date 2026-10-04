@@ -530,7 +530,7 @@ class Screen:
 class TuiDrawingTests(unittest.TestCase):
   def test_Draw_NormalView_CommonShortcutsPersistWithFeedback(self) -> None:
     hints = ['Tab panes', 'e edit', 'a add', 's start', 'd done', '/ search',
-             'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit']
+             'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit', 'v view']
     state = example()
     for height, width, rows in [(10, 80, 2), (24, 160, 1)]:
       for focus in ['left', 'right']:
@@ -666,3 +666,91 @@ class NotesPanelTests(unittest.TestCase):
     # the note's body line is tagged with its own entry index
     note_entry = next(e_i for e_i, e in enumerate(ents) if e.kind == "note")
     self.assertTrue(any(l.text == "a note" and l.entry == note_entry for l in panel))
+
+
+class QueueViewTests(unittest.TestCase):
+  def test_View_CyclesInWorkAndReview_AndReturnsToTheInitialSet(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.filters.query = "Find"
+    view.filters.values["status"] = {"parked"}
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "in-work")
+    self.assertEqual(view.filters.values["status"], state.config.in_work())
+    self.assertEqual(view.filters.query, "Find")
+    self.assertIn("view=in-work", view.status(state))
+    self.assertEqual(item_ids(view), [])  # the query does not match the started title
+    view.filters.query = ""
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "review")
+    self.assertEqual(view.filters.values["status"], {state.config.review_status})
+    self.assertIn("view=review", view.status(state))
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "")
+    self.assertEqual(
+      view.filters.values["status"], tui.Filters.initial(state).values["status"],
+    )
+    self.assertNotIn("view=", view.status(state))
+
+  def test_View_FilterApplyDropsTheName_AndShowsThePresetChecked(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.handle(state, "v")
+    view.handle(state, "f")
+    screen = Screen(24, 80)
+    tui.draw(screen, state, view)
+    text = "\n".join(line for _, line in screen.writes)
+    self.assertIn("[x] status      started", text)
+    self.assertIn("[x] status      reviewing", text)
+    self.assertIn("[ ] status      open", text)
+    view.handle(state, "\n")
+    self.assertEqual(view.view_preset, "")
+    self.assertEqual(view.filters.values["status"], state.config.in_work())
+    self.assertNotIn("view=", view.status(state))
+
+  def test_View_ClearAndHiddenJump_DropThePreset(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.handle(state, "v")
+    view.handle(state, "c")
+    self.assertEqual(view.view_preset, "")
+    self.assertFalse(view.filters.values["status"])
+    view.handle(state, "v")
+    view.handle(state, "g")
+    type_keys(view, state, "S02")
+    view.handle(state, "\n")
+    self.assertEqual(view.view_preset, "")
+    self.assertIn("cleared", view.message)
+    self.assertEqual(view.target, "S02")
+
+  def test_View_SkipsADisabledRole_AndSaysSoWhenBothAreUnavailable(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    state.config.review_status = ""
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "in-work")
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "")
+    state.config.started_status = ""
+    state.config.reviewing_status = ""
+    state.config.review_status = "review"
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "review")
+    view.handle(state, "v")
+    self.assertEqual(view.view_preset, "")
+    state.config.review_status = ""
+    before = set(view.filters.values["status"])
+    view.handle(state, "v")
+    self.assertIn("no in-work or review status", view.message)
+    self.assertEqual(view.view_preset, "")
+    self.assertEqual(view.filters.values["status"], before)
+
+  def test_View_DisablesReorder_AndHelpListsTheKey(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.handle(state, "v")
+    view.handle(state, "J")
+    self.assertIn("reordering disabled", view.message)
+    view.handle(state, "K")
+    self.assertIn("reordering disabled", view.message)
+    self.assertTrue(any(line.startswith("v ") and "Cycle" in line for line in tui.help_lines()))
