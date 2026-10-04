@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from unittest.mock import patch
 
 import support
 
@@ -54,6 +55,69 @@ class ConfigValidationTests(unittest.TestCase):
     with self.repo() as repo:
       poke(repo, "config.json", id={"prefix": "TASK-", "width": 3})
       self.assertEqual(repo.run("list")[0], 0)
+
+  def test_RequiredSectionOutsideSections_IsAConfigError(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", required_sections=["Nope"])
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("required_sections", err)
+      self.assertIn("Nope", err)
+
+  def test_RepeatedRequiredSection_IsAConfigError(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", required_sections=["Check", "Check"])
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("repeats", err)
+
+  def test_RequiredSections_MustBeAListOfNames(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", required_sections="Check")
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("list of section names", err)
+
+
+class SectionsCommandTests(unittest.TestCase):
+  def test_Sections_MarksRequiredRows_AndReturnsJson(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, text, err = repo.run("sections")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("Implement  required", text.splitlines())
+      self.assertIn("Check  required", text.splitlines())
+      self.assertIn("Why", text.splitlines())
+      payload = json.loads(repo.run("sections", "--json")[1])
+      self.assertEqual(payload["required"], ["Implement", "Check"])
+      self.assertIn("Why", payload["sections"])
+      self.assertEqual(payload["sections"][:1], ["Why"])
+
+  def test_Sections_MissingKey_StillReportsTheHistoricalPair(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      path = repo.root / ".slicer/config.json"
+      data = json.loads(path.read_text())
+      del data["required_sections"]
+      path.write_text(json.dumps(data) + "\n")
+      payload = json.loads(repo.run("sections", "--json")[1])
+      self.assertEqual(payload["required"], ["Implement", "Check"])
+
+  def test_Sections_DoesNotReadTheIndexLockOrWrite(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "A thing")
+      (repo.root / ".slicer/index.json").write_text("{", encoding="utf-8")
+      before = {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+           patch("slicer.store.read_index", side_effect=AssertionError("index")):
+        code, out, err = repo.run("sections", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["required"], ["Implement", "Check"])
+      after = {p.relative_to(repo.root): p.read_bytes()
+               for p in repo.root.rglob("*") if p.is_file()}
+      self.assertEqual(after, before)
 
 
 class SyncPatternTests(unittest.TestCase):

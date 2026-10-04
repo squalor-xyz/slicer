@@ -337,6 +337,7 @@ class RetiredStatusConfigTests(unittest.TestCase):
     "open_status": "open",
     "done_status": "done",
     "sections": ["Why"],
+    "required_sections": [],
     "done_dir": "done",
   }
 

@@ -358,6 +358,7 @@ class SkeletonTests(unittest.TestCase):
       path = repo.root / ".slicer/config.json"
       cfg = _json.loads(path.read_text())
       cfg["sections"] = ["Context", "Plan"]
+      cfg["required_sections"] = []
       path.write_text(_json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
       _, out, err = repo.run("import", "--skeleton")
       self.assertIn("### Context", out, err)

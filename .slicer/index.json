@@ -4407,7 +4407,7 @@
       "id": "s168",
       "title": "Name the project's sections and use them for readiness",
       "short_title": "Name the project's sections and use them for readiness",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4426,7 +4426,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

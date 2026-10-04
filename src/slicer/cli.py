@@ -632,7 +632,9 @@ def _unspecified_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
   lines: list[str] = []
   for item_id, missing in result.unspecified:
     names = " and ".join(missing)
-    edits = " and ".join(f"`slicer edit {item_id} --section {name}`" for name in missing)
+    edits = " and ".join(
+      f"`slicer edit {item_id} --section {shlex.quote(name)}`" for name in missing
+    )
     verb = "is" if len(missing) == 1 else "are"
     lines.append(f"skipped {item_id}: {names} {verb} empty. Fill them with {edits}.")
   return lines
@@ -1449,6 +1451,17 @@ def cmd_prose_show(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_sections(args: argparse.Namespace) -> int:
+  """The project's section names. Config only: no index, lock, or write."""
+  root = store.discover(Path(args.root).resolve() if args.root else None)
+  cfg = Config.load(root / store.DIR_NAME / CONFIG_NAME)
+  required = set(cfg.required_sections)
+  lines = [f"{name}  required" if name in required else name for name in cfg.sections]
+  _emit(args, {"sections": list(cfg.sections), "required": list(cfg.required_sections)},
+        "\n".join(lines))
+  return OK
+
+
 def cmd_goals(args: argparse.Namespace) -> int:
   """Project direction in one read: the goals and non_goals prose blocks."""
   state = _state(args)
@@ -1922,6 +1935,9 @@ def build_parser() -> argparse.ArgumentParser:
   )
   sp.add_argument("--context", action="store_true",
                   help="with --section, include title, dependencies, and scope boundary")
+
+  add("sections", cmd_sections,
+      "list configured section names, marking the ones next requires")
 
   sp = _strict_flag(_render_flag(add("add", _mutating(cmd_add), "append a roadmap item")))
   sp.add_argument("title")

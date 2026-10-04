@@ -60,11 +60,24 @@ DEFAULT_STATUSES: dict[str, str] = {
 }
 
 DEFAULT_SECTIONS = ["Why", "Files", "Failing tests", "Implement", "Check", "Git"]
+# What `next` treats as unspecified when the body is empty. A config written
+# before this key existed keeps that historical pair.
+DEFAULT_REQUIRED_SECTIONS = ["Implement", "Check"]
 
 def _claim_owner(value: object) -> str:
   if not isinstance(value, str):
     raise ConfigError("claim_owner must be a string")
   return value
+
+
+def _required_sections(d: Mapping[str, Any]) -> list[str]:
+  """Missing key keeps the historical Implement and Check check. No schema bump."""
+  if "required_sections" not in d:
+    return list(DEFAULT_REQUIRED_SECTIONS)
+  raw = d["required_sections"]
+  if not isinstance(raw, list) or any(not isinstance(name, str) for name in raw):
+    raise ConfigError("required_sections must be a list of section names")
+  return list(raw)
 
 
 DEFAULT_LATER = {
@@ -105,6 +118,9 @@ class Config:
   # Empty makes `start` on a review item move it to started, as before.
   reviewing_status: str = "reviewing"
   sections: list[str] = field(default_factory=lambda: list(DEFAULT_SECTIONS))
+  # Headings `next` skips a slice for when the body is empty. Empty means
+  # `next` does not skip a slice for an empty section.
+  required_sections: list[str] = field(default_factory=lambda: list(DEFAULT_REQUIRED_SECTIONS))
   boundary: str = "**Not in this slice:**"
   done_dir: str = "done"
   retired_dir: str = "retired"
@@ -168,6 +184,16 @@ class Config:
           f"reviewing_status {self.reviewing_status!r} is already another role's status; "
           "give reviewing its own status"
         )
+    seen_required: set[str] = set()
+    for name in self.required_sections:
+      if name not in self.sections:
+        raise ConfigError(
+          f"required_sections entry {name!r} is not in sections; "
+          f"known: {list(self.sections)}"
+        )
+      if name in seen_required:
+        raise ConfigError(f"required_sections repeats {name!r}")
+      seen_required.add(name)
     if len({self.done_dir, self.retired_dir, ""}) != 3:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
     if len(set(self.statuses.values())) != len(self.statuses):
@@ -208,6 +234,7 @@ class Config:
       "review_status": self.review_status,
       "reviewing_status": self.reviewing_status,
       "sections": list(self.sections),
+      "required_sections": list(self.required_sections),
       "boundary": self.boundary,
       "done_dir": self.done_dir,
       "retired_dir": self.retired_dir,
@@ -283,6 +310,7 @@ class Config:
       review_status=review,
       reviewing_status=reviewing,
       sections=list(d.get("sections", DEFAULT_SECTIONS)),
+      required_sections=_required_sections(d),
       boundary=d.get("boundary", "**Not in this slice:**"),
       done_dir=d.get("done_dir", "done"),
       retired_dir=d.get("retired_dir", "retired"),

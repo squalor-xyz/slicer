@@ -5,7 +5,7 @@ description: Drive a slicer roadmap. Use when asked to review a roadmap, plan wo
 
 1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
    to get the next item and only those sections. The headings are examples;
-   pass the section names the project configures.
+   pass the section names the project configures (`slicer sections`).
    Read its scope, dependencies, and acceptance checks. Resolve missing or
    ambiguous specifications before changing its status. If the specification is
    trusted and needs no clarification, `slicer next --start --ready --section "Implement" --section "Check" --json --lean` may

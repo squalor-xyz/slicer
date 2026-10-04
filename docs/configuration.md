@@ -21,6 +21,7 @@ and the slice files, the config is yours to hand-edit.
   "review_status": "review",
   "reviewing_status": "reviewing",
   "sections": ["Why", "Files", "Failing tests", "Implement", "Check", "Git"],
+  "required_sections": ["Implement", "Check"],
   "boundary": "**Not in this slice:**",
   "done_dir": "done",
   "retired_dir": "retired",
@@ -57,6 +58,7 @@ and the slice files, the config is yours to hand-edit.
 | `done_status` | `"done"` | The `done` target, **which folder a slice lives in**, dependency satisfaction | **No — breaking** |
 | `retired_status` | `"retired"` | The `remove --reason` target and the `retired/` folder | Yes if nothing is retired yet |
 | `sections` | `Why, Files, Failing tests, Implement, Check, Git` | The headings `promote` seeds. Nothing validates existing slices against it | **Yes** |
+| `required_sections` | `Implement, Check` | Headings `next` skips a slice for when the body is empty. A missing key means that pair. An empty list skips nothing. Each name must be in `sections` | **Yes** |
 | `boundary` | `"**Not in this slice:**"` | Seeds the separate boundary field; identifies inline boundaries in older input; `check` warns when the field is empty | Yes, but noisy |
 | `done_dir` | `"done"` | `.slicer/slices/done/`, and the subdirectory `migrate` reads finished slices from | **No — breaking** |
 | `retired_dir` | `"retired"` | `.slicer/slices/retired/` | **No — breaking** |
@@ -148,7 +150,7 @@ does not.
 
 ## Sections
 
-`sections` is only the list `promote` seeds into a new slice, in order. The boundary
+`sections` is only the list `promote` seeds into a new slice, in order. `required_sections` is the subset `next` treats as unspecified while a body is empty. Leave the key out and that check stays Implement and Check. Set it to `[]` and an empty section no longer holds a slice out of `next`. A name that is not in `sections` is a config error. The boundary
 is a separate slice field seeded from `boundary`. Existing slices are never touched, never validated, and
 may carry headings that appear nowhere here — both `import` and `migrate` count those as "off-schema" and
 keeps them exactly where they were.

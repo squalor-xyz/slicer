@@ -80,6 +80,7 @@ reproduce is never half-migrated.
 | `deps` | dependencies: unblocked items, or one item's edges |
 | `find` | search items by text |
 | `show` | print one slice |
+| `sections` | list configured section names, marking the ones next requires |
 | `add` | append a roadmap item |
 | `promote` | give an item a slice file |
 | `move` | reorder the queue |
