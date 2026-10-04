@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-185 items · — 14 · done 169 · retired 2
+185 items · — 13 · done 170 · retired 2
 
 v1.3.0 release
 
@@ -44,7 +44,7 @@ v1.3.0 release
 | 14 | [s178](slices/s178.md) | Print lean JSON without indentation | S | 1 | cli | efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22% | — |
 | 15 | [s179](slices/s179.md) | Steer agent reads to lean output and slim lean find rows | S | 1 | slicer | efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path | — |
 | 16 | [s180](slices/s180.md) | Print one command's JSON contract on demand | M | 2 | slicer | efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB | — |
-| 17 | [s181](slices/s181.md) | Resolve the trace root so the affected-map test passes under a symlinked TMPDIR | S | 1 | tests | efficiency review 2026-10-04: test_affected fails on macOS with the default TMPDIR because /var is a symlink to /private/var | — |
+| 17 | [s181](slices/s181.md) | Resolve the trace root so the affected-map test passes under a symlinked TMPDIR | S | 1 | tests | efficiency review 2026-10-04: test_affected fails on macOS with the default TMPDIR because /var is a symlink to /private/var | done |
 | 18 | [s182](slices/s182.md) | Tighten AGENTS.md for agent sessions | S | 1 | docs | efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts | — |
 | 19 | [s183](slices/s183.md) | Let a slice quote the exact text that names a flag it adds | S | 1 | slicer | dogfood 2026-10-04: filing s176 and s177 failed check because their target text names --rest and --check, the flags those slices add | — |
 | 20 | [s184](slices/s184.md) | Show sibling review and done work | M | 2 | slicer | bug report: a slice handed off in a worktree shows as open and unclaimed on main, and next offers it | done |
