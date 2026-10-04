@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-174 items · — 6 · done 166 · retired 2
+174 items · — 5 · done 167 · retired 2
 
 v1.3.0 release
 
@@ -30,7 +30,7 @@ v1.3.0 release
 |---|---|---|---|---|---|---|---|
 | 1 | [s165](slices/s165.md) | Show the in-work and review queues in one step | M | 2 | slicer | user request: list and the TUI can show these queues only by naming each status | done |
 | 2 | [s166](slices/s166.md) | Hint at show instead of printing the slice path | S | 1 | cli | another project opened a slice JSON file because next printed its path | done |
-| 3 | [s167](slices/s167.md) | Default bare slicer ai to instructions | S | 1 | cli | another project: bare slicer ai exits 2 even though its help offers onboarding instructions | — |
+| 3 | [s167](slices/s167.md) | Default bare slicer ai to instructions | S | 1 | cli | another project: bare slicer ai exits 2 even though its help offers onboarding instructions | done |
 | 4 | [s168](slices/s168.md) | Name the project's sections and use them for readiness | M | 2 | slicer | another project: section names in the agent guide are only examples, and next hardcodes Implement and Check | done |
 | 5 | [s169](slices/s169.md) | Put the tracking rule first and let a project choose how work finishes | M | 2 | slicer | another project: the tracking rule is buried, and the skill's last step is done, which their AGENTS.md forbids | done |
 | 6 | [s170](slices/s170.md) | Install the agent skill into the project | M | 2 | slicer | another project: slicer ai skill prints a SKILL.md and does not write it anywhere | — |

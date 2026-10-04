@@ -162,7 +162,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 
 | Command | Payload |
 |---|---|
-| `ai instructions` | `{instructions}`. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
+| `ai instructions` | `{instructions}`. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |
