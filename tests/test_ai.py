@@ -22,6 +22,7 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn("--section", ai.LOOP)
     self.assertIn("The headings are examples", ai.LOOP)
     self.assertIn("pass the section names the project configures", ai.LOOP)
+    self.assertIn("slicer sections", ai.LOOP)
     self.assertIn("Read its scope, dependencies, and acceptance checks", ai.LOOP)
     self.assertIn("before changing its status", ai.LOOP)
     self.assertIn("specification is\n   trusted and needs no clarification", ai.LOOP)

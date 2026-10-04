@@ -100,7 +100,8 @@ the concise, canonical quick start and works without project state. The
 prompts.
 
 To pick up existing work, run this from the checkout root; no installation is needed.
-The headings are examples; pass the section names the project configures:
+The headings are examples; pass the section names the project configures.
+Run `slicer sections` for this project's names:
 
 ```sh
 PYTHONPATH=src python3 -m slicer next --ready --section "Implement" --section "Check" --json --lean

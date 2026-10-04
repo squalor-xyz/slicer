@@ -312,6 +312,7 @@ class WizardPersistenceTests(unittest.TestCase):
     repo = self.repo()
     state = repo.state()
     state.config.sections = []
+    state.config.required_sections = []
     state.config.statuses["todo"] = "todo"
     state.config.open_status = "todo"
     jsonio.write(state.dir / "config.json", state.config.to_dict())

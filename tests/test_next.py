@@ -114,6 +114,63 @@ class NextVerboseTests(unittest.TestCase):
         "unspecified": [{"id": "S01", "missing": ["Check"]}],
       })
 
+  def test_Next_RequiredSections_ReplaceTheDefaultPair(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Needs a spec")
+      repo.run("promote", "S01")
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      data["required_sections"] = ["Why"]
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(json.loads(out)["unspecified"], [{"id": "S01", "missing": ["Why"]}])
+      repo.run("edit", "S01", "--section", "Why", "--text", "Because.")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("unspecified", payload)
+
+  def test_Next_SpacedRequiredHeading_IsQuotedInTheEditHint(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Needs a spec")
+      repo.run("promote", "S01")
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      data["required_sections"] = ["Failing tests"]
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      code, text, err = repo.run("next")
+      self.assertEqual(code, 2, err)
+      self.assertIn("skipped S01: Failing tests is empty.", text)
+      self.assertIn("`slicer edit S01 --section 'Failing tests'`", text)
+
+  def test_Next_EmptyRequiredSections_DoesNotSkipForAnEmptySection(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Needs a spec")
+      repo.run("promote", "S01")
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      data["required_sections"] = []
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["id"], "S01")
+      self.assertNotIn("unspecified", payload)
+
+  def test_Next_MissingRequiredSectionsKey_StaysImplementAndCheck(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Needs a spec")
+      repo.run("promote", "S01")
+      path = repo.root / ".slicer/config.json"
+      data = json.loads(path.read_text())
+      data.pop("required_sections", None)
+      path.write_text(json.dumps(data) + "\n")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(
+        json.loads(out)["unspecified"],
+        [{"id": "S01", "missing": ["Implement", "Check"]}],
+      )
+
   def test_Next_NoSlice_StaysEligible(self) -> None:
     with self.repo() as repo:
       repo.run("add", "bare row")

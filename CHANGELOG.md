@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer sections` lists the configured section names and marks the ones `next` requires. `required_sections` chooses those headings. A missing key still means Implement and Check. An empty list means an empty section does not hold a slice out of `next`.
+
 ## [1.2.0] - 2026-10-02
 
 ### Changed
