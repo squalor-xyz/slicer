@@ -1,14 +1,17 @@
 # Driving slicer from an agent
 
 Start with `slicer ai instructions` for the canonical concise onboarding guide.
-It is available wherever slicer is installed and works without an initialized project;
-it does not read project files or change state. `slicer ai instructions --json`
+It is available wherever slicer is installed and works without an initialized project.
+A readable project whose `implement_finish` is `handoff` changes step 4 to handoff;
+otherwise the text is generic, including when that key is missing. No project, or a
+config or index that cannot be read, prints the generic text, warns on stderr, and
+exits 0. It does not lock or write. `slicer ai instructions --json`
 returns `{"instructions": "..."}` with the same Markdown as the text output.
-`--root` is accepted but unused. This page provides the detailed reference and
+`--root` selects the project. This page provides the detailed reference and
 reusable prompts; the command is the single source for the quick start.
 
 `slicer ai skill` prints a `SKILL.md` for that implement loop and the exit-code
-rules. Claude Code, Codex, and Grok load the same file. Copy or symlink
+rules, using the same finish choice and the same fallback. Claude Code, Codex, and Grok load the same file. Copy or symlink
 `skills/slicer/SKILL.md` to `.claude/skills/slicer/SKILL.md`,
 `.agents/skills/slicer/SKILL.md` (Codex also reads `.codex/skills/`), or
 `.grok/skills/slicer/SKILL.md` (Grok also reads the Claude and `.agents` paths).
@@ -159,8 +162,8 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 
 | Command | Payload |
 |---|---|
-| `ai instructions` | `{instructions}` containing the generic Markdown quick start |
-| `ai skill` | `{skill}` containing the `SKILL.md` text |
+| `ai instructions` | `{instructions}`. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
+| `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |
 | `list` | array of items. Each item includes `claim`: `{"owner", "at"}` or null, plus derived `in_work_elsewhere`: an array of `{worktree, owner}` objects, or `[]`. Text adds a CLAIM column (local owner, `*` for local in-progress with no claim, `wt:NAME` for sibling work, `wt:NAME+N` for multiple siblings, otherwise `-`), and, when the roadmap declares or names any pass, a PASS column after it (the pass key, or `-`); JSON carries the pass as `fields.pass` either way. Local claim or started state takes precedence in text; JSON still lists all siblings. A done item is never shown as locally claimed. Sibling detection uses only this machine's Git worktrees and their `.slicer/index.json` files. Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. Default order is the `next` sequence (unblocked started, then unblocked open, by effective score), then the other visible rows by effective score. Repeatable `--flag` keeps an item that has any named flag and combines with `--status`, `--tree`, and `--pass`. `--sort score` is that same set in flat score order. `--sort effort` orders `fields.effort` from 1 to 3 and puts null last, without writing state. `sort --by effort` persists that order |

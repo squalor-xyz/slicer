@@ -80,6 +80,16 @@ def _required_sections(d: Mapping[str, Any]) -> list[str]:
   return list(raw)
 
 
+def _implement_finish(d: Mapping[str, Any]) -> str:
+  """Missing key stays done. No schema bump."""
+  if "implement_finish" not in d:
+    return "done"
+  raw = d["implement_finish"]
+  if not isinstance(raw, str):
+    raise ConfigError("implement_finish must be 'done' or 'handoff'")
+  return raw
+
+
 DEFAULT_LATER = {
   "group_sep": "; ",
   "item_sep": "/",
@@ -139,6 +149,8 @@ class Config:
   # Who `start` records when it claims an item. Empty means git user.name,
   # then the worktree directory name.
   claim_owner: str = ""
+  # `handoff` needs a review status to move the item to. Missing key stays `done`.
+  implement_finish: str = "done"
 
   def in_work(self) -> set[str]:
     """Statuses that mean someone is on an item: started, or reviewing."""
@@ -194,6 +206,13 @@ class Config:
       if name in seen_required:
         raise ConfigError(f"required_sections repeats {name!r}")
       seen_required.add(name)
+    if self.implement_finish not in ("done", "handoff"):
+      raise ConfigError("implement_finish must be 'done' or 'handoff'")
+    if self.implement_finish == "handoff" and not self.review_status:
+      raise ConfigError(
+        "implement_finish 'handoff' needs a review_status; "
+        "an empty review_status disables handoff"
+      )
     if len({self.done_dir, self.retired_dir, ""}) != 3:
       raise ConfigError("done_dir and retired_dir must differ, and neither may be empty")
     if len(set(self.statuses.values())) != len(self.statuses):
@@ -248,6 +267,7 @@ class Config:
       "git_check": self.git_check,
       "render_driver_check": self.render_driver_check,
       "claim_owner": self.claim_owner,
+      "implement_finish": self.implement_finish,
     }
 
   @staticmethod
@@ -322,6 +342,7 @@ class Config:
       git_check=bool(d.get("git_check", True)),
       render_driver_check=bool(d.get("render_driver_check", True)),
       claim_owner=_claim_owner(d.get("claim_owner", "")),
+      implement_finish=_implement_finish(d),
     )
     cfg.validate()
     return cfg

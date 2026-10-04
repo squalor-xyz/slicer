@@ -4,8 +4,8 @@ Adding slicer to a project, from nothing to a rendered roadmap and a green CI ga
 
 For an AI agent, start with `slicer ai instructions` (or
 `slicer ai instructions --json`). This built-in guide is the concise, canonical
-onboarding; it explains the workflow and rules without requiring or reading project
-state. Consult the [agent reference](agents.md) for detailed command/JSON contracts
+onboarding. With no readable project the text is generic. A project can set
+`implement_finish` to `handoff` so step 4 is handoff. Consult the [agent reference](agents.md) for detailed command/JSON contracts
 and reusable prompts when you need them.
 
 Console transcripts show output with the project path shortened to `~/code/my-project`.

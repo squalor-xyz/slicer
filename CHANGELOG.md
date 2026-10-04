@@ -9,6 +9,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Added
 
 - `slicer sections` lists the configured section names and marks the ones `next` requires. `required_sections` chooses those headings. A missing key still means Implement and Check. An empty list means an empty section does not hold a slice out of `next`.
+- `implement_finish` chooses how the agent loop finishes: `done` (the default, including when the key is missing) or `handoff`. `handoff` is a config error when `review_status` is empty. `slicer ai instructions` and `slicer ai skill` use that choice when the project can be read, and otherwise print the generic text with a stderr warning. Both start with the rule to use slicer commands instead of opening tracking files.
 
 ## [1.2.0] - 2026-10-02
 

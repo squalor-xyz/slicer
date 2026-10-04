@@ -273,13 +273,30 @@ def _state(args: argparse.Namespace) -> store.State:
   return state
 
 
+def _ai_finish(args: argparse.Namespace) -> str:
+  """implement_finish when config and index both load. Otherwise done.
+
+  Read-only: no lock and no write. A miss warns and keeps the generic text.
+  """
+  root = Path(args.root).resolve() if getattr(args, "root", None) else None
+  try:
+    project = store.discover(root)
+    cfg = Config.load(project / store.DIR_NAME / CONFIG_NAME)
+    store.read_index(project)
+  except (OSError, SlicerError) as exc:
+    print(f"{exc}; printing the generic guide", file=sys.stderr)
+    return "done"
+  return cfg.implement_finish
+
+
 def cmd_ai_instructions(args: argparse.Namespace) -> int:
-  _emit(args, {"instructions": ai.INSTRUCTIONS}, ai.INSTRUCTIONS.rstrip("\n"))
+  text = ai.instructions_text(_ai_finish(args))
+  _emit(args, {"instructions": text}, text.rstrip("\n"))
   return OK
 
 
 def cmd_ai_skill(args: argparse.Namespace) -> int:
-  text = ai.skill_text()
+  text = ai.skill_text(_ai_finish(args))
   _emit(args, {"skill": text}, text.rstrip("\n"))
   return OK
 
@@ -1839,8 +1856,9 @@ def build_parser() -> argparse.ArgumentParser:
   inner = aisub.add_parser(
     "instructions", help="print the agent quick start (no project needed)",
     description=(
-      "Print generic agent instructions without reading or changing project state. "
-      "--root is accepted but unused."
+      "Print the agent quick start. A project with implement_finish handoff "
+      "changes step 4. No project, or a config or index that cannot be read, "
+      "prints the generic text and warns on stderr. Does not lock or write."
     ),
     parents=[common],
   )
@@ -1849,8 +1867,8 @@ def build_parser() -> argparse.ArgumentParser:
   inner = aisub.add_parser(
     "skill", help="print the agent skill for Claude Code, Codex, and Grok",
     description=(
-      "Print the SKILL.md for the implement loop. It needs no project. "
-      "--root is accepted but unused."
+      "Print the SKILL.md for the implement loop. Same project read and "
+      "fallback as instructions: warns on stderr, does not lock or write."
     ),
     parents=[common],
   )

@@ -3,6 +3,8 @@ name: slicer
 description: Drive a slicer roadmap. Use when asked to review a roadmap, plan work, take a slice, implement the next slice, or drive slicer.
 ---
 
+Do not open, search, parse, or edit tracking files; use the slicer commands.
+
 1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
    to get the next item and only those sections. The headings are examples;
    pass the section names the project configures (`slicer sections`).
@@ -17,7 +19,8 @@ description: Drive a slicer roadmap. Use when asked to review a roadmap, plan wo
 3. Review the changes and run `slicer check --json`. Fix problems before marking
    work complete; this tracking check does not replace code tests.
 4. Run `slicer done ID --note "Describe the verified outcome" --render --json`,
-   then `slicer check --json`. Report results and any remaining limitations.
+   then `slicer check --json`. If `implement_finish` is `handoff`, run
+   `slicer handoff ID --render --json` instead and do not run done.
 
 If `next` JSON includes `unspecified`, those ids are not ready. Fill each missing section with `slicer edit ID --section NAME` and run `next` again. Do not invent the section body.
 
