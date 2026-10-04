@@ -4355,7 +4355,7 @@
       "id": "s166",
       "title": "Hint at show instead of printing the slice path",
       "short_title": "Hint at show instead of printing the slice path",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4374,7 +4374,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

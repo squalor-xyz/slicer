@@ -574,7 +574,7 @@ S03  Cache the parsed config
 ```console
 $ slicer next
 S01  Parse the config file
-     ~/code/my-project/.slicer/slices/S01.json
+     (run `slicer show S01`)
 ```
 
 `next` is the highest-priority *startable* item: the highest effective score among items

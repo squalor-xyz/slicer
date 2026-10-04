@@ -716,7 +716,20 @@ def _append_blocked(lines: list[str], blocked: list[dict[str, object]]) -> None:
     lines.append("Blocked   none")
 
 
-def _next_fields(state: store.State, item: model.Item) -> tuple[dict[str, object], list[str]]:
+def _append_slice_hint(
+  lines: list[str], item: model.Item, path: object, show_path: bool,
+) -> None:
+  """Point text at `show`. The path is opt-in so the line is not a file to open."""
+  if not path:
+    return
+  lines.append(f"     (run `slicer show {item.id}`)")
+  if show_path:
+    lines.append(f"     {path}")
+
+
+def _next_fields(
+  state: store.State, item: model.Item, *, show_path: bool = False,
+) -> tuple[dict[str, object], list[str]]:
   """The plain `next` object (item record, path, effective score) and its lines."""
   eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
@@ -726,8 +739,7 @@ def _next_fields(state: store.State, item: model.Item) -> tuple[dict[str, object
     f"{item.id}  {item.display_title()}",
     f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
   ]
-  if path:
-    lines.append(f"     {path}")
+  _append_slice_hint(lines, item, path, show_path)
   return payload, lines
 
 
@@ -753,8 +765,7 @@ def _ready_entry(
     f"{item.id}  {item.display_title()}",
     f"     score {eff}{'^' if eff > item.score else ''} · {state.config.status_label(item.status)}",
   ]
-  if path:
-    lines.append(f"     {path}")
+  _append_slice_hint(lines, item, path, bool(getattr(args, "path", False)))
   if sl is None:
     lines.append(f"     (no slice yet; run `slicer promote {item.id}`)")
   else:
@@ -842,7 +853,7 @@ def cmd_next(args: argparse.Namespace) -> int:
   if args.ready:
     _emit_ready(args, state, item, result)
     return OK
-  payload, lines = _next_fields(state, item)
+  payload, lines = _next_fields(state, item, show_path=bool(args.path))
   _note_skips(payload, lines, result)
   if args.show:
     # Fold the follow-up `show ID` into this one call: an agent picking up work
@@ -893,7 +904,7 @@ def _cmd_next_batch(
   else:
     entries = []
     for item in items:
-      entry, item_lines = _next_fields(state, item)
+      entry, item_lines = _next_fields(state, item, show_path=bool(args.path))
       entries.append(entry)
       lines.extend(item_lines)
     payload = {"items": entries, "blocked": blocked}
@@ -1949,6 +1960,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="with --ready, return only this section (repeatable)")
   sp.add_argument("--owner", help="with --start, who to claim as (overrides SLICER_CLAIM_OWNER and claim_owner)")
   sp.add_argument("--status", help="draw from this queue instead; only the review status is supported")
+  sp.add_argument("--path", action="store_true",
+                  help="also print the slice file path (text only; JSON is unchanged)")
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 
