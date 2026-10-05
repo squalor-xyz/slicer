@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-213 items · — 20 · done 191 · retired 2
+213 items · — 19 · done 191 · retired 3
 
 v1.4.0 release
 
@@ -63,7 +63,7 @@ v1.3.0 release
 | 21 | [s172](slices/s172.md) | Show claim, blocked work, and review status in the TUI | M | 2 | tui | user request: the TUI cannot show who has a slice, and review rows are easy to miss | done |
 | 22 | [s173](slices/s173.md) | Hand off, reject, and release from the TUI | M | 2 | tui | user request: handoff is CLI-only, so the TUI cannot finish or return a review | done |
 | 23 | [s174](slices/s174.md) | Keep the slice path out of next --show text | S | 1 | cli | next --show still printed .slicer/slices/S01.json in the generated banner while checking s166 | done |
-| 24 | [s175](slices/s175.md) | Hint to commit worktree handoff state | S | 1 | cli | bug report: handoff state exists only as uncommitted .slicer changes in the worktree | — |
+| 24 | [s175](slices/s175.md) | Hint to commit worktree handoff state | S | 1 | cli | bug report: handoff state exists only as uncommitted .slicer changes in the worktree · Not worth implementing for v1.3 (owner decision 2026-10-05). The stderr hint would fire on every done/handoff in a worktree, which is every slice under the worktree-per-claim rule, at the point where the .slicer change is always uncommitted until landing. Plain git worktree remove already refuses a worktree with modified files, so loss needs --force or rm -rf, and main already shows a sibling's review or done work as wt:NAME (s184). The spec's instruction to commit conflicts with the owner-authorizes-commits rule unless reworded. Upstream feedback endorsed but did not request it. | retired |
 | 25 | [s176](slices/s176.md) | Let the skill point at only the instructions it does not already carry | S | 1 | slicer | efficiency review 2026-10-04: 46% of ai instructions repeats the skill the agent just loaded | done |
 | 26 | [s177](slices/s177.md) | Check tracking state as part of done and handoff | M | 2 | cli | efficiency review 2026-10-04: the implement loop runs slicer check twice around done, an extra tool call or two per slice | done |
 | 27 | [s178](slices/s178.md) | Print lean JSON without indentation | S | 1 | cli | efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22% | done |

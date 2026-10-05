@@ -4607,7 +4607,7 @@
       "id": "s175",
       "title": "Hint to commit slicer state after a handoff in a worktree",
       "short_title": "Hint to commit worktree handoff state",
-      "status": "open",
+      "status": "retired",
       "has_slice": true,
       "depends_on": [],
       "notes": [
@@ -4624,7 +4624,7 @@
         "findings": "bug report: handoff state exists only as uncommitted .slicer changes in the worktree",
         "pass": "v1.3",
         "group": "",
-        "reason": "",
+        "reason": "Not worth implementing for v1.3 (owner decision 2026-10-05). The stderr hint would fire on every done/handoff in a worktree, which is every slice under the worktree-per-claim rule, at the point where the .slicer change is always uncommitted until landing. Plain git worktree remove already refuses a worktree with modified files, so loss needs --force or rm -rf, and main already shows a sibling's review or done work as wt:NAME (s184). The spec's instruction to commit conflicts with the owner-authorizes-commits rule unless reworded. Upstream feedback endorsed but did not request it.",
         "importance": 1,
         "urgency": 1,
         "effort": 1,

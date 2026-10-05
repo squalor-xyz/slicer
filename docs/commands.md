@@ -101,8 +101,10 @@ column. The rendered roadmap does not read siblings.
 
 Canonical state remains git-tracked JSON in each checkout's `.slicer/`; coordination
 happens through git. Commit tracking changes with the work before removing its worktree,
-when the owner authorizes committing. The automatic handoff/done reminder is pending
-in [s175](../.slicer/render/slices/s175.md). The sibling allocation floor and collision
+when the owner authorizes committing. No automatic handoff/done reminder is planned
+([s175](../.slicer/render/slices/s175.md) was retired): `git worktree remove` refuses a
+worktree with modified files unless forced, and `list` shows a sibling's review or done
+work as `wt:NAME`. The sibling allocation floor and collision
 warning shipped in [s185](../.slicer/render/slices/s185.md): `add`, `import`, and `next-id`
 use the higher of this checkout's `next_id` and the highest matching-prefix `next_id`
 visible in local sibling worktrees. This does not reserve ids across simultaneous
