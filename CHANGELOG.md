@@ -6,15 +6,20 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-05
+
 ### Fixed
 
 - `slicer show ID --context` without `--section` still exits 2 with code `usage`, and its message now names the fix: pass `--section NAME`, for example `--section Implement`, and `slicer sections` lists the names.
 - `slicer list` and `slicer status` text report an open item that exists only in a sibling git worktree, under an `Only in a sibling` heading with one `ID  worktree  title` row each. `status --json` adds `only_in_sibling`, `[{id, title, worktree, status}]`, only when non-empty. `list --json` stays a bare array of items. A sibling row that is claimed or in work stays in `in_work_elsewhere`, and a done or review row is not listed. Before, an unclaimed open item filed in a sibling and never committed was invisible here and `check` stayed green. `check`, `next` and `in_work_elsewhere` are unchanged.
 - `slicer next --show` text prints the slice without its generated banner, which named `.slicer/slices/ID.json` and invited a read of the tracking file. `slicer show`, the files under `.slicer/render/slices/`, and the JSON from `next` and `next --show` (including `path`) are unchanged. `render.slice_body` returns the slice without the banner, and `render_slice` adds it.
 - `slicer prose list`, `show`, and `edit` accept a pass key that contains dots. The field is the last segment of `pass.<key>.<field>`, so `pass.v1.1.heading` addresses pass `v1.1`. Before, `prose list` exited 2 on any project with such a pass. An unknown field or an empty key is still an error that names the valid forms.
+- The affected-map test no longer fails on macOS with the default `TMPDIR`. The tracer now resolves its root, which `/var` (a symlink to `/private/var`) had left unresolved. A regression test covers a symlinked root on any platform.
 
 ### Changed
 
+- `slicer list` orders by declared pass within each readiness group: unblocked in-work, then unblocked open, then other visible rows, with parked last. Within a group, declared pass order comes first, then descending effective score, then stored queue order. Empty and undeclared pass keys rank after every declared pass. Pass labels are not parsed as versions, so declare passes in the order they should be worked. Text and JSON output and filtered views follow this order. `--sort score` and `--sort effort` override it, and `next` still selects by effective score. Without declared passes, the order is unchanged.
+- The documentation declares git-tracked JSON under `.slicer/` the permanent canonical store. Any future database may only be a gitignored, rebuildable cache that is never read back as authority, and `~/.slicer/` is not a state directory. Coordination stays in git.
 - `attempts` counts fresh implementation starts once, including explicit starts from custom queues. Rejection no longer increments it; start → reject → restart records two attempts. Resumes, review claims, and `set --status` do not count. Stored historical values and schema stay unchanged; historical counts may overcount, and owners may correct them with `set ID --attempts N` before adopting a cap. Counts are not reconstructed from history.
 - Done-mode `slicer ai instructions` and `slicer ai skill` say step 4 is the finish. Handoff mode keeps the review-and-merge closer. The shared tracking block no longer says both.
 - The implement prompt in `docs/agents.md` and the pickup paragraph name one finish instead of each picking their own. The prompt tells the agent to run step 4 of `slicer ai instructions`: `slicer done ID --note ... --render` unless `implement_finish` is `handoff`, then `slicer handoff ID --render`, then `slicer check`, and to run done only after review and merge when step 4 was handoff. The prompt no longer passes `--check` to handoff. Getting started labels the handoff block as the `handoff` finish and section 6 as the default `done` finish, names `slicer ai instructions` as the agent loop, and passes `--render` in the `start` and `done` examples.
@@ -38,10 +43,6 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer sections` lists the configured section names and marks the ones `next` requires. `required_sections` chooses those headings. A missing key still means Implement and Check. An empty list means an empty section does not hold a slice out of `next`.
 - `slicer list --in-work` and `slicer list --review` show those queues in one step. `--in-work` is started plus reviewing when that role is set. `--review` is only the review status. The TUI `v` key cycles the same views around the unfinished set.
 - `implement_finish` chooses how the agent loop finishes: `done` (the default, including when the key is missing) or `handoff`. `handoff` is a config error when `review_status` is empty. `slicer ai instructions` and `slicer ai skill` use that choice when the project can be read, and otherwise print the generic text with a stderr warning. Both start with the rule to use slicer commands instead of opening tracking files.
-
-### Fixed
-
-- The affected-map test no longer fails on macOS with the default `TMPDIR`. The tracer now resolves its root, which `/var` (a symlink to `/private/var`) had left unresolved. A regression test covers a symlinked root on any platform.
 
 ## [1.2.0] - 2026-10-02
 
