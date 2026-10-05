@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 227,
+  "next_id": 228,
   "preamble": "",
   "passes": [
     {
@@ -5639,6 +5639,32 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s227",
+      "title": "Finish implementation with handoff so done is recorded only after landing",
+      "short_title": "Finish implementation with handoff so done is recorded only after landing",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "done-audit 2026-10-05: agents marked s220 and s225 done in worktrees before merge; both were set back by hand",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }
