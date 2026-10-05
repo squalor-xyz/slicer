@@ -16,6 +16,7 @@ from slicer.store import State
 @dataclass
 class CheckReport:
   stale_render: list[str] = field(default_factory=list)
+  stale_render_details: list[dict[str, object]] = field(default_factory=list)
   orphan_render: list[str] = field(default_factory=list)
   stale_sync: list[str] = field(default_factory=list)
   problems: list[str] = field(default_factory=list)
@@ -29,6 +30,7 @@ class CheckReport:
     return {
       "ok": self.ok,
       "stale_render": self.stale_render,
+      "stale_render_details": self.stale_render_details,
       "orphan_render": self.orphan_render,
       "stale_sync": self.stale_sync,
       "problems": self.problems,
@@ -41,6 +43,8 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
   diff = render.compare(expected, state.render_dir)
   report = CheckReport()
   report.stale_render = sorted(diff.missing + diff.differing)
+  by_file = {d.file: d for d in diff.details}
+  report.stale_render_details = [by_file[rel].to_dict() for rel in report.stale_render]
   report.orphan_render = list(diff.orphans)
 
   for finding in sync.apply(state.root, state.index, state.config, check_only=True):

@@ -192,7 +192,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `goals` | `{goals, non_goals}` |
 | `render` | `{written: [...]}` |
 | `sync` | array of `{target, path, stale, detail}` |
-| `check` | `{ok, stale_render, orphan_render, stale_sync, problems, warnings}`. `warnings` also names an id that a sibling git worktree holds under a different title (it would collide on merge); it does not change `ok` or the exit code |
+| `check` | `{ok, stale_render, stale_render_details, orphan_render, stale_sync, problems, warnings}`. `stale_render` stays the sorted list of paths; `stale_render_details` has one `{file, cause, detail}` per path in the same order. `cause` is `missing`, `renderer_format`, `unknown_provenance` (an unstamped legacy banner or an unreadable format), or `content`; `renderer_format` also carries `rendered_format` and `running_format`, and means the renderer's layout differs, so state or templates may also have changed. Run `slicer render` for any of them. `warnings` also names an id that a sibling git worktree holds under a different title (it would collide on merge); it does not change `ok` or the exit code |
 | `verify` | `{checked, git, errors, findings: [{level, item, message}]}` |
 | `stats` | `{total, completion, by_status, by_size, by_tree, by_pass, by_tree_status}`. `by_status` and `by_tree_status` are keyed by status key (`open`, `done`, …), the same value as an item's `status`, never by its configured display label; text output shows the labels. `status --json` carries the same `census`, and `import`/`migrate` key their `by_status` the same way |
 | `status` | `{next, census, blocked}`, plus `unspecified` and `in_work_elsewhere` when `next` would skip items, in the same shapes |

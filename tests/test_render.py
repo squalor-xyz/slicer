@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 import unittest
+from unittest.mock import patch
 
 import support
 
-from slicer import render, templates
+from slicer import render, store, templates
 from slicer.config import Config
 from slicer.errors import RenderError
 from slicer.model import Index, Item, PassInfo, Slice
@@ -234,6 +236,115 @@ class RenderTests(unittest.TestCase):
       self.assertIn("ROADMAP.html", out)
       self.assertEqual(repo.run("render")[0], 0)
       self.assertEqual(repo.run("check")[0], 0)
+
+  def _details(self, repo: support.TempRepo) -> tuple[int, dict]:
+    code, out, _ = repo.run("check", "--json")
+    return code, json.loads(out)
+
+  def _rewrite_header(self, repo: support.TempRepo, rel: str, old: str, new: str) -> None:
+    path = repo.root / ".slicer/render" / rel
+    text = path.read_text(encoding="utf-8")
+    self.assertIn(old, text.split("\n", 1)[0])
+    path.write_text(text.replace(old, new, 1), encoding="utf-8", newline="\n")
+
+  def test_Render_UnchangedInput_IsIdenticalAndIgnoresPackageVersion(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      state = store.load(repo.root)
+      first = render.plan(state)
+      with patch("slicer.__version__", "999.0.0"):
+        second = render.plan(state)
+      self.assertEqual(first, second)
+      for body in first.values():
+        self.assertNotIn(b"999.0.0", body)
+        self.assertIn(f"Render format: {render.RENDER_FORMAT}.".encode(), body.split(b"\n", 1)[0])
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Check_OlderRenderFormat_IsStaleAndNamesBothRevisions(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      self._rewrite_header(repo, "ROADMAP.md", "Render format: 1.", "Render format: 0.")
+      before = (repo.root / ".slicer/render/ROADMAP.md").read_bytes()
+      code, report = self._details(repo)
+      self.assertEqual(code, 1)
+      self.assertEqual(report["stale_render"], ["ROADMAP.md"])
+      (detail,) = report["stale_render_details"]
+      self.assertEqual(detail["file"], "ROADMAP.md")
+      self.assertEqual(detail["cause"], "renderer_format")
+      self.assertEqual((detail["rendered_format"], detail["running_format"]), (0, 1))
+      self.assertIn("slicer render", detail["detail"])
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("stale render: ROADMAP.md", out)
+      self.assertIn("render format 0", out)
+      self.assertIn("render format 1", out)
+      self.assertIn("slicer render", out)
+      self.assertEqual((repo.root / ".slicer/render/ROADMAP.md").read_bytes(), before)
+      repo.run("render")
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Check_SameFormatContentChange_ReportsContent(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      repo.write(".slicer/render/slices/S02.md", render.banner(".slicer/slices/S02.json") + "\n\nedited\n")
+      code, report = self._details(repo)
+      self.assertEqual(code, 1)
+      self.assertEqual(report["stale_render_details"][0]["cause"], "content")
+      self.assertNotIn("rendered_format", report["stale_render_details"][0])
+
+  def test_Check_MissingFile_ReportsMissing(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      (repo.root / ".slicer/render/slices/S02.md").unlink()
+      code, report = self._details(repo)
+      self.assertEqual(code, 1)
+      self.assertEqual(report["stale_render"], ["slices/S02.md"])
+      self.assertEqual(report["stale_render_details"][0]["cause"], "missing")
+
+  def test_Check_UnstampedOrMalformedBanner_ReportsUnknownProvenance(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      self._rewrite_header(repo, "ROADMAP.md", " Render format: 1.", "")
+      self._rewrite_header(repo, "ROADMAP.html", "Render format: 1.", "Render format: one.")
+      repo.write(".slicer/render/slices/S02.md", "hand written over a generated file\n")
+      code, report = self._details(repo)
+      self.assertEqual(code, 1)
+      causes = {d["file"]: d["cause"] for d in report["stale_render_details"]}
+      self.assertEqual(causes["ROADMAP.md"], "unknown_provenance")
+      self.assertEqual(causes["ROADMAP.html"], "unknown_provenance")
+      self.assertEqual(causes["slices/S02.md"], "unknown_provenance")
+      self.assertEqual(report["stale_render"], sorted(report["stale_render"]))
+      self.assertEqual(
+        [d["file"] for d in report["stale_render_details"]], report["stale_render"],
+      )
+
+  def test_Check_FormatMismatchWithChangedState_DoesNotClaimSoleCause(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      self._rewrite_header(repo, "slices/S02.md", "Render format: 1.", "Render format: 0.")
+      repo.run("add", "A new item")
+      code, report = self._details(repo)
+      self.assertEqual(code, 1)
+      by_file = {d["file"]: d for d in report["stale_render_details"]}
+      self.assertEqual(by_file["slices/S02.md"]["cause"], "renderer_format")
+      self.assertIn("state or templates may also have changed", by_file["slices/S02.md"]["detail"])
+      self.assertEqual(by_file["ROADMAP.md"]["cause"], "content")
+
+  def test_Render_LegacyBanner_StillOrphanAndForeignStillKept(self) -> None:
+    with self.repo() as repo:
+      repo.run("render")
+      repo.write(
+        ".slicer/render/slices/S99.md",
+        "<!-- GENERATED by slicer. Source: x. Run `slicer render`. Do not edit. -->\n\nold\n",
+      )
+      repo.write(".slicer/render/NOTES.md", "hand written\n")
+      code, report = self._details(repo)
+      self.assertEqual(code, 1)
+      self.assertEqual(report["orphan_render"], ["slices/S99.md"])
+      self.assertEqual(report["stale_render"], [])
+      repo.run("render")
+      self.assertFalse((repo.root / ".slicer/render/slices/S99.md").exists())
+      self.assertEqual(repo.read(".slicer/render/NOTES.md"), "hand written\n")
 
 
 if __name__ == "__main__":
