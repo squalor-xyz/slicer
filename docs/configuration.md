@@ -235,6 +235,11 @@ substitution with no loops, no conditionals and no eval; an unknown placeholder 
 rather than rendering empty. Anything that repeats is flattened before it reaches a
 template.
 
+Row templates can use `{{discovered_from}}` for the raw source ID (empty when
+absent). `{{findings}}` includes the optional `discovered from ID` annotation,
+so existing default row templates show provenance without template changes.
+The browser roadmap shows the same annotation.
+
 ## Concurrency
 
 A mutating command holds an advisory lock on `.slicer/lock` for the length of its run, so

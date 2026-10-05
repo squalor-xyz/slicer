@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 @dataclass
@@ -182,6 +182,7 @@ class Item:
   trees: list[str] = field(default_factory=list)
   trees_literal: bool = False
   findings: str = ""
+  discovered_from: str = ""
   pass_key: str = ""
   group: str = ""
   reason: str = ""
@@ -262,6 +263,7 @@ class Item:
         "trees": list(self.trees),
         "trees_literal": self.trees_literal,
         "findings": self.findings,
+        "discovered_from": self.discovered_from,
         "pass": self.pass_key,
         "group": self.group,
         "reason": self.reason,
@@ -294,6 +296,7 @@ class Item:
       trees=list(f.get("trees", [])),
       trees_literal=bool(f.get("trees_literal", False)),
       findings=f.get("findings", ""),
+      discovered_from=_discovered_from(f.get("discovered_from", "")),
       pass_key=f.get("pass", ""),
       group=f.get("group", ""),
       reason=f.get("reason", ""),
@@ -302,6 +305,13 @@ class Item:
       effort=_optional_effort(f["effort"]) if "effort" in f else None,
       attempts=_attempts(f["attempts"]) if "attempts" in f else 0,
     )
+
+
+def _discovered_from(value: object) -> str:
+  """Historical items have no source; stored references must be strings."""
+  if not isinstance(value, str):
+    raise StateError("discovered_from must be a string", code="corrupt")
+  return value
 
 
 def _claim_parts(value: object) -> tuple[str, str]:

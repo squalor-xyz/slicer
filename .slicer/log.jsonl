@@ -1002,3 +1002,6 @@
 {"when": "2026-10-05T18:56:21Z", "item": "s207", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-05T19:34:11Z", "item": "s207", "action": "note", "from": "", "to": "", "note": "Correction after merging main (s209 took config schema 3): s"}
 {"when": "2026-10-05T19:35:57Z", "item": "s207", "action": "status", "from": "review", "to": "done", "note": "Verified: satisfies_dependencies config (schema 4) shared by next, batch, deps, list and TUI; 1261 tests OK, check and diff --check clean; merged to main.", "by": "Jon Robbins"}
+{"when": "2026-10-05T19:06:34Z", "item": "s210", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-05T19:13:09Z", "item": "s210", "action": "note", "from": "", "to": "", "note": "Ready for review: Added optional fields.discovered_from with"}
+{"when": "2026-10-05T19:13:10Z", "item": "s210", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

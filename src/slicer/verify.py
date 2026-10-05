@@ -120,6 +120,12 @@ def offline(state: State) -> VerifyReport:
         Finding("warn", item.id, f"no {cfg.boundary} boundary; scope is unbounded")
       )
 
+  for item in index.items:
+    if item.discovered_from and index.get(item.discovered_from) is None:
+      report.findings.append(Finding(
+        "error", item.id, f"discovered_from unknown id {item.discovered_from}",
+      ))
+
   for item_id, dep in graph.dangling(index):
     report.findings.append(Finding("error", item_id, f"depends on unknown id {dep}"))
   if cfg.retired_status and cfg.retired_status not in cfg.satisfying_statuses():

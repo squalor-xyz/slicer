@@ -146,6 +146,7 @@ $ slicer next --json
     ],
     "trees_literal": false,
     "findings": "G1",
+    "discovered_from": "",
     "pass": "",
     "group": "Phase 0 — groundwork",
     "reason": "",
@@ -163,7 +164,7 @@ Item `notes` remains a list of display strings. Additive `note_records` carries
 `{id, kind, text, created_at, attempt}` in that key order; `text` is the complete dated
 paragraph before adding the kind label. Historical strings retain their exact text,
 get stable item-local positional IDs, empty `created_at`, and null `attempt` on reads.
-The next index save persists those records under schema 4. New notes use stored UUIDs,
+The next index save persists those records under schema 5. New notes use stored UUIDs,
 UTC ISO8601 timestamps, and the item's current attempt count.
 
 Use `note ID --kind KIND --text TEXT` for a typed note; omitted kind is untyped.
@@ -177,7 +178,7 @@ include `notes` and `note_records`; section-only show payloads add those fields 
 
 Two shapes recur. An **item** is the object above minus `path` and `effective_score`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
-1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts fresh implementation starts from open or a custom queue into the configured started status. Resumes, review claims, rejection, and `set --status` do not increment it. Start → reject → restart records two attempts. Historical values are preserved and may overcount; history is not authoritative enough to reconstruct them. Owners may correct them with `set ID --attempts N` before adopting a cap. The index schema is 4, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
+1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts fresh implementation starts from open or a custom queue into the configured started status. Resumes, review claims, rejection, and `set --status` do not increment it. Start → reject → restart records two attempts. Historical values are preserved and may overcount; history is not authoritative enough to reconstruct them. Owners may correct them with `set ID --attempts N` before adopting a cap. The index schema is 5, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
 they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
 `list --sort score`. `--json` without `--lean` is always this full shape.
 
@@ -363,6 +364,17 @@ about X?" — and see why each hit matched — before creating one.
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --importance 3 --urgency 2 --effort 2 --depends-on S01 --render`.
 Score what you file rather than leaving the 2/2 defaults, and say why in your reply.
+`add --discovered-from ID` records an existing source item in
+`fields.discovered_from`, with any status allowed. `list --discovered-from ID`
+filters by exact source and combines with other filters; an unknown ID is
+`no_such_item`, and zero matches succeeds. Outline input uses the single-value
+`discovered_from: ID` key and refuses unknown or prospective sources before
+writing the batch. Provenance neither blocks pickup nor changes scores.
+Missing historical fields load empty; `--lean` omits empty provenance. Source
+retirement keeps references valid; purge needs `--force` when referenced and
+then integrity validation reports the dangling source. Index saves stamp schema 5
+so older readers refuse rather than lose provenance.
+
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)
 and a self-edge, a new cycle, or a dependency on a retired item unless `satisfies_dependencies` lists the retired status (`state`). A dangling edge

@@ -86,6 +86,7 @@ status: parked
 | `status` | Any status key your config defines. Defaults to open |
 | `pass` | A pass group key, if the project uses passes |
 | `group` | A phase label rendered above the item |
+| `discovered_from` | One existing item ID, in any status; never a title or a prospective outline item |
 | `depends` | The **title** of another item, in this file or already in the roadmap |
 | `importance` | `1`–`3`, how important (default 2); drives the priority score |
 | `urgency` | `1`–`3`, how urgent (default 2); drives the priority score |
@@ -151,6 +152,11 @@ to change it.
 `.slicer/slices/done/`, so importing a roadmap that already has history does not leave
 `verify` complaining.
 
+**Discovery provenance uses existing ids.** `discovered_from: S01` stores the
+source in `Item.fields.discovered_from`. It is a single value, independent of
+`depends`; unknown sources refuse the entire outline before allocating IDs or
+writing anything. Sources cannot refer to items being created in that outline.
+
 **Dependencies resolve to ids.** `depends: Parse the config file` becomes
 `depends_on: ["S01"]`.
 
@@ -165,7 +171,7 @@ Import is all-or-nothing. Everything is validated before a byte is written.
 
 ```console
 $ slicer import roadmap.md
-slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, importance, urgency, effort
+slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, discovered_from, importance, urgency, effort
 ```
 
 **Anything the outline says that does not fit the project** is collected, reported
