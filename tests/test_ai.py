@@ -75,6 +75,13 @@ class AiInstructionsTests(unittest.TestCase):
       "slicer handoff ID --render --json",
     ):
       self.assertIn(command, text)
+    for command in (
+      "goals", "list", "status", "stats", "show ID", "next --ready", "find topic",
+      "prose list", "prose show goals", "log",
+    ):
+      self.assertIn(f"slicer {command} --json --lean", text)
+    self.assertNotIn("slicer check --json --lean", text)
+    self.assertIn("Use --lean on reads", text)
     self.assertIn("propose a roadmap item", text)
     self.assertIn("Do not switch to the tracking files.", text)
     self.assertIn("Source code", text)

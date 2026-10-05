@@ -1167,7 +1167,16 @@ def cmd_find(args: argparse.Namespace) -> int:
     match = _find_match(state, item, fields, needle)
     if match is not None:
       hits.append((item, match[0], match[1]))
-  payload = [i.to_dict() | {"match": {"field": f, "snippet": s}} for i, f, s in hits]
+  if args.json and args.lean:
+    payload = [
+      {
+        "id": i.id, "title": i.title, "status": i.status, "has_slice": i.has_slice,
+        "match": {"field": f, "snippet": s},
+      }
+      for i, f, s in hits
+    ]
+  else:
+    payload = [i.to_dict() | {"match": {"field": f, "snippet": s}} for i, f, s in hits]
   rows = _item_rows(state, [i for i, _, _ in hits])
   text = "\n".join(
     f"{row}\n      matched in {f}: {s}" for row, (_, f, s) in zip(rows, hits)

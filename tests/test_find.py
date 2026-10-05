@@ -107,6 +107,37 @@ class FindTests(unittest.TestCase):
       payload = json.loads(repo.run("find", "F9", "--in", "findings", "--json")[1])
       self.assertEqual(payload[0]["match"]["field"], "findings")
 
+  def test_FindLean_RowIsIdTitleStatusSliceAndMatch(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Zebra crossing")
+      _, out, _ = repo.run("find", "zebra", "--in", "title", "--json", "--lean")
+      rows = json.loads(out)
+      self.assertEqual(len(rows), 1)
+      self.assertEqual(set(rows[0]), {"id", "title", "status", "has_slice", "match"})
+      self.assertIs(rows[0]["has_slice"], False)
+      self.assertEqual(rows[0]["match"]["field"], "title")
+      _, out, _ = repo.run("find", "fourth thing", "--in", "title", "--json", "--lean")
+      rows = json.loads(out)
+      self.assertEqual(set(rows[0]), {"id", "title", "status", "has_slice", "match"})
+      self.assertIs(rows[0]["has_slice"], True)
+
+  def test_FindFull_KeepsTheWholeItem(self) -> None:
+    with self.repo() as repo:
+      _, out, _ = repo.run("find", "fourth thing", "--in", "title", "--json")
+      row = json.loads(out)[0]
+      for key in ("fields", "claim", "depends_on"):
+        self.assertIn(key, row)
+
+  def test_FindText_IsUnchanged(self) -> None:
+    with self.repo() as repo:
+      plain = repo.run("find", "off-schema")
+      self.assertEqual(
+        plain[1],
+        "  1  S03   parked  -     2    L    -      22    -         Third thing\n"
+        "      matched in body: …yet, but this heading is off-schema. Check None. Git none.\n",
+      )
+      self.assertEqual(repo.run("find", "off-schema", "--lean"), plain)
+
 
 if __name__ == "__main__":
   unittest.main()
