@@ -1,0 +1,41 @@
+{
+  "id": "s222",
+  "title": "Pack current trusted notes for the selected item",
+  "lead": [
+    "Pickup can load a bounded set of current notes from the selected item without changing complete audit reads or deterministic generated documents."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U12b; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** dependency-neighborhood retrieval, embeddings or catalogs, writing state during a read, filtering acceptance based on trust, or silently dropping expired notes from ordinary reads.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner selected item-local packs, opt-in expiry filtering, whole-note budgeting, and explicit verification tiers. U3's kind selection remains useful independently and must compose with packing."
+    },
+    {
+      "heading": "Files",
+      "body": "A stdlib pure note-selection helper, CLI show/next-ready including batch output, note-pack tests and command/agent documentation. Rendering of committed files remains clock-independent."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Without min-trust or notes-budget, ordinary show/ready reads keep every note, including expired notes; kind-only filtering does not activate expiry filtering.\n- Either packing option excludes notes whose stale_after <= the captured read time, combines OR kind selection with minimum trust, and returns manifest reasons.\n- Higher trust precedes lower trust, newer known created_at precedes older/unknown dates, and stored order resolves equal ties. Explicit verification tier changes affect selection, not authorship alone.\n- Whole display notes plus newline separators fit exactly within the character budget; oversized notes are skipped and later fitting notes remain eligible. Unicode code points, zero budget and empty results behave deterministically.\n- Show, next-ready, section projections, lean output and batch-ready apply the same policy; each selected batch item gets its own budget. Unknown trust values/negative budgets fail before --start writes.\n- Legacy item and slice notes are untyped/unverified; legacy slice manifest IDs are stable read identifiers. Selection never changes state, render bytes, history or claims on a plain read."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add min-trust with values unverified, machine-confirmed and human-reviewed, and notes-budget as a nonnegative integer. Either option enables packing; omitted trust means unverified and omitted budget means unlimited. On next these options require ready. Existing notes-kind filters combine with them but do not enable packing by themselves.\n\nCapture one UTC read time per invocation. Exclude expired notes at or after stale_after; no expiry is current. Collect selected-item notes only. Rank by descending derived trust, then descending created_at with unknown dates last, then stored order. Use display strings as budgeted texts, counting Python Unicode characters and one newline between selected strings. Keep whole notes; skip an over-budget note and continue. Do not count manifest serialization against the text budget.\n\nReturn filtered display-string notes and corresponding item note_records plus note_pack with selected IDs, omitted {id, reason} entries, characters, budget and min_trust. Reasons use deterministic precedence: kind, expired, trust, budget. Always expose a requested pack manifest, including an empty pack under lean. Legacy slice-note IDs use slice-legacy-N in their original order and are read-only; selected legacy text remains in the slice notes projection. Each batch entry has an independent pack sharing the invocation's captured time.\n\nGenerated render remains a complete deterministic projection; never evaluate wall-clock expiry there. Document that complete audit reads are the default and no pack operation promotes trust or hides the item/sections."
+    },
+    {
+      "heading": "Check",
+      "body": "Run frozen-clock expiry, trust, kind, Unicode budget, oversize-skip, legacy and batch tests, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including JSON/text contracts and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

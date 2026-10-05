@@ -1,0 +1,41 @@
+{
+  "id": "s221",
+  "title": "Add explicit note verification and freshness metadata",
+  "lead": [
+    "Keep authorship separate from evidence of verification, and make owner attestation an explicit action rather than treating an author's name as proof of trust."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U12a; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** caller authentication, OS/account access controls, importing the OKF kit, a database, note packing, or treating machine authorship alone as verification.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "U12 combines authorship and trust in a local CLI. The owner selected separate verified_by metadata and a workflow convention: an agent can invoke owner commands, so the CLI cannot honestly claim an identity boundary."
+    },
+    {
+      "heading": "Files",
+      "body": "Note model and operations, CLI append/verification/attestation surfaces, TUI edits, deterministic rendering, schema/note/history tests and agent/command contracts."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Named machine authorship without verified_by stays unverified. A machine verifier yields machine-confirmed; a human: verifier set by attestation yields human-reviewed. The tier is derived, never independently stored.\n- Ordinary note creation, machine verification and actor configuration cannot assign human verification or a reserved human: author. The owner attestation command retains the original author.\n- Legacy notes default to unverified with unknown authorship and no expiry. Verification addresses a stable note ID; unknown IDs fail without writes.\n- Text editing through ops or TUI preserves ID/kind/order but clears verified_by and verified_at. Verification/attestation logs the actor and selected ID without changing text.\n- Timezone-aware stale-after input is normalized and stored; naive/malformed values fail before writing. Rendering the same stored metadata at different clock times has identical bytes."
+    },
+    {
+      "heading": "Implement",
+      "body": "Extend item-note records with fixed-order by, verified_by, verified_at and stale_after fields; empty values mean absent. Add note --owner for authorship using existing actor precedence and --stale-after for optional expiry. Reject the reserved human: prefix on ordinary authorship and machine-verification input, including configured/environment actor fallbacks.\n\nProvide note-verify ITEM --note-id NOTE --owner ACTOR for a nonempty machine actor, and note-attest ITEM --note-id NOTE --owner NAME for owner attestation. Require a nonempty unprefixed owner name on attestation and store verified_by as human:NAME. Store the operation's UTC verification time; retain original by. Re-verifying unchanged text as the same verifier is a no-op, while a new verifier replaces prior verification and records the change.\n\nDerive trust as unverified for no verifier, machine-confirmed for a nonhuman verifier, and human-reviewed for human: verification. Clear verification on any actual text edit; metadata remains available to audit. Legacy Slice.notes remains untyped/unverified read data and cannot be attested through these item-note operations. Normalize expiry to UTC with stdlib datetime; never let render evaluate expiry using the clock.\n\nAll writers go through ops and existing locking/render gating. Protect new saved metadata with the index schema; older readers refuse rather than erase it. State plainly that the separated command is a workflow attestation, not caller authentication; do not add credentials, network calls or proprietary services."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused verification/attestation/edit/schema/time-validation cases and frozen-clock render tests, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including the trust limitation and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

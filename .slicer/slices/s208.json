@@ -1,0 +1,41 @@
+{
+  "id": "s208",
+  "title": "Add structured note kinds without breaking display-string JSON",
+  "lead": [
+    "Reviewers need decisions and reports without loading every note. Add typed item-note records and kind filters while retaining existing JSON notes as display strings."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U3a; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** handoff enforcement, trust or expiry policy, note packing, changing legacy parser/emitter bytes, or converting history-only done/handoff notes into item reports.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Item notes are dated strings; add_note, reject_many, TUI editing, show, and rendering all consume that representation. U3 asks for labels and selective reads. The owner chose additive note_records rather than replacing public notes strings with objects."
+    },
+    {
+      "heading": "Files",
+      "body": "Model, config, note operations, show/next output, render and TUI note handling; note/schema/show/next tests and command/configuration/agent documentation."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- An untyped note retains today's display text. A report note displays its kind label and exposes metadata alongside the display-string list. Assert notes remains a list of strings in list/find/show and mutation JSON as well as next-ready output.\n- Optional note_kinds validates explicit kinds; absent/empty whitelist permits any nonempty kind, and omitted kind remains untyped. Invalid configuration or rejected writes change no files.\n- One or several notes-kind filters select the union of exact kinds in stored order, including with lean JSON, section projection, next-ready and batch-ready output. Empty matches do not hide the item or alter sections.\n- Historical string notes load without writes, keep exact display text, and receive stable identities across repeated reads; the next save persists the lifted records under a newer schema.\n- TUI add/edit/delete and rejection verdicts still work. Editing does not change a note ID or reorder notes; deleting one does not rename later notes. Legacy slice-note strings continue to render unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Introduce item-note records with fixed serialization order: id, kind, text, created_at, attempt. Text remains the complete dated display paragraph; do not normalize historical text. New IDs use a stored stdlib UUID. Lift old item-note strings with deterministic item-local legacy IDs based on their original position; legacy created_at is empty and attempt is null. New created_at is stored UTC ISO8601 and attempt captures the item's current implementation-attempt count.\n\nUse one display helper: empty kind preserves text exactly; typed notes insert a readable kind label after the date separator. Update every item-note writer and TUI path to handle records. Legacy Slice.notes remains its existing string representation; filters treat those strings as untyped, and no legacy parser/emitter change is needed.\n\nAdd optional note_kinds and a kind argument to note. Add repeatable notes-kind arguments to show and next --ready, invalid on next without ready. Filter output copies, never state. Preserve existing public notes fields as display strings and add note_records with the structured item records. Separate persisted-record serialization from public item serialization so list, find, show and mutation envelopes also retain their existing notes string lists; do not leak the new persisted object shape into any existing public notes field; ready outputs expose the selected item notes alongside the slice. Apply filters to legacy slice notes as untyped data too.\n\nBump the index schema on record writes so older readers cannot discard metadata; preserve read-only lifting and future-schema refusal. New config behavior must have backward defaults and schema protection when written. Do not hardcode report/decision labels in production."
+    },
+    {
+      "heading": "Check",
+      "body": "Run note, schema, reject, TUI, show and ready/batch-focused cases, then full unittest discovery, tracking check, and git diff --check. Prove preexisting string-note display bytes are preserved after lifting.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including contracts, changelog, and regenerated tracking output; no publishing without owner instruction."
+    }
+  ],
+  "notes": []
+}

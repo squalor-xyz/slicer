@@ -1,0 +1,41 @@
+{
+  "id": "s211",
+  "title": "Return an existing item for a repeated filing key",
+  "lead": [
+    "A retry or two serialized sessions filing the same key in one checkout must not create duplicate items or consume IDs."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U4b; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** fuzzy matching, synchronizing keys across branches or machines, mutating an existing keyed item, or bypassing an import's syntax validation.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "U4 needs retry-safe agent filing. The owner decided the key defines identity even when a retried payload has changed. The current writer lock provides the local serialization boundary; a separate branch has a separate state snapshot."
+    },
+    {
+      "heading": "Files",
+      "body": "Item model, add/import validation and operations, outline parser, CLI mutation/render handling, integrity checks, add/import/concurrency tests and contract documentation."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- First add stores the key; another add with the same key returns the same ID and existing:true even with a different title/status/source request. Index, next ID, history, slices and renders remain byte-identical, including when render output was already stale and --render was requested.\n- Keys compare case-sensitively; explicitly blank/whitespace keys fail. Existing retired/done items still reserve their keys.\n- An all-existing import is a write-free success. A mixed batch adds only new entries, reports existing entries, and resolves new dependencies to reused IDs without editing reused items.\n- Two outline entries with the same key fail the whole import. A malformed outline or invalid new entry still prevents all writes; force cannot bypass key identity.\n- Dry-run and real import produce matching mappings and allocate only new entries. Serialized concurrent same-key adds return one allocated ID.\n- Duplicate nonempty stored keys fail integrity validation; historical missing keys load empty with no write."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a case-sensitive key string to Item.fields and a single-value outline key. Trim surrounding input whitespace and reject an explicit empty key; absence stores empty. Resolve an existing key under the writer lock before add payload-dependent state validation/allocation; return its current record plus existing:true. For new keys perform normal validation. Reads and help remain unaffected.\n\nExtend import planning to map each accepted outline entry to a new or existing ID. Parse the entire outline and reject duplicate keys in the same input. For reused entries ignore replacement metadata and sections; for new entries retain all existing atomic validation. Resolve dependencies through the complete mapping. Preserve the existing report field names and add an entries array with requested title, id and existing. ids covers all input entries in input order; items remains the input count. Add created and reused counts; promoted counts only newly created slice files. by_status counts the resulting mapped records, including existing records with their actual status; depends_edges counts only the new records' edges. Warnings about scoring or off-schema replacement sections apply only to new entries, since reused content is ignored. Use the same planner for dry-run and apply.\n\nA pure retry must bypass optional render and save/history hooks too; emitting existing:true while rewriting files is not idempotence. Preserve mixed-batch render gating. Protect the persisted field with an index schema upgrade and validate uniqueness, including hidden terminal statuses. No outside-checkout store is introduced."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused retry-byte-identity, mixed-import, force, dependency-mapping and writer-lock tests, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including API documentation and regenerated tracking output; no publication without owner instruction."
+    }
+  ],
+  "notes": []
+}

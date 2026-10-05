@@ -870,3 +870,45 @@
 {"when": "2026-10-05T03:35:12Z", "item": "s187", "action": "status", "from": "started", "to": "done", "note": "Implement prompt and pickup paragraph in docs/agents.md now name one finish (done by default, handoff when implement_finish is handoff, via step 4 of slicer ai instructions); getting-started labels both finishes, names slicer ai instructions as the agent loop and passes --render in the section 6 examples. 3 new tests in tests/test_ai.py; full suite 1165 OK.", "by": "Jon Robbins"}
 {"when": "2026-10-05T10:08:07Z", "item": "s188", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-05T10:13:40Z", "item": "s188", "action": "status", "from": "started", "to": "done", "note": "Added slicer recommended-workflow: prints docs/generic-recommended-project-workflow.md (the only edited source; src/slicer/generic-recommended-project-workflow.md is a symlink shipped as package data), reads no project, --json is {workflow}, unreadable file is exit 3 code io. 7 tests in tests/test_workflow.py; full suite 1173 OK. Wheel inclusion not built locally (no setuptools offline).", "by": "Jon Robbins"}
+{"when": "2026-10-05T10:55:35Z", "item": "s206", "action": "add", "from": "", "to": "open", "note": "Explain render drift with a renderer-format revision"}
+{"when": "2026-10-05T10:55:35Z", "item": "s207", "action": "add", "from": "", "to": "open", "note": "Configure which statuses satisfy dependencies"}
+{"when": "2026-10-05T10:55:35Z", "item": "s208", "action": "add", "from": "", "to": "open", "note": "Add structured note kinds without breaking display-string JSON"}
+{"when": "2026-10-05T10:55:35Z", "item": "s209", "action": "add", "from": "", "to": "open", "note": "Require a current-attempt note before handing off"}
+{"when": "2026-10-05T10:55:35Z", "item": "s210", "action": "add", "from": "", "to": "open", "note": "Record which item discovered new work"}
+{"when": "2026-10-05T10:55:35Z", "item": "s211", "action": "add", "from": "", "to": "open", "note": "Return an existing item for a repeated filing key"}
+{"when": "2026-10-05T10:55:35Z", "item": "s212", "action": "add", "from": "", "to": "open", "note": "Find items by exact title"}
+{"when": "2026-10-05T10:55:35Z", "item": "s213", "action": "add", "from": "", "to": "open", "note": "Claim and resume work in a custom status queue"}
+{"when": "2026-10-05T10:55:35Z", "item": "s214", "action": "add", "from": "", "to": "open", "note": "Count implementation attempts once per fresh start"}
+{"when": "2026-10-05T10:55:35Z", "item": "s215", "action": "add", "from": "", "to": "open", "note": "Cap new implementation pickups while allowing resume"}
+{"when": "2026-10-05T10:55:35Z", "item": "s216", "action": "add", "from": "", "to": "open", "note": "Filter history by timezone-aware timestamp windows"}
+{"when": "2026-10-05T10:55:35Z", "item": "s217", "action": "add", "from": "", "to": "open", "note": "Merge independent item fields without guessing list or queue edits"}
+{"when": "2026-10-05T10:55:35Z", "item": "s218", "action": "add", "from": "", "to": "open", "note": "Filter next pickups with inclusive and exclusive flag patterns"}
+{"when": "2026-10-05T10:55:35Z", "item": "s219", "action": "add", "from": "", "to": "open", "note": "Resolve whole dependency titles before splitting outline commas"}
+{"when": "2026-10-05T10:55:35Z", "item": "s220", "action": "add", "from": "", "to": "open", "note": "Declare git-tracked JSON the permanent canonical store"}
+{"when": "2026-10-05T10:55:35Z", "item": "s221", "action": "add", "from": "", "to": "open", "note": "Add explicit note verification and freshness metadata"}
+{"when": "2026-10-05T10:55:35Z", "item": "s222", "action": "add", "from": "", "to": "open", "note": "Pack current trusted notes for the selected item"}
+{"when": "2026-10-05T10:56:31Z", "item": "s170", "action": "note", "from": "", "to": "", "note": "Agents upstream feedback 2026-10-05: their orchestrator inst"}
+{"when": "2026-10-05T10:56:32Z", "item": "s175", "action": "note", "from": "", "to": "", "note": "Agents upstream feedback 2026-10-05: run branches commit .sl"}
+{"when": "2026-10-05T10:56:33Z", "item": "s191", "action": "note", "from": "", "to": "", "note": "Agents upstream feedback 2026-10-05 U8: a run branch changes"}
+{"when": "2026-10-05T10:59:58Z", "item": "s206", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T10:59:58Z", "item": "s207", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-05T10:59:58Z", "item": "s207", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-05T10:59:59Z", "item": "s207", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T10:59:59Z", "item": "s208", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T10:59:59Z", "item": "s209", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T10:59:59Z", "item": "s210", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T10:59:59Z", "item": "s211", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-05T11:00:00Z", "item": "s211", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:00Z", "item": "s212", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:00Z", "item": "s213", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:01Z", "item": "s214", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:01Z", "item": "s215", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:01Z", "item": "s216", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:01Z", "item": "s217", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:02Z", "item": "s218", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:02Z", "item": "s219", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:02Z", "item": "s220", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:02Z", "item": "s221", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:00:03Z", "item": "s222", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-05T11:01:32Z", "item": "s208", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-05T11:01:33Z", "item": "s208", "action": "edit", "from": "", "to": "", "note": "Implement"}

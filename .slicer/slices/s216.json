@@ -1,0 +1,41 @@
+{
+  "id": "s216",
+  "title": "Filter history by timezone-aware timestamp windows",
+  "lead": [
+    "Run reports need a time window without fetching and filtering the entire displayed history in a client."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U7; docs/feedback/agents-2026-10-05.md",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** history cursors, log schema changes, protection against clock skew, or changing stored timestamps and default log ordering.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "cmd_log filters item/action/by before timestamp ordering and limiting. U7 needs since/until. The owner selected time windows only with an inclusive lower and exclusive upper bound."
+    },
+    {
+      "heading": "Files",
+      "body": "CLI log parser/handler and shared timestamp helper if needed, history/log tests, command and agent references, and CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Since includes an exactly equal instant; until excludes it. Z, explicit UTC offset and fractional seconds compare as instants.\n- Time filters compose with item/action/by before limit; newest-first ordering and append-order ties stay unchanged.\n- Missing bounds preserve current output. Empty windows succeed with an empty result; equal bounds are a valid empty window.\n- Naive timestamps, malformed values and since > until fail with usage and no writes. A malformed stored timestamp encountered while time filtering is a named corrupt-state error, not a traceback or guessed instant.\n- Windowed history survives interleaved union-merge append order; no per-entry cursor field is introduced."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add --since and --until, parse them with stdlib datetime, require a timezone, and normalize for comparisons. Apply since <= entry.when < until, with either bound optional. Filtering precedes the existing sort/limit step; emitted when strings remain the originals.\n\nValidate supplied bounds before reading/filtering entries. Time filtering must fail clearly on a malformed entry timestamp rather than silently dropping it. Keep the default path's existing behavior and history schema. Document that timestamp windows cannot define an exact run boundary under clock skew."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused boundary/offset/fractional/composed-filter/union-order tests, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit with command contracts and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

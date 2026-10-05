@@ -1,0 +1,41 @@
+{
+  "id": "s213",
+  "title": "Claim and resume work in a custom status queue",
+  "lead": [
+    "Approval and triage agents need next's ranking and atomic claiming in configured custom queues, without placing those queues in the implementer's default pool."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U5; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing plain next's open/started pool, changing review pickup, supporting --batch with --status, or treating a custom claim as a configured in-work role.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "cmd_next currently permits only the review role in --status. The owner chose claim-in-place, own-claim resume priority, exclusion of other actors' claims, and explicit transitions limited to active destinations."
+    },
+    {
+      "heading": "Files",
+      "body": "Next selection/result operations, claim operations, CLI next validation and locking, next/claim/concurrency tests, command/configuration/agent documentation."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- A configured custom lane ranks by effective score with stable ties, and respects readiness, dependencies, tree/size filters and sibling work.\n- Own claimed work resumes before unclaimed work; another actor's claim is skipped and reported. Read-only custom selection resolves the effective actor using existing precedence.\n- --start claims in place and repeated resume changes nothing. --start-to moves to open, started or a custom status, claims atomically, and returns the resulting record.\n- Unknown queues, non-review lifecycle queues, unsupported destinations, start-to without start/custom status, and batch with status fail before any mutation.\n- Default/review selection and review-to-reviewing transitions retain their existing behavior. A race between sessions does not steal an intervening claim."
+    },
+    {
+      "heading": "Implement",
+      "body": "Permit --status for custom keys outside configured open/started/done/retired/parked/reviewing roles. The review role preserves its existing dedicated path. Reject disabled/unknown queues and name the supported choices.\n\nWithin custom selection, first rank claims belonging to the effective actor, then unclaimed items, each by effective score and queue-order ties. Skip locally foreign claims and add claimed_elsewhere entries with id and owner; retain the existing sibling skip report independently. Read-only selection uses actor configuration/environment/defaults; explicit owner retains its existing requirement for --start.\n\nAdd --start-to only with --start on a custom queue. Destination must be configured and cannot be done, retired, parked, review or reviewing; open and started roles and custom destinations are valid. Implement the claim/status change through ops with writer locking, reload and re-selection under that lock, and validation before any persistence. Do not use generic start's implicit started transition for claim-in-place. Log an actual claim/transition only; resumes do not write.\n\nClaim-only custom pickup does not increment implementation attempts. An explicit transition to started starts one implementation attempt once; coordinate with the attempt-counting slice if already present. Document the single-queue limitation for read-only resume after changing destination."
+    },
+    {
+      "heading": "Check",
+      "body": "Run custom ranking, ownership, resume, transition and race tests, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit with contract docs, changelog and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}
