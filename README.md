@@ -11,8 +11,15 @@ renders the work. It runs locally without an AI service or API key.
 Run `slicer ai instructions` for a concise agent quick start, or add `--json` for
 machine-readable output. It works before initialization and reads no project state.
 
-State is **JSON**. The markdown under `.slicer/render/` is generated output — readable,
-committed, and never parsed back. Edit through the commands or the TUI, not by hand.
+The permanent canonical store is **git-tracked JSON under `.slicer/`**. It travels
+with branches and clones, exposes state changes in review diffs, and lets `slicer check`
+compare generated output byte for byte. The markdown under `.slicer/render/` is generated
+output — readable, committed, and never parsed back. Edit through the commands or the
+TUI, not by hand.
+
+Any future database may only be a disposable cache inside the checkout: gitignored,
+rebuildable from JSON, and never read back as authority. `~/.slicer/` is not a canonical
+state directory; canonical state stays inside the checkout. Coordination stays in git.
 
 Stdlib Python 3.11+, no dependencies.
 

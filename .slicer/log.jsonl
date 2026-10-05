@@ -940,3 +940,10 @@
 {"when": "2026-10-05T12:34:23Z", "item": "s206", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-05T12:37:05Z", "item": "s214", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-05T12:38:06Z", "item": "s206", "action": "status", "from": "started", "to": "done", "note": "Added Render format: 1 header stamp independent of package version; check keeps stale_render paths and adds stale_render_details (missing, renderer_format, unknown_provenance, content). Full suite, slicer check, git diff --check pass.", "by": "Jon Robbins"}
+{"when": "2026-10-05T12:47:57Z", "item": "s220", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-05T12:50:20Z", "item": "goals", "action": "prose", "from": "", "to": "", "note": "edit"}
+{"when": "2026-10-05T12:50:29Z", "item": "non_goals", "action": "prose", "from": "", "to": "", "note": "edit"}
+{"when": "2026-10-05T12:57:47Z", "item": "s220", "action": "status", "from": "started", "to": "done", "note": "Declared git-tracked .slicer JSON the permanent canonical store in goals/non-goals, README and architecture; documented checkout-local disposable cache constraints and shipped s185 versus pending s175/s191 worktree guidance. Full unittest suite passed (1180 tests, one skip), tracking check and git diff --check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-05T12:59:50Z", "item": "s220", "action": "note", "from": "", "to": "", "note": "Ready for review in .worktrees/s220 on feature/s220-canonica"}
+{"when": "2026-10-05T12:59:50Z", "item": "s220", "action": "set", "from": "done", "to": "started", "note": "status done→started"}
+{"when": "2026-10-05T12:59:50Z", "item": "s220", "action": "handoff", "from": "started", "to": "review", "note": "Ready for review; implementation and validation recorded in the item note.", "by": "Jon Robbins"}

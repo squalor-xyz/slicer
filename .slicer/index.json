@@ -5456,10 +5456,12 @@
       "id": "s220",
       "title": "Declare git-tracked JSON the permanent canonical store",
       "short_title": "Declare git-tracked JSON the permanent canonical store",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Ready for review in .worktrees/s220 on feature/s220-canonical-json. Updated README.md, ARCHITECTURE.md, docs/commands.md and goals/non-goals through the prose CLI: git-tracked JSON remains permanent authority; any future database is a disposable gitignored checkout-local cache. Guidance distinguishes shipped s185 from pending s175/s191. Validation: 1180 unit tests passed, one skipped; slicer check and git diff --check passed. Documentation/tracking changes only; uncommitted. Review the diff and slice acceptance criteria before landing."
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5475,7 +5477,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -5562,6 +5564,6 @@
     }
   ],
   "epilogue": "",
-  "goals": "- Manage a project's roadmap, goals, and issues in one simple, file-based store\n  (git-tracked JSON today; a database backing may come later — TBD).\n- Keep that store canonical, so humans and AI coding agents can plan the next work\n  directly from it.\n- Treat every generated markdown file (ROADMAP, slices) as a deterministic projection\n  of the JSON, kept in lockstep and enforced by `slicer check`.\n- Offer a machine-readable CLI: every command supports `--json` with stable envelopes\n  and exit codes, so agents automate against slicer without parsing prose.\n- Stay small and dependency-light: standard-library only, install-light, runnable from\n  a clean checkout.\n- Serve both a solo developer working with AI agents and small teams coordinating\n  through git.",
-  "non_goals": "- Not a real-time collaboration or multi-user concurrent-editing tool; coordination\n  happens through git, not a live shared service."
+  "goals": "- Manage a project’s roadmap, goals, and issues in one simple, file-based store:\n  git-tracked JSON under `.slicer/` is the permanent canonical authority.\n- Keep state inside the checkout so it travels with branches and clones, appears in\n  review diffs, and remains available within the same sandbox as the code.\n- Let humans and AI coding agents plan the next work directly from that store.\n- Treat every generated markdown file (ROADMAP, slices) as a deterministic projection\n  of the JSON, kept in lockstep and compared byte for byte by `slicer check`.\n- Any future database may only be a disposable, gitignored cache inside the checkout,\n  rebuildable from JSON and never read back as authority.\n- Offer a machine-readable CLI: every command supports `--json` with stable envelopes\n  and exit codes, so agents automate against slicer without parsing prose.\n- Stay small and dependency-light: standard-library only, install-light, runnable from\n  a clean checkout.\n- Serve both a solo developer working with AI agents and small teams coordinating\n  through git.",
+  "non_goals": "- Not a real-time collaboration or multi-user concurrent-editing tool; coordination\n  happens through git, not a live shared service.\n- No canonical database or home-directory state store: `~/.slicer/` is not a canonical\n  state directory; canonical state stays in git-tracked JSON inside the checkout."
 }
