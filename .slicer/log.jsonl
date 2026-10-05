@@ -983,3 +983,4 @@
 {"when": "2026-10-05T17:10:22Z", "item": "s227", "action": "note", "from": "", "to": "", "note": "Ready for review: set implement_finish to handoff in .slicer"}
 {"when": "2026-10-05T17:10:22Z", "item": "s227", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-05T17:14:15Z", "item": "s227", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-05T17:14:21Z", "item": "s227", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: implement_finish is handoff in .slicer/config.json and AGENTS.md describes the handoff loop (implementer ends with handoff; reviewer picks up via next --status review --start, merges --no-ff, runs done on main). Verified in the worktree: 1208 unit tests pass (1 skipped), slicer check and git diff --check clean. Shipped skill needed no change.", "by": "Jon Robbins"}

@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-214 items · — 18 · done 192 · retired 3 · review 1
+214 items · — 18 · done 193 · retired 3
 
 v1.4.0 release
 
@@ -85,7 +85,7 @@ v1.3.0 release
 | 43 | [s223](slices/s223.md) | Show open items that exist only in a sibling worktree | S | 1 | slicer | roadmap review 2026-10-05: s192-s201 were open only in a sibling worktree and main's list stayed empty; first filed as s203 on the superseded feature/agents-feedback branch | done |
 | 44 | [s224](slices/s224.md) | Prioritize declared passes within slicer list readiness groups | M | 2 | slicer | owner request 2026-10-05: list should prioritize v1.3 over v1.4 and later below defined release passes; preserve status/readiness groups | done |
 | 45 | [s225](slices/s225.md) | Make the suite refuse to run against the enclosing real project | M | 2 | tests | s224 landing 2026-10-05: a full-suite run from the main checkout root failed 560 tests and wrote into the real .slicer/ | done |
-| 46 | [s227](slices/s227.md) | Finish implementation with handoff so done is recorded only after landing | S | 1 | docs | done-audit 2026-10-05: agents marked s220 and s225 done in worktrees before merge; both were set back by hand | review |
+| 46 | [s227](slices/s227.md) | Finish implementation with handoff so done is recorded only after landing | S | 1 | docs | done-audit 2026-10-05: agents marked s220 and s225 done in worktrees before merge; both were set back by hand | done |
 
 ---
 

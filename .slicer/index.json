@@ -5646,16 +5646,13 @@
       "id": "s227",
       "title": "Finish implementation with handoff so done is recorded only after landing",
       "short_title": "Finish implementation with handoff so done is recorded only after landing",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [
         "**2026-10-05** — Ready for review: set implement_finish to handoff in .slicer/config.json (the one-key owner exception; added the key, nothing else), and rewrote the AGENTS.md implement block and Landing a slice for the handoff loop: the implementer ends with note + handoff --render --check and never runs done in a worktree; the reviewer picks up with next --status review --start against the worktree via --root, rejects with reject, or commits, merges --no-ff, then runs done --render --check on main. Roadmap section is 3,772 of 3,800 bytes (was 3,797, limit unchanged; trimmed prose, dropped the import example block and the show example line). Shipped skill unchanged: its step 4 already routes on implement_finish. Verified: repo ai instructions step 4 is handoff; 1208 unit tests pass (1 skipped), slicer check and git diff --check clean; end-to-end throwaway project in handoff mode showed worktree review, main wt:NAME, done on main only after merge. Uncommitted on feature/s227-handoff-finish."
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-05T17:14:15Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
