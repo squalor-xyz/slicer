@@ -99,6 +99,17 @@ or done while this checkout's copy has a different status and is not done. An em
 status key. Text still shows `wt:NAME` and keeps this checkout's status in the STATUS
 column. The rendered roadmap does not read siblings.
 
+Canonical state remains git-tracked JSON in each checkout's `.slicer/`; coordination
+happens through git. Commit tracking changes with the work before removing its worktree,
+when the owner authorizes committing. The automatic handoff/done reminder is pending
+in [s175](../.slicer/render/slices/s175.md). The sibling allocation floor and collision
+warning shipped in [s185](../.slicer/render/slices/s185.md): `add`, `import`, and `next-id`
+use the higher of this checkout's `next_id` and the highest matching-prefix `next_id`
+visible in local sibling worktrees. This does not reserve ids across simultaneous
+writers or other machines, or resolve merge
+conflicts. The `next_id` merge driver remains pending in
+[s191](../.slicer/render/slices/s191.md).
+
 `slicer next -n 1` returns the item after the current next item. Offsets are
 nonnegative integers: `-n 0` is the same as `next`. Eligible started items come
 before eligible open items; each group uses descending effective priority with

@@ -5,10 +5,16 @@ for anyone reading or changing the source.
 
 ## Shape
 
-State is JSON under `.slicer/`. Markdown under `.slicer/render/` is a projection of that
-state: generated, committed, read by humans, and **never parsed back**. Every command is
-a function of the JSON, and `slicer check` is the assertion that the markdown still
-matches.
+The permanent canonical store is git-tracked JSON under `.slicer/`. Markdown under
+`.slicer/render/` is a projection of that state: generated, committed, read by humans,
+and **never parsed back**. Every command is a function of the JSON, and `slicer check`
+is the assertion that the markdown still matches byte for byte.
+
+Keeping authority in the checkout makes state branch-local, cloneable, visible in
+review diffs, and available within the same sandbox as the code. Coordination happens
+through git. Any future database may only be a disposable, gitignored cache inside
+the checkout, rebuildable from JSON and never read back as authority. `~/.slicer/`
+is not a canonical state directory; canonical state cannot move outside the checkout.
 
 ```
 errors                                      every module imports from here
