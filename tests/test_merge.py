@@ -264,14 +264,14 @@ class SetupGitCommandTests(unittest.TestCase):
   DRIVER = "git config merge.slicer-generated.driver true"
 
   def test_SetupGit_PrintsBothConfigLines(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, out, err = repo.run("setup-git")
       self.assertEqual((code, err), (0, ""))
       self.assertIn(self.NAME, out)
       self.assertIn(self.DRIVER, out)
 
   def test_SetupGit_Json_ReturnsTheCommandsAsAList(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       text = repo.run("setup-git")[1]
       code, out, _ = repo.run("setup-git", "--json")
       self.assertEqual(code, 0)
@@ -286,7 +286,8 @@ class SetupGitCommandTests(unittest.TestCase):
       with patch("slicer.cli.store.discover", side_effect=AssertionError("discover")), \
            patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
            patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
-        code, out, err = repo.run("setup-git")
+        # Discovery is mocked here; bypass only the test harness's guard.
+        code, out, err = repo.run("setup-git", allow_parent_project=True)
       self.assertEqual((code, err), (0, ""))
       self.assertIn(self.DRIVER, out)
       self.assertEqual(list(repo.root.iterdir()), [])  # created nothing

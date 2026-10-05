@@ -1131,7 +1131,8 @@ class AboutFlagTests(unittest.TestCase):
     with support.TempRepo() as repo, support.isolated_discovery(repo.root), patch(
       "slicer.store.discover", side_effect=AssertionError("about must not discover a project")
     ):
-      code, out, err = repo.run("--about")
+      # Discovery is mocked here; bypass only the test harness's guard.
+      code, out, err = repo.run("--about", allow_parent_project=True)
     self.assertEqual(code, 0)
     self.assertEqual(err, "")
     self.assertEqual(out, f"slicer {__version__}\nroadmap and slice manager\n"
@@ -1149,14 +1150,14 @@ class AboutFlagTests(unittest.TestCase):
       })
 
   def test_About_UnexpectedArgument_ReturnsUsageError(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, out, err = repo.run("--about", "--unknown", "--json")
     self.assertEqual(code, 2)
     self.assertEqual(json.loads(out)["error"]["code"], "usage")
     self.assertIn("--unknown", err)
 
   def test_Main_MissingSubcommand_StillRequiresOne(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, out, err = repo.run("--json")
     self.assertEqual(code, 2)
     self.assertEqual(json.loads(out)["error"]["code"], "usage")
@@ -1607,7 +1608,7 @@ class ColorRobustnessTests(unittest.TestCase):
 
   def test_ParserError_WithForceColor_UsageIsPlain(self) -> None:
     with patch.dict(os.environ, {"FORCE_COLOR": "3"}):
-      with support.TempRepo() as repo:
+      with support.TempRepo() as repo, support.isolated_discovery(repo.root):
         code, out, err = repo.run("show")  # missing required id -> usage error
     self.assertEqual(code, 2)
     self.assertNotIn(self.ESC, err)

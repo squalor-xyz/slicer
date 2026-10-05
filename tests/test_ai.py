@@ -262,7 +262,7 @@ class AiInstructionsTests(unittest.TestCase):
         self.assertEqual(err.getvalue(), "")
 
   def test_Instructions_InvalidSyntax_ReturnsAiUsageEnvelope(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       for argv in (
         ("ai", "unknown", "--json"),
         ("ai", "instructions", "--unknown", "--json"),

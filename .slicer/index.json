@@ -5589,10 +5589,13 @@
       "id": "s225",
       "title": "Make the suite refuse to run against the enclosing real project",
       "short_title": "Make the suite refuse to run against the enclosing real project",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Reproduced in disposable nested fixtures: an enclosing Git MERGE_HEAD makes child init exit 2 before creating .slicer/config.json. After clearing the enclosing merge marker, child add previously exited 0 and changed the enclosing fixture index. This matches the recorded merge-in-progress symptom; no production discovery changes are needed. The exact concurrent sequence from 2026-10-05 was not replayed.",
+        "**2026-10-05** — Ready for review: fixture discovery guard and five regressions implemented. Full suite passed: 1205 tests, one optional skip; copied real tracking-state check, slicer check and git diff --check passed. Changes remain uncommitted in feature/s225-fixture-guard. Corrected the earlier done status at the owner’s request; review and landing remain pending."
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5608,7 +5611,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

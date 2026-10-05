@@ -364,13 +364,13 @@ class MigrateRenderFlagTests(unittest.TestCase):
 
   def test_Migrate_DryRunRenderIntoEmptyDir_DoesNotCrash(self) -> None:
     # A dry-run migrate writes no .slicer/, so --render must not try to load one.
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       support.make_mini(repo)
       code, _, err = repo.run("migrate", "--from", "docs/slices", "--dry-run", "--render")
       self.assertEqual(code, 0, err)
 
   def test_Migrate_StrictRenderFailsInEmptyProject_RemovesCreatedTree(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       support.make_mini(repo)
       with patch.object(render, "plan", side_effect=render.RenderError("boom")):
         code, out, _ = repo.run(
@@ -459,7 +459,7 @@ class MigrateRenderFlagTests(unittest.TestCase):
       self.assertEqual(after, before)
 
   def test_Migrate_StrictRenderSucceeds_WritesProjectAndRender(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       support.make_mini(repo)
       code, out, err = repo.run(
         "migrate", "--from", "docs/slices", "--render", "--strict", "--json"
