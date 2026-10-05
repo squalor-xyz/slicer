@@ -1,0 +1,41 @@
+{
+  "id": "s188",
+  "title": "Print the generic recommended project workflow",
+  "lead": [
+    "There is no command that prints a recommended workflow for an arbitrary project. `slicer ai instructions` is the agent quick start, and a handoff project changes its step 4. The recommended workflow should be one generic document, the same for every project, stored where a person can edit it, and printed by the tool."
+  ],
+  "depends_note": null,
+  "findings_note": "user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing `slicer ai instructions`, the skill, or `implement_finish` (s186); rewriting the implement prompt or getting-started section 6 (s187); slicer's own contributor steps (`tests/affected.py`, the unit suite, or `.worktrees/`).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A person or an agent starting a project needs the same kind of guidelines this repository uses, stated so they fit any project: pick up one slice, start it, do the work, check it, and finish the way the project is configured. That text has to live in the repo, and a process change that should change the guidelines has to update it in the same change. The installed command has to print that text without reading the project."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/generic-recommended-project-workflow.md` (the only edited source of the text)\n- `src/slicer/cli.py` (the command)\n- `src/slicer/ai.py` or a small reader next to it\n- `pyproject.toml`, only if the wheel needs the file listed as package data\n- `tests/test_ai.py` or `tests/test_workflow.py`\n- `README.md`\n- `docs/commands.md`\n- `docs/agents.md`\n- `docs/getting-started.md` (one pointer, not a rewrite of the loop)\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_RecommendedWorkflow_PrintsTheDocsFile`: with no project, `slicer recommended-workflow` exits 0, writes nothing, leaves stderr empty, and its stdout is the exact text of `docs/generic-recommended-project-workflow.md`.\n2. `test_RecommendedWorkflow_JsonMatchesTheText`: `--json` exits 0 and returns `{\"workflow\": \"<that same text>\"}`. The text and JSON forms carry the same document.\n3. `test_RecommendedWorkflow_IgnoresTheProject`: a project with `implement_finish` of `done` and one with `handoff` both print the same stdout as a directory with no project. The command does not lock or write.\n4. `test_RecommendedWorkflow_StatesTheGenericGuidelines`: the document contains `slicer sections`, `slicer next --ready`, `slicer start ID --render --strict`, `slicer check`, `implement_finish`, `slicer handoff ID --render`, and `slicer done ID`. It says to follow step 4 of `slicer ai instructions`. It says this file is updated when the recommended workflow changes. It does not name `tests/affected.py`, `.worktrees/`, or `python3 -m unittest discover`.\n5. `test_RecommendedWorkflow_MissingFile_IsIo`: when the reader is pointed at a path that is not there, the command exits 3 with code `io` and the message names that path. Nothing is written.\n6. `slicer --help` lists `recommended-workflow`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `slicer recommended-workflow`. It takes the shared flags, including `--json`, and no others. Help text: print the generic recommended project workflow. It does not load a project, lock, or write. It does not warn when no project is present.\n\nThe only committed source is `docs/generic-recommended-project-workflow.md`. The command prints that file's text. An editable checkout and an installed wheel both print it. Do not commit a second copy that can drift. A package-data entry or a symlink into the package is enough, as long as the docs file remains the file a person edits.\n\nIf the file cannot be read, exit 3 with code `io` and name the path.\n\nWrite the document as generic advice for any project, in this order:\n\n- Say that this is the recommended workflow for any project using slicer, that `slicer recommended-workflow` prints this file, and that a change to the recommended workflow updates this file in the same change. `slicer ai instructions` stays the agent quick start and can vary by project; this file does not.\n- Read the project's own instructions before acting. Follow its tests and constraints.\n- Read and change goals, items, slices, notes, history, and roadmap prose with slicer commands. Do not hand-edit tracking JSON or generated `.slicer/render/` output. When render files conflict, run `slicer render` and then `slicer check`.\n- Pick up one slice with `slicer sections` and `slicer next --ready`, using the section names the project configures. Read the scope, dependencies, and checks before starting. Resolve a missing or ambiguous specification first. A row with no slice needs `promote` and a written specification.\n- Start with `slicer start ID --render --strict`.\n- Do the slice, update the documentation it names, and run the tests the project documents. Then run `slicer check`.\n- Finish by following step 4 of `slicer ai instructions`. That is `slicer done ID --note \"Describe the verified outcome\" --render` unless `implement_finish` is `handoff`, in which case it is `slicer handoff ID --render`. Then run `slicer check`. When step 4 was handoff, run `done` only after review and merge.\n- Commit or publish only when the project's instructions or the owner ask. slicer itself never commits, pushes, or tags.\n- Work one slice at a time. Isolate it, review it, then integrate it.\n\nIn `README.md` and `docs/commands.md`, add the command: it prints `docs/generic-recommended-project-workflow.md`, does not read the project, and supports `--json` as `{\"workflow\": \"...\"}`. Say that a change to the recommended workflow updates that file in the same change.\n\nIn `docs/agents.md`, add the command to the payload table. In `docs/getting-started.md`, add one sentence next to the existing pointer to `slicer ai instructions`, pointing at `slicer recommended-workflow` for the generic project workflow. Do not rewrite section 6.\n\nCHANGELOG under `[Unreleased]`, `### Added`."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the workflow document, the command, the doc updates, and the changelog entry."
+    }
+  ],
+  "notes": []
+}
