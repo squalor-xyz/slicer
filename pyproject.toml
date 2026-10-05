@@ -37,4 +37,4 @@ version = { attr = "slicer.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-slicer = ["templates/*.md"]
+slicer = ["templates/*.md", "generic-recommended-project-workflow.md"]

@@ -40,6 +40,7 @@ from slicer import (
   templates,
   verify,
   vcs,
+  workflow,
 )
 from slicer import __doc__ as _package_doc, __url__, __version__
 from slicer.config import CONFIG_NAME, Config
@@ -323,6 +324,13 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   # `--rest` is the guide minus the skill, which never reads the project.
   text = ai.rest_text() if args.rest else ai.instructions_text(_ai_finish(args))
   _emit(args, {"instructions": text}, text.rstrip("\n"))
+  return OK
+
+
+def cmd_recommended_workflow(args: argparse.Namespace) -> int:
+  """The generic workflow document. Reads no project, takes no lock, writes nothing."""
+  doc = workflow.text()
+  _emit(args, {"workflow": doc}, doc.rstrip("\n"))
   return OK
 
 
@@ -2154,6 +2162,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("config", cmd_config,
            "print the effective config, or one value by dotted key; read-only")
   sp.add_argument("key", nargs="?", help="a top-level key or a dotted path such as id.prefix")
+
+  add("recommended-workflow", cmd_recommended_workflow,
+      "print the generic recommended project workflow")
 
   sp = _strict_flag(_render_flag(add("add", _mutating(cmd_add), "append a roadmap item")))
   sp.add_argument("title")
