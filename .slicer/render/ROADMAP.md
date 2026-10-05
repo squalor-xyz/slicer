@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-185 items · — 10 · done 173 · retired 2
+185 items · — 9 · done 174 · retired 2
 
 v1.3.0 release
 
@@ -37,7 +37,7 @@ v1.3.0 release
 | 7 | [s171](slices/s171.md) | Accept a dotted pass key in prose addresses | S | 1 | slicer | slicer prose list exits 2 on this repo because pass v1.1 becomes pass.v1.1.heading | done |
 | 8 | [s172](slices/s172.md) | Show claim, blocked work, and review status in the TUI | M | 2 | tui | user request: the TUI cannot show who has a slice, and review rows are easy to miss | done |
 | 9 | [s173](slices/s173.md) | Hand off, reject, and release from the TUI | M | 2 | tui | user request: handoff is CLI-only, so the TUI cannot finish or return a review | done |
-| 10 | [s174](slices/s174.md) | Keep the slice path out of next --show text | S | 1 | cli | next --show still printed .slicer/slices/S01.json in the generated banner while checking s166 | — |
+| 10 | [s174](slices/s174.md) | Keep the slice path out of next --show text | S | 1 | cli | next --show still printed .slicer/slices/S01.json in the generated banner while checking s166 | done |
 | 11 | [s175](slices/s175.md) | Hint to commit worktree handoff state | S | 1 | cli | bug report: handoff state exists only as uncommitted .slicer changes in the worktree | — |
 | 12 | [s176](slices/s176.md) | Let the skill point at only the instructions it does not already carry | S | 1 | slicer | efficiency review 2026-10-04: 46% of ai instructions repeats the skill the agent just loaded | done |
 | 13 | [s177](slices/s177.md) | Check tracking state as part of done and handoff | M | 2 | cli | efficiency review 2026-10-04: the implement loop runs slicer check twice around done, an extra tool call or two per slice | — |

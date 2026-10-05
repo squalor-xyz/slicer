@@ -81,7 +81,8 @@ def slice_header(sl: Slice, cfg: Config, item_notes: "list[str]" = ()) -> str:
   return "\n\n".join(b for b in blocks if b)
 
 
-def render_slice(sl: Slice, cfg: Config, template: str, item_notes: "list[str]" = ()) -> bytes:
+def slice_body(sl: Slice, cfg: Config, template: str, item_notes: "list[str]" = ()) -> str:
+  """A slice as markdown without the generated banner."""
   sections = "\n\n".join(
     f"## {s.heading}\n\n{s.body}" if s.body else f"## {s.heading}" for s in sl.sections
   )
@@ -96,8 +97,12 @@ def render_slice(sl: Slice, cfg: Config, template: str, item_notes: "list[str]" 
       "sections": sections,
     },
   )
+  return tidy(body)
+
+
+def render_slice(sl: Slice, cfg: Config, template: str, item_notes: "list[str]" = ()) -> bytes:
   source = f".slicer/slices/{sl.id}.json"
-  return (banner(source) + "\n\n" + tidy(body)).encode("utf-8")
+  return (banner(source) + "\n\n" + slice_body(sl, cfg, template, item_notes)).encode("utf-8")
 
 
 def cell(text: str) -> str:
