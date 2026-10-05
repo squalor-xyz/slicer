@@ -36,8 +36,8 @@ def parse_ref(ref: str) -> BlockRef:
   if ref in SINGLETONS:
     return BlockRef(kind=ref)
   parts = ref.split(".")
-  if len(parts) == 3 and parts[0] == "pass":
-    _, key, field = parts
+  if len(parts) >= 3 and parts[0] == "pass":
+    key, field = ".".join(parts[1:-1]), parts[-1]
     if field not in PASS_FIELDS:
       raise StateError(f"unknown prose field {field!r}; valid forms: {FORMS}")
     if not key:

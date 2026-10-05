@@ -22,8 +22,14 @@ class ParseRefTests(unittest.TestCase):
     ref = prose.parse_ref("pass.5.intro")
     self.assertEqual((ref.kind, ref.pass_key, ref.field), ("pass", "5", "intro"))
 
+  def test_ParseRef_DottedPassKey_TakesTheLastSegmentAsTheField(self) -> None:
+    ref = prose.parse_ref("pass.v1.1.heading")
+    self.assertEqual((ref.kind, ref.pass_key, ref.field), ("pass", "v1.1", "heading"))
+
   def test_ParseRef_RoundTripsThroughStr(self) -> None:
-    for ref in ("preamble", "epilogue", "pass.5.outro", "pass.2.heading"):
+    for ref in (
+      "preamble", "epilogue", "pass.5.outro", "pass.2.heading", "pass.v1.1.heading"
+    ):
       with self.subTest(ref):
         self.assertEqual(str(prose.parse_ref(ref)), ref)
 
@@ -35,8 +41,9 @@ class ParseRefTests(unittest.TestCase):
   def test_ParseRef_Malformed_RaisesNamingTheValidForms(self) -> None:
     for bad in ("", "nonsense", "pass.5", "pass..intro", "pass.5.intro.extra"):
       with self.subTest(bad):
-        with self.assertRaises(StateError):
+        with self.assertRaises(StateError) as caught:
           prose.parse_ref(bad)
+        self.assertIn("pass.<key>.intro", str(caught.exception))
 
 
 class ProseBlockTests(unittest.TestCase):
@@ -143,6 +150,22 @@ class ProseBlockTests(unittest.TestCase):
       repo.run("prose", "edit", "pass.1.outro", "--file", str(repo.root / "new.md"))
       entry = repo.state().history()[-1]
       self.assertEqual((entry.item, entry.action), ("pass.1.outro", "prose"))
+
+  def test_Prose_DottedPassKey_ListsShowsAndEdits(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("prose", "add-pass", "v1.1", "--heading", "# Pass v1.1")
+      self.assertEqual(code, 0, err)
+      code, out, err = repo.run("prose", "list", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertIn("pass.v1.1.heading", [row["ref"] for row in json.loads(out)])
+      code, out, err = repo.run("prose", "show", "pass.v1.1.heading")
+      self.assertEqual(code, 0, err)
+      self.assertIn("# Pass v1.1", out)
+      repo.write("h.md", "# Pass v1.1 renamed\n")
+      code, _, err = repo.run(
+        "prose", "edit", "pass.v1.1.heading", "--file", str(repo.root / "h.md")
+      )
+      self.assertEqual(code, 0, err)
 
   def test_ProseEdit_UnknownBlock_ExitsTwoWithoutWriting(self) -> None:
     with self.repo() as repo:

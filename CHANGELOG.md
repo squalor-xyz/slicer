@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `slicer prose list`, `show`, and `edit` accept a pass key that contains dots. The field is the last segment of `pass.<key>.<field>`, so `pass.v1.1.heading` addresses pass `v1.1`. Before, `prose list` exited 2 on any project with such a pass. An unknown field or an empty key is still an error that names the valid forms.
+
 ### Changed
 
 - `in_work_elsewhere` entries include `status`, the sibling's status key. A sibling in review or done counts when this checkout's copy has a different status and is not done, so `list` shows `wt:NAME` and `next` skips the item. The same status on both sides is not reported. Claimed and in-work siblings still count. The rendered roadmap stays local.
