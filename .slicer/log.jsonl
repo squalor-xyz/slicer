@@ -864,3 +864,5 @@
 {"when": "2026-10-05T03:22:05Z", "item": "s202", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-05T03:23:00Z", "item": "s202", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-05T03:26:28Z", "item": "s202", "action": "status", "from": "started", "to": "done", "note": "Added slicer config [KEY]: read-only, config only (no index, lock or write); whole config or a dotted key; unknown key is usage naming the top-level keys. 11 tests in tests/test_config_command.py; full suite 1162 OK; dogfooded: config implement_finish prints done, sections match.", "by": "Jon Robbins"}
+{"when": "2026-10-05T03:34:55Z", "item": "s186", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-05T03:36:30Z", "item": "s186", "action": "status", "from": "started", "to": "done", "note": "Done-mode skill and instructions say step 4 is the finish. Handoff mode keeps the review-and-merge closer. Suite: 1163 tests, 1 skipped. slicer check passed.", "by": "Jon Robbins"}

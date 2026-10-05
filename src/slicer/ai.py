@@ -87,10 +87,27 @@ repair tracking internals is the only exception.
 
 When slicer warns that the running code belongs to another worktree, run
 `PYTHONPATH=src python3 -m slicer` for this checkout.
-
-`slicer handoff ID --render --json` records work ready for review. Mark that work done
-only after review and merge are complete.
 """
+
+# Finish closers. They follow implement_finish, so they stay out of TRACKING,
+# which both modes share. Done mode must not tell the reader to wait for review.
+DONE_CLOSER = (
+  "Step 4 is the finish. Commit or publish only when the project instructions authorize it.\n"
+)
+
+HANDOFF_CLOSER = (
+  "`slicer handoff ID --render --json` records work ready for review. Mark that work done\n"
+  "only after review and merge are complete.\n"
+)
+
+# The hand-off section applies only when the project finishes by handoff. Done mode
+# keeps that qualification and does not say to wait for review and merge.
+HANDOFF_APPLIES = (
+  "This section applies when `implement_finish` is `handoff`. "
+  "When step 4 is done, that command is the finish."
+)
+
+HANDOFF_REVIEW_SENTENCE = "Run done only after review and merge are complete."
 
 
 def loop_text(finish: str = "done") -> str:
@@ -119,6 +136,7 @@ def skill_text(finish: str = "done") -> str:
     f"{SPEC_GAP}\n"
     f"{EXITS}\n"
     f"{TRACKING}\n"
+    f"{HANDOFF_CLOSER if finish == 'handoff' else DONE_CLOSER}\n"
     "For planning, filing, claims, and review, run `slicer ai instructions --rest`; "
     "it leaves out what this skill already says.\n"
   )
@@ -189,7 +207,7 @@ Run `--help` on any command for the rest of its options.
 
 """
 
-HANDOFF_SECTION = """\
+HANDOFF_SECTION = f"""\
 ## Hand off for review
 
 When the implementation is ready for someone else to review, merge, or clean up, record
@@ -199,8 +217,7 @@ the context with `slicer note ID --text "Ready for review: ..."`, then run
 item and moves it to `reviewing`, so `next` never hands it to an implementer, and the
 same command resumes it later. If the review fails, run
 `slicer reject ID --note "VERDICT: FAIL - reason" --render --json`: it sends the item back
-to open (or `--to STATUS`), records the verdict, and clears the claim. Run `done` only
-after review and merge are complete.
+to open (or `--to STATUS`), records the verdict, and clears the claim. {HANDOFF_APPLIES}
 
 """
 
@@ -222,6 +239,7 @@ INSTRUCTIONS = (
   + INTRO + PLAN + TRACKING + "\n"
   + IMPLEMENT_HEADING + LOOP + SPEC_GAP + "\n" + IMPLEMENT_MORE
   + HANDOFF_SECTION + STATE + EXITS
+  + "\n" + DONE_CLOSER
 )
 
 REST_LEAD = (
@@ -240,7 +258,10 @@ def rest_text() -> str:
 
 
 def instructions_text(finish: str = "done") -> str:
-  """The quick start. `handoff` uses that loop; anything else is `INSTRUCTIONS`."""
-  if finish == "handoff":
-    return INSTRUCTIONS.replace(LOOP, loop_text("handoff"), 1)
-  return INSTRUCTIONS
+  """The quick start. `handoff` uses that loop and the handoff closer."""
+  if finish != "handoff":
+    return INSTRUCTIONS
+  text = INSTRUCTIONS.replace(LOOP, loop_text("handoff"), 1)
+  text = text.replace(DONE_CLOSER, HANDOFF_CLOSER, 1)
+  text = text.replace(HANDOFF_APPLIES, f"{HANDOFF_APPLIES} {HANDOFF_REVIEW_SENTENCE}", 1)
+  return text
