@@ -58,8 +58,19 @@ banner is someone else's and is left alone.
 
 **Output is deterministic, because `check` compares bytes.** Every `to_dict` writes its
 keys in a fixed order, `jsonio` always formats the same way (`ensure_ascii=False`,
-`indent=2`, one trailing newline), and nothing in `render` emits a timestamp, a version
+`indent=2`, one trailing newline), and nothing in `render` emits a timestamp, a package version
 or a hostname. Formatting drift would read as a real change and make the gate useless.
+
+The one stamp allowed is `render.RENDER_FORMAT`, an integer written as
+`Render format: N.` in every generated header. It is independent of the package
+version, so an unrelated release changes no bytes. A contributor bumps it in the same
+change as any edit to what `plan` emits for unchanged state and templates (layout,
+column order, banner wording), and never otherwise. `check` reads only that header line
+to explain a stale file: `stale_render` stays the sorted list of paths, and
+`stale_render_details` gives each file's cause (`missing`, `renderer_format`,
+`unknown_provenance`, `content`). A format mismatch proves the layout differs, not that
+state and templates did not also change; a legacy banner with no format is
+`unknown_provenance`, and its provenance is not guessed.
 
 **Individual JSON writes are atomic.** `jsonio.write` goes through `mkstemp` in the destination
 directory then `os.replace`, and restores the umask default mode, because `mkstemp`

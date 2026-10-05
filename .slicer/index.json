@@ -5079,7 +5079,7 @@
       "id": "s206",
       "title": "Explain render drift with a renderer-format revision",
       "short_title": "Explain render drift with a renderer-format revision",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [
@@ -5100,7 +5100,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -5292,11 +5292,14 @@
       "id": "s214",
       "title": "Count implementation attempts once per fresh start",
       "short_title": "Count implementation attempts once per fresh start",
-      "status": "open",
+      "status": "started",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-05T12:37:05Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -5311,7 +5314,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

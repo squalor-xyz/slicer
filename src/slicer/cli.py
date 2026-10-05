@@ -1838,8 +1838,8 @@ def _check_report(state: store.State, *, show_diff: bool = False) -> tuple[check
   # A removed flag in a slice's own `slicer ...` examples is drift too.
   report.problems.extend(_slice_flag_problems(state))
   lines: list[str] = []
-  for rel in report.stale_render:
-    lines.append(f"stale render: {rel}")
+  for rel, detail in zip(report.stale_render, report.stale_render_details):
+    lines.append(f"stale render: {rel}: {detail['detail']}")
     if show_diff:
       lines.append(render.unified(expected, state.render_dir, rel))
   lines.extend(f"orphan render: {rel}" for rel in report.orphan_render)
