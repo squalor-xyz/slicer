@@ -36,7 +36,7 @@ never pays for curses.
 ```
 .slicer/
   config.json              everything project-specific; "version": 2
-  index.json               the ordered queue; "version": 4
+  index.json               the ordered queue; "version": 5
   log.jsonl                append-only history, one LogEntry per line
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
@@ -51,12 +51,16 @@ Config schema is `4` (`src/slicer/config.py`), protecting the optional
 `satisfies_dependencies` policy; schema 3 added `handoff_requires_note_kind` and schema 2
 the `note_kinds` whitelist. Older configs still load with the historical defaults
 (no report requirement, `done_status` alone satisfying dependencies); config saves
-stamp 4. Index schema is `4`
+stamp 4. Index schema is `5`
 (`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
-Older item-note strings lift without writes into stable item-local positional IDs,
+Schema 5 adds optional `fields.discovered_from`, an existing item ID independent
+of dependency and priority edges. Missing fields load empty without writes;
+nonempty dangling sources fail integrity checks. Purge guards source references,
+while retirement keeps them valid. Older item-note strings lift without writes
+into stable item-local positional IDs,
 with their exact text, empty creation time, and null attempt. New records store UUIDs,
 UTC creation time, and the current implementation attempt. The next index save stamps
-4 and persists records; older readers refuse that schema rather than dropping metadata.
+5 and persists records; older readers refuse that schema rather than dropping metadata.
 Public item serialization keeps `notes` as display strings alongside `note_records`;
 index persistence uses a separate serialization without the derived strings.
 Legacy slice notes remain strings. `tests/test_schema.py` and `tests/test_note.py`

@@ -37,10 +37,10 @@ from slicer.errors import OutlineError
 
 # Keys an entry may carry. Anything else is an error naming this set, because
 # a silently ignored key is a roadmap item that quietly lost its size.
-KEYS = ("size", "tree", "trees", "findings", "status", "pass", "group", "depends", "importance", "urgency", "effort")
+KEYS = ("size", "tree", "trees", "findings", "status", "pass", "group", "depends", "discovered_from", "importance", "urgency", "effort")
 LIST_KEYS = ("tree", "trees", "depends")
 
-KEY_RE = re.compile(r"^(?P<key>[a-z][a-z-]*)\s*:\s*(?P<value>.*)$")
+KEY_RE = re.compile(r"^(?P<key>[a-z][a-z_-]*)\s*:\s*(?P<value>.*)$")
 COMMENT_RE = re.compile(r"(?s)<!--.*?-->")
 
 
@@ -67,6 +67,7 @@ class ItemSpec:
   size: str = ""
   trees: list[str] = field(default_factory=list)
   findings: str = ""
+  discovered_from: str = ""
   status: str = ""
   pass_key: str = ""
   group: str = ""
@@ -87,6 +88,7 @@ class ItemSpec:
       "size": self.size,
       "trees": list(self.trees),
       "findings": self.findings,
+      "discovered_from": self.discovered_from,
       "status": self.status,
       "pass": self.pass_key,
       "group": self.group,

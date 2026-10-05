@@ -1145,7 +1145,11 @@ def cmd_list(args: argparse.Namespace) -> int:
       "--all and --status cannot be combined; --status already chooses which statuses to show",
       code="usage",
     )
+  if args.discovered_from is not None:
+    state.index.require(args.discovered_from)
   items = state.index.items
+  if args.discovered_from is not None:
+    items = [i for i in items if i.discovered_from == args.discovered_from]
   if args.tree:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
@@ -1381,7 +1385,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     trees=args.tree or [], findings=args.findings or "", status=args.status,
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
     effort=args.effort, depends_on=args.depends_on, short_title=args.short_title,
-    id_floor=_id_floor(state),
+    id_floor=_id_floor(state), discovered_from=args.discovered_from,
   )
   text = f"added {item.id}  {item.display_title()}"
   if item.pass_key:
@@ -2211,6 +2215,7 @@ def build_parser() -> argparse.ArgumentParser:
                   help="only started items, plus reviewing when that status is set")
   sp.add_argument("--review", action="store_true",
                   help="only items in the review status")
+  sp.add_argument("--discovered-from", help="filter by exact source item ID")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--flag", action="append",
@@ -2253,6 +2258,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("title")
   sp.add_argument("--depends-on", action="append", help="dependency id (repeatable)")
   sp.add_argument("--short-title", help="short title for the roadmap row")
+  sp.add_argument("--discovered-from", help="existing item ID that discovered this work")
   sp.add_argument("--id", help="use this id instead of the next free one")
   sp.add_argument("--size")
   sp.add_argument("--tree", action="append")

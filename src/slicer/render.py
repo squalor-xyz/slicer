@@ -133,7 +133,10 @@ def render_row(item: Item, position: int, cfg: Config, template: str) -> str:
   # the status column alone does not tell a reader why. Join what is present
   # rather than stripping afterwards: `.strip(" ·")` took a character *set*,
   # so it ate a middot the user had written at either end of their findings.
-  findings = f" {MIDDOT} ".join(p for p in (item.findings, item.reason) if p)
+  findings = f" {MIDDOT} ".join(
+    p for p in (item.findings, item.reason,
+                f"discovered from {item.discovered_from}" if item.discovered_from else "") if p
+  )
   # An item stored before titles were validated may have none. Say so, rather
   # than rendering a blank cell nobody can act on.
   title = cell(item.display_title()) or f"(untitled {item.id})"
@@ -148,6 +151,7 @@ def render_row(item: Item, position: int, cfg: Config, template: str) -> str:
       "effort": "-" if item.effort is None else str(item.effort),
       "trees": cell(", ".join(item.trees)),
       "findings": cell(findings),
+      "discovered_from": cell(item.discovered_from),
       "status": cell(cfg.status_label(item.status)),
     },
   ).strip("\n")
@@ -379,7 +383,10 @@ def render_html(index: Index, cfg: Config) -> bytes:
         group = item.group
         parts.append(f'<tr class="group"><td></td><td colspan="7"><strong>{e(group)}</strong></td></tr>')
       size = item.size + "".join(f" [{f}]" for f in item.flags)
-      findings = f" {MIDDOT} ".join(p for p in (item.findings, item.reason) if p)
+      findings = f" {MIDDOT} ".join(
+        p for p in (item.findings, item.reason,
+                    f"discovered from {item.discovered_from}" if item.discovered_from else "") if p
+      )
       title = item.display_title() or f"(untitled {item.id})"
       parts.append(
         f'<tr class="{_status_class(item.status, cfg)}"><td>{position}</td>'

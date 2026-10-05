@@ -149,6 +149,9 @@ def add(
   """Append a roadmap entry. It has no slice file until it is promoted."""
   cfg = state.config
   _reject_bad_text(title=title, **fields)
+  discovered_from = fields.get("discovered_from") or ""
+  if discovered_from:
+    state.index.require(discovered_from)
   new_id = ids.allocate(state.index, item_id, floor=id_floor)
   # An omitted pass (None) inherits the previous item's; an explicit empty one
   # files the item with no pass, the same meaning `set --pass ''` has.
@@ -164,6 +167,7 @@ def add(
     size=str(fields.get("size") or ""),
     trees=_clean(list(fields.get("trees") or [])),
     findings=str(fields.get("findings") or ""),
+    discovered_from=discovered_from,
     pass_key=str(pass_key),
     depends_on=_clean(list(fields.get("depends_on") or [])),
     importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
@@ -1144,7 +1148,7 @@ def dependents(state: State, item_id: str) -> list[str]:
   return [i.id for i in state.index.items if item_id in i.depends_on]
 
 
-def _blockers(state: State, item_id: str) -> list[str]:
+def _blockers(state: State, item_id: str, *, purge: bool = False) -> list[str]:
   """Reasons not to remove this item, in the order worth reading."""
   item = state.index.get(item_id)
   if item is None:
@@ -1153,13 +1157,17 @@ def _blockers(state: State, item_id: str) -> list[str]:
   citing = dependents(state, item_id)
   if citing:
     reasons.append(f"{', '.join(citing)} depend(s) on it")
+  if purge:
+    sources = [i.id for i in state.index.items if i.discovered_from == item_id]
+    if sources:
+      reasons.append(f"{', '.join(sources)} discovered from it")
   if item.status == state.config.done_status:
     reasons.append("it is done; removing it hides landed work")
   return reasons
 
 
 def _guard(state: State, item_id: str, action: str, force: bool) -> None:
-  reasons = _blockers(state, item_id)
+  reasons = _blockers(state, item_id, purge=action == "purge")
   if reasons and not force:
     raise StateError(f"cannot {action} {item_id}: " + "; ".join(reasons) + ". Pass --force.")
 
@@ -1190,6 +1198,8 @@ def retire(state: State, item_id: str, *, reason: str, force: bool = False) -> I
 def _reclaim_check(state: State, item_id: str) -> tuple[bool, str]:
   """Whether purging `item_id` frees its id, and why. Read-only; independent of
   whether the item is still in the index, so a preview and the real purge agree."""
+  if any(i.discovered_from == item_id for i in state.index.items):
+    return False, f"{item_id} is referenced by discovered_from"
   number = ids.parse_id(item_id, state.index.id_prefix)
   if number is None:
     return False, f"{item_id} is not an allocated id"
@@ -1218,7 +1228,7 @@ def remove_preview(state: State, item_id: str, *, purge: bool) -> RemovePreview:
   without mutating anything, so a destructive removal is a decision not a surprise."""
   state.index.require(item_id)
   path = state.find_slice_file(item_id)
-  blockers = _blockers(state, item_id)
+  blockers = _blockers(state, item_id, purge=purge)
   freed, why = _reclaim_check(state, item_id) if purge else (False, "")
   return RemovePreview(
     id=item_id, mode="purge" if purge else "retire", blockers=blockers,
@@ -1344,6 +1354,11 @@ def outline_report(
       problems.append(
         f"{spec.title!r}: unknown status {spec.status!r}; known: {sorted(cfg.statuses)}"
       )
+    if spec.discovered_from and state.index.get(spec.discovered_from) is None:
+      problems.append(
+        f"{spec.title!r}: discovered_from unknown id {spec.discovered_from!r}; "
+        "use an existing item ID"
+      )
     for dep in spec.depends:
       if dep not in known:
         problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
@@ -1437,6 +1452,7 @@ def apply_outline(
       size=spec.size,
       trees=list(spec.trees),
       findings=spec.findings,
+      discovered_from=spec.discovered_from,
       # Never inherited from the previous item: an outline says where its own
       # entries belong, and silently filing them under the tail item's pass
       # would be wrong in exactly the case bulk loading is for.
