@@ -119,9 +119,7 @@ PYTHONPATH=src python3 -m slicer start <ID> --render --strict
 python3 tests/affected.py --run
 # Implement the slice and run its focused tests, then the repository checks:
 python3 -m unittest discover -s tests -t tests
-PYTHONPATH=src python3 -m slicer check
-PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render
-PYTHONPATH=src python3 -m slicer check
+PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render --check
 git diff --check
 git status --short
 ```

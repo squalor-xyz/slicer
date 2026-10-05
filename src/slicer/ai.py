@@ -17,17 +17,18 @@ LOOP = """\
    Implement the agreed scope, update
    affected documentation, and run the slice's checks and required project tests.
    Edit a slice with `slicer edit ID --section NAME --text "Body" --render --strict --json`.
-3. Review the changes and run `slicer check --json`. Fix problems before marking
-   work complete; this tracking check does not replace code tests.
-4. Run `slicer done ID --note "Describe the verified outcome" --render --json`,
-   then `slicer check --json`. If `implement_finish` is `handoff`, run
-   `slicer handoff ID --render --json` instead and do not run done.
+3. Review the changes. Fix problems before marking work complete. The tracking
+   check in step 4 does not replace code tests.
+4. Run `slicer done ID --note "Describe the verified outcome" --render --check --json`.
+   Exit 1 means it landed but the tracking check failed: fix what stderr names,
+   then run `slicer check --json`. If `implement_finish` is `handoff`, run
+   `slicer handoff ID --render --check --json` instead and do not run done.
 """
 
 # Step 4 when implement_finish is handoff. The done command stays out of this text.
 HANDOFF_STEP = """\
-4. Run `slicer handoff ID --render --json`,
-   then `slicer check --json`.
+4. Run `slicer handoff ID --render --check --json`. Exit 1 means it landed but
+   the tracking check failed: fix what stderr names, then run `slicer check --json`.
 """
 
 # The one line both outputs lead with. The full tracking section still follows.
@@ -174,15 +175,14 @@ Projects can add statuses in `config.statuses`. `next` offers only open work and
 resumes started work; parked, review, reviewing, and custom statuses `draft` or
 `blocked` stay out. Hold an item back with a custom status, not a flag.
 
-`start` claims the item. `wt:NAME` marks sibling work; `next` skips it
-(`in_work_elsewhere`). After a sibling handoff, main shows `wt:NAME` and
-`next` skips that item too. `slicer list --json` shows every claim, and
-`slicer release ID` clears a claim without changing status.
+`start` claims the item. `wt:NAME` marks sibling work, including a sibling
+handoff, and `next` skips it (`in_work_elsewhere`). `slicer list --json` shows
+every claim, and `slicer release ID` clears a claim without changing status.
 Use `--owner NAME` on `start`, `next --start`, `handoff`,
 `release` and `done`, or set `SLICER_CLAIM_OWNER`; `slicer log --by NAME` shows
 what each did.
 
-Re-read one slice with its title, dependencies, and scope boundary using
+Re-read one slice with
 `slicer show ID --section "Implement" --section "Check" --context --json`.
 Those headings are examples; use the section names the project configures.
 Run `--help` on any command for the rest of its options.

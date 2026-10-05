@@ -1216,6 +1216,67 @@ class RenderAfterMutationTests(unittest.TestCase):
       self.assertEqual(repo.read(".slicer/render/ROADMAP.md"), roadmap)
       self.assertTrue((repo.root / ".slicer/slices/S01.json").exists())
 
+  def _started_slice(self) -> support.TempRepo:
+    repo = self._fresh()
+    repo.run("add", "One")
+    repo.run("promote", "S01")
+    repo.run("start", "S01")
+    return repo
+
+  def test_Done_CheckFlag_CleanProject_ExitsZeroAndPrintsOnlyTheItem(self) -> None:
+    def payload(*extra: str):
+      with self._started_slice() as repo:
+        code, out, err = repo.run("done", "S01", "--render", *extra, "--json")
+        return code, json.loads(out), err
+
+    plain = payload()
+    checked = payload("--check")
+    self.assertEqual(checked[0], 0)
+    self.assertEqual(checked[2], "")
+    self.assertEqual(checked[1], plain[1])
+
+  def test_Done_CheckFlag_StaleSync_ExitsOneWithFindingsOnStderr(self) -> None:
+    with self._started_slice() as repo:
+      (repo.root / "docs").mkdir()
+      (repo.root / "docs" / "plan.md").write_text("Status: STALE\n", encoding="utf-8")
+      path = repo.root / ".slicer" / "config.json"
+      cfg = json.loads(path.read_text(encoding="utf-8"))
+      cfg["sync"] = {"targets": [{
+        "name": "plan",
+        "path": "docs/plan.md",
+        "match": "^Status:.*$",
+        "template": "Status: {{next}}",
+      }]}
+      path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
+      code, out, err = repo.run("done", "S01", "--render", "--check", "--json")
+      self.assertEqual(code, 1)
+      self.assertIn("id", json.loads(out))
+      self.assertEqual(repo.state().index.require("S01").status, "done")
+      self.assertIn("stale sync:", err)
+      self.assertEqual(
+        err.splitlines()[-1],
+        "slicer: done landed, but check failed; run `slicer check` for the report",
+      )
+
+  def test_Done_CheckWithoutRender_IsUsage(self) -> None:
+    with self._started_slice() as repo:
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("done", "S01", "--check", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.state().index.require("S01").status, "started")
+      self.assertIn("--check", err)
+
+  def test_Done_CheckFlag_TextMode_PrintsRenderedLineThenNothingElse(self) -> None:
+    with self._started_slice() as repo:
+      code, out, err = repo.run("done", "S01", "--render", "--check")
+      self.assertEqual((code, err), (0, ""))
+      lines = out.splitlines()
+      self.assertEqual(lines[0], "S01 -> done")
+      self.assertRegex(lines[1], r"^rendered \d+ file\(s\)$")
+      self.assertEqual(len(lines), 2)
+
   def test_Done_WorkingRowTemplate_MarksDoneAndRenders(self) -> None:
     with self._fresh() as repo:
       repo.run("add", "One")

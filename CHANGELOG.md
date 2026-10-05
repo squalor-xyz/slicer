@@ -20,6 +20,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `done` and `handoff` take `--check` with `--render`. After the change lands they run the same check as `slicer check`, stay quiet when it passes, and exit 1 with the findings on stderr when it does not. Stdout is still the item. `--check` without `--render` is a usage error and writes nothing.
 - The TUI has `h` to hand off the selected item, `x` to reject it, and `l` to release its claim. They call the same operations as `slicer handoff`, `reject`, and `release`, and refuse the same cases (an item with no slice, or a project with no review status). `h` asks for an optional note and `x` for a required verdict; an empty verdict or Esc writes nothing. `h handoff` joins the shortcut strip, which stays two rows at 80 columns and one at 160 with `v view`. `x` and `l` are listed in help (`?`).
 - `slicer ai instructions --rest` (and `slicer ai --rest`) prints only the parts of the guide the skill does not already carry, about 4 KB instead of 7.8 KB. It does not read the project. The skill's last line now points at it instead of the full guide. Without `--rest`, the output is unchanged.
 - Bare `slicer ai` and `slicer ai --json` print the same text and JSON as `slicer ai instructions`. An unknown subcommand is still a usage error. `slicer ai skill` is unchanged.
