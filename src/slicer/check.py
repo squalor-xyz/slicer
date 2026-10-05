@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import render, sync, verify
+from slicer import render, store, sync, vcs, verify
 from slicer.store import State
 
 
@@ -54,4 +54,22 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
     for f in offline.findings
     if f.level == "warn"
   ]
+  report.warnings.extend(_sibling_collisions(state))
   return report, expected, diff
+
+
+def _sibling_collisions(state: State) -> list[str]:
+  """Ids a sibling worktree filed under a different title than this checkout did."""
+  if not vcs.is_repo(state.root):
+    return []
+  warnings: list[str] = []
+  for name, sibling in store.sibling_ids(state.root):
+    for theirs in sibling.items:
+      ours = state.index.get(theirs.id)
+      if ours is not None and ours.title != theirs.title:
+        warnings.append(
+          f"{theirs.id} is {ours.title!r} here but {theirs.title!r} in worktree {name}; "
+          f"the two will collide on merge. File this checkout's item under a new id "
+          f"before merging."
+        )
+  return warnings

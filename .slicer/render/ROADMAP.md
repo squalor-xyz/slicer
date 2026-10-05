@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-191 items · — 11 · done 178 · retired 2
+191 items · — 10 · done 179 · retired 2
 
 v1.3.0 release
 
@@ -48,7 +48,7 @@ v1.3.0 release
 | 18 | [s182](slices/s182.md) | Tighten AGENTS.md for agent sessions | S | 1 | docs | efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts | — |
 | 19 | [s183](slices/s183.md) | Let a slice quote the exact text that names a flag it adds | S | 1 | slicer | dogfood 2026-10-04: filing s176 and s177 failed check because their target text names --rest and --check, the flags those slices add | done |
 | 20 | [s184](slices/s184.md) | Show sibling review and done work | M | 2 | slicer | bug report: a slice handed off in a worktree shows as open and unclaimed on main, and next offers it | done |
-| 21 | [s185](slices/s185.md) | Warn on cross-worktree id collisions | M | 2 | slicer | dogfood 2026-10-04: a filing branch and main each filed a different s174; check stayed green and slicer has no renumber | — |
+| 21 | [s185](slices/s185.md) | Warn on cross-worktree id collisions | M | 2 | slicer | dogfood 2026-10-04: a filing branch and main each filed a different s174; check stayed green and slicer has no renumber | done |
 | 22 | [s186](slices/s186.md) | Make the loaded finish text follow implement_finish | M | 2 | slicer | the done-mode skill says both to run done now and to wait until after review and merge | — |
 | 23 | [s187](slices/s187.md) | Say the same finish in the agent prompt and the human loop | S | 1 | docs | the implement prompt always hands off, while the human loop later shows done and does not say which finish the project uses | — |
 | 24 | [s188](slices/s188.md) | Print the generic recommended project workflow | M | 2 | slicer | user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes | — |
