@@ -113,6 +113,23 @@ Resolve missing acceptance criteria before implementation. A row without a slice
 needs `promote` and a written specification first. `next` resumes eligible started
 work before choosing open work.
 
+**Every implementation claim starts in a new worktree, one slice per worktree.**
+Create it before running `start` or `next --start`; do not claim or implement the
+slice on `main`. This applies even when committing and merging were not requested.
+
+```sh
+git worktree add -b feature/<id>-<slug> .worktrees/<id> main
+```
+
+A new worktree starts at `main`'s committed `HEAD`. If the selected slice has
+uncommitted filings, ask the owner to authorize committing those filings before
+cutting the worktree; never commit them without authorization. Run the commands
+below against the new worktree's code and tracking state. If retaining the launch
+working directory, use `PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root
+.worktrees/<id> ...`, `git -C .worktrees/<id> ...`, and unittest discovery with
+`-s .worktrees/<id>/tests -t .worktrees/<id>/tests`. Use that worktree's ignored
+TMPDIR for test fixtures.
+
 ```sh
 PYTHONPATH=src python3 -m slicer start <ID> --render --strict
 # While editing, run the tests that hit this diff. If that command exits 2, run the full discover.
@@ -135,12 +152,7 @@ owner's instructions; a slice's Git section does not itself authorize them.
 Follow this only when the owner asks to commit and merge. Do not push unless they
 ask for that too.
 
-Commit any uncommitted roadmap filings on `main` before cutting a worktree. The
-worktree is cut from `HEAD` and does not see those filings. One slice per worktree:
-
-```sh
-git worktree add -b feature/<id>-<slug> .worktrees/<id> main
-```
+Use the implementation worktree created before claiming the slice.
 
 Run `PYTHONPATH=src python3 -m slicer` inside that worktree. An editable `slicer`
 on `PATH` may be another checkout. Implement only that slice. Run its tests,
