@@ -1550,6 +1550,53 @@ class SliceCommandFlagCheckTests(unittest.TestCase):
       self.assertEqual(code, 0, out)
       self.assertEqual(json.loads(out)["problems"], [])
 
+  def _implement(self, repo: support.TempRepo, body: str) -> None:
+    repo.run("edit", "S01", "--section", "Implement", "--text", body, "--render")
+
+  def test_Check_FencedBlockUnknownFlag_NotAProblem(self) -> None:
+    fence = "`" * 3
+    with self._promoted() as repo:
+      self._implement(repo, "\n".join([fence, "`slicer next --not-yet`", fence]))
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_InlineUnknownFlagOutsideFence_StillFails(self) -> None:
+    fence = "`" * 3
+    with self._promoted() as repo:
+      self._implement(repo, "\n".join([
+        fence, "`slicer next --not-yet`", fence, "Run `slicer next --require-render`."]))
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 1)
+      problems = json.loads(out)["problems"]
+      self.assertTrue(any("--require-render" in p for p in problems), problems)
+      self.assertFalse(any("--not-yet" in p for p in problems), problems)
+
+  def test_Check_UnclosedFence_ScansToEndAsFenced(self) -> None:
+    fence = "`" * 3
+    with self._promoted() as repo:
+      self._implement(repo, "\n".join([fence, "`slicer next --not-yet`"]))
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_TildeFencedBlockUnknownFlag_NotAProblem(self) -> None:
+    fence = "~" * 3
+    with self._promoted() as repo:
+      self._implement(repo, "\n".join([fence, "`slicer next --not-yet`", fence]))
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_ShorterFenceInsideLongerFence_DoesNotClose(self) -> None:
+    long_fence, short_fence = "`" * 4, "`" * 3
+    with self._promoted() as repo:
+      self._implement(repo, "\n".join([
+        long_fence, short_fence, "`slicer next --not-yet`", long_fence]))
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
 
 class ColorRobustnessTests(unittest.TestCase):
   """slicer's usage/help/errors stay plain even when the environment forces color,

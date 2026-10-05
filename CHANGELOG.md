@@ -13,6 +13,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `slicer check` no longer parses `slicer ...` commands inside fenced code blocks (backticks or tildes) in a live slice, so a slice can quote the exact text that names a flag it adds. Inline backtick commands are still checked. An unclosed fence runs to the end of the section, as CommonMark renders it.
 - The tracking block in `slicer ai instructions` and the skill names every read as `--json --lean` (`check` and `handoff` stay as they were), so agents copy the compact form. `slicer find --json --lean` rows are only `{id, title, status, has_slice, match}`, which is enough for a duplicate check; `show ID` gives the rest. Full `find --json` and the text output are unchanged.
 - `--json --lean` output is compact: one line, no indentation, and a trailing newline. Full `--json` stays indented, and error envelopes stay indented under `--lean`. Parsers are unaffected, because `json.loads` reads both forms. On this repo that is about 21% to 39% fewer bytes for `list`, `status`, `find` and `log`.
 - The TUI status column is as wide as the longest visible label, and at least seven characters, so `reviewing` stays aligned with `started`. Every blocked row shows `!`, including review and parked. The detail pane shows the claim owner, or `-` when the item has none. Review uses magenta when the terminal has a spare color pair, and bold otherwise. `NO_COLOR` stays monochrome. The queue row has no claim column.

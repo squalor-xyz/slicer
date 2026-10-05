@@ -50,7 +50,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `render` | regenerate `.slicer/render/` (ROADMAP.md, a browser-viewable ROADMAP.html, and one file per slice) |
 | `sync [--check]` | rewrite derived lines in other documents |
 | `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render merge driver (`render_driver_check`) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). Render freshness is `check`'s job. See [getting started](getting-started.md#9-when-something-goes-wrong) |
-| `check [--diff]` | the CI gate: render staleness, sync drift, integrity |
+| `check [--diff]` | the CI gate: render staleness, sync drift, integrity, and unknown flags in the backtick `slicer ...` commands of live slices (commands inside fenced code blocks are literal text and are not checked) |
 | `stats` / `log [--limit N] [--item ID] [--action A] [--by NAME]` | counts + completion % and per-tree progress; history, newest first (`--limit` defaults to 20; `--item`/`--action`/`--by` scope it; `set` records old→new values; `by` is who started, claimed, released, handed off or finished an item) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`) |
 | `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
