@@ -2218,7 +2218,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--urgency", type=int, help="1-3")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate")
   sp.add_argument("--no-effort", action="store_true", help="clear the effort estimate")
-  sp.add_argument("--attempts", type=int, help="restart count; an integer >= 0")
+  sp.add_argument("--attempts", type=int, help="implementation attempt count; an integer >= 0")
 
   sp = _strict_flag(_render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary")))
   sp.add_argument("id")

@@ -26,6 +26,19 @@ class BatchTests(unittest.TestCase):
     return {str(p.relative_to(repo.root)): p.read_bytes()
             for p in (repo.root / ".slicer").rglob("*") if p.is_file() and p.name != "lock"}
 
+  def test_StartBatch_MixedFreshAndResumed_CountsEachFreshStartOnce(self):
+    with self.repo() as repo:
+      self.assertEqual(repo.run("start", "S01")[0], 0)
+      self.assertEqual(repo.run("release", "S01")[0], 0)
+      self.assertEqual(repo.run("start", "S01", "S02", "S02")[0], 0)
+      self.assertEqual([i.attempts for i in repo.state().index.items], [1, 1])
+      self.assertEqual(repo.run("handoff", "S01", "S02")[0], 0)
+      self.assertEqual(repo.run("start", "S01", "S02")[0], 0)
+      self.assertEqual(repo.run("reject", "S01", "S02", "--note", "repair")[0], 0)
+      self.assertEqual([i.attempts for i in repo.state().index.items], [1, 1])
+      self.assertEqual(repo.run("start", "S01", "S02")[0], 0)
+      self.assertEqual([i.attempts for i in repo.state().index.items], [2, 2])
+
   def test_Commands_Batches_PreserveOrderHistoryAndRender(self):
     with self.repo() as repo:
       for command, options, status in (
@@ -79,6 +92,7 @@ class BatchTests(unittest.TestCase):
   def test_InvalidRequests_LeaveMemoryAndDiskUnchanged(self):
     with self.repo() as repo:
       for action in (
+        lambda s: ops.start_many(s, ["S01", "S99"]),
         lambda s: ops.set_status_many(s, ["S01", "S99"], "done"),
         lambda s: ops.set_status_many(s, ["S01", "S02"], "invalid"),
         lambda s: ops.set_fields_many(s, ["S01", "S99"], title="changed"),

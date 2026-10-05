@@ -34,7 +34,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `sections` | the configured section names, one per line, with `required` on the ones `next` treats as unspecified when empty. JSON is `{sections, required}`. Reads config only: it does not lock, write, or read the index |
 | `config [KEY]` | the effective config, read-only. With no key, one `key  value` line per top-level key: lists are comma-separated and nested objects print as compact JSON. With `KEY`, the bare value, one element per line for a list. A dotted `KEY` reaches into a nested object (`id.prefix`, `pointers.later`). An unknown key is `usage` and names the top-level keys. Reads config only: it does not lock, write, or read the index. JSON is the whole config, or `{key, value}` |
 | `recommended-workflow` | print the generic recommended project workflow: pick up one slice, start it, do the work, check it, and finish the way the project is configured. The text is [`docs/generic-recommended-project-workflow.md`](generic-recommended-project-workflow.md), which an installed copy carries too. It does not read the project, lock, or write, and it does not warn when there is no project. JSON is `{"workflow": "..."}`. A change to the recommended workflow updates that file in the same change |
-| `set ID [ID ...] --title/--short-title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--add-flag/--remove-flag/--no-flags/--group/--importance/--urgency/--effort/--no-effort/--attempts` | change fields. `--flag` replaces the list. Repeatable `--add-flag` and `--remove-flag` edit it in place and cannot be combined with `--flag` or `--no-flags`. `--no-effort` clears an estimate. `--attempts` sets the restart count and must be an integer >= 0. `add` and `set` refuse an unknown, self, retired, or cycle-closing `--depends-on` and write nothing |
+| `set ID [ID ...] --title/--short-title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--add-flag/--remove-flag/--no-flags/--group/--importance/--urgency/--effort/--no-effort/--attempts` | change fields. `--flag` replaces the list. Repeatable `--add-flag` and `--remove-flag` edit it in place and cannot be combined with `--flag` or `--no-flags`. `--no-effort` clears an estimate. `--attempts` sets the implementation attempt count and must be an integer >= 0. `add` and `set` refuse an unknown, self, retired, or cycle-closing `--depends-on` and write nothing |
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
 | `note ID [--text/--file/--stdin] [--render]` | append a dated note to any item — no slice needed (shows in `show`/`render`, unlike `done --note`) |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
@@ -58,6 +58,15 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
 
 For TUI keys, filters, the wizard, and display behavior, see the [TUI manual](tui.md).
+
+`attempts` counts fresh implementation starts: `start` from open or a custom
+queue into the configured started status increments it once. Repeated starts,
+release followed by resume, review pickups, rejection, and `set --status` do
+not increment it. A start → reject → restart repair records two attempts.
+Stored historical values are retained and may overcount because older versions
+also counted rejection. History is not authoritative enough to reconstruct
+them; owners may correct a count with `slicer set ID --attempts N` before
+adopting an attempt cap.
 
 ## Flags every command takes
 

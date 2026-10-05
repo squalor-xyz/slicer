@@ -41,15 +41,55 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(repo.run("start", "S01")[0], 0)
       self.assertEqual(repo.state().index.require("S01").attempts, 1)
 
-  def test_Reject_ThenStart_CountsEachReturnToTheQueue(self) -> None:
+  def test_Reject_ThenStart_RecordsTwoImplementationAttempts(self) -> None:
     with self._fresh() as repo:
       repo.run("start", "S01")
       repo.run("handoff", "S01")
       code, _, err = repo.run("reject", "S01", "--note", "try again")
       self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
+      self.assertEqual(repo.run("start", "S01")[0], 0)
       self.assertEqual(repo.state().index.require("S01").attempts, 2)
-      repo.run("start", "S01")
-      self.assertEqual(repo.state().index.require("S01").attempts, 3)
+
+  def test_Start_AfterRelease_ResumesWithoutCounting(self) -> None:
+    with self._fresh() as repo:
+      for command in ("start", "release", "start"):
+        self.assertEqual(repo.run(command, "S01")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
+
+  def test_Reject_WithoutImplementationStart_DoesNotCount(self) -> None:
+    with self._fresh() as repo:
+      self.assertEqual(repo.run("set", "S01", "--status", "review")[0], 0)
+      self.assertEqual(repo.run("reject", "S01", "--note", "try again")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 0)
+
+  def test_Start_ReviewWithoutReviewingRole_DoesNotCount(self) -> None:
+    with self._fresh() as repo:
+      state = repo.state()
+      state.config.reviewing_status = ""
+      ops.set_status(state, "S01", state.config.review_status)
+      ops.start(state, "S01")
+      self.assertEqual(state.index.require("S01").attempts, 0)
+
+  def test_Start_CustomQueue_CountsTransitionOnce(self) -> None:
+    with self._fresh() as repo:
+      state = repo.state()
+      state.config.statuses["repair"] = "repair"
+      ops.set_status(state, "S01", "repair")
+      self.assertEqual(state.index.require("S01").attempts, 0)
+      ops.start(state, "S01")
+      ops.release(state, "S01")
+      ops.start(state, "S01")
+      self.assertEqual(state.index.require("S01").attempts, 1)
+
+  def test_Set_StatusAndUnrelatedSave_PreserveHistoricalAttempts(self) -> None:
+    with self._fresh() as repo:
+      self.assertEqual(repo.run("set", "S01", "--attempts", "7")[0], 0)
+      self.assertEqual(repo.run("show", "S01", "--json")[0], 0)
+      self.assertEqual(repo.run("set", "S01", "--status", "started")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 7)
+      self.assertEqual(repo.run("start", "S01")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 7)
 
   def test_Start_FromReview_DoesNotCount(self) -> None:
     with self._fresh() as repo:
@@ -61,6 +101,9 @@ class OpsTests(unittest.TestCase):
       item = repo.state().index.require("S01")
       self.assertEqual(item.status, "reviewing")
       self.assertEqual(item.attempts, 1)
+      self.assertEqual(repo.run("release", "S01")[0], 0)
+      self.assertEqual(repo.run("start", "S01")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
 
   def test_Set_Attempts_ResetsAndLogs(self) -> None:
     with self._fresh() as repo:

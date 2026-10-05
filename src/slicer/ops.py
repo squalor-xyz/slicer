@@ -584,6 +584,18 @@ def unpark(state: State, item_id: str) -> Item:
   return set_status(state, item_id, state.config.open_status)
 
 
+def _fresh_implementation_start(state: State, previous: str, target: str) -> bool:
+  """Count queue-to-implementation starts, never resumes or review claims."""
+  cfg = state.config
+  roles = {cfg.started_status, cfg.review_status, cfg.reviewing_status,
+           cfg.done_status, cfg.retired_status, cfg.parked_status} - {""}
+  return (
+    target == cfg.started_status and previous != target
+    and (previous == cfg.open_status or previous not in roles)
+    and previous not in {cfg.review_status, cfg.reviewing_status}
+  )
+
+
 def start_many(
   state: State, item_ids: list[str], *, note: str = "", owner: str | None = None
 ) -> list[Item]:
@@ -619,9 +631,7 @@ def start_many(
       claim_changed = True
     if not status_changed and not claim_changed:
       continue
-    # Only a fresh start from the queue counts. Resuming, and claiming a
-    # review, leave the count where it is.
-    if previous == cfg.open_status:
+    if _fresh_implementation_start(state, previous, status):
       item.attempts += 1
     if status_changed:
       item.status = status
@@ -764,7 +774,6 @@ def reject_many(
     item.status = target
     _clear_claim(item)
     item.notes.append(_dated(verdict))
-    item.attempts += 1
     changed.append((item, previous))
   for item, previous in changed:
     if previous != item.status:
