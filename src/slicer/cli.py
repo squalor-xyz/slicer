@@ -136,22 +136,27 @@ def _mutating(fn):
     render_on = getattr(args, "render", False) and not getattr(args, "dry_run", False)
     if getattr(args, "strict", False) and not render_on:
       raise StateError("--strict has no effect without --render", code="usage")
+    if getattr(args, "check", False) and not render_on:
+      raise StateError("--check has no effect without --render", code="usage")
     if not render_on:
       return fn(args)
     if getattr(args, "strict", False):
       if args.command == "migrate":
         return _migrate_strict(fn, args)
-      return _mutate_strict(fn, args)
-    code = fn(args)
-    if code != OK:
-      return code
-    try:
-      written = _render_after_mutation(args)
-    except (SlicerError, OSError) as exc:
-      print(f"slicer: saved, but render failed: {exc}; run `slicer render`", file=sys.stderr)
-      return DRIFT
-    if not getattr(args, "json", False):
-      print(f"rendered {written} file(s)")
+      code = _mutate_strict(fn, args)
+    else:
+      code = fn(args)
+      if code != OK:
+        return code
+      try:
+        written = _render_after_mutation(args)
+      except (SlicerError, OSError) as exc:
+        print(f"slicer: saved, but render failed: {exc}; run `slicer render`", file=sys.stderr)
+        return DRIFT
+      if not getattr(args, "json", False):
+        print(f"rendered {written} file(s)")
+    if code == OK and getattr(args, "check", False):
+      return _post_check(args, args.command)
     return code
 
   # main() locks the project around a mutating command; the flag says which
@@ -254,6 +259,15 @@ def _migrate_strict(fn, args: argparse.Namespace) -> int:
 
 def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   sp.add_argument("--render", action="store_true", help="render .slicer/render/ after the change")
+  return sp
+
+
+def _check_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
+  """`--check` runs `slicer check` after a rendered change has landed."""
+  sp.add_argument(
+    "--check", action="store_true",
+    help="with --render, run slicer check after the change lands; exit 1 if it fails",
+  )
   return sp
 
 
@@ -1504,6 +1518,8 @@ def cmd_reject(args: argparse.Namespace) -> int:
 
 
 def cmd_done(args: argparse.Namespace) -> int:
+  if getattr(args, "check", False) and not args.render:
+    raise StateError("--check has no effect without --render", code="usage")
   item_ids, batch = _batch_ids(args)
   state = _state(args)
   by = ops.actor(state, args.owner)
@@ -1517,6 +1533,8 @@ def cmd_done(args: argparse.Namespace) -> int:
               [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
   if args.render and not args.json:
     print(f"rendered {written} file(s)")
+  if getattr(args, "check", False):
+    return _post_check(args, "done")
   return OK
 
 
@@ -1737,21 +1755,41 @@ def _slice_flag_problems(state: store.State) -> list[str]:
   return problems
 
 
-def cmd_check(args: argparse.Namespace) -> int:
-  state = _state(args)
+def _check_report(state: store.State, *, show_diff: bool = False) -> tuple[check_mod.CheckReport, list[str]]:
+  """The check report and its finding lines, without the final passed or failed line."""
   report, expected, diff = check_mod.run(state)
-  # A removed flag in a slice's own `slicer ...` examples is drift too: fold it
-  # into the report so `check` fails and its exit code reflects it.
+  # A removed flag in a slice's own `slicer ...` examples is drift too.
   report.problems.extend(_slice_flag_problems(state))
   lines: list[str] = []
   for rel in report.stale_render:
     lines.append(f"stale render: {rel}")
-    if args.diff:
+    if show_diff:
       lines.append(render.unified(expected, state.render_dir, rel))
   lines.extend(f"orphan render: {rel}" for rel in report.orphan_render)
   lines.extend(f"stale sync: {s}" for s in report.stale_sync)
   lines.extend(f"problem: {p}" for p in report.problems)
   lines.extend(f"warn: {w}" for w in report.warnings)
+  return report, lines
+
+
+def _post_check(args: argparse.Namespace, verb: str) -> int:
+  """Run check against the landed state. Silence means it passed."""
+  state = store.load(Path(args.root) if args.root else None)
+  report, lines = _check_report(state)
+  if report.ok:
+    return OK
+  for line in lines:
+    print(line, file=sys.stderr)
+  print(
+    f"slicer: {verb} landed, but check failed; run `slicer check` for the report",
+    file=sys.stderr,
+  )
+  return DRIFT
+
+
+def cmd_check(args: argparse.Namespace) -> int:
+  state = _state(args)
+  report, lines = _check_report(state, show_diff=args.diff)
   if report.ok and not lines:
     lines.append(f"check passed: {len(state.index.items)} items, render and sync current")
   elif report.ok:
@@ -2113,7 +2151,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
 
-  sp = _render_flag(add("done", cmd_done, "mark an item finished"))
+  sp = _check_flag(_render_flag(add("done", cmd_done, "mark an item finished")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
   sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
@@ -2127,7 +2165,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
-  sp = _strict_flag(_render_flag(add("handoff", _mutating(cmd_handoff), "hand a started slice to review and clear its claim")))
+  sp = _check_flag(_strict_flag(_render_flag(add("handoff", _mutating(cmd_handoff), "hand a started slice to review and clear its claim"))))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
   sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")

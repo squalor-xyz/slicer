@@ -126,6 +126,28 @@ class HandoffTests(unittest.TestCase):
       self.assertEqual((item.status, item.claim_owner), ("started", "Ada"))
       self.assertTrue((repo.root / DIR_NAME / "slices" / "S01.json").is_file())
 
+  def test_Handoff_CheckFlag_CleanProject_ExitsZero(self) -> None:
+    def payload(*extra: str):
+      with self.repo() as repo:
+        code, out, err = repo.run("handoff", "S01", "--render", *extra, "--json")
+        return code, json.loads(out), err
+
+    plain = payload()
+    checked = payload("--check")
+    self.assertEqual(checked[0], 0)
+    self.assertEqual(checked[2], "")
+    self.assertEqual(checked[1], plain[1])
+
+  def test_Handoff_CheckFlag_WithStrict_RunsAfterCommit(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("handoff", "S01", "--render", "--strict", "--check", "--json")
+      self.assertEqual(code, 0)
+      self.assertEqual(err, "")
+      doc = json.loads(out)
+      self.assertEqual(doc["status"], "review")
+      self.assertIsNone(doc["claim"])
+      self.assertEqual(repo.state().index.require("S01").status, "review")
+
   def test_Handoff_JsonReportsReviewAndNoClaim(self) -> None:
     with self.repo() as repo:
       payload = json.loads(repo.run("handoff", "S01", "--json")[1])

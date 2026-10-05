@@ -265,7 +265,7 @@ class AiInstructionsTests(unittest.TestCase):
       "slicer start ID --render --strict --json",
       "slicer edit ID --section NAME --text \"Body\" --render --strict --json",
       "slicer check --json",
-      "slicer done ID --note \"Describe the verified outcome\" --render --json",
+      "slicer done ID --note \"Describe the verified outcome\" --render --check --json",
     ):
       self.assertIn(command, text)
     self.assertNotIn("--require-render", text)
@@ -306,7 +306,7 @@ class AiInstructionsTests(unittest.TestCase):
       self.assertEqual((code, err), (0, ""))
       self.assertEqual(text, ai.skill_text("handoff"))
       step = text.split("4. Run", 1)[1].split("If `next` JSON", 1)[0]
-      self.assertIn("slicer handoff ID --render --json", step)
+      self.assertIn("slicer handoff ID --render --check --json", step)
       self.assertNotIn("done", step)
       self.assertNotIn("slicer done", text)
       self.assertIn("only after review and merge are complete", text)
@@ -393,7 +393,7 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertNotIn("slicer show", pickup)
     self.assertIn("slicer start <ID> --render --strict", section)
     self.assertIn("slicer edit S07 --section Why --file note.md --render --strict", section)
-    done = 'slicer done <ID> --note "Describe the verified outcome" --render'
+    done = 'slicer done <ID> --note "Describe the verified outcome" --render --check'
     self.assertIn(done, section)
     self.assertNotIn(done + " --strict", section)
 
