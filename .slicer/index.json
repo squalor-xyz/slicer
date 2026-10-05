@@ -5029,7 +5029,7 @@
       "id": "s191",
       "title": "Resolve a next_id-only merge conflict without hand-editing the index",
       "short_title": "Resolve a next_id-only merge conflict without hand-editing the index",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "notes": [
@@ -5050,7 +5050,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

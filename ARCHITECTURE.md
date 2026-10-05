@@ -134,9 +134,11 @@ and templates and may create `.slicer/`, so the CLI snapshots that exact directo
 and restores it if rendering fails.
 
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
-`ls-files`, `worktree`, `branch`, and `config`. `worktree`, `branch`, and `config` are only
-the read-only forms `worktree list --porcelain`, `branch --all --format=%(refname)`, and
-`config --get user.name`. `start` uses the first two to notice another checkout, and the
+`ls-files`, `worktree`, `branch`, `config`, and `merge-file`. `worktree`, `branch`, and
+`config` are only the read-only forms `worktree list --porcelain`,
+`branch --all --format=%(refname)`, and `config --get` of `user.name` and the two merge
+drivers; `merge-file` is only the `-p` form, which prints the merge to stdout and writes
+nothing. `start` uses the first two to notice another checkout, and the
 last to name a claim when `claim_owner` is empty. Any other argument is refused. `commit`,
 `push` and `tag` are unreachable from the code — not by convention but because `vcs._run`
 refuses anything off the list, including for a caller that asks.

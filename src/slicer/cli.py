@@ -29,6 +29,7 @@ from slicer import (
   graph,
   ids,
   jsonio,
+  mergeindex,
   migrator,
   model,
   ops,
@@ -355,16 +356,26 @@ log.jsonl merge=union
 render/ROADMAP.md merge=slicer-generated
 render/ROADMAP.html merge=slicer-generated
 render/slices/*.md merge=slicer-generated
+
+# index.json is merged by Git, except that the slicer-index driver resolves a
+# conflict on the next_id counter alone to the larger value, so ids are never
+# reused; any other overlap stays an ordinary conflict. Also defined once per clone:
+#   git config merge.slicer-index.name "keep the larger next_id when merging the index"
+#   git config merge.slicer-index.driver "slicer merge-index %O %A %B"
+index.json merge=slicer-index
 """
 
 
 def _render_driver_commands() -> list[str]:
-  """The two per-clone `git config` commands that turn on the render merge driver
-  named in `.gitattributes` (S109). slicer's git allowlist cannot run them, so
-  `init` and `setup-git` print them for a person to run once in each clone."""
+  """The per-clone `git config` commands that turn on the merge drivers named in
+  `.gitattributes`: the render files (S109) and the index counter (S191). slicer's
+  git allowlist cannot run them, so `init` and `setup-git` print them for a person
+  to run once in each clone."""
   return [
     'git config merge.slicer-generated.name "keep the current branch\'s generated files"',
     "git config merge.slicer-generated.driver true",
+    'git config merge.slicer-index.name "keep the larger next_id when merging the index"',
+    'git config merge.slicer-index.driver "slicer merge-index %O %A %B"',
   ]
 
 
@@ -372,8 +383,9 @@ def _render_driver_setup() -> str:
   """The `init` hint: why the driver exists, plus the two commands to enable it."""
   indented = "\n".join("  " + command for command in _render_driver_commands())
   return (
-    "render/ is pointed at a merge driver so parallel branches don't leave "
-    "conflict markers in it.\nEnable it once in this clone:\n" + indented
+    "render/ and index.json are pointed at merge drivers so parallel branches "
+    "don't leave conflict markers in render/ or on the next_id counter.\n"
+    "Enable them once in this clone:\n" + indented
   )
 
 
@@ -428,8 +440,18 @@ def cmd_init(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_merge_index(args: argparse.Namespace) -> int:
+  """The `slicer-index` merge driver: Git passes %O %A %B and reads the result
+  from the second path. Needs no project and prints nothing; exit 1 leaves the
+  usual conflict markers in that file, and Git reports a normal conflict."""
+  conflicts = mergeindex.merge(
+    Path.cwd(), Path(args.base), Path(args.ours), Path(args.theirs)
+  )
+  return DRIFT if conflicts else OK
+
+
 def cmd_setup_git(args: argparse.Namespace) -> int:
-  """Print the per-clone git config that turns on the render merge driver.
+  """Print the per-clone git config that turns on the merge drivers.
 
   Read-only and project-independent: it needs no `.slicer/`, so a fresh clone can
   run it before anything else, and it never loads or locks state. slicer's git
@@ -2097,7 +2119,13 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--id", help="id the first add allocates, such as S21")
 
   add("setup-git", cmd_setup_git,
-      "print the git config that turns on the render merge driver (run once per clone)")
+      "print the git config that turns on the merge drivers (run once per clone)")
+
+  # Git calls this, not a person, so it stays out of the command list.
+  sp = add("merge-index", cmd_merge_index, argparse.SUPPRESS, json_flag=False)
+  sp.add_argument("base", help="the common ancestor's index.json (Git's %%O)")
+  sp.add_argument("ours", help="this side's index.json, rewritten with the result (%%A)")
+  sp.add_argument("theirs", help="the other side's index.json (%%B)")
 
   sp = _strict_flag(_render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline")))
   sp.add_argument("file", nargs="?", help="the outline file")
