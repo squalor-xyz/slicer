@@ -4905,7 +4905,7 @@
       "id": "s187",
       "title": "Say the same finish in the agent prompt and the human loop",
       "short_title": "Say the same finish in the agent prompt and the human loop",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4924,7 +4924,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-192 items · — 9 · done 181 · retired 2
+192 items · — 8 · done 182 · retired 2
 
 v1.3.0 release
 
@@ -50,7 +50,7 @@ v1.3.0 release
 | 20 | [s184](slices/s184.md) | Show sibling review and done work | M | 2 | slicer | bug report: a slice handed off in a worktree shows as open and unclaimed on main, and next offers it | done |
 | 21 | [s185](slices/s185.md) | Warn on cross-worktree id collisions | M | 2 | slicer | dogfood 2026-10-04: a filing branch and main each filed a different s174; check stayed green and slicer has no renumber | done |
 | 22 | [s186](slices/s186.md) | Make the loaded finish text follow implement_finish | M | 2 | slicer | the done-mode skill says both to run done now and to wait until after review and merge | done |
-| 23 | [s187](slices/s187.md) | Say the same finish in the agent prompt and the human loop | S | 1 | docs | the implement prompt always hands off, while the human loop later shows done and does not say which finish the project uses | — |
+| 23 | [s187](slices/s187.md) | Say the same finish in the agent prompt and the human loop | S | 1 | docs | the implement prompt always hands off, while the human loop later shows done and does not say which finish the project uses | done |
 | 24 | [s188](slices/s188.md) | Print the generic recommended project workflow | M | 2 | slicer | user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes | — |
 | 25 | [s189](slices/s189.md) | Name the fix when show --context has no --section | S | 1 | cli | show s173 --json --lean --context failed with a usage error while reading the slice | — |
 | 26 | [s190](slices/s190.md) | Document running a worktree's slicer from outside it | S | 1 | docs | AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174 | — |

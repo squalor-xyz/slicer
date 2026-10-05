@@ -305,8 +305,8 @@ same name as `by` on start, release, handoff and done. `slicer release S01`
 clears the claim and leaves the status. `done` clears it too, so a finished item is not
 shown as claimed.
 
-To pass finished implementation to someone else for review, merge, or cleanup without
-marking it done, hand it off:
+When `implement_finish` is `handoff`, this is the finish: pass the implementation to
+someone else for review, merge, or cleanup without marking it done by handing it off:
 
 ```console
 $ slicer note S01 --text "Ready for review: branch feature/S01; suite green"
@@ -574,6 +574,10 @@ S03  Cache the parsed config
 
 ## 6. The loop
 
+For an agent, the loop is the one `slicer ai instructions` prints. The short example
+below is the default finish, `done`. A project that sets `implement_finish` to `handoff`
+ends with the handoff under [Worked workflows](#worked-workflows) instead.
+
 ```console
 $ slicer next
 S01  Parse the config file
@@ -589,7 +593,7 @@ Mark it in flight before you start typing, so the queue can answer "what am I in
 middle of":
 
 ```console
-$ slicer start S01
+$ slicer start S01 --render
 S01 -> started
 ```
 
@@ -600,7 +604,7 @@ finishing what you started beats picking up something new. The slice file does n
 Implement it, then:
 
 ```console
-$ slicer done S01 --note "loader now refuses a missing key"
+$ slicer done S01 --note "loader now refuses a missing key" --render
 S01 -> done
 ```
 
@@ -618,7 +622,7 @@ Add the old path and the new file together to record that as one rename.
 `git add -u` stages only the deletion. A directory that already holds tracked
 slices lists the new file on its own instead of the whole directory.
 
-Now re-render. `check` will tell you if you forget:
+`--render` re-rendered for you. Without it, `check` tells you to:
 
 ```console
 $ slicer check
@@ -630,7 +634,7 @@ $ slicer check
 check passed: 4 items, render and sync current
 ```
 
-Or skip the separate render: every mutating command takes `--render`, so
+That is why the examples above pass `--render`: every mutating command takes it, so
 `slicer done S01 --render` marks it done *and* re-renders in one step. The same flag works
 on `add`, `set`, `move`, `edit`, `import`, and the rest. By default the change is saved
 first and rendered after; add `--strict` to require the render to succeed first, so a
