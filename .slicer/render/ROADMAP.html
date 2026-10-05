@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">213 items · — 22 · done 189 · retired 2</p>
+<p class="summary">213 items · — 21 · done 190 · retired 2</p>
 <h2>v1.4.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s170</td><td>Install the agent skill into the project</td><td>M</td><td>2</td><td>slicer</td><td>another project: slicer ai skill prints a SKILL.md and does not write it anywhere</td><td class="status">—</td></tr>
@@ -86,7 +86,7 @@
 <tr class="done"><td>34</td><td>s186</td><td>Make the loaded finish text follow implement_finish</td><td>M</td><td>2</td><td>slicer</td><td>the done-mode skill says both to run done now and to wait until after review and merge</td><td class="status">done</td></tr>
 <tr class="done"><td>35</td><td>s187</td><td>Say the same finish in the agent prompt and the human loop</td><td>S</td><td>1</td><td>docs</td><td>the implement prompt always hands off, while the human loop later shows done and does not say which finish the project uses</td><td class="status">done</td></tr>
 <tr class="done"><td>36</td><td>s188</td><td>Print the generic recommended project workflow</td><td>M</td><td>2</td><td>slicer</td><td>user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes</td><td class="status">done</td></tr>
-<tr class="open"><td>37</td><td>s189</td><td>Name the fix when show --context has no --section</td><td>S</td><td>1</td><td>cli</td><td>show s173 --json --lean --context failed with a usage error while reading the slice</td><td class="status">—</td></tr>
+<tr class="done"><td>37</td><td>s189</td><td>Name the fix when show --context has no --section</td><td>S</td><td>1</td><td>cli</td><td>show s173 --json --lean --context failed with a usage error while reading the slice</td><td class="status">done</td></tr>
 <tr class="open"><td>38</td><td>s190</td><td>Document running a worktree&#x27;s slicer from outside it</td><td>S</td><td>1</td><td>docs</td><td>AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174</td><td class="status">—</td></tr>
 <tr class="done"><td>39</td><td>s202</td><td>Add a config read command</td><td>M</td><td>2</td><td>cli</td><td>dogfood 2026-10-05: finishing s185 needed implement_finish (done or handoff); no command prints it, and the tracking-file rule forbids reading config.json</td><td class="status">done</td></tr>
 <tr class="done"><td>40</td><td>s206</td><td>Explain render drift with a renderer-format revision</td><td>M</td><td>2</td><td>slicer</td><td>agents feedback 2026-10-05 U1; docs/feedback/agents-2026-10-05.md</td><td class="status">done</td></tr>
