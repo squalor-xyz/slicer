@@ -1001,3 +1001,4 @@
 {"when": "2026-10-05T18:56:20Z", "item": "s207", "action": "note", "from": "", "to": "", "note": "Ready for review: optional satisfies_dependencies config (ab"}
 {"when": "2026-10-05T18:56:21Z", "item": "s207", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-05T19:34:11Z", "item": "s207", "action": "note", "from": "", "to": "", "note": "Correction after merging main (s209 took config schema 3): s"}
+{"when": "2026-10-05T19:35:57Z", "item": "s207", "action": "status", "from": "review", "to": "done", "note": "Verified: satisfies_dependencies config (schema 4) shared by next, batch, deps, list and TUI; 1261 tests OK, check and diff --check clean; merged to main.", "by": "Jon Robbins"}

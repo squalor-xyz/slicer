@@ -5195,7 +5195,7 @@
       "id": "s207",
       "title": "Configure which statuses satisfy dependencies",
       "short_title": "Configure which statuses satisfy dependencies",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
