@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shlex
+
 
 # The implement loop and the exit-code rules. The instructions and the agent
 # skill both use these sentences, so a wording change cannot land in only one.
@@ -87,6 +89,10 @@ repair tracking internals is the only exception.
 
 When slicer warns that the running code belongs to another worktree, run
 `PYTHONPATH=src python3 -m slicer` for this checkout.
+
+Before handoff, read `slicer config handoff_requires_note_kind`. If nonempty,
+file `slicer note ID --kind KIND --text "Describe the verified outcome"`
+for this implementation attempt. A report from a previous attempt cannot satisfy it.
 """
 
 # Finish closers. They follow implement_finish, so they stay out of TRACKING,
@@ -118,7 +124,20 @@ def loop_text(finish: str = "done") -> str:
   return LOOP
 
 
-def skill_text(finish: str = "done") -> str:
+def handoff_policy_text(kind: str) -> str:
+  """Expose the configured report kind without guessing from note prose."""
+  if not kind:
+    return ""
+  return (
+    f"This project sets handoff_requires_note_kind to {kind!r}. Before handoff, run "
+    f"`slicer note ID --kind {shlex.quote(kind)} --text \"Describe the verified outcome\"`. "
+    "The note must be nonempty and belong to the current implementation attempt. "
+    "Release and resume keep its association; reject then restart needs a new report. "
+    "Changing attempts manually changes which reports belong to the current attempt.\n\n"
+  )
+
+
+def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
   """The SKILL.md Claude Code, Codex, and Grok all load.
 
   `finish` is the project's `implement_finish` when that project can be read.
@@ -133,6 +152,7 @@ def skill_text(finish: str = "done") -> str:
     f"{TRACKING_RULE}\n"
     "\n"
     f"{loop_text(finish)}\n"
+    f"{handoff_policy_text(required_note_kind)}"
     f"{SPEC_GAP}\n"
     f"{EXITS}\n"
     f"{TRACKING}\n"
@@ -219,6 +239,11 @@ same command resumes it later. If the review fails, run
 `slicer reject ID --note "VERDICT: FAIL - reason" --render --json`: it sends the item back
 to open (or `--to STATUS`), records the verdict, and clears the claim. {HANDOFF_APPLIES}
 
+Read `slicer config handoff_requires_note_kind` before handing off. A nonempty value
+requires `slicer note ID --kind KIND --text "Describe the verified outcome"` for the
+current attempt. Previous-attempt and legacy unknown-attempt notes do not satisfy it;
+`handoff --note` only records history. Changing attempts manually changes report association.
+
 """
 
 STATE = """\
@@ -257,11 +282,13 @@ def rest_text() -> str:
   return body.rstrip("\n") + "\n"
 
 
-def instructions_text(finish: str = "done") -> str:
+def instructions_text(finish: str = "done", required_note_kind: str = "") -> str:
   """The quick start. `handoff` uses that loop and the handoff closer."""
-  if finish != "handoff":
-    return INSTRUCTIONS
-  text = INSTRUCTIONS.replace(LOOP, loop_text("handoff"), 1)
-  text = text.replace(DONE_CLOSER, HANDOFF_CLOSER, 1)
-  text = text.replace(HANDOFF_APPLIES, f"{HANDOFF_APPLIES} {HANDOFF_REVIEW_SENTENCE}", 1)
+  text = INSTRUCTIONS
+  if finish == "handoff":
+    text = text.replace(LOOP, loop_text("handoff"), 1)
+    text = text.replace(DONE_CLOSER, HANDOFF_CLOSER, 1)
+    text = text.replace(HANDOFF_APPLIES, f"{HANDOFF_APPLIES} {HANDOFF_REVIEW_SENTENCE}", 1)
+  if required_note_kind:
+    text = text.replace(IMPLEMENT_HEADING, handoff_policy_text(required_note_kind) + IMPLEMENT_HEADING, 1)
   return text

@@ -3,7 +3,8 @@
 Start with `slicer ai instructions` for the canonical concise onboarding guide.
 It is available wherever slicer is installed and works without an initialized project.
 A readable project whose `implement_finish` is `handoff` changes step 4 to handoff;
-otherwise the text is generic, including when that key is missing. No project, or a
+otherwise step 4 stays done, including when that key is missing. A nonempty
+`handoff_requires_note_kind` also adds the project's report requirement. No project, or a
 config or index that cannot be read, prints the generic text, warns on stderr, and
 exits 0. It does not lock or write. `slicer ai instructions --json`
 returns `{"instructions": "..."}` with the same Markdown as the text output.
@@ -32,6 +33,16 @@ changing slicer itself.
 
 For automation, use JSON responses and inspect both the exit code and the payload.
 The command and error contracts are described below the prompts.
+
+Before handing off, read `slicer config handoff_requires_note_kind`. If nonempty,
+file `slicer note ID --kind KIND --text "Describe the verified outcome"` during the
+current implementation attempt. Project-aware instructions and skill output name
+that required kind. Wrong-kind, previous-attempt, legacy unknown-attempt, and
+history-only handoff notes cannot satisfy the policy. Missing reports fail with
+code `state` before any batch writes. Release and resume preserve the association;
+reject then restart requires a new report. Manually changing `attempts` changes
+which reports match. Note read filters do not affect this check. `done` is unchanged.
+`ai instructions --rest` stays generic and does not read project policy.
 
 ## Reusable prompts
 
@@ -183,7 +194,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 
 | Command | Payload |
 |---|---|
-| `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
+| `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |

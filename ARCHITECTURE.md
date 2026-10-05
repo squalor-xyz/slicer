@@ -47,8 +47,10 @@ never pays for curses.
   render/slices/<ID>.md    GENERATED
 ```
 
-Config schema is `2` (`src/slicer/config.py`), protecting the optional `note_kinds`
-whitelist. Version-1 configs still load; config saves stamp 2. Index schema is `4`
+Config schema is `3` (`src/slicer/config.py`), protecting the optional
+`handoff_requires_note_kind` policy; schema 2 introduced the `note_kinds` whitelist.
+Version-1 and version-2 configs still load without a report requirement; config saves
+stamp 3. Index schema is `4`
 (`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
 Older item-note strings lift without writes into stable item-local positional IDs,
 with their exact text, empty creation time, and null attempt. New records store UUIDs,

@@ -5255,13 +5255,21 @@
       "id": "s209",
       "title": "Require a current-attempt note before handing off",
       "short_title": "Require a current-attempt note before handing off",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s208",
         "s214"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "cffd75c1-bd22-4ed8-90e3-a592ee3e04bf",
+          "kind": "report",
+          "text": "**2026-10-05** — Ready for review: Implemented optional handoff_requires_note_kind (empty by default), whitelist/type validation, and config schema 3 with read-only loading of older configs. Started-to-review handoff now requires an exact-kind, nonempty item note associated with the current attempts count. Validation collects missing reports before any batch mutation; legacy unknown-attempt and previous-attempt reports do not qualify. Reject/restart requires a new report; release/resume preserves association. Unclaimed review no-ops and done behavior remain unchanged. Project-aware agent instructions and skill output name the required kind and filing command; documentation covers manual attempt edits. Verification: 137 focused tests passed; full unittest discovery ran 1240 tests successfully (1 skipped); slicer check and git diff --check passed. No dependencies added. Review changes in feature/s209-current-attempt-note at .worktrees/s209.",
+          "created_at": "2026-10-05T18:55:03Z",
+          "attempt": 1
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5277,7 +5285,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

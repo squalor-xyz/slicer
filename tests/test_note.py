@@ -229,7 +229,7 @@ class StructuredNoteTests(unittest.TestCase):
       with self.assertRaises(ConfigError):
         Config.from_dict({"note_kinds": invalid})
     self.assertEqual(Config.from_dict({}).note_kinds, [])
-    self.assertEqual(Config.from_dict({"version": 1, "note_kinds": ["report"]}).to_dict()["version"], 2)
+    self.assertEqual(Config.from_dict({"version": 1, "note_kinds": ["report"]}).to_dict()["version"], 3)
     with self.repo() as repo:
       config = json.loads(repo.read(".slicer/config.json"))
       config["note_kinds"] = ["report"]

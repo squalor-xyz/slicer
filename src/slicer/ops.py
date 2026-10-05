@@ -7,6 +7,7 @@ and so each one records the same log entry.
 from __future__ import annotations
 
 import re
+import shlex
 from uuid import uuid4
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
@@ -708,6 +709,15 @@ def handoff_many(
       )
     elif not item.has_slice:
       problems.append(f"{item.id} has no slice to review; run `slicer promote {item.id}` first")
+    if (item.status == cfg.started_status and cfg.handoff_requires_note_kind
+        and not any(record.kind == cfg.handoff_requires_note_kind
+                    and record.text.strip() and record.attempt == item.attempts
+                    for record in item.note_records)):
+      problems.append(
+        f"{item.id} needs a nonempty {cfg.handoff_requires_note_kind!r} note for "
+        f"current attempt {item.attempts}; run `slicer note {item.id} "
+        f"--kind {shlex.quote(cfg.handoff_requires_note_kind)} --text \"Describe the verified outcome\"`"
+      )
   if problems:
     raise StateError("; ".join(problems) + ". Nothing was changed.", code="state")
   changed: list[tuple[Item, str, str]] = []
