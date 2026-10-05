@@ -5453,7 +5453,7 @@
       "id": "s220",
       "title": "Declare git-tracked JSON the permanent canonical store",
       "short_title": "Declare git-tracked JSON the permanent canonical store",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [

@@ -951,3 +951,4 @@
 {"when": "2026-10-05T12:59:50Z", "item": "s220", "action": "note", "from": "", "to": "", "note": "Ready for review in .worktrees/s220 on feature/s220-canonica"}
 {"when": "2026-10-05T12:59:50Z", "item": "s220", "action": "set", "from": "done", "to": "started", "note": "status done→started"}
 {"when": "2026-10-05T12:59:50Z", "item": "s220", "action": "handoff", "from": "started", "to": "review", "note": "Ready for review; implementation and validation recorded in the item note.", "by": "Jon Robbins"}
+{"when": "2026-10-05T13:11:39Z", "item": "s220", "action": "status", "from": "review", "to": "done", "note": "Landed: git-tracked JSON declared the permanent canonical store in goals, non-goals, README, ARCHITECTURE and docs/commands.md. Verified in the worktree before merge: 1180 unit tests passed (1 skipped), slicer check and git diff --check clean. Docs only; no cache, schema or command added.", "by": "Jon Robbins"}

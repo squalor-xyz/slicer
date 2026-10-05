@@ -4,12 +4,15 @@
 
 ## Goals
 
-- Manage a project's roadmap, goals, and issues in one simple, file-based store
-  (git-tracked JSON today; a database backing may come later — TBD).
-- Keep that store canonical, so humans and AI coding agents can plan the next work
-  directly from it.
+- Manage a project’s roadmap, goals, and issues in one simple, file-based store:
+  git-tracked JSON under `.slicer/` is the permanent canonical authority.
+- Keep state inside the checkout so it travels with branches and clones, appears in
+  review diffs, and remains available within the same sandbox as the code.
+- Let humans and AI coding agents plan the next work directly from that store.
 - Treat every generated markdown file (ROADMAP, slices) as a deterministic projection
-  of the JSON, kept in lockstep and enforced by `slicer check`.
+  of the JSON, kept in lockstep and compared byte for byte by `slicer check`.
+- Any future database may only be a disposable, gitignored cache inside the checkout,
+  rebuildable from JSON and never read back as authority.
 - Offer a machine-readable CLI: every command supports `--json` with stable envelopes
   and exit codes, so agents automate against slicer without parsing prose.
 - Stay small and dependency-light: standard-library only, install-light, runnable from
@@ -21,8 +24,10 @@
 
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
+- No canonical database or home-directory state store: `~/.slicer/` is not a canonical
+  state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-211 items · — 24 · done 185 · retired 2
+211 items · — 23 · done 186 · retired 2
 
 v1.4.0 release
 
@@ -75,7 +80,7 @@ v1.3.0 release
 | 38 | [s202](slices/s202.md) | Add a config read command | M | 2 | cli | dogfood 2026-10-05: finishing s185 needed implement_finish (done or handoff); no command prints it, and the tracking-file rule forbids reading config.json | done |
 | 39 | [s206](slices/s206.md) | Explain render drift with a renderer-format revision | M | 2 | slicer | agents feedback 2026-10-05 U1; docs/feedback/agents-2026-10-05.md | done |
 | 40 | [s214](slices/s214.md) | Count implementation attempts once per fresh start | S | 1 | slicer | agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md | done |
-| 41 | [s220](slices/s220.md) | Declare git-tracked JSON the permanent canonical store | S | 1 | docs | agents feedback 2026-10-05 U11; docs/feedback/agents-2026-10-05.md | — |
+| 41 | [s220](slices/s220.md) | Declare git-tracked JSON the permanent canonical store | S | 1 | docs | agents feedback 2026-10-05 U11; docs/feedback/agents-2026-10-05.md | done |
 | 42 | [s223](slices/s223.md) | Show open items that exist only in a sibling worktree | S | 1 | slicer | roadmap review 2026-10-05: s192-s201 were open only in a sibling worktree and main's list stayed empty; first filed as s203 on the superseded feature/agents-feedback branch | — |
 | 43 | [s224](slices/s224.md) | Prioritize declared passes within slicer list readiness groups | M | 2 | slicer | owner request 2026-10-05: list should prioritize v1.3 over v1.4 and later below defined release passes; preserve status/readiness groups | — |
 
