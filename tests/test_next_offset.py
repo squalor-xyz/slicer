@@ -79,7 +79,7 @@ class NextOffsetTests(unittest.TestCase):
       self.assertEqual(caught.exception.code, "usage")
 
   def test_Next_InvalidOffset_ReportsUsageInTextAndJson(self):
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       for args in [("-n", "-1"), ("-n", "1.5"), ("-n", "word"), ("-n",)]:
         for json_args in [(), ("--json",)]:
           with self.subTest(args=args, json=json_args):

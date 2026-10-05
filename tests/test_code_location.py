@@ -74,7 +74,7 @@ class CodeMismatchWarningTests(unittest.TestCase):
 
   def test_Main_NoProject_StaysSilent(self) -> None:
     # Outside any project, discovery fails and nothing is printed.
-    with support.TempRepo() as repo:  # no `init`
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):  # no `init`
       code, _, err = repo.run("list")
       self.assertNotIn("different worktree", err)
 

@@ -84,8 +84,29 @@ class TempRepo:
     (dst / "status-line.txt").unlink(missing_ok=True)
     return dst
 
-  def run(self, *argv: str) -> tuple[int, str, str]:
+  def run(self, *argv: str, allow_parent_project: bool = False) -> tuple[int, str, str]:
+    """Refuse enclosing projects unless this call explicitly tests discovery.
+
+    No-project commands retain their normal CLI errors. `init` must be able to
+    create the fixture project, but a failed init cannot expose a parent's state
+    to later commands. The opt-out also permits tests that mock discovery itself.
+    """
+    from slicer import store
     from slicer.cli import main
+    from slicer.errors import StateError
+
+    if argv[:1] != ("init",) and not allow_parent_project:
+      try:
+        project = store.discover(self.root)
+      except StateError:
+        pass  # An outside-project fixture can still exercise CLI failures.
+      else:
+        if project != self.root:
+          raise AssertionError(
+            f"fixture {self.root} would use enclosing project {project}; "
+            "initialize the fixture or use isolated_discovery. "
+            "Use allow_parent_project=True only to test discovery explicitly."
+          )
 
     out, err = io.StringIO(), io.StringIO()
     argv = ("--root", str(self.root)) + argv

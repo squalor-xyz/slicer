@@ -35,7 +35,7 @@ def _listing(repo: support.TempRepo) -> dict[str, bytes]:
 
 class RecommendedWorkflowTests(unittest.TestCase):
   def test_RecommendedWorkflow_PrintsTheDocsFile(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       before = _listing(repo)
       code, out, err = repo.run("recommended-workflow")
       self.assertEqual(code, 0)
@@ -44,7 +44,7 @@ class RecommendedWorkflowTests(unittest.TestCase):
       self.assertEqual(_listing(repo), before)
 
   def test_RecommendedWorkflow_JsonMatchesTheText(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, out, err = repo.run("recommended-workflow", "--json")
       self.assertEqual((code, err), (0, ""))
       payload = json.loads(out)
@@ -53,7 +53,7 @@ class RecommendedWorkflowTests(unittest.TestCase):
       self.assertEqual(payload["workflow"].rstrip("\n"), text.rstrip("\n"))
 
   def test_RecommendedWorkflow_IgnoresTheProject(self) -> None:
-    with support.TempRepo() as bare:
+    with support.TempRepo() as bare, support.isolated_discovery(bare.root):
       _, expected, _ = bare.run("recommended-workflow")
     for finish in ("done", "handoff"):
       with self.subTest(implement_finish=finish), support.TempRepo() as repo:
@@ -84,7 +84,7 @@ class RecommendedWorkflowTests(unittest.TestCase):
 
   def test_RecommendedWorkflow_MissingFile_IsIo(self) -> None:
     missing = ROOT / "no-such-dir" / "workflow.md"
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       before = _listing(repo)
       with patch.object(workflow, "WORKFLOW_PATH", missing):
         code, out, _ = repo.run("recommended-workflow", "--json")
