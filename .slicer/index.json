@@ -4739,10 +4739,12 @@
       "id": "s180",
       "title": "Print one command's JSON contract on demand",
       "short_title": "Print one command's JSON contract on demand",
-      "status": "open",
+      "status": "retired",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Retired 2026-10-05: low value (importance 1, urgency 1; no dependents, no friction recorded). Agents read payloads from --json output directly. Duplicating the docs/agents.md payload table into reference.py would double the edit cost of every JSON contract change. Spec line refs and row sizes had gone stale. If the PyPI gap matters later, ship agents.md as package data or generate the table from code instead."
+      ],
       "claim": null,
       "fields": {
         "size": "M",
