@@ -63,7 +63,6 @@ repair tracking internals is the only exception.
 When slicer warns that the running code belongs to another worktree, run
 `PYTHONPATH=src python3 -m slicer` for this checkout.
 
-`slicer handoff ID --render --json` records work ready for review. Mark that work done
-only after review and merge are complete.
+Step 4 is the finish. Commit or publish only when the project instructions authorize it.
 
 For planning, filing, claims, and review, run `slicer ai instructions --rest`; it leaves out what this skill already says.

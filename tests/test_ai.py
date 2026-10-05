@@ -72,7 +72,6 @@ class AiInstructionsTests(unittest.TestCase):
       "slicer prose show goals --json",
       "slicer log --json",
       "slicer check --json",
-      "slicer handoff ID --render --json",
     ):
       self.assertIn(command, text)
     for command in (
@@ -91,9 +90,13 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn("explicitly asks you to inspect or", text)
     self.assertIn("repair tracking internals", text)
     self.assertIn("PYTHONPATH=src python3 -m slicer", text)
-    self.assertIn("ready for review", text)
-    self.assertIn("only after review and merge are complete", text)
+    self.assertNotIn("slicer handoff ID --render --json", text)
+    self.assertNotIn("only after review and merge are complete", text)
     self.assertNotIn(".slicer/render/", text)
+    handoff = ai.skill_text("handoff")
+    self.assertIn("slicer handoff ID --render --json", handoff)
+    self.assertIn("ready for review", handoff)
+    self.assertIn("only after review and merge are complete", handoff)
     skill = ai.skill_text()
     self.assertIn("review a roadmap", skill)
     self.assertIn("plan work", skill)
@@ -290,6 +293,47 @@ class AiInstructionsTests(unittest.TestCase):
       self.assertEqual(json.loads(out), {"skill": text})
       self.assertEqual(list(repo.root.iterdir()), [])
 
+  def test_FinishText_FollowsImplementFinish_InSkillAndInstructions(self) -> None:
+    done_skill = ai.skill_text("done")
+    done_guide = ai.instructions_text("done")
+    done_command = (
+      'slicer done ID --note "Describe the verified outcome" --render --check --json'
+    )
+    for text in (done_skill, done_guide):
+      self.assertIn("Step 4 is the finish.", text)
+      self.assertNotIn("only after review and merge are complete", text)
+      self.assertIn(done_command, text)
+      self.assertIn("slicer handoff ID --render --check --json", text)
+
+    handoff_skill = ai.skill_text("handoff")
+    self.assertIn("slicer handoff ID --render --json", handoff_skill)
+    self.assertIn("only after review and merge are complete", handoff_skill)
+    self.assertNotIn("slicer done", handoff_skill)
+    step = handoff_skill.split("4. Run", 1)[1].split("If `next` JSON", 1)[0]
+    self.assertIn("slicer handoff ID --render --check --json", step)
+
+    done_section = done_guide.split("## Hand off for review", 1)[1].split("\n## ", 1)[0]
+    self.assertIn(ai.HANDOFF_APPLIES, done_section)
+    self.assertIn("When step 4 is done, that command is the finish.", done_section)
+
+    handoff_guide = ai.instructions_text("handoff")
+    handoff_section = handoff_guide.split("## Hand off for review", 1)[1].split("\n## ", 1)[0]
+    self.assertIn(ai.HANDOFF_REVIEW_SENTENCE, handoff_section)
+
+    rest = ai.rest_text()
+    self.assertIn("## Hand off for review", rest)
+    self.assertIn(ai.HANDOFF_APPLIES, rest)
+    self.assertNotIn(ai.DONE_CLOSER, rest)
+    self.assertNotIn(ai.HANDOFF_REVIEW_SENTENCE, rest)
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      data["implement_finish"] = "handoff"
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      code, text, err = repo.run("ai", "instructions", "--rest")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(text, rest)
+
   def test_Skill_HandoffProject_DropsTheDoneCommand_AndKeepsTheReviewStep(self) -> None:
     with support.TempRepo() as repo:
       self.assertEqual(repo.run("init")[0], 0)
@@ -354,6 +398,7 @@ class AiInstructionsTests(unittest.TestCase):
       + ai.INTRO + ai.PLAN + ai.TRACKING + "\n"
       + "## Implement one slice\n\n" + ai.LOOP + ai.SPEC_GAP + "\n" + ai.IMPLEMENT_MORE
       + ai.HANDOFF_SECTION + ai.STATE + ai.EXITS
+      + "\n" + ai.DONE_CLOSER
     )
     self.assertEqual(ai.INSTRUCTIONS, expected)
     self.assertIn(ai.loop_text("handoff"), ai.instructions_text("handoff"))

@@ -4879,7 +4879,7 @@
       "id": "s186",
       "title": "Make the loaded finish text follow implement_finish",
       "short_title": "Make the loaded finish text follow implement_finish",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4898,7 +4898,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
