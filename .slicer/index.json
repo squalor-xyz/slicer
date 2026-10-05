@@ -5255,7 +5255,7 @@
       "id": "s209",
       "title": "Require a current-attempt note before handing off",
       "short_title": "Require a current-attempt note before handing off",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s208",
