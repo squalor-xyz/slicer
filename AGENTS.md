@@ -37,8 +37,12 @@ mkdir -p .venv/test-tmp
 TMPDIR="$PWD/.venv/test-tmp" python3 -m unittest discover -s tests -t tests
 ```
 
-This does not require creating a virtual environment. Tests that need an
-outside-project fixture explicitly use `support.isolated_discovery(root)` to hide
+The full suite takes about one minute alone and longer under load. In an agent
+session, run it in the background or with a timeout over 180 s. While iterating,
+run `python3 tests/affected.py --run` first; run the full discover once before done.
+
+The temporary directory does not require creating a virtual environment. Tests
+that need an outside-project fixture use `support.isolated_discovery(root)` to hide
 ancestor slicer configs and stop Git discovery above the fixture. Discovery within
 the fixture stays real; the helper restores its patches on exit. Keep it scoped to
 those tests rather than changing production discovery or using it suite-wide.
@@ -92,12 +96,9 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 This repo tracks its own roadmap with slicer. That is the point — it is also the
 end-to-end test.
 
-Start with README.md for the tool's purpose, ARCHITECTURE.md for the implementation
-and invariants, then this file for contributor commands and style. For agent
-onboarding, use `slicer ai instructions` (or `slicer ai instructions --json`); it is
-the concise, canonical quick start and works without project state. The
-[agent reference](docs/agents.md) is for detailed command/JSON contracts and reusable
-prompts.
+Read README.md and ARCHITECTURE.md first. Use `slicer ai instructions` for agent
+onboarding; [docs/agents.md](docs/agents.md) has detailed command/JSON contracts
+and reusable prompts.
 
 To pick up existing work, run this from the checkout root; no installation is needed.
 The headings are examples; pass the section names the project configures.
@@ -107,11 +108,9 @@ Run `slicer sections` for this project's names:
 PYTHONPATH=src python3 -m slicer next --ready --section "Implement" --section "Check" --json --lean
 ```
 
-Replace `<ID>` with the returned id. Read its scope, dependencies, and acceptance
-checks before changing its status. Then inspect the relevant source and tests.
-Resolve missing acceptance criteria before implementation. A row without a slice
-needs `promote` and a written specification first. `next` resumes eligible started
-work before choosing open work.
+Replace `<ID>` with the returned id. Read its scope, dependencies, acceptance
+checks, relevant source and tests before claiming. Resolve missing criteria first;
+a row without a slice needs `promote` and a specification.
 
 **Every implementation claim starts in a new worktree, one slice per worktree.**
 Create it before running `start` or `next --start`; do not claim or implement the
@@ -141,11 +140,9 @@ git diff --check
 git status --short
 ```
 
-Review code, documentation, and tracking state together. Read that state with the
-CLI (`slicer show`, `slicer list`, `slicer prose list`, `slicer check`). `check`
-verifies tracking consistency; the unit suite verifies code behavior. Mark done only
-after the slice's acceptance checks pass. Leave committing and publishing to the
-owner's instructions; a slice's Git section does not itself authorize them.
+Review code, documentation, and tracking state together. Mark done only after
+acceptance checks pass. Commit and publish only on the owner's instructions; a
+slice's Git section does not authorize them.
 
 ### Landing a slice
 
@@ -154,51 +151,29 @@ ask for that too.
 
 Use the implementation worktree created before claiming the slice.
 
-Run `PYTHONPATH=src python3 -m slicer` inside that worktree. An editable `slicer`
-on `PATH` may be another checkout. Implement only that slice. Run its tests,
-`python3 -m unittest discover -s tests -t tests`, `slicer check`, and
-`git diff --check`. Mark it done with `--render` only after those pass.
+Use that worktree's code. Run focused tests, the full suite, `slicer check`, and
+`git diff --check`; mark done with `--render` only after they pass.
 
 Review the diff before committing. Commit on the feature branch. Merge into
 `main` with `git merge --no-ff`. Remove the worktree and delete the feature
 branch. Leave `main` clean.
 
-**Read and change tracking state through the slicer CLI.** That covers goals, items,
-slices, notes, history, and roadmap prose, during review, planning, implementation,
-and validation. Do not open, search, parse, or edit `.slicer` JSON, the history file,
-or generated roadmap and slice output to obtain or change that state. If a command
-is missing or fails, report it and propose a roadmap item. Source, ordinary
-documentation, templates, and the skill stay readable. Inspect or repair tracking
-internals only when the task explicitly asks for that.
+**Read and change tracking state through the slicer CLI.** The full rule is in `slicer ai instructions`; inspect tracking internals only when the task asks.
 
-**Never hand-edit `.slicer/*.json`.** Use the commands, then re-render:
+**Never hand-edit `.slicer/*.json`.**
 
-```sh
-slicer add "Some title"
-slicer edit S07 --section Why --file note.md --render --strict
-slicer done S07
-slicer render
-slicer check
-```
-
-Every mutating command takes `--render`, which folds the separate `render` step into the
-mutation — `slicer done S07 --render` is the two middle steps in one. It saves first and
-renders after by default; `--strict` (with `--render`) requires the render to succeed first
-and rolls the change back if it fails, the render-first policy `done --render` already uses.
-
-To file a fully-specified slice in one step rather than a `promote` plus one `edit` per
-section, hand `promote` a one-item outline (the same `##` item / `### section` shape
-`import` reads) via `--file` or `--stdin`. The item keeps its own fields, so the source is
-sections and lead only:
+To file a specification, pass `promote` a one-item outline (`##` item / `### section`)
+via `--file` or `--stdin`. It keeps the item's fields; supply sections and lead only.
+Use `edit` for subsequent section changes:
 
 ```sh
 slicer add "Some title"
 slicer promote S07 --file draft.md --render
+slicer edit S07 --section Why --file note.md --render --strict
 slicer show S07 --section Why    # read one section back
 ```
 
-Several items at once go through an outline, which is also how the agent-surface items
-were filed:
+For several items, import an outline:
 
 ```sh
 slicer import --skeleton > /tmp/draft.md

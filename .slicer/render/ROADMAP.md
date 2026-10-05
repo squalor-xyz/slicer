@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-211 items · — 22 · done 187 · retired 2
+211 items · — 21 · done 188 · retired 2
 
 v1.4.0 release
 
@@ -68,7 +68,7 @@ v1.3.0 release
 | 26 | [s178](slices/s178.md) | Print lean JSON without indentation | S | 1 | cli | efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22% | done |
 | 27 | [s179](slices/s179.md) | Steer agent reads to lean output and slim lean find rows | S | 1 | slicer | efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path | done |
 | 28 | [s181](slices/s181.md) | Resolve the trace root so the affected-map test passes under a symlinked TMPDIR | S | 1 | tests | efficiency review 2026-10-04: test_affected fails on macOS with the default TMPDIR because /var is a symlink to /private/var | done |
-| 29 | [s182](slices/s182.md) | Tighten AGENTS.md for agent sessions | S | 1 | docs | efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts | — |
+| 29 | [s182](slices/s182.md) | Tighten AGENTS.md for agent sessions | S | 1 | docs | efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts | done |
 | 30 | [s183](slices/s183.md) | Let a slice quote the exact text that names a flag it adds | S | 1 | slicer | dogfood 2026-10-04: filing s176 and s177 failed check because their target text names --rest and --check, the flags those slices add | done |
 | 31 | [s184](slices/s184.md) | Show sibling review and done work | M | 2 | slicer | bug report: a slice handed off in a worktree shows as open and unclaimed on main, and next offers it | done |
 | 32 | [s185](slices/s185.md) | Warn on cross-worktree id collisions | M | 2 | slicer | dogfood 2026-10-04: a filing branch and main each filed a different s174; check stayed green and slicer has no renumber | done |
