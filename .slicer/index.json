@@ -5563,7 +5563,7 @@
       "id": "s224",
       "title": "Prioritize declared passes within slicer list readiness groups",
       "short_title": "Prioritize declared passes within slicer list readiness groups",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -5582,7 +5582,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],
