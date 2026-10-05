@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `slicer prose list`, `show`, and `edit` accept a pass key that contains dots. The field is the last segment of `pass.<key>.<field>`, so `pass.v1.1.heading` addresses pass `v1.1`. Before, `prose list` exited 2 on any project with such a pass. An unknown field or an empty key is still an error that names the valid forms.
+
 ### Changed
 
 - The TUI status column is as wide as the longest visible label, and at least seven characters, so `reviewing` stays aligned with `started`. Every blocked row shows `!`, including review and parked. The detail pane shows the claim owner, or `-` when the item has none. Review uses magenta when the terminal has a spare color pair, and bold otherwise. `NO_COLOR` stays monochrome. The queue row has no claim column.

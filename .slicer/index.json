@@ -4489,7 +4489,7 @@
       "id": "s171",
       "title": "Accept a dotted pass key in prose addresses",
       "short_title": "Accept a dotted pass key in prose addresses",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4508,7 +4508,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
