@@ -480,6 +480,21 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn(done, section)
     self.assertNotIn(done + " --strict", section)
 
+  def test_AgentsGuide_NamesSuiteDurationAndBackgroundRun(self) -> None:
+    text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
+    section = text.split("## Commands", 1)[1].split("\n## ", 1)[0]
+    self.assertIn("python3 tests/affected.py --run", section)
+    self.assertIn("background", section)
+    self.assertIn("about one minute", section)
+    self.assertIn("longer under load", section)
+    self.assertIn("timeout over 180 s", section)
+    self.assertIn("full discover once before done", section)
+
+  def test_AgentsGuide_RoadmapSection_IsShorter(self) -> None:
+    text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
+    section = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
+    self.assertLess(len(section.encode("utf-8")), 3800)
+
   def test_Instructions_ImplementSection_LeavesTheCommandCatalogueToHelp(self) -> None:
     # S138: the loop keeps the reads it needs; the rest is `--help`'s job.
     section = ai.INSTRUCTIONS.split("## Implement one slice", 1)[1].split("\n## ", 1)[0]

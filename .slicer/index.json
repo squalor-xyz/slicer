@@ -4791,7 +4791,7 @@
       "id": "s182",
       "title": "Tighten AGENTS.md for agent sessions",
       "short_title": "Tighten AGENTS.md for agent sessions",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4810,7 +4810,7 @@
         "importance": 1,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
