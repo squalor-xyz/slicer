@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-191 items · — 10 · done 179 · retired 2
+192 items · — 11 · done 179 · retired 2
 
 v1.3.0 release
 
@@ -55,6 +55,7 @@ v1.3.0 release
 | 25 | [s189](slices/s189.md) | Name the fix when show --context has no --section | S | 1 | cli | show s173 --json --lean --context failed with a usage error while reading the slice | — |
 | 26 | [s190](slices/s190.md) | Document running a worktree's slicer from outside it | S | 1 | docs | AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174 | — |
 | 27 | [s191](slices/s191.md) | Resolve a next_id-only merge conflict without hand-editing the index | M | 2 | slicer | merging s174 into a main whose next_id had moved conflicted only on next_id; resolving it needed a hand edit of index.json | — |
+| 28 | [s202](slices/s202.md) | Add a config read command | M | 2 | cli | dogfood 2026-10-05: finishing s185 needed implement_finish (done or handoff); no command prints it, and the tracking-file rule forbids reading config.json | — |
 
 ---
 
@@ -62,26 +63,26 @@ v1.2.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 28 | [S144](slices/S144.md) | Don't flag retired or done items that depend on a retired item | S | 1 | slicer | user report: check flags retired items that depend on retired items; user cleared the edges to pass | done |
-| 29 | [S145](slices/S145.md) | Change the id prefix for new ids | M | 2 | slicer | owner request: lowercase ids (s145) going forward; prefix is locked once items exist; mixed-case explicit ids can collide | done |
-| 30 | [S146](slices/S146.md) | Lift a scope boundary out of an outline item's lead | S | 1 | slicer | dogfooding S144: promote --file left the boundary line in the lead and the boundary field as the bare marker | done |
-| 31 | [S147](slices/S147.md) | Keep an unset short title in step when set changes the title | S | 1 | slicer | dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title | done |
-| 32 | [S148](slices/S148.md) | Offer --strict on import and remove | M | 2 | slicer | dogfooding S146/S147: `import --render --strict` failed with "unrecognized arguments: --strict" | done |
-| 33 | [S149](slices/S149.md) | Claim as a named actor per invocation | M | 2 | slicer | agents-repo request R1: claims always record the git user; per-call owner wanted | done |
-| 34 | [S150](slices/S150.md) | Add a reviewing status for a claimed review | M | 2 | slicer | agents-repo request R2: start on a review item turns it into started, which next then offers to implementers | done |
-| 35 | [S151](slices/S151.md) | Pick up the next review item in one call | M | 2 | slicer | agents-repo request R2: next skips review items; a reviewer needs list + show + client-side ranking | done |
-| 36 | [S152](slices/S152.md) | Reject a review back to the queue with a verdict | M | 2 | slicer | agents-repo request R3: set --status open records a field change, not a review verdict, and keeps the claim | done |
-| 37 | [S153](slices/S153.md) | Count attempts on an item | M | 2 | slicer | agents-repo request R4: escalation policy needs a restart-safe attempt count; log counting is fragile | done |
-| 38 | [S154](slices/S154.md) | Add or remove one flag without replacing the list | S | 1 | slicer | agents-repo request R5: set --flag replaces every flag and clobbers independent flag families | done |
-| 39 | [S155](slices/S155.md) | Batch pickup of small same-tree slices | L | 3 | slicer | agents-repo request R6: batching K size-S slices per session means reimplementing next's eligibility client-side | done |
-| 40 | [S156](slices/S156.md) | Document statuses, next eligibility and verify's git checks | S | 1 | slicer | agents-repo request R7 and Q1: custom statuses undocumented; exclude_flags assumed to filter next; verify's git checks unexplained | done |
-| 41 | [S157](slices/S157.md) | Point migrate errors at the expected format | S | 1 | slicer | agents-repo request R8: five successive migrate refusals on a near-miss tree; the format is in docs/migrate-format.md but no message says so | done |
-| 42 | [S159](slices/S159.md) | Set the starting id at init | S | 1 | slicer | agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround | done |
-| 43 | [s160](slices/s160.md) | Show the project URL from the CLI | S | 1 | slicer | owner request 2026-10-01: repo URL (https://github.com/squalor-xyz/slicer) reachable from -h or --about; today only pyproject.toml has it | done |
-| 44 | [s161](slices/s161.md) | Select the unit tests that hit a diff | M | 2 | slicer | owner request 2026-10-01, after S144: the full suite was 972 tests in 558s; 31 tests that matched the change took 27s | done |
-| 45 | [s162](slices/s162.md) | Leave a slice move unstaged | S | 1 | slicer | owner request 2026-10-02, after S144 and S146: done staged only the slice rename | done |
-| 46 | [s163](slices/s163.md) | Require agents to use the slicer CLI for all roadmap reads and edits | S | 1 | docs | Owner request during 2026-10-02 roadmap review: the agent read tracking files directly instead of dogfooding slicer | done |
-| 47 | [s164](slices/s164.md) | Render release groups newest first in HTML and Markdown | M | 2 | slicer | Owner request 2026-10-02: show the latest release at the top of both roadmap renders, earlier releases below, and pre-v1.0 items at the bottom | done |
+| 29 | [S144](slices/S144.md) | Don't flag retired or done items that depend on a retired item | S | 1 | slicer | user report: check flags retired items that depend on retired items; user cleared the edges to pass | done |
+| 30 | [S145](slices/S145.md) | Change the id prefix for new ids | M | 2 | slicer | owner request: lowercase ids (s145) going forward; prefix is locked once items exist; mixed-case explicit ids can collide | done |
+| 31 | [S146](slices/S146.md) | Lift a scope boundary out of an outline item's lead | S | 1 | slicer | dogfooding S144: promote --file left the boundary line in the lead and the boundary field as the bare marker | done |
+| 32 | [S147](slices/S147.md) | Keep an unset short title in step when set changes the title | S | 1 | slicer | dogfooding S144: set --title left the old short_title, so list and ROADMAP kept the old title | done |
+| 33 | [S148](slices/S148.md) | Offer --strict on import and remove | M | 2 | slicer | dogfooding S146/S147: `import --render --strict` failed with "unrecognized arguments: --strict" | done |
+| 34 | [S149](slices/S149.md) | Claim as a named actor per invocation | M | 2 | slicer | agents-repo request R1: claims always record the git user; per-call owner wanted | done |
+| 35 | [S150](slices/S150.md) | Add a reviewing status for a claimed review | M | 2 | slicer | agents-repo request R2: start on a review item turns it into started, which next then offers to implementers | done |
+| 36 | [S151](slices/S151.md) | Pick up the next review item in one call | M | 2 | slicer | agents-repo request R2: next skips review items; a reviewer needs list + show + client-side ranking | done |
+| 37 | [S152](slices/S152.md) | Reject a review back to the queue with a verdict | M | 2 | slicer | agents-repo request R3: set --status open records a field change, not a review verdict, and keeps the claim | done |
+| 38 | [S153](slices/S153.md) | Count attempts on an item | M | 2 | slicer | agents-repo request R4: escalation policy needs a restart-safe attempt count; log counting is fragile | done |
+| 39 | [S154](slices/S154.md) | Add or remove one flag without replacing the list | S | 1 | slicer | agents-repo request R5: set --flag replaces every flag and clobbers independent flag families | done |
+| 40 | [S155](slices/S155.md) | Batch pickup of small same-tree slices | L | 3 | slicer | agents-repo request R6: batching K size-S slices per session means reimplementing next's eligibility client-side | done |
+| 41 | [S156](slices/S156.md) | Document statuses, next eligibility and verify's git checks | S | 1 | slicer | agents-repo request R7 and Q1: custom statuses undocumented; exclude_flags assumed to filter next; verify's git checks unexplained | done |
+| 42 | [S157](slices/S157.md) | Point migrate errors at the expected format | S | 1 | slicer | agents-repo request R8: five successive migrate refusals on a near-miss tree; the format is in docs/migrate-format.md but no message says so | done |
+| 43 | [S159](slices/S159.md) | Set the starting id at init | S | 1 | slicer | agents-repo request R9: init cannot start the counter at S21; add --id works as a workaround | done |
+| 44 | [s160](slices/s160.md) | Show the project URL from the CLI | S | 1 | slicer | owner request 2026-10-01: repo URL (https://github.com/squalor-xyz/slicer) reachable from -h or --about; today only pyproject.toml has it | done |
+| 45 | [s161](slices/s161.md) | Select the unit tests that hit a diff | M | 2 | slicer | owner request 2026-10-01, after S144: the full suite was 972 tests in 558s; 31 tests that matched the change took 27s | done |
+| 46 | [s162](slices/s162.md) | Leave a slice move unstaged | S | 1 | slicer | owner request 2026-10-02, after S144 and S146: done staged only the slice rename | done |
+| 47 | [s163](slices/s163.md) | Require agents to use the slicer CLI for all roadmap reads and edits | S | 1 | docs | Owner request during 2026-10-02 roadmap review: the agent read tracking files directly instead of dogfooding slicer | done |
+| 48 | [s164](slices/s164.md) | Render release groups newest first in HTML and Markdown | M | 2 | slicer | Owner request 2026-10-02: show the latest release at the top of both roadmap renders, earlier releases below, and pre-v1.0 items at the bottom | done |
 
 ---
 
@@ -89,12 +90,12 @@ v1.1.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 48 | [S129](slices/S129.md) | Make the suite independent of where TMPDIR points |  | 1 |  |  | done |
-| 49 | [S132](slices/S132.md) | Render empty slice metadata without broken emphasis |  | 1 |  |  | done |
-| 50 | [S134](slices/S134.md) | Show pass membership in the list table |  | 1 |  |  | done |
-| 51 | [S141](slices/S141.md) | Move the TUI manual out of the README into docs/tui.md | S | 1 | slicer | docs review: README carries the only full TUI manual | done |
-| 52 | [S142](slices/S142.md) | Slim the README to a front page and give each doc topic one home | M | 2 | slicer | docs review: README duplicates install, batch, goals and next/list detail from docs | done |
-| 53 | [S143](slices/S143.md) | Cut and tag the 1.1.0 release | S | 1 | slicer | owner request: release the v1.1 pass | done |
+| 49 | [S129](slices/S129.md) | Make the suite independent of where TMPDIR points |  | 1 |  |  | done |
+| 50 | [S132](slices/S132.md) | Render empty slice metadata without broken emphasis |  | 1 |  |  | done |
+| 51 | [S134](slices/S134.md) | Show pass membership in the list table |  | 1 |  |  | done |
+| 52 | [S141](slices/S141.md) | Move the TUI manual out of the README into docs/tui.md | S | 1 | slicer | docs review: README carries the only full TUI manual | done |
+| 53 | [S142](slices/S142.md) | Slim the README to a front page and give each doc topic one home | M | 2 | slicer | docs review: README duplicates install, batch, goals and next/list detail from docs | done |
+| 54 | [S143](slices/S143.md) | Cut and tag the 1.1.0 release | S | 1 | slicer | owner request: release the v1.1 pass | done |
 
 ---
 
@@ -102,151 +103,151 @@ v1.0.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 54 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | - | slicer | user request | done |
-| 55 | [S06](slices/S06.md) | Publish to PyPI as squalor-slicer | S | - | slicer | PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58 | done |
-| 56 | [S72](slices/S72.md) | Refuse a newer-than-known state schema instead of silently downgrading it | M | - | slicer | v1.0.0 readiness audit (code maturity) | done |
-| 57 | [S73](slices/S73.md) | Raise a clean error on a malformed config numeric field | S | - | slicer | v1.0.0 readiness audit (code maturity) | done |
-| 58 | [S74](slices/S74.md) | Keep a --render failure inside one JSON envelope | M | - | slicer, cli | v1.0.0 readiness audit (code maturity) | done |
-| 59 | [S75](slices/S75.md) | Give internal/state errors a distinct exit code before the CLI freezes | M | - | cli | v1.0.0 readiness audit (code maturity) | done |
-| 60 | [S76](slices/S76.md) | Derive the version from package metadata and add slicer --version | S | - | slicer | v1.0.0 readiness audit (docs + code) | done |
-| 61 | [S77](slices/S77.md) | Add a CHANGELOG seeded from the history | S | - | docs | v1.0.0 readiness audit (docs) | done |
-| 62 | [S78](slices/S78.md) | Add a CONTRIBUTING pointer | S | - | docs | v1.0.0 readiness audit (docs) | done |
-| 63 | [S79](slices/S79.md) | Bring the documentation current with the shipped CLI and TUI | M | - | docs | v1.0.0 readiness audit (docs) | done |
-| 64 | [S80](slices/S80.md) | Add a release checklist, tag CI, and the 1.0.0 bump | M | - | slicer | v1.0.0 readiness audit (release) | done |
-| 65 | [S81](slices/S81.md) | Add a reusable multi-field text input to the TUI | M | - | slicer | v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50) | done |
-| 66 | [S84](slices/S84.md) | Show importance and urgency in the import skeleton | S | - | cli | user feedback on import | done |
-| 67 | [S85](slices/S85.md) | Report the ids an import dry-run would assign | S | - | cli | user feedback on import | done |
-| 68 | [S88](slices/S88.md) | Hide done items from list by default | S | - | cli | v1.0.0 readiness audit (cli contract) | done |
-| 69 | [S89](slices/S89.md) | Hide retired items and list in next's order | S | - | cli | v1.0.0 readiness audit (cli contract) | done |
-| 70 | [S90](slices/S90.md) | Set up PyPI and the trusted publisher for squalor-slicer | S | - | slicer | PyPI was down when S06 landed; account, GitHub environment, and pending publisher are still undone | done |
-| 71 | [S91](slices/S91.md) | Return the next slice body in one call to cut a model round trip | M | - | cli | AI credit-flow review | done |
-| 72 | [S92](slices/S92.md) | Add a lean JSON profile that drops empty and default fields | M | - | cli | AI credit-flow review | done |
-| 73 | [S94](slices/S94.md) | Point agents at the command, not the 21 KB reference doc | S | - | docs | AI credit-flow review | done |
-| 74 | [S106](slices/S106.md) | Return only the sections a pickup needs | M | 2 | slicer | credit review | done |
-| 75 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | done |
-| 76 | [S108](slices/S108.md) | Fold shipped notes into the 1.0.0 changelog | S | 1 | slicer | credit review | done |
-| 77 | [S126](slices/S126.md) | Verify and document the schema v1 to v2 upgrade contract |  | 2 |  |  | done |
-| 78 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | done |
-| 79 | [S128](slices/S128.md) | Cut and tag the 1.0.0 release |  | 1 |  |  | done |
-| 80 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | done |
-| 81 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 2 |  |  | done |
-| 82 | [S133](slices/S133.md) | Key JSON status tallies by status, not display label |  | 1 |  |  | done |
-| 83 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | done |
-| 84 | [S136](slices/S136.md) | Keep next from offering work started in a sibling worktree |  | 2 | slicer | S127 docs audit: next_item ignores claims and sibling worktrees | done |
-| 85 | [S137](slices/S137.md) | Let add opt out of pass inheritance |  | 1 | slicer | S127 docs audit: add --pass '' still inherits the previous item's pass | done |
-| 86 | [S138](slices/S138.md) | Trim the command catalogue out of ai instructions |  | 1 | slicer | S127 review: ai instructions length, owner question | done |
-| 87 | [S139](slices/S139.md) | Tell agents to fill in priority and estimate fields when filing items |  | 1 | slicer | owner request, 2026-09-29 v1.0.0 triage | done |
-| 88 | [S140](slices/S140.md) | Hint when an item is filed unscored |  | 1 | slicer | S139 decision: guidance only for 1.0.0, tool nudge later | done |
+| 55 | [S50](slices/S50.md) | TUI wizard: create a roadmap interactively | L | - | slicer | user request | done |
+| 56 | [S06](slices/S06.md) | Publish to PyPI as squalor-slicer | S | - | slicer | PyPI name 'slicer' is taken (MS InterpretML); publish as 'squalor-slicer', command/import stay slicer; packaging verified by S58 | done |
+| 57 | [S72](slices/S72.md) | Refuse a newer-than-known state schema instead of silently downgrading it | M | - | slicer | v1.0.0 readiness audit (code maturity) | done |
+| 58 | [S73](slices/S73.md) | Raise a clean error on a malformed config numeric field | S | - | slicer | v1.0.0 readiness audit (code maturity) | done |
+| 59 | [S74](slices/S74.md) | Keep a --render failure inside one JSON envelope | M | - | slicer, cli | v1.0.0 readiness audit (code maturity) | done |
+| 60 | [S75](slices/S75.md) | Give internal/state errors a distinct exit code before the CLI freezes | M | - | cli | v1.0.0 readiness audit (code maturity) | done |
+| 61 | [S76](slices/S76.md) | Derive the version from package metadata and add slicer --version | S | - | slicer | v1.0.0 readiness audit (docs + code) | done |
+| 62 | [S77](slices/S77.md) | Add a CHANGELOG seeded from the history | S | - | docs | v1.0.0 readiness audit (docs) | done |
+| 63 | [S78](slices/S78.md) | Add a CONTRIBUTING pointer | S | - | docs | v1.0.0 readiness audit (docs) | done |
+| 64 | [S79](slices/S79.md) | Bring the documentation current with the shipped CLI and TUI | M | - | docs | v1.0.0 readiness audit (docs) | done |
+| 65 | [S80](slices/S80.md) | Add a release checklist, tag CI, and the 1.0.0 bump | M | - | slicer | v1.0.0 readiness audit (release) | done |
+| 66 | [S81](slices/S81.md) | Add a reusable multi-field text input to the TUI | M | - | slicer | v1.0.0 readiness audit; prerequisite for the roadmap wizard (S50) | done |
+| 67 | [S84](slices/S84.md) | Show importance and urgency in the import skeleton | S | - | cli | user feedback on import | done |
+| 68 | [S85](slices/S85.md) | Report the ids an import dry-run would assign | S | - | cli | user feedback on import | done |
+| 69 | [S88](slices/S88.md) | Hide done items from list by default | S | - | cli | v1.0.0 readiness audit (cli contract) | done |
+| 70 | [S89](slices/S89.md) | Hide retired items and list in next's order | S | - | cli | v1.0.0 readiness audit (cli contract) | done |
+| 71 | [S90](slices/S90.md) | Set up PyPI and the trusted publisher for squalor-slicer | S | - | slicer | PyPI was down when S06 landed; account, GitHub environment, and pending publisher are still undone | done |
+| 72 | [S91](slices/S91.md) | Return the next slice body in one call to cut a model round trip | M | - | cli | AI credit-flow review | done |
+| 73 | [S92](slices/S92.md) | Add a lean JSON profile that drops empty and default fields | M | - | cli | AI credit-flow review | done |
+| 74 | [S94](slices/S94.md) | Point agents at the command, not the 21 KB reference doc | S | - | docs | AI credit-flow review | done |
+| 75 | [S106](slices/S106.md) | Return only the sections a pickup needs | M | 2 | slicer | credit review | done |
+| 76 | [S107](slices/S107.md) | Point the agent loop at the small commands | S | 1 | slicer | credit review | done |
+| 77 | [S108](slices/S108.md) | Fold shipped notes into the 1.0.0 changelog | S | 1 | slicer | credit review | done |
+| 78 | [S126](slices/S126.md) | Verify and document the schema v1 to v2 upgrade contract |  | 2 |  |  | done |
+| 79 | [S127](slices/S127.md) | Bring all docs up to date for the 1.0.0 release |  | 3 |  |  | done |
+| 80 | [S128](slices/S128.md) | Cut and tag the 1.0.0 release |  | 1 |  |  | done |
+| 81 | [S130](slices/S130.md) | Advertise Python 3.14 in the package classifiers |  | 1 |  |  | done |
+| 82 | [S131](slices/S131.md) | Reject unknown dependency ids at set time |  | 2 |  |  | done |
+| 83 | [S133](slices/S133.md) | Key JSON status tallies by status, not display label |  | 1 |  |  | done |
+| 84 | [S135](slices/S135.md) | Hand off a claimed slice as ready for review | M | 3 | slicer | user request: implementation-to-review agent handoff | done |
+| 85 | [S136](slices/S136.md) | Keep next from offering work started in a sibling worktree |  | 2 | slicer | S127 docs audit: next_item ignores claims and sibling worktrees | done |
+| 86 | [S137](slices/S137.md) | Let add opt out of pass inheritance |  | 1 | slicer | S127 docs audit: add --pass '' still inherits the previous item's pass | done |
+| 87 | [S138](slices/S138.md) | Trim the command catalogue out of ai instructions |  | 1 | slicer | S127 review: ai instructions length, owner question | done |
+| 88 | [S139](slices/S139.md) | Tell agents to fill in priority and estimate fields when filing items |  | 1 | slicer | owner request, 2026-09-29 v1.0.0 triage | done |
+| 89 | [S140](slices/S140.md) | Hint when an item is filed unscored |  | 1 | slicer | S139 decision: guidance only for 1.0.0, tool nudge later | done |
 
 ---
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 89 | S03 | Export back to a legacy markdown index for anything still expecting one | M | - | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
-| 90 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
+| 90 | S03 | Export back to a legacy markdown index for anything still expecting one | M | - | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
+| 91 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
 
 ---
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 91 | [S36](slices/S36.md) | No single where-am-I overview | M | - | slicer | review; ergonomics | done |
-| 92 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | - | slicer | profiled; I first misattributed this to store.load | done |
-| 93 | [S65](slices/S65.md) | find does not show which field or snippet matched |  | - | slicer | dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json. | done |
-| 94 | [S64](slices/S64.md) | slicer log has no per-item filter |  | - | slicer | dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note. | done |
-| 95 | [S20](slices/S20.md) | History records that something changed, never what | M | - | slicer | agent surface | done |
-| 96 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | - | slicer | agent surface | done |
-| 97 | [S35](slices/S35.md) | remove --purge has no dry-run | S | - | slicer | review; safety | done |
-| 98 | [S33](slices/S33.md) | stats cannot show progress | M | - | slicer | review; reporting | done |
-| 99 | S68 | no item-level notes/context without a slice |  | - | slicer | dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice. | done |
-| 100 | [S67](slices/S67.md) | slicer next output is terse |  | - | slicer | dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag. | done |
-| 101 | [S02](slices/S02.md) | Trial run on a second repo with no legacy tree to import | S | - | slicer |  | done |
-| 102 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | - | slicer | dogfooding S50 | done |
-| 103 | [S66](slices/S66.md) | done --note and note mean different things (log vs slice) |  | - | slicer | dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible. | done |
-| 104 | [S63](slices/S63.md) | TUI: view, edit and add slice notes |  | - | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | done |
-| 105 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | - | slicer | dogfooding; reorder at scale | done |
-| 106 | [S52](slices/S52.md) | Document onboarding and AI-assisted roadmap workflows | M | - | docs | documentation review; user workflow | done |
-| 107 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | - | slicer | review; sibling of S22 | done |
-| 108 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | - | slicer | review; data loss | done |
-| 109 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | - | slicer | review; core invariant | done |
-| 110 | [S30](slices/S30.md) | verify misses several inconsistent states | M | - | slicer | review; gate completeness | done |
-| 111 | [S38](slices/S38.md) | Priority and criticality scoring: the score as data | M | - | slicer | user request; Eisenhower matrix | done |
-| 112 | [S39](slices/S39.md) | Priority propagation and next picks the highest effective score | M | - | slicer | user request; critical-path propagation | done |
-| 113 | [S44](slices/S44.md) | No way to mark an item in-progress, so the queue cannot show what is in flight | M | - | slicer | dogfooding; the flow gap | done |
-| 114 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | - | slicer | found probing edge cases | done |
-| 115 | [S12](slices/S12.md) | flags and group have no CLI setter | S | - | slicer | found auditing the machine interface | done |
-| 116 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | - | slicer | review; daily friction | done |
-| 117 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | - | slicer | dogfooding; done->render->check every commit | done |
-| 118 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | - | slicer | follow-on from S45, which scoped prose out | done |
-| 119 | [S49](slices/S49.md) | import and migrate should honour --render too | S | - | slicer | the two bulk-load holdouts from S45/S47 | done |
-| 120 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | - | slicer | dogfooding; a temp file per section edit | done |
-| 121 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | - | slicer | dogfooding; felt every run | done |
-| 122 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | - | slicer | severity revised: cosmetic since the error envelope landed | done |
-| 123 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | - | slicer | found probing edge cases | done |
-| 124 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | - | slicer | dogfooding; biggest TUI gap | done |
-| 125 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | - | slicer | dogfooding; navigation at scale | done |
-| 126 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | - | slicer | path traversal; found planning S21 | done |
-| 127 | [S01](slices/S01.md) | Split slicer into its own repository | M | - | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
-| 128 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | - | slicer |  | done |
-| 129 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | - | slicer | found while verifying prose add-pass | done |
-| 130 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | - | slicer | owner: needs a legal name | done |
-| 131 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | - | slicer | found while splitting the repo | done |
-| 132 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | - | slicer | found while writing the getting-started guide | done |
-| 133 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | - | slicer | found while writing docs/configuration.md | done |
-| 134 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | - | slicer | found auditing the machine interface | done |
-| 135 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | - | slicer | found auditing the machine interface | done |
-| 136 | [S15](slices/S15.md) | Nothing searches anything | M | - | slicer | agent surface | done |
-| 137 | [S16](slices/S16.md) | Status changes are one item per process | M | - | slicer | agent surface | done |
-| 138 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | - | slicer | agent surface | done |
-| 139 | [S18](slices/S18.md) | An item has nowhere to put a note | M | - | slicer | agent surface | done |
-| 140 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | - | slicer | found probing edge cases | done |
-| 141 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | - | slicer | found probing edge cases | done |
-| 142 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | - | slicer | found planning S21 | done |
-| 143 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | - | slicer | review; robustness | done |
-| 144 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | - | slicer | review; agent workflow | done |
-| 145 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | - | slicer | reproduced closing S47; a section edit silently dropped it | done |
-| 146 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | - | cli | S46 planning; slicer edit --json prints argparse usage only | done |
-| 147 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | - | tests | S52 validation; three failures with workspace-local TMPDIR | done |
-| 148 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | - | slicer | user request: clearer TUI with color | done |
-| 149 | [S56](slices/S56.md) | Track project goals and non-goals for AI-assisted planning |  | - | slicer | user request: explicit product direction for AI-assisted planning | done |
-| 150 | [S57](slices/S57.md) | Provide slicer ai instructions for agent onboarding |  | - | slicer | user request: discoverable agent onboarding from the installed tool | done |
-| 151 | [S58](slices/S58.md) | Provide a simple install path without cloning the repository |  | - | slicer | user request: easier installation for casual users while retaining clone-based installs | done |
-| 152 | [S59](slices/S59.md) | Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1) |  | - |  |  | done |
-| 153 | [S60](slices/S60.md) | List more keyboard shortcuts in the TUI |  | - |  |  | done |
-| 154 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  | - |  |  | done |
-| 155 | [S62](slices/S62.md) | Parallel branches conflict on .slicer/log.jsonl and generated render/ files |  | - | slicer | dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/. | done |
-| 156 | [S69](slices/S69.md) | No way to bulk-reorder or persist a score sort (queue reorder is one move at a time) |  | - | slicer | dogfooding re-sort: reordering the queue needs one 'move --to' per item; list --sort score is view-only. Consider 'slicer sort --by score' to persist, or move accepting a full order / multiple ids. | done |
-| 157 | [S70](slices/S70.md) | Render an HTML roadmap file alongside the markdown |  | - | slicer | user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness. | done |
-| 158 | [S71](slices/S71.md) | set --depends-on '' stores an empty-string dependency instead of clearing |  | - | slicer | dogfooding S02 (greenfield): 'slicer set ID --depends-on ""' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug. | done |
-| 159 | [S82](slices/S82.md) | Make flags a first-class, filterable tag axis | M | - | slicer |  | done |
-| 160 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | - | cli |  | done |
-| 161 | [S86](slices/S86.md) | Accept a roadmap preamble in an import outline | M | - | cli | user feedback on import | done |
-| 162 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | - | cli | user request for a next-id command | done |
-| 163 | [S93](slices/S93.md) | Read only the sections an agent implements against | S | - | cli | AI credit-flow review | done |
-| 164 | [S95](slices/S95.md) | Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok | M | - | docs | AI credit-flow review | done |
-| 165 | [S96](slices/S96.md) | Add optional effort estimates and effort sorting | M | - | slicer, cli, tui, docs | user request | done |
-| 166 | [S97](slices/S97.md) | Rank the TUI queue and choose a sort field and direction | M | - | tui, slicer, docs | user request | done |
-| 167 | [S98](slices/S98.md) | Default to a one-call slice pickup in agent guidance | S | - | docs | AI credit-flow review | done |
-| 168 | [S99](slices/S99.md) | Surface targeted slice reads in the short agent guide | S | - | docs | AI credit-flow review | done |
-| 169 | [S100](slices/S100.md) | Clarify when to start a slice in agent workflows | S | - | docs | AI credit-flow review | done |
-| 170 | [S101](slices/S101.md) | Add a compact ready-to-work CLI context bundle | M | - | cli | AI credit-flow review | done |
-| 171 | [S102](slices/S102.md) | Do not hand next a slice that does not say what done means |  | - | slicer |  | done |
-| 172 | [S103](slices/S103.md) | Keep a failed render from landing done |  | - | slicer |  | done |
-| 173 | [S104](slices/S104.md) | Let set clear an optional field without a one-off sentinel |  | - | slicer |  | done |
-| 174 | [S105](slices/S105.md) | Choose whether render success is required for a mutation |  | - |  |  | done |
-| 175 | [S109](slices/S109.md) | Stop generated roadmap files from conflict-marking on merge | M | 2 | slicer | credit review | done |
-| 176 | [S110](slices/S110.md) | Roll back a partial render when done --render fails | S | 2 | slicer | credit review | done |
-| 177 | [S111](slices/S111.md) | Roll migrate back when a required render fails | M | 2 | slicer | credit review | done |
-| 178 | [S112](slices/S112.md) | Label list columns and say when rows are hidden | S | 1 | slicer | credit review | done |
-| 179 | [S113](slices/S113.md) | Detect concurrent work on a slice across branches and worktrees |  | - |  |  | done |
-| 180 | [S114](slices/S114.md) | Claim a slice and surface claimed / in-work items in list |  | - |  |  | done |
-| 181 | [S115](slices/S115.md) | Point the contributor guide at the bounded pickup | S | 1 | slicer | S107 | done |
-| 182 | [S116](slices/S116.md) | Reject slice examples that name a removed flag | M | 2 | slicer | S107 | done |
-| 183 | [S117](slices/S117.md) | Make the test suite robust to colorized argparse output |  | - |  |  | done |
-| 184 | [S118](slices/S118.md) | Configure the render merge driver in one step |  | - |  |  | done |
-| 185 | [S119](slices/S119.md) | Guard against parallel merges into the shared main checkout |  | - |  |  | done |
-| 186 | [S120](slices/S120.md) | Warn when slicer runs code from outside the discovered project |  | - |  |  | done |
-| 187 | [S121](slices/S121.md) | Add slicer setup-git to configure the render merge driver on any clone |  | - |  |  | done |
-| 188 | [S122](slices/S122.md) | Surface items in-work in a sibling worktree in slicer list |  | - |  |  | done |
-| 189 | [S123](slices/S123.md) | Warn in verify when the render merge driver is not configured |  | - |  |  | done |
-| 190 | [S124](slices/S124.md) | Add Python 3.14 to the CI test matrix |  | 1 |  |  | done |
-| 191 | [S125](slices/S125.md) | Tame the verify render-driver warning for solo projects |  | 2 |  |  | done |
+| 92 | [S36](slices/S36.md) | No single where-am-I overview | M | - | slicer | review; ergonomics | done |
+| 93 | [S37](slices/S37.md) | The CLI rebuilds its whole argparse tree on every invocation | S | - | slicer | profiled; I first misattributed this to store.load | done |
+| 94 | [S65](slices/S65.md) | find does not show which field or snippet matched |  | - | slicer | dogfooding S15: slicer find lists matching items but not where the term hit (esp. body matches), so you re-open the slice to see why. Show the matched field + a short snippet in text and --json. | done |
+| 95 | [S64](slices/S64.md) | slicer log has no per-item filter |  | - | slicer | dogfooding: after note/done I wanted one item's history, but log takes only --limit and shows everything. Add slicer log --item ID (repeatable) to scope history; pairs with find and note. | done |
+| 96 | [S20](slices/S20.md) | History records that something changed, never what | M | - | slicer | agent surface | done |
+| 97 | [S19](slices/S19.md) | Dependencies can only be asked about one item at a time | M | - | slicer | agent surface | done |
+| 98 | [S35](slices/S35.md) | remove --purge has no dry-run | S | - | slicer | review; safety | done |
+| 99 | [S33](slices/S33.md) | stats cannot show progress | M | - | slicer | review; reporting | done |
+| 100 | S68 | no item-level notes/context without a slice |  | - | slicer | dogfooding S06/S18: a bare idea row cannot take a note (note needs a slice) and --findings only replaces. You must promote to record context. Consider item-level notes independent of a slice. | done |
+| 101 | [S67](slices/S67.md) | slicer next output is terse |  | - | slicer | dogfooding: next prints id/title/path only — not the effective score, why it is next, or what blocks it, and there is no one-shot to start it. Consider showing score/blockers (text) and/or a --start flag. | done |
+| 102 | [S02](slices/S02.md) | Trial run on a second repo with no legacy tree to import | S | - | slicer |  | done |
+| 103 | [S51](slices/S51.md) | A mutating command still says "now run slicer render" after --render already rendered | S | - | slicer | dogfooding S50 | done |
+| 104 | [S66](slices/S66.md) | done --note and note mean different things (log vs slice) |  | - | slicer | dogfooding S18: 'done --note' writes only log.jsonl; 'slicer note' writes the slice. Same word, two destinations — easy to confuse. Align naming/help, or surface log notes somewhere visible. | done |
+| 105 | [S63](slices/S63.md) | TUI: view, edit and add slice notes |  | - | slicer | split from S18: CLI slicer note landed; TUI should show notes and let e edit one, plus an affordance to add a note (list-entry add, unlike edit-in-place fields/sections). | done |
+| 106 | [S42](slices/S42.md) | TUI reordering and re-prioritizing are one step at a time | S | - | slicer | dogfooding; reorder at scale | done |
+| 107 | [S52](slices/S52.md) | Document onboarding and AI-assisted roadmap workflows | M | - | docs | documentation review; user workflow | done |
+| 108 | [S27](slices/S27.md) | Corrupted or mis-encoded tracking files crash instead of reporting | M | - | slicer | review; sibling of S22 | done |
+| 109 | [S29](slices/S29.md) | migrate silently overwrites an existing roadmap | S | - | slicer | review; data loss | done |
+| 110 | [S28](slices/S28.md) | A low next_id silently mints a duplicate id | S | - | slicer | review; core invariant | done |
+| 111 | [S30](slices/S30.md) | verify misses several inconsistent states | M | - | slicer | review; gate completeness | done |
+| 112 | [S38](slices/S38.md) | Priority and criticality scoring: the score as data | M | - | slicer | user request; Eisenhower matrix | done |
+| 113 | [S39](slices/S39.md) | Priority propagation and next picks the highest effective score | M | - | slicer | user request; critical-path propagation | done |
+| 114 | [S44](slices/S44.md) | No way to mark an item in-progress, so the queue cannot show what is in flight | M | - | slicer | dogfooding; the flow gap | done |
+| 115 | [S23](slices/S23.md) | park hardcodes the literal parked status | S | - | slicer | found probing edge cases | done |
+| 116 | [S12](slices/S12.md) | flags and group have no CLI setter | S | - | slicer | found auditing the machine interface | done |
+| 117 | [S32](slices/S32.md) | add cannot set deps or short-title; park and unpark cannot take a note | S | - | slicer | review; daily friction | done |
+| 118 | [S45](slices/S45.md) | A mutating command should be able to render in the same step | S | - | slicer | dogfooding; done->render->check every commit | done |
+| 119 | [S47](slices/S47.md) | Extend --render to the prose mutating commands | S | - | slicer | follow-on from S45, which scoped prose out | done |
+| 120 | [S49](slices/S49.md) | import and migrate should honour --render too | S | - | slicer | the two bulk-load holdouts from S45/S47 | done |
+| 121 | [S46](slices/S46.md) | edit should take an inline value, not only a file, stdin, or the editor | S | - | slicer | dogfooding; a temp file per section edit | done |
+| 122 | [S43](slices/S43.md) | verify's git cross-check emits permanent, unclearable warnings | S | - | slicer | dogfooding; felt every run | done |
+| 123 | [S13](slices/S13.md) | move X --before X drops the item from the in-memory index | S | - | slicer | severity revised: cosmetic since the error envelope landed | done |
+| 124 | [S24](slices/S24.md) | move --to silently clamps an out-of-range position | S | - | slicer | found probing edge cases | done |
+| 125 | [S40](slices/S40.md) | The TUI can browse and edit but not create or set fields | M | - | slicer | dogfooding; biggest TUI gap | done |
+| 126 | [S41](slices/S41.md) | The TUI has no search, filter, jump, or help | M | - | slicer | dogfooding; navigation at scale | done |
+| 127 | [S25](slices/S25.md) | An item id is used as a file path without validation | M | - | slicer | path traversal; found planning S21 | done |
+| 128 | [S01](slices/S01.md) | Split slicer into its own repository | M | - | slicer | owner: the split is what proves nothing project-specific is compiled in | done |
+| 129 | S04 | TUI: edit a section in place instead of handing off to the CLI | M | - | slicer |  | done |
+| 130 | S05 | No command removes a roadmap item; a mistyped add needs index.json | S | - | slicer | found while verifying prose add-pass | done |
+| 131 | S07 | Copyright holder is unnamed in LICENSE and pyproject | S | - | slicer | owner: needs a legal name | done |
+| 132 | [S08](slices/S08.md) | set --findings updates the index row but not the slice file; check does not notice | M | - | slicer | found while splitting the repo | done |
+| 133 | S09 | No bulk-load command: a plain list of planned features needs a shell loop over add | S | - | slicer | found while writing the getting-started guide | done |
+| 134 | [S10](slices/S10.md) | id.prefix and id.width in config.json are silently inert after init | S | - | slicer | found while writing docs/configuration.md | done |
+| 135 | [S11](slices/S11.md) | set --status changes the field without moving the slice file | S | - | slicer | found auditing the machine interface | done |
+| 136 | [S14](slices/S14.md) | The TUI help line advertises a key that does something else | S | - | slicer | found auditing the machine interface | done |
+| 137 | [S15](slices/S15.md) | Nothing searches anything | M | - | slicer | agent surface | done |
+| 138 | [S16](slices/S16.md) | Status changes are one item per process | M | - | slicer | agent surface | done |
+| 139 | [S17](slices/S17.md) | edit always replaces; there is no way to append | S | - | slicer | agent surface | done |
+| 140 | [S18](slices/S18.md) | An item has nowhere to put a note | M | - | slicer | agent surface | done |
+| 141 | [S21](slices/S21.md) | User text reaches the roadmap table unvalidated | M | - | slicer | found probing edge cases | done |
+| 142 | [S22](slices/S22.md) | Config errors escape as Python tracebacks | M | - | slicer | found probing edge cases | done |
+| 143 | [S26](slices/S26.md) | A retired row eats a middot from its findings | S | - | slicer | found planning S21 | done |
+| 144 | [S31](slices/S31.md) | Operations are not atomic across files, and nothing locks | M | - | slicer | review; robustness | done |
+| 145 | [S34](slices/S34.md) | Filing a detailed slice takes promote plus one edit per section | M | - | slicer | review; agent workflow | done |
+| 146 | [S48](slices/S48.md) | The scope boundary is fragile prose, not a structured field | M | - | slicer | reproduced closing S47; a section edit silently dropped it | done |
+| 147 | [S53](slices/S53.md) | Argument-parser failures bypass JSON error envelopes | S | - | cli | S46 planning; slicer edit --json prints argparse usage only | done |
+| 148 | [S54](slices/S54.md) | Tests inherit enclosing project state when temporary directories are inside the workspace | S | - | tests | S52 validation; three failures with workspace-local TMPDIR | done |
+| 149 | [S55](slices/S55.md) | TUI color and visual polish: status, priority, focus, and feedback | M | - | slicer | user request: clearer TUI with color | done |
+| 150 | [S56](slices/S56.md) | Track project goals and non-goals for AI-assisted planning |  | - | slicer | user request: explicit product direction for AI-assisted planning | done |
+| 151 | [S57](slices/S57.md) | Provide slicer ai instructions for agent onboarding |  | - | slicer | user request: discoverable agent onboarding from the installed tool | done |
+| 152 | [S58](slices/S58.md) | Provide a simple install path without cloning the repository |  | - | slicer | user request: easier installation for casual users while retaining clone-based installs | done |
+| 153 | [S59](slices/S59.md) | Support slicer next -n N to return the slice N positions after the current next slice (-n 1 returns next+1) |  | - |  |  | done |
+| 154 | [S60](slices/S60.md) | List more keyboard shortcuts in the TUI |  | - |  |  | done |
+| 155 | [S61](slices/S61.md) | Make slicer ui and slicer tui both open the TUI |  | - |  |  | done |
+| 156 | [S62](slices/S62.md) | Parallel branches conflict on .slicer/log.jsonl and generated render/ files |  | - | slicer | dogfooding: landing S60 onto main (which had S06) hit a log.jsonl merge conflict; generated .slicer/render/ files also conflict and must be re-rendered, not merged. Consider a union merge driver / .gitattributes for log.jsonl and a regenerate-on-merge story for render/. | done |
+| 157 | [S69](slices/S69.md) | No way to bulk-reorder or persist a score sort (queue reorder is one move at a time) |  | - | slicer | dogfooding re-sort: reordering the queue needs one 'move --to' per item; list --sort score is view-only. Consider 'slicer sort --by score' to persist, or move accepting a full order / multiple ids. | done |
+| 158 | [S70](slices/S70.md) | Render an HTML roadmap file alongside the markdown |  | - | slicer | user request: generate an HTML roadmap. render/ emits ROADMAP.md today; an HTML version is browser-viewable/shareable without a markdown renderer. Design: separate render target (e.g. render/ROADMAP.html) vs a dedicated command; templating and styling with stdlib only (no new deps); whether it participates in render/check staleness. | done |
+| 159 | [S71](slices/S71.md) | set --depends-on '' stores an empty-string dependency instead of clearing |  | - | slicer | dogfooding S02 (greenfield): 'slicer set ID --depends-on ""' sets depends_on=[''], a phantom 'depends on unknown id ' that fails check/verify. Empty --depends-on should clear to []. import/add may share the parse. Bug. | done |
+| 160 | [S82](slices/S82.md) | Make flags a first-class, filterable tag axis | M | - | slicer |  | done |
+| 161 | [S83](slices/S83.md) | Show the inherited pass in add's output | S | - | cli |  | done |
+| 162 | [S86](slices/S86.md) | Accept a roadmap preamble in an import outline | M | - | cli | user feedback on import | done |
+| 163 | [S87](slices/S87.md) | Print the next slice id without allocating it | S | - | cli | user request for a next-id command | done |
+| 164 | [S93](slices/S93.md) | Read only the sections an agent implements against | S | - | cli | AI credit-flow review | done |
+| 165 | [S95](slices/S95.md) | Package the slicer driving loop as fixed agent skills for Claude, Codex, and Grok | M | - | docs | AI credit-flow review | done |
+| 166 | [S96](slices/S96.md) | Add optional effort estimates and effort sorting | M | - | slicer, cli, tui, docs | user request | done |
+| 167 | [S97](slices/S97.md) | Rank the TUI queue and choose a sort field and direction | M | - | tui, slicer, docs | user request | done |
+| 168 | [S98](slices/S98.md) | Default to a one-call slice pickup in agent guidance | S | - | docs | AI credit-flow review | done |
+| 169 | [S99](slices/S99.md) | Surface targeted slice reads in the short agent guide | S | - | docs | AI credit-flow review | done |
+| 170 | [S100](slices/S100.md) | Clarify when to start a slice in agent workflows | S | - | docs | AI credit-flow review | done |
+| 171 | [S101](slices/S101.md) | Add a compact ready-to-work CLI context bundle | M | - | cli | AI credit-flow review | done |
+| 172 | [S102](slices/S102.md) | Do not hand next a slice that does not say what done means |  | - | slicer |  | done |
+| 173 | [S103](slices/S103.md) | Keep a failed render from landing done |  | - | slicer |  | done |
+| 174 | [S104](slices/S104.md) | Let set clear an optional field without a one-off sentinel |  | - | slicer |  | done |
+| 175 | [S105](slices/S105.md) | Choose whether render success is required for a mutation |  | - |  |  | done |
+| 176 | [S109](slices/S109.md) | Stop generated roadmap files from conflict-marking on merge | M | 2 | slicer | credit review | done |
+| 177 | [S110](slices/S110.md) | Roll back a partial render when done --render fails | S | 2 | slicer | credit review | done |
+| 178 | [S111](slices/S111.md) | Roll migrate back when a required render fails | M | 2 | slicer | credit review | done |
+| 179 | [S112](slices/S112.md) | Label list columns and say when rows are hidden | S | 1 | slicer | credit review | done |
+| 180 | [S113](slices/S113.md) | Detect concurrent work on a slice across branches and worktrees |  | - |  |  | done |
+| 181 | [S114](slices/S114.md) | Claim a slice and surface claimed / in-work items in list |  | - |  |  | done |
+| 182 | [S115](slices/S115.md) | Point the contributor guide at the bounded pickup | S | 1 | slicer | S107 | done |
+| 183 | [S116](slices/S116.md) | Reject slice examples that name a removed flag | M | 2 | slicer | S107 | done |
+| 184 | [S117](slices/S117.md) | Make the test suite robust to colorized argparse output |  | - |  |  | done |
+| 185 | [S118](slices/S118.md) | Configure the render merge driver in one step |  | - |  |  | done |
+| 186 | [S119](slices/S119.md) | Guard against parallel merges into the shared main checkout |  | - |  |  | done |
+| 187 | [S120](slices/S120.md) | Warn when slicer runs code from outside the discovered project |  | - |  |  | done |
+| 188 | [S121](slices/S121.md) | Add slicer setup-git to configure the render merge driver on any clone |  | - |  |  | done |
+| 189 | [S122](slices/S122.md) | Surface items in-work in a sibling worktree in slicer list |  | - |  |  | done |
+| 190 | [S123](slices/S123.md) | Warn in verify when the render merge driver is not configured |  | - |  |  | done |
+| 191 | [S124](slices/S124.md) | Add Python 3.14 to the CI test matrix |  | 1 |  |  | done |
+| 192 | [S125](slices/S125.md) | Tame the verify render-driver warning for solo projects |  | 2 |  |  | done |
