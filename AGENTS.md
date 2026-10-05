@@ -93,16 +93,14 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 
 ## Working on the roadmap
 
-This repo tracks its own roadmap with slicer. That is the point — it is also the
-end-to-end test.
+This repo tracks its own roadmap with slicer; that is also the end-to-end test.
 
 Read README.md and ARCHITECTURE.md first. Use `slicer ai instructions` for agent
 onboarding; [docs/agents.md](docs/agents.md) has detailed command/JSON contracts
 and reusable prompts.
 
-To pick up existing work, run this from the checkout root; no installation is needed.
-The headings are examples; pass the section names the project configures.
-Run `slicer sections` for this project's names:
+To pick up existing work, run this from the checkout root. The headings are
+examples; `slicer sections` lists this project's:
 
 ```sh
 PYTHONPATH=src python3 -m slicer next --ready --section "Implement" --section "Check" --json --lean
@@ -120,10 +118,9 @@ slice on `main`. This applies even when committing and merging were not requeste
 git worktree add -b feature/<id>-<slug> .worktrees/<id> main
 ```
 
-A new worktree starts at `main`'s committed `HEAD`. If the selected slice has
-uncommitted filings, ask the owner to authorize committing those filings before
-cutting the worktree; never commit them without authorization. Run the commands
-below against the new worktree's code and tracking state. If retaining the launch
+A new worktree starts at `main`'s committed `HEAD`. If the slice has uncommitted
+filings, ask the owner to authorize committing them before cutting the worktree.
+Run the commands below against the worktree's code and state. To keep the launch
 working directory, use `PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root
 .worktrees/<id> ...`, `git -C .worktrees/<id> ...`, and unittest discovery with
 `-s .worktrees/<id>/tests -t .worktrees/<id>/tests`. Use that worktree's ignored
@@ -135,28 +132,35 @@ PYTHONPATH=src python3 -m slicer start <ID> --render --strict
 python3 tests/affected.py --run
 # Implement the slice and run its focused tests, then the repository checks:
 python3 -m unittest discover -s tests -t tests
-PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render --check
+PYTHONPATH=src python3 -m slicer note <ID> --text "Ready for review: ..."
+PYTHONPATH=src python3 -m slicer handoff <ID> --render --check
 git diff --check
 git status --short
 ```
 
-Review code, documentation, and tracking state together. Mark done only after
-acceptance checks pass. Commit and publish only on the owner's instructions; a
-slice's Git section does not authorize them.
+Review code, documentation, and tracking state together. This project finishes with
+`handoff` (`implement_finish`): hand off only after the acceptance checks pass, and
+never run `done` in a worktree. Commit and publish only on the owner's instructions;
+a slice's Git section does not authorize them.
 
 ### Landing a slice
 
-Use the slice's worktree; commit, merge, and push only when asked.
-Inside: `PYTHONPATH=src python3 -m slicer`. Outside, use `--root` for state and
-`PYTHONPATH` for code, without changing directory:
+Only when the owner asks to commit and merge; push only when asked. Pick up the
+handoff through `--root`, review the diff, and rerun the checks:
 
 ```sh
-PYTHONPATH=<worktree>/src python3 -m slicer --root <worktree> ...
+PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> next --status review --start --ready --section "Check" --json --lean
 ```
 
-After focused tests, the full suite, `slicer check`, and `git diff --check` pass,
-mark done with `--render`. Review the diff; commit on its branch and merge into `main` with `git merge --no-ff`. Remove the worktree and branch; leave
-`main` clean.
+A failed review is `slicer reject <ID> --note "VERDICT: FAIL - reason" --render`.
+Otherwise commit on its branch, merge into `main` with `git merge --no-ff`, then on
+`main`:
+
+```sh
+PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render --check
+```
+
+Commit that, remove the worktree and branch, and leave `main` clean.
 
 **Read and change tracking state through the slicer CLI.** The full rule is in `slicer ai instructions`; inspect tracking internals only when the task asks.
 
@@ -170,16 +174,10 @@ Use `edit` for subsequent section changes:
 slicer add "Some title"
 slicer promote S07 --file draft.md --render
 slicer edit S07 --section Why --file note.md --render --strict
-slicer show S07 --section Why    # read one section back
 ```
 
-For several items, import an outline:
-
-```sh
-slicer import --skeleton > /tmp/draft.md
-slicer import /tmp/draft.md --dry-run
-slicer import /tmp/draft.md
-```
+For several items, run `slicer import --skeleton`, then `import FILE --dry-run`, then
+`import FILE`.
 
 `.slicer/render/` is committed. A change to state without a re-render fails CI.
 
