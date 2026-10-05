@@ -4931,7 +4931,7 @@
       "id": "s188",
       "title": "Print the generic recommended project workflow",
       "short_title": "Print the generic recommended project workflow",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4950,7 +4950,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
