@@ -7,6 +7,7 @@ subdirectory of a project, the way git does.
 from __future__ import annotations
 
 import os
+import re
 import sys
 import time
 from contextlib import contextmanager
@@ -407,6 +408,14 @@ def sibling_ids(root: Path) -> list[tuple[str, Index]]:
   return [(path.name, index) for path, index in _read_siblings(root)]
 
 
+def _id_order(item_id: str) -> list[tuple[int, int, str]]:
+  """Sort key that puts `s9` before `s10`: digit runs compare as numbers."""
+  return [
+    (1, int(part), "") if part.isdigit() else (0, 0, part.casefold())
+    for part in re.split(r"(\d+)", item_id) if part
+  ]
+
+
 def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]]]:
   """Sibling work this checkout has not reached, ordered by worktree path.
 
@@ -414,19 +423,45 @@ def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]
   `index` is this checkout's copy, used to tell a real handoff or done from
   the same state already here.
   """
+  return sibling_work(root, index)[0]
+
+
+def only_in_sibling(root: Path, index: Index) -> list[dict[str, str]]:
+  """Open sibling items whose id this checkout does not have.
+
+  Each row is `{id, title, worktree, status}`, ordered by worktree path and then
+  id. Claimed and in-work rows are left to `in_work_elsewhere`, and a sibling's
+  done or review rows are not new work.
+  """
+  return sibling_work(root, index)[1]
+
+
+def sibling_work(
+  root: Path, index: Index,
+) -> tuple[dict[str, list[dict[str, str]]], list[dict[str, str]]]:
+  """`(in_work_elsewhere, only_in_sibling)` from one read of the sibling worktrees.
+
+  `list` and `status` need both, and each worktree enumeration and index read is
+  a git call, so they share this pass instead of making it twice.
+  """
   # A directory inside some other checkout is not that checkout's project.
   # Reading its worktrees would treat another index's done items as this one.
   if not vcs.at_worktree_root(root):
-    return {}
+    return {}, []
   local_done = Config.load(root / DIR_NAME / CONFIG_NAME).done_status
   local_by_id = {item.id: item for item in index.items}
   found: dict[str, list[dict[str, str]]] = {}
+  unseen: list[dict[str, str]] = []
   for sibling, sibling_index in _read_siblings(root):
     try:
       config = Config.load(sibling / DIR_NAME / CONFIG_NAME)
     except (OSError, SlicerError, AttributeError, KeyError, TypeError, ValueError):
       continue
+    fresh = []
     for item in sibling_index.items:
+      if item.id not in local_by_id:
+        if item.status == config.open_status and not item.claim_owner and item.status not in config.in_work():
+          fresh.append(item)
       if not _elsewhere_counts(config, item, local_by_id.get(item.id), local_done):
         continue
       found.setdefault(item.id, []).append({
@@ -434,7 +469,11 @@ def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]
         "owner": item.claim_owner,
         "status": item.status,
       })
-  return found
+    unseen.extend(
+      {"id": item.id, "title": item.title, "worktree": sibling.name, "status": item.status}
+      for item in sorted(fresh, key=lambda item: _id_order(item.id))
+    )
+  return found, unseen
 
 
 def load(root: Path | None = None) -> State:

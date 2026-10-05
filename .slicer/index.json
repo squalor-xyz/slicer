@@ -5537,7 +5537,7 @@
       "id": "s223",
       "title": "Show open items that exist only in a sibling worktree",
       "short_title": "Show open items that exist only in a sibling worktree",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -5556,7 +5556,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
