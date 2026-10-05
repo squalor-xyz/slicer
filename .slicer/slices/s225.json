@@ -1,0 +1,41 @@
+{
+  "id": "s225",
+  "title": "Make the suite refuse to run against the enclosing real project",
+  "lead": [
+    "A test fixture whose own project is missing must stop with a clear error, not fall through to the real project that encloses it, because the suite can then edit the tracking state it is checking."
+  ],
+  "depends_note": null,
+  "findings_note": "s224 landing 2026-10-05: a full-suite run from the main checkout root failed 560 tests and wrote into the real .slicer/",
+  "size": "M",
+  "flags": [],
+  "trees_note": "tests",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing production discovery in `src/slicer/store.py`, changing `init`, removing the in-checkout `TMPDIR` advice, hiding enclosing projects suite-wide (S54 kept `isolated_discovery` scoped on purpose), or repairing already-polluted tracking state.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-05, `TMPDIR=\"$PWD/.venv/test-tmp\" python3 -m unittest discover -s tests -t tests` run from the main checkout root, with an s224 merge in progress and another agent running the suite from `.worktrees/s182`, ended `FAILED (failures=560, errors=268)` in about 60s; a normal run takes 150 to 220s. A second run with a private `TMPDIR` failed the same way (564 failures, 268 errors). The first error seen was `FileNotFoundError` for `<fixture>/.slicer/index.json`.\n\nThe tests also changed the real project: notes added to S01, a `ghost` pass set on it, S05 removed, `done/S99.json` moved, and `log.jsonl` appended. That state was restored from the staged merge. The same commit passes in a throwaway clone (`test_Add_NewlineInShortTitle`), in the s224 worktree, and in a detached scratch worktree (1200 tests OK). So the code is sound, and some state of the main checkout made fixtures lack their own `.slicer`. That cause is not identified. `TempRepo.run` passes `--root` for the fixture, but nothing checks that the project the command resolves to is the fixture. S54 added `support.isolated_discovery` as an opt-in only."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/support.py` (`TempRepo.run`)\n- a new test module for the guard, for example `tests/test_support_isolation.py`\n- `AGENTS.md` (how to run the suite) only if the cause stays unexplained"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_TempRepoRun_ProjectResolvesOutsideFixture_RefusesBeforeRunning`: a fixture directory inside a directory that has its own `.slicer/config.json`, with no `.slicer` of its own. `TempRepo.run(\"add\", \"x\")` raises a test error naming the fixture and the project it would have used. The enclosing project's index and log are byte-identical afterwards.\n2. `test_TempRepoRun_InitInEmptyFixture_StillWorks`: `run(\"init\")` in a fresh fixture is allowed, and later commands resolve to the fixture.\n3. `test_TempRepoRun_IsolatedDiscovery_StillAllowsOutsideProjectFixtures`: tests that use `support.isolated_discovery` keep working unchanged.\n4. The full suite passes unchanged apart from tests that deliberately discover a parent project. Each of those opts out by name in the test, and the slice lists them."
+    },
+    {
+      "heading": "Implement",
+      "body": "First, try to identify why a fixture lacked its own `.slicer` in the 2026-10-05 runs. Work only in a throwaway clone or a scratch worktree, never in the real checkout's `.slicer/`. Record what is found, or that it was not reproduced, in a note on the item.\n\nThen add the guard in `TempRepo.run`, before `main()` runs: unless the command is `init` or the test opts out, resolve the project the way `store.discover` would from the fixture root, and raise if it is not the fixture root. Name both paths in the message. Keep the opt-out explicit and per test. Do not change `store.discover` or the CLI.\n\nIf the cause is still unknown after the guard lands, add one line to `AGENTS.md` saying to run the suite from a worktree or clone, with the date and symptom."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the suite from a worktree or a throwaway clone, not the main checkout root: `python3 -m unittest discover -s tests -t tests`, plus `PYTHONPATH=src python3 -m slicer check --json` and `git diff --check`. Then run guard tests 1 and 2 against a fixture inside a directory holding a copy of a real `.slicer/`, and confirm that copy is unchanged."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

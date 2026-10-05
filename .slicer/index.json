@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 225,
+  "next_id": 227,
   "preamble": "",
   "passes": [
     {
@@ -5583,6 +5583,58 @@
         "urgency": 2,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s225",
+      "title": "Make the suite refuse to run against the enclosing real project",
+      "short_title": "Make the suite refuse to run against the enclosing real project",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "s224 landing 2026-10-05: a full-suite run from the main checkout root failed 560 tests and wrote into the real .slicer/",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s226",
+      "title": "Offer a list JSON envelope that can carry non-item data",
+      "short_title": "Offer a list JSON envelope that can carry non-item data",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "s223 landing 2026-10-05: list --json is a bare array, so sibling-only items could only go in status --json",
+        "pass": "v1.4",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

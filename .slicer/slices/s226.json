@@ -1,0 +1,41 @@
+{
+  "id": "s226",
+  "title": "Offer a list JSON envelope that can carry non-item data",
+  "lead": [
+    "Give `slicer list --json` an opt-in object form so agents that read only the list can see sibling-only open items, without changing the array every current consumer parses."
+  ],
+  "depends_note": null,
+  "findings_note": "s223 landing 2026-10-05: list --json is a bare array, so sibling-only items could only go in status --json",
+  "size": "M",
+  "flags": [],
+  "trees_note": "cli",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the default `list --json` shape, `status`, `next` or `check`, adding other kinds of sibling data, or changing which sibling rows count as `only_in_sibling` (s223 settled that).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`list --json` is a bare array of items (`docs/agents.md`, the `list` row). s223 added sibling-only open items to `list` text and to `status --json` as `only_in_sibling`, and left `list --json` unchanged: a top-level key cannot be added to an array without breaking its consumers, including the slicer skill's own `list --json --lean` calls. An agent that reads only `list --json` therefore cannot see a sibling-only item, and has to call `status`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_list`, the `list` parser)\n- `docs/commands.md`, `docs/agents.md`, `CHANGELOG.md`\n- `tests/test_sibling_ids.py`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_ListJson_NoEnvelopeFlag_StaysABareArray`: with a sibling-only item present, `list --json` is exactly today's array.\n2. `test_ListJson_Envelope_ItemsAndOnlyInSibling`: `list --json --envelope` is `{\"items\": [...], \"only_in_sibling\": [...]}`. `items` equals the bare array for the same filters. `only_in_sibling` equals `status --json`'s list.\n3. `test_ListJson_Envelope_RespectsFiltersSortsAndLean`: `--all`, `--status`, `--tree`, `--pass`, `--sort` and `--lean` apply to `items` as they do to the array. `only_in_sibling` is `[]` when empty, so the shape is stable.\n4. `test_ListEnvelope_WithoutJson_IsUsage`: `--envelope` without `--json` exits 2 with code `usage`."
+    },
+    {
+      "heading": "Implement",
+      "body": "Settle the shape with the owner before building; do not infer. The leading candidate is an opt-in `--envelope` flag on `list`, used with `--json`, because it changes nothing for existing callers. Alternatives to weigh: wrap by default and treat it as a breaking change with a changelog note, or leave `status` as the only home for this data.\n\nReuse the one pass over siblings that `store.sibling_work` already makes, so `list` still enumerates worktrees once and reads each sibling index once (`test_List_EnumeratesOnceAndReadsEachSiblingIndexOnce`). Document the flag and the shape in both docs and the changelog."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests` run from a worktree, `PYTHONPATH=src python3 -m slicer check --json`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, with the re-rendered roadmap and a CHANGELOG entry under Unreleased."
+    }
+  ],
+  "notes": []
+}
