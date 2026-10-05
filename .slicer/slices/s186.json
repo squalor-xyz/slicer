@@ -1,0 +1,41 @@
+{
+  "id": "s186",
+  "title": "Make the loaded finish text follow implement_finish",
+  "lead": [
+    "`skill_text(\"done\")` and `instructions_text(\"done\")` include a tracking closer that tells the reader to hand off and to mark done only after review and merge. That closer overrides step 4. The handoff mode already drops the done command from step 4 and should keep the review sentence."
+  ],
+  "depends_note": null,
+  "findings_note": "the done-mode skill says both to run done now and to wait until after review and merge",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `LOOP` or `HANDOFF_STEP` command strings (s177); `--lean` on the read list (s179); `AGENTS.md` (s182); the reusable prompt and the getting-started loop (s187).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The skill and the full instructions are what an agent loads. Step 4 of the done loop says to run done. The last two sentences of `TRACKING` then say to run handoff and to mark the work done only after review and merge. A reader can follow either sentence. `implement_finish` already chooses step 4, and the closer should say the same thing."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`\n- `skills/slicer/SKILL.md` (regenerated from `skill_text()`)\n- `tests/test_ai.py`\n- `docs/configuration.md`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `ai.TRACKING` no longer contains `slicer handoff ID --render --json` or `only after review and merge are complete`. The read-command list in that constant stays as it is.\n2. `skill_text(\"done\")` and `instructions_text(\"done\")` contain the sentence `Step 4 is the finish.` They do not contain `only after review and merge are complete`. Step 4 is still the existing done command, including its mention of the handoff alternative.\n3. `skill_text(\"handoff\")` still contains `slicer handoff ID --render --json` and `only after review and merge are complete`, and still does not contain `slicer done`. Its step 4 is unchanged.\n4. `instructions_text(\"done\")` still has `## Hand off for review`, and that section says it applies when `implement_finish` is `handoff` and that a step 4 of done is the finish. `instructions_text(\"handoff\")` keeps the sentence `Run done only after review and merge are complete` inside that section.\n5. `slicer ai instructions --rest` stays project-independent and still includes `## Hand off for review` with the same qualified wording. `test_Instructions_Full_IsUnchangedByTheSplit` is updated for the new closer. `test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill` looks for the handoff sentences on `skill_text(\"handoff\")`, not on `ai.TRACKING`.\n6. `skills/slicer/SKILL.md` equals `skill_text()` with no argument."
+    },
+    {
+      "heading": "Implement",
+      "body": "Delete the last two sentences of `TRACKING` (the handoff command and the review-and-merge sentence).\n\nAdd a done closer and a handoff closer. `skill_text` and `instructions_text` append the closer that matches `finish`. The done closer is exactly: Step 4 is the finish. Commit or publish only when the project instructions authorize it.\n\nThe handoff closer is the two sentences removed from `TRACKING`.\n\nIn `HANDOFF_SECTION`, replace `Run done only after review and merge are complete.` with: This section applies when implement_finish is handoff. When step 4 is done, that command is the finish. When step 4 was handoff, run done only after review and merge are complete.\n\nIn `docs/configuration.md`, on the `implement_finish` row, add that the done-mode skill says step 4 is the finish, and the handoff-mode skill keeps the review-and-merge sentence.\n\nCHANGELOG under `[Unreleased]`, `### Changed`."
+    },
+    {
+      "heading": "Check",
+      "body": "The failing tests pass, then `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the regenerated skill and the changelog entry."
+    }
+  ],
+  "notes": []
+}
