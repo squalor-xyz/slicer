@@ -5503,7 +5503,7 @@
       "id": "s210",
       "title": "Record which item discovered new work",
       "short_title": "Record which item discovered new work",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
