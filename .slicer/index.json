@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 189,
+  "next_id": 192,
   "preamble": "",
   "passes": [
     {
@@ -4944,6 +4944,84 @@
         ],
         "trees_literal": false,
         "findings": "user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s189",
+      "title": "Name the fix when show --context has no --section",
+      "short_title": "Name the fix when show --context has no --section",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "cli"
+        ],
+        "trees_literal": false,
+        "findings": "show s173 --json --lean --context failed with a usage error while reading the slice",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s190",
+      "title": "Document running a worktree's slicer from outside it",
+      "short_title": "Document running a worktree's slicer from outside it",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s191",
+      "title": "Resolve a next_id-only merge conflict without hand-editing the index",
+      "short_title": "Resolve a next_id-only merge conflict without hand-editing the index",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "merging s174 into a main whose next_id had moved conflicted only on next_id; resolving it needed a hand edit of index.json",
         "pass": "v1.3",
         "group": "",
         "reason": "",

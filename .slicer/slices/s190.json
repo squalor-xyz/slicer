@@ -1,0 +1,41 @@
+{
+  "id": "s190",
+  "title": "Document running a worktree's slicer from outside it",
+  "lead": [
+    "AGENTS.md \"Landing a slice\" tells an agent to run `PYTHONPATH=src python3 -m slicer` inside the new worktree. An agent that must not change directory has no stated way to do that, and the editable `slicer` on `PATH` may belong to another checkout."
+  ],
+  "depends_note": null,
+  "findings_note": "AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** adding a `--worktree` flag or any code change to slicer; changing the worktree process itself; editing the global agent rules.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`--root` already points slicer at another checkout. With `PYTHONPATH` set to that worktree's `src`, the worktree's code runs against the worktree's `.slicer/` from any directory. The guide should say so, so an agent does not fall back to the wrong `slicer` or to a `cd`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `AGENTS.md` (\"Landing a slice\")\n- `docs/agents.md` if it repeats the worktree instruction\n- `CHANGELOG.md` only if a user-facing doc changes"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. The guide shows the no-`cd` form: `PYTHONPATH=<worktree>/src python3 -m slicer --root <worktree> ...`.\n2. Run from the main checkout, that form's `start`, `check`, and `done` change the worktree's `.slicer/` and leave the main checkout's `git status` clean."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add the no-`cd` form next to the existing worktree instruction. Keep the in-worktree form, and say that `--root` is how to reach the worktree without changing directory."
+    },
+    {
+      "heading": "Check",
+      "body": "`slicer check`, `git diff --check`, and the run in test 2 on a scratch worktree. No code changes, so the unit suite is unaffected."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch, including the re-rendered roadmap."
+    }
+  ],
+  "notes": []
+}

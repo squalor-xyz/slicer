@@ -842,3 +842,9 @@
 {"when": "2026-10-05T01:58:38Z", "item": "s187", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-05T02:09:47Z", "item": "s187", "action": "purge", "from": "open", "to": "", "note": "s187 is named in 1 commit subject(s)"}
 {"when": "2026-10-05T02:09:47Z", "item": "s186", "action": "purge", "from": "open", "to": "", "note": "s186 is not the most recent id"}
+{"when": "2026-10-05T02:17:31Z", "item": "s189", "action": "add", "from": "", "to": "open", "note": "Name the fix when show --context has no --section"}
+{"when": "2026-10-05T02:17:31Z", "item": "s190", "action": "add", "from": "", "to": "open", "note": "Document running a worktree's slicer from outside it"}
+{"when": "2026-10-05T02:17:32Z", "item": "s191", "action": "add", "from": "", "to": "open", "note": "Resolve a next_id-only merge conflict without hand-editing the index"}
+{"when": "2026-10-05T02:17:37Z", "item": "s189", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-05T02:17:37Z", "item": "s190", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-05T02:17:37Z", "item": "s191", "action": "promote", "from": "", "to": "", "note": ""}
