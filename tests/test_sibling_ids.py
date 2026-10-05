@@ -167,7 +167,7 @@ class SiblingIdTests(unittest.TestCase):
 
   def test_Check_NotAGitRepo_DoesNoSiblingWork(self) -> None:
     repo = support.TempRepo()
-    with repo:
+    with repo, support.isolated_discovery(repo.root):
       repo.run("init")
       repo.run("add", "one")
       repo.run("render")

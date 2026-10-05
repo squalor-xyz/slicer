@@ -1,0 +1,41 @@
+{
+  "id": "s218",
+  "title": "Filter next pickups with inclusive and exclusive flag patterns",
+  "lead": [
+    "Lite agent runs can omit risk-tagged work before selection rather than skipping it after pickup."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U9; docs/feedback/agents-2026-10-05.md",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing list's existing exact-flag behavior, changing flags on items, or changing the default queue when no filters are supplied.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "U9 needs risk-* exclusion and batch support. The owner chose case-sensitive shell-style patterns, OR inclusion and exclusion precedence."
+    },
+    {
+      "heading": "Files",
+      "body": "Next pool/results, CLI next arguments, focused next/offset/batch tests, command/agent documentation and CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Repeated include patterns keep items matching any pattern; repeated exclude patterns drop matches to any. Exclusion wins when both match.\n- Literal names, wildcard risk-*, ? and bracket patterns work case-sensitively; patterns are interpreted by slicer rather than the invoking shell.\n- An item without flags passes absent inclusion and fails supplied inclusion. No filters preserves current next results.\n- Apply filtering before offset and batch capacity. A filtered-out blocker leaves its dependent blocked; it is never simulated as complete.\n- Combine with tree/size, ready sections, caps and custom/review selection when those capabilities exist. Read and --start select the same filtered pool."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add repeatable --flag and --no-flag to next, rejecting explicitly empty patterns as usage. Use stdlib fnmatchcase over each stored flag. An inclusion list requires at least one flag/pattern match; any exclusion match removes the item. Keep unmatched items out of both candidate and diagnostic pools before other next skip classification, while dependency calculations still use the complete index.\n\nThread the same filters through single, offset, ready, review and batch paths. Help must show quoted wildcard examples so shells do not expand them. Document the intentional distinction from list's current literal flag filter rather than silently changing that command."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused matching/composition/offset/dependency-batch cases, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit with docs and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,41 @@
+{
+  "id": "s215",
+  "title": "Cap new implementation pickups while allowing resume",
+  "lead": [
+    "An unattended implementer can stop taking new attempts at a configured per-call limit without abandoning an already active attempt."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U6b; docs/feedback/agents-2026-10-05.md",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a project-wide max_attempts default, automatic blocked-status transitions, rejection side effects, or limiting review claims.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "U6 asks next to respect an attempt cap rather than leaving client code to reject a pickup after it has happened. The owner explicitly retained resume at the boundary."
+    },
+    {
+      "heading": "Files",
+      "body": "Next pool/results and batch planning, CLI next parser/output, focused next/batch/attempt tests and command/agent docs."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- A new implementation pickup with attempts >= N is skipped; the next eligible item is selected and capped details include id, attempts and max_attempts.\n- A fresh item below N can start; once it reaches N, its started attempt can still resume after release.\n- A batch excludes capped blockers, and their dependents remain blocked rather than assuming the blocker was completed.\n- A wholly capped pool returns existing no-item exit 2 with a capped array and writes nothing. Positive integer validation rejects zero, negatives and invalid input.\n- Review pickup is unaffected. Custom claim-in-place is unaffected; an explicit custom transition into started respects the cap if that capability is present."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add optional positive --max-attempts to next. Thread it into single, offset and batch selection before allocation of pickup slots. It governs fresh implementation attempts, not the number of future resumes. Started implementation items retain their existing eligibility even at or above the cap.\n\nAdd capped to result structures and JSON/text skip output. Each entry is {id, attempts, max_attempts}, in queue order. Report capped candidates independently of unmet dependencies so callers can see why a blocker was excluded, without treating it as completed in a batch. Omit the field in lean output when empty; preserve existing empty-item result and exit code. Apply identical rules to atomic --start selection and read-only next."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused single/offset/batch/capped-dependency/resume cases, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit with documentation, changelog and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

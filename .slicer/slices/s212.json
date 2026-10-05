@@ -1,0 +1,41 @@
+{
+  "id": "s212",
+  "title": "Find items by exact title",
+  "lead": [
+    "Provide deterministic title equality for client-side dedupe while retaining ordinary substring search."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U4c; docs/feedback/agents-2026-10-05.md",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** making titles unique, fuzzy search changes, key-based filing, or title normalization.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "U4's workaround filters find results in a script. cmd_find currently casefolds and substring-matches fields. Exact matching is a small independent read-only capability."
+    },
+    {
+      "heading": "Files",
+      "body": "CLI find parser/handler, find tests, command and agent references, and CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Exact mode returns a case-sensitive equal stored title; a superstring, different case, different Unicode normalization, and short-title-only match are excluded.\n- Multiple identical stored titles return all matches in normal stable find order; done/retired inclusion follows existing find behavior.\n- No match succeeds with the usual empty-result text and JSON shape.\n- Exact mode combined with a positional substring query or --in fails as usage. Existing positional find behavior and output contracts are unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add title-exact with its own TITLE argument, mutually exclusive with the positional query and field-selector --in. Require exactly one search mode. Compare the stored full title with Python string equality, not display_title, casefold, or Unicode normalization. Return the normal find envelope and mark title as the matching field. Update examples and help without changing storage."
+    },
+    {
+      "heading": "Check",
+      "body": "Run focused find tests, then full unittest discovery, tracking check, and git diff --check.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including documentation and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

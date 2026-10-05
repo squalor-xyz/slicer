@@ -1,0 +1,41 @@
+{
+  "id": "s214",
+  "title": "Count implementation attempts once per fresh start",
+  "lead": [
+    "One repair means two implementation attempts. The stored counter currently increments on both start and rejection, so start, reject, restart reaches three."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** pickup caps, automatic blocking, rewriting historical counters from log guesses, or restricting the owner's existing attempts setter.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ops.start_many increments on a fresh open start; reject_many also increments. The owner selected a count of actual implementation starts, with resumes and review claims excluded."
+    },
+    {
+      "heading": "Files",
+      "body": "Start/reject operations and attempt semantics in command/agent docs; attempt, review, claim and batch tests; CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- First fresh start records 1; rejection keeps 1; restart records 2.\n- Repeated start, release then resume, review pickup and rejection alone do not increment.\n- Batch start increments each fresh attempt exactly once and keeps counts unchanged on failed atomic validation.\n- Existing stored counts survive read/save unchanged. Explicit owner corrections through set still work; malformed values remain rejected.\n- If custom-lane transitions exist, claim-in-place does not count and a fresh transition into implementation counts once."
+    },
+    {
+      "heading": "Implement",
+      "body": "Remove the rejection increment and centralize the fresh-implementation-start rule. Preserve current open-to-start behavior and recognize an explicit custom-queue-to-started implementation start when that surface exists; exclude already-started resumes and all review claims. Do not turn general set-status into an attempt-start command.\n\nRetain the stored attempts field and schema. Explain the changed meaning and that historical values may overcount; do not infer their intended correction from history because log coverage is not authoritative. Tell owners they may correct the count with the existing setter before adopting a cap. Keep status, claim and verdict behavior otherwise unchanged."
+    },
+    {
+      "heading": "Check",
+      "body": "Run attempt/reject/resume/batch cases, then full unittest discovery, tracking check, and git diff --check. Verify the two-attempt repair sequence explicitly.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including semantic-change documentation and regenerated tracking output."
+    }
+  ],
+  "notes": []
+}

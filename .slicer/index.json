@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 203,
+  "next_id": 223,
   "preamble": "",
   "passes": [
     {
@@ -4466,7 +4466,9 @@
       "depends_on": [
         "s169"
       ],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Agents upstream feedback 2026-10-05: their orchestrator installs ai skill output into vendor skill directories by redirection and compares it with fresh output. Preserve stable bytes for a given generating version and implement_finish so the drift check is meaningful. Source: docs/feedback/agents-2026-10-05.md, Existing items."
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4596,7 +4598,9 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Agents upstream feedback 2026-10-05: run branches commit .slicer with the work before exit. The handoff hint should reinforce that checkout-local state must be committed; it should not imply keeping handoff state outside the worktree. U11 records the accepted permanent canonical-JSON policy. Source: docs/feedback/agents-2026-10-05.md."
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5012,7 +5016,9 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Agents upstream feedback 2026-10-05 U8: a run branch changes statuses and files work while main approves drafts. This slice remains the next_id-only driver prerequisite; s217 separately extends that driver to independent item fields, preserving conflicts for incompatible lists and queue reorderings. s185 allocation-floor behavior is shipped. Source: docs/feedback/agents-2026-10-05.md."
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5055,6 +5061,460 @@
         "urgency": 1,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s206",
+      "title": "Explain render drift with a renderer-format revision",
+      "short_title": "Explain render drift with a renderer-format revision",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U1; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s207",
+      "title": "Configure which statuses satisfy dependencies",
+      "short_title": "Configure which statuses satisfy dependencies",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U2; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s208",
+      "title": "Add structured note kinds without breaking display-string JSON",
+      "short_title": "Add structured note kinds without breaking display-string JSON",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U3a; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s209",
+      "title": "Require a current-attempt note before handing off",
+      "short_title": "Require a current-attempt note before handing off",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s208",
+        "s214"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U3b; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s210",
+      "title": "Record which item discovered new work",
+      "short_title": "Record which item discovered new work",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U4a; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s211",
+      "title": "Return an existing item for a repeated filing key",
+      "short_title": "Return an existing item for a repeated filing key",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U4b; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s212",
+      "title": "Find items by exact title",
+      "short_title": "Find items by exact title",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U4c; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s213",
+      "title": "Claim and resume work in a custom status queue",
+      "short_title": "Claim and resume work in a custom status queue",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U5; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s214",
+      "title": "Count implementation attempts once per fresh start",
+      "short_title": "Count implementation attempts once per fresh start",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s215",
+      "title": "Cap new implementation pickups while allowing resume",
+      "short_title": "Cap new implementation pickups while allowing resume",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s214"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U6b; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s216",
+      "title": "Filter history by timezone-aware timestamp windows",
+      "short_title": "Filter history by timezone-aware timestamp windows",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U7; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s217",
+      "title": "Merge independent item fields without guessing list or queue edits",
+      "short_title": "Merge independent item fields without guessing list or queue edits",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s191",
+        "s211"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "L",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U8; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 3,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s218",
+      "title": "Filter next pickups with inclusive and exclusive flag patterns",
+      "short_title": "Filter next pickups with inclusive and exclusive flag patterns",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U9; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s219",
+      "title": "Resolve whole dependency titles before splitting outline commas",
+      "short_title": "Resolve whole dependency titles before splitting outline commas",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U10; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s220",
+      "title": "Declare git-tracked JSON the permanent canonical store",
+      "short_title": "Declare git-tracked JSON the permanent canonical store",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U11; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s221",
+      "title": "Add explicit note verification and freshness metadata",
+      "short_title": "Add explicit note verification and freshness metadata",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s208"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U12a; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s222",
+      "title": "Pack current trusted notes for the selected item",
+      "short_title": "Pack current trusted notes for the selected item",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s221"
+      ],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "agents feedback 2026-10-05 U12b; docs/feedback/agents-2026-10-05.md",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

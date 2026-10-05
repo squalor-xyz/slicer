@@ -1,0 +1,41 @@
+{
+  "id": "s207",
+  "title": "Configure which statuses satisfy dependencies",
+  "lead": [
+    "Projects committing passing work on a run branch need an ordinary custom status to unblock later work before the owner marks it done on main."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U2; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the meaning of done, moving custom statuses into the default next pool, changing slice folders, in-work roles or Git verification, or creating a landed status in every project.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`graph.blocked_by` currently receives one done status. Its callers include next/batch selection, list ranking, deps, and TUI dependency displays. U2 needs consistent satisfaction semantics without pretending a run-branch commit has already been integrated."
+    },
+    {
+      "heading": "Files",
+      "body": "Config and graph helpers, their callers in ops/CLI/TUI, integrity checks, configuration and workflow documentation, focused graph/config/next tests, and CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Missing configuration uses the project's configured done_status, including a renamed done role.\n- With done and a custom landed status configured as satisfying, dependents become eligible in next, deps, list ordering, TUI dependency display, and dependency-aware batches.\n- Another unfinished status still blocks; dangling dependencies, self-dependencies and cycles still fail integrity validation. If retired is explicitly satisfying, dependency writes and offline checks accept that completed edge; otherwise the current retired-reference validation remains.\n- Non-list configuration, non-string members, unknown status keys, and an empty satisfaction list fail as config errors. Duplicate entries do not affect behavior.\n- Custom landed slices stay in their existing folder, list --in-work retains role semantics, and verify's commit-subject check still applies only to done."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add optional `satisfies_dependencies`, a nonempty list of configured status keys. When absent, derive the default from done_status rather than the literal word done. An explicitly supplied list is authoritative, including when it excludes done; document that consequence rather than silently inserting a status.\n\nCentralize satisfaction in Config and graph so every dependency-gate caller uses the same set. Missing item references remain unmet. Preserve declared dependency order and effective-score propagation. Use the same policy in dependency-write validation (_check_depends) and offline integrity checks: a configured satisfying retired status must not be rejected as an impossible dependency, while the historical retired-dependency rejection remains when that status is not satisfying. Self-dependency and cycles are still invalid regardless of satisfaction. Keep batch planning able to select an unfinished dependency ahead of its dependent, while already-satisfying statuses need no batch pickup.\n\nAdvance the config schema when writing this policy so an older reader refuses instead of silently ignoring it. Older files still load with the historical default; reads never restamp them. Retain the current index schema unless its stored shape also changes. Document how the configured policy relates to handoff and a project's integration workflow."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the focused config/graph/next/deps cases, then full unittest discovery, the tracking check, and git diff --check. Exercise a mini project with a renamed done status and a custom satisfying status.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit including documentation, a changelog entry, and regenerated tracking output; integration follows owner instructions."
+    }
+  ],
+  "notes": []
+}

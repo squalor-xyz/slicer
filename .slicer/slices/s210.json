@@ -1,0 +1,41 @@
+{
+  "id": "s210",
+  "title": "Record which item discovered new work",
+  "lead": [
+    "Discovered work needs a validated source-item reference rather than prose embedded in findings."
+  ],
+  "depends_note": null,
+  "findings_note": "agents feedback 2026-10-05 U4a; docs/feedback/agents-2026-10-05.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** duplicate detection, filing keys, changing status defaults, or turning provenance into a dependency or priority edge.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "U4's orchestrator files discovered defects as drafts and wants to trace them to the finding slice. add and outline currently expose no provenance field. Status remains the caller's configured choice."
+    },
+    {
+      "heading": "Files",
+      "body": "Item model, add/import operations, outline parser and reporting, CLI add/list, roadmap rendering, integrity checks, associated tests and command/import/agent documentation."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Add and outline input accept an existing source ID, including done or retired sources, preserve it in JSON, and show it on the generated row.\n- Unknown sources fail before allocation, logging or rendering; a mixed invalid outline writes nothing.\n- List filtering uses exact source ID and composes with existing status/tree filters. Unknown filter IDs fail with no_such_item; zero matches succeed.\n- Missing historical fields load empty without writes, lean omits them, and empty provenance leaves row rendering unchanged.\n- A source reference does not block pickup or alter scores. Purge refuses deletion of a referenced source unless explicitly forced; forced dangling provenance is reported by integrity validation."
+    },
+    {
+      "heading": "Implement",
+      "body": "Store discovered_from as an optional string in Item.fields. Add discovered-from to add/list and the single-value discovered_from outline key. Require an existing ID in the current project before allocation; the outline may refer to existing IDs, not prospective title-based source references. A source can have any status.\n\nRender a source annotation only when present, supplying it to default row rendering and documenting custom-template support. Keep this independent of depends_on. Extend integrity and purge-reference checks so ordinary removal/retirement preserves references and purging cannot silently orphan them.\n\nBump the index schema for saved provenance; older files retain an empty default, and older readers refuse newer state rather than dropping the reference. Update outline known-key diagnostics, command contracts, and changelog."
+    },
+    {
+      "heading": "Check",
+      "body": "Run add/import/list/provenance/purge validation cases, then full unittest discovery, tracking check, and git diff --check. Inspect a generated row with source provenance and an unchanged row without it.\n\nUse the project's ignored TMPDIR for temporary test fixtures, and scoped\nsupport.isolated_discovery only for fixtures that require outside-project\ndiscovery. The repository acceptance commands, run against the implementation\ncheckout's code and state, are:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One reviewed implementation commit with relevant documentation and regenerated tracking state; no external publication without instruction."
+    }
+  ],
+  "notes": []
+}
