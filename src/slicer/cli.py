@@ -1698,6 +1698,32 @@ def cmd_verify(args: argparse.Namespace) -> int:
 
 
 _BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
+_FENCE_OPEN = re.compile(r"(`{3,}|~{3,})")
+
+
+def _outside_fences(body: str) -> str:
+  """`body` with every line of a fenced code block blanked, fence lines included.
+
+  Lines are blanked rather than dropped so line numbers stay put. A fence closes
+  on a later line of at least as many of the same character and nothing else; an
+  unclosed fence runs to the end, as CommonMark renders it.
+  """
+  out: list[str] = []
+  fence = ""
+  for line in body.split("\n"):
+    text = line.strip()
+    if not fence:
+      opened = _FENCE_OPEN.match(text)
+      if opened:
+        fence = opened.group(1)
+        out.append("")
+      else:
+        out.append(line)
+      continue
+    out.append("")
+    if text.startswith(fence) and not text.strip(fence[0]):
+      fence = ""
+  return "\n".join(out)
 
 
 def _unknown_flags(parser: argparse.ArgumentParser, tokens: list[str]) -> list[str]:
@@ -1725,7 +1751,8 @@ def _slice_flag_problems(state: store.State) -> list[str]:
   copies it into a real command; `check` catches it first. Done and retired
   slices are skipped -- they keep their history, old flag names and all. Only
   backtick commands are parsed; a flag merely mentioned in prose is left alone,
-  and the command is never executed.
+  and the command is never executed. Fenced blocks are literal text to write,
+  such as the lines a slice adds for a flag it introduces, so they are skipped.
   """
   cfg = state.config
   skip = {cfg.done_status}
@@ -1740,7 +1767,7 @@ def _slice_flag_problems(state: store.State) -> list[str]:
     if sl is None:
       continue
     for section in sl.sections:
-      for span in _BACKTICK_SPAN.findall(section.body):
+      for span in _BACKTICK_SPAN.findall(_outside_fences(section.body)):
         command = span.strip()
         if not command.startswith("slicer "):
           continue
