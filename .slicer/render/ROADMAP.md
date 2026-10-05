@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-185 items · — 12 · done 171 · retired 2
+185 items · — 11 · done 172 · retired 2
 
 v1.3.0 release
 
@@ -34,7 +34,7 @@ v1.3.0 release
 | 4 | [s168](slices/s168.md) | Name the project's sections and use them for readiness | M | 2 | slicer | another project: section names in the agent guide are only examples, and next hardcodes Implement and Check | done |
 | 5 | [s169](slices/s169.md) | Put the tracking rule first and let a project choose how work finishes | M | 2 | slicer | another project: the tracking rule is buried, and the skill's last step is done, which their AGENTS.md forbids | done |
 | 6 | [s170](slices/s170.md) | Install the agent skill into the project | M | 2 | slicer | another project: slicer ai skill prints a SKILL.md and does not write it anywhere | — |
-| 7 | [s171](slices/s171.md) | Accept a dotted pass key in prose addresses | S | 1 | slicer | slicer prose list exits 2 on this repo because pass v1.1 becomes pass.v1.1.heading | — |
+| 7 | [s171](slices/s171.md) | Accept a dotted pass key in prose addresses | S | 1 | slicer | slicer prose list exits 2 on this repo because pass v1.1 becomes pass.v1.1.heading | done |
 | 8 | [s172](slices/s172.md) | Show claim, blocked work, and review status in the TUI | M | 2 | tui | user request: the TUI cannot show who has a slice, and review rows are easy to miss | done |
 | 9 | [s173](slices/s173.md) | Hand off, reject, and release from the TUI | M | 2 | tui | user request: handoff is CLI-only, so the TUI cannot finish or return a review | — |
 | 10 | [s174](slices/s174.md) | Keep the slice path out of next --show text | S | 1 | cli | next --show still printed .slicer/slices/S01.json in the generated banner while checking s166 | — |
