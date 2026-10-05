@@ -39,7 +39,7 @@
   through git.</p></div></section>
 <section><h2>Non-goals</h2><div class="prose"><p>- Not a real-time collaboration or multi-user concurrent-editing tool; coordination<br>
   happens through git, not a live shared service.</p></div></section>
-<p class="summary">191 items · — 14 · done 175 · retired 2</p>
+<p class="summary">191 items · — 13 · done 176 · retired 2</p>
 <h2>v1.3.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>s165</td><td>Show the in-work and review queues in one step</td><td>M</td><td>2</td><td>slicer</td><td>user request: list and the TUI can show these queues only by naming each status</td><td class="status">done</td></tr>
@@ -56,7 +56,7 @@
 <tr class="done"><td>12</td><td>s176</td><td>Let the skill point at only the instructions it does not already carry</td><td>S</td><td>1</td><td>slicer</td><td>efficiency review 2026-10-04: 46% of ai instructions repeats the skill the agent just loaded</td><td class="status">done</td></tr>
 <tr class="open"><td>13</td><td>s177</td><td>Check tracking state as part of done and handoff</td><td>M</td><td>2</td><td>cli</td><td>efficiency review 2026-10-04: the implement loop runs slicer check twice around done, an extra tool call or two per slice</td><td class="status">—</td></tr>
 <tr class="done"><td>14</td><td>s178</td><td>Print lean JSON without indentation</td><td>S</td><td>1</td><td>cli</td><td>efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22%</td><td class="status">done</td></tr>
-<tr class="open"><td>15</td><td>s179</td><td>Steer agent reads to lean output and slim lean find rows</td><td>S</td><td>1</td><td>slicer</td><td>efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path</td><td class="status">—</td></tr>
+<tr class="done"><td>15</td><td>s179</td><td>Steer agent reads to lean output and slim lean find rows</td><td>S</td><td>1</td><td>slicer</td><td>efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path</td><td class="status">done</td></tr>
 <tr class="open"><td>16</td><td>s180</td><td>Print one command&#x27;s JSON contract on demand</td><td>M</td><td>2</td><td>slicer</td><td>efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB</td><td class="status">—</td></tr>
 <tr class="done"><td>17</td><td>s181</td><td>Resolve the trace root so the affected-map test passes under a symlinked TMPDIR</td><td>S</td><td>1</td><td>tests</td><td>efficiency review 2026-10-04: test_affected fails on macOS with the default TMPDIR because /var is a symlink to /private/var</td><td class="status">done</td></tr>
 <tr class="open"><td>18</td><td>s182</td><td>Tighten AGENTS.md for agent sessions</td><td>S</td><td>1</td><td>docs</td><td>efficiency review 2026-10-04: AGENTS.md repeats the CLI-only rule and loop that ai instructions carries, and gives no guidance on the 1-3 minute suite against tool timeouts</td><td class="status">—</td></tr>

@@ -156,7 +156,7 @@ they are not in the JSON — compute `importance*10 + urgency`, or read the rank
 item. A missing key means empty or that default, not unknown. `has_slice: false` and the
 importance and urgency numbers stay, including the default 2. `item: null` stays, so an
 empty `next` is still recognisable. `path` is only in the full profile. Text output
-ignores `--lean`. Error envelopes stay full. Lean output is compact, one line with no indentation; full --json stays indented.
+ignores `--lean`. `find` is the exception to "the same items, fewer empty fields": its lean rows are only `{id, title, status, has_slice, match}`. Error envelopes stay full. Lean output is compact, one line with no indentation; full --json stays indented.
 
 A **slice** is
 `{id, title, lead[], depends_note, findings_note, size, flags[], trees_note,
@@ -183,7 +183,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `sort` | `{by, moved}` |
 | `edit` | `{id, section}`; boundary edits return `{id, boundary}` |
 | `note` | `{id, added}` |
-| `find` | array of items with `match: {field, snippet}` |
+| `find` | array of items with `match: {field, snippet}`; with `--lean`, each row is only `{id, title, status, has_slice, match}` |
 | `deps` | unblocked-item array; for `deps ID`, `{id, waits_on, blocked_by, dependents}`; mermaid format returns `{format, graph}` |
 | `goals` | `{goals, non_goals}` |
 | `render` | `{written: [...]}` |

@@ -42,13 +42,15 @@ implementing a slice, and validating the result.
 
 Do not open, search, parse, or edit tracking JSON, the history file, or generated roadmap and slice output to obtain or change that state.
 
-- Goals: `slicer goals --json`.
-- Inventory: `slicer list --json`, `slicer status --json`, and `slicer stats --json`.
-- Slice detail: `slicer show ID --json` and `slicer next --ready --json`.
-- Search: `slicer find topic --json`.
-- Roadmap prose: `slicer prose list --json` and `slicer prose show goals --json`.
-- History: `slicer log --json`. Notes on an item come back with `slicer show ID --json`.
+- Goals: `slicer goals --json --lean`.
+- Inventory: `slicer list --json --lean`, `slicer status --json --lean`, and `slicer stats --json --lean`.
+- Slice detail: `slicer show ID --json --lean` and `slicer next --ready --json --lean`.
+- Search: `slicer find topic --json --lean`.
+- Roadmap prose: `slicer prose list --json --lean` and `slicer prose show goals --json --lean`.
+- History: `slicer log --json --lean`. Notes on an item come back with `slicer show ID --json --lean`.
 - Validation: `slicer check --json`.
+
+Use --lean on reads; it drops empty fields and paths. Drop it only when you need the full shape.
 
 If a CLI read or edit is missing or fails, report that and propose a roadmap item.
 Do not switch to the tracking files.

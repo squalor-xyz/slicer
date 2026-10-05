@@ -4697,7 +4697,7 @@
       "id": "s179",
       "title": "Steer agent reads to lean output and slim lean find rows",
       "short_title": "Steer agent reads to lean output and slim lean find rows",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4716,7 +4716,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
