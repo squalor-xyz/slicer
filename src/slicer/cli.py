@@ -60,7 +60,7 @@ def _json_flags(parser: argparse.ArgumentParser, *, suppress: bool = False) -> N
   parser.add_argument("--json", action="store_true", default=default, help="machine-readable output")
   parser.add_argument(
     "--lean", action="store_true", default=default,
-    help="with --json, omit empty fields, a repeated short title, and an item path",
+    help="with --json, compact output that omits empty fields, a repeated short title, and an item path",
   )
 
 
@@ -75,8 +75,10 @@ def _rest_flag(parser: argparse.ArgumentParser, *, suppress: bool = False) -> No
 def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
   if getattr(args, "json", False):
     if getattr(args, "lean", False):
-      payload = model.lean(payload)
-    _write_out(args, json.dumps(payload, ensure_ascii=False, indent=2))
+      compact = (",", ":")
+      _write_out(args, json.dumps(model.lean(payload), ensure_ascii=False, separators=compact))
+    else:
+      _write_out(args, json.dumps(payload, ensure_ascii=False, indent=2))
   elif text:
     _write_out(args, text)
 

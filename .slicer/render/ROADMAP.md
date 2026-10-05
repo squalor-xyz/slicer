@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-191 items · — 15 · done 174 · retired 2
+191 items · — 14 · done 175 · retired 2
 
 v1.3.0 release
 
@@ -41,7 +41,7 @@ v1.3.0 release
 | 11 | [s175](slices/s175.md) | Hint to commit worktree handoff state | S | 1 | cli | bug report: handoff state exists only as uncommitted .slicer changes in the worktree | — |
 | 12 | [s176](slices/s176.md) | Let the skill point at only the instructions it does not already carry | S | 1 | slicer | efficiency review 2026-10-04: 46% of ai instructions repeats the skill the agent just loaded | done |
 | 13 | [s177](slices/s177.md) | Check tracking state as part of done and handoff | M | 2 | cli | efficiency review 2026-10-04: the implement loop runs slicer check twice around done, an extra tool call or two per slice | — |
-| 14 | [s178](slices/s178.md) | Print lean JSON without indentation | S | 1 | cli | efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22% | — |
+| 14 | [s178](slices/s178.md) | Print lean JSON without indentation | S | 1 | cli | efficiency review 2026-10-04: --lean output is pretty-printed; compact separators cut list 28%, status 40%, find 26%, log 22% | done |
 | 15 | [s179](slices/s179.md) | Steer agent reads to lean output and slim lean find rows | S | 1 | slicer | efficiency review 2026-10-04: the tracking block names full-size reads; find --json is 15 KB for 20 hits; full status JSON carries an absolute slice path | — |
 | 16 | [s180](slices/s180.md) | Print one command's JSON contract on demand | M | 2 | slicer | efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB | — |
 | 17 | [s181](slices/s181.md) | Resolve the trace root so the affected-map test passes under a symlinked TMPDIR | S | 1 | tests | efficiency review 2026-10-04: test_affected fails on macOS with the default TMPDIR because /var is a symlink to /private/var | done |

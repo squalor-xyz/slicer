@@ -156,7 +156,7 @@ they are not in the JSON — compute `importance*10 + urgency`, or read the rank
 item. A missing key means empty or that default, not unknown. `has_slice: false` and the
 importance and urgency numbers stay, including the default 2. `item: null` stays, so an
 empty `next` is still recognisable. `path` is only in the full profile. Text output
-ignores `--lean`. Error envelopes stay full.
+ignores `--lean`. Error envelopes stay full. Lean output is compact, one line with no indentation; full --json stays indented.
 
 A **slice** is
 `{id, title, lead[], depends_note, findings_note, size, flags[], trees_note,
