@@ -294,8 +294,8 @@ def entries(state: State, target: str) -> list[Entry]:
   if sl is not None:
     out.append(Entry(kind="boundary", target=target, name="boundary", body=sl.boundary))
     out += [Entry(kind="section", target=target, name=s.heading, body=s.body) for s in sl.sections]
-  out += [Entry(kind="note", target=target, name=f"note {i + 1}", body=n, index=i)
-          for i, n in enumerate(item.notes)]
+  out += [Entry(kind="note", target=target, name=f"note {i + 1}", body=n.text, index=i)
+          for i, n in enumerate(item.note_records)]
   out.append(Entry(kind="note_new", target=target, name="add a note", body=""))
   return out
 

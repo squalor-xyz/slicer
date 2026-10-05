@@ -35,8 +35,8 @@ never pays for curses.
 
 ```
 .slicer/
-  config.json              everything project-specific; "version": 1
-  index.json               the ordered queue; "version": 2
+  config.json              everything project-specific; "version": 2
+  index.json               the ordered queue; "version": 4
   log.jsonl                append-only history, one LogEntry per line
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
@@ -47,11 +47,18 @@ never pays for curses.
   render/slices/<ID>.md    GENERATED
 ```
 
-Config schema stays `1` (`src/slicer/config.py`). Index schema is `2`
-(`SCHEMA_VERSION` in `src/slicer/model.py`): an item may carry a `claim`. A version-1
-index still loads, and the next save stamps `2`, so an older slicer refuses the file
-instead of dropping the claim. A read never re-stamps, and no migration step exists;
-`tests/test_schema.py` covers the upgrade and the refusal. `done_dir` and `retired_dir` are config, not constants.
+Config schema is `2` (`src/slicer/config.py`), protecting the optional `note_kinds`
+whitelist. Version-1 configs still load; config saves stamp 2. Index schema is `4`
+(`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
+Older item-note strings lift without writes into stable item-local positional IDs,
+with their exact text, empty creation time, and null attempt. New records store UUIDs,
+UTC creation time, and the current implementation attempt. The next index save stamps
+4 and persists records; older readers refuse that schema rather than dropping metadata.
+Public item serialization keeps `notes` as display strings alongside `note_records`;
+index persistence uses a separate serialization without the derived strings.
+Legacy slice notes remain strings. `tests/test_schema.py` and `tests/test_note.py`
+cover read-only lifting, upgrades and future-schema refusal. `done_dir` and
+`retired_dir` are config, not constants.
 
 ## Invariants
 

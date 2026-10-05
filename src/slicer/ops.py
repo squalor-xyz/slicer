@@ -7,6 +7,7 @@ and so each one records the same log entry.
 from __future__ import annotations
 
 import re
+from uuid import uuid4
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
@@ -15,7 +16,7 @@ from typing import Callable, Mapping
 
 from slicer import graph, ids, outline, prose, render, vcs
 from slicer.errors import StateError
-from slicer.model import Index, Item, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary, is_unscored
+from slicer.model import Index, Item, NoteRecord, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary, is_unscored
 from slicer.store import State
 
 
@@ -773,7 +774,7 @@ def reject_many(
     previous = item.status
     item.status = target
     _clear_claim(item)
-    item.notes.append(_dated(verdict))
+    _append_note(item, verdict)
     changed.append((item, previous))
   for item, previous in changed:
     if previous != item.status:
@@ -1006,14 +1007,25 @@ def _dated(text: str) -> str:
   return f"**{_now()[:10]}** — {text}"
 
 
-def add_note(state: State, item_id: str, text: str) -> Item:
+def _append_note(item: Item, text: str, kind: str = "") -> None:
+  created_at = _now()
+  item.note_records.append(NoteRecord(str(uuid4()), kind,
+    f"**{created_at[:10]}** — {text}", created_at, item.attempts))
+
+
+def add_note(state: State, item_id: str, text: str, kind: str | None = None) -> Item:
   """Append a dated note to the item itself — no slice required — visible in
   `show` and (once promoted) the rendered slice."""
   item = state.index.require(item_id)
   text = text.strip()
   if not text:
     raise StateError("a note cannot be blank", code="usage")
-  item.notes.append(_dated(text))
+  if kind is not None:
+    if not isinstance(kind, str) or not kind.strip():
+      raise StateError("a note kind cannot be blank", code="usage")
+    if state.config.note_kinds and kind not in state.config.note_kinds:
+      raise StateError(f"unknown note kind {kind!r}; choose from {state.config.note_kinds}", code="usage")
+  _append_note(item, text, kind or "")
   state.save_index()
   _record(state, item_id, "note", note=text.splitlines()[0][:60])
   return item
@@ -1028,7 +1040,7 @@ def set_note(state: State, item_id: str, index: int, text: str) -> Item:
   """Replace one note verbatim (the caller edited the full dated paragraph)."""
   item = state.index.require(item_id)
   _note_index(item, index)
-  item.notes[index] = text
+  item.note_records[index].text = text
   state.save_index()
   _record(state, item_id, "note", note="edit")
   return item
@@ -1038,7 +1050,7 @@ def remove_note(state: State, item_id: str, index: int) -> Item:
   """Drop one note."""
   item = state.index.require(item_id)
   _note_index(item, index)
-  del item.notes[index]
+  del item.note_records[index]
   state.save_index()
   _record(state, item_id, "note", note="remove")
   return item

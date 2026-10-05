@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-214 items · — 17 · done 193 · retired 4
+214 items · — 16 · done 193 · retired 4 · review 1
 
 v1.4.0 release
 
@@ -37,7 +37,7 @@ v1.4.0 release
 | 2 | [s180](slices/s180.md) | Print one command's JSON contract on demand | M | 2 | slicer | efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB | retired |
 | 3 | [s191](slices/s191.md) | Resolve a next_id-only merge conflict without hand-editing the index | M | 2 | slicer | merging s174 into a main whose next_id had moved conflicted only on next_id; resolving it needed a hand edit of index.json | — |
 | 4 | [s207](slices/s207.md) | Configure which statuses satisfy dependencies | M | 2 | slicer | agents feedback 2026-10-05 U2; docs/feedback/agents-2026-10-05.md | — |
-| 5 | [s208](slices/s208.md) | Add structured note kinds without breaking display-string JSON | M | 2 | slicer | agents feedback 2026-10-05 U3a; docs/feedback/agents-2026-10-05.md | — |
+| 5 | [s208](slices/s208.md) | Add structured note kinds without breaking display-string JSON | M | 2 | slicer | agents feedback 2026-10-05 U3a; docs/feedback/agents-2026-10-05.md | review |
 | 6 | [s209](slices/s209.md) | Require a current-attempt note before handing off | M | 2 | slicer | agents feedback 2026-10-05 U3b; docs/feedback/agents-2026-10-05.md | — |
 | 7 | [s210](slices/s210.md) | Record which item discovered new work | M | 2 | slicer | agents feedback 2026-10-05 U4a; docs/feedback/agents-2026-10-05.md | — |
 | 8 | [s211](slices/s211.md) | Return an existing item for a repeated filing key | M | 2 | slicer | agents feedback 2026-10-05 U4b; docs/feedback/agents-2026-10-05.md | — |

@@ -75,6 +75,7 @@ class ConfigValidationTests(unittest.TestCase):
     with self.repo() as repo:
       path = repo.root / ".slicer/config.json"
       data = json.loads(path.read_text())
+      data["version"] = 1
       data.pop("implement_finish", None)
       path.write_text(json.dumps(data) + "\n")
       self.assertEqual(repo.state().config.implement_finish, "done")

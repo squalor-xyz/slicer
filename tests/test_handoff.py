@@ -446,6 +446,11 @@ class RejectTests(unittest.TestCase):
       item = self.item(repo)
       self.assertEqual((item.status, item.claim_owner), ("open", ""))
       self.assertTrue(item.notes[-1].endswith(self.VERDICT))
+      record = item.note_records[-1]
+      self.assertEqual(record.kind, "")
+      self.assertEqual(record.attempt, item.attempts)
+      self.assertTrue(record.created_at.endswith("Z"))
+      self.assertEqual(record.text, item.notes[-1])
       entries = json.loads(repo.run("log", "--item", "S01", "--action", "reject", "--json")[1])
       self.assertEqual(len(entries), 1)
       self.assertEqual(

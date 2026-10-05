@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import patch
 
 import support
+from slicer import model
 from slicer import tui, tui_style
 from slicer.config import Config
 from slicer.model import Index, Item
@@ -647,7 +648,8 @@ class NotesPanelTests(unittest.TestCase):
   def test_Entries_IncludeANotePerNotePlusATrailingAddEntry(self) -> None:
     state = example()
     item = state.index.require("S02")
-    item.notes = ["**2026-01-01** — first", "second"]
+    item.note_records = [model.NoteRecord(str(i), "", text, "", None)
+                         for i, text in enumerate(["**2026-01-01** — first", "second"])]
     ents = tui.entries(state, "S02")
     notes = [e for e in ents if e.kind == "note"]
     self.assertEqual([e.index for e in notes], [0, 1])
@@ -657,7 +659,7 @@ class NotesPanelTests(unittest.TestCase):
   def test_Panel_AddLineTagMatchesTheLastEntry(self) -> None:
     state = example()
     item = state.index.require("S02")
-    item.notes = ["a note"]
+    item.note_records = [model.NoteRecord("n1", "", "a note", "", None)]
     ents = tui.entries(state, "S02")
     panel = tui.panel(state, "S02")
     self.assertTrue(any(l.role == "heading" and l.text == "Notes" for l in panel))

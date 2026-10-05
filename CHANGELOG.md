@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- Item notes carry stable identities, optional kinds, UTC creation times, and implementation attempts. `note --kind` accepts any nonempty kind unless `note_kinds` restricts it. Repeatable `--notes-kind` filters `show` and `next --ready`, including batches and section projections, without changing state. Public `notes` arrays remain display strings; `note_records` adds metadata. Historical item notes lift without changing display bytes and persist on the next save under index schema 4. Config saves use schema 2; legacy slice notes are unchanged.
+
 ## [1.3.0] - 2026-10-05
 
 ### Fixed

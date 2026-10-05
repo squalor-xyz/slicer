@@ -106,12 +106,13 @@ DEFAULT_LATER = {
 # higher number on disk means a newer slicer wrote it; `store.load` refuses it
 # rather than dropping the keys this build does not know. Bump only alongside a
 # reader that lifts the older shape.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass
 class Config:
   version: int = SCHEMA_VERSION
+  note_kinds: list[str] = field(default_factory=list)
   id_prefix: str = "S"
   id_width: int = 2
   statuses: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_STATUSES))
@@ -166,6 +167,10 @@ class Config:
     raise ConfigError(f"unknown status {label!r}; known: {sorted(self.statuses.values())}")
 
   def validate(self) -> None:
+    if not isinstance(self.note_kinds, list) or any(
+      not isinstance(kind, str) or not kind.strip() for kind in self.note_kinds
+    ):
+      raise ConfigError("note_kinds must be a list of nonempty strings")
     if self.open_status not in self.statuses:
       raise ConfigError(f"open_status {self.open_status!r} is not in statuses")
     if self.done_status not in self.statuses:
@@ -242,7 +247,8 @@ class Config:
 
   def to_dict(self) -> dict[str, Any]:
     return {
-      "version": self.version,
+      "version": SCHEMA_VERSION,
+      "note_kinds": list(self.note_kinds),
       "id": {"prefix": self.id_prefix, "width": self.id_width},
       "statuses": dict(self.statuses),
       "open_status": self.open_status,
@@ -319,6 +325,7 @@ class Config:
       statuses[reviewing] = reviewing
     cfg = Config(
       version=int(d.get("version", SCHEMA_VERSION)),
+      note_kinds=d.get("note_kinds", []),
       id_prefix=ident.get("prefix", "S"),
       id_width=int(ident.get("width", 2)),
       statuses=statuses,
