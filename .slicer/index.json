@@ -4541,7 +4541,7 @@
       "id": "s173",
       "title": "Hand off, reject, and release from the TUI",
       "short_title": "Hand off, reject, and release from the TUI",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4560,7 +4560,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

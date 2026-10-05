@@ -47,6 +47,9 @@ BINDINGS = (
   Binding(("M",), "M", "move_to", "Move to a position (clear restrictions first)"),
   Binding(("s",), "s", "start", "Start item"),
   Binding(("d",), "d", "done", "Mark item done"),
+  Binding(("h",), "h", "handoff", "Hand the item to review; the note is optional"),
+  Binding(("x",), "x", "reject", "Send a review back to open; a note is required"),
+  Binding(("l",), "l", "release", "Release the item's claim and keep its status"),
   Binding(("p",), "p", "park", "Park item"),
   Binding(("u",), "u", "unpark", "Reopen item"),
   Binding(("n",), "n", "promote", "Promote item to a slice"),
@@ -67,7 +70,7 @@ def help_lines() -> list[str]:
 # Common actions in display order; key labels come from the dispatch table.
 SHORTCUTS = (
   (("pane",), "panes"), (("edit",), "edit"), (("add",), "add"),
-  (("start",), "start"), (("done",), "done"), (("search",), "search"),
+  (("start",), "start"), (("done",), "done"), (("handoff",), "handoff"), (("search",), "search"),
   (("filter",), "filters"), (("sort",), "sort"), (("clear",), "show all"), (("jump",), "jump"),
   (("down", "up"), "move"), (("help",), "help"), (("quit",), "quit"),
   (("view",), "view"),
@@ -411,6 +414,13 @@ def act(
         ops.set_status(state, target, cfg.open_status)
         message = f"{target} reopened"
       return ActResult(message, severity="success" if item.status != previous else "info")
+    if action == "release":
+      held = state.index.require(target).claim_owner
+      vcs.require_no_merge(state.root)
+      ops.release(state, target)
+      return ActResult(f"{target} released", severity="success") if held else ActResult(
+        f"{target} has no claim"
+      )
     if action == "reorder_down":
       at = state.index.position(target)
       if at + 1 < len(state.index.items):
@@ -606,6 +616,8 @@ class View:
   focus: str = "left"
   scroll: int = 0
   mode: str = "normal"
+  # "handoff" or "reject" while the note prompt is open.
+  note_action: str = ""
   message: str = ""
   message_severity: str = "normal"
   text: str = ""
@@ -689,6 +701,8 @@ class View:
       return self._prompt(state, key)
     if self.mode == "move":
       return self._move(state, key)
+    if self.mode == "note":
+      return self._note(state, key)
     if self.mode == "filter":
       return self._filter(state, key)
     if self.mode == "sort":
@@ -746,6 +760,13 @@ class View:
         self.mode, self.text = "move", ""
       else:
         self.notify("no item selected")
+    elif action in ("handoff", "reject"):
+      if not self.selected:
+        self.notify("no item selected")
+      elif self.selected[0] != ITEM:
+        self.notify("that key applies to a slice, not to a prose block")
+      else:
+        self.mode, self.text, self.note_action = "note", "", action
     elif action:
       if self.selected or action in ("add", "render"):
         result = act(state, key, self.target, entry=self.entry_at, focus=self.focus)
@@ -860,6 +881,35 @@ class View:
       self.text = self.text[:-1]
     elif len(key) == 1 and key.isdigit():
       self.text += key
+    return ActResult()
+
+  def _note(self, state: State, key: str) -> ActResult:
+    """Collect a note, then hand off or reject through the same ops the CLI uses.
+    A handoff note is optional; a reject needs one, so an empty one cancels."""
+    if key == "\x1b":
+      self.mode = "normal"
+      self.notify("cancelled")
+    elif key in ("\n", "\r", "KEY_ENTER"):
+      self.mode = "normal"
+      note = self.text.strip()
+      if self.note_action == "reject" and not note:
+        self.notify("cancelled")
+      elif not self.selected:
+        self.notify("no item selected", "error")
+      else:
+        try:
+          vcs.require_no_merge(state.root)
+          if self.note_action == "handoff":
+            ops.handoff(state, self.target, note=note)
+            self.notify(f"{self.target} handed off for review", "success")
+          else:
+            ops.reject(state, self.target, note=note)
+            self.notify(f"{self.target} rejected", "success")
+        except (SlicerError, OSError) as exc:
+          self.notify(str(exc), "error")
+      self.refresh(state)
+    else:
+      self.text, _ = tui_wizard.text_input(self.text, key)
     return ActResult()
 
   def _sort(self, state: State, key: str) -> ActResult:
@@ -1052,8 +1102,12 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
       attr = palette.attr(line.role, selected=selected, focused=view.focus == "right")
       put(n, right_x, ("> " if selected else "  ") + line.text, attr)
   put(status_y, 0, view.status(state), palette.attr("dim"))
-  if view.mode in ("search", "jump", "move"):
-    label = {"search": "Search", "jump": "Jump to ID", "move": "Move to position"}[view.mode]
+  if view.mode in ("search", "jump", "move", "note"):
+    label = {
+      "search": "Search", "jump": "Jump to ID", "move": "Move to position",
+      "note": "Handoff note, optional" if view.note_action == "handoff"
+      else "Reject verdict, required",
+    }[view.mode]
     prompt = f"{label} (Enter accepts, Esc cancels): {view.text}"
     put(status_y + 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))
   else:

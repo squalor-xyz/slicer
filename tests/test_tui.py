@@ -529,8 +529,8 @@ class Screen:
 
 class TuiDrawingTests(unittest.TestCase):
   def test_Draw_NormalView_CommonShortcutsPersistWithFeedback(self) -> None:
-    hints = ['Tab panes', 'e edit', 'a add', 's start', 'd done', '/ search',
-             'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit', 'v view']
+    hints = ['Tab panes', 'e edit', 'a add', 's start', 'd done', 'h handoff',
+             '/ search', 'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit', 'v view']
     state = example()
     for height, width, rows in [(10, 80, 2), (24, 160, 1)]:
       for focus in ['left', 'right']:
@@ -802,3 +802,135 @@ class QueueViewTests(unittest.TestCase):
     view.handle(state, "K")
     self.assertIn("reordering disabled", view.message)
     self.assertTrue(any(line.startswith("v ") and "Cycle" in line for line in tui.help_lines()))
+
+
+class ReviewKeyTests(unittest.TestCase):
+  def repo_with_started(self, repo: support.TempRepo, *titles: str) -> None:
+    repo.run('init')
+    for title in titles:
+      repo.run('add', title)
+    repo.run('promote', 'S01')
+    repo.run('start', 'S01')
+
+  def test_Handoff_NoteOrEmptyNote_HandsOffTheSelectedItemOnly(self) -> None:
+    for note in ('', 'ready for review'):
+      with self.subTest(note=note), support.TempRepo() as repo:
+        self.repo_with_started(repo, 'First', 'Second')
+        state = repo.state()
+        view = tui.View.initial(state)
+        self.assertEqual(view.target, 'S01')
+        with patch.object(tui.ops, 'handoff', wraps=tui.ops.handoff) as op:
+          view.handle(state, 'h')
+          self.assertEqual(view.mode, 'note')
+          type_keys(view, state, note)
+          view.handle(state, '\n')
+        op.assert_called_once_with(state, 'S01', note=note)
+        fresh = repo.state()
+        self.assertEqual(fresh.index.require('S01').status, 'review')
+        self.assertEqual(fresh.index.require('S02').status, 'open')
+        self.assertEqual(view.mode, 'normal')
+        self.assertIn('S01 handed off', view.message)
+        entry = fresh.history()[-1]
+        self.assertEqual((entry.item, entry.action), ('S01', 'handoff'))
+        if note:
+          self.assertIn(note, entry.note)
+
+  def test_Handoff_Cancel_WritesNothing(self) -> None:
+    with support.TempRepo() as repo:
+      self.repo_with_started(repo, 'First')
+      before = repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.handle(state, 'h')
+      type_keys(view, state, 'never saved')
+      view.handle(state, '\x1b')
+      self.assertEqual(view.mode, 'normal')
+      self.assertIn('cancelled', view.message)
+      self.assertEqual(before, (repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')))
+
+  def test_Reject_RequiresANote_AndSendsTheSelectedItemBack(self) -> None:
+    with support.TempRepo() as repo:
+      self.repo_with_started(repo, 'First', 'Second')
+      repo.run('handoff', 'S01')
+      before = repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.select((tui.ITEM, 'S01'))
+      view.handle(state, 'x')
+      self.assertEqual(view.mode, 'note')
+      view.handle(state, '\n')
+      self.assertEqual(view.mode, 'normal')
+      self.assertIn('cancelled', view.message)
+      self.assertEqual(before, (repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')))
+      with patch.object(tui.ops, 'reject', wraps=tui.ops.reject) as op:
+        view.handle(state, 'x')
+        type_keys(view, state, 'VERDICT: FAIL - no test')
+        view.handle(state, '\n')
+      op.assert_called_once_with(state, 'S01', note='VERDICT: FAIL - no test')
+      fresh = repo.state()
+      self.assertEqual(fresh.index.require('S01').status, 'open')
+      self.assertEqual(fresh.index.require('S02').status, 'open')
+      self.assertTrue(any('VERDICT: FAIL' in n for n in fresh.index.require('S01').notes))
+      self.assertIn('S01 rejected', view.message)
+
+  def test_Release_ClearsTheClaimAndKeepsTheStatus(self) -> None:
+    with support.TempRepo() as repo:
+      self.repo_with_started(repo, 'First', 'Second')
+      state = repo.state()
+      self.assertTrue(state.index.require('S01').claim_owner)
+      view = tui.View.initial(state)
+      with patch.object(tui.ops, 'release', wraps=tui.ops.release) as op:
+        view.handle(state, 'l')
+      op.assert_called_once_with(state, 'S01')
+      fresh = repo.state().index.require('S01')
+      self.assertEqual((fresh.status, fresh.claim_owner), ('started', ''))
+      self.assertIn('S01 released', view.message)
+      view.handle(state, 'l')
+      self.assertIn('no claim', view.message)
+
+  def test_Keys_OnAProseRow_ApplyToASliceOnly(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.select((tui.PROSE, 'preamble'))
+    for key in 'hxl':
+      view.handle(state, key)
+      self.assertEqual(view.mode, 'normal')
+      self.assertIn('applies to a slice', view.message)
+
+  def test_Help_ListsAllThreeKeys_AndTheStripOnlyHandoff(self) -> None:
+    lines = tui.help_lines()
+    for key, text in (('h', 'review'), ('x', 'note is required'), ('l', 'claim')):
+      self.assertTrue(any(l.startswith(f'{key} ') and text in l for l in lines), key)
+    for width, rows in ((80, 2), (160, 1)):
+      strip = tui.shortcut_lines(width)
+      text = '  '.join(strip)
+      self.assertEqual(len(strip), rows, width)
+      self.assertIn('h handoff', text)
+      self.assertIn('v view', text)
+      self.assertNotIn('x reject', text)
+      self.assertNotIn('l release', text)
+
+  def test_Reorder_WhileFilteredOrViewPreset_StaysDisabled(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.handle(state, 'v')
+    for key in 'JK':
+      view.handle(state, key)
+      self.assertIn('reordering disabled', view.message)
+    view.handle(state, 'c')
+    view.filters.query = 'Current'
+    for key in 'JK':
+      view.message = ''
+      view.handle(state, key)
+      self.assertIn('reordering disabled', view.message)
+
+  def test_Draw_NotePrompt_NamesWhetherTheNoteIsRequired(self) -> None:
+    state = example()
+    for action, label in (('handoff', 'Handoff note, optional'), ('reject', 'Reject verdict, required')):
+      view = tui.View.initial(state)
+      view.mode, view.note_action, view.text = 'note', action, 'abc'
+      screen = Screen(10, 80)
+      tui.draw(screen, state, view)
+      text = '\n'.join(t for _, t in screen.writes)
+      self.assertIn(f'{label} (Enter accepts, Esc cancels): abc', text)
+      self.assertNotIn('Tab panes', text)
