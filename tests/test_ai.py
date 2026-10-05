@@ -46,6 +46,44 @@ class AiInstructionsTests(unittest.TestCase):
                     reference_flow.index("slicer start ID"))
     self.assertIn("If the\nspecification is already trusted", reference_flow)
 
+  def test_ImplementPrompt_FollowsThePrintedFinish(self) -> None:
+    docs = (Path(__file__).resolve().parents[1] / "docs" / "agents.md").read_text(encoding="utf-8")
+    prompt = docs.split("### Implement one slice", 1)[1].split("```", 2)[1]
+    for text in ("slicer ai instructions", "implement_finish", "slicer done ID", "slicer handoff ID"):
+      self.assertIn(text, prompt)
+    self.assertIn("run done only after review and merge", prompt)
+    self.assertEqual(prompt.count("run done only after review and merge"), 1)
+    self.assertGreater(
+      prompt.index("run done only after review and merge"), prompt.index("slicer handoff ID")
+    )
+    self.assertLess(prompt.index("slicer done ID"), prompt.index("slicer handoff ID"))
+    self.assertNotIn("--check", prompt)
+    self.assertLess(prompt.index("Read the scope"), prompt.index("slicer start ID"))
+    self.assertIn("resolve the specification\nwith me first", prompt)
+    self.assertIn("Do not commit or\npublish unless separately authorized", prompt)
+
+  def test_PickupParagraph_NamesTheDefaultFinishAndTheHandoffChoice(self) -> None:
+    docs = (Path(__file__).resolve().parents[1] / "docs" / "agents.md").read_text(encoding="utf-8")
+    pickup = docs.split("**`slicer next` is the queue.**", 1)[1].split(
+      "**Read only the implementation sections.**", 1
+    )[0]
+    self.assertIn('`slicer done ID --note "..." --render` followed by `slicer check`', pickup)
+    self.assertIn("the\ndefault finish", pickup)
+    self.assertIn("`implement_finish` is `handoff`", pickup)
+    self.assertIn("handoff command from\n`slicer ai instructions`", pickup)
+
+  def test_GettingStarted_LabelsBothFinishesAndRendersTheLoopExamples(self) -> None:
+    guide = (Path(__file__).resolve().parents[1] / "docs" / "getting-started.md").read_text(
+      encoding="utf-8"
+    )
+    handoff = guide.split("$ slicer handoff S01 --render", 1)[0]
+    self.assertIn("When `implement_finish` is `handoff`", handoff[-500:])
+    loop = guide.split("## 6. The loop", 1)[1].split("\n## ", 1)[0]
+    self.assertIn("`slicer ai instructions`", loop)
+    self.assertIn("default finish, `done`", loop)
+    self.assertIn("$ slicer start S01 --render", loop)
+    self.assertIn('$ slicer done S01 --note "loader now refuses a missing key" --render', loop)
+
   def test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill(self) -> None:
     self.assertIn(ai.TRACKING, ai.INSTRUCTIONS)
     self.assertIn(ai.TRACKING, ai.skill_text())

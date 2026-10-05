@@ -95,17 +95,19 @@ with me first. If `next` includes `unspecified`, fill each missing section with
 Once the specification is clear and trusted, mark it started with
 `slicer start ID --render --strict`. Implement that slice, and run its acceptance checks and
 required project checks. Update affected documentation. Edit a slice with
-`slicer edit ID --section NAME --text "Body" --render --strict`. Once verified, record
-it for review with `slicer handoff ID --render --check`. Report changes and
+`slicer edit ID --section NAME --text "Body" --render --strict`. Once verified, run
+step 4 of `slicer ai instructions`. That is
+`slicer done ID --note "Describe the verified outcome" --render` unless `implement_finish`
+is `handoff`, in which case it is `slicer handoff ID --render`. Then run `slicer check`.
+When step 4 was handoff, run done only after review and merge. Report changes and
 checks, and stop after this slice.
 Use the slicer CLI to read and to change goals, items, slices, notes, history, and
 roadmap prose, including during review and planning. Do not open, search, parse, or
 edit tracking JSON, the history file, or generated roadmap and slice output to obtain
 or change that state. If a command is missing or fails, report it and propose a
 roadmap item. Do not open or hand-merge generated roadmap files. When `ROADMAP.md` or
-`ROADMAP.html` conflicts, run `slicer render` then `slicer check`. `slicer handoff`
-records work ready for review; run `slicer done` only after review and merge are
-complete. Do not commit or publish unless separately authorized.
+`ROADMAP.html` conflicts, run `slicer render` then `slicer check`. Do not commit or
+publish unless separately authorized.
 ```
 
 ## Everything takes `--json`
@@ -399,7 +401,9 @@ Goals stay on `slicer goals`, the progress census stays on `slicer status`, and 
 section stays on `slicer show ID --section`.
 Read the slice and inspect its scope, dependencies, and acceptance checks; resolve any
 ambiguity before starting it. Then run `slicer start ID --render --strict`, implement and verify
-it, and use `slicer done ID --note "..." --render` followed by `slicer check`. If the
+it, and finish with `slicer done ID --note "..." --render` followed by `slicer check`, the
+default finish. If `implement_finish` is `handoff`, use the handoff command from
+`slicer ai instructions` instead. If the
 specification is already trusted and needs no clarification, `slicer next --start --ready --section "Implement" --section "Check" --json --lean` may combine fetching, reading, and starting the item.
 
 **Read only the implementation sections.** Repeat `--section` to return just selected
