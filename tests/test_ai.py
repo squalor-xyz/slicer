@@ -393,6 +393,31 @@ class AiInstructionsTests(unittest.TestCase):
       self.assertNotIn("slicer done", text)
       self.assertIn("only after review and merge are complete", text)
 
+  def test_Ai_RequiredReport_ExposesKindAndCurrentAttemptInstructions(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      path = repo.root / ".slicer/config.json"
+      data = json.loads(path.read_text())
+      data["handoff_requires_note_kind"] = "implementation report"
+      path.write_text(json.dumps(data))
+      before = {p: p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+      for finish in ("done", "handoff"):
+        data["implement_finish"] = finish
+        path.write_text(json.dumps(data))
+        before[path] = path.read_bytes()
+        for command in ("instructions", "skill"):
+          code, out, err = repo.run("ai", command, "--json")
+          self.assertEqual((code, err), (0, ""))
+          text = json.loads(out)[command]
+          self.assertIn("handoff_requires_note_kind to 'implementation report'", text)
+          self.assertIn("slicer note ID --kind 'implementation report' --text", text)
+          self.assertIn("current implementation attempt", text)
+          self.assertIn("Changing attempts manually", text)
+          if finish == "handoff" and command == "skill":
+            self.assertNotIn("slicer done", text)
+        self.assertEqual({p: p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}, before)
+      self.assertEqual(repo.run("ai", "instructions", "--rest")[1], ai.rest_text())
+
   def test_Instructions_TargetedRead_DocumentsRepeatedSectionAndContext(self) -> None:
     text = ai.INSTRUCTIONS
     example = 'slicer show ID --section "Implement" --section "Check" --context --json'

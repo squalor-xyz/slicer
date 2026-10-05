@@ -305,8 +305,8 @@ def _state(args: argparse.Namespace) -> store.State:
   return state
 
 
-def _ai_finish(args: argparse.Namespace) -> str:
-  """implement_finish when config and index both load. Otherwise done.
+def _ai_policy(args: argparse.Namespace) -> tuple[str, str]:
+  """Finish and report policy when config and index load; otherwise generic.
 
   Read-only: no lock and no write. A miss warns and keeps the generic text.
   """
@@ -317,13 +317,13 @@ def _ai_finish(args: argparse.Namespace) -> str:
     store.read_index(project)
   except (OSError, SlicerError) as exc:
     print(f"{exc}; printing the generic guide", file=sys.stderr)
-    return "done"
-  return cfg.implement_finish
+    return "done", ""
+  return cfg.implement_finish, cfg.handoff_requires_note_kind
 
 
 def cmd_ai_instructions(args: argparse.Namespace) -> int:
   # `--rest` is the guide minus the skill, which never reads the project.
-  text = ai.rest_text() if args.rest else ai.instructions_text(_ai_finish(args))
+  text = ai.rest_text() if args.rest else ai.instructions_text(*_ai_policy(args))
   _emit(args, {"instructions": text}, text.rstrip("\n"))
   return OK
 
@@ -336,7 +336,7 @@ def cmd_recommended_workflow(args: argparse.Namespace) -> int:
 
 
 def cmd_ai_skill(args: argparse.Namespace) -> int:
-  text = ai.skill_text(_ai_finish(args))
+  text = ai.skill_text(*_ai_policy(args))
   _emit(args, {"skill": text}, text.rstrip("\n"))
   return OK
 

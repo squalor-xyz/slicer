@@ -106,13 +106,14 @@ DEFAULT_LATER = {
 # higher number on disk means a newer slicer wrote it; `store.load` refuses it
 # rather than dropping the keys this build does not know. Bump only alongside a
 # reader that lifts the older shape.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass
 class Config:
   version: int = SCHEMA_VERSION
   note_kinds: list[str] = field(default_factory=list)
+  handoff_requires_note_kind: str = ""
   id_prefix: str = "S"
   id_width: int = 2
   statuses: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_STATUSES))
@@ -171,6 +172,16 @@ class Config:
       not isinstance(kind, str) or not kind.strip() for kind in self.note_kinds
     ):
       raise ConfigError("note_kinds must be a list of nonempty strings")
+    if not isinstance(self.handoff_requires_note_kind, str):
+      raise ConfigError("handoff_requires_note_kind must be a string")
+    if self.handoff_requires_note_kind and not self.handoff_requires_note_kind.strip():
+      raise ConfigError("handoff_requires_note_kind must be empty or a nonempty note kind")
+    if (self.handoff_requires_note_kind and self.note_kinds
+        and self.handoff_requires_note_kind not in self.note_kinds):
+      raise ConfigError(
+        f"handoff_requires_note_kind {self.handoff_requires_note_kind!r} is not in note_kinds; "
+        "add the required kind to the whitelist"
+      )
     if self.open_status not in self.statuses:
       raise ConfigError(f"open_status {self.open_status!r} is not in statuses")
     if self.done_status not in self.statuses:
@@ -249,6 +260,7 @@ class Config:
     return {
       "version": SCHEMA_VERSION,
       "note_kinds": list(self.note_kinds),
+      "handoff_requires_note_kind": self.handoff_requires_note_kind,
       "id": {"prefix": self.id_prefix, "width": self.id_width},
       "statuses": dict(self.statuses),
       "open_status": self.open_status,
@@ -326,6 +338,7 @@ class Config:
     cfg = Config(
       version=int(d.get("version", SCHEMA_VERSION)),
       note_kinds=d.get("note_kinds", []),
+      handoff_requires_note_kind=d.get("handoff_requires_note_kind", ""),
       id_prefix=ident.get("prefix", "S"),
       id_width=int(ident.get("width", 2)),
       statuses=statuses,

@@ -11,8 +11,10 @@ import unittest
 from unittest.mock import patch
 
 import support
+from slicer import config
 from slicer.config import Config
-from slicer.errors import ConfigError, RenderError
+from slicer.errors import ConfigError, RenderError, SlicerError
+from slicer.model import NoteRecord
 from slicer.store import DIR_NAME, INDEX_NAME
 
 
@@ -152,6 +154,177 @@ class HandoffTests(unittest.TestCase):
     with self.repo() as repo:
       payload = json.loads(repo.run("handoff", "S01", "--json")[1])
       self.assertEqual((payload["status"], payload["claim"]), ("review", None))
+
+
+class HandoffReportTests(unittest.TestCase):
+  repo = HandoffTests.repo
+
+  def snapshot(self, repo):
+    return {p.relative_to(repo.root): p.read_bytes()
+      for p in (repo.root / DIR_NAME).rglob("*") if p.is_file()}
+
+  def require_report(self, repo):
+    _config(repo, handoff_requires_note_kind="report", note_kinds=["report", "decision"])
+
+  def test_Handoff_MissingReport_RefusesWithoutAnyWrites(self):
+    for extra in ((), ("--render",), ("--render", "--strict")):
+      with self.subTest(extra=extra), self.repo() as repo:
+        self.require_report(repo)
+        repo.run("render")
+        before = self.snapshot(repo)
+        code, out, err = repo.run("handoff", "S01", *extra, "--json")
+        self.assertEqual(code, 2, err)
+        error = json.loads(out)["error"]
+        self.assertEqual(error["code"], "state")
+        for detail in ("S01", "report", "attempt 1", "slicer note"):
+          self.assertIn(detail, error["message"])
+        self.assertEqual(self.snapshot(repo), before)
+
+  def test_Handoff_CurrentReport_AllowsStrictTransition(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--kind", "report", "--text", "Checks passed")
+      code, _, err = repo.run("handoff", "S01", "--render", "--strict", "--check")
+      self.assertEqual(code, 0, err)
+      item = repo.state().index.require("S01")
+      self.assertEqual((item.status, item.claim_owner), ("review", ""))
+
+  def test_Handoff_InvalidRecord_DoesNotAuthorizeTransition(self):
+    for kind, text, attempt in (("decision", "verified", 1),
+                               ("report", "verified", None),
+                               ("report", "verified", 0),
+                               ("report", "", 1), ("report", "  \n", 1)):
+      with self.subTest(kind=kind, text=text, attempt=attempt), self.repo() as repo:
+        self.require_report(repo)
+        state = repo.state()
+        state.index.require("S01").note_records.append(
+          NoteRecord("fixture", kind, text, "", attempt))
+        state.save_index()
+        before = self.snapshot(repo)
+        self.assertEqual(repo.run("handoff", "S01")[0], 2)
+        self.assertEqual(self.snapshot(repo), before)
+
+  def test_Handoff_HistoryNoteAndLegacyNotes_DoNotSatisfyPolicy(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--text", "Ready for review: [report] verified")
+      state = repo.state()
+      state.slices["S01"].notes.append("[report] verified")
+      state.save_slice(state.slices["S01"])
+      before = self.snapshot(repo)
+      self.assertEqual(repo.run("handoff", "S01", "--note", "[report] verified")[0], 2)
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Handoff_RejectRestart_RequiresNewReport(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--kind", "report", "--text", "First pass")
+      self.assertEqual(repo.run("handoff", "S01")[0], 0)
+      repo.run("reject", "S01", "--note", "Repair needed")
+      repo.run("start", "S01")
+      self.assertEqual(repo.state().index.require("S01").attempts, 2)
+      before = self.snapshot(repo)
+      self.assertEqual(repo.run("handoff", "S01")[0], 2)
+      self.assertEqual(self.snapshot(repo), before)
+      repo.run("note", "S01", "--kind", "report", "--text", "Repair verified")
+      self.assertEqual(repo.run("handoff", "S01")[0], 0)
+
+  def test_Handoff_ReleaseResume_KeepsReportAssociation(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--kind", "report", "--text", "Verified")
+      repo.run("release", "S01")
+      repo.run("start", "S01")
+      self.assertEqual(repo.state().index.require("S01").attempts, 1)
+      self.assertEqual(repo.run("handoff", "S01")[0], 0)
+
+  def test_Handoff_ManualAttemptCorrection_ChangesReportAssociation(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--kind", "report", "--text", "Verified")
+      repo.run("set", "S01", "--attempts", "2")
+      self.assertEqual(repo.run("handoff", "S01")[0], 2)
+      repo.run("set", "S01", "--attempts", "1")
+      self.assertEqual(repo.run("handoff", "S01")[0], 0)
+
+  def test_Handoff_BatchMissingReports_CollectsProblemsBeforeWrites(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      for title in ("third", "fourth"):
+        repo.run("add", title)
+      for item_id in ("S03", "S04"):
+        repo.run("promote", item_id)
+        repo.run("start", item_id)
+      repo.run("note", "S01", "--kind", "report", "--text", "Verified")
+      repo.run("render")
+      before = self.snapshot(repo)
+      code, out, _ = repo.run("handoff", "S01", "S02", "S03", "S04",
+        "--render", "--strict", "--json")
+      self.assertEqual(code, 2)
+      message = json.loads(out)["error"]["message"]
+      for detail in ("S02", "not started", "S03", "S04", "report"):
+        self.assertIn(detail, message)
+      self.assertEqual(self.snapshot(repo), before)
+      repo.run("note", "S03", "--kind", "report", "--text", "Verified")
+      repo.run("note", "S04", "--kind", "report", "--text", "Verified")
+      self.assertEqual(repo.run("handoff", "S01", "S03", "S04")[0], 0)
+
+  def test_Handoff_UnclaimedReview_NoOpNeedsNoReport(self):
+    with self.repo() as repo:
+      repo.run("handoff", "S01")
+      self.require_report(repo)
+      repo.run("render")
+      before = self.snapshot(repo)
+      self.assertEqual(repo.run("handoff", "S01", "--render", "--strict")[0], 0)
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Handoff_ReportPresentRenderFails_RollsBackAllFiles(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--kind", "report", "--text", "Verified", "--render")
+      before = self.snapshot(repo)
+      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+        self.assertEqual(repo.run("handoff", "S01", "--render", "--strict")[0], 2)
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Done_RequiredReport_DoesNotChangeDoneBehavior(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      self.assertEqual(repo.run("done", "S01")[0], 0)
+
+
+class HandoffReportConfigTests(unittest.TestCase):
+  def test_Config_MissingOrEmptyPolicy_KeepsExistingBehavior(self):
+    for version in (1, 2, 3):
+      for policy in ({}, {"handoff_requires_note_kind": ""}):
+        self.assertEqual(Config.from_dict({"version": version} | policy).handoff_requires_note_kind, "")
+
+  def test_Config_RequiredKind_ValidatesTypeAndWhitelist(self):
+    for invalid in (None, 1, True, [], " "):
+      with self.subTest(invalid=invalid), self.assertRaises(ConfigError):
+        Config.from_dict({"handoff_requires_note_kind": invalid})
+    for kinds in ([], ["report"]):
+      cfg = Config.from_dict({"handoff_requires_note_kind": "report", "note_kinds": kinds})
+      self.assertEqual(cfg.to_dict()["handoff_requires_note_kind"], "report")
+    with self.assertRaisesRegex(ConfigError, "report.*note_kinds"):
+      Config.from_dict({"handoff_requires_note_kind": "report", "note_kinds": ["decision"]})
+
+  def test_Config_OlderFiles_LoadWithoutWritesAndSaveProtectedPolicy(self):
+    with support.TempRepo() as repo:
+      repo.run("init")
+      path = repo.root / DIR_NAME / "config.json"
+      for version in (1, 2):
+        _config(repo, version=version, handoff_requires_note_kind=None)
+        before = path.read_bytes()
+        cfg = Config.load(path)
+        self.assertEqual(cfg.handoff_requires_note_kind, "")
+        self.assertEqual(path.read_bytes(), before)
+      cfg.handoff_requires_note_kind = "report"
+      path.write_text(json.dumps(cfg.to_dict()), encoding="utf-8")
+      self.assertEqual(Config.load(path).version, 3)
+      with patch.object(config, "SCHEMA_VERSION", 2), self.assertRaises(SlicerError) as cm:
+        Config.load(path)
+      self.assertEqual(cm.exception.code, "schema_too_new")
 
 
 class ReviewStatusConfigTests(unittest.TestCase):

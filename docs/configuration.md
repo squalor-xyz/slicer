@@ -10,8 +10,9 @@ and the slice files, the config is yours to hand-edit.
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "note_kinds": [],
+  "handoff_requires_note_kind": "",
   "id": { "prefix": "S", "width": 2 },
   "statuses": { "open": "—", "done": "done", "parked": "parked", "later": "later" },
   "open_status": "open",
@@ -49,8 +50,9 @@ and the slice files, the config is yours to hand-edit.
 }
 ```
 
-Config schema 2 protects `note_kinds` from older readers. Version-1 configs still
-load without writes; a config save writes version 2.
+Config schema 3 protects `handoff_requires_note_kind` from older readers; schema 2
+introduced `note_kinds`. Version-1 and version-2 configs still load without writes
+and without a report requirement; a config save writes version 3.
 
 ## Every key
 
@@ -60,6 +62,7 @@ Read any value without opening the file: `slicer config KEY` prints it, and
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
 | `note_kinds` | `[]` | Optional whitelist of nonempty strings for explicit `note --kind` values. Missing or empty permits any nonempty kind. Omitting `--kind` always creates an untyped note | **Yes** |
+| `handoff_requires_note_kind` | `""` | Nonempty requires an item note of this exact kind, with nonempty text and the current attempt, before started work can be handed off. Must belong to `note_kinds` when that whitelist is nonempty. Missing or empty keeps existing handoff behavior. Does not change `done` | **Yes**, changes handoff eligibility |
 | `id.prefix` | `"S"` | The id scheme | **Until the first item exists**; after that, only its case, with `slicer id-prefix`. See below |
 | `id.width` | `2` → `S01` | As above | **Until the first item exists** |
 | `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |

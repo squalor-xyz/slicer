@@ -13,7 +13,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 
 | | |
 |---|---|
-| `ai [instructions]` | agent quick start. `slicer ai` and `slicer ai --json` are `slicer ai instructions` with the same flags. Generic unless the project sets `implement_finish` to `handoff`, which makes step 4 handoff only. No project, or an unreadable config or index, prints the generic text and warns on stderr. Does not lock or write. Supports `--json`. `--rest` prints only what the skill does not already carry and does not read the project |
+| `ai [instructions]` | agent quick start. `slicer ai` and `slicer ai --json` are `slicer ai instructions` with the same flags. The project can set `implement_finish` to `handoff`, making step 4 handoff only, and `handoff_requires_note_kind` to name its required current-attempt report. No project, or an unreadable config or index, prints the generic text and warns on stderr. Does not lock or write. Supports `--json`. `--rest` prints only what the skill does not already carry and does not read the project |
 | `ai skill` | the same loop as a `SKILL.md` for Claude Code, Codex, and Grok. Same project read and fallback as `ai instructions` |
 | `init [--force] [--id ID]` | create `.slicer/` with config and templates; `--force` rewrites an existing config and templates only. `--id` sets the id the first `add` allocates (`S21`), and is refused when the index already has items |
 | `setup-git` | print the four `git config` lines that enable the `slicer-generated` render merge driver and the `slicer-index` driver for `index.json` in this clone (`slicer setup-git \| sh` applies them); needs no project |
@@ -68,6 +68,16 @@ Stored historical values are retained and may overcount because older versions
 also counted rejection. History is not authoritative enough to reconstruct
 them; owners may correct a count with `slicer set ID --attempts N` before
 adopting an attempt cap.
+
+If `handoff_requires_note_kind` is nonempty, started-to-review handoff requires an
+item note with that exact kind, nonempty text, and `attempt` equal to the item's
+current `attempts`. File it with `slicer note ID --kind KIND --text "Describe the
+verified outcome"`. Missing reports fail with code `state`, naming the item and
+kind; every batch item is validated before any writes, including strict rendering.
+Release and resume keep the report valid; reject then restart needs a new report.
+Legacy unknown-attempt notes, wrong kinds, previous-attempt reports, and history-only
+`handoff --note` do not qualify. An already unclaimed review item remains a no-op.
+`done` is unaffected. Manually changing `attempts` changes report association.
 
 Item notes keep their public `notes` array as display strings and add `note_records`
 with `{id, kind, text, created_at, attempt}`. `note ID --kind KIND` labels the dated

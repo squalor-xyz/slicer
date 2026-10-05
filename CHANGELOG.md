@@ -8,9 +8,11 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- Optional `handoff_requires_note_kind` requires a nonempty item note of that exact kind for the current implementation attempt before started work can move to review. Missing reports refuse the whole batch without writes; previous-attempt and legacy unknown-attempt notes do not qualify. Release/resume preserves the report, while reject/restart needs a new one. Missing or empty policy keeps existing behavior, and `done` is unchanged. Config schema 3 protects the policy from older readers, cross-validates a nonempty `note_kinds` whitelist, and loads older configs without a requirement. Agent guidance names the configured kind and how to file its report.
+
 - A `slicer-index` merge driver for `.slicer/index.json`. Two branches that each file anything conflict on the single `next_id` line even when their ids differ, and the only fix was a hand edit of tracking JSON. The driver sets the counter to the largest of the base, ours and theirs, then lets `git merge-file` merge the rest, so a `next_id`-only conflict resolves to the larger value and ids are never reused. Any other overlap exits 1 and leaves the usual conflict markers, so Git reports an ordinary conflict. It does not merge items or fields.
 - `slicer merge-index BASE OURS THEIRS` is the driver command Git runs (`%O %A %B`). It needs no project, prints nothing, and is not listed in `--help`.
-- Item notes carry stable identities, optional kinds, UTC creation times, and implementation attempts. `note --kind` accepts any nonempty kind unless `note_kinds` restricts it. Repeatable `--notes-kind` filters `show` and `next --ready`, including batches and section projections, without changing state. Public `notes` arrays remain display strings; `note_records` adds metadata. Historical item notes lift without changing display bytes and persist on the next save under index schema 4. Config saves use schema 2; legacy slice notes are unchanged.
+- Item notes carry stable identities, optional kinds, UTC creation times, and implementation attempts. `note --kind` accepts any nonempty kind unless `note_kinds` restricts it. Repeatable `--notes-kind` filters `show` and `next --ready`, including batches and section projections, without changing state. Public `notes` arrays remain display strings; `note_records` adds metadata. Historical item notes lift without changing display bytes and persist on the next save under index schema 4. Config saves use schema 3; legacy slice notes are unchanged.
 
 ### Changed
 
