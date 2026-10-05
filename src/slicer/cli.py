@@ -522,9 +522,13 @@ def cmd_import(args: argparse.Namespace) -> int:
   preamble = parsed.preamble or None
 
   if args.dry_run:
-    report = ops.outline_report(state, specs, force=args.force, preamble=preamble)
+    report = ops.outline_report(
+      state, specs, force=args.force, preamble=preamble, id_floor=_id_floor(state),
+    )
   else:
-    report = ops.apply_outline(state, specs, force=args.force, preamble=preamble)
+    report = ops.apply_outline(
+      state, specs, force=args.force, preamble=preamble, id_floor=_id_floor(state),
+    )
 
   lines = [
     f"source     {path}",
@@ -641,9 +645,15 @@ def _positive_int(value: str) -> int:
   return number
 
 
+def _id_floor(state: store.State) -> int:
+  """The highest id counter any sibling worktree has reached, so a new id clears it."""
+  siblings = [index for _, index in store.sibling_ids(state.root)]
+  return ids.floor_from(siblings, state.index.id_prefix)
+
+
 def cmd_next_id(args: argparse.Namespace) -> int:
   state = _state(args)
-  item_id = ids.format_next(state.index)
+  item_id = ids.format_next(state.index, floor=_id_floor(state))
   _emit(args, {"id": item_id}, item_id)
   return OK
 
@@ -1292,6 +1302,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     trees=args.tree or [], findings=args.findings or "", status=args.status,
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
     effort=args.effort, depends_on=args.depends_on, short_title=args.short_title,
+    id_floor=_id_floor(state),
   )
   text = f"added {item.id}  {item.display_title()}"
   if item.pass_key:

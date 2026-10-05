@@ -384,6 +384,29 @@ def _elsewhere_counts(
   return bool(config.review_status) and item.status == config.review_status
 
 
+def _read_siblings(root: Path) -> list[tuple[Path, Index]]:
+  """Each sibling checkout with its index, skipping any that cannot be read."""
+  found: list[tuple[Path, Index]] = []
+  for sibling in vcs.sibling_worktrees(root):
+    try:
+      found.append((sibling, read_index(sibling)))
+    except (OSError, SlicerError, AttributeError, KeyError, TypeError, ValueError):
+      continue
+  return found
+
+
+def sibling_ids(root: Path) -> list[tuple[str, Index]]:
+  """`(worktree name, index)` for every readable sibling checkout.
+
+  Like `in_work_elsewhere`, this reads nothing when `root` is a directory
+  inside some other checkout, because that checkout's siblings are not this
+  project's.
+  """
+  if not vcs.at_worktree_root(root):
+    return []
+  return [(path.name, index) for path, index in _read_siblings(root)]
+
+
 def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]]]:
   """Sibling work this checkout has not reached, ordered by worktree path.
 
@@ -398,10 +421,9 @@ def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]
   local_done = Config.load(root / DIR_NAME / CONFIG_NAME).done_status
   local_by_id = {item.id: item for item in index.items}
   found: dict[str, list[dict[str, str]]] = {}
-  for sibling in vcs.sibling_worktrees(root):
+  for sibling, sibling_index in _read_siblings(root):
     try:
       config = Config.load(sibling / DIR_NAME / CONFIG_NAME)
-      sibling_index = read_index(sibling)
     except (OSError, SlicerError, AttributeError, KeyError, TypeError, ValueError):
       continue
     for item in sibling_index.items:

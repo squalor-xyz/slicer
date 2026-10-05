@@ -39,8 +39,23 @@ def format_id(prefix: str, number: int, width: int) -> str:
   return f"{prefix}{number:0{width}d}"
 
 
-def format_next(index) -> str:
+def floor_from(indexes, prefix: str) -> int:
+  """The largest `next_id` among sibling indexes of this id scheme, or 0.
+
+  Sibling checkouts hand out ids from their own `next_id`, so two of them can
+  file different items under one id. Starting above their counters avoids
+  that. The prefix compares without case, like `parse_id`.
+  """
+  return max(
+    (ix.next_id for ix in indexes if ix.id_prefix.casefold() == prefix.casefold()),
+    default=0,
+  )
+
+
+def format_next(index, *, floor: int = 0) -> str:
   """The id `allocate` would hand out next, without consuming it.
+
+  `floor` lifts the number to at least that value; see `floor_from`.
 
   A hostile prefix makes every generated id traversing, so the generated side
   needs `require_valid` too, not just an explicit id. `next_id` should always
@@ -48,11 +63,12 @@ def format_next(index) -> str:
   hand-edit can lower it. Refuse that collision here, or a later `allocate`
   would mint a duplicate of the id it exists to keep unique.
   """
-  new_id = format_id(index.id_prefix, index.next_id, index.id_width)
+  number = max(index.next_id, floor)
+  new_id = format_id(index.id_prefix, number, index.id_width)
   require_valid(new_id)
   if index.get(new_id) is not None:
     raise StateError(
-      f"next_id ({index.next_id}) would reuse the existing id {new_id}; the index "
+      f"next_id ({number}) would reuse the existing id {new_id}; the index "
       f"is inconsistent -- run `slicer verify`",
       code="corrupt",
     )
@@ -108,7 +124,7 @@ def parse_id(item_id: str, prefix: str) -> int | None:
   return int(m.group(1)) if m else None
 
 
-def allocate(index, explicit: str | None = None) -> str:
+def allocate(index, explicit: str | None = None, *, floor: int = 0) -> str:
   """Take `explicit` if free, else the next id above the high-water mark."""
   if explicit is not None:
     require_valid(explicit)
@@ -121,8 +137,8 @@ def allocate(index, explicit: str | None = None) -> str:
     if number is not None and number >= index.next_id:
       index.next_id = number + 1
     return explicit
-  new_id = format_next(index)
-  index.next_id += 1
+  new_id = format_next(index, floor=floor)
+  index.next_id = max(index.next_id, floor) + 1
   return new_id
 
 

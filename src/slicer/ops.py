@@ -139,11 +139,14 @@ def _check_depends(state: State, proposed: dict[str, list[str]], new: Item | Non
     raise StateError("; ".join(problems) + ". Nothing was changed.", code=code)
 
 
-def add(state: State, title: str, *, item_id: str | None = None, **fields: object) -> Item:
+def add(
+  state: State, title: str, *, item_id: str | None = None, id_floor: int = 0,
+  **fields: object,
+) -> Item:
   """Append a roadmap entry. It has no slice file until it is promoted."""
   cfg = state.config
   _reject_bad_text(title=title, **fields)
-  new_id = ids.allocate(state.index, item_id)
+  new_id = ids.allocate(state.index, item_id, floor=id_floor)
   # An omitted pass (None) inherits the previous item's; an explicit empty one
   # files the item with no pass, the same meaning `set --pass ''` has.
   pass_key = fields.get("pass_key")
@@ -1249,14 +1252,14 @@ class OutlineReport:
     }
 
 
-def _allocate_outline_ids(index: Index, count: int) -> list[str]:
+def _allocate_outline_ids(index: Index, count: int, floor: int = 0) -> list[str]:
   """Allocate one id per outline entry against the supplied index."""
-  return [ids.allocate(index) for _ in range(count)]
+  return [ids.allocate(index, floor=floor) for _ in range(count)]
 
 
 def outline_report(
   state: State, specs: list[object], *, force: bool = False, promote_all: bool = False,
-  preamble: str | None = None, replace_preamble: bool = False,
+  preamble: str | None = None, replace_preamble: bool = False, id_floor: int = 0,
 ) -> OutlineReport:
   """What this outline says, and everything wrong with it. Writes nothing.
 
@@ -1338,7 +1341,7 @@ def outline_report(
   report.preamble = preamble
   report.problems = problems
   if not problems:
-    report.ids = _allocate_outline_ids(deepcopy(state.index), len(specs))
+    report.ids = _allocate_outline_ids(deepcopy(state.index), len(specs), id_floor)
   return report
 
 
@@ -1353,7 +1356,7 @@ class OutlineCommittedError(StateError):
 def apply_outline(
   state: State, specs: list[object], *, force: bool = False,
   preamble: str | None = None, promote_all: bool = False,
-  replace_preamble: bool = False,
+  replace_preamble: bool = False, id_floor: int = 0,
 ) -> OutlineReport:
   """Append every entry in a parsed outline, or write nothing at all.
 
@@ -1366,7 +1369,7 @@ def apply_outline(
   cfg = state.config
   report = outline_report(
     state, specs, force=force, promote_all=promote_all, preamble=preamble,
-    replace_preamble=replace_preamble,
+    replace_preamble=replace_preamble, id_floor=id_floor,
   )
   if report.problems:
     return report
@@ -1386,7 +1389,7 @@ def apply_outline(
   # Titles resolve to ids only once every entry has one, so allocate first.
   by_title: dict[str, str] = {it.title: it.id for it in state.index.items}
   by_title.update({it.display_title(): it.id for it in state.index.items})
-  allocated = list(zip(specs, _allocate_outline_ids(state.index, len(specs))))
+  allocated = list(zip(specs, _allocate_outline_ids(state.index, len(specs), id_floor)))
   for spec, new_id in allocated:
     by_title[spec.title] = new_id
 

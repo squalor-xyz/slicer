@@ -4853,7 +4853,7 @@
       "id": "s185",
       "title": "Warn when a sibling worktree files a different item under the same id",
       "short_title": "Warn on cross-worktree id collisions",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4872,7 +4872,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
