@@ -878,8 +878,9 @@ def cmd_next(args: argparse.Namespace) -> int:
       lines.append(f"     (no slice yet; run `slicer promote {item.id}`)")
     else:
       payload = payload | {"slice": sl.to_dict()}
-      lines.append(render.render_slice(
-        sl, state.config, state.template("slice.md"), item.notes).decode("utf-8"))
+      # The banner names the source file, which is the path this text keeps out.
+      lines.append(render.slice_body(
+        sl, state.config, state.template("slice.md"), item.notes))
   _emit(args, payload, "\n".join(lines))
   return OK
 

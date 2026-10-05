@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- `slicer next --show` text prints the slice without its generated banner, which named `.slicer/slices/ID.json` and invited a read of the tracking file. `slicer show`, the files under `.slicer/render/slices/`, and the JSON from `next` and `next --show` (including `path`) are unchanged. `render.slice_body` returns the slice without the banner, and `render_slice` adds it.
 - `slicer prose list`, `show`, and `edit` accept a pass key that contains dots. The field is the last segment of `pass.<key>.<field>`, so `pass.v1.1.heading` addresses pass `v1.1`. Before, `prose list` exited 2 on any project with such a pass. An unknown field or an empty key is still an error that names the valid forms.
 
 ### Changed

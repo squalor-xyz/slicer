@@ -834,3 +834,11 @@
 {"when": "2026-10-05T01:57:09Z", "item": "s186", "action": "add", "from": "", "to": "open", "note": "Make the loaded finish text follow implement_finish"}
 {"when": "2026-10-05T01:57:09Z", "item": "s187", "action": "add", "from": "", "to": "open", "note": "Say the same finish in the agent prompt and the human loop"}
 {"when": "2026-10-05T02:09:50Z", "item": "s188", "action": "add", "from": "", "to": "open", "note": "Print the generic recommended project workflow"}
+{"when": "2026-10-05T01:54:18Z", "item": "s174", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-05T01:57:38Z", "item": "s174", "action": "status", "from": "started", "to": "done", "note": "next --show text prints the slice body without the generated banner (render.slice_body); show, the render files and JSON are unchanged. 4 new tests plus a tightened one, full suite (1118), slicer check and git diff --check pass.", "by": "Jon Robbins"}
+{"when": "2026-10-05T01:58:28Z", "item": "s186", "action": "add", "from": "", "to": "open", "note": "Name the fix when show --context has no --section"}
+{"when": "2026-10-05T01:58:28Z", "item": "s187", "action": "add", "from": "", "to": "open", "note": "Document running a worktree's slicer from outside it"}
+{"when": "2026-10-05T01:58:38Z", "item": "s186", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-05T01:58:38Z", "item": "s187", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-05T02:09:47Z", "item": "s187", "action": "purge", "from": "open", "to": "", "note": "s187 is named in 1 commit subject(s)"}
+{"when": "2026-10-05T02:09:47Z", "item": "s186", "action": "purge", "from": "open", "to": "", "note": "s186 is not the most recent id"}

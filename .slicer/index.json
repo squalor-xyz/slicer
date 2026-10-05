@@ -4567,7 +4567,7 @@
       "id": "s174",
       "title": "Keep the slice path out of next --show text",
       "short_title": "Keep the slice path out of next --show text",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4586,7 +4586,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
