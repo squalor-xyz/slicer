@@ -4999,7 +4999,7 @@
       "id": "s190",
       "title": "Document running a worktree's slicer from outside it",
       "short_title": "Document running a worktree's slicer from outside it",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [
