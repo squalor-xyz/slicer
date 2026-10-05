@@ -943,3 +943,4 @@
 {"when": "2026-10-05T12:41:56Z", "item": "s214", "action": "release", "from": "Jon Robbins", "to": "", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-05T12:41:56Z", "item": "s214", "action": "set", "from": "started", "to": "open", "note": "status started→open; attempts 1→0"}
 {"when": "2026-10-05T12:58:41Z", "item": "s214", "action": "status", "from": "open", "to": "done", "note": "Fresh implementation starts count once; rejection no longer increments attempts. Attempts, batch and review tests added; docs and CHANGELOG updated. Full suite, slicer check and git diff --check pass.", "by": "Jon Robbins"}
+{"when": "2026-10-05T13:04:59Z", "item": "s224", "action": "add", "from": "", "to": "open", "note": "Prioritize declared passes within slicer list readiness groups"}
