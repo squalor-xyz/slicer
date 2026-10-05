@@ -104,9 +104,9 @@ class SchemaGuardTests(unittest.TestCase):
       self.assertEqual(code, 3)
       self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
 
-  def test_Cli_Version4_ExitsSchemaTooNew(self) -> None:
+  def test_Cli_FutureVersion_ExitsSchemaTooNew(self) -> None:
     with self._repo() as repo:
-      _set_version(repo, f"{DIR_NAME}/{INDEX_NAME}", 4)
+      _set_version(repo, f"{DIR_NAME}/{INDEX_NAME}", INDEX_SCHEMA_VERSION + 1)
       code, out, _ = repo.run("list", "--json")
       self.assertEqual(code, 3)
       self.assertEqual(json.loads(out)["error"]["code"], "schema_too_new")

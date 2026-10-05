@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 @dataclass
@@ -131,6 +131,39 @@ def is_unscored(importance: int, urgency: int, effort: int | None) -> bool:
 
 
 @dataclass
+class NoteRecord:
+  """Keep note identity and provenance independent of its display paragraph."""
+
+  id: str
+  kind: str
+  text: str
+  created_at: str
+  attempt: int | None
+
+  def display(self) -> str:
+    if not self.kind:
+      return self.text
+    before, separator, after = self.text.partition(" — ")
+    label = f"[{self.kind}] "
+    return before + separator + label + after if separator else label + self.text
+
+  def to_dict(self) -> dict[str, Any]:
+    return {"id": self.id, "kind": self.kind, "text": self.text,
+            "created_at": self.created_at, "attempt": self.attempt}
+
+  @staticmethod
+  def from_dict(d: Mapping[str, Any]) -> "NoteRecord":
+    if not isinstance(d, Mapping) or any(
+      not isinstance(d.get(k), str) for k in ("id", "kind", "text", "created_at")
+    ) or not d["id"]:
+      raise StateError("note record must have string id, kind, text and created_at", code="corrupt")
+    attempt = d.get("attempt")
+    if attempt is not None:
+      attempt = _attempts(attempt)
+    return NoteRecord(d["id"], d["kind"], d["text"], d["created_at"], attempt)
+
+
+@dataclass
 class Item:
   """One roadmap entry. May exist with no slice file (`has_slice=False`).
 
@@ -153,8 +186,8 @@ class Item:
   group: str = ""
   reason: str = ""
   depends_on: list[str] = field(default_factory=list)
-  # Dated free-text notes on the item itself, so a note needs no slice.
-  notes: list[str] = field(default_factory=list)
+  # Structured item notes; legacy slice notes remain strings.
+  note_records: list[NoteRecord] = field(default_factory=list)
   # Eisenhower axes, 1-3, defaulting to a neutral 2 so unscored items interleave
   # rather than sinking or floating. Base score is importance-first (below).
   importance: int = 2
@@ -167,6 +200,15 @@ class Item:
   # The time is stored on the item so render never invents one.
   claim_owner: str = ""
   claim_at: str = ""
+
+  @property
+  def notes(self) -> list[str]:
+    return [record.display() for record in self.note_records]
+
+  def persisted_dict(self) -> dict[str, Any]:
+    data = self.to_dict()
+    del data["notes"]
+    return data
 
   def display_title(self) -> str:
     return self.short_title or self.title
@@ -210,6 +252,7 @@ class Item:
       "has_slice": self.has_slice,
       "depends_on": list(self.depends_on),
       "notes": list(self.notes),
+      "note_records": [n.to_dict() for n in self.note_records],
       "claim": (
         {"owner": self.claim_owner, "at": self.claim_at} if self.claim_owner else None
       ),
@@ -239,7 +282,11 @@ class Item:
       status=d["status"],
       has_slice=bool(d.get("has_slice", False)),
       depends_on=list(d.get("depends_on", [])),
-      notes=list(d.get("notes", [])),
+      note_records=(
+        [NoteRecord.from_dict(n) for n in d["note_records"]] if "note_records" in d else
+        [NoteRecord(f"{d['id']}:legacy:{i}", "", text, "", None)
+         for i, text in enumerate(d.get("notes", []))]
+      ),
       claim_owner=_claim_owner(d.get("claim")),
       claim_at=_claim_at(d.get("claim")),
       size=f.get("size", ""),
@@ -397,7 +444,7 @@ class Index:
       "next_id": self.next_id,
       "preamble": self.preamble,
       "passes": [p.to_dict() for p in self.passes],
-      "items": [it.to_dict() for it in self.items],
+      "items": [it.persisted_dict() for it in self.items],
       "epilogue": self.epilogue,
       "goals": self.goals,
       "non_goals": self.non_goals,

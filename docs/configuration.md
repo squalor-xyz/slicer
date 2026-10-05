@@ -10,7 +10,8 @@ and the slice files, the config is yours to hand-edit.
 
 ```json
 {
-  "version": 1,
+  "version": 2,
+  "note_kinds": [],
   "id": { "prefix": "S", "width": 2 },
   "statuses": { "open": "—", "done": "done", "parked": "parked", "later": "later" },
   "open_status": "open",
@@ -48,6 +49,9 @@ and the slice files, the config is yours to hand-edit.
 }
 ```
 
+Config schema 2 protects `note_kinds` from older readers. Version-1 configs still
+load without writes; a config save writes version 2.
+
 ## Every key
 
 Read any value without opening the file: `slicer config KEY` prints it, and
@@ -55,6 +59,7 @@ Read any value without opening the file: `slicer config KEY` prints it, and
 
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
+| `note_kinds` | `[]` | Optional whitelist of nonempty strings for explicit `note --kind` values. Missing or empty permits any nonempty kind. Omitting `--kind` always creates an untyped note | **Yes** |
 | `id.prefix` | `"S"` | The id scheme | **Until the first item exists**; after that, only its case, with `slicer id-prefix`. See below |
 | `id.width` | `2` → `S01` | As above | **Until the first item exists** |
 | `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |

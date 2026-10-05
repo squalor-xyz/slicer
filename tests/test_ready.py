@@ -7,7 +7,7 @@ import unittest
 
 import support
 
-ITEM_KEYS = ["attempts", "depends_on", "effective_score", "id", "path", "status", "title"]
+ITEM_KEYS = ["attempts", "depends_on", "effective_score", "id", "note_records", "notes", "path", "status", "title"]
 
 
 class ReadyTests(unittest.TestCase):
@@ -197,15 +197,16 @@ class ReadyTests(unittest.TestCase):
       self.assertTrue(str(payload["item"]["path"]).endswith(".slicer/slices/S01.json"))
       self.assertEqual(payload["slice"], {
         "boundary": "Stay inside the loader.",
+        "notes": [],
         "sections": [
           {"heading": "Implement", "body": "Do the thing."},
           {"heading": "Check", "body": "The thing works."},
         ],
       })
       self.assertNotIn("Because.", out)
-      self.assertNotIn("a durable note", out)
+      self.assertTrue(payload["item"]["notes"][0].endswith("a durable note"))
       self.assertNotIn("lead", payload["slice"])
-      self.assertNotIn("notes", payload["slice"])
+      self.assertEqual(payload["slice"]["notes"], [])
       shown = repo.run("next", "--show", "--json")[1]
       self.assertLess(len(out), len(shown))
       self.assertIn("Because.", shown)

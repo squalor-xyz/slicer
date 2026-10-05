@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "id_prefix": "s",
   "id_width": 2,
   "next_id": 228,
@@ -50,7 +50,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -76,7 +76,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -102,7 +102,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -128,7 +128,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -154,7 +154,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -180,7 +180,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -206,7 +206,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -232,7 +232,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -258,8 +258,14 @@
       "status": "done",
       "has_slice": false,
       "depends_on": [],
-      "notes": [
-        "**2026-09-27** — Implemented: notes now live on the item (Item.notes); slicer note works on bare rows."
+      "note_records": [
+        {
+          "id": "S68:legacy:0",
+          "kind": "",
+          "text": "**2026-09-27** — Implemented: notes now live on the item (Item.notes); slicer note works on bare rows.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -286,7 +292,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -312,7 +318,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -338,7 +344,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -364,7 +370,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -390,7 +396,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -416,7 +422,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -444,9 +450,21 @@
       "depends_on": [
         "S81"
       ],
-      "notes": [
-        "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it.",
-        "**2026-09-27** — Implemented on feature/S50-tui-roadmap-wizard: guided wizard (tui_wizard.py) landing items and slices via ops.apply_outline; text-input primitive delivered (S81)."
+      "note_records": [
+        {
+          "id": "S50:legacy:0",
+          "kind": "",
+          "text": "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it.",
+          "created_at": "",
+          "attempt": null
+        },
+        {
+          "id": "S50:legacy:1",
+          "kind": "",
+          "text": "**2026-09-27** — Implemented on feature/S50-tui-roadmap-wizard: guided wizard (tui_wizard.py) landing items and slices via ops.apply_outline; text-input primitive delivered (S81).",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -473,7 +491,7 @@
       "status": "retired",
       "has_slice": false,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -499,7 +517,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -525,7 +543,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -551,7 +569,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -577,7 +595,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -603,7 +621,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -629,7 +647,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -657,7 +675,7 @@
       "depends_on": [
         "S38"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -683,7 +701,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -709,7 +727,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -735,7 +753,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -761,7 +779,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -787,7 +805,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -813,7 +831,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -839,7 +857,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -865,7 +883,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -891,7 +909,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -917,7 +935,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -945,7 +963,7 @@
       "depends_on": [
         "S13"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -971,7 +989,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -997,7 +1015,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1023,7 +1041,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1049,7 +1067,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1075,7 +1093,7 @@
       "status": "done",
       "has_slice": false,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1101,7 +1119,7 @@
       "status": "done",
       "has_slice": false,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1135,7 +1153,7 @@
         "S88",
         "S89"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1161,7 +1179,7 @@
       "status": "done",
       "has_slice": false,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1187,7 +1205,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1213,7 +1231,7 @@
       "status": "done",
       "has_slice": false,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1239,7 +1257,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1265,7 +1283,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1291,7 +1309,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1317,7 +1335,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1343,7 +1361,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1369,7 +1387,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1395,7 +1413,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1421,7 +1439,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1447,7 +1465,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1473,7 +1491,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1499,7 +1517,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1525,7 +1543,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1551,7 +1569,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1577,7 +1595,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1603,7 +1621,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1629,7 +1647,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1655,7 +1673,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1681,7 +1699,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1707,7 +1725,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1733,7 +1751,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1757,7 +1775,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1781,7 +1799,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1805,7 +1823,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1831,7 +1849,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1857,7 +1875,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1883,7 +1901,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -1909,7 +1927,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1935,7 +1953,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -1961,7 +1979,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -1988,7 +2006,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2014,7 +2032,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2040,7 +2058,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2066,7 +2084,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2092,7 +2110,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2122,7 +2140,7 @@
         "S77",
         "S06"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2148,8 +2166,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-09-27** — Delivered as the wizard's text_input primitive (tui_wizard.py), reused by the TUI search/jump/move prompts."
+      "note_records": [
+        {
+          "id": "S81:legacy:0",
+          "kind": "",
+          "text": "**2026-09-27** — Delivered as the wizard's text_input primitive (tui_wizard.py), reused by the TUI search/jump/move prompts.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -2176,7 +2200,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2202,7 +2226,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2228,7 +2252,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2254,7 +2278,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2280,7 +2304,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2306,7 +2330,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2332,7 +2356,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2358,7 +2382,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2386,7 +2410,7 @@
       "depends_on": [
         "S06"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2412,7 +2436,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2438,7 +2462,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2464,7 +2488,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2490,7 +2514,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2516,7 +2540,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2542,7 +2566,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2573,7 +2597,7 @@
       "depends_on": [
         "S96"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2601,7 +2625,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2627,7 +2651,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2653,7 +2677,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2679,7 +2703,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2705,7 +2729,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -2731,7 +2755,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -2757,7 +2781,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -2783,8 +2807,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-09-29** — Landed as --strict (render-first via State.staged() + ops.render_gated) in commit 37b0d79, superseding the earlier --require-render implementation. The done history entry's note predates that decision."
+      "note_records": [
+        {
+          "id": "S105:legacy:0",
+          "kind": "",
+          "text": "**2026-09-29** — Landed as --strict (render-first via State.staged() + ops.render_gated) in commit 37b0d79, superseding the earlier --require-render implementation. The done history entry's note predates that decision.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -2809,7 +2839,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2837,7 +2867,7 @@
       "depends_on": [
         "S106"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2865,7 +2895,7 @@
       "depends_on": [
         "S107"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2891,7 +2921,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -2917,7 +2947,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2943,8 +2973,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-09-29** — Implementation uses --strict, the current render-gated flag that replaced --require-render in S105. Migration snapshots its exact target .slicer directory, including config and templates, and restores it on render failure."
+      "note_records": [
+        {
+          "id": "S111:legacy:0",
+          "kind": "",
+          "text": "**2026-09-29** — Implementation uses --strict, the current render-gated flag that replaced --require-render in S105. Migration snapshots its exact target .slicer directory, including config and templates, and restores it on render failure.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -2971,7 +3007,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -2997,7 +3033,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3023,7 +3059,7 @@
       "depends_on": [
         "S113"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3047,7 +3083,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -3073,7 +3109,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3099,7 +3135,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3123,7 +3159,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3147,7 +3183,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3171,7 +3207,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3195,7 +3231,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3219,7 +3255,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3243,7 +3279,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3267,7 +3303,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3291,7 +3327,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3315,7 +3351,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3342,8 +3378,14 @@
         "S131",
         "S133"
       ],
-      "notes": [
-        "**2026-09-29** — Docs gap found while triaging: `slicer add` inherits the previous item's pass (`src/slicer/ops.py:105`, documented only in `docs/import.md:155` and CHANGELOG). `add --pass` help (`src/slicer/cli.py:1674`) and getting-started §7 do not say so; with the v1 pass as the tail, a post-1.0 item filed with `add` silently lands in v1. `set ID --pass ''` clears it."
+      "note_records": [
+        {
+          "id": "S127:legacy:0",
+          "kind": "",
+          "text": "**2026-09-29** — Docs gap found while triaging: `slicer add` inherits the previous item's pass (`src/slicer/ops.py:105`, documented only in `docs/import.md:155` and CHANGELOG). `add --pass` help (`src/slicer/cli.py:1674`) and getting-started §7 do not say so; with the v1 pass as the tail, a post-1.0 item filed with `add` silently lands in v1. `set ID --pass ''` clears it.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -3382,8 +3424,14 @@
         "S139",
         "S140"
       ],
-      "notes": [
-        "**2026-09-29** — Release-workflow review: publish.yml publishes via PyPI trusted publishing (OIDC), so before the first v* tag a pending publisher must be configured on PyPI (owner: squalor-xyz, repo: slicer, workflow: publish.yml, environment: pypi) per the publish.yml header. Follow RELEASING.md to cut the tag. S124 must bump the matrix in BOTH ci.yml and publish.yml. pyproject reads the version from slicer.__version__, and the publish job asserts the tag equals v<version>."
+      "note_records": [
+        {
+          "id": "S128:legacy:0",
+          "kind": "",
+          "text": "**2026-09-29** — Release-workflow review: publish.yml publishes via PyPI trusted publishing (OIDC), so before the first v* tag a pending publisher must be configured on PyPI (owner: squalor-xyz, repo: slicer, workflow: publish.yml, environment: pypi) per the publish.yml header. Follow RELEASING.md to cut the tag. S124 must bump the matrix in BOTH ci.yml and publish.yml. pyproject reads the version from slicer.__version__, and the publish job asserts the tag equals v<version>.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -3408,7 +3456,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3432,7 +3480,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3456,7 +3504,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3480,7 +3528,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3504,7 +3552,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3528,7 +3576,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3552,7 +3600,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3578,7 +3626,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3604,7 +3652,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3630,7 +3678,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3656,7 +3704,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3682,7 +3730,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "",
@@ -3708,7 +3756,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -3736,7 +3784,7 @@
       "depends_on": [
         "S141"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3762,7 +3810,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -3788,7 +3836,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -3814,7 +3862,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3840,7 +3888,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -3866,7 +3914,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -3892,7 +3940,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3918,7 +3966,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3944,7 +3992,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -3972,7 +4020,7 @@
       "depends_on": [
         "S150"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4000,7 +4048,7 @@
       "depends_on": [
         "S150"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4028,7 +4076,7 @@
       "depends_on": [
         "S152"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4054,7 +4102,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4082,7 +4130,7 @@
       "depends_on": [
         "S151"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "L",
@@ -4108,7 +4156,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4134,7 +4182,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4160,7 +4208,7 @@
       "status": "retired",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4188,7 +4236,7 @@
       "depends_on": [
         "S145"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4214,7 +4262,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4240,7 +4288,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4266,7 +4314,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4292,7 +4340,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4318,7 +4366,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4344,7 +4392,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4370,7 +4418,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4396,7 +4444,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4422,7 +4470,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4450,7 +4498,7 @@
       "depends_on": [
         "s168"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4478,8 +4526,14 @@
       "depends_on": [
         "s169"
       ],
-      "notes": [
-        "**2026-10-05** — Agents upstream feedback 2026-10-05: their orchestrator installs ai skill output into vendor skill directories by redirection and compares it with fresh output. Preserve stable bytes for a given generating version and implement_finish so the drift check is meaningful. Source: docs/feedback/agents-2026-10-05.md, Existing items."
+      "note_records": [
+        {
+          "id": "s170:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Agents upstream feedback 2026-10-05: their orchestrator installs ai skill output into vendor skill directories by redirection and compares it with fresh output. Preserve stable bytes for a given generating version and implement_finish so the drift check is meaningful. Source: docs/feedback/agents-2026-10-05.md, Existing items.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -4506,7 +4560,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4532,7 +4586,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4558,7 +4612,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4584,7 +4638,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4610,8 +4664,14 @@
       "status": "retired",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Agents upstream feedback 2026-10-05: run branches commit .slicer with the work before exit. The handoff hint should reinforce that checkout-local state must be committed; it should not imply keeping handoff state outside the worktree. U11 records the accepted permanent canonical-JSON policy. Source: docs/feedback/agents-2026-10-05.md."
+      "note_records": [
+        {
+          "id": "s175:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Agents upstream feedback 2026-10-05: run branches commit .slicer with the work before exit. The handoff hint should reinforce that checkout-local state must be committed; it should not imply keeping handoff state outside the worktree. U11 records the accepted permanent canonical-JSON policy. Source: docs/feedback/agents-2026-10-05.md.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -4638,7 +4698,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4664,7 +4724,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4690,7 +4750,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4716,7 +4776,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4742,8 +4802,14 @@
       "status": "retired",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Retired 2026-10-05: low value (importance 1, urgency 1; no dependents, no friction recorded). Agents read payloads from --json output directly. Duplicating the docs/agents.md payload table into reference.py would double the edit cost of every JSON contract change. Spec line refs and row sizes had gone stale. If the PyPI gap matters later, ship agents.md as package data or generate the table from code instead."
+      "note_records": [
+        {
+          "id": "s180:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Retired 2026-10-05: low value (importance 1, urgency 1; no dependents, no friction recorded). Agents read payloads from --json output directly. Duplicating the docs/agents.md payload table into reference.py would double the edit cost of every JSON contract change. Spec line refs and row sizes had gone stale. If the PyPI gap matters later, ship agents.md as package data or generate the table from code instead.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -4770,7 +4836,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4796,7 +4862,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4822,7 +4888,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4848,7 +4914,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4874,7 +4940,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4900,7 +4966,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4926,7 +4992,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -4952,7 +5018,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -4978,7 +5044,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5004,8 +5070,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Ready for review: AGENTS.md Landing a slice now shows both in-worktree and outside-worktree commands, explaining PYTHONPATH for code and --root for state without changing directory. docs/agents.md does not repeat the instruction, so it and CHANGELOG.md needed no edit. Verified start/check/done from the main checkout against detached scratch worktree s190-validation using scratch item s227; main git status stayed clean. All 31 test_ai tests, slicer check, and git diff --check passed. Full suite not run: this slice changes documentation only and explicitly says it is unaffected. Changes remain uncommitted on feature/s190-outside-worktree."
+      "note_records": [
+        {
+          "id": "s190:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review: AGENTS.md Landing a slice now shows both in-worktree and outside-worktree commands, explaining PYTHONPATH for code and --root for state without changing directory. docs/agents.md does not repeat the instruction, so it and CHANGELOG.md needed no edit. Verified start/check/done from the main checkout against detached scratch worktree s190-validation using scratch item s227; main git status stayed clean. All 31 test_ai tests, slicer check, and git diff --check passed. Full suite not run: this slice changes documentation only and explicitly says it is unaffected. Changes remain uncommitted on feature/s190-outside-worktree.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -5032,8 +5104,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Agents upstream feedback 2026-10-05 U8: a run branch changes statuses and files work while main approves drafts. This slice remains the next_id-only driver prerequisite; s217 separately extends that driver to independent item fields, preserving conflicts for incompatible lists and queue reorderings. s185 allocation-floor behavior is shipped. Source: docs/feedback/agents-2026-10-05.md."
+      "note_records": [
+        {
+          "id": "s191:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Agents upstream feedback 2026-10-05 U8: a run branch changes statuses and files work while main approves drafts. This slice remains the next_id-only driver prerequisite; s217 separately extends that driver to independent item fields, preserving conflicts for incompatible lists and queue reorderings. s185 allocation-floor behavior is shipped. Source: docs/feedback/agents-2026-10-05.md.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -5060,7 +5138,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5086,8 +5164,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Roadmap review 2026-10-05: gates the v1.3.0 release, so consumers upgrading from 1.2.0 get an explained render drift instead of an unexplained red check (U1)."
+      "note_records": [
+        {
+          "id": "s206:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Roadmap review 2026-10-05: gates the v1.3.0 release, so consumers upgrading from 1.2.0 get an explained render drift instead of an unexplained red check (U1).",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -5114,7 +5198,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5137,10 +5221,18 @@
       "id": "s208",
       "title": "Add structured note kinds without breaking display-string JSON",
       "short_title": "Add structured note kinds without breaking display-string JSON",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [
+        {
+          "id": "0d77bcc5-da81-476f-9e85-861a8d12c95d",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review: structured item-note records preserve public notes strings and legacy display bytes; kind validation and filters cover show, section projections, ready and batch pickups; TUI edits and rejection preserve note metadata. Updated schema and command contracts, configuration docs, architecture, and changelog. Verified 173 focused checks and full discovery: 1214 tests passed, 1 skipped (optional live legacy fixture).",
+          "created_at": "2026-10-05T18:08:50Z",
+          "attempt": 1
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5156,7 +5248,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -5169,7 +5261,7 @@
         "s208",
         "s214"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5195,7 +5287,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5221,7 +5313,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5247,7 +5339,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5273,7 +5365,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5299,7 +5391,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5327,7 +5419,7 @@
       "depends_on": [
         "s214"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5353,7 +5445,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5382,7 +5474,7 @@
         "s191",
         "s211"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "L",
@@ -5408,7 +5500,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5434,7 +5526,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5460,8 +5552,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Ready for review in .worktrees/s220 on feature/s220-canonical-json. Updated README.md, ARCHITECTURE.md, docs/commands.md and goals/non-goals through the prose CLI: git-tracked JSON remains permanent authority; any future database is a disposable gitignored checkout-local cache. Guidance distinguishes shipped s185 from pending s175/s191. Validation: 1180 unit tests passed, one skipped; slicer check and git diff --check passed. Documentation/tracking changes only; uncommitted. Review the diff and slice acceptance criteria before landing."
+      "note_records": [
+        {
+          "id": "s220:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review in .worktrees/s220 on feature/s220-canonical-json. Updated README.md, ARCHITECTURE.md, docs/commands.md and goals/non-goals through the prose CLI: git-tracked JSON remains permanent authority; any future database is a disposable gitignored checkout-local cache. Guidance distinguishes shipped s185 from pending s175/s191. Validation: 1180 unit tests passed, one skipped; slicer check and git diff --check passed. Documentation/tracking changes only; uncommitted. Review the diff and slice acceptance criteria before landing.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -5490,7 +5588,7 @@
       "depends_on": [
         "s208"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5518,7 +5616,7 @@
       "depends_on": [
         "s221"
       ],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5544,7 +5642,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5570,7 +5668,7 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5596,9 +5694,21 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Reproduced in disposable nested fixtures: an enclosing Git MERGE_HEAD makes child init exit 2 before creating .slicer/config.json. After clearing the enclosing merge marker, child add previously exited 0 and changed the enclosing fixture index. This matches the recorded merge-in-progress symptom; no production discovery changes are needed. The exact concurrent sequence from 2026-10-05 was not replayed.",
-        "**2026-10-05** — Ready for review: fixture discovery guard and five regressions implemented. Full suite passed: 1205 tests, one optional skip; copied real tracking-state check, slicer check and git diff --check passed. Changes remain uncommitted in feature/s225-fixture-guard. Corrected the earlier done status at the owner’s request; review and landing remain pending."
+      "note_records": [
+        {
+          "id": "s225:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Reproduced in disposable nested fixtures: an enclosing Git MERGE_HEAD makes child init exit 2 before creating .slicer/config.json. After clearing the enclosing merge marker, child add previously exited 0 and changed the enclosing fixture index. This matches the recorded merge-in-progress symptom; no production discovery changes are needed. The exact concurrent sequence from 2026-10-05 was not replayed.",
+          "created_at": "",
+          "attempt": null
+        },
+        {
+          "id": "s225:legacy:1",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review: fixture discovery guard and five regressions implemented. Full suite passed: 1205 tests, one optional skip; copied real tracking-state check, slicer check and git diff --check passed. Changes remain uncommitted in feature/s225-fixture-guard. Corrected the earlier done status at the owner’s request; review and landing remain pending.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {
@@ -5625,7 +5735,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5651,8 +5761,14 @@
       "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "notes": [
-        "**2026-10-05** — Ready for review: set implement_finish to handoff in .slicer/config.json (the one-key owner exception; added the key, nothing else), and rewrote the AGENTS.md implement block and Landing a slice for the handoff loop: the implementer ends with note + handoff --render --check and never runs done in a worktree; the reviewer picks up with next --status review --start against the worktree via --root, rejects with reject, or commits, merges --no-ff, then runs done --render --check on main. Roadmap section is 3,772 of 3,800 bytes (was 3,797, limit unchanged; trimmed prose, dropped the import example block and the show example line). Shipped skill unchanged: its step 4 already routes on implement_finish. Verified: repo ai instructions step 4 is handoff; 1208 unit tests pass (1 skipped), slicer check and git diff --check clean; end-to-end throwaway project in handoff mode showed worktree review, main wt:NAME, done on main only after merge. Uncommitted on feature/s227-handoff-finish."
+      "note_records": [
+        {
+          "id": "s227:legacy:0",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review: set implement_finish to handoff in .slicer/config.json (the one-key owner exception; added the key, nothing else), and rewrote the AGENTS.md implement block and Landing a slice for the handoff loop: the implementer ends with note + handoff --render --check and never runs done in a worktree; the reviewer picks up with next --status review --start against the worktree via --root, rejects with reject, or commits, merges --no-ff, then runs done --render --check on main. Roadmap section is 3,772 of 3,800 bytes (was 3,797, limit unchanged; trimmed prose, dropped the import example block and the show example line). Shipped skill unchanged: its step 4 already routes on implement_finish. Verified: repo ai instructions step 4 is handoff; 1208 unit tests pass (1 skipped), slicer check and git diff --check clean; end-to-end throwaway project in handoff mode showed worktree review, main wt:NAME, done on main only after merge. Uncommitted on feature/s227-handoff-finish.",
+          "created_at": "",
+          "attempt": null
+        }
       ],
       "claim": null,
       "fields": {

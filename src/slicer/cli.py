@@ -825,13 +825,32 @@ def _next_fields(
   return payload, lines
 
 
+def _note_projection(
+  args: argparse.Namespace, item: model.Item, sl: model.Slice | None,
+) -> tuple[model.Item, model.Slice | None]:
+  """Select notes on detached copies, keeping the loaded state untouched."""
+  from copy import deepcopy
+  item, sl = deepcopy(item), deepcopy(sl)
+  kinds = getattr(args, "notes_kind", None)
+  if kinds is not None:
+    item.note_records = [n for n in item.note_records if n.kind in kinds]
+    if sl is not None and "" not in kinds:
+      sl.notes = []
+  return item, sl
+
+
+def _note_fields(item: model.Item) -> dict[str, object]:
+  return {"notes": list(item.notes),
+          "note_records": [n.to_dict() for n in item.note_records]}
+
+
 def _ready_entry(
   args: argparse.Namespace, state: store.State, item: model.Item,
 ) -> tuple[dict[str, object], list[str]]:
   """One `{item, slice?}` pickup. `blocked` stays with the caller."""
   eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
-  sl = state.slices.get(item.id)
+  item, sl = _note_projection(args, item, state.slices.get(item.id))
   payload: dict[str, object] = {
     "item": {
       "id": item.id,
@@ -839,6 +858,7 @@ def _ready_entry(
       "status": item.status,
       "depends_on": list(item.depends_on),
       "attempts": item.attempts,
+      **_note_fields(item),
       "effective_score": eff,
       "path": str(path) if path else None,
     },
@@ -854,6 +874,7 @@ def _ready_entry(
     if args.section:
       payload["slice"] = {
         "boundary": sl.boundary,
+        "notes": list(sl.notes),
         "sections": [s.to_dict() for s in _sections_named(sl, args.section)],
       }
     else:
@@ -897,6 +918,8 @@ def cmd_next(args: argparse.Namespace) -> int:
       "--ready and --show are separate output profiles; pass only one",
       code="usage",
     )
+  if args.notes_kind is not None and not args.ready:
+    raise StateError("--notes-kind on next requires --ready", code="usage")
   if args.section and not args.ready:
     raise StateError("--section on next requires --ready", code="usage")
   if args.owner is not None and not args.start:
@@ -1289,7 +1312,7 @@ def cmd_deps(args: argparse.Namespace) -> int:
 def cmd_show(args: argparse.Namespace) -> int:
   state = _state(args)
   item = state.index.require(args.id)
-  sl = state.slices.get(args.id)
+  item, sl = _note_projection(args, item, state.slices.get(args.id))
   if args.section is not None:
     # The read counterpart to `edit --section`: one section's body, nothing
     # else, so an agent can round-trip a section without re-parsing the render.
@@ -1315,15 +1338,23 @@ def cmd_show(args: argparse.Namespace) -> int:
       ]
       for section in selected:
         lines.extend(["", f"## {section.heading}", section.body])
+      if args.notes_kind is not None:
+        payload.update(_note_fields(item))
+        payload["slice_notes"] = list(sl.notes)
       _emit(args, payload, "\n".join(lines))
     elif len(args.section) == 1:
       section = selected[0]
-      _emit(
-        args, {"id": args.id, "section": section.heading, "body": section.body}, section.body
-      )
+      payload = {"id": args.id, "section": section.heading, "body": section.body}
+      if args.notes_kind is not None:
+        payload.update(_note_fields(item))
+        payload["slice_notes"] = list(sl.notes)
+      _emit(args, payload, section.body)
     else:
       payload = {"id": args.id, "sections": [s.to_dict() for s in selected]}
       text = "\n\n".join(f"## {s.heading}\n{s.body}" for s in selected)
+      if args.notes_kind is not None:
+        payload.update(_note_fields(item))
+        payload["slice_notes"] = list(sl.notes)
       _emit(args, payload, text)
     return OK
   if args.context:
@@ -1426,7 +1457,7 @@ def cmd_note(args: argparse.Namespace) -> int:
   body = _body_from(args, "")
   if body is None:
     raise StateError("editor exited non-zero; nothing added", code="editor_aborted")
-  ops.add_note(state, args.id, body)
+  ops.add_note(state, args.id, body, kind=args.kind)
   hint = _render_hint(args)
   _emit(args, {"id": args.id, "added": True}, f"added note to {args.id}" + (f"; {hint}" if hint else ""))
   return OK
@@ -2151,6 +2182,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--start", action="store_true", help="mark the returned item or batch started")
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
+  sp.add_argument("--notes-kind", action="append", help="select exact note kinds (repeatable; requires --ready)")
   sp.add_argument("--ready", action="store_true",
                   help="bounded pickup: item identity, its slice, and blocked ids")
   sp.add_argument("--section", action="append",
@@ -2202,6 +2234,7 @@ def build_parser() -> argparse.ArgumentParser:
     "--section", action="append",
     help="print only this section's body; repeat to select several",
   )
+  sp.add_argument("--notes-kind", action="append", help="select exact note kinds (repeatable; empty selects untyped)")
   sp.add_argument("--context", action="store_true",
                   help="with --section, include title, dependencies, and scope boundary")
 
@@ -2280,6 +2313,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")
+  sp.add_argument("--kind", help="optional note kind, validated against note_kinds")
   sp.add_argument("--text", help="inline note; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
