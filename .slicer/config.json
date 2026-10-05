@@ -52,5 +52,6 @@
   "sync": {
     "targets": []
   },
-  "git_check": false
+  "git_check": false,
+  "implement_finish": "handoff"
 }
