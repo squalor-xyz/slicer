@@ -915,3 +915,25 @@
 {"when": "2026-10-05T12:14:57Z", "item": "s219", "action": "edit", "from": "", "to": "", "note": "Files"}
 {"when": "2026-10-05T12:14:57Z", "item": "s219", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-10-05T12:14:57Z", "item": "s219", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-05T12:31:09Z", "item": "pass.v1.4", "action": "prose", "from": "", "to": "v1.4", "note": "add-pass"}
+{"when": "2026-10-05T12:31:10Z", "item": "pass.later", "action": "prose", "from": "", "to": "later", "note": "add-pass"}
+{"when": "2026-10-05T12:31:10Z", "item": "s208", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s209", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s207", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s210", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s211", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s212", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s216", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s219", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s191", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s170", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s215", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s218", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s180", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→v1.4"}
+{"when": "2026-10-05T12:31:10Z", "item": "s217", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→later"}
+{"when": "2026-10-05T12:31:10Z", "item": "s221", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→later"}
+{"when": "2026-10-05T12:31:10Z", "item": "s222", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→later"}
+{"when": "2026-10-05T12:31:10Z", "item": "s213", "action": "set", "from": "", "to": "", "note": "pass_key v1.3→later"}
+{"when": "2026-10-05T12:31:32Z", "item": "s223", "action": "add", "from": "", "to": "open", "note": "Show open items that exist only in a sibling worktree"}
+{"when": "2026-10-05T12:31:33Z", "item": "s223", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-05T12:31:33Z", "item": "s206", "action": "note", "from": "", "to": "", "note": "Roadmap review 2026-10-05: gates the v1.3.0 release, so cons"}
