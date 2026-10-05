@@ -365,7 +365,7 @@ about X?" — and see why each hit matched — before creating one.
 Score what you file rather than leaving the 2/2 defaults, and say why in your reply.
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)
-and a self-edge, a new cycle, or a dependency on a retired item (`state`). A dangling edge
+and a self-edge, a new cycle, or a dependency on a retired item unless `satisfies_dependencies` lists the retired status (`state`). A dangling edge
 or cycle already in the index is left for `check` to report. `park` and `unpark` accept `--note` to record
 why work is being deferred or resumed; read those notes with `slicer log --json`, and scope to
 one item with `slicer log --item ID --json` (repeat `--item` for several) or to a kind of change
@@ -405,7 +405,8 @@ serialize Git commands.
 
 **`slicer next` is the queue.** It considers eligible started items first, then open
 items if none qualify. Within that pool it selects the highest effective score, with
-stored queue order breaking ties. All dependencies must be done. A
+stored queue order breaking ties. All dependencies must be done, or in a status the
+project lists in `satisfies_dependencies`. A
 blocker of a critical item inherits that item's priority, so `next` naturally surfaces the
 blocker first; dependencies still hard-gate, so a blocked item is never returned whatever
 its score. `next` also reports the item's effective score (a `^` marks a score inherited from a

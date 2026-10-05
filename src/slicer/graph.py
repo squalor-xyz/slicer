@@ -7,6 +7,8 @@ raise RecursionError.
 
 from __future__ import annotations
 
+from typing import Collection
+
 from slicer.config import Config
 from slicer.model import Index, Item
 
@@ -73,12 +75,18 @@ def path(index: Index, start: str, goal: str) -> list[str] | None:
   return None
 
 
-def blocked_by(index: Index, item: Item, done_status: str) -> list[str]:
-  """Dependencies of `item` that are not finished yet, in declared order."""
+def blocked_by(index: Index, item: Item, satisfying: str | Collection[str]) -> list[str]:
+  """Dependencies of `item` that are not satisfied yet, in declared order.
+
+  `satisfying` is `Config.satisfying_statuses()`; one status key also works.
+  A dependency that is not in the index is never satisfied.
+  """
+  if isinstance(satisfying, str):
+    satisfying = {satisfying}
   out: list[str] = []
   for dep in item.depends_on:
     other = index.get(dep)
-    if other is None or other.status != done_status:
+    if other is None or other.status not in satisfying:
       out.append(dep)
   return out
 
@@ -157,6 +165,7 @@ def ranked_order(
   """
   eff = effective_scores(index)
   in_work = cfg.in_work()
+  satisfying = cfg.satisfying_statuses()
   parked = cfg.parked_status
   place = {it.id: n for n, it in enumerate(index.items)}
   passes = {p.key: n for n, p in enumerate(index.passes)} if by_pass else {}
@@ -164,7 +173,7 @@ def ranked_order(
   def tier(item: Item) -> int:
     if parked and item.status == parked:
       return 3
-    if blocked_by(index, item, cfg.done_status):
+    if blocked_by(index, item, satisfying):
       return 2
     if item.status in in_work:
       return 0

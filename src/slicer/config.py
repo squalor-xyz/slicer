@@ -106,7 +106,7 @@ DEFAULT_LATER = {
 # higher number on disk means a newer slicer wrote it; `store.load` refuses it
 # rather than dropping the keys this build does not know. Bump only alongside a
 # reader that lifts the older shape.
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 @dataclass
@@ -153,10 +153,19 @@ class Config:
   claim_owner: str = ""
   # `handoff` needs a review status to move the item to. Missing key stays `done`.
   implement_finish: str = "done"
+  # Statuses that let a dependent start. None (the key absent) means `done_status`
+  # alone. An explicit list is authoritative: it is not widened to include done.
+  satisfies_dependencies: list[str] | None = None
 
   def in_work(self) -> set[str]:
     """Statuses that mean someone is on an item: started, or reviewing."""
     return {self.started_status, self.reviewing_status} - {""}
+
+  def satisfying_statuses(self) -> frozenset[str]:
+    """Statuses a dependency may be in for its dependents to proceed."""
+    if self.satisfies_dependencies is None:
+      return frozenset({self.done_status})
+    return frozenset(self.satisfies_dependencies)
 
   def status_label(self, status: str) -> str:
     return self.statuses.get(status, status)
@@ -182,6 +191,18 @@ class Config:
         f"handoff_requires_note_kind {self.handoff_requires_note_kind!r} is not in note_kinds; "
         "add the required kind to the whitelist"
       )
+    if self.satisfies_dependencies is not None:
+      listed = self.satisfies_dependencies
+      if not isinstance(listed, list) or not listed or any(
+        not isinstance(status, str) for status in listed
+      ):
+        raise ConfigError("satisfies_dependencies must be a nonempty list of status keys")
+      unknown = sorted({status for status in listed if status not in self.statuses})
+      if unknown:
+        raise ConfigError(
+          f"satisfies_dependencies names unknown status {unknown}; "
+          f"known keys: {sorted(self.statuses)}"
+        )
     if self.open_status not in self.statuses:
       raise ConfigError(f"open_status {self.open_status!r} is not in statuses")
     if self.done_status not in self.statuses:
@@ -257,6 +278,12 @@ class Config:
         ) from None
 
   def to_dict(self) -> dict[str, Any]:
+    out = self._base_dict()
+    if self.satisfies_dependencies is not None:
+      out["satisfies_dependencies"] = list(self.satisfies_dependencies)
+    return out
+
+  def _base_dict(self) -> dict[str, Any]:
     return {
       "version": SCHEMA_VERSION,
       "note_kinds": list(self.note_kinds),
@@ -363,6 +390,7 @@ class Config:
       render_driver_check=bool(d.get("render_driver_check", True)),
       claim_owner=_claim_owner(d.get("claim_owner", "")),
       implement_finish=_implement_finish(d),
+      satisfies_dependencies=d.get("satisfies_dependencies"),
     )
     cfg.validate()
     return cfg

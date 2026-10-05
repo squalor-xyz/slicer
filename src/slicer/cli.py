@@ -1287,7 +1287,7 @@ def cmd_deps(args: argparse.Namespace) -> int:
     return OK
   if args.id is not None:
     item = index.require(args.id)
-    blocked = graph.blocked_by(index, item, cfg.done_status)
+    blocked = graph.blocked_by(index, item, cfg.satisfying_statuses())
     dependents = graph.dependents(index)[args.id]
     payload = {
       "id": args.id, "waits_on": item.depends_on,
@@ -1301,8 +1301,9 @@ def cmd_deps(args: argparse.Namespace) -> int:
     _emit(args, payload, "\n".join(lines))
     return OK
   eff = graph.effective_scores(index)
+  satisfying = cfg.satisfying_statuses()
   unblocked = [it for it in index.items
-               if it.status == cfg.open_status and not graph.blocked_by(index, it, cfg.done_status)]
+               if it.status == cfg.open_status and not graph.blocked_by(index, it, satisfying)]
   unblocked.sort(key=lambda it: eff[it.id], reverse=True)
   _emit(args, [it.to_dict() for it in unblocked],
         "\n".join(_item_rows(state, unblocked)) or "nothing unblocked")

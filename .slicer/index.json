@@ -5195,10 +5195,25 @@
       "id": "s207",
       "title": "Configure which statuses satisfy dependencies",
       "short_title": "Configure which statuses satisfy dependencies",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9c9ada98-efa9-4a70-9885-1668e20d8ea5",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review: optional satisfies_dependencies config (absent = done_status alone, so a renamed done role works; an explicit list is authoritative) shared via Config.satisfying_statuses by next, next --batch, deps, list ordering and the TUI blocked marker. Listing the retired status makes add/set/check/verify accept a retired dependency; self-edges, cycles and dangling ids still fail. Config schema is 3 (older configs load unchanged, never restamped on read). 21 new tests in tests/test_satisfies_dependencies.py; full suite 1246 tests, 1 failure (a hard-coded config version 2 in an s208 test, now SCHEMA_VERSION) fixed and re-run with test_note and the new file; slicer check and git diff --check clean. Docs: configuration.md, agents.md, commands.md, ARCHITECTURE.md, CHANGELOG.",
+          "created_at": "2026-10-05T18:56:20Z",
+          "attempt": 1
+        },
+        {
+          "id": "4df13416-5896-4a59-a648-222046eda7e5",
+          "kind": "",
+          "text": "**2026-10-05** — Correction after merging main (s209 took config schema 3): satisfies_dependencies now ships as config schema 4, so an s209-only reader refuses it. Docs, changelog and ARCHITECTURE updated; test_handoff's hard-coded 3 now uses SCHEMA_VERSION. Full suite 1261 tests OK (1 skipped); slicer check and git diff --check clean.",
+          "created_at": "2026-10-05T19:34:11Z",
+          "attempt": 1
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -5214,7 +5229,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
