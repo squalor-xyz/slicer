@@ -146,17 +146,17 @@ slice's Git section does not authorize them.
 
 ### Landing a slice
 
-Follow this only when the owner asks to commit and merge. Do not push unless they
-ask for that too.
+Use the slice's worktree; commit, merge, and push only when asked.
+Inside: `PYTHONPATH=src python3 -m slicer`. Outside, use `--root` for state and
+`PYTHONPATH` for code, without changing directory:
 
-Use the implementation worktree created before claiming the slice.
+```sh
+PYTHONPATH=<worktree>/src python3 -m slicer --root <worktree> ...
+```
 
-Use that worktree's code. Run focused tests, the full suite, `slicer check`, and
-`git diff --check`; mark done with `--render` only after they pass.
-
-Review the diff before committing. Commit on the feature branch. Merge into
-`main` with `git merge --no-ff`. Remove the worktree and delete the feature
-branch. Leave `main` clean.
+After focused tests, the full suite, `slicer check`, and `git diff --check` pass,
+mark done with `--render`. Review the diff; commit on its branch and merge into `main` with `git merge --no-ff`. Remove the worktree and branch; leave
+`main` clean.
 
 **Read and change tracking state through the slicer CLI.** The full rule is in `slicer ai instructions`; inspect tracking internals only when the task asks.
 

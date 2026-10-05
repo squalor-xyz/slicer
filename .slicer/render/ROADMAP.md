@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-213 items · — 21 · done 190 · retired 2
+213 items · — 20 · done 190 · retired 2 · review 1
 
 v1.4.0 release
 
@@ -77,7 +77,7 @@ v1.3.0 release
 | 35 | [s187](slices/s187.md) | Say the same finish in the agent prompt and the human loop | S | 1 | docs | the implement prompt always hands off, while the human loop later shows done and does not say which finish the project uses | done |
 | 36 | [s188](slices/s188.md) | Print the generic recommended project workflow | M | 2 | slicer | user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes | done |
 | 37 | [s189](slices/s189.md) | Name the fix when show --context has no --section | S | 1 | cli | show s173 --json --lean --context failed with a usage error while reading the slice | done |
-| 38 | [s190](slices/s190.md) | Document running a worktree's slicer from outside it | S | 1 | docs | AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174 | — |
+| 38 | [s190](slices/s190.md) | Document running a worktree's slicer from outside it | S | 1 | docs | AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174 | review |
 | 39 | [s202](slices/s202.md) | Add a config read command | M | 2 | cli | dogfood 2026-10-05: finishing s185 needed implement_finish (done or handoff); no command prints it, and the tracking-file rule forbids reading config.json | done |
 | 40 | [s206](slices/s206.md) | Explain render drift with a renderer-format revision | M | 2 | slicer | agents feedback 2026-10-05 U1; docs/feedback/agents-2026-10-05.md | done |
 | 41 | [s214](slices/s214.md) | Count implementation attempts once per fresh start | S | 1 | slicer | agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md | done |

@@ -4999,10 +4999,12 @@
       "id": "s190",
       "title": "Document running a worktree's slicer from outside it",
       "short_title": "Document running a worktree's slicer from outside it",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "notes": [],
+      "notes": [
+        "**2026-10-05** — Ready for review: AGENTS.md Landing a slice now shows both in-worktree and outside-worktree commands, explaining PYTHONPATH for code and --root for state without changing directory. docs/agents.md does not repeat the instruction, so it and CHANGELOG.md needed no edit. Verified start/check/done from the main checkout against detached scratch worktree s190-validation using scratch item s227; main git status stayed clean. All 31 test_ai tests, slicer check, and git diff --check passed. Full suite not run: this slice changes documentation only and explicitly says it is unaffected. Changes remain uncommitted on feature/s190-outside-worktree."
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5018,7 +5020,7 @@
         "importance": 1,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
