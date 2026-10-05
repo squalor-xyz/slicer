@@ -47,10 +47,11 @@ never pays for curses.
   render/slices/<ID>.md    GENERATED
 ```
 
-Config schema is `3` (`src/slicer/config.py`), protecting the optional
-`handoff_requires_note_kind` policy; schema 2 introduced the `note_kinds` whitelist.
-Version-1 and version-2 configs still load without a report requirement; config saves
-stamp 3. Index schema is `4`
+Config schema is `4` (`src/slicer/config.py`), protecting the optional
+`satisfies_dependencies` policy; schema 3 added `handoff_requires_note_kind` and schema 2
+the `note_kinds` whitelist. Older configs still load with the historical defaults
+(no report requirement, `done_status` alone satisfying dependencies); config saves
+stamp 4. Index schema is `4`
 (`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
 Older item-note strings lift without writes into stable item-local positional IDs,
 with their exact text, empty creation time, and null attempt. New records store UUIDs,
@@ -175,8 +176,9 @@ command, and `slicer render` deliberately does not reproduce the legacy shape.
 
 ## Two pointers that disagree on purpose
 
-`slicer next` first considers started items whose dependencies are all done. If none
-qualify, it considers open items whose dependencies are all done. Within that pool,
+`slicer next` first considers started items whose dependencies are all satisfied (`done`,
+or the statuses in `satisfies_dependencies`, via `Config.satisfying_statuses`). If none
+qualify, it considers open items whose dependencies are all satisfied. Within that pool,
 it returns the highest *effective* score, breaking ties by stored queue order.
 Effective score propagates a priority up the dependency graph (`graph.effective_scores`, a
 fixed-point relaxation, cycle-safe), so a blocker of a critical item inherits its priority

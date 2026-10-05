@@ -122,7 +122,7 @@ def offline(state: State) -> VerifyReport:
 
   for item_id, dep in graph.dangling(index):
     report.findings.append(Finding("error", item_id, f"depends on unknown id {dep}"))
-  if cfg.retired_status:
+  if cfg.retired_status and cfg.retired_status not in cfg.satisfying_statuses():
     # A retired or done dependent will not be started, so an edge onto a
     # retired item is history. Live work is still an error.
     settled = {status for status in (cfg.retired_status, cfg.done_status) if status}

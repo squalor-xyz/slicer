@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-214 items · — 14 · done 196 · retired 4
+214 items · — 13 · done 196 · retired 4 · review 1
 
 v1.4.0 release
 
@@ -36,7 +36,7 @@ v1.4.0 release
 | 1 | [s170](slices/s170.md) | Install the agent skill into the project | M | 2 | slicer | another project: slicer ai skill prints a SKILL.md and does not write it anywhere | — |
 | 2 | [s180](slices/s180.md) | Print one command's JSON contract on demand | M | 2 | slicer | efficiency review 2026-10-04: the per-command JSON contracts exist only in the 36 KB docs/agents.md, and the list row alone is 1.9 KB | retired |
 | 3 | [s191](slices/s191.md) | Resolve a next_id-only merge conflict without hand-editing the index | M | 2 | slicer | merging s174 into a main whose next_id had moved conflicted only on next_id; resolving it needed a hand edit of index.json | done |
-| 4 | [s207](slices/s207.md) | Configure which statuses satisfy dependencies | M | 2 | slicer | agents feedback 2026-10-05 U2; docs/feedback/agents-2026-10-05.md | — |
+| 4 | [s207](slices/s207.md) | Configure which statuses satisfy dependencies | M | 2 | slicer | agents feedback 2026-10-05 U2; docs/feedback/agents-2026-10-05.md | review |
 | 5 | [s208](slices/s208.md) | Add structured note kinds without breaking display-string JSON | M | 2 | slicer | agents feedback 2026-10-05 U3a; docs/feedback/agents-2026-10-05.md | done |
 | 6 | [s209](slices/s209.md) | Require a current-attempt note before handing off | M | 2 | slicer | agents feedback 2026-10-05 U3b; docs/feedback/agents-2026-10-05.md | done |
 | 7 | [s210](slices/s210.md) | Record which item discovered new work | M | 2 | slicer | agents feedback 2026-10-05 U4a; docs/feedback/agents-2026-10-05.md | — |

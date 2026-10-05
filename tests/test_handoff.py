@@ -321,7 +321,7 @@ class HandoffReportConfigTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
       cfg.handoff_requires_note_kind = "report"
       path.write_text(json.dumps(cfg.to_dict()), encoding="utf-8")
-      self.assertEqual(Config.load(path).version, 3)
+      self.assertEqual(Config.load(path).version, config.SCHEMA_VERSION)
       with patch.object(config, "SCHEMA_VERSION", 2), self.assertRaises(SlicerError) as cm:
         Config.load(path)
       self.assertEqual(cm.exception.code, "schema_too_new")

@@ -127,6 +127,7 @@ def _check_depends(state: State, proposed: dict[str, list[str]], new: Item | Non
         problems.append(f"{item_id}: cannot depend on itself")
       elif (
         state.config.retired_status
+        and state.config.retired_status not in state.config.satisfying_statuses()
         and after.require(dep).status == state.config.retired_status
         and after.require(item_id).status not in {
           status for status in (state.config.retired_status, state.config.done_status) if status
@@ -871,7 +872,7 @@ def _ranked_pool(
       continue
     if size is not None and item.size != size:
       continue
-    pending = graph.blocked_by(state.index, item, cfg.done_status)
+    pending = graph.blocked_by(state.index, item, cfg.satisfying_statuses())
     if pending:
       blocked.append((item.id, pending))
     missing = _missing_spec(state, item)
@@ -949,13 +950,13 @@ def next_batch(
   )
   chosen: list[Item] = []
   chosen_ids: set[str] = set()
-  done = state.config.done_status
+  satisfying = state.config.satisfying_statuses()
   while len(chosen) < count:
     pick: Item | None = None
     for item in pool.items:
       if item.id in chosen_ids:
         continue
-      unmet = [dep for dep in graph.blocked_by(state.index, item, done) if dep not in chosen_ids]
+      unmet = [dep for dep in graph.blocked_by(state.index, item, satisfying) if dep not in chosen_ids]
       if not unmet:
         pick = item
         break

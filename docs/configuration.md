@@ -10,7 +10,7 @@ and the slice files, the config is yours to hand-edit.
 
 ```json
 {
-  "version": 3,
+  "version": 4,
   "note_kinds": [],
   "handoff_requires_note_kind": "",
   "id": { "prefix": "S", "width": 2 },
@@ -50,9 +50,10 @@ and the slice files, the config is yours to hand-edit.
 }
 ```
 
-Config schema 3 protects `handoff_requires_note_kind` from older readers; schema 2
-introduced `note_kinds`. Version-1 and version-2 configs still load without writes
-and without a report requirement; a config save writes version 3.
+Config schema 2 introduced `note_kinds`, schema 3 protects `handoff_requires_note_kind`
+from older readers, and schema 4 does the same for `satisfies_dependencies`. Older
+configs still load without writes, with no report requirement and the historical
+dependency default; a config save writes version 4.
 
 ## Every key
 
@@ -80,9 +81,10 @@ Read any value without opening the file: `slicer config KEY` prints it, and
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
 | `sync.targets` | `[]` | Derived lines in documents slicer does not own | **Yes** |
 | `parked_status` | `"parked"` | Which status `park` sets, and what an item returns *from*. **Empty string = the project has no park state, and `park` refuses cleanly** | Yes if nothing is parked |
-| `review_status` | `"review"` | Which status `handoff` sets: a started slice whose implementation is ready for someone else to review, merge, or clean up. `next` does not offer it (find it with `list --status review`), dependents stay blocked until `done`, and the slice file stays in `slices/`. **Empty string disables `handoff`** | Yes if nothing is in review |
+| `review_status` | `"review"` | Which status `handoff` sets: a started slice whose implementation is ready for someone else to review, merge, or clean up. `next` does not offer it (find it with `list --status review`), dependents stay blocked until `done` (or a status in `satisfies_dependencies`), and the slice file stays in `slices/`. **Empty string disables `handoff`** | Yes if nothing is in review |
 | `reviewing_status` | `"reviewing"` | Which status `start` sets on a review item: a reviewer has claimed it. Like review, `next` does not offer it, so an implementer never resumes a review in progress; `list` ranks it with started work, and `done` finishes it. `handoff` refuses it. **Empty string makes `start` on a review item set started, as before** | Yes if nothing is being reviewed |
 | `started_status` | `"started"` | Which status `start` sets. `next` returns a started item ahead of every open one. It gets no folder — the slice file stays in `slices/`. **Empty string = the project has no start state, and `start` refuses cleanly** | Yes if nothing is started |
+| `satisfies_dependencies` | absent (`done_status` alone) | A nonempty list of status keys that let a dependent start. Absent, it is just `done_status`, whatever that key is named. When listed it is **authoritative**: slicer does not add `done_status` for you, so a list without it makes `done` stop unblocking dependents. It governs `next`, `next --batch`, `deps`, `list` ordering and the TUI blocked marker. It does not change what `done` means, which statuses `next` offers, where a slice file lives, `list --in-work`, or `verify`'s commit-subject check, which stays on `done`. Listing `retired_status` also lets an item depend on a retired one, in `add` and `set` and in `check`/`verify`; otherwise that edge stays an error. Self-dependencies and cycles are errors either way. Unknown keys, non-strings, a non-list and an empty list are config errors; duplicates are ignored. Written only when set | Yes |
 | `git_check` | `true` | Whether `slicer verify` cross-checks item status against `git log`. Turn it **off** for a repo split from another, where items were finished before its history began and the check can never be satisfied | **Yes** |
 | `render_driver_check` | `true` | Whether `slicer verify` reminds you to configure the `slicer-generated` render and `slicer-index` merge drivers (via `slicer setup-git`). Only fires when this checkout has other worktrees, so a single-worktree clone is already quiet; set **off** to silence it entirely. There is no way to force it on for a single worktree | **Yes** |
 | `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name. A per-call `--owner` or the `SLICER_CLAIM_OWNER` environment variable overrides it | **Yes** |
@@ -164,6 +166,24 @@ status — parked, review, reviewing, and any key you add, such as `draft` or
 `blocked` — stays out of that queue. A reviewer picks review work up with
 `next --status review`. A custom status is how you hold an item back; `exclude_flags`
 does not.
+
+### Dependencies and integration
+
+A dependent starts when every dependency is in a satisfying status: `done_status` alone
+unless `satisfies_dependencies` lists others. This lets a project that commits passing
+work on a run branch unblock later work before the owner integrates it. Add a status for
+it, list it beside `done`, and finish with it instead of `done`:
+
+```json
+"statuses": { "open": "—", "landed": "landed", "done": "done" },
+"satisfies_dependencies": ["done", "landed"]
+```
+
+`landed` here is only a name; slicer creates no such status. `done` keeps its meaning and
+still moves the slice to `done/`, and a custom status gets no folder and no `next`
+offer. `handoff` is unchanged: a `review` item still blocks its dependents unless
+`review_status` is listed. The list is authoritative, so omitting `done` means finished
+work stops unblocking anything.
 
 ## Sections
 

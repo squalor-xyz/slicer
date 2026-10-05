@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 import support
 from slicer import model, ops, render, tui
-from slicer.config import Config
+from slicer.config import SCHEMA_VERSION, Config
 from slicer.errors import ConfigError
 
 
@@ -229,7 +229,7 @@ class StructuredNoteTests(unittest.TestCase):
       with self.assertRaises(ConfigError):
         Config.from_dict({"note_kinds": invalid})
     self.assertEqual(Config.from_dict({}).note_kinds, [])
-    self.assertEqual(Config.from_dict({"version": 1, "note_kinds": ["report"]}).to_dict()["version"], 3)
+    self.assertEqual(Config.from_dict({"version": 1, "note_kinds": ["report"]}).to_dict()["version"], SCHEMA_VERSION)
     with self.repo() as repo:
       config = json.loads(repo.read(".slicer/config.json"))
       config["note_kinds"] = ["report"]
