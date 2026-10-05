@@ -145,17 +145,21 @@ def effective_scores(index: Index) -> dict[str, int]:
 
 def ranked_order(
   index: Index, cfg: Config, items: list[Item], *, descending: bool = True,
+  by_pass: bool = False,
 ) -> list[Item]:
-  """The order `list` shows: unblocked started (or reviewing), unblocked open, then the rest.
+  """Group by readiness without losing score inheritance or manual ties.
 
-  Parked items are a last group, still by effective score. Each other group
-  is by effective score too. Descending is the list order. Ascending reverses
-  the groups and sorts score upward. Ties keep stored queue order.
+  Unblocked in-work items precede unblocked open items, then other visible
+  rows, with parked items last. Each group uses descending effective score.
+  With by_pass, declared pass order precedes score within each group;
+  empty and undeclared keys share a final fallback rank.
+  Ascending reverses groups, passes and scores. Ties keep stored queue order.
   """
   eff = effective_scores(index)
   in_work = cfg.in_work()
   parked = cfg.parked_status
   place = {it.id: n for n, it in enumerate(index.items)}
+  passes = {p.key: n for n, p in enumerate(index.passes)} if by_pass else {}
 
   def tier(item: Item) -> int:
     if parked and item.status == parked:
@@ -168,11 +172,12 @@ def ranked_order(
       return 1
     return 2
 
-  def key(item: Item) -> tuple[int, int, int]:
+  def key(item: Item) -> tuple[int, int, int, int]:
     group = tier(item)
+    pass_rank = passes.get(item.pass_key, len(passes)) if item.pass_key else len(passes)
     score = eff[item.id]
     if descending:
-      return (group, -score, place[item.id])
-    return (-group, score, place[item.id])
+      return (group, pass_rank, -score, place[item.id])
+    return (-group, -pass_rank, score, place[item.id])
 
   return sorted(items, key=key)

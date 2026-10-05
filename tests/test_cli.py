@@ -472,8 +472,8 @@ class ListDoneDefaultTests(unittest.TestCase):
 
   def test_List_All_IncludesDone_AndOtherFiltersStillApply(self) -> None:
     with self.repo() as repo:
-      self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S04", "S06", "S03"])
-      self.assertEqual(self.ids(repo, "--all", "--tree", "alpha"), ["S01", "S02", "S04", "S06"])
+      self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S06", "S04", "S03"])
+      self.assertEqual(self.ids(repo, "--all", "--tree", "alpha"), ["S01", "S02", "S06", "S04"])
       self.assertEqual(self.ids(repo, "--tree", "alpha"), ["S01", "S04"])
       self.assertEqual(self.ids(repo, "--all", "--pass", "now"), ["S01", "S02", "S06", "S03"])
       self.assertEqual(self.ids(repo, "--pass", "now"), ["S01", "S03"])
@@ -693,7 +693,7 @@ if __name__ == "__main__":
 
 
 class ListNextOrderTests(unittest.TestCase):
-  """Default list order is the sequence `next` walks, then the rest by score."""
+  """Without declared passes, list keeps readiness groups and effective scores."""
 
   def ids(self, repo: support.TempRepo, *argv: str) -> list[str]:
     code, out, err = repo.run("list", *argv, "--json")

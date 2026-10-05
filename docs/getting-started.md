@@ -266,8 +266,11 @@ and a snippet so you see why each item hit; it also takes `--json` (each result 
 progress census, and the blocked edges into one view (and one `--json` payload), so you don't
 run `next`, `stats`, and read `next`'s blocked set separately.
 
-Default `list` is the view `next` walks: unblocked started items, then unblocked
-open items, then the other visible rows, each by effective score. Done and retired
+Default `list` groups unblocked in-work items first, then unblocked open items,
+then other visible rows, with parked items last. Within each group, declared pass
+order precedes effective score; empty and undeclared passes share a final fallback
+rank. Without declared passes, each group uses effective score alone. `next` still
+selects by effective score within its eligible status groups. Done and retired
 items are left out unless you pass `--all` or name them with `--status`.
 `list --sort score` is a flat score sort of that same set, which can rank a blocked
 item above work `next` would actually pick. `move` changes stored queue order and therefore

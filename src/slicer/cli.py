@@ -1042,9 +1042,9 @@ def _item_rows(
   return rows
 
 
-def _list_in_next_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
-  """The sequence `next` walks, then every other visible row by effective score."""
-  return graph.ranked_order(state.index, state.config, items)
+def _list_in_priority_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
+  """Keep readiness groups first, then declared passes and effective scores."""
+  return graph.ranked_order(state.index, state.config, items, by_pass=True)
 
 
 def _list_status_view(args: argparse.Namespace, cfg: Config) -> set[str] | None:
@@ -1116,7 +1116,7 @@ def cmd_list(args: argparse.Namespace) -> int:
     # Same tie rule, and still a copy: effort order is not the stored queue.
     items = sorted(items, key=model.effort_rank)
   else:
-    items = _list_in_next_order(state, items)
+    items = _list_in_priority_order(state, items)
   elsewhere = store.in_work_elsewhere(state.root, state.index)
   claim_w = _claim_width(state.config, items, elsewhere)
   pass_w = _pass_width(state.index, items)
@@ -2120,7 +2120,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("prefix", nargs="?", help="the new prefix; only its case may differ")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
 
-  sp = add("list", cmd_list, "list items in next's order, omitting done and retired unless asked")
+  sp = add("list", cmd_list, "list items by readiness, pass and score, omitting done and retired unless asked")
   sp.add_argument("--all", action="store_true",
                   help="include done and retired items (default: omit them)")
   sp.add_argument("--status", action="append",

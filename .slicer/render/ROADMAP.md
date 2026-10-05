@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-211 items · — 23 · done 186 · retired 2
+211 items · — 22 · done 187 · retired 2
 
 v1.4.0 release
 
@@ -82,7 +82,7 @@ v1.3.0 release
 | 40 | [s214](slices/s214.md) | Count implementation attempts once per fresh start | S | 1 | slicer | agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md | done |
 | 41 | [s220](slices/s220.md) | Declare git-tracked JSON the permanent canonical store | S | 1 | docs | agents feedback 2026-10-05 U11; docs/feedback/agents-2026-10-05.md | done |
 | 42 | [s223](slices/s223.md) | Show open items that exist only in a sibling worktree | S | 1 | slicer | roadmap review 2026-10-05: s192-s201 were open only in a sibling worktree and main's list stayed empty; first filed as s203 on the superseded feature/agents-feedback branch | — |
-| 43 | [s224](slices/s224.md) | Prioritize declared passes within slicer list readiness groups | M | 2 | slicer | owner request 2026-10-05: list should prioritize v1.3 over v1.4 and later below defined release passes; preserve status/readiness groups | — |
+| 43 | [s224](slices/s224.md) | Prioritize declared passes within slicer list readiness groups | M | 2 | slicer | owner request 2026-10-05: list should prioritize v1.3 over v1.4 and later below defined release passes; preserve status/readiness groups | done |
 
 ---
 
