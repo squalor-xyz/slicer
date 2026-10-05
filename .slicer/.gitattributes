@@ -12,3 +12,10 @@ log.jsonl merge=union
 render/ROADMAP.md merge=slicer-generated
 render/ROADMAP.html merge=slicer-generated
 render/slices/*.md merge=slicer-generated
+
+# index.json is merged by Git, except that the slicer-index driver resolves a
+# conflict on the next_id counter alone to the larger value, so ids are never
+# reused; any other overlap stays an ordinary conflict. Also defined once per clone:
+#   git config merge.slicer-index.name "keep the larger next_id when merging the index"
+#   git config merge.slicer-index.driver "slicer merge-index %O %A %B"
+index.json merge=slicer-index

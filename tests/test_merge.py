@@ -114,6 +114,8 @@ class GitattributesTests(unittest.TestCase):
       repo.run("init")
       text = repo.read(f".slicer/{store.GITATTRIBUTES_NAME}")
       self.assertIn("log.jsonl merge=union", text)
+      # index.json takes the slicer-index driver, which settles a next_id conflict.
+      self.assertIn("\nindex.json merge=slicer-index\n", text)
 
 
 class LogOrderTests(unittest.TestCase):
@@ -248,11 +250,15 @@ class RenderDriverSetupHintTests(unittest.TestCase):
 
   def test_Vcs_Config_AllowsOnlyReadOnlyGets(self) -> None:
     # config is allowlisted only for read-only `--get`s: the git user (S114, for
-    # claims) and the render driver (S123, to warn when it is unset). slicer must
+    # claims) and the two merge drivers (S123, S191, to warn when unset). slicer must
     # still never *write* config, so no other form is permitted.
     self.assertEqual(
       vcs.READ_ONLY.get("config"),
-      frozenset({("--get", "user.name"), ("--get", "merge.slicer-generated.driver")}),
+      frozenset({
+        ("--get", "user.name"),
+        ("--get", "merge.slicer-generated.driver"),
+        ("--get", "merge.slicer-index.driver"),
+      }),
     )
 
 
@@ -262,6 +268,7 @@ class SetupGitCommandTests(unittest.TestCase):
 
   NAME = "git config merge.slicer-generated.name"
   DRIVER = "git config merge.slicer-generated.driver true"
+  INDEX_DRIVER = 'git config merge.slicer-index.driver "slicer merge-index %O %A %B"'
 
   def test_SetupGit_PrintsBothConfigLines(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -269,6 +276,7 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertEqual((code, err), (0, ""))
       self.assertIn(self.NAME, out)
       self.assertIn(self.DRIVER, out)
+      self.assertIn(self.INDEX_DRIVER, out)
 
   def test_SetupGit_Json_ReturnsTheCommandsAsAList(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -277,7 +285,7 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertEqual(code, 0)
       commands = json.loads(out)
       self.assertEqual(commands, text.splitlines())
-      self.assertEqual(len(commands), 2)
+      self.assertEqual(len(commands), 4)
       # --lean must not choke on a list of plain strings.
       self.assertEqual(json.loads(repo.run("setup-git", "--json", "--lean")[1]), commands)
 
@@ -299,6 +307,7 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
   workflow the driver serves -- and `render_driver_check` is on (S123, S125)."""
 
   MISSING = "render merge driver not configured"
+  INDEX_MISSING = "index merge driver not configured"
 
   def _configure_driver(self, repo: support.TempRepo) -> None:
     repo._git("config", "merge.slicer-generated.driver", "true")
@@ -348,6 +357,29 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
       self.assertNotIn(self.MISSING, out)
+
+  def test_Verify_IndexDriverUnset_WarnsEvenWithRenderDriverSet(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self._add_sibling(repo)
+      self._configure_driver(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertIn(self.INDEX_MISSING, out)
+      self.assertIn("setup-git", out)
+      repo._git("config", "merge.slicer-index.driver", "slicer merge-index %O %A %B")
+      self.assertNotIn(self.INDEX_MISSING, repo.run("verify")[1])
+
+  def test_Verify_IndexDriverCheck_FollowsTheSameGates(self) -> None:
+    with support.TempRepo(git=True) as repo:  # single worktree
+      repo.run("init")
+      repo.commit("base")
+      self.assertNotIn(self.INDEX_MISSING, repo.run("verify")[1])
+    with support.TempRepo(git=True) as repo:  # check off
+      repo.run("init")
+      self._set_config(repo, render_driver_check=False)
+      self._add_sibling(repo)
+      self.assertNotIn(self.INDEX_MISSING, repo.run("verify")[1])
 
   def test_Verify_OutsideGitRepo_NoDriverWarning(self) -> None:
     with support.TempRepo() as repo:  # not a git repo

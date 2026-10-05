@@ -6,6 +6,16 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- A `slicer-index` merge driver for `.slicer/index.json`. Two branches that each file anything conflict on the single `next_id` line even when their ids differ, and the only fix was a hand edit of tracking JSON. The driver sets the counter to the largest of the base, ours and theirs, then lets `git merge-file` merge the rest, so a `next_id`-only conflict resolves to the larger value and ids are never reused. Any other overlap exits 1 and leaves the usual conflict markers, so Git reports an ordinary conflict. It does not merge items or fields.
+- `slicer merge-index BASE OURS THEIRS` is the driver command Git runs (`%O %A %B`). It needs no project, prints nothing, and is not listed in `--help`.
+
+### Changed
+
+- `slicer setup-git` and the hint `slicer init` prints now give four `git config` lines: the two `slicer-generated` lines as before, plus `slicer-index` name and driver. `--json` is the same list with four strings. New projects get `index.json merge=slicer-index` in `.slicer/.gitattributes`; add that line to an existing project's file to use the driver.
+- `slicer verify` also warns, under the same sibling-worktree and `render_driver_check` gates, when the `slicer-index` driver is not configured in this clone. The git allowlist gains `config --get merge.slicer-index.driver` and `merge-file -p`, which writes nothing.
+
 ## [1.3.0] - 2026-10-05
 
 ### Fixed

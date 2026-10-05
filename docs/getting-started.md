@@ -652,13 +652,24 @@ stale. That staleness check is the whole point: state and its rendering cannot d
 `render/` at a `slicer-generated` driver so a merge keeps the current branch's copy instead
 of writing conflict markers into those large files. A driver name only resolves once the
 clone defines it, and slicer's git allowlist cannot run `git config` for you, so run these
-two lines once in each clone. `slicer setup-git` prints them (`slicer setup-git | sh` applies
+lines once in each clone. `slicer setup-git` prints them (`slicer setup-git | sh` applies
 them), and `slicer init` also prints them when it is run inside a git repo:
 
 ```sh
 git config merge.slicer-generated.name "keep the current branch's generated files"
 git config merge.slicer-generated.driver true
+git config merge.slicer-index.name "keep the larger next_id when merging the index"
+git config merge.slicer-index.driver "slicer merge-index %O %A %B"
 ```
+
+The last two turn on the `slicer-index` driver for `index.json`. Every filing moves the
+single `next_id` line, so two branches that each file anything conflict there even when
+their ids differ. The driver resolves that line to the larger value, so an id is never
+reused, and merges the rest of the file as Git would. Any other overlap is still an
+ordinary conflict to resolve by hand. It does not combine two items added at the same
+place in the queue. A project created before this driver gains the line
+`index.json merge=slicer-index` in `.slicer/.gitattributes` by adding it there; without it
+Git does not call the driver. `slicer` must be on the `PATH` Git runs with.
 
 The kept copy still has to match the merged `index.json`, so re-run `slicer render` after
 resolving a merge — the driver only skips the markers, it does not re-project the state.
@@ -833,7 +844,7 @@ nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
 | `Git merge in progress in …; finish or abort it before changing slicer state.` | slicer refuses state changes, including TUI saves, while this checkout has a merge to finish (`merge_in_progress`, exit 2). Read-only commands, dry runs, `render` and `sync` still work for the repair; finish or abort the merge, then retry. |
 | `running code from …, but this project is … -- a different worktree of the same repo` | A stderr note, not an error: an editable install from one worktree is running against another worktree's `.slicer/`, so that checkout's `src/` edits are not what runs. Use `PYTHONPATH=src python3 -m slicer` in the checkout you are editing, or set `SLICER_NO_CODE_WARNING=1` to silence it. |
 | `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
-| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth — resolve a real overlap there by hand. For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see below) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. |
+| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth. With the `slicer-index` driver configured (see below), a conflict on `next_id` alone resolves to the larger value, so resolve any remaining overlap there by hand. For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see below) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. |
 
 `slicer verify` is the broader health check — dangling dependencies, cycles, a dependency
 on a retired item, slices in the wrong folder for their status, a slice file whose name
@@ -844,7 +855,7 @@ rewrites. Render freshness belongs to `slicer check`, not `verify`.
 Inside a git checkout it adds two checks. Both are warnings, so `verify` still exits 0:
 
 - With `render_driver_check` on (the default), it warns when this clone has sibling
-  worktrees and the `slicer-generated` merge driver is not configured. A single-worktree
+  worktrees and the `slicer-generated` or `slicer-index` merge driver is not configured. A single-worktree
   clone stays quiet. Set `render_driver_check` to `false` to silence the reminder.
 - With `git_check` on (the default), it warns when a done item has no commit subject
   mentioning its id. The scan is `git log --all --no-merges`, at most 2000 commits.

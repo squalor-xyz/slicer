@@ -15,7 +15,7 @@ from pathlib import Path
 from slicer.errors import StateError
 
 ALLOWED = frozenset({
-  "rev-parse", "status", "log", "worktree", "branch", "config",
+  "rev-parse", "status", "log", "worktree", "branch", "config", "merge-file",
 })
 
 # These subcommands are allowlisted only for the exact read-only forms below.
@@ -25,8 +25,13 @@ READ_ONLY = {
   "config": frozenset({
     ("--get", "user.name"),
     ("--get", "merge.slicer-generated.driver"),
+    ("--get", "merge.slicer-index.driver"),
   }),
 }
+
+# `merge-file` rewrites its first file argument unless `-p` sends the result to
+# stdout, so `-p` must lead. It reads three files and never touches a repository.
+STDOUT_ONLY = {"merge-file": "-p"}
 
 
 def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -36,6 +41,10 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     )
   exact = READ_ONLY.get(args[0])
   if exact is not None and args[1:] not in exact:
+    raise StateError(
+      f"git {' '.join(args)} is not permitted; slicer never writes history"
+    )
+  if args[0] in STDOUT_ONLY and args[1:2] != (STDOUT_ONLY[args[0]],):
     raise StateError(
       f"git {' '.join(args)} is not permitted; slicer never writes history"
     )
@@ -129,16 +138,44 @@ def identity(root: Path, configured: str, override: str | None = None) -> str:
   return root.name or "unknown"
 
 
+def _driver_configured(root: Path, name: str) -> bool:
+  try:
+    done = _run(root, "config", "--get", f"merge.{name}.driver")
+  except (FileNotFoundError, OSError):
+    return False
+  return done.returncode == 0 and done.stdout.strip() != ""
+
+
 def render_driver_configured(root: Path) -> bool:
   """Whether this clone has the `slicer-generated` render merge driver set up --
   the per-clone `git config` that `slicer setup-git` prints (S109/S121). Read-only;
   an unset driver, a non-repo, or a failed query all read as not configured. The
   caller gates on `is_repo` so a non-repo is not reported as a missing driver."""
-  try:
-    done = _run(root, "config", "--get", "merge.slicer-generated.driver")
-  except (FileNotFoundError, OSError):
-    return False
-  return done.returncode == 0 and done.stdout.strip() != ""
+  return _driver_configured(root, "slicer-generated")
+
+
+def index_driver_configured(root: Path) -> bool:
+  """Whether this clone has the `slicer-index` merge driver for `index.json` set
+  up. Same read-only query and the same reading of "not configured" as the render
+  driver."""
+  return _driver_configured(root, "slicer-index")
+
+
+def merge_file(cwd: Path, base: Path, ours: Path, theirs: Path) -> tuple[int, str]:
+  """Three-way merge of three files, as `(conflict count, merged text)`.
+
+  Nothing is written: `-p` returns the result, and conflicts stay in it as the
+  usual markers. A count above 127 is git's error exit, not a conflict count.
+  """
+  done = _run(
+    cwd, "merge-file", "-p", "-L", "ours", "-L", "base", "-L", "theirs",
+    str(ours), str(base), str(theirs),
+  )
+  if done.returncode > 127 or done.returncode < 0:
+    raise StateError(
+      f"git merge-file failed: {done.stderr.strip() or done.returncode}", code="io"
+    )
+  return done.returncode, done.stdout
 
 
 def elsewhere(root: Path, item_id: str) -> list[str]:

@@ -16,7 +16,8 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `ai [instructions]` | agent quick start. `slicer ai` and `slicer ai --json` are `slicer ai instructions` with the same flags. Generic unless the project sets `implement_finish` to `handoff`, which makes step 4 handoff only. No project, or an unreadable config or index, prints the generic text and warns on stderr. Does not lock or write. Supports `--json`. `--rest` prints only what the skill does not already carry and does not read the project |
 | `ai skill` | the same loop as a `SKILL.md` for Claude Code, Codex, and Grok. Same project read and fallback as `ai instructions` |
 | `init [--force] [--id ID]` | create `.slicer/` with config and templates; `--force` rewrites an existing config and templates only. `--id` sets the id the first `add` allocates (`S21`), and is refused when the index already has items |
-| `setup-git` | print the two `git config` lines that enable the `slicer-generated` render merge driver in this clone (`slicer setup-git \| sh` applies them); needs no project |
+| `setup-git` | print the four `git config` lines that enable the `slicer-generated` render merge driver and the `slicer-index` driver for `index.json` in this clone (`slicer setup-git \| sh` applies them); needs no project |
+| `merge-index BASE OURS THEIRS` | the `slicer-index` merge driver, which Git runs with its `%O %A %B` files and a person does not. It sets `next_id` to the largest of the three, runs a three-way `git merge-file`, and writes the result over `OURS`. Exit 0 is a clean merge. Exit 1 leaves the usual conflict markers in `OURS` for any overlap other than `next_id`, so Git reports an ordinary conflict. It needs no project, prints nothing, and is left out of `--help`'s command list |
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline. When a sibling git worktree's `next_id` is higher than this checkout's, the id starts above it, so two worktrees do not file different items under the same id. |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run] [--force]` | convert an existing legacy markdown tree; `--force` replaces an existing roadmap |
@@ -51,7 +52,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `remove ID ... --force` | retire or purge despite dependents, or a done item |
 | `render` | regenerate `.slicer/render/` (ROADMAP.md, a browser-viewable ROADMAP.html, and one file per slice) |
 | `sync [--check]` | rewrite derived lines in other documents |
-| `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render merge driver (`render_driver_check`) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). Render freshness is `check`'s job. See [getting started](getting-started.md#9-when-something-goes-wrong) |
+| `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render or index merge driver (`render_driver_check`) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). Render freshness is `check`'s job. See [getting started](getting-started.md#9-when-something-goes-wrong) |
 | `check [--diff]` | the CI gate: render staleness (each stale file's text line and `stale_render_details` entry name its cause, including a renderer-format mismatch between the file's `Render format: N.` header and the running slicer), sync drift, integrity, and unknown flags in the backtick `slicer ...` commands of live slices (commands inside fenced code blocks are literal text and are not checked). It also warns (exit 0) when a sibling git worktree has an item under the same id with a different title, which would collide on merge. The warning does not fail the gate |
 | `stats` / `log [--limit N] [--item ID] [--action A] [--by NAME]` | counts + completion % and per-tree progress; history, newest first (`--limit` defaults to 20; `--item`/`--action`/`--by` scope it; `set` records old→new values; `by` is who started, claimed, released, handed off or finished an item) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`). Text adds an `Only in a sibling` block, and JSON an `only_in_sibling` list, when a sibling worktree has an unclaimed open item this checkout lacks |
@@ -109,8 +110,10 @@ warning shipped in [s185](../.slicer/render/slices/s185.md): `add`, `import`, an
 use the higher of this checkout's `next_id` and the highest matching-prefix `next_id`
 visible in local sibling worktrees. This does not reserve ids across simultaneous
 writers or other machines, or resolve merge
-conflicts. The `next_id` merge driver remains pending in
-[s191](../.slicer/render/slices/s191.md).
+conflicts. Two branches that each file something still conflict on the single
+`next_id` line of `index.json`; the `slicer-index` merge driver (`slicer setup-git`
+prints its config, [s191](../.slicer/render/slices/s191.md)) resolves that line to the
+larger value and leaves every other overlap to Git.
 
 `slicer next -n 1` returns the item after the current next item. Offsets are
 nonnegative integers: `-n 0` is the same as `next`. Eligible started items come
@@ -173,8 +176,9 @@ See [batch changes](getting-started.md#batch-changes) for validation and output 
 
 **slicer never commits, pushes or tags.** `git` access is allowlisted to
 `rev-parse`, `status`, `log`, and the read-only queries
-`worktree list --porcelain`, `branch --all`, and `config --get` of `user.name` and
-`merge.slicer-generated.driver`. A mutation does not stage. `start` uses
+`worktree list --porcelain`, `branch --all`, `config --get` of `user.name`,
+`merge.slicer-generated.driver` and `merge.slicer-index.driver`, and `merge-file -p`
+(three-way merge of three files to stdout, used only by `merge-index`). A mutation does not stage. `start` uses
 the branch and worktree queries to warn when another checkout already refers to the slice;
 the exit code does not change, and
 `next` stays silent. Writing subcommands cannot be reached from the code at all.
