@@ -2,7 +2,7 @@
   "version": 3,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 188,
+  "next_id": 189,
   "preamble": "",
   "passes": [
     {
@@ -4924,6 +4924,32 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s188",
+      "title": "Print the generic recommended project workflow",
+      "short_title": "Print the generic recommended project workflow",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "notes": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "user request: a command that prints a generic recommended workflow for any project, kept in docs and updated when the slicer process changes",
+        "pass": "v1.3",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
         "attempts": 0
       }
     }
