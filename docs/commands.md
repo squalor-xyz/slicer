@@ -65,7 +65,7 @@ directory.
 Every command except the interactive `tui`/`ui` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage, validation, or nothing to do, `3` internal or state (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).
-`--lean`, with `--json`, omits empty fields, a repeated short title, and an item path.
+`--lean`, with `--json`, prints compact JSON on one line and omits empty fields, a repeated short title, and an item path.
 See the [agent reference](agents.md) for every payload.
 
 Every command that changes state — `add`, `set`, `start`, `done`, `move`, `sort`, `promote`,

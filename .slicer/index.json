@@ -4671,7 +4671,7 @@
       "id": "s178",
       "title": "Print lean JSON without indentation",
       "short_title": "Print lean JSON without indentation",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4690,7 +4690,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

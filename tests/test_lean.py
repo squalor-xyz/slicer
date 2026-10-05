@@ -159,3 +159,41 @@ class LeanCommandTests(unittest.TestCase):
       error = json.loads(out)["error"]
       self.assertEqual(error["code"], "no_such_item")
       self.assertIn("message", error)
+
+
+class LeanCompactTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "Parse the config file")
+    repo.run("add", "Write the docs")
+    return repo
+
+  def test_LeanOutput_IsOneCompactLine(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("list", "--json", "--lean")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(
+        out, json.dumps(json.loads(out), ensure_ascii=False, separators=(",", ":")) + "\n",
+      )
+      self.assertEqual(out.count("\n"), 1)
+
+  def test_FullJson_StaysIndented(self) -> None:
+    with self.repo() as repo:
+      out = repo.run("list", "--json")[1]
+      self.assertEqual(out, _dumps(json.loads(out)) + "\n")
+
+  def test_LeanErrorEnvelope_StaysIndented(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("show", "S99", "--json", "--lean")
+      self.assertEqual(code, 2)
+      self.assertEqual(out, _dumps(json.loads(out)) + "\n")
+      self.assertIn("\n  ", out)
+
+  def test_LeanCompact_KeepsNonAscii(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Café")
+      out = repo.run("list", "--json", "--lean")[1]
+      self.assertIn("Café", out)
+      self.assertNotIn("\\u00e9", out)
