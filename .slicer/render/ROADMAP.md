@@ -22,7 +22,7 @@
 - Not a real-time collaboration or multi-user concurrent-editing tool; coordination
   happens through git, not a live shared service.
 
-210 items · — 23 · done 184 · retired 2 · started 1
+210 items · — 23 · done 185 · retired 2
 
 v1.4.0 release
 
@@ -74,7 +74,7 @@ v1.3.0 release
 | 37 | [s190](slices/s190.md) | Document running a worktree's slicer from outside it | S | 1 | docs | AGENTS.md says to run PYTHONPATH=src python3 -m slicer inside the worktree, which needs a cd; PYTHONPATH with --root worked from the main checkout while taking s174 | — |
 | 38 | [s202](slices/s202.md) | Add a config read command | M | 2 | cli | dogfood 2026-10-05: finishing s185 needed implement_finish (done or handoff); no command prints it, and the tracking-file rule forbids reading config.json | done |
 | 39 | [s206](slices/s206.md) | Explain render drift with a renderer-format revision | M | 2 | slicer | agents feedback 2026-10-05 U1; docs/feedback/agents-2026-10-05.md | done |
-| 40 | [s214](slices/s214.md) | Count implementation attempts once per fresh start | S | 1 | slicer | agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md | started |
+| 40 | [s214](slices/s214.md) | Count implementation attempts once per fresh start | S | 1 | slicer | agents feedback 2026-10-05 U6a; docs/feedback/agents-2026-10-05.md | done |
 | 41 | [s220](slices/s220.md) | Declare git-tracked JSON the permanent canonical store | S | 1 | docs | agents feedback 2026-10-05 U11; docs/feedback/agents-2026-10-05.md | — |
 | 42 | [s223](slices/s223.md) | Show open items that exist only in a sibling worktree | S | 1 | slicer | roadmap review 2026-10-05: s192-s201 were open only in a sibling worktree and main's list stayed empty; first filed as s203 on the superseded feature/agents-feedback branch | — |
 

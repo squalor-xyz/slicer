@@ -5292,14 +5292,11 @@
       "id": "s214",
       "title": "Count implementation attempts once per fresh start",
       "short_title": "Count implementation attempts once per fresh start",
-      "status": "started",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-05T12:37:05Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
@@ -5314,7 +5311,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 1
+        "attempts": 0
       }
     },
     {
