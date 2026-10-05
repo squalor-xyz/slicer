@@ -149,7 +149,7 @@ $ slicer next --json
 
 Two shapes recur. An **item** is the object above minus `path` and `effective_score`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
-1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts each `start` from open and each `reject`, the index schema is 3, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
+1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts fresh implementation starts from open or a custom queue into the configured started status. Resumes, review claims, rejection, and `set --status` do not increment it. Start → reject → restart records two attempts. Historical values are preserved and may overcount; history is not authoritative enough to reconstruct them. Owners may correct them with `set ID --attempts N` before adopting a cap. The index schema stays 3, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
 they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
 `list --sort score`. `--json` without `--lean` is always this full shape.
 
