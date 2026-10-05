@@ -718,6 +718,17 @@ def _elsewhere_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
   ]
 
 
+def _sibling_only_lines(rows: list[dict[str, str]]) -> list[str]:
+  """The `Only in a sibling` block, or nothing when no sibling has unseen open work."""
+  if not rows:
+    return []
+  id_w = max(len(r["id"]) for r in rows)
+  tree_w = max(len(r["worktree"]) for r in rows)
+  return ["Only in a sibling", *(
+    f"  {r['id']:<{id_w}}  {r['worktree']:<{tree_w}}  {r['title']}" for r in rows
+  )]
+
+
 def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.BatchResult) -> None:
   """Add the unspecified and in-work-elsewhere skips, each only when non-empty."""
   unspecified = _unspecified_payload(result)
@@ -1117,7 +1128,7 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_next_order(state, items)
-  elsewhere = store.in_work_elsewhere(state.root, state.index)
+  elsewhere, only_sibling = store.sibling_work(state.root, state.index)
   claim_w = _claim_width(state.config, items, elsewhere)
   pass_w = _pass_width(state.index, items)
   status_w = _status_width(state.config, items)
@@ -1134,6 +1145,8 @@ def cmd_list(args: argparse.Namespace) -> int:
   if hidden_count:
     noun = "item" if hidden_count == 1 else "items"
     lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
+  # Text only: `list --json` is a bare array of items, so sibling-only rows are in `status`.
+  lines.extend(_sibling_only_lines(only_sibling))
   _emit(args, [
     i.to_dict() | {"in_work_elsewhere": elsewhere.get(i.id, [])} for i in items
   ], "\n".join(lines))
@@ -1927,7 +1940,8 @@ def cmd_stats(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
   """The one-call front door: what is next, how far along, and what is blocked."""
   state = _state(args)
-  result = ops.next_item(state, 0, store.in_work_elsewhere(state.root, state.index))
+  elsewhere, only_sibling = store.sibling_work(state.root, state.index)
+  result = ops.next_item(state, 0, elsewhere)
   census = _census(state)
   nxt = result.item
   blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
@@ -1950,6 +1964,9 @@ def cmd_status(args: argparse.Namespace) -> int:
   else:
     lines.append("Blocked   none")
   _note_skips(payload, lines, result)
+  if only_sibling:
+    payload["only_in_sibling"] = only_sibling
+    lines.extend(_sibling_only_lines(only_sibling))
   _emit(args, payload, "\n".join(lines))
   return OK
 

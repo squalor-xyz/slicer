@@ -176,5 +176,113 @@ class SiblingIdTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
 
 
+class OnlyInSiblingTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo(git=True)
+    repo.run("init")
+    repo.run("add", "one")
+    repo.commit("base")
+    return repo
+
+  def sibling(self, repo: support.TempRepo, name: str) -> Path:
+    root = repo.root / "siblings" / name
+    root.parent.mkdir(exist_ok=True)
+    made = repo._git("worktree", "add", "-q", "-b", name, str(root), "HEAD")
+    self.assertEqual(made.returncode, 0, made.stderr)
+    return root
+
+  def test_List_OpenOnlyInSibling_NamesIt(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "add", "sibling only")
+      repo.run("render")
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      self.assertIn("Only in a sibling\n  S02  other  sibling only", out)
+      code, out, err = repo.run("list", "--json")
+      self.assertEqual(code, 0, err)
+      rows = json.loads(out)
+      self.assertIsInstance(rows, list)
+      self.assertEqual([r["id"] for r in rows], ["S01"])
+      code, out, err = repo.run("check", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertFalse([w for w in json.loads(out)["warnings"] if "collide" in w])
+
+  def test_Status_OpenOnlyInSibling_NamesIt(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "add", "sibling only")
+      code, out, err = repo.run("status")
+      self.assertEqual(code, 0, err)
+      self.assertIn("Only in a sibling\n  S02  other  sibling only", out)
+      code, out, err = repo.run("status", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["only_in_sibling"], [
+        {"id": "S02", "title": "sibling only", "worktree": "other", "status": "open"},
+      ])
+      self.assertEqual(payload["next"]["id"], "S01")
+
+  def test_Status_NothingOnlyInSibling_StaysAsBefore(self) -> None:
+    with self.repo() as repo:
+      self.sibling(repo, "other")
+      code, out, err = repo.run("status", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("only_in_sibling", json.loads(out))
+      code, out, err = repo.run("status")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("Only in a sibling", out)
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("Only in a sibling", out)
+
+  def test_List_KnownId_NotOnlyInSibling(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      code, _, err = _run(sibling, "done", "S01", "--note", "finished there")
+      self.assertEqual(code, 0, err)
+      _run(sibling, "add", "claimed there")
+      code, _, err = _run(sibling, "start", "S02")
+      self.assertEqual(code, 0, err)
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("Only in a sibling", out)
+      code, out, err = repo.run("status", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("only_in_sibling", json.loads(out))
+      self.assertEqual(store.in_work_elsewhere(repo.root, repo.state().index)["S02"][0]["worktree"], "other")
+
+  def test_List_SiblingDoneOnly_IsNotListed(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "add", "finished there")
+      code, _, err = _run(sibling, "done", "S02", "--note", "finished there")
+      self.assertEqual(code, 0, err)
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      self.assertNotIn("Only in a sibling", out)
+      self.assertEqual(store.only_in_sibling(repo.root, repo.state().index), [])
+
+  def test_OnlyInSibling_SeveralSiblings_WorktreePathThenNumericId(self) -> None:
+    with self.repo() as repo:
+      zed = self.sibling(repo, "zed")
+      alpha = self.sibling(repo, "alpha")
+      _run(zed, "add", "zed nine", "--id", "S09")
+      _run(alpha, "add", "alpha ten", "--id", "S10")
+      _run(alpha, "add", "alpha nine", "--id", "S09")
+      rows = store.only_in_sibling(repo.root, repo.state().index)
+      self.assertEqual(
+        [(r["worktree"], r["id"]) for r in rows],
+        [("alpha", "S09"), ("alpha", "S10"), ("zed", "S09")],
+      )
+
+  def test_OnlyInSibling_NotAGitRepo_DoesNoSiblingWork(self) -> None:
+    repo = support.TempRepo()
+    with repo, support.isolated_discovery(repo.root):
+      repo.run("init")
+      with patch.object(store, "_read_siblings", side_effect=AssertionError("git work")):
+        self.assertEqual(store.only_in_sibling(repo.root, repo.state().index), [])
+
+
 if __name__ == "__main__":
   unittest.main()

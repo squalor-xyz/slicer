@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- `slicer list` and `slicer status` text report an open item that exists only in a sibling git worktree, under an `Only in a sibling` heading with one `ID  worktree  title` row each. `status --json` adds `only_in_sibling`, `[{id, title, worktree, status}]`, only when non-empty. `list --json` stays a bare array of items. A sibling row that is claimed or in work stays in `in_work_elsewhere`, and a done or review row is not listed. Before, an unclaimed open item filed in a sibling and never committed was invisible here and `check` stayed green. `check`, `next` and `in_work_elsewhere` are unchanged.
 - `slicer next --show` text prints the slice without its generated banner, which named `.slicer/slices/ID.json` and invited a read of the tracking file. `slicer show`, the files under `.slicer/render/slices/`, and the JSON from `next` and `next --show` (including `path`) are unchanged. `render.slice_body` returns the slice without the banner, and `render_slice` adds it.
 - `slicer prose list`, `show`, and `edit` accept a pass key that contains dots. The field is the last segment of `pass.<key>.<field>`, so `pass.v1.1.heading` addresses pass `v1.1`. Before, `prose list` exited 2 on any project with such a pass. An unknown field or an empty key is still an error that names the valid forms.
 
