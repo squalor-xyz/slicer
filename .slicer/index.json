@@ -5035,7 +5035,7 @@
       "id": "s202",
       "title": "Read the effective project config through the CLI",
       "short_title": "Add a config read command",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -5054,7 +5054,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

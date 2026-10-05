@@ -1583,6 +1583,37 @@ def cmd_sections(args: argparse.Namespace) -> int:
   return OK
 
 
+def _config_text(value: object, *, joined: bool) -> str:
+  """One config value as text. Strings print bare, a list as lines or a comma list."""
+  if isinstance(value, str):
+    return value
+  if isinstance(value, list):
+    items = [_config_text(v, joined=True) for v in value]
+    return ", ".join(items) if joined else "\n".join(items)
+  return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def cmd_config(args: argparse.Namespace) -> int:
+  """The effective config, or one dotted key of it. Config only: no index, lock, or write."""
+  root = store.discover(Path(args.root).resolve() if args.root else None)
+  data = Config.load(root / store.DIR_NAME / CONFIG_NAME).to_dict()
+  if args.key is None:
+    width = max(len(k) for k in data)
+    lines = [f"{k.ljust(width)}  {_config_text(v, joined=True)}" for k, v in data.items()]
+    _emit(args, data, "\n".join(lines))
+    return OK
+  value: object = data
+  for part in args.key.split("."):
+    if not isinstance(value, dict) or part not in value:
+      raise StateError(
+        f"{args.key!r} is not a config key; the top-level keys are {', '.join(data)}",
+        code="usage",
+      )
+    value = value[part]
+  _emit(args, {"key": args.key, "value": value}, _config_text(value, joined=False))
+  return OK
+
+
 def cmd_goals(args: argparse.Namespace) -> int:
   """Project direction in one read: the goals and non_goals prose blocks."""
   state = _state(args)
@@ -2119,6 +2150,10 @@ def build_parser() -> argparse.ArgumentParser:
 
   add("sections", cmd_sections,
       "list configured section names, marking the ones next requires")
+
+  sp = add("config", cmd_config,
+           "print the effective config, or one value by dotted key; read-only")
+  sp.add_argument("key", nargs="?", help="a top-level key or a dotted path such as id.prefix")
 
   sp = _strict_flag(_render_flag(add("add", _mutating(cmd_add), "append a roadmap item")))
   sp.add_argument("title")

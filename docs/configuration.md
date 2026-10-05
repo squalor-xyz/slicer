@@ -50,6 +50,9 @@ and the slice files, the config is yours to hand-edit.
 
 ## Every key
 
+Read any value without opening the file: `slicer config KEY` prints it, and
+`slicer config` prints them all.
+
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
 | `id.prefix` | `"S"` | The id scheme | **Until the first item exists**; after that, only its case, with `slicer id-prefix`. See below |
