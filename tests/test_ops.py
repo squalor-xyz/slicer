@@ -709,6 +709,16 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertIn("requires at least one --section", err)
 
+  def test_Show_ContextWithoutSection_NamesTheFix(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("show", "S02", "--context", "--json")
+      self.assertEqual(code, 2)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "usage")
+      self.assertIn("requires at least one --section", error["message"])
+      self.assertIn("--section Implement", error["message"])
+      self.assertIn("`slicer sections`", error["message"])
+
   def test_Show_MissingSection_ErrorsClearly(self) -> None:
     with self.repo() as repo:
       code, _, err = repo.run("show", "S02", "--section", "Nonexistent")

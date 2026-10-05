@@ -1305,7 +1305,11 @@ def cmd_show(args: argparse.Namespace) -> int:
       _emit(args, payload, text)
     return OK
   if args.context:
-    raise StateError("--context requires at least one --section", code="usage")
+    raise StateError(
+      "--context requires at least one --section; pass --section NAME, for example "
+      "--section Implement. `slicer sections` lists the names",
+      code="usage",
+    )
   if sl is None:
     lines = [f"{item.id}  {item.display_title()}", *item.notes,
              f"(no slice yet; run `slicer promote {item.id}`)"]

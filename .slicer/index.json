@@ -4973,7 +4973,7 @@
       "id": "s189",
       "title": "Name the fix when show --context has no --section",
       "short_title": "Name the fix when show --context has no --section",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [],
@@ -4992,7 +4992,7 @@
         "importance": 1,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
