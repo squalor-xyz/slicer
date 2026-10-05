@@ -5589,7 +5589,7 @@
       "id": "s225",
       "title": "Make the suite refuse to run against the enclosing real project",
       "short_title": "Make the suite refuse to run against the enclosing real project",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "notes": [
