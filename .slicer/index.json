@@ -5863,12 +5863,20 @@
       "id": "s215",
       "title": "Cap new implementation pickups while allowing resume",
       "short_title": "Cap new implementation pickups while allowing resume",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s214"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "a2c64072-2c06-41a8-9172-b85fd5324128",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: added per-call next --max-attempts with queue-ordered capped diagnostics across single, offset, ready/show and batch outputs. Started attempts resume after release at or above the cap; review claims remain unaffected. Capped batch blockers leave dependents blocked. Capped atomic starts load and select under the writer lock; intervening-writer regression passes. Custom-lane pickup is not yet present in this checkout. Verified 43 next tests (including 7 new cap tests), full discovery 1301 tests OK (1 optional legacy-tree skip), slicer check, and git diff --check. Updated command/agent docs and changelog.",
+          "created_at": "2026-10-06T12:57:31Z",
+          "attempt": 1
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5886,7 +5894,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
