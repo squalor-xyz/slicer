@@ -6040,13 +6040,25 @@
       "id": "s217",
       "title": "Merge independent item fields without guessing list or queue edits",
       "short_title": "Merge independent item fields without guessing list or queue edits",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s191",
         "s211"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "045ed501-bd58-4fda-b5dd-4d80f2bd69ea",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: the slicer-index driver (src/slicer/mergeindex.py) merges index.json by identity. Items match by id and object fields by name; lists, prose and passes are atomic; next_id stays the largest of the three; item order follows the base unless exactly one side reordered it; new ids from both sides are kept, ours first. Conflicts stay local: a scalar or list changed two ways, delete against edit, one new id filed with different content, both sides reordering differently (including independent swaps), and a merged result that breaks the index (a shared filing key, ids differing only in case, a dependency cycle, a dangling dependency, or discovered_from). Unreadable input falls back to the s191 text merge and is forced to a conflict if that merge came back clean. Verified on current main: tests/test_merge_fields.py and tests/test_merge_index.py; full discover 1386 tests OK (1 skipped); git diff --check clean.",
+          "created_at": "2026-10-06T18:31:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "L",
@@ -6064,7 +6076,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -1,5 +1,5 @@
 """The `slicer-index` merge driver resolves a conflict on `next_id` alone to the
-larger counter and leaves every other conflict to Git (S191)."""
+larger counter (S191); S217 widened it to independent items and fields."""
 
 from __future__ import annotations
 
@@ -70,10 +70,10 @@ class MergeIndexCommandTests(unittest.TestCase):
       self.assertEqual(merged.count("next_id"), 1)
       self.assertIn('"next_id": 12', merged)
 
-  def test_MergeIndex_NoCounterLine_IsAPlainMerge(self) -> None:
+  def test_MergeIndex_NoCounterLine_IsMergedAsItIs(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")
-      doc = {"items": [{"id": "s01", "status": "open"}]}
+      doc = {"items": [{"id": "s01", "title": "one", "status": "open"}]}
       code, _, _, merged = self._merge(
         repo, jsonio.dumps(doc), jsonio.dumps(doc), jsonio.dumps({"items": []})
       )

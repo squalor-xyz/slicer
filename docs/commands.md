@@ -17,7 +17,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `ai skill [--output PATH] [--install] [--force]` | the same loop as a `SKILL.md` for Claude Code, Codex, and Grok. Same project read and fallback as `ai instructions`. `--output` writes the printed bytes to PATH (parents created); `--install` writes them to `.claude/`, `.agents/` and `.grok/` `skills/slicer/SKILL.md` under the project root. Different existing text exits 2 (`state`) with nothing written unless `--force`; stdout lists the paths written |
 | `init [--force] [--id ID]` | create `.slicer/` with config and templates; `--force` rewrites an existing config and templates only. `--id` sets the id the first `add` allocates (`S21`), and is refused when the index already has items |
 | `setup-git` | print the four `git config` lines that enable the `slicer-generated` render merge driver and the `slicer-index` driver for `index.json` in this clone (`slicer setup-git \| sh` applies them); needs no project |
-| `merge-index BASE OURS THEIRS` | the `slicer-index` merge driver, which Git runs with its `%O %A %B` files and a person does not. It sets `next_id` to the largest of the three, runs a three-way `git merge-file`, and writes the result over `OURS`. Exit 0 is a clean merge. Exit 1 leaves the usual conflict markers in `OURS` for any overlap other than `next_id`, so Git reports an ordinary conflict. It needs no project, prints nothing, and is left out of `--help`'s command list |
+| `merge-index BASE OURS THEIRS` | the `slicer-index` merge driver, which Git runs with its `%O %A %B` files and a person does not. It merges items by id and object fields by name, takes `next_id` as the largest of the three, and writes the result over `OURS`. A value changed on one side takes that change, equal changes coalesce, and lists and prose are atomic. Exit 0 is a clean merge. Exit 1 leaves conflict markers in `OURS` only where both sides changed a value differently, a record was deleted on one side and edited on the other, the same new id was filed twice with different content, both sides reordered the shared items differently, or the result would break the index (two ids for one filing key, ids differing only in case, a dependency cycle or on a removed item); stderr names each. Input that is not a readable index conflicts and is never merged cleanly. It needs no project, prints nothing when the merge is clean, and is left out of `--help`'s command list |
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline. When a sibling git worktree's `next_id` is higher than this checkout's, the id starts above it, so two worktrees do not file different items under the same id. |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run] [--force]` | convert an existing legacy markdown tree; `--force` replaces an existing roadmap |
@@ -164,7 +164,8 @@ writers or other machines, or resolve merge
 conflicts. Two branches that each file something still conflict on the single
 `next_id` line of `index.json`; the `slicer-index` merge driver (`slicer setup-git`
 prints its config, [s191](../.slicer/render/slices/s191.md)) resolves that line to the
-larger value and leaves every other overlap to Git.
+larger value, and [s217](../.slicer/render/slices/s217.md) widens it to merge independent
+items and fields; only a true disagreement is left as a conflict.
 
 `slicer next -n 1` returns the item after the current next item. Offsets are
 nonnegative integers: `-n 0` is the same as `next`. Eligible started items come
