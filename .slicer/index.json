@@ -5771,10 +5771,18 @@
       "id": "s212",
       "title": "Find items by exact title",
       "short_title": "Find items by exact title",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "de4fdd37-fb48-4f77-93d6-b130dd6ff9f0",
+          "kind": "",
+          "text": "**2026-10-05** — Ready for review: find --title-exact TITLE (exact stored-title equality, usage error when combined with PATTERN/--in or when no mode given). New FindTitleExactTests; full suite 1279 tests OK (1 skipped), slicer check ok, git diff --check clean. Docs: commands, getting-started, agents, CHANGELOG.",
+          "created_at": "2026-10-05T20:21:04Z",
+          "attempt": 1
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5792,7 +5800,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

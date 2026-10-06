@@ -1014,3 +1014,6 @@
 {"when": "2026-10-06T12:09:38Z", "item": "s211", "action": "note", "from": "", "to": "", "note": "Ready for review: implemented case-sensitive filing keys, sc"}
 {"when": "2026-10-06T12:09:38Z", "item": "s211", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-06T12:13:44Z", "item": "s211", "action": "status", "from": "review", "to": "done", "note": "Verified: case-sensitive filing keys (add --key, outline key:) return the existing item with no writes, IDs or history; mixed imports reuse existing entries; duplicate keys fail check; index schema 6 rebased over s210's schema 5; 1279 tests OK", "by": "Jon Robbins"}
+{"when": "2026-10-05T20:14:45Z", "item": "s212", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-05T20:21:04Z", "item": "s212", "action": "note", "from": "", "to": "", "note": "Ready for review: find --title-exact TITLE (exact stored-tit"}
+{"when": "2026-10-05T20:21:05Z", "item": "s212", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

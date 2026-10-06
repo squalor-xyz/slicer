@@ -1241,6 +1241,18 @@ def _find_match(
 
 
 def cmd_find(args: argparse.Namespace) -> int:
+  if args.title_exact is not None:
+    if args.pattern is not None or args.fields is not None:
+      raise StateError(
+        "--title-exact cannot be combined with a PATTERN or --in; "
+        "use one search mode",
+        code="usage",
+      )
+    return _find_title_exact(args)
+  if args.pattern is None:
+    raise StateError(
+      "find needs a PATTERN or --title-exact TITLE", code="usage",
+    )
   needle = args.pattern.strip()
   if not needle:
     raise StateError("find needs a nonempty pattern", code="usage")
@@ -1262,6 +1274,23 @@ def cmd_find(args: argparse.Namespace) -> int:
     match = _find_match(state, item, fields, needle)
     if match is not None:
       hits.append((item, match[0], match[1]))
+  _emit_find(args, state, hits)
+  return OK
+
+
+def _find_title_exact(args: argparse.Namespace) -> int:
+  """Items whose stored full title equals the argument, for client-side dedupe.
+  Plain string equality: no casefold, no Unicode normalization, no short title."""
+  state = _state(args)
+  hits = [(i, "title", i.title) for i in state.index.items if i.title == args.title_exact]
+  _emit_find(args, state, hits)
+  return OK
+
+
+def _emit_find(
+  args: argparse.Namespace, state: store.State, hits: list[tuple[model.Item, str, str]]
+) -> None:
+  """The find envelope shared by every search mode."""
   if args.json and args.lean:
     payload = [
       {
@@ -1277,7 +1306,6 @@ def cmd_find(args: argparse.Namespace) -> int:
     f"{row}\n      matched in {f}: {s}" for row, (_, f, s) in zip(rows, hits)
   ) or "no matching items"
   _emit(args, payload, text)
-  return OK
 
 
 def cmd_deps(args: argparse.Namespace) -> int:
@@ -2236,10 +2264,15 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--format", choices=["mermaid"], help="render the dependency graph")
 
   sp = add("find", cmd_find, "search items by text")
-  sp.add_argument("pattern")
+  sp.add_argument("pattern", nargs="?")
   sp.add_argument(
     "--in", dest="fields",
     help="comma-separated fields to search: id,title,short_title,findings,body (default: all)",
+  )
+  sp.add_argument(
+    "--title-exact", metavar="TITLE",
+    help="match items whose full stored title equals TITLE exactly (case- and "
+    "Unicode-sensitive); replaces PATTERN and --in",
   )
 
   sp = add("show", cmd_show, "print one slice")
