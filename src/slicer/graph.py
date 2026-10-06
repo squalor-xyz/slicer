@@ -153,14 +153,14 @@ def effective_scores(index: Index) -> dict[str, int]:
 
 def ranked_order(
   index: Index, cfg: Config, items: list[Item], *, descending: bool = True,
-  by_pass: bool = False,
+  by_pass: bool = True,
 ) -> list[Item]:
   """Group by readiness without losing score inheritance or manual ties.
 
   Unblocked in-work items precede unblocked open items, then other visible
   rows, with parked items last. Each group uses descending effective score.
   With by_pass, declared pass order precedes score within each group;
-  empty and undeclared keys share a final fallback rank.
+  empty keys merge by score; undeclared named keys follow declared passes.
   Ascending reverses groups, passes and scores. Ties keep stored queue order.
   """
   eff = effective_scores(index)
@@ -181,12 +181,28 @@ def ranked_order(
       return 1
     return 2
 
-  def key(item: Item) -> tuple[int, int, int, int]:
-    group = tier(item)
-    pass_rank = passes.get(item.pass_key, len(passes)) if item.pass_key else len(passes)
-    score = eff[item.id]
-    if descending:
-      return (group, pass_rank, -score, place[item.id])
-    return (-group, -pass_rank, score, place[item.id])
+  def score_key(item: Item) -> tuple[int, int]:
+    return (-eff[item.id] if descending else eff[item.id], place[item.id])
 
-  return sorted(items, key=key)
+  def named_key(item: Item) -> tuple[int, int, int]:
+    rank = passes.get(item.pass_key, len(passes))
+    return (rank if descending else -rank, *score_key(item))
+
+  out: list[Item] = []
+  for group in sorted({tier(it) for it in items}, reverse=not descending):
+    rows = [it for it in items if tier(it) == group]
+    if not passes:
+      out.extend(sorted(rows, key=score_key))
+      continue
+    named = sorted((it for it in rows if it.pass_key), key=named_key)
+    empty = sorted((it for it in rows if not it.pass_key), key=score_key)
+    # Merge against the next named row, preserving declared pass order even
+    # when its scores rise. Queue position decides equal-score comparisons.
+    at = 0
+    for item in named:
+      while at < len(empty) and score_key(empty[at]) < score_key(item):
+        out.append(empty[at])
+        at += 1
+      out.append(item)
+    out.extend(empty[at:])
+  return out

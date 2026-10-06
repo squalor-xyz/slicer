@@ -6462,10 +6462,22 @@
       "id": "s228",
       "title": "Order next and the TUI from list priority, placing an empty pass by score",
       "short_title": "Order next and the TUI from list priority, placing an empty pass by score",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e7f52e4c-e39a-48f6-896c-799843eb3ee9",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: default list, plain and review next, batch pickup, and the TUI ranked view share readiness, declared pass order, effective score, and stored queue ties. Empty passes merge by score against the next named row. Next keeps that eligible subsequence when an unspecified or sibling-held row is skipped. Batch dependencies still precede dependents. Custom status queues still rank the caller's claims first. Verification: unittest discover passed 1433 tests, 1 skipped.",
+          "created_at": "2026-10-06T19:39:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -6483,7 +6495,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
