@@ -6245,12 +6245,24 @@
       "id": "s222",
       "title": "Pack current trusted notes for the selected item",
       "short_title": "Pack current trusted notes for the selected item",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s221"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "1cf2ec34-a276-4d7f-b1be-ed5681c6a3cf",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: added read-only current note packs to show and next --ready, including section/context and batch projections. --min-trust/--notes-budget opt into expiry filtering; ranking uses verification trust, creation time and stored order; whole display notes share per-item Unicode budgets with oversize skipping. note_pack records selected IDs and deterministic omission reasons, survives lean including empty manifests, and covers stable legacy slice IDs. Ordinary/kind-only reads and generated documents remain complete. Added 15 packing tests and command/agent documentation. Full unittest discovery: 1401 tests, OK (1 skipped); tracking check and git diff --check pass.",
+          "created_at": "2026-10-06T19:04:51Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -6268,7 +6280,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

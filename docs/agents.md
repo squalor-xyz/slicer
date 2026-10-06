@@ -184,6 +184,36 @@ include `notes` and `note_records`; section-only show payloads add those fields 
 `slice_notes` when a filter is supplied. Lean output omits empty matches as usual.
 `next --notes-kind` without `--ready` returns `usage`.
 
+For bounded pickup context, add `--min-trust TIER` and/or `--notes-budget N`
+to `show` or `next --ready`, including batches. Tiers are `unverified`,
+`machine-confirmed`, and `human-reviewed`; omitted trust means unverified and
+omitted budget means unlimited. A budget must be a nonnegative integer. Either
+option enables expiry filtering at one captured UTC read time; ordinary and
+kind-only reads keep expired audit notes. Kinds compose by OR, then minimum trust
+applies. Ranking is higher derived verification trust, newer known creation time,
+then stored order. Authorship alone never raises trust.
+
+Whole display strings share the character budget, including one newline between
+selected strings; count Unicode code points, skip oversized notes, and continue.
+Each batch item gets its own budget. Legacy slice notes are untyped/unverified and
+use read-only IDs `slice-legacy-N` (one-based original order).
+
+Requested packs always expose `note_pack` beside item `notes`/`note_records` (on
+`item` for ready entries), even under lean and when empty:
+
+```json
+{"selected_ids": [], "omitted": [], "characters": 0, "budget": null, "min_trust": "unverified"}
+```
+
+`omitted` entries are `{id, reason}`; reason precedence is `kind`, `expired`,
+`trust`, `budget`. Selected IDs follow ranking order; omissions follow original
+item-note then slice-note order. The budget covers display text only, excluding
+manifest/metadata/sections. Section/context projections expose the same manifest
+and selected notes; legacy strings stay in the slice-note projection. Packing does
+not hide items/sections, promote trust, save state, or change generated documents.
+`next` packing without `--ready`, invalid trust, or a negative budget is `usage`
+before any `--start` writes.
+
 Filing identity is `fields.key`, a case-sensitive string (empty when absent).
 `add --key KEY` trims surrounding whitespace and rejects explicit blank input
 (`blank_key`). It returns the item plus `existing: false` on creation or
