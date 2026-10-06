@@ -6245,7 +6245,7 @@
       "id": "s222",
       "title": "Pack current trusted notes for the selected item",
       "short_title": "Pack current trusted notes for the selected item",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s221"
