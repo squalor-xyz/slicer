@@ -367,7 +367,9 @@ PR-reviewable graph. Reach for these instead of reconstructing the graph from `l
 **Before adding, search for duplicates.** `slicer find "topic" --json` matches item ids,
 titles, findings, and slice bodies (narrow with `--in title,findings,body`) and reports the
 matched field and a snippet (`match` in JSON), so you can answer "is there already an item
-about X?" — and see why each hit matched — before creating one.
+about X?" — and see why each hit matched — before creating one. To dedupe on one known title,
+`slicer find --title-exact "Full title" --json` returns only items whose stored title equals it
+character for character (case and Unicode form matter; no PATTERN or `--in`).
 
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --importance 3 --urgency 2 --effort 2 --depends-on S01 --render`.

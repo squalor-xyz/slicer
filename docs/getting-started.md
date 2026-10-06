@@ -261,6 +261,7 @@ slicer next
 To locate an item by text rather than by filter, `slicer find PATTERN` searches ids, titles,
 findings, and slice bodies (narrow with `--in title,findings,body`) and shows the matched field
 and a snippet so you see why each item hit; it also takes `--json` (each result carries `match`).
+`slicer find --title-exact TITLE` returns only items whose full title equals TITLE exactly.
 
 `slicer status` is the "where am I / did it work" front door: it composes the next item, a
 progress census, and the blocked edges into one view (and one `--json` payload), so you don't

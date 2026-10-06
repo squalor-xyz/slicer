@@ -139,5 +139,79 @@ class FindTests(unittest.TestCase):
       self.assertEqual(repo.run("find", "off-schema", "--lean"), plain)
 
 
+class FindTitleExactTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    support.make_mini(repo)
+    repo.run("init")
+    repo.run("migrate", "--from", "docs/slices")
+    return repo
+
+  def test_FindTitleExact_ReturnsOnlyTheEqualTitle(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Alpha")
+      repo.run("add", "Alpha beta")
+      repo.run("add", "alpha")
+      repo.run("add", "Full title", "--short-title", "Alpha")
+      code, out, err = repo.run("find", "--title-exact", "Alpha", "--json", "--lean")
+      self.assertEqual((code, err), (0, ""))
+      rows = json.loads(out)
+      self.assertEqual([r["title"] for r in rows], ["Alpha"])
+      self.assertEqual(rows[0]["match"]["field"], "title")
+      self.assertEqual(rows[0]["match"]["snippet"], "Alpha")
+
+  def test_FindTitleExact_DoesNotNormalizeUnicode(self) -> None:
+    composed, decomposed = "Café", "Café"
+    with self.repo() as repo:
+      repo.run("add", composed)
+      self.assertEqual(len(_ids(repo.run("find", "--title-exact", composed, "--json")[1])), 1)
+      self.assertEqual(_ids(repo.run("find", "--title-exact", decomposed, "--json")[1]), [])
+
+  def test_FindTitleExact_IdenticalTitles_ReturnAllInFindOrder(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Twin")
+      repo.run("add", "Other")
+      repo.run("add", "Twin")
+      repo.run("done", "S05")
+      found = _ids(repo.run("find", "--title-exact", "Twin", "--json")[1])
+      self.assertEqual(len(found), 2)
+      substring = _ids(repo.run("find", "twin", "--in", "title", "--json")[1])
+      self.assertEqual(found, substring)
+      self.assertIn("S05", found)
+
+  def test_FindTitleExact_NoMatch_UsesTheEmptyResult(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("find", "--title-exact", "Nothing like this")
+      self.assertEqual(code, 0)
+      self.assertIn("no matching items", out)
+      code, out, _ = repo.run("find", "--title-exact", "Nothing like this", "--json")
+      self.assertEqual((code, json.loads(out)), (0, []))
+
+  def test_FindTitleExact_TextRowMatchesFindFormat(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Zebra crossing")
+      exact = repo.run("find", "--title-exact", "Zebra crossing")
+      self.assertEqual(exact, repo.run("find", "Zebra crossing", "--in", "title"))
+      self.assertIn("matched in title: Zebra crossing", exact[1])
+
+  def test_FindTitleExact_WithPositionalQuery_IsUsage(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("find", "Zebra", "--title-exact", "Zebra")
+      self.assertEqual((code, out), (2, ""))
+      self.assertIn("title-exact", err)
+
+  def test_FindTitleExact_WithIn_IsUsage(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("find", "--title-exact", "Zebra", "--in", "title")
+      self.assertEqual((code, out), (2, ""))
+      self.assertIn("--in", err)
+
+  def test_Find_WithNoSearchMode_IsUsage(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("find")
+      self.assertEqual((code, out), (2, ""))
+      self.assertIn("title-exact", err)
+
+
 if __name__ == "__main__":
   unittest.main()
