@@ -12,6 +12,7 @@ from uuid import uuid4
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
+from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Callable, Mapping
 
@@ -864,6 +865,7 @@ def _ranked_pool(
   size: str | None = None,
   include_blocked: bool = False,
   max_attempts: int | None = None,
+  flags: list[str] | None = None, no_flags: list[str] | None = None,
 ) -> _NextPool:
   """Open or started work in next's order, after tree, size, and skip rules.
 
@@ -871,7 +873,9 @@ def _ranked_pool(
   and queue order breaks ties. With `review`, reviewing items precede review
   items by those same rules. `tree` keeps an item when that tree is one of
   its trees. `size` keeps an exact size match. Omit either and it does not
-  narrow the pool.
+  narrow the pool. `flags` requires any case-sensitive shell pattern match;
+  any `no_flags` match excludes the item before skip diagnostics. Dependency
+  checks and effective scores still use the complete index.
 
   A blocked item stays out unless `include_blocked`, which is how a batch can
   take a dependency before the item that waits on it. Unspecified slices and
@@ -884,6 +888,9 @@ def _ranked_pool(
   if max_attempts is not None and (isinstance(max_attempts, bool)
       or not isinstance(max_attempts, int) or max_attempts < 1):
     raise StateError("next --max-attempts must be an integer >= 1", code="usage")
+  for pattern in (flags or []) + (no_flags or []):
+    if pattern == "":
+      raise StateError("next flag patterns cannot be empty", code="usage")
   cfg = state.config
   # A whitelist, so parked, done, retired and any project-specific status stay
   # out. An empty started_status means the project has no start state, and the
@@ -906,6 +913,10 @@ def _ranked_pool(
     if tree is not None and tree not in item.trees:
       continue
     if size is not None and item.size != size:
+      continue
+    if flags and not any(fnmatchcase(flag, pattern) for flag in item.flags for pattern in flags):
+      continue
+    if no_flags and any(fnmatchcase(flag, pattern) for flag in item.flags for pattern in no_flags):
       continue
     pending = graph.blocked_by(state.index, item, cfg.satisfying_statuses())
     if pending:
@@ -941,6 +952,7 @@ def next_item(
   elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
   *, review: bool = False, tree: str | None = None, size: str | None = None,
   max_attempts: int | None = None,
+  flags: list[str] | None = None, no_flags: list[str] | None = None,
 ) -> NextResult:
   """The most critical startable item: highest effective score, unblocked.
 
@@ -965,6 +977,7 @@ def next_item(
     raise StateError("next offset must be a nonnegative integer", code="usage")
   pool = _ranked_pool(
     state, elsewhere, review=review, tree=tree, size=size, max_attempts=max_attempts,
+    flags=flags, no_flags=no_flags,
   )
   return NextResult(
     item=pool.items[offset] if offset < len(pool.items) else None,
@@ -980,6 +993,7 @@ def next_batch(
   elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
   *, tree: str | None = None, size: str | None = None,
   max_attempts: int | None = None,
+  flags: list[str] | None = None, no_flags: list[str] | None = None,
 ) -> BatchResult:
   """Up to `count` items from the next pool, dependencies before dependents.
 
@@ -994,7 +1008,7 @@ def next_batch(
     raise StateError("next --batch must be an integer >= 1", code="usage")
   pool = _ranked_pool(
     state, elsewhere, tree=tree, size=size, include_blocked=True,
-    max_attempts=max_attempts,
+    max_attempts=max_attempts, flags=flags, no_flags=no_flags,
   )
   chosen: list[Item] = []
   chosen_ids: set[str] = set()

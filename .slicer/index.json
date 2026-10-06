@@ -5975,10 +5975,18 @@
       "id": "s218",
       "title": "Filter next pickups with inclusive and exclusive flag patterns",
       "short_title": "Filter next pickups with inclusive and exclusive flag patterns",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "5c25abd4-2a3e-4e4e-a439-f4f826adac8e",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: Added repeatable next --flag/--no-flag case-sensitive fnmatchcase patterns with OR inclusion and exclusion precedence. Shared filtering precedes skip diagnostics, offsets and batch capacity; dependency checks and effective scores retain the complete index. Covered literal/wildcard/question/bracket matching, case sensitivity, untagged items, excluded blockers and diagnostics, tree/size/cap/ready/start composition, review/resume, empty-pattern refusal and unchanged list matching. Updated command and agent references, quoted help examples and changelog. Focused flag tests (8) and docs coverage (2) passed. Full unittest discovery passed: 1325 tests, 1 skipped. Tracking check and git diff --check passed.",
+          "created_at": "2026-10-06T15:03:56Z",
+          "attempt": 1
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -5996,7 +6004,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

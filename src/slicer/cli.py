@@ -1017,7 +1017,7 @@ def _select_next(args: argparse.Namespace) -> int:
   offset = 0 if args.n is None else args.n
   result = ops.next_item(
     state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
-    max_attempts=args.max_attempts,
+    max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
   )
   if result.item is None:
     payload = {"item": None, "blocked": _blocked_payload(result.blocked)}
@@ -1060,7 +1060,7 @@ def _cmd_next_batch(
   """Several items from one tree and size. One lock covers the whole start."""
   result = ops.next_batch(
     state, args.batch, elsewhere, tree=args.tree, size=args.size,
-    max_attempts=args.max_attempts,
+    max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
   )
   blocked = _blocked_payload(result.blocked)
   if not result.items:
@@ -2346,6 +2346,10 @@ def build_parser() -> argparse.ArgumentParser:
                   help="return up to K items; a dependent follows its dependency")
   sp.add_argument("--tree", help="only items in this tree (one tree; not repeatable)")
   sp.add_argument("--size", help="only items of this exact size")
+  sp.add_argument("--flag", action="append", metavar="PATTERN",
+                  help="include any matching flag (repeatable, case-sensitive); quote patterns: --flag 'risk-*'")
+  sp.add_argument("--no-flag", action="append", metavar="PATTERN",
+                  help="exclude any matching flag, overriding --flag (repeatable); quote patterns: --no-flag 'risk-*'")
   sp.add_argument("--start", action="store_true", help="mark the returned item or batch started")
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
