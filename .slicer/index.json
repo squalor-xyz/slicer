@@ -5975,7 +5975,7 @@
       "id": "s218",
       "title": "Filter next pickups with inclusive and exclusive flag patterns",
       "short_title": "Filter next pickups with inclusive and exclusive flag patterns",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
