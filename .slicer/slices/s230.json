@@ -1,0 +1,41 @@
+{
+  "id": "s230",
+  "title": "Keep a local feedback log separate from the roadmap",
+  "lead": [
+    "An agent can record a friction, a bug, or a feature request while using slicer, without filing a roadmap item."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** creating a roadmap item from feedback, editing or clearing entries, a TUI, validating the optional item id, or committing the log.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Using slicer, especially an agent working through a slice, hits frictions, bugs, and feature ideas that are not roadmap items yet. Writing them into the index files a slice too early. A local log holds the note until a person copies it out."
+    },
+    {
+      "heading": "Files",
+      "body": "The feedback command in src/slicer/cli.py. Log read, append, and export in src/slicer/ops.py or a small new module. init's write of .slicer/.gitignore. tests/test_feedback.py. docs/commands.md, a short paragraph in docs/getting-started.md, and the command table in docs/agents.md. An Unreleased changelog entry. The root .gitignore line /.slicer/feedback.md, and .slicer/.gitignore."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- An append with kind friction, bug, or feature stores one entry and leaves earlier entries unchanged.\n- An unknown kind, empty text, or --out combined with an append exits 2 and writes nothing.\n- --item is stored verbatim and is not resolved. Omitting it, or an empty value, stores no item attribute.\n- Print and --json on a missing log report no entries and exit 0.\n- --out writes the exact log bytes inside or outside the repo, creates parent directories, refuses the log path, and refuses a different existing destination unless --force. Identical bytes are rewritten.\n- --out with no log exits 2 and creates nothing.\n- The first append and init ensure .slicer/.gitignore contains feedback.md, never delete an existing log, and run no git command.\n- Append does not change index.json, log.jsonl, or render. slicer check passes while the log exists.\n- The root gitignore lists /.slicer/feedback.md."
+    },
+    {
+      "heading": "Implement",
+      "body": "slicer feedback keeps a local use-log at .slicer/feedback.md. An agent appends as it goes. The command does not create a roadmap item and does not write index.json, log.jsonl, or anything under .slicer/render/.\n\nAppend with slicer feedback --kind KIND and a nonempty body. --text, --file, and --stdin are the same mutually exclusive body sources as note. KIND is friction, bug, or feature. Anything else, or an empty body, is exit 2, code usage, and writes nothing. --item is optional. The string is stored as written and is not looked up in the roadmap. Omitting it, or passing an empty value, stores no item attribute. The timestamp is UTC, second resolution, with a Z suffix, taken from a clock at append that tests can replace. Earlier entries are not rewritten.\n\nEach entry is one HTML comment and its body, with a blank line between entries. The item attribute is omitted when there is no item:\n\n```markdown\n<!-- slicer-feedback at=2026-10-06T18:07:07Z kind=friction item=s219 -->\nThe prose, which may be several paragraphs.\n\n<!-- slicer-feedback at=2026-10-06T18:09:00Z kind=bug -->\nAnother note.\n```\n\n--json after an append returns path and entry, with at, kind, text, and item only when present. Text mode prints \"added feedback to .slicer/feedback.md\".\n\nWith no write flags, slicer feedback prints the log. When the file is absent it prints that there are no entries and exits 0. --json returns path and entries. An absent file has an empty entries array.\n\nslicer feedback --out PATH copies the exact log bytes. PATH may be inside or outside the project, and this command does not gitignore the destination. Parent directories are created. The log path itself is refused. A destination that already holds different bytes exits 2, code state, and writes nothing unless --force. Identical bytes are rewritten. An absent log exits 2, code usage, and creates nothing. --out cannot be combined with --kind, --text, --file, --stdin, or --item. --force is valid only with --out.\n\n.slicer/ stays committed. The log is gitignored, next to the lock. init writes .slicer/.gitignore containing the line feedback.md when that file is absent, and adds the line when the file exists without it. init never deletes feedback.md. The first append does the same before it writes the log, using ordinary file IO. It does not run git, stage, or commit. This repo's root .gitignore lists /.slicer/feedback.md and no longer calls the lock the only exception. Append, the gitignore update, a print, and --out take the project lock so a reader does not see a torn last entry.\n\nslicer check stays green when the log exists. The log is not render output and is not parsed back into roadmap state."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the new feedback tests, then the repository acceptance commands against the implementation checkout:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One implementation commit after those checks pass. Do not push unless asked. This filing does not authorize that commit."
+    }
+  ],
+  "notes": []
+}
