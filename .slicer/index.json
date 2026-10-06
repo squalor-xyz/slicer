@@ -6179,7 +6179,7 @@
       "id": "s221",
       "title": "Add explicit note verification and freshness metadata",
       "short_title": "Add explicit note verification and freshness metadata",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s208"
