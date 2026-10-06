@@ -6518,7 +6518,7 @@
       "id": "s229",
       "title": "Show a sibling handoff as review in list and the TUI",
       "short_title": "Show a sibling handoff as review in list and the TUI",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
