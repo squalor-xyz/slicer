@@ -832,6 +832,7 @@ class NextResult:
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   # Eligible items skipped because a sibling worktree has them in work.
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
+  capped: list[dict[str, int | str]] = field(default_factory=list)
 
 
 @dataclass
@@ -842,6 +843,7 @@ class BatchResult:
   blocked: list[tuple[str, list[str]]]
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
+  capped: list[dict[str, int | str]] = field(default_factory=list)
 
 
 @dataclass
@@ -850,6 +852,7 @@ class _NextPool:
   blocked: list[tuple[str, list[str]]]
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
+  capped: list[dict[str, int | str]] = field(default_factory=list)
 
 
 def _ranked_pool(
@@ -860,6 +863,7 @@ def _ranked_pool(
   tree: str | None = None,
   size: str | None = None,
   include_blocked: bool = False,
+  max_attempts: int | None = None,
 ) -> _NextPool:
   """Open or started work in next's order, after tree, size, and skip rules.
 
@@ -873,7 +877,13 @@ def _ranked_pool(
   take a dependency before the item that waits on it. Unspecified slices and
   work held in another checkout stay out either way. A blocked item is not
   also reported as elsewhere. The caller decides which sibling rows count.
+  `max_attempts` excludes fresh implementation attempts at the limit, but
+  keeps started resumes and review claims. Capped rows are reported even
+  when blocked, and never enter the batch dependency plan.
   """
+  if max_attempts is not None and (isinstance(max_attempts, bool)
+      or not isinstance(max_attempts, int) or max_attempts < 1):
+    raise StateError("next --max-attempts must be an integer >= 1", code="usage")
   cfg = state.config
   # A whitelist, so parked, done, retired and any project-specific status stay
   # out. An empty started_status means the project has no start state, and the
@@ -887,6 +897,7 @@ def _ranked_pool(
   blocked: list[tuple[str, list[str]]] = []
   unspecified: list[tuple[str, list[str]]] = []
   skipped: list[tuple[str, list[dict[str, str]]]] = []
+  capped: list[dict[str, int | str]] = []
   started: list[Item] = []
   candidates: list[Item] = []
   for item in state.index.items:
@@ -902,7 +913,11 @@ def _ranked_pool(
     missing = _missing_spec(state, item)
     if missing:
       unspecified.append((item.id, missing))
-    if missing or (pending and not include_blocked):
+    at_cap = (max_attempts is not None and not review
+              and item.status != cfg.started_status and item.attempts >= max_attempts)
+    if at_cap:
+      capped.append({"id": item.id, "attempts": item.attempts, "max_attempts": max_attempts})
+    if at_cap or missing or (pending and not include_blocked):
       continue
     local = bool(item.claim_owner) or item.status in cfg.in_work()
     if elsewhere and item.id in elsewhere and not local:
@@ -915,13 +930,17 @@ def _ranked_pool(
   eff = graph.effective_scores(state.index)
   ranked = (sorted(started, key=lambda it: -eff[it.id])
             + sorted(candidates, key=lambda it: -eff[it.id]))
-  return _NextPool(items=ranked, blocked=blocked, unspecified=unspecified, elsewhere=skipped)
+  return _NextPool(
+    items=ranked, blocked=blocked, unspecified=unspecified,
+    elsewhere=skipped, capped=capped,
+  )
 
 
 def next_item(
   state: State, offset: int = 0,
   elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
   *, review: bool = False, tree: str | None = None, size: str | None = None,
+  max_attempts: int | None = None,
 ) -> NextResult:
   """The most critical startable item: highest effective score, unblocked.
 
@@ -944,12 +963,15 @@ def next_item(
   """
   if offset < 0:
     raise StateError("next offset must be a nonnegative integer", code="usage")
-  pool = _ranked_pool(state, elsewhere, review=review, tree=tree, size=size)
+  pool = _ranked_pool(
+    state, elsewhere, review=review, tree=tree, size=size, max_attempts=max_attempts,
+  )
   return NextResult(
     item=pool.items[offset] if offset < len(pool.items) else None,
     blocked=pool.blocked,
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
+    capped=pool.capped,
   )
 
 
@@ -957,6 +979,7 @@ def next_batch(
   state: State, count: int,
   elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
   *, tree: str | None = None, size: str | None = None,
+  max_attempts: int | None = None,
 ) -> BatchResult:
   """Up to `count` items from the next pool, dependencies before dependents.
 
@@ -971,6 +994,7 @@ def next_batch(
     raise StateError("next --batch must be an integer >= 1", code="usage")
   pool = _ranked_pool(
     state, elsewhere, tree=tree, size=size, include_blocked=True,
+    max_attempts=max_attempts,
   )
   chosen: list[Item] = []
   chosen_ids: set[str] = set()
@@ -1000,6 +1024,7 @@ def next_batch(
     blocked=blocked,
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
+    capped=pool.capped,
   )
 
 

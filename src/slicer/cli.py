@@ -754,7 +754,13 @@ def _sibling_only_lines(rows: list[dict[str, str]]) -> list[str]:
 
 
 def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.BatchResult) -> None:
-  """Add the unspecified and in-work-elsewhere skips, each only when non-empty."""
+  """Expose why candidates were skipped, each category only when non-empty."""
+  if result.capped:
+    payload["capped"] = result.capped
+    lines.extend(
+      f"skipped {entry['id']} (attempts {entry['attempts']} >= max_attempts {entry['max_attempts']})"
+      for entry in result.capped
+    )
   unspecified = _unspecified_payload(result)
   if unspecified:
     payload["unspecified"] = unspecified
@@ -930,6 +936,15 @@ def cmd_next(args: argparse.Namespace) -> int:
     raise StateError("--batch cannot be combined with --show or -n", code="usage")
   if args.batch is not None and args.status is not None:
     raise StateError("--batch cannot be combined with --status", code="usage")
+  if args.start and args.max_attempts is not None:
+    root = store.discover(Path(args.root) if args.root else None)
+    with store.project_lock(root):
+      return _select_next(args)
+  return _select_next(args)
+
+
+def _select_next(args: argparse.Namespace) -> int:
+  """Load and select under the writer lock for capped atomic pickups."""
   state = _state(args)
   review = args.status is not None
   if review and (not state.config.review_status or args.status != state.config.review_status):
@@ -942,6 +957,7 @@ def cmd_next(args: argparse.Namespace) -> int:
   offset = 0 if args.n is None else args.n
   result = ops.next_item(
     state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
+    max_attempts=args.max_attempts,
   )
   if result.item is None:
     payload = {"item": None, "blocked": _blocked_payload(result.blocked)}
@@ -955,7 +971,7 @@ def cmd_next(args: argparse.Namespace) -> int:
   item = result.item
   _reject_unknown_sections(args, state, [item])
   if args.start:
-    with store.project_lock(state.root):
+    with (nullcontext() if args.max_attempts is not None else store.project_lock(state.root)):
       item = ops.start(state, item.id, owner=args.owner)
   if args.ready:
     _emit_ready(args, state, item, result)
@@ -982,7 +998,10 @@ def _cmd_next_batch(
   elsewhere: dict[str, list[dict[str, str]]],
 ) -> int:
   """Several items from one tree and size. One lock covers the whole start."""
-  result = ops.next_batch(state, args.batch, elsewhere, tree=args.tree, size=args.size)
+  result = ops.next_batch(
+    state, args.batch, elsewhere, tree=args.tree, size=args.size,
+    max_attempts=args.max_attempts,
+  )
   blocked = _blocked_payload(result.blocked)
   if not result.items:
     payload: dict[str, object] = {"items": [], "blocked": blocked}
@@ -994,9 +1013,10 @@ def _cmd_next_batch(
   _reject_unknown_sections(args, state, result.items)
   items = result.items
   if args.start:
-    # Empty batches never reach this. One lock and one staged start_many, so a
+    # Empty batches never start. Capped selection already holds the lock;
+    # otherwise take it here. One staged start_many ensures that a
     # failure keeps every id unclaimed: no status, move, or log line.
-    with store.project_lock(state.root):
+    with (nullcontext() if args.max_attempts is not None else store.project_lock(state.root)):
       with state.staged():
         started = ops.start_many(state, [item.id for item in items], owner=args.owner)
     by_id = {item.id: item for item in started}
@@ -2250,6 +2270,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("next", cmd_next, "the highest-priority startable item")
   sp.add_argument("-n", type=_nonnegative_int, default=None, metavar="N",
                   help="skip N currently eligible items (default 0); return one item")
+  sp.add_argument("--max-attempts", type=_positive_int, default=None, metavar="N",
+                  help="skip fresh implementation pickups at N attempts; allow started resumes")
   sp.add_argument("--batch", type=_positive_int, default=None, metavar="K",
                   help="return up to K items; a dependent follows its dependency")
   sp.add_argument("--tree", help="only items in this tree (one tree; not repeatable)")

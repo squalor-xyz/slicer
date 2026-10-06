@@ -1023,3 +1023,6 @@
 {"when": "2026-10-06T12:12:24Z", "item": "s216", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-06T12:25:11Z", "item": "s216", "action": "status", "from": "review", "to": "done", "note": "Verified: log --since (inclusive) and --until (exclusive) accept timezone-aware ISO8601 bounds, filter before limit, usage before reading history, corrupt on bad stored timestamps; 1294 tests OK", "by": "Jon Robbins"}
 {"when": "2026-10-06T12:55:27Z", "item": "s228", "action": "add", "from": "", "to": "open", "note": "Order next and the TUI from list priority, placing an empty pass by score"}
+{"when": "2026-10-06T12:52:05Z", "item": "s215", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-06T12:57:31Z", "item": "s215", "action": "note", "from": "", "to": "", "note": "Ready for review: added per-call next --max-attempts with qu"}
+{"when": "2026-10-06T12:57:31Z", "item": "s215", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
