@@ -4859,7 +4859,7 @@
       "id": "s170",
       "title": "Install the agent skill into the project",
       "short_title": "Install the agent skill into the project",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s169"
@@ -4871,6 +4871,13 @@
           "text": "**2026-10-05** — Agents upstream feedback 2026-10-05: their orchestrator installs ai skill output into vendor skill directories by redirection and compares it with fresh output. Preserve stable bytes for a given generating version and implement_finish so the drift check is meaningful. Source: docs/feedback/agents-2026-10-05.md, Existing items.",
           "created_at": "",
           "attempt": null
+        },
+        {
+          "id": "c65ce330-096a-4265-984a-e7c491c21175",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: ai skill --output and --install write the printed bytes to .claude, .agents, and .grok skills/slicer/SKILL.md under the project root (no .codex copy, no home directory). Different text or a directory exits 2 with code state and writes nothing unless --force. --force alone is usage. --install needs a project, and an unreadable project is refused. Replayed onto main at 23886c9 so later slice state stayed. Full discovery 1317 tests OK (1 skipped). slicer check passed. Docs: agents.md, commands.md, CHANGELOG.",
+          "created_at": "2026-10-06T13:47:53Z",
+          "attempt": 1
         }
       ],
       "claim": null,
@@ -4890,7 +4897,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
