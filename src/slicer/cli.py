@@ -148,7 +148,7 @@ def _mutating(fn):
       code = _mutate_strict(fn, args)
     else:
       code = fn(args)
-      if code != OK:
+      if code != OK or getattr(args, "_no_change", False):
         return code
       try:
         written = _render_after_mutation(args)
@@ -180,7 +180,7 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
   state = _state(args)  # loads, caches on args, and begins the staging transaction
   try:
     code = fn(args)
-    if code != OK:
+    if code != OK or getattr(args, "_no_change", False):
       state.discard_stage()
       # The handler already explained the refusal. Discarding the stage must
       # not also discard that report.
@@ -560,6 +560,7 @@ def cmd_import(args: argparse.Namespace) -> int:
       state, specs, force=args.force, preamble=preamble, id_floor=_id_floor(state),
     )
 
+  args._no_change = not report.created and not report.problems
   lines = [
     f"source     {path}",
     f"outline    {report.items} items, {report.promoted} with slices",
@@ -1380,17 +1381,24 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def cmd_add(args: argparse.Namespace) -> int:
   state = _state(args)
+  key = ops.filing_key(args.key)
+  existing = ops.keyed_item(state, key)
+  if existing is not None:
+    args._no_change = True
+    _emit(args, existing.to_dict() | {"existing": True},
+          f"existing {existing.id}  {existing.display_title()}")
+    return OK
   item = ops.add(
     state, args.title, item_id=args.id, size=args.size or "",
     trees=args.tree or [], findings=args.findings or "", status=args.status,
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
-    effort=args.effort, depends_on=args.depends_on, short_title=args.short_title,
+    effort=args.effort, depends_on=args.depends_on, short_title=args.short_title, key=args.key,
     id_floor=_id_floor(state), discovered_from=args.discovered_from,
   )
   text = f"added {item.id}  {item.display_title()}"
   if item.pass_key:
     text += f" (pass: {item.pass_key})"
-  _emit(args, item.to_dict(), text)
+  _emit(args, item.to_dict() | {"existing": False}, text)
   if item.unscored and item.status in (state.config.open_status, state.config.started_status):
     _write_err(args, (
       f"slicer: {item.id} is unscored (importance 2, urgency 2, no effort), so it ranks on "
@@ -2260,6 +2268,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--short-title", help="short title for the roadmap row")
   sp.add_argument("--discovered-from", help="existing item ID that discovered this work")
   sp.add_argument("--id", help="use this id instead of the next free one")
+  sp.add_argument("--key", help="case-sensitive filing identity; retries return the existing item")
   sp.add_argument("--size")
   sp.add_argument("--tree", action="append")
   sp.add_argument("--findings")

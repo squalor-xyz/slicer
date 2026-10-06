@@ -37,7 +37,7 @@ from slicer.errors import OutlineError
 
 # Keys an entry may carry. Anything else is an error naming this set, because
 # a silently ignored key is a roadmap item that quietly lost its size.
-KEYS = ("size", "tree", "trees", "findings", "status", "pass", "group", "depends", "discovered_from", "importance", "urgency", "effort")
+KEYS = ("key", "size", "tree", "trees", "findings", "status", "pass", "group", "depends", "discovered_from", "importance", "urgency", "effort")
 LIST_KEYS = ("tree", "trees", "depends")
 
 KEY_RE = re.compile(r"^(?P<key>[a-z][a-z_-]*)\s*:\s*(?P<value>.*)$")
@@ -64,6 +64,7 @@ class ItemSpec:
 
   title: str
   line: int = 0
+  key: str = ""
   size: str = ""
   trees: list[str] = field(default_factory=list)
   findings: str = ""
@@ -85,6 +86,7 @@ class ItemSpec:
   def to_dict(self) -> dict[str, object]:
     return {
       "title": self.title,
+      "key": self.key,
       "size": self.size,
       "trees": list(self.trees),
       "findings": self.findings,
@@ -227,6 +229,8 @@ def _assign(spec: ItemSpec, key: str, value: str, *, path: str, line: int) -> No
     return
   if not value:
     raise OutlineError(f"{path}:{line}: {key!r} has no value")
+  if key == "key" and spec.key:
+    raise OutlineError(f"{path}:{line}: key may appear only once per item")
   if key == "pass":
     spec.pass_key = value
   elif key in ("importance", "urgency", "effort"):

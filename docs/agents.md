@@ -164,7 +164,7 @@ Item `notes` remains a list of display strings. Additive `note_records` carries
 `{id, kind, text, created_at, attempt}` in that key order; `text` is the complete dated
 paragraph before adding the kind label. Historical strings retain their exact text,
 get stable item-local positional IDs, empty `created_at`, and null `attempt` on reads.
-The next index save persists those records under schema 5. New notes use stored UUIDs,
+The next index save persists those records under the current index schema (note records arrived in schema 4). New notes use stored UUIDs,
 UTC ISO8601 timestamps, and the item's current attempt count.
 
 Use `note ID --kind KIND --text TEXT` for a typed note; omitted kind is untyped.
@@ -175,6 +175,14 @@ items, and work with `--lean`, `--section`, and ready batches. Ready item payloa
 include `notes` and `note_records`; section-only show payloads add those fields and
 `slice_notes` when a filter is supplied. Lean output omits empty matches as usual.
 `next --notes-kind` without `--ready` returns `usage`.
+
+Filing identity is `fields.key`, a case-sensitive string (empty when absent).
+`add --key KEY` trims surrounding whitespace and rejects explicit blank input
+(`blank_key`). It returns the item plus `existing: false` on creation or
+`existing: true` for a retry, even if replacement payload fields differ or are
+invalid. Done and retired items reserve their keys. Retries leave state, IDs,
+history, slices and renders untouched, even with `--render --strict`.
+Keys belong to this checkout; no cross-branch or machine synchronization occurs.
 
 Two shapes recur. An **item** is the object above minus `path` and `effective_score`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
@@ -210,7 +218,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `id-prefix` | with no argument, `{"prefix": "S"}`; with `NEW`, `{from, to, changed, next_id}`, plus `dry_run: true` under `--dry-run`. A prefix that is not the current one in another case is `usage`, and nothing is written |
 | `add`, `set`, `start`, `done`, `park`, `unpark`, `release`, `handoff`, `reject` | the item. `reject` needs `--note` (the verdict), refuses (`state`, nothing written) an item that is not in review or reviewing, and refuses (`usage`) a `--to` that is not a configured status or is a lifecycle role; it clears `claim` and logs one `reject` entry carrying the verdict. `handoff` sets `review_status`, clears `claim`, and refuses (`state`, nothing written) an item that is not started or in review, or has no slice; one already in review with no claim is a no-op. `start` on a review item (or a reviewing one whose claim was released) sets `reviewing_status` instead of started, so `next` never returns it. `start` claims an unclaimed item (`claim.owner` and `claim.at`) and writes a non-blocking stderr warning when another branch or worktree name refers to the id (the current checkout does not count). The exit code is unchanged. `next`, including `next --start`, does not warn; `next --start` does claim. `release` clears `claim` and leaves status. `done` clears `claim`. `done --render --check` and `handoff --render --check` run `slicer check` after the change lands. Stdout stays the item. A failing check exits 1 and writes the findings to stderr, ending with "slicer: VERB landed, but check failed; run slicer check for the report". `--check` without `--render` is `usage` and writes nothing. `add` of an open or started item left at importance 2, urgency 2 and no effort writes a non-blocking stderr hint to score it; the payload and exit code are unchanged. `add` takes its id above any sibling git worktree's `next_id`, so two worktrees do not file different items under one id; an explicit `--id` is unchanged |
 | `promote` | the slice (`--file`/`--stdin` fills its sections from a one-item outline) |
-| `import` | `{items, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems, preamble}`. `warnings` names open or started items left unscored (importance 2, urgency 2, no effort). `preamble` is the leading prose, or null when the outline has none. Ids start above any sibling git worktree's `next_id`, in `--dry-run` and in the real run alike |
+| `import` | `{items, created, reused, entries, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems, preamble}`. `entries` contains `{title, id, existing}` for each requested title in input order; `ids` covers all entries and `items` is the input count. `created` and `reused` count new and reused records; `promoted` counts new slice files, `by_status` counts mapped records at their actual status, and `depends_edges` counts new edges only. An all-existing import writes nothing and bypasses optional rendering. `warnings` names new open or started items left unscored (importance 2, urgency 2, no effort). `preamble` is the leading prose, or null when the outline has none. Ids start above any sibling git worktree's `next_id`, in `--dry-run` and in the real run alike |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |
 | `remove` | retire: the item plus `mode: "retire"`; purge: `{id, mode, id_freed, reason, file_removed}`; `--dry-run`: `{id, mode, dry_run, blockers, file, id_freed, reason}` and nothing is written |
 | `move` | `{id, position}` |
@@ -372,7 +380,7 @@ filters by exact source and combines with other filters; an unknown ID is
 writing the batch. Provenance neither blocks pickup nor changes scores.
 Missing historical fields load empty; `--lean` omits empty provenance. Source
 retirement keeps references valid; purge needs `--force` when referenced and
-then integrity validation reports the dangling source. Index saves stamp schema 5
+then integrity validation reports the dangling source. Index saves stamp schema 6 (provenance arrived in 5)
 so older readers refuse rather than lose provenance.
 
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
