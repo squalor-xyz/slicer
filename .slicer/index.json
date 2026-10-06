@@ -5814,7 +5814,7 @@
       "id": "s213",
       "title": "Claim and resume work in a custom status queue",
       "short_title": "Claim and resume work in a custom status queue",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [],
