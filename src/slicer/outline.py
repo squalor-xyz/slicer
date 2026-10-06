@@ -17,7 +17,8 @@ The shape:
     ## Parse the config file        an item; the heading is its title
     size: M                         key lines, directly under the heading
     tree: core, cli
-    depends: Some other title
+    depends: Some other title       a title containing commas is one value;
+                                    otherwise commas separate several
 
     A paragraph before the first `###` becomes the slice's lead.
 
@@ -72,6 +73,8 @@ class ItemSpec:
   status: str = ""
   pass_key: str = ""
   group: str = ""
+  # One raw value per `depends:` line, in declared order and not yet split on
+  # commas; `ops` resolves them against the known titles.
   depends: list[str] = field(default_factory=list)
   importance: int = 2
   urgency: int = 2
@@ -99,7 +102,7 @@ class ItemSpec:
     }
 
 
-def _split_list(value: str) -> list[str]:
+def split_list(value: str) -> list[str]:
   return [part.strip() for part in value.split(",") if part.strip()]
 
 
@@ -220,12 +223,15 @@ def parse(text: str, *, path: str = "<outline>") -> ParsedOutline:
 
 
 def _assign(spec: ItemSpec, key: str, value: str, *, path: str, line: int) -> None:
+  if key == "depends":
+    # Kept whole: only `ops.apply_outline` knows the titles that let a comma
+    # inside one title be told from a comma between two. An empty or all-comma
+    # line names nothing, as it always did.
+    if split_list(value):
+      spec.depends.append(value)
+    return
   if key in LIST_KEYS:
-    values = _split_list(value)
-    if key == "depends":
-      spec.depends.extend(values)
-    else:
-      spec.trees.extend(values)
+    spec.trees.extend(split_list(value))
     return
   if not value:
     raise OutlineError(f"{path}:{line}: {key!r} has no value")

@@ -1503,6 +1503,9 @@ class OutlineReport:
   warnings: list[str] = field(default_factory=list)
   problems: list[str] = field(default_factory=list)
   preamble: str | None = None
+  # Resolved dependency titles per new spec (keyed by `id(spec)`), so applying
+  # saves exactly the edges the census counted. Not part of the JSON report.
+  depends: dict[int, list[str]] = field(default_factory=dict, repr=False)
 
   def to_dict(self) -> dict[str, object]:
     return {
@@ -1526,6 +1529,23 @@ def _allocate_outline_ids(index: Index, count: int, floor: int = 0) -> list[str]
   return [ids.allocate(index, floor=floor) for _ in range(count)]
 
 
+def _resolve_outline_depends(raw: list[str], known: set[str]) -> tuple[list[str], list[str]]:
+  """Turn raw `depends:` values into titles, plus the references that match none.
+
+  A whole value that is a known title wins, so a title may contain commas.
+  Any other value is split on commas, as it always was, and each piece must be
+  a known title. Order is declared order across lines; nothing is deduplicated.
+  """
+  titles: list[str] = []
+  unknown: list[str] = []
+  for value in raw:
+    value = value.strip()
+    pieces = [value] if value in known else outline.split_list(value)
+    for piece in pieces:
+      (titles if piece in known else unknown).append(piece)
+  return titles, unknown
+
+
 def outline_report(
   state: State, specs: list[object], *, force: bool = False, promote_all: bool = False,
   preamble: str | None = None, replace_preamble: bool = False, id_floor: int = 0,
@@ -1544,13 +1564,18 @@ def outline_report(
   report.created = len(new_specs)
   report.reused = len(specs) - report.created
   report.promoted = sum(1 for spec in new_specs if promote_all or spec.has_slice)
+  known = {s.title for s in specs} | {it.title for it in state.index.items}
+  known |= {it.display_title() for it in state.index.items}
+  unknown_deps: dict[int, list[str]] = {}
+  for spec in new_specs:
+    report.depends[id(spec)], unknown_deps[id(spec)] = _resolve_outline_depends(spec.depends, known)
   for spec in specs:
     item = reused[id(spec)]
     status = item.status if item is not None else spec.status or cfg.open_status
     report.by_status[status] = report.by_status.get(status, 0) + 1
     if item is not None:
       continue
-    report.depends_edges += len(spec.depends)
+    report.depends_edges += len(report.depends[id(spec)])
     for section in spec.sections:
       if section.heading not in cfg.sections:
         report.off_schema_sections[section.heading] = (
@@ -1580,8 +1605,6 @@ def outline_report(
           f"{title!r} already exists as {existing[title]}; pass --force to add it anyway"
         )
 
-  known = set(titles) | {it.title for it in state.index.items}
-  known |= {it.display_title() for it in state.index.items}
   for spec in new_specs:
     try:
       _reject_bad_text(title=spec.title, size=spec.size, findings=spec.findings,
@@ -1599,9 +1622,8 @@ def outline_report(
         f"{spec.title!r}: discovered_from unknown id {spec.discovered_from!r}; "
         "use an existing item ID"
       )
-    for dep in spec.depends:
-      if dep not in known:
-        problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
+    for dep in unknown_deps[id(spec)]:
+      problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
     heading = _boundary_in_both(spec.lead, spec.sections, cfg.boundary)
     if heading:
       problems.append(
@@ -1707,7 +1729,7 @@ def apply_outline(
       # would be wrong in exactly the case bulk loading is for.
       pass_key=spec.pass_key,
       group=spec.group,
-      depends_on=[by_title[d] for d in spec.depends],
+      depends_on=[by_title[d] for d in report.depends[id(spec)]],
       importance=spec.importance,
       urgency=spec.urgency,
       effort=spec.effort,

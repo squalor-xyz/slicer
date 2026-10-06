@@ -159,7 +159,21 @@ source in `Item.fields.discovered_from`. It is a single value, independent of
 writing anything. Sources cannot refer to items being created in that outline.
 
 **Dependencies resolve to ids.** `depends: Parse the config file` becomes
-`depends_on: ["S01"]`.
+`depends_on: ["S01"]`. Each `depends:` line is read whole first: if the entire value is
+the title of an item in the outline or already in the roadmap, it is that one dependency,
+so a title may contain commas. Otherwise the value is split on commas and each piece must
+be a title. When both readings exist, the whole title wins. Repeat the key to add more
+dependencies, in the order written:
+
+```markdown
+depends: Parse, then validate the config
+depends: Load defaults, Reject blank names
+```
+
+The first line is one dependency if an item has exactly that title; the second names two.
+A reference that matches no title refuses the whole file, and the dry run and the import
+count and save the same edges. `slicer promote` refuses a source that sets `depends:`, as
+it does every item-level key.
 
 **Passes are not inherited.** `slicer add` without `--pass` files a new item under the
 previous item's pass (`--pass ''` opts out); import does not, because an outline says where its own entries belong.

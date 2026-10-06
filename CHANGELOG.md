@@ -35,6 +35,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer setup-git` and the hint `slicer init` prints now give four `git config` lines: the two `slicer-generated` lines as before, plus `slicer-index` name and driver. `--json` is the same list with four strings. New projects get `index.json merge=slicer-index` in `.slicer/.gitattributes`; add that line to an existing project's file to use the driver.
 - `slicer verify` also warns, under the same sibling-worktree and `render_driver_check` gates, when the `slicer-index` driver is not configured in this clone. The git allowlist gains `config --get merge.slicer-index.driver` and `merge-file -p`, which writes nothing.
 
+### Fixed
+
+- An outline `depends:` line that names a title containing commas is one dependency. The whole value is matched against titles in the outline and the roadmap first; any other value is still split on commas. Repeat the key for several dependencies, in the order written. When a whole title and its comma-separated pieces both exist, the whole title wins. Unknown references still refuse the file, and a dry run counts the same edges the import saves. `slicer promote` still refuses a source that sets `depends:`.
+
 ## [1.3.0] - 2026-10-05
 
 ### Fixed
