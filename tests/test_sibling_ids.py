@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import ids, store
+from slicer import ids, store, vcs
 from slicer.cli import main
 
 OUTLINE = """\
@@ -190,6 +190,62 @@ class OnlyInSiblingTests(unittest.TestCase):
     made = repo._git("worktree", "add", "-q", "-b", name, str(root), "HEAD")
     self.assertEqual(made.returncode, 0, made.stderr)
     return root
+
+  def test_ListJson_NoEnvelopeFlag_StaysABareArray(self) -> None:
+    with self.repo() as repo:
+      before = json.loads(repo.run("list", "--json")[1])
+      _run(self.sibling(repo, "other"), "add", "sibling only")
+      code, out, err = repo.run("list", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertIsInstance(json.loads(out), list)
+      self.assertEqual(json.loads(out), before)
+
+  def test_ListJson_Envelope_ItemsAndOnlyInSibling(self) -> None:
+    with self.repo() as repo:
+      _run(self.sibling(repo, "other"), "add", "sibling only")
+      bare = json.loads(repo.run("list", "--json")[1])
+      siblings = json.loads(repo.run("status", "--json")[1])["only_in_sibling"]
+      with patch.object(vcs, "_worktree_paths", wraps=vcs._worktree_paths) as paths, patch.object(
+        store, "read_index", wraps=store.read_index,
+      ) as indexes:
+        code, out, err = repo.run("list", "--json", "--envelope")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out), {"items": bare, "only_in_sibling": siblings})
+      self.assertEqual(paths.call_count, 1)
+      self.assertEqual(indexes.call_count, 2)  # local state plus one sibling
+
+  def test_ListJson_Envelope_RespectsFiltersSortsAndLean(self) -> None:
+    with self.repo() as repo:
+      repo.run("set", "S01", "--tree", "core", "--pass", "v1", "--effort", "3")
+      repo.run("add", "two", "--tree", "cli", "--pass", "v2", "--effort", "1")
+      repo.run("set", "S02", "--status", "done")
+      self.sibling(repo, "other")
+      views = [(), ("--all",), ("--status", "done"), ("--tree", "core"),
+               ("--pass", "v1"), ("--sort", "score"), ("--sort", "effort"),
+               ("--all", "--tree", "cli", "--pass", "v2", "--sort", "effort"),
+               ("--tree", "missing")]
+      for flags in views:
+        for lean in [(), ("--lean",)]:
+          with self.subTest(flags=flags, lean=lean):
+            bare_code, bare, bare_err = repo.run("list", "--json", *flags, *lean)
+            self.assertEqual(bare_code, 0, bare_err)
+            code, out, err = repo.run("list", "--json", "--envelope", *flags, *lean)
+            self.assertEqual(code, 0, err)
+            self.assertEqual(json.loads(out), {"items": json.loads(bare), "only_in_sibling": []})
+      _run(repo.root / "siblings" / "other", "add", "sibling only")
+      code, out, err = repo.run("list", "--json", "--envelope", "--lean", "--tree", "missing")
+      self.assertEqual(code, 0, err)
+      siblings = json.loads(repo.run("status", "--json", "--lean")[1])["only_in_sibling"]
+      self.assertEqual(json.loads(out), {"items": [], "only_in_sibling": siblings})
+
+  def test_ListEnvelope_WithoutJson_IsUsage(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("list", "--envelope")
+      self.assertEqual(code, 2)
+      self.assertIn("--json", err)
+      with patch("slicer.cli._error_envelope") as error:
+        repo.run("list", "--envelope")
+      self.assertEqual(error.call_args.args[1].code, "usage")
 
   def test_List_OpenOnlyInSibling_NamesIt(self) -> None:
     with self.repo() as repo:

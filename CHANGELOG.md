@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer list --json --envelope` opts into `{items: [...], only_in_sibling: [...]}`. The default JSON array is unchanged. Filters, sorts and `--lean` apply to `items` as before; sibling-only rows match `status --json`. Both envelope keys remain present when empty, including under `--lean`. `--envelope` without `--json` exits 2 with code `usage`. Sibling worktrees are still enumerated and read only once.
+
 - `slicer feedback` keeps a local use-log at `.slicer/feedback.md`, separate from the roadmap: `--kind friction|bug|feature` with one of `--text`, `--file`, or `--stdin` appends a UTC-stamped entry (an optional `--item` is stored as written and not looked up). With no write flag it prints the log, or `--json` returns `{path, entries}`; `--out PATH` copies the exact bytes anywhere, refusing the log itself and a different existing file unless `--force`. It never writes `index.json`, `log.jsonl`, or `render/`, and takes the project lock for each mode. `init` and the first append add `feedback.md` to `.slicer/.gitignore` without running git or deleting an existing log; this repo's root `.gitignore` also lists it.
 
 - Opt-in current note packs on `show` and `next --ready`, including sections and batches: `--min-trust` selects a verification tier and `--notes-budget` limits whole display notes by Unicode character count. Packs exclude expired notes, rank by trust then recency, skip oversized notes, and return a `note_pack` manifest even under lean. Batch budgets are independent per item; ordinary and kind-only reads retain complete audit notes. Packing is read-only and generated documents remain clock-independent.

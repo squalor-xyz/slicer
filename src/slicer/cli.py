@@ -77,11 +77,21 @@ def _rest_flag(parser: argparse.ArgumentParser, *, suppress: bool = False) -> No
   )
 
 
-def _emit(args: argparse.Namespace, payload: object, text: str) -> None:
+def _emit(
+  args: argparse.Namespace, payload: object, text: str, *, keep_empty: tuple[str, ...] = (),
+) -> None:
   if getattr(args, "json", False):
     if getattr(args, "lean", False):
       compact = (",", ":")
-      _write_out(args, json.dumps(model.lean(payload), ensure_ascii=False, separators=compact))
+      shaped = model.lean(payload)
+      if keep_empty and isinstance(payload, dict) and isinstance(shaped, dict):
+        # Lean drops empty lists. These keys are part of the shape even then.
+        shaped = {
+          key: shaped.get(key, value)
+          for key, value in payload.items()
+          if key in shaped or key in keep_empty
+        }
+      _write_out(args, json.dumps(shaped, ensure_ascii=False, separators=compact))
     else:
       _write_out(args, json.dumps(payload, ensure_ascii=False, indent=2))
   elif text:
@@ -1290,6 +1300,8 @@ def _list_status_view(args: argparse.Namespace, cfg: Config) -> set[str] | None:
 
 
 def cmd_list(args: argparse.Namespace) -> int:
+  if args.envelope and not args.json:
+    raise StateError("--envelope requires --json; use list --json --envelope", code="usage")
   state = _state(args)
   view = _list_status_view(args, state.config)
   if args.all and args.status:
@@ -1350,11 +1362,15 @@ def cmd_list(args: argparse.Namespace) -> int:
   if hidden_count:
     noun = "item" if hidden_count == 1 else "items"
     lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
-  # Text only: `list --json` is a bare array of items, so sibling-only rows are in `status`.
   lines.extend(_sibling_only_lines(only_sibling))
-  _emit(args, [
+  rows = [
     i.to_dict() | {"in_work_elsewhere": elsewhere.get(i.id, [])} for i in items
-  ], "\n".join(lines))
+  ]
+  if args.envelope:
+    _emit(args, {"items": rows, "only_in_sibling": only_sibling}, "\n".join(lines),
+          keep_empty=("items", "only_in_sibling"))
+  else:
+    _emit(args, rows, "\n".join(lines))
   return OK
 
 
@@ -2506,6 +2522,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
 
   sp = add("list", cmd_list, "list by readiness, pass and score; empty passes merge by score; omit done and retired unless asked")
+  sp.add_argument("--envelope", action="store_true",
+                  help="with --json, wrap items and sibling-only rows in an object")
   sp.add_argument("--all", action="store_true",
                   help="include done and retired items (default: omit them)")
   sp.add_argument("--status", action="append",
