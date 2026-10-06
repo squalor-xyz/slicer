@@ -5771,7 +5771,7 @@
       "id": "s212",
       "title": "Find items by exact title",
       "short_title": "Find items by exact title",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
