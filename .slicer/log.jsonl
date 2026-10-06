@@ -1056,3 +1056,8 @@
 {"when": "2026-10-06T19:04:51Z", "item": "s222", "action": "note", "from": "", "to": "", "note": "Ready for review: added read-only current note packs to show", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:04:51Z", "item": "s222", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:05:19Z", "item": "s222", "action": "status", "from": "review", "to": "done", "note": "Packed current trusted notes on show and next --ready. Verified by the note-pack tests, full unittest discovery (1401 tests, 1 skipped), slicer check, and git diff --check.", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:15:31Z", "item": "s229", "action": "add", "from": "", "to": "open", "note": "Show a sibling handoff as review in list and the TUI"}
+{"when": "2026-10-06T19:15:31Z", "item": "s229", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-06T19:15:37Z", "item": "s229", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:15:37Z", "item": "s229", "action": "note", "from": "", "to": "", "note": "Ready for review: list, find, deps, and the TUI show this ch", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:15:37Z", "item": "s229", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -72,6 +72,13 @@ last only for this session. `J/K` reorder down/up, `T` moves to the top and `M` 
 a numbered position; reordering requires clearing all restrictions with `c`. Filtering
 itself preserves queue order.
 
+An item stored as open whose sibling reports the configured review key appears in
+both open and review status filters, including the review preset. The unfinished
+preset also keeps it; the in-work preset does not gain it. The queue and detail pane
+show this checkout's review label and review styling, and status sorting uses that
+visible label. Sibling data is refreshed with the view, only at the Git worktree root.
+Browsing writes no tracking state; lifecycle actions continue to use stored status.
+
 ## Display and color
 
 Queue and Details headings mark the focused pane with `>`. Focused selections use

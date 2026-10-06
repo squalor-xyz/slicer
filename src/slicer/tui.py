@@ -194,7 +194,10 @@ SORT_FIELDS = (
 )
 
 
-def sort_items(state: State, items: list, field: str, descending: bool) -> list:
+def sort_items(
+  state: State, items: list, field: str, descending: bool,
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
+) -> list:
   """Order a visible subset. Blanks stay last. Ties keep stored queue order."""
   if field == "ranked":
     return graph.ranked_order(state.index, state.config, items, descending=descending)
@@ -207,7 +210,9 @@ def sort_items(state: State, items: list, field: str, descending: bool) -> list:
     if field == "title":
       return item.display_title()
     if field == "status":
-      return state.config.status_label(item.status)
+      return state.config.status_label(store.displayed_status(
+        state.config, item, (elsewhere or {}).get(item.id, []),
+      ))
     if field == "size":
       return item.size
     if field == "importance":
@@ -234,23 +239,30 @@ def sort_items(state: State, items: list, field: str, descending: bool) -> list:
   return sorted(items, key=key)
 
 
-def item_rows(state: State, items: list) -> list[Row]:
+def item_rows(
+  state: State, items: list,
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
+) -> list[Row]:
   """Queue rows in the given order. The number is the position in that view."""
   cfg = state.config
+  elsewhere = elsewhere or {}
   # At least the historical 7, wider for the longest visible label (`reviewing`).
-  status_w = max([7, *(len(cfg.status_label(item.status)) for item in items)])
+  status_w = max([7, *(len(cfg.status_label(store.displayed_status(
+    cfg, item, elsewhere.get(item.id, []),
+  ))) for item in items)])
   out: list[Row] = []
   for n, item in enumerate(items, 1):
     pending = graph.blocked_by(state.index, item, cfg.satisfying_statuses())
     marker = "!" if pending else " "
-    label = cfg.status_label(item.status)
+    status = store.displayed_status(cfg, item, elsewhere.get(item.id, []))
+    label = cfg.status_label(status)
     prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} {item.size:<2} "
     out.append(
       Row(
         kind=ITEM,
         target=item.id,
         text=f"{prefix}P:{item.score} {item.display_title()}",
-        status=item.status,
+        status=status,
         blocked=bool(pending),
         priority_at=len(prefix),
         high_priority=item.importance == 3 or item.urgency == 3,
@@ -300,7 +312,10 @@ def entries(state: State, target: str) -> list[Entry]:
   return out
 
 
-def panel(state: State, target: str) -> list[PanelLine]:
+def panel(
+  state: State, target: str,
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
+) -> list[PanelLine]:
   """The detail pane: plain context lines, plus lines tagged with their entry."""
   if target in prose.refs(state.index):
     out = [PanelLine(target, role="heading"), PanelLine("")]
@@ -311,11 +326,12 @@ def panel(state: State, target: str) -> list[PanelLine]:
   item = state.index.get(target)
   if item is None:
     return [PanelLine("(no such item)")]
+  status = store.displayed_status(state.config, item, (elsewhere or {}).get(item.id, []))
   out = [
     PanelLine(f"{item.id}  {item.title}", role="heading"),
     PanelLine(""),
-    PanelLine(f"status     {state.config.status_label(item.status)}",
-              role=tui_style.status_role(item.status, bool(graph.blocked_by(
+    PanelLine(f"status     {state.config.status_label(status)}",
+              role=tui_style.status_role(status, bool(graph.blocked_by(
                 state.index, item, state.config.satisfying_statuses())), state.config)),
     PanelLine(f"{'claim':<11}{item.claim_owner or '-'}"),
   ]
@@ -530,14 +546,14 @@ class Filters:
   def active(self) -> bool:
     return bool(self.query or any(self.values.values()))
 
-  def matches(self, item) -> bool:
+  def matches(self, item, displayed_status: str | None = None) -> bool:
     needle = self.query.casefold()
     if needle and not any(needle in text.casefold() for text in (
       item.id, item.title, item.short_title
     )):
       return False
     candidates = {
-      "status": {item.status}, "tree": set(item.trees) or {""},
+      "status": {item.status, displayed_status or item.status}, "tree": set(item.trees) or {""},
       "pass": {item.pass_key}, "importance": {str(item.importance)},
       "urgency": {str(item.urgency)},
       "flag": set(item.flags) or {""},
@@ -555,10 +571,14 @@ class Filters:
 
 def filtered_rows(
   state: State, filters: Filters, sort_field: str = "ranked", descending: bool = True,
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
 ) -> list[Row]:
-  visible = [it for it in state.index.items if filters.matches(it)]
-  ordered = sort_items(state, visible, sort_field, descending)
-  out = item_rows(state, ordered)
+  elsewhere = elsewhere or {}
+  visible = [it for it in state.index.items if filters.matches(
+    it, store.displayed_status(state.config, it, elsewhere.get(it.id, [])),
+  )]
+  ordered = sort_items(state, visible, sort_field, descending, elsewhere)
+  out = item_rows(state, ordered, elsewhere)
   refs = prose.refs(state.index)
   if refs:
     out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
@@ -611,6 +631,7 @@ class View:
   sort_desc: bool = True
   sort_draft_desc: bool = True
   listing: list[Row] = field(default_factory=list)
+  elsewhere: dict[str, list[dict[str, str]]] = field(default_factory=dict)
   selected: tuple[str, str] | None = None
   entry_at: int = 0
   focus: str = "left"
@@ -642,7 +663,8 @@ class View:
     return self.selected[1] if self.selected else ""
 
   def refresh(self, state: State) -> None:
-    listing = filtered_rows(state, self.filters, self.sort_field, self.sort_desc)
+    self.elsewhere = store.in_work_elsewhere(state.root, state.index)
+    listing = filtered_rows(state, self.filters, self.sort_field, self.sort_desc, self.elsewhere)
     selected = reconcile_selection(self.listing, listing, self.selected)
     if selected != self.selected:
       self.entry_at = 0
@@ -1094,7 +1116,7 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
         x = 2 + tui_style.cell_width(tui_style.clipped(row.text[:row.priority_at], left_width))
         put(n, x, row.text[row.priority_at:row.priority_at + 4],
             palette.attr("priority", selected=selected, focused=view.focus == "left"), left_width - x)
-    lines = panel(state, view.target) if view.selected else []
+    lines = panel(state, view.target, view.elsewhere) if view.selected else []
     first = next((n for n, line in enumerate(lines) if line.entry == view.entry_at), 0)
     top = max(0, first - 2) if view.focus == "right" else 0
     for n, line in enumerate(lines[top:top + visible], 1):
