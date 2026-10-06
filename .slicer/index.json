@@ -5893,7 +5893,7 @@
       "id": "s216",
       "title": "Filter history by timezone-aware timestamp windows",
       "short_title": "Filter history by timezone-aware timestamp windows",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
