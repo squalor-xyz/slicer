@@ -5863,7 +5863,7 @@
       "id": "s215",
       "title": "Cap new implementation pickups while allowing resume",
       "short_title": "Cap new implementation pickups while allowing resume",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s214"
