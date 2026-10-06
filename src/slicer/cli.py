@@ -829,6 +829,11 @@ def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.Ba
   if elsewhere:
     payload["in_work_elsewhere"] = elsewhere
     lines.extend(_elsewhere_lines(result))
+  if result.claimed_elsewhere:
+    payload["claimed_elsewhere"] = result.claimed_elsewhere
+    lines.extend(
+      f"skipped {entry['id']} (claimed by {entry['owner']})" for entry in result.claimed_elsewhere
+    )
 
 
 def _sections_named(
@@ -996,21 +1001,30 @@ def cmd_next(args: argparse.Namespace) -> int:
     raise StateError("--batch cannot be combined with --show or -n", code="usage")
   if args.batch is not None and args.status is not None:
     raise StateError("--batch cannot be combined with --status", code="usage")
-  if args.start and args.max_attempts is not None:
+  if args.start_to is not None and not (args.start and args.status is not None):
+    raise StateError("--start-to on next requires --start and --status", code="usage")
+  if args.start and (args.max_attempts is not None or args.status is not None):
     root = store.discover(Path(args.root) if args.root else None)
     with store.project_lock(root):
-      return _select_next(args)
-  return _select_next(args)
+      return _select_next(args, locked=True)
+  return _select_next(args, locked=False)
 
 
-def _select_next(args: argparse.Namespace) -> int:
-  """Load and select under the writer lock for capped atomic pickups."""
+def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
+  """Load and select under the writer lock for capped and queue pickups.
+
+  `locked` says the caller already holds the writer lock, so the state read
+  here is the state the pickup writes against.
+  """
   state = _state(args)
-  review = args.status is not None
-  if review and (not state.config.review_status or args.status != state.config.review_status):
-    supported = (f"only {state.config.review_status!r}, the review status, is supported"
-                 if state.config.review_status else "this project declares no review status")
-    raise StateError(f"next --status {args.status!r}: {supported}", code="usage")
+  cfg = state.config
+  review = bool(cfg.review_status) and args.status == cfg.review_status
+  queue = args.status if args.status is not None and not review else None
+  if queue is not None:
+    ops.custom_queue(cfg, queue)
+  if args.start_to is not None and queue is None:
+    raise StateError("--start-to on next requires a custom --status, not the review status",
+                     code="usage")
   elsewhere = store.in_work_elsewhere(state.root, state.index)
   if args.batch is not None:
     return _cmd_next_batch(args, state, elsewhere)
@@ -1018,12 +1032,14 @@ def _select_next(args: argparse.Namespace) -> int:
   result = ops.next_item(
     state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
+    queue=queue, owner=args.owner, start_to=args.start_to,
   )
   if result.item is None:
     payload = {"item": None, "blocked": _blocked_payload(result.blocked)}
     parts = [f"blocked {i} waits on {', '.join(b)}" for i, b in result.blocked]
     _note_skips(payload, parts, result)
-    text = "\n".join(parts) if parts else ("nothing in review" if review else "nothing unmarked")
+    empty = f"nothing in {queue}" if queue else "nothing in review" if review else "nothing unmarked"
+    text = "\n".join(parts) if parts else empty
     if offset:
       text = f"no eligible item at offset {offset}" + (f"\n{text}" if parts else "")
     _emit(args, payload, text)
@@ -1031,8 +1047,11 @@ def _select_next(args: argparse.Namespace) -> int:
   item = result.item
   _reject_unknown_sections(args, state, [item])
   if args.start:
-    with (nullcontext() if args.max_attempts is not None else store.project_lock(state.root)):
-      item = ops.start(state, item.id, owner=args.owner)
+    with (nullcontext() if locked else store.project_lock(state.root)):
+      if queue is not None:
+        item = ops.claim_in_queue(state, item.id, queue=queue, owner=args.owner, to=args.start_to)
+      else:
+        item = ops.start(state, item.id, owner=args.owner)
   if args.ready:
     _emit_ready(args, state, item, result)
     return OK
@@ -2359,7 +2378,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--section", action="append",
                   help="with --ready, return only this section (repeatable)")
   sp.add_argument("--owner", help="with --start, who to claim as (overrides SLICER_CLAIM_OWNER and claim_owner)")
-  sp.add_argument("--status", help="draw from this queue instead; only the review status is supported")
+  sp.add_argument("--status", help="draw from this queue instead: the review status or a custom status")
+  sp.add_argument("--start-to", metavar="KEY",
+                  help="with --start and a custom --status, move the claimed item to this status")
   sp.add_argument("--path", action="store_true",
                   help="also print the slice file path (text only; JSON is unchanged)")
 

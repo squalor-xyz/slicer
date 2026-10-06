@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Callable, Mapping
 
 from slicer import graph, ids, outline, prose, render, vcs
+from slicer.config import Config
 from slicer.errors import StateError
 from slicer.model import Index, Item, NoteRecord, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary, is_unscored
 from slicer.store import State
@@ -682,6 +683,74 @@ def start(state: State, item_id: str, *, note: str = "", owner: str | None = Non
   return start_many(state, [item_id], note=note, owner=owner)[0]
 
 
+def _lifecycle_roles(cfg: Config) -> set[str]:
+  return {cfg.open_status, cfg.started_status, cfg.done_status, cfg.retired_status,
+          cfg.parked_status, cfg.review_status, cfg.reviewing_status} - {""}
+
+
+def custom_queue(cfg: Config, key: str) -> str:
+  """A status key `next --status` may draw from: configured, and no lifecycle role."""
+  allowed = sorted(set(cfg.statuses) - _lifecycle_roles(cfg))
+  if key not in allowed:
+    choices = sorted([*allowed, *([cfg.review_status] if cfg.review_status else [])])
+    raise StateError(f"next --status {key!r}: choose one of {choices}", code="usage")
+  return key
+
+
+def check_start_to(cfg: Config, to: str | None) -> None:
+  """A claim may move to any configured status except a finished, parked or review one."""
+  if to is None:
+    return
+  barred = {cfg.done_status, cfg.retired_status, cfg.parked_status,
+            cfg.review_status, cfg.reviewing_status} - {""}
+  if to not in cfg.statuses or to in barred:
+    allowed = sorted(set(cfg.statuses) - barred)
+    raise StateError(f"cannot start to {to!r}; choose one of {allowed}", code="usage")
+
+
+def claim_in_queue(
+  state: State, item_id: str, *, queue: str, owner: str | None = None,
+  to: str | None = None, note: str = "",
+) -> Item:
+  """Claim an item of a custom queue in place, or move it to `to` as well.
+
+  A claim alone leaves the status and the attempt count as they are. Moving to
+  the started role begins one implementation attempt. Resuming an item the
+  actor already holds writes nothing. Every check runs before anything is
+  changed, so a refusal leaves the state as it was.
+  """
+  cfg = state.config
+  custom_queue(cfg, queue)
+  check_start_to(cfg, to)
+  item = state.index.require(item_id)
+  by = actor(state, owner)
+  if item.status != queue:
+    raise StateError(
+      f"{item.id} is {cfg.status_label(item.status)!r}, not in {queue!r}", code="state")
+  if item.claim_owner and item.claim_owner != by:
+    raise StateError(f"{item.id} is claimed by {item.claim_owner}", code="state")
+  previous = item.status
+  status = to if to is not None else previous
+  status_changed = status != previous
+  claim_changed = not item.claim_owner
+  if not status_changed and not claim_changed:
+    return item
+  if claim_changed:
+    item.claim_owner = by
+    item.claim_at = _now()
+  if _fresh_implementation_start(state, previous, status):
+    item.attempts += 1
+  if status_changed:
+    item.status = status
+    _relocate_slice(state, item.id)
+  state.save_index()
+  if status_changed:
+    _record(state, item.id, "status", frm=previous, to=status, note=note, by=by)
+  else:
+    _record(state, item.id, "claim", to=by, note=note, by=by)
+  return item
+
+
 def release_many(state: State, item_ids: list[str], *, owner: str | None = None) -> list[Item]:
   """Drop claims without changing status. An item with no claim is left alone."""
   items = _batch_items(state, item_ids)
@@ -834,6 +903,8 @@ class NextResult:
   # Eligible items skipped because a sibling worktree has them in work.
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
+  # Custom-queue items skipped because another owner holds the claim.
+  claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -845,6 +916,8 @@ class BatchResult:
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
+  # Custom-queue items skipped because another owner holds the claim.
+  claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -854,6 +927,8 @@ class _NextPool:
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
+  # Custom-queue items skipped because another owner holds the claim.
+  claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
 
 
 def _ranked_pool(
@@ -866,6 +941,9 @@ def _ranked_pool(
   include_blocked: bool = False,
   max_attempts: int | None = None,
   flags: list[str] | None = None, no_flags: list[str] | None = None,
+  queue: str | None = None,
+  holder: str = "",
+  cap_queue: bool = False,
 ) -> _NextPool:
   """Open or started work in next's order, after tree, size, and skip rules.
 
@@ -884,6 +962,12 @@ def _ranked_pool(
   `max_attempts` excludes fresh implementation attempts at the limit, but
   keeps started resumes and review claims. Capped rows are reported even
   when blocked, and never enter the batch dependency plan.
+
+  With `queue`, the pool is that custom status instead. Items claimed by
+  `holder` come first, then unclaimed ones, each by effective score. An item
+  another owner claimed is skipped and reported as claimed elsewhere. The
+  attempt cap applies there only when `cap_queue` says the pickup will start
+  an implementation attempt.
   """
   if max_attempts is not None and (isinstance(max_attempts, bool)
       or not isinstance(max_attempts, int) or max_attempts < 1):
@@ -895,7 +979,9 @@ def _ranked_pool(
   # A whitelist, so parked, done, retired and any project-specific status stay
   # out. An empty started_status means the project has no start state, and the
   # set is just the open one.
-  if review:
+  if queue is not None:
+    active = {queue}
+  elif review:
     active = {cfg.review_status, cfg.reviewing_status} - {""}
   else:
     active = {cfg.open_status}
@@ -905,6 +991,7 @@ def _ranked_pool(
   unspecified: list[tuple[str, list[str]]] = []
   skipped: list[tuple[str, list[dict[str, str]]]] = []
   capped: list[dict[str, int | str]] = []
+  claimed_elsewhere: list[dict[str, str]] = []
   started: list[Item] = []
   candidates: list[Item] = []
   for item in state.index.items:
@@ -924,11 +1011,15 @@ def _ranked_pool(
     missing = _missing_spec(state, item)
     if missing:
       unspecified.append((item.id, missing))
-    at_cap = (max_attempts is not None and not review
+    cap_applies = cap_queue if queue is not None else not review
+    at_cap = (max_attempts is not None and cap_applies
               and item.status != cfg.started_status and item.attempts >= max_attempts)
     if at_cap:
       capped.append({"id": item.id, "attempts": item.attempts, "max_attempts": max_attempts})
     if at_cap or missing or (pending and not include_blocked):
+      continue
+    if queue is not None and item.claim_owner and item.claim_owner != holder:
+      claimed_elsewhere.append({"id": item.id, "owner": item.claim_owner})
       continue
     local = bool(item.claim_owner) or item.status in cfg.in_work()
     if elsewhere and item.id in elsewhere and not local:
@@ -937,13 +1028,14 @@ def _ranked_pool(
       if not pending:
         skipped.append((item.id, elsewhere[item.id]))
       continue
-    (started if item.status in cfg.in_work() else candidates).append(item)
+    mine = bool(item.claim_owner) if queue is not None else item.status in cfg.in_work()
+    (started if mine else candidates).append(item)
   eff = graph.effective_scores(state.index)
   ranked = (sorted(started, key=lambda it: -eff[it.id])
             + sorted(candidates, key=lambda it: -eff[it.id]))
   return _NextPool(
     items=ranked, blocked=blocked, unspecified=unspecified,
-    elsewhere=skipped, capped=capped,
+    elsewhere=skipped, capped=capped, claimed_elsewhere=claimed_elsewhere,
   )
 
 
@@ -953,6 +1045,8 @@ def next_item(
   *, review: bool = False, tree: str | None = None, size: str | None = None,
   max_attempts: int | None = None,
   flags: list[str] | None = None, no_flags: list[str] | None = None,
+  queue: str | None = None,
+  owner: str | None = None, start_to: str | None = None,
 ) -> NextResult:
   """The most critical startable item: highest effective score, unblocked.
 
@@ -972,12 +1066,23 @@ def next_item(
   done. Such an item is skipped and reported, unless this checkout has it
   started or claimed too: local work wins, as it does in `list`. The caller
   supplies the map, so this stays free of git.
+
+  `queue` names a custom status to draw from; see `_ranked_pool`. The holder is
+  `owner` or the usual actor, so a read-only call ranks the caller's own claims.
   """
   if offset < 0:
     raise StateError("next offset must be a nonnegative integer", code="usage")
+  holder = ""
+  cap_queue = False
+  if queue is not None:
+    custom_queue(state.config, queue)
+    check_start_to(state.config, start_to)
+    holder = actor(state, owner)
+    cap_queue = bool(start_to) and start_to == state.config.started_status
   pool = _ranked_pool(
     state, elsewhere, review=review, tree=tree, size=size, max_attempts=max_attempts,
     flags=flags, no_flags=no_flags,
+    queue=queue, holder=holder, cap_queue=cap_queue,
   )
   return NextResult(
     item=pool.items[offset] if offset < len(pool.items) else None,
@@ -985,6 +1090,7 @@ def next_item(
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
     capped=pool.capped,
+    claimed_elsewhere=pool.claimed_elsewhere,
   )
 
 

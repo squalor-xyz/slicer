@@ -165,7 +165,8 @@ Plain `next` offers only `open_status` and resumes `started_status`. Every other
 status — parked, review, reviewing, and any key you add, such as `draft` or
 `blocked` — stays out of that queue. A reviewer picks review work up with
 `next --status review`. A custom status is how you hold an item back; `exclude_flags`
-does not.
+does not. `next --status draft` draws from such a queue, and `--start` claims in place
+or, with `--start-to KEY`, moves the claimed item.
 
 ### Dependencies and integration
 
