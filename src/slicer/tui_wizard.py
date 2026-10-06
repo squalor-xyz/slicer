@@ -22,7 +22,7 @@ FIELDS = (
   ("Importance", "1, 2 or 3; default 2"),
   ("Urgency", "1, 2 or 3; default 2"),
   ("Group", "Optional group label"),
-  ("Depends", "Comma-separated exact titles; later draft items are allowed"),
+  ("Depends", "Exact title, or comma-separated titles; later draft items are allowed"),
   ("Effort", "1, 2 or 3; blank leaves it unset"),
 )
 DEFAULTS = ("", "", "", "", "2", "2", "", "", "")
@@ -64,7 +64,7 @@ class DraftItem:
       raise StateError("Effort must be 1, 2 or 3, or blank.")
     return ItemSpec(title=values[0], size=values[1], trees=csv(values[2]),
                     findings=values[3], importance=int(values[4]), urgency=int(values[5]),
-                    group=values[6], depends=csv(values[7]),
+                    group=values[6], depends=[values[7]] if csv(values[7]) else [],
                     effort=int(effort) if effort else None,
                     sections=[SectionSpec(s.heading, s.body) for s in self.sections])
 

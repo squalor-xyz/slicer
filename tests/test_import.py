@@ -245,6 +245,68 @@ class ImportRefusalTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
 
+  def test_Import_DependsOnCommaTitle_IsOneEdgeInDryRunAndApply(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## Later\ndepends: Parse, then validate\n## Parse, then validate\n")
+      code, out, err = repo.run("import", "r.md", "--dry-run", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["depends_edges"], 1)
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").depends_on, ["S02"])
+
+  def test_Import_DependsOnExistingCommaTitle_IsOneEdge(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Load, then check")
+      repo.write("r.md", "## New\ndepends: Load, then check\n")
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Import_DependsWithoutWholeMatch_StillSplitsOnCommas(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## C\ndepends: A,  B\n## A\n## B\n")
+      code, out, err = repo.run("import", "r.md", "--dry-run", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["depends_edges"], 2)
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").depends_on, ["S02", "S03"])
+
+  def test_Import_RepeatedDependsLines_CombineInDeclaredOrder(self) -> None:
+    with self.repo() as repo:
+      repo.write(
+        "r.md",
+        "## D\ndepends: B\ndepends: A, C\ndepends: Big, one\n"
+        "## A\n## B\n## C\n## Big, one\n",
+      )
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").depends_on, ["S03", "S02", "S04", "S05"])
+
+  def test_Import_WholeTitleAndItsPiecesBothExist_WholeTitleWins(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## D\ndepends: A, B\n## A\n## B\n## A, B\n")
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").depends_on, ["S04"])
+
+  def test_Import_WholeTitleMatchesDisplayTitle_IsOneEdge(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Load, then check")
+      repo.run("set", "S01", "--short-title", "Load, check")
+      repo.write("r.md", "## New\ndepends: Load, check\n")
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Import_UnknownDependsReferences_RefuseTheWholeFile(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## D\ndepends: A, Nope\ndepends: Also, missing\n## A\n")
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("import", "r.md")
+      self.assertEqual(code, 1)
+      self.assertIn("depends on 'Nope'", out)
+      self.assertIn("depends on 'Also'", out)
+      self.assertIn("depends on 'missing'", out)
+      self.assertNotIn("depends on 'A'", out)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
   def test_Import_UnparsableOutline_ExitsTwoWithoutWriting(self) -> None:
     with self.repo() as repo:
       repo.write("r.md", "## A thing\nnonsense: x\n")

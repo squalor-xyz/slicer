@@ -228,6 +228,19 @@ class OpsTests(unittest.TestCase):
       self.assertIn("set", err)
       self.assertFalse(repo.state().index.require("S05").has_slice)
 
+  def test_Promote_SourceWithDepends_RefusesAndWritesNothing(self) -> None:
+    for line in ("depends: S01", "depends: Some, comma title", "depends: A\ndepends: B"):
+      with self.subTest(line=line), self.repo() as repo:
+        repo.run("add", "a new idea")
+        repo.write("draft.md", f"## a new idea\n{line}\n\n### Why\nBecause.\n")
+        before = repo.read(".slicer/index.json")
+        code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+        self.assertEqual(code, 2)
+        self.assertIn("cannot set 'depends'", err)
+        self.assertEqual(repo.read(".slicer/index.json"), before)
+        self.assertEqual(repo.state().index.require("S05").depends_on, [])
+        self.assertFalse(repo.state().index.require("S05").has_slice)
+
   def test_Promote_SourceWithTwoItems_Refuses(self) -> None:
     with self.repo() as repo:
       repo.run("add", "a new idea")

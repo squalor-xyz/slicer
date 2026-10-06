@@ -535,7 +535,9 @@ SKELETON_HEAD = """\
     status:   {statuses}
     pass:     a group key, if the project uses passes
     group:    a phase label rendered above the item
-    depends:  the title of another item, here or already in the roadmap
+    depends:  the title of another item, here or already in the roadmap; a title
+              containing commas is matched whole, otherwise commas separate
+              several titles, and repeated lines add more
     importance: 1, 2 or 3; how important (default 2)
     urgency:    1, 2 or 3; how urgent (default 2)
     effort:     1, 2 or 3; optional, omit to leave unset

@@ -91,6 +91,12 @@ class OutlineParseTests(unittest.TestCase):
     self.assertEqual(specs[0].size, "M")
     self.assertEqual(specs[0].lead, ["Note that this line has: a colon in it."])
 
+  def test_Parse_DependsLines_KeepRawValuesInDeclaredOrder(self) -> None:
+    specs = self.parse(
+      "## T\ndepends: Parse, then validate\ndepends: A, B\ndepends:\ndepends: ,\n"
+    )
+    self.assertEqual(specs[0].depends, ["Parse, then validate", "A, B"])
+
 
 class OutlineRefusalTests(unittest.TestCase):
   def assertRefuses(self, text: str, fragment: str) -> None:

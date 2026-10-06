@@ -6111,10 +6111,22 @@
       "id": "s219",
       "title": "Resolve whole dependency titles before splitting outline commas",
       "short_title": "Resolve whole dependency titles before splitting outline commas",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "fe2714ed-4f49-4d6d-bb6b-14bce72c7b96",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: outline.parse keeps each depends: line raw; ops._resolve_outline_depends resolves once in outline_report (whole known title first, else comma split), and apply_outline saves those same edges, so import, dry-run and the wizard agree. Promote still refuses any depends line. Replayed onto main at 2ca7282. Full suite 1357 OK (1 skipped), slicer check ok, git diff --check clean.",
+          "created_at": "2026-10-06T18:07:07Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -6132,7 +6144,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

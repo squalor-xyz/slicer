@@ -180,6 +180,20 @@ class WizardPersistenceTests(unittest.TestCase):
     self.assertEqual({k: v.to_dict() for k, v in state.slices.items()},
                      {k: v.to_dict() for k, v in expected.slices.items()})
 
+  def test_Wizard_DependsOnCommaTitle_SavesOneEdge(self):
+    repo = self.repo()
+    state = repo.state()
+    wizard = tui_wizard.Wizard(list(state.config.sections))
+    answer(wizard, "")
+    fill_item(wizard, "First", "Second, then third")
+    wizard.handle("y")
+    fill_item(wizard, "Second, then third")
+    view = tui.View.initial(state)
+    view.wizard, view.mode = wizard, "wizard"
+    save(view, state)
+    self.assertIsNone(view.wizard)
+    self.assertEqual(state.index.require("S01").depends_on, ["S02"])
+
   def test_Wizard_CancelAfterEditor_WritesNothing(self):
     repo = self.repo()
     state = repo.state()
