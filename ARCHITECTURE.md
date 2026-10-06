@@ -51,7 +51,7 @@ Config schema is `4` (`src/slicer/config.py`), protecting the optional
 `satisfies_dependencies` policy; schema 3 added `handoff_requires_note_kind` and schema 2
 the `note_kinds` whitelist. Older configs still load with the historical defaults
 (no report requirement, `done_status` alone satisfying dependencies); config saves
-stamp 4. Index schema is `6`
+stamp 4. Index schema is `7`
 (`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
 Schema 5 adds optional `fields.discovered_from`, an existing item ID independent
 of dependency and priority edges. Missing fields load empty without writes;
@@ -60,12 +60,19 @@ while retirement keeps them valid. Older item-note strings lift without writes
 into stable item-local positional IDs,
 with their exact text, empty creation time, and null attempt. New records store UUIDs,
 UTC creation time, and the current implementation attempt. The next index save stamps
-6 and persists records; older readers refuse that schema rather than dropping metadata.
+7 and persists records; older readers refuse that schema rather than dropping metadata.
 Schema 6 protects the case-sensitive filing identity in `Item.fields.key`.
 Missing historical keys load as empty without writes; nonempty keys are unique
 across all statuses. Key lookup runs under the writer lock. Add retries and
 all-existing imports bypass persistence, history and optional rendering, including
 strict rendering; mixed imports allocate only new entries.
+Schema 7 protects note authorship (`by`), verification (`verified_by`, `verified_at`),
+and optional UTC expiry (`stale_after`). Missing metadata loads empty. Trust is
+computed from the verifier, never stored: unverified, machine-confirmed, or
+human-reviewed for the reserved `human:` verifier prefix. Only explicit owner
+attestation creates that prefix; it is a workflow convention, not authentication.
+An actual text edit clears verification and logs the previous verifier and time.
+Rendering projects stored metadata without consulting the clock.
 Public item serialization keeps `notes` as display strings alongside `note_records`;
 index persistence uses a separate serialization without the derived strings.
 Legacy slice notes remain strings. `tests/test_schema.py` and `tests/test_note.py`

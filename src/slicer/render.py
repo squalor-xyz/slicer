@@ -482,7 +482,7 @@ def plan(state) -> dict[str, bytes]:
     # render.write joins this onto the render root and mkdirs, so a bad id
     # escapes here as surely as it does in the slices directory.
     ids.require_valid(item.id)
-    out[f"{SLICES_SUBDIR}/{item.id}.md"] = render_slice(sl, cfg, slice_template, item.notes)
+    out[f"{SLICES_SUBDIR}/{item.id}.md"] = render_slice(sl, cfg, slice_template, item.rendered_notes)
   return out
 
 

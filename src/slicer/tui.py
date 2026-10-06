@@ -344,7 +344,7 @@ def panel(state: State, target: str) -> list[PanelLine]:
   # Notes live on any item: `e` edits one (empty removes it), the last line adds one.
   out.append(PanelLine(""))
   out.append(PanelLine("Notes", role="heading"))
-  for i, note in enumerate(item.notes):
+  for i, note in enumerate(item.rendered_notes):
     idx = note_base + i
     for line in note.split("\n"):
       out.append(PanelLine(line, idx))

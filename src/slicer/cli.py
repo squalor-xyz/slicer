@@ -1067,7 +1067,7 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
       payload = payload | {"slice": sl.to_dict()}
       # The banner names the source file, which is the path this text keeps out.
       lines.append(render.slice_body(
-        sl, state.config, state.template("slice.md"), item.notes))
+        sl, state.config, state.template("slice.md"), item.rendered_notes))
   _emit(args, payload, "\n".join(lines))
   return OK
 
@@ -1498,11 +1498,11 @@ def cmd_show(args: argparse.Namespace) -> int:
       code="usage",
     )
   if sl is None:
-    lines = [f"{item.id}  {item.display_title()}", *item.notes,
+    lines = [f"{item.id}  {item.display_title()}", *item.rendered_notes,
              f"(no slice yet; run `slicer promote {item.id}`)"]
     _emit(args, item.to_dict(), "\n".join(lines))
     return OK
-  text = render.render_slice(sl, state.config, state.template("slice.md"), item.notes).decode("utf-8")
+  text = render.render_slice(sl, state.config, state.template("slice.md"), item.rendered_notes).decode("utf-8")
   _emit(args, item.to_dict() | {"slice": sl.to_dict()}, text)
   return OK
 
@@ -1598,9 +1598,19 @@ def cmd_note(args: argparse.Namespace) -> int:
   body = _body_from(args, "")
   if body is None:
     raise StateError("editor exited non-zero; nothing added", code="editor_aborted")
-  ops.add_note(state, args.id, body, kind=args.kind)
+  ops.add_note(state, args.id, body, kind=args.kind, owner=args.owner, stale_after=args.stale_after)
   hint = _render_hint(args)
   _emit(args, {"id": args.id, "added": True}, f"added note to {args.id}" + (f"; {hint}" if hint else ""))
+  return OK
+
+
+def cmd_note_verify(args: argparse.Namespace) -> int:
+  record, changed = ops.verify_note(_state(args), args.id, args.note_id,
+    owner=args.owner, attest=args.command == "note-attest")
+  if not changed:
+    args._no_change = True
+  _emit(args, {"id": args.id, "note_record": record.to_dict(), "trust": record.trust},
+    f"{args.id} note {record.id}: {record.trust}" + ("" if changed else " (unchanged)"))
   return OK
 
 
@@ -2514,9 +2524,21 @@ def build_parser() -> argparse.ArgumentParser:
   sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")
   sp.add_argument("--kind", help="optional note kind, validated against note_kinds")
+  sp.add_argument("--owner", help="note author; uses the claim actor precedence")
+  sp.add_argument("--stale-after", default="", help="timezone-aware ISO8601 expiry; normalized to UTC")
   sp.add_argument("--text", help="inline note; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
+
+  for command in ("note-verify", "note-attest"):
+    sp = _strict_flag(_render_flag(add(command, _mutating(cmd_note_verify),
+      "record note verification (workflow attestation, not caller authentication)")))
+    sp.add_argument("id")
+    sp.add_argument("--note-id", required=True, help="stable item-note ID from show --json")
+    if command == "note-attest":
+      sp.add_argument("--owner", required=True, help="owner name; stored as human:NAME")
+    else:
+      sp.add_argument("--owner", help="verifying actor; uses the claim actor precedence; no human: prefix")
 
   sp = _check_flag(_render_flag(add("done", cmd_done, "mark an item finished")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")

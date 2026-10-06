@@ -106,7 +106,7 @@ class StructuredNoteTests(unittest.TestCase):
       shown = self.payload(repo, "show", "S01")
       self.assertEqual(shown["notes"], [f"**{_today()}** — plain", f"**{_today()}** — [report] verified"])
       records = shown["note_records"]
-      self.assertEqual(list(records[1]), ["id", "kind", "text", "created_at", "attempt"])
+      self.assertEqual(list(records[1]), ["id", "kind", "text", "created_at", "attempt", "by", "verified_by", "verified_at", "stale_after", "trust"])
       self.assertEqual(records[1]["attempt"], 1)
       self.assertEqual(records[1]["text"], f"**{_today()}** — verified")
       self.assertTrue(records[1]["created_at"].endswith("Z"))

@@ -115,7 +115,7 @@ class ProvenanceTests(unittest.TestCase):
       self.assertEqual(repo.state().index.require("S01").discovered_from, "")
       self.assertEqual(self.snapshot(repo), before)
       repo.run("add", "Found", "--discovered-from", "S01")
-      self.assertEqual(json.loads(path.read_text())["version"], 6)
+      self.assertEqual(json.loads(path.read_text())["version"], 7)
       with patch.object(model, "SCHEMA_VERSION", 4), self.assertRaises(StateError) as exc:
         model.Index.from_dict(json.loads(path.read_text()))
       self.assertEqual(exc.exception.code, "schema_too_new")

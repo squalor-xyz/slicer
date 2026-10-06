@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 
 @dataclass
@@ -139,6 +139,26 @@ class NoteRecord:
   text: str
   created_at: str
   attempt: int | None
+  by: str = ""
+  verified_by: str = ""
+  verified_at: str = ""
+  stale_after: str = ""
+
+  @property
+  def trust(self) -> str:
+    if not self.verified_by:
+      return "unverified"
+    return "human-reviewed" if self.verified_by.startswith("human:") else "machine-confirmed"
+
+  def rendered(self) -> str:
+    metadata = []
+    for key in ("by", "verified_by", "verified_at", "stale_after"):
+      value = getattr(self, key)
+      if value:
+        metadata.append(f"{key}: {value}")
+    if not metadata:
+      return self.display()
+    return self.display() + "\n\n" + "; ".join([f"trust: {self.trust}", *metadata])
 
   def display(self) -> str:
     if not self.kind:
@@ -147,9 +167,15 @@ class NoteRecord:
     label = f"[{self.kind}] "
     return before + separator + label + after if separator else label + self.text
 
-  def to_dict(self) -> dict[str, Any]:
+  def persisted_dict(self) -> dict[str, Any]:
     return {"id": self.id, "kind": self.kind, "text": self.text,
-            "created_at": self.created_at, "attempt": self.attempt}
+            "created_at": self.created_at, "attempt": self.attempt,
+            "by": self.by, "verified_by": self.verified_by,
+            "verified_at": self.verified_at, "stale_after": self.stale_after}
+
+  def to_dict(self) -> dict[str, Any]:
+    """Public shape: the stored fields plus the derived, never-stored trust tier."""
+    return self.persisted_dict() | {"trust": self.trust}
 
   @staticmethod
   def from_dict(d: Mapping[str, Any]) -> "NoteRecord":
@@ -160,7 +186,10 @@ class NoteRecord:
     attempt = d.get("attempt")
     if attempt is not None:
       attempt = _attempts(attempt)
-    return NoteRecord(d["id"], d["kind"], d["text"], d["created_at"], attempt)
+    metadata = {k: d.get(k, "") for k in ("by", "verified_by", "verified_at", "stale_after")}
+    if any(not isinstance(v, str) for v in metadata.values()):
+      raise StateError("note metadata must be strings", code="corrupt")
+    return NoteRecord(d["id"], d["kind"], d["text"], d["created_at"], attempt, **metadata)
 
 
 @dataclass
@@ -207,9 +236,14 @@ class Item:
   def notes(self) -> list[str]:
     return [record.display() for record in self.note_records]
 
+  @property
+  def rendered_notes(self) -> list[str]:
+    return [record.rendered() for record in self.note_records]
+
   def persisted_dict(self) -> dict[str, Any]:
     data = self.to_dict()
     del data["notes"]
+    data["note_records"] = [n.persisted_dict() for n in self.note_records]
     return data
 
   def display_title(self) -> str:

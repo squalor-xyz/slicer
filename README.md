@@ -98,6 +98,8 @@ reproduce is never half-migrated.
 | `set` | change an item's fields |
 | `edit` | edit a slice section or scope boundary |
 | `note` | append a dated note to an item |
+| `note-verify` | record machine verification of an item note |
+| `note-attest` | record owner attestation of an item note (workflow convention, not authentication) |
 | `done` | mark an item finished |
 | `start` | mark an item in progress and claim it |
 | `release` | clear a claim without changing status |

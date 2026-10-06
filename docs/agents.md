@@ -169,7 +169,7 @@ $ slicer next --json
 ```
 
 Item `notes` remains a list of display strings. Additive `note_records` carries
-`{id, kind, text, created_at, attempt}` in that key order; `text` is the complete dated
+`{id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, trust}` in that key order (`trust` is derived, read-only, never stored); `text` is the complete dated
 paragraph before adding the kind label. Historical strings retain their exact text,
 get stable item-local positional IDs, empty `created_at`, and null `attempt` on reads.
 The next index save persists those records under the current index schema (note records arrived in schema 4). New notes use stored UUIDs,
@@ -233,6 +233,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `sort` | `{by, moved}` |
 | `edit` | `{id, section}`; boundary edits return `{id, boundary}` |
 | `note` | `{id, added}` |
+| `note-verify`, `note-attest` | `{id, note_record, trust}`; repeating the same verifier is a no-op (no write, no render) |
 | `find` | array of items with `match: {field, snippet}`; with `--lean`, each row is only `{id, title, status, has_slice, match}` |
 | `deps` | unblocked-item array; for `deps ID`, `{id, waits_on, blocked_by, dependents}`; mermaid format returns `{format, graph}` |
 | `goals` | `{goals, non_goals}` |
@@ -418,7 +419,7 @@ filters by exact source and combines with other filters; an unknown ID is
 writing the batch. Provenance neither blocks pickup nor changes scores.
 Missing historical fields load empty; `--lean` omits empty provenance. Source
 retirement keeps references valid; purge needs `--force` when referenced and
-then integrity validation reports the dangling source. Index saves stamp schema 6 (provenance arrived in 5)
+then integrity validation reports the dangling source. Index saves stamp schema 7 (provenance arrived in 5, filing keys in 6)
 so older readers refuse rather than lose provenance.
 
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
@@ -527,6 +528,29 @@ To leave a durable observation on an item — what you tried, why something was 
 `slicer note ID --text "..."` appends a dated note to the item (no slice needed; works on a bare
 row), visible in `slicer show` and, once promoted, the rendered slice. This differs from
 `done --note`, which records only to the log.
+
+Item note records contain fixed-order `id`, `kind`, `text`, `created_at`, `attempt`,
+`by`, `verified_by`, `verified_at`, and `stale_after`; empty metadata means absent.
+`notes` remains the compatible display-string view. `note --owner ACTOR` uses the
+existing actor precedence to record authorship without verification.
+`--stale-after` takes timezone-aware ISO8601 and stores UTC; render does not
+calculate freshness using the clock.
+
+Read stable IDs with `show ID --json`. Use
+`note-verify ID --note-id NOTE [--owner ACTOR]` for machine verification and
+`note-attest ID --note-id NOTE --owner NAME` for owner attestation. Verification
+without `--owner` uses the actor precedence; attestation always needs an explicit
+nonempty name. Ordinary authorship (including actor fallbacks) and machine
+verification reject the reserved `human:` prefix. Attestation stores `human:NAME` as
+verifier and preserves authorship and text. The returned `trust` is derived:
+`unverified`, `machine-confirmed`, or `human-reviewed`. Repeating the same
+verifier is a no-op; a different verifier replaces it. Actual text edits clear
+verification and log the previous verifier/time. Unknown note IDs fail with
+`usage` before writes; legacy slice notes cannot be attested.
+
+Attestation is a workflow convention, not caller authentication. An agent can
+invoke the owner command; metadata alone does not establish an identity boundary.
+New index saves stamp schema 7 so older readers refuse rather than erase metadata.
 
 To add to a section:
 

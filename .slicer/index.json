@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "id_prefix": "s",
   "id_width": 2,
   "next_id": 229,
@@ -280,7 +280,11 @@
           "kind": "",
           "text": "**2026-09-27** — Implemented: notes now live on the item (Item.notes); slicer note works on bare rows.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -486,14 +490,22 @@
           "kind": "",
           "text": "**2026-09-27** — Text-input primitive split out as its own prerequisite slice (S81); this wizard depends on it.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         },
         {
           "id": "S50:legacy:1",
           "kind": "",
           "text": "**2026-09-27** — Implemented on feature/S50-tui-roadmap-wizard: guided wizard (tui_wizard.py) landing items and slices via ops.apply_outline; text-input primitive delivered (S81).",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -2332,7 +2344,11 @@
           "kind": "",
           "text": "**2026-09-27** — Delivered as the wizard's text_input primitive (tui_wizard.py), reused by the TUI search/jump/move prompts.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -3021,7 +3037,11 @@
           "kind": "",
           "text": "**2026-09-29** — Landed as --strict (render-first via State.staged() + ops.render_gated) in commit 37b0d79, superseding the earlier --require-render implementation. The done history entry's note predates that decision.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -3199,7 +3219,11 @@
           "kind": "",
           "text": "**2026-09-29** — Implementation uses --strict, the current render-gated flag that replaced --require-render in S105. Migration snapshots its exact target .slicer directory, including config and templates, and restores it on render failure.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -3636,7 +3660,11 @@
           "kind": "",
           "text": "**2026-09-29** — Docs gap found while triaging: `slicer add` inherits the previous item's pass (`src/slicer/ops.py:105`, documented only in `docs/import.md:155` and CHANGELOG). `add --pass` help (`src/slicer/cli.py:1674`) and getting-started §7 do not say so; with the v1 pass as the tail, a post-1.0 item filed with `add` silently lands in v1. `set ID --pass ''` clears it.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -3684,7 +3712,11 @@
           "kind": "",
           "text": "**2026-09-29** — Release-workflow review: publish.yml publishes via PyPI trusted publishing (OIDC), so before the first v* tag a pending publisher must be configured on PyPI (owner: squalor-xyz, repo: slicer, workflow: publish.yml, environment: pypi) per the publish.yml header. Follow RELEASING.md to cut the tag. S124 must bump the matrix in BOTH ci.yml and publish.yml. pyproject reads the version from slicer.__version__, and the publish job asserts the tag equals v<version>.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -4870,14 +4902,22 @@
           "kind": "",
           "text": "**2026-10-05** — Agents upstream feedback 2026-10-05: their orchestrator installs ai skill output into vendor skill directories by redirection and compares it with fresh output. Preserve stable bytes for a given generating version and implement_finish so the drift check is meaningful. Source: docs/feedback/agents-2026-10-05.md, Existing items.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         },
         {
           "id": "c65ce330-096a-4265-984a-e7c491c21175",
           "kind": "",
           "text": "**2026-10-06** — Ready for review: ai skill --output and --install write the printed bytes to .claude, .agents, and .grok skills/slicer/SKILL.md under the project root (no .codex copy, no home directory). Different text or a directory exits 2 with code state and writes nothing unless --force. --force alone is usage. --install needs a project, and an unreadable project is refused. Replayed onto main at 23886c9 so later slice state stayed. Full discovery 1317 tests OK (1 skipped). slicer check passed. Docs: agents.md, commands.md, CHANGELOG.",
           "created_at": "2026-10-06T13:47:53Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5025,7 +5065,11 @@
           "kind": "",
           "text": "**2026-10-05** — Agents upstream feedback 2026-10-05: run branches commit .slicer with the work before exit. The handoff hint should reinforce that checkout-local state must be committed; it should not imply keeping handoff state outside the worktree. U11 records the accepted permanent canonical-JSON policy. Source: docs/feedback/agents-2026-10-05.md.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5173,7 +5217,11 @@
           "kind": "",
           "text": "**2026-10-05** — Retired 2026-10-05: low value (importance 1, urgency 1; no dependents, no friction recorded). Agents read payloads from --json output directly. Duplicating the docs/agents.md payload table into reference.py would double the edit cost of every JSON contract change. Spec line refs and row sizes had gone stale. If the PyPI gap matters later, ship agents.md as package data or generate the table from code instead.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5461,7 +5509,11 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review: AGENTS.md Landing a slice now shows both in-worktree and outside-worktree commands, explaining PYTHONPATH for code and --root for state without changing directory. docs/agents.md does not repeat the instruction, so it and CHANGELOG.md needed no edit. Verified start/check/done from the main checkout against detached scratch worktree s190-validation using scratch item s227; main git status stayed clean. All 31 test_ai tests, slicer check, and git diff --check passed. Full suite not run: this slice changes documentation only and explicitly says it is unaffected. Changes remain uncommitted on feature/s190-outside-worktree.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5497,7 +5549,11 @@
           "kind": "",
           "text": "**2026-10-05** — Agents upstream feedback 2026-10-05 U8: a run branch changes statuses and files work while main approves drafts. This slice remains the next_id-only driver prerequisite; s217 separately extends that driver to independent item fields, preserving conflicts for incompatible lists and queue reorderings. s185 allocation-floor behavior is shipped. Source: docs/feedback/agents-2026-10-05.md.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5561,7 +5617,11 @@
           "kind": "",
           "text": "**2026-10-05** — Roadmap review 2026-10-05: gates the v1.3.0 release, so consumers upgrading from 1.2.0 get an explained render drift instead of an unexplained red check (U1).",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5597,14 +5657,22 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review: optional satisfies_dependencies config (absent = done_status alone, so a renamed done role works; an explicit list is authoritative) shared via Config.satisfying_statuses by next, next --batch, deps, list ordering and the TUI blocked marker. Listing the retired status makes add/set/check/verify accept a retired dependency; self-edges, cycles and dangling ids still fail. Config schema is 3 (older configs load unchanged, never restamped on read). 21 new tests in tests/test_satisfies_dependencies.py; full suite 1246 tests, 1 failure (a hard-coded config version 2 in an s208 test, now SCHEMA_VERSION) fixed and re-run with test_note and the new file; slicer check and git diff --check clean. Docs: configuration.md, agents.md, commands.md, ARCHITECTURE.md, CHANGELOG.",
           "created_at": "2026-10-05T18:56:20Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         },
         {
           "id": "4df13416-5896-4a59-a648-222046eda7e5",
           "kind": "",
           "text": "**2026-10-05** — Correction after merging main (s209 took config schema 3): satisfies_dependencies now ships as config schema 4, so an s209-only reader refuses it. Docs, changelog and ARCHITECTURE updated; test_handoff's hard-coded 3 now uses SCHEMA_VERSION. Full suite 1261 tests OK (1 skipped); slicer check and git diff --check clean.",
           "created_at": "2026-10-05T19:34:11Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5640,7 +5708,11 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review: structured item-note records preserve public notes strings and legacy display bytes; kind validation and filters cover show, section projections, ready and batch pickups; TUI edits and rejection preserve note metadata. Updated schema and command contracts, configuration docs, architecture, and changelog. Verified 173 focused checks and full discovery: 1214 tests passed, 1 skipped (optional live legacy fixture).",
           "created_at": "2026-10-05T18:08:50Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5679,7 +5751,11 @@
           "kind": "report",
           "text": "**2026-10-05** — Ready for review: Implemented optional handoff_requires_note_kind (empty by default), whitelist/type validation, and config schema 3 with read-only loading of older configs. Started-to-review handoff now requires an exact-kind, nonempty item note associated with the current attempts count. Validation collects missing reports before any batch mutation; legacy unknown-attempt and previous-attempt reports do not qualify. Reject/restart requires a new report; release/resume preserves association. Unclaimed review no-ops and done behavior remain unchanged. Project-aware agent instructions and skill output name the required kind and filing command; documentation covers manual attempt edits. Verification: 137 focused tests passed; full unittest discovery ran 1240 tests successfully (1 skipped); slicer check and git diff --check passed. No dependencies added. Review changes in feature/s209-current-attempt-note at .worktrees/s209.",
           "created_at": "2026-10-05T18:55:03Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5715,7 +5791,11 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review: Added optional fields.discovered_from with index schema 5, existing-source validation before allocation, outline parsing and whole-batch validation, exact-source list filtering, Markdown/HTML annotations and custom row placeholder, purge reference guards and dangling-source integrity checks. Retirement preserves sources; provenance does not affect pickup or scores. Updated command/import/agent/configuration documentation, architecture, and changelog. All 10 focused provenance tests pass. Full unittest discovery: 1250 tests, OK (1 skipped), using worktree-local TMPDIR. Affected-test selection required full discovery because its map was missing. Tracking check and git diff --check pass.",
           "created_at": "2026-10-05T19:13:09Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5751,7 +5831,11 @@
           "kind": "",
           "text": "**2026-10-06** — Ready for review: implemented case-sensitive filing keys, schema 6 persistence (rebased onto s210's schema 5) and duplicate-key integrity checks. Add retries and all-existing imports preserve state/history/render bytes and consume no IDs; mixed imports map reused entries and allocate only new records. Updated contracts and added eight focused tests covering byte identity, force, forward dependencies, schema compatibility and concurrent same-key adds.",
           "created_at": "2026-10-06T12:09:38Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5787,7 +5871,11 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review: find --title-exact TITLE (exact stored-title equality, usage error when combined with PATTERN/--in or when no mode given). New FindTitleExactTests; full suite 1279 tests OK (1 skipped), slicer check ok, git diff --check clean. Docs: commands, getting-started, agents, CHANGELOG.",
           "created_at": "2026-10-05T20:21:04Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5881,7 +5969,11 @@
           "kind": "",
           "text": "**2026-10-06** — Ready for review: added per-call next --max-attempts with queue-ordered capped diagnostics across single, offset, ready/show and batch outputs. Started attempts resume after release at or above the cap; review claims remain unaffected. Capped batch blockers leave dependents blocked. Capped atomic starts load and select under the writer lock; intervening-writer regression passes. Custom-lane pickup is not yet present in this checkout. Verified 43 next tests (including 7 new cap tests), full discovery 1301 tests OK (1 optional legacy-tree skip), slicer check, and git diff --check. Updated command/agent docs and changelog.",
           "created_at": "2026-10-06T12:57:31Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5917,7 +6009,11 @@
           "kind": "",
           "text": "**2026-10-06** — Ready for review: added inclusive --since and exclusive --until timezone-aware ISO8601 history windows, validating bounds before history reads and reporting invalid stored timestamps as corrupt. Preserved original timestamp strings, sorting, append-order ties, and schema. Updated command/agent references and changelog. Seven focused window tests passed; full unittest discovery passed 1278 tests with one skipped. affected.py exited 2 because the new worktree has no coverage map, so full discovery was run. Tracking check and git diff --check passed.",
           "created_at": "2026-10-06T12:12:24Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -5984,7 +6080,11 @@
           "kind": "",
           "text": "**2026-10-06** — Ready for review: Added repeatable next --flag/--no-flag case-sensitive fnmatchcase patterns with OR inclusion and exclusion precedence. Shared filtering precedes skip diagnostics, offsets and batch capacity; dependency checks and effective scores retain the complete index. Covered literal/wildcard/question/bracket matching, case sensitivity, untagged items, excluded blockers and diagnostics, tree/size/cap/ready/start composition, review/resume, empty-pattern refusal and unchanged list matching. Updated command and agent references, quoted help examples and changelog. Focused flag tests (8) and docs coverage (2) passed. Full unittest discovery passed: 1325 tests, 1 skipped. Tracking check and git diff --check passed.",
           "created_at": "2026-10-06T15:03:56Z",
-          "attempt": 1
+          "attempt": 1,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -6048,7 +6148,11 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review in .worktrees/s220 on feature/s220-canonical-json. Updated README.md, ARCHITECTURE.md, docs/commands.md and goals/non-goals through the prose CLI: git-tracked JSON remains permanent authority; any future database is a disposable gitignored checkout-local cache. Guidance distinguishes shipped s185 from pending s175/s191. Validation: 1180 unit tests passed, one skipped; slicer check and git diff --check passed. Documentation/tracking changes only; uncommitted. Review the diff and slice acceptance criteria before landing.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -6075,12 +6179,24 @@
       "id": "s221",
       "title": "Add explicit note verification and freshness metadata",
       "short_title": "Add explicit note verification and freshness metadata",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s208"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2fd49b8b-904c-4a99-bee6-2972d30c4e4d",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: note records add by, verified_by, verified_at, stale_after and a derived trust key; note --owner/--stale-after, note-verify (actor precedence) and note-attest (explicit owner, stores human:NAME); human: refused on authorship and machine verification incl. fallbacks; same-verifier repeat is a no-op; text edits clear verification; schema 7. Docs and changelog updated. Full discovery 1347 tests OK (1 skipped), slicer check clean.",
+          "created_at": "2026-10-06T15:24:17Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -6098,7 +6214,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -6200,14 +6316,22 @@
           "kind": "",
           "text": "**2026-10-05** — Reproduced in disposable nested fixtures: an enclosing Git MERGE_HEAD makes child init exit 2 before creating .slicer/config.json. After clearing the enclosing merge marker, child add previously exited 0 and changed the enclosing fixture index. This matches the recorded merge-in-progress symptom; no production discovery changes are needed. The exact concurrent sequence from 2026-10-05 was not replayed.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         },
         {
           "id": "s225:legacy:1",
           "kind": "",
           "text": "**2026-10-05** — Ready for review: fixture discovery guard and five regressions implemented. Full suite passed: 1205 tests, one optional skip; copied real tracking-state check, slicer check and git diff --check passed. Changes remain uncommitted in feature/s225-fixture-guard. Corrected the earlier done status at the owner’s request; review and landing remain pending.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -6271,7 +6395,11 @@
           "kind": "",
           "text": "**2026-10-05** — Ready for review: set implement_finish to handoff in .slicer/config.json (the one-key owner exception; added the key, nothing else), and rewrote the AGENTS.md implement block and Landing a slice for the handoff loop: the implementer ends with note + handoff --render --check and never runs done in a worktree; the reviewer picks up with next --status review --start against the worktree via --root, rejects with reject, or commits, merges --no-ff, then runs done --render --check on main. Roadmap section is 3,772 of 3,800 bytes (was 3,797, limit unchanged; trimmed prose, dropped the import example block and the show example line). Shipped skill unchanged: its step 4 already routes on implement_finish. Verified: repo ai instructions step 4 is handoff; 1208 unit tests pass (1 skipped), slicer check and git diff --check clean; end-to-end throwaway project in handoff mode showed worktree review, main wt:NAME, done on main only after merge. Uncommitted on feature/s227-handoff-finish.",
           "created_at": "",
-          "attempt": null
+          "attempt": null,
+          "by": "",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
