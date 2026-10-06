@@ -6040,7 +6040,7 @@
       "id": "s217",
       "title": "Merge independent item fields without guessing list or queue edits",
       "short_title": "Merge independent item fields without guessing list or queue edits",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s191",

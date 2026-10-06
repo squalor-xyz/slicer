@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-216 items · — 4 · done 207 · retired 4 · review 1
+216 items · — 4 · done 208 · retired 4
 
 v1.4.0 release
 
@@ -178,7 +178,7 @@ Later (revisit after orchestrator use)
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
 | 110 | [s213](slices/s213.md) | Claim and resume work in a custom status queue | M | 2 | slicer | agents feedback 2026-10-05 U5; docs/feedback/agents-2026-10-05.md | done |
-| 111 | [s217](slices/s217.md) | Merge independent item fields without guessing list or queue edits | L | 3 | slicer | agents feedback 2026-10-05 U8; docs/feedback/agents-2026-10-05.md | review |
+| 111 | [s217](slices/s217.md) | Merge independent item fields without guessing list or queue edits | L | 3 | slicer | agents feedback 2026-10-05 U8; docs/feedback/agents-2026-10-05.md | done |
 | 112 | [s221](slices/s221.md) | Add explicit note verification and freshness metadata | M | 2 | slicer | agents feedback 2026-10-05 U12a; docs/feedback/agents-2026-10-05.md | done |
 | 113 | [s222](slices/s222.md) | Pack current trusted notes for the selected item | M | 2 | slicer | agents feedback 2026-10-05 U12b; docs/feedback/agents-2026-10-05.md | — |
 
