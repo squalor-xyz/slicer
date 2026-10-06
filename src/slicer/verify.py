@@ -83,10 +83,15 @@ def offline(state: State) -> VerifyReport:
     )
 
   seen: set[str] = set()
+  keys: set[str] = set()
   for item in index.items:
     if item.id in seen:
       report.findings.append(Finding("error", item.id, "duplicate id in the index"))
     seen.add(item.id)
+    if item.key:
+      if item.key in keys:
+        report.findings.append(Finding("error", item.id, f"duplicate filing key {item.key!r}"))
+      keys.add(item.key)
     if not ids.is_valid(item.id):
       # An error, not a warning: with the path boundary enforced, nothing can
       # promote, move or retire this item, so the project really is broken.

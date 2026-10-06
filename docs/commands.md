@@ -21,7 +21,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `import FILE [--dry-run] [--force]` | bulk-load a roadmap from a markdown outline. When a sibling git worktree's `next_id` is higher than this checkout's, the id starts above it, so two worktrees do not file different items under the same id. |
 | `import --skeleton` | print an outline template built from your config |
 | `migrate --from DIR [--dry-run] [--force]` | convert an existing legacy markdown tree; `--force` replaces an existing roadmap |
-| `add TITLE [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--effort/--depends-on/--discovered-from/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies. `--effort` is 1–3 and optional; an open item left at importance 2, urgency 2 and no effort gets a stderr hint. When a sibling git worktree's `next_id` is higher than this checkout's, the id starts above it, so two worktrees do not file different items under the same id. An explicit `--id` is unchanged |
+| `add TITLE [--key KEY] [--id/--size/--tree/--findings/--status/--pass/--importance/--urgency/--effort/--depends-on/--discovered-from/--short-title]` | append a roadmap item (no slice file yet); repeat `--depends-on ID` for multiple dependencies. `--effort` is 1–3 and optional; an open item left at importance 2, urgency 2 and no effort gets a stderr hint. When a sibling git worktree's `next_id` is higher than this checkout's, the id starts above it, so two worktrees do not file different items under the same id. An explicit `--id` is unchanged |
 | `promote ID [--file/--stdin] [--boundary TEXT] [--force]` | give an item a slice file; a one-item outline fills its sections in one call. `--force` overwrites an existing slice |
 | `move ID --before/--after/--to` | reorder the queue; position is the manual priority, and breaks score ties |
 | `sort [--by score\|effort] [--render]` | reorder the whole queue in one step. `score` (default) persists `list --sort score`. `effort` persists `list --sort effort`: lightest estimate first, unset last |
@@ -188,6 +188,16 @@ Items carry an Eisenhower-style priority: an `--importance` and an `--urgency` (
 combined into a score (importance leads). A blocker of a critical item inherits its
 priority, so `slicer next` and `slicer list --sort score` surface the blockers of
 important work first, while the stored queue order stays whatever `move` set.
+
+## Filing work
+
+Filing retries use `slicer add "Title" --key KEY`. Keys are case-sensitive,
+trim surrounding whitespace, and cannot be explicitly blank. An existing key
+returns its current item with `existing: true`, ignoring replacement fields
+before state validation or ID allocation. A new item returns `existing: false`.
+Done and retired items reserve their keys. A retry writes nothing and skips
+optional rendering, even when output is stale or `--strict` is set. Keys are
+checkout-local and can also be supplied as `key:` in import outlines.
 
 ## Batch changes
 

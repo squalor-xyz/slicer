@@ -80,6 +80,7 @@ status: parked
 
 | Key | Meaning |
 |---|---|
+| `key` | Case-sensitive filing identity; one value per entry. A stored key reuses its item |
 | `size` | Free text; `S`/`M`/`L` by convention |
 | `tree` | Which part of the codebase. Comma-separated, or repeat the key |
 | `findings` | A reference back to whatever raised this |
@@ -197,6 +198,24 @@ The other problems in this tier: the same title twice in one outline, a `status`
 config does not define, a `depends` that resolves to nothing, and a preamble that
 differs from a non-empty one already stored.
 
+## Filing retries
+
+An item may carry one `key: filing-identity` line. Keys are case-sensitive;
+surrounding whitespace is trimmed and an explicit empty value is invalid.
+A stored key reuses its existing ID (including done and retired items), ignoring
+the entry's replacement metadata, lead and sections. New entries can depend on
+the reused entry's requested title. The whole outline still undergoes syntax
+validation; duplicate keys in one input fail the batch, even with `--force`.
+
+Dry-run and apply share the same mapping. Reports add `entries`, with requested
+`title`, `id` and `existing` for each entry, plus `created` and `reused` counts.
+`ids` includes every input entry; `items` remains the input count.
+`promoted` counts only new slices, `by_status` counts mapped records at their actual
+status, and `depends_edges` counts only new edges. Scoring and off-schema section
+warnings apply only to new entries. An all-existing import writes nothing,
+including history and optional renders; mixed batches retain render gating.
+Keys are local to this checkout, with no cross-branch or machine synchronization.
+
 ## Driving it from an agent
 
 Every command takes `--json`, including the failures. See [agents.md](agents.md).
@@ -205,6 +224,13 @@ Every command takes `--json`, including the failures. See [agents.md](agents.md)
 $ slicer import roadmap.md --json
 {
   "items": 3,
+  "created": 3,
+  "reused": 0,
+  "entries": [
+    {"title": "Parse the config file", "id": "S01", "existing": false},
+    {"title": "Fail loudly on a missing key", "id": "S02", "existing": false},
+    {"title": "Document the config schema", "id": "S03", "existing": false}
+  ],
   "promoted": 1,
   "by_status": {
     "open": 2,

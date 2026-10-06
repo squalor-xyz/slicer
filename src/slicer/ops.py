@@ -142,12 +142,30 @@ def _check_depends(state: State, proposed: dict[str, list[str]], new: Item | Non
     raise StateError("; ".join(problems) + ". Nothing was changed.", code=code)
 
 
+def filing_key(value: object) -> str:
+  """Normalize an explicitly supplied filing identity."""
+  if value is None:
+    return ""
+  if not isinstance(value, str) or not value.strip():
+    raise StateError("key cannot be blank; omit it for an unkeyed item", code="blank_key")
+  return value.strip()
+
+
+def keyed_item(state: State, key: str) -> Item | None:
+  """Look up identity across every status in this checkout."""
+  return next((item for item in state.index.items if key and item.key == key), None)
+
+
 def add(
   state: State, title: str, *, item_id: str | None = None, id_floor: int = 0,
   **fields: object,
 ) -> Item:
   """Append a roadmap entry. It has no slice file until it is promoted."""
   cfg = state.config
+  key = filing_key(fields.get("key"))
+  existing = keyed_item(state, key)
+  if existing is not None:
+    return existing
   _reject_bad_text(title=title, **fields)
   discovered_from = fields.get("discovered_from") or ""
   if discovered_from:
@@ -160,6 +178,7 @@ def add(
     pass_key = state.index.items[-1].pass_key if state.index.items else ""
   item = Item(
     id=new_id,
+    key=key,
     title=title,
     short_title=str(fields.get("short_title") or title),
     status=str(fields.get("status") or cfg.open_status),
@@ -268,6 +287,7 @@ def _slice_from_source(source: str, item: Item, cfg: object, path: str) -> Slice
 # promote source names none of them -- the item already has them -- so any that
 # is set is a mistake worth naming rather than dropping.
 _SOURCE_FIELD_DEFAULTS = {
+  "key": "",
   "size": "",
   "trees": [],
   "findings": "",
@@ -1271,6 +1291,9 @@ class OutlineReport:
   """What an outline would do, or did. Mirrors the migrate report's shape."""
 
   items: int = 0
+  created: int = 0
+  reused: int = 0
+  entries: list[dict[str, object]] = field(default_factory=list)
   promoted: int = 0
   by_status: dict[str, int] = field(default_factory=dict)
   ids: list[str] = field(default_factory=list)
@@ -1283,6 +1306,9 @@ class OutlineReport:
   def to_dict(self) -> dict[str, object]:
     return {
       "items": self.items,
+      "created": self.created,
+      "reused": self.reused,
+      "entries": self.entries,
       "promoted": self.promoted,
       "by_status": self.by_status,
       "ids": self.ids,
@@ -1312,10 +1338,17 @@ def outline_report(
   cfg = state.config
   report = OutlineReport()
   report.items = len(specs)
-  report.promoted = sum(1 for spec in specs if promote_all or spec.has_slice)
+  reused = {id(spec): keyed_item(state, spec.key) for spec in specs}
+  new_specs = [spec for spec in specs if reused[id(spec)] is None]
+  report.created = len(new_specs)
+  report.reused = len(specs) - report.created
+  report.promoted = sum(1 for spec in new_specs if promote_all or spec.has_slice)
   for spec in specs:
-    status = spec.status or cfg.open_status
+    item = reused[id(spec)]
+    status = item.status if item is not None else spec.status or cfg.open_status
     report.by_status[status] = report.by_status.get(status, 0) + 1
+    if item is not None:
+      continue
     report.depends_edges += len(spec.depends)
     for section in spec.sections:
       if section.heading not in cfg.sections:
@@ -1324,6 +1357,12 @@ def outline_report(
         )
   problems: list[str] = []
 
+  keys: set[str] = set()
+  for spec in specs:
+    if spec.key:
+      if spec.key in keys:
+        problems.append(f"key {spec.key!r} appears twice in the outline")
+      keys.add(spec.key)
   titles = [s.title for s in specs]
   seen: set[str] = set()
   for title in titles:
@@ -1334,7 +1373,7 @@ def outline_report(
   if not force:
     existing = {it.display_title(): it.id for it in state.index.items}
     existing.update({it.title: it.id for it in state.index.items})
-    for title in dict.fromkeys(titles):
+    for title in dict.fromkeys(s.title for s in new_specs):
       if title in existing:
         problems.append(
           f"{title!r} already exists as {existing[title]}; pass --force to add it anyway"
@@ -1342,7 +1381,7 @@ def outline_report(
 
   known = set(titles) | {it.title for it in state.index.items}
   known |= {it.display_title() for it in state.index.items}
-  for spec in specs:
+  for spec in new_specs:
     try:
       _reject_bad_text(title=spec.title, size=spec.size, findings=spec.findings,
                        pass_key=spec.pass_key, group=spec.group, trees=spec.trees)
@@ -1369,7 +1408,7 @@ def outline_report(
       )
   active = {cfg.open_status, cfg.started_status}
   unscored = [
-    spec.title for spec in specs
+    spec.title for spec in new_specs
     if (spec.status or cfg.open_status) in active
     and is_unscored(spec.importance, spec.urgency, spec.effort)
   ]
@@ -1381,14 +1420,19 @@ def outline_report(
     )
   stored_preamble = state.index.preamble
   if (
-    preamble is not None and stored_preamble and stored_preamble != preamble
+    report.created and preamble is not None and stored_preamble and stored_preamble != preamble
     and not force and not replace_preamble
   ):
     problems.append("preamble differs from the one already stored; pass --force to replace it")
   report.preamble = preamble
   report.problems = problems
   if not problems:
-    report.ids = _allocate_outline_ids(deepcopy(state.index), len(specs), id_floor)
+    draft = deepcopy(state.index)
+    for spec in specs:
+      item = reused[id(spec)]
+      mapped_id = item.id if item is not None else ids.allocate(draft, floor=id_floor)
+      report.ids.append(mapped_id)
+      report.entries.append({"title": spec.title, "id": mapped_id, "existing": item is not None})
   return report
 
 
@@ -1418,7 +1462,7 @@ def apply_outline(
     state, specs, force=force, promote_all=promote_all, preamble=preamble,
     replace_preamble=replace_preamble, id_floor=id_floor,
   )
-  if report.problems:
+  if report.problems or not report.created:
     return report
 
   # Publish the in-memory draft only after the index is saved. A failed
@@ -1436,16 +1480,20 @@ def apply_outline(
   # Titles resolve to ids only once every entry has one, so allocate first.
   by_title: dict[str, str] = {it.title: it.id for it in state.index.items}
   by_title.update({it.display_title(): it.id for it in state.index.items})
-  allocated = list(zip(specs, _allocate_outline_ids(state.index, len(specs), id_floor)))
+  allocated = list(zip(specs, report.ids))
+  _allocate_outline_ids(state.index, report.created, id_floor)
   for spec, new_id in allocated:
     by_title[spec.title] = new_id
 
   # Build every item and slice against the staged index before writing.
   pending: list[Slice] = []
   for spec, new_id in allocated:
+    if state.index.get(new_id) is not None:
+      continue
     status = spec.status or cfg.open_status
     item = Item(
       id=new_id,
+      key=spec.key,
       title=spec.title,
       short_title=spec.title,
       status=status,
@@ -1486,7 +1534,9 @@ def apply_outline(
     raise
   original.index, original.slices = state.index, state.slices
   try:
-    for spec, new_id in allocated:
+    for (spec, new_id), entry in zip(allocated, report.entries):
+      if entry["existing"]:
+        continue
       _record(state, new_id, "add", to=spec.status or cfg.open_status, note=spec.title)
   except OSError as exc:
     raise OutlineCommittedError(report, exc) from exc
