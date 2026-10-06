@@ -6111,7 +6111,7 @@
       "id": "s219",
       "title": "Resolve whole dependency titles before splitting outline commas",
       "short_title": "Resolve whole dependency titles before splitting outline commas",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
