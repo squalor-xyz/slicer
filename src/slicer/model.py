@@ -580,6 +580,9 @@ def lean(payload: Any) -> Any:
   title = payload.get("title")
   out: dict[str, Any] = {}
   for key, value in payload.items():
+    if key == "note_pack":
+      out[key] = value
+      continue
     if item and key == "path":
       continue
     if key == "trees_literal" and value is False:

@@ -33,6 +33,7 @@ from slicer import (
   mergeindex,
   migrator,
   model,
+  note_pack,
   ops,
   outline,
   prose,
@@ -903,21 +904,56 @@ def _next_fields(
 
 def _note_projection(
   args: argparse.Namespace, item: model.Item, sl: model.Slice | None,
-) -> tuple[model.Item, model.Slice | None]:
+) -> tuple[model.Item, model.Slice | None, dict[str, object] | None]:
   """Select notes on detached copies, keeping the loaded state untouched."""
   from copy import deepcopy
   item, sl = deepcopy(item), deepcopy(sl)
   kinds = getattr(args, "notes_kind", None)
-  if kinds is not None:
+  manifest = None
+  if getattr(args, "_pack_time", None) is not None:
+    item.note_records, legacy, manifest = note_pack.select(
+      item.note_records, sl.notes if sl is not None else [], now=args._pack_time,
+      kinds=kinds, min_trust=args.min_trust or "unverified", budget=args.notes_budget,
+    )
+    if sl is not None:
+      sl.notes = legacy
+  elif kinds is not None:
     item.note_records = [n for n in item.note_records if n.kind in kinds]
     if sl is not None and "" not in kinds:
       sl.notes = []
-  return item, sl
+  return item, sl, manifest
 
 
-def _note_fields(item: model.Item) -> dict[str, object]:
-  return {"notes": list(item.notes),
-          "note_records": [n.to_dict() for n in item.note_records]}
+def _prepare_note_pack(args: argparse.Namespace) -> None:
+  """Validate pickup options and capture one time before any claims."""
+  if args.notes_budget is not None and args.notes_budget < 0:
+    raise StateError("--notes-budget must be a nonnegative integer", code="usage")
+  packing = args.min_trust is not None or args.notes_budget is not None
+  args._pack_time = datetime.now(timezone.utc) if packing else None
+
+
+def _pack_text(item: model.Item, sl: model.Slice | None, manifest: dict[str, object] | None,
+               *, notes: bool = True) -> list[str]:
+  """Expose the requested selection and manifest in human output too."""
+  if manifest is None:
+    return []
+  lines = []
+  if notes:
+    texts = {n.id: n.display() for n in item.note_records}
+    # Selected legacy notes retain their relative order, even when earlier ones were omitted.
+    legacy_ids = [i for i in manifest["selected_ids"] if i.startswith("slice-legacy-")]
+    texts.update(zip(legacy_ids, sl.notes if sl is not None else []))
+    lines.extend(texts[i] for i in manifest["selected_ids"])
+  lines.append("Note pack  " + json.dumps(manifest, ensure_ascii=False))
+  return lines
+
+
+def _note_fields(item: model.Item, manifest: dict[str, object] | None = None) -> dict[str, object]:
+  fields = {"notes": list(item.notes),
+            "note_records": [n.to_dict() for n in item.note_records]}
+  if manifest is not None:
+    fields["note_pack"] = manifest
+  return fields
 
 
 def _ready_entry(
@@ -926,7 +962,7 @@ def _ready_entry(
   """One `{item, slice?}` pickup. `blocked` stays with the caller."""
   eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
-  item, sl = _note_projection(args, item, state.slices.get(item.id))
+  item, sl, manifest = _note_projection(args, item, state.slices.get(item.id))
   payload: dict[str, object] = {
     "item": {
       "id": item.id,
@@ -934,7 +970,7 @@ def _ready_entry(
       "status": item.status,
       "depends_on": list(item.depends_on),
       "attempts": item.attempts,
-      **_note_fields(item),
+      **_note_fields(item, manifest),
       "effective_score": eff,
       "path": str(path) if path else None,
     },
@@ -959,6 +995,7 @@ def _ready_entry(
     headings = ", ".join(section.heading for section in sl.sections) or "(none)"
     lines.append(f"     boundary  {boundary}")
     lines.append(f"     sections  {headings}")
+  lines.extend(_pack_text(item, sl, manifest))
   return payload, lines
 
 
@@ -979,16 +1016,19 @@ def _emit_ready(
 
 
 def _reject_unknown_sections(args: argparse.Namespace, state: store.State, items: list[model.Item]) -> None:
-  """A typo in `--section` must fail before `--start` claims anything."""
-  if not (args.ready and args.section):
-    return
+  """Validate sections and requested note packs before `--start` claims anything."""
   for item in items:
     sl = state.slices.get(item.id)
-    if sl is not None:
+    if args._pack_time is not None:
+      _note_projection(args, item, sl)
+    if args.ready and args.section and sl is not None:
       _sections_named(sl, args.section)
 
 
 def cmd_next(args: argparse.Namespace) -> int:
+  _prepare_note_pack(args)
+  if args._pack_time is not None and not args.ready:
+    raise StateError("--min-trust and --notes-budget on next require --ready", code="usage")
   if args.ready and args.show:
     raise StateError(
       "--ready and --show are separate output profiles; pass only one",
@@ -1447,9 +1487,10 @@ def cmd_deps(args: argparse.Namespace) -> int:
 
 
 def cmd_show(args: argparse.Namespace) -> int:
+  _prepare_note_pack(args)
   state = _state(args)
   item = state.index.require(args.id)
-  item, sl = _note_projection(args, item, state.slices.get(args.id))
+  item, sl, manifest = _note_projection(args, item, state.slices.get(args.id))
   if args.section is not None:
     # The read counterpart to `edit --section`: one section's body, nothing
     # else, so an agent can round-trip a section without re-parsing the render.
@@ -1475,24 +1516,24 @@ def cmd_show(args: argparse.Namespace) -> int:
       ]
       for section in selected:
         lines.extend(["", f"## {section.heading}", section.body])
-      if args.notes_kind is not None:
-        payload.update(_note_fields(item))
+      if args.notes_kind is not None or manifest is not None:
+        payload.update(_note_fields(item, manifest))
         payload["slice_notes"] = list(sl.notes)
-      _emit(args, payload, "\n".join(lines))
+      _emit(args, payload, "\n".join(lines + _pack_text(item, sl, manifest)))
     elif len(args.section) == 1:
       section = selected[0]
       payload = {"id": args.id, "section": section.heading, "body": section.body}
-      if args.notes_kind is not None:
-        payload.update(_note_fields(item))
+      if args.notes_kind is not None or manifest is not None:
+        payload.update(_note_fields(item, manifest))
         payload["slice_notes"] = list(sl.notes)
-      _emit(args, payload, section.body)
+      _emit(args, payload, "\n".join([section.body, *_pack_text(item, sl, manifest)]))
     else:
       payload = {"id": args.id, "sections": [s.to_dict() for s in selected]}
       text = "\n\n".join(f"## {s.heading}\n{s.body}" for s in selected)
-      if args.notes_kind is not None:
-        payload.update(_note_fields(item))
+      if args.notes_kind is not None or manifest is not None:
+        payload.update(_note_fields(item, manifest))
         payload["slice_notes"] = list(sl.notes)
-      _emit(args, payload, text)
+      _emit(args, payload, "\n".join([text, *_pack_text(item, sl, manifest)]))
     return OK
   if args.context:
     raise StateError(
@@ -1503,10 +1544,12 @@ def cmd_show(args: argparse.Namespace) -> int:
   if sl is None:
     lines = [f"{item.id}  {item.display_title()}", *item.rendered_notes,
              f"(no slice yet; run `slicer promote {item.id}`)"]
-    _emit(args, item.to_dict(), "\n".join(lines))
+    _emit(args, item.to_dict() | _note_fields(item, manifest),
+          "\n".join(lines + _pack_text(item, sl, manifest, notes=False)))
     return OK
   text = render.render_slice(sl, state.config, state.template("slice.md"), item.rendered_notes).decode("utf-8")
-  _emit(args, item.to_dict() | {"slice": sl.to_dict()}, text)
+  _emit(args, item.to_dict() | _note_fields(item, manifest) | {"slice": sl.to_dict()},
+        "\n".join([text, *_pack_text(item, sl, manifest, notes=False)]))
   return OK
 
 
@@ -2386,6 +2429,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
   sp.add_argument("--notes-kind", action="append", help="select exact note kinds (repeatable; requires --ready)")
+  sp.add_argument("--min-trust", choices=note_pack.TRUST,
+                  help="pack current notes at or above this verification tier")
+  sp.add_argument("--notes-budget", type=int,
+                  help="pack whole current notes within this nonnegative character budget")
   sp.add_argument("--ready", action="store_true",
                   help="bounded pickup: item identity, its slice, and blocked ids")
   sp.add_argument("--section", action="append",
@@ -2446,6 +2493,10 @@ def build_parser() -> argparse.ArgumentParser:
     help="print only this section's body; repeat to select several",
   )
   sp.add_argument("--notes-kind", action="append", help="select exact note kinds (repeatable; empty selects untyped)")
+  sp.add_argument("--min-trust", choices=note_pack.TRUST,
+                  help="pack current notes at or above this verification tier")
+  sp.add_argument("--notes-budget", type=int,
+                  help="pack whole current notes within this nonnegative character budget")
   sp.add_argument("--context", action="store_true",
                   help="with --section, include title, dependencies, and scope boundary")
 

@@ -1052,3 +1052,6 @@
 {"when": "2026-10-06T18:31:10Z", "item": "s217", "action": "note", "from": "", "to": "", "note": "Ready for review: the slicer-index driver (src/slicer/mergei", "by": "Jon Robbins"}
 {"when": "2026-10-06T18:31:10Z", "item": "s217", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-06T18:31:41Z", "item": "s217", "action": "status", "from": "review", "to": "done", "note": "The slicer-index driver merges independent items and fields of index.json by identity, keeps the larger next_id, and leaves list, order, delete-versus-edit, and integrity disagreements as conflicts. Full discover was 1386 tests OK (1 skipped), and slicer check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:03:48Z", "item": "s222", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:04:51Z", "item": "s222", "action": "note", "from": "", "to": "", "note": "Ready for review: added read-only current note packs to show", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:04:51Z", "item": "s222", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
