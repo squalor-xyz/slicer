@@ -6394,7 +6394,7 @@
       "id": "s226",
       "title": "Offer a list JSON envelope that can carry non-item data",
       "short_title": "Offer a list JSON envelope that can carry non-item data",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

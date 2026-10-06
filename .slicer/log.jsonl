@@ -1074,3 +1074,4 @@
 {"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "note", "from": "", "to": "", "note": "Owner chose opt-in list --json --envelope with items and onl", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "note", "from": "", "to": "", "note": "Ready for review: opt-in list --json --envelope returns {ite", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:51:25Z", "item": "s226", "action": "status", "from": "review", "to": "done", "note": "Opt-in list --json --envelope returns {items, only_in_sibling} while the default list JSON stays an array. Lean keeps both keys when empty. Filters and sorts apply to items only, and sibling indexes are still read once. Verified with unittest discover: 1437 tests, 1 skipped.", "by": "Jon Robbins"}
