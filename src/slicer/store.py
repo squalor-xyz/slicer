@@ -416,6 +416,14 @@ def _id_order(item_id: str) -> list[tuple[int, int, str]]:
   ]
 
 
+def displayed_status(config: Config, item: Item, siblings: list[dict[str, str]]) -> str:
+  """Expose a sibling handoff without changing this checkout's stored status."""
+  if (item.status == config.open_status and config.review_status
+      and any(row["status"] == config.review_status for row in siblings)):
+    return config.review_status
+  return item.status
+
+
 def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]]]:
   """Sibling work this checkout has not reached, ordered by worktree path.
 

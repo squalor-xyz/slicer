@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 
 import support
-from slicer import model
+from slicer import model, store
 from slicer import tui, tui_style
 from slicer.config import Config
 from slicer.model import Index, Item
@@ -22,7 +22,7 @@ class MemoryState(State):
 
 
 def example() -> State:
-  return MemoryState(Path.cwd(), Config.from_dict({}), Index(items=[
+  return MemoryState(Path(__file__).resolve().parent, Config.from_dict({}), Index(items=[
     Item('S01', 'Finished setup', 'done', trees=['alpha'], importance=3, urgency=1),
     Item('S02', 'Search full title', 'open', short_title='Find things',
          trees=['alpha', 'beta'], pass_key='one', importance=3, urgency=2),
@@ -668,6 +668,75 @@ class NotesPanelTests(unittest.TestCase):
     # the note's body line is tagged with its own entry index
     note_entry = next(e_i for e_i, e in enumerate(ents) if e.kind == "note")
     self.assertTrue(any(l.text == "a note" and l.entry == note_entry for l in panel))
+
+
+class SiblingReviewDisplayTests(unittest.TestCase):
+  def siblings(self) -> dict[str, list[dict[str, str]]]:
+    return {"S02": [{"worktree": "other", "owner": "", "status": "review"}]}
+
+  def test_View_SiblingReview_PresetsFiltersAndRefreshShareOneSnapshot(self) -> None:
+    state = example()
+    with patch.object(store, "in_work_elsewhere", return_value=self.siblings()) as discover:
+      view = tui.View.initial(state)
+      discover.assert_called_once_with(state.root, state.index)
+      self.assertIn("S02", item_ids(view))
+      view.handle(state, "v")
+      self.assertNotIn("S02", item_ids(view))
+      view.handle(state, "v")
+      self.assertEqual(item_ids(view), ["S02"])
+      view.select((tui.ITEM, "S02"))
+      screen = Screen(24, 100)
+      discover.reset_mock()
+      tui.draw(screen, state, view)
+      discover.assert_called_once_with(state.root, state.index)
+      self.assertIn("status     review", "\n".join(text for _, text in screen.writes))
+      discover.return_value = {}
+      view.refresh(state)
+      self.assertNotIn("S02", item_ids(view))
+      self.assertEqual(state.index.require("S02").status, "open")
+
+  def test_Presentation_CustomReviewLabel_StylesAlignsAndSortsWithoutWrites(self) -> None:
+    state = example()
+    state.config.statuses["review"] = "ready-for-review"
+    siblings = self.siblings()
+    state.index.require("S02").depends_on = ["S04"]
+    before = state.index.to_dict()
+    items = [state.index.require(i) for i in ("S02", "S04")]
+    with patch.object(store, "in_work_elsewhere", side_effect=AssertionError("pure helper did IO")):
+      rows = tui.item_rows(state, items, siblings)
+      self.assertEqual(rows[0].status, "review")
+      self.assertIn("ready-for-review", rows[0].text)
+      self.assertEqual(rows[0].text.index("P:"), rows[1].text.index("P:"))
+      self.assertEqual(tui_style.status_role(rows[0].status, rows[0].blocked, state.config), "review")
+      line = next(l for l in tui.panel(state, "S02", siblings) if l.text.startswith("status"))
+      self.assertEqual(line.text, "status     ready-for-review")
+      self.assertEqual(line.role, "review")
+      state.config.statuses["review"] = "zzz"
+      self.assertEqual([i.id for i in tui.sort_items(state, items, "status", False, siblings)],
+                       ["S04", "S02"])
+      self.assertEqual([i.id for i in tui.sort_items(state, items, "status", True, siblings)],
+                       ["S02", "S04"])
+      for selected, expected in (({"review"}, ["S02"]), ({"open"}, ["S02"]),
+                                 ({"started", "reviewing"}, ["S04"])):
+        filters = tui.Filters()
+        filters.values["status"] = selected
+        self.assertEqual([r.item_id for r in tui.filtered_rows(state, filters, elsewhere=siblings)
+                          if r.kind == tui.ITEM], expected)
+    self.assertEqual(state.index.to_dict(), before)
+
+  def test_DisplayedStatus_NonOpenAndOtherSiblingKeys_KeepStoredStatus(self) -> None:
+    state = example()
+    item = state.index.require("S02")
+    for status in ("open", "started", "parked", "review", "later"):
+      for sibling_status in ("review", "started", "reviewing", "done"):
+        with self.subTest(status=status, sibling_status=sibling_status):
+          item.status = status
+          siblings = [{"status": sibling_status}]
+          expected = "review" if status == "open" and sibling_status == "review" else status
+          self.assertEqual(store.displayed_status(state.config, item, siblings), expected)
+    item.status = "open"
+    state.config.review_status = ""
+    self.assertEqual(store.displayed_status(state.config, item, [{"status": "review"}]), "open")
 
 
 class ClaimDisplayTests(unittest.TestCase):

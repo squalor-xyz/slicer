@@ -302,6 +302,10 @@ skip an item reported that way (`skipped S03 (in work in wt:NAME)`, or
 `in_work_elsewhere` in JSON), unless this checkout has it started or claimed too. This
 reads local Git worktrees only; it cannot see work on another machine, and the rendered
 roadmap ignores it.
+For an open item whose sibling reports the configured review key, `list`, `find`, and
+unblocked `deps` show this checkout's review label. `list --review` and `list --status
+review` (use the configured key) include it, as does the open filter. JSON status stays
+open. The TUI uses the same label and review filters without changing stored state.
 The owner is `--owner NAME` on
 the command, otherwise the `SLICER_CLAIM_OWNER` environment variable, otherwise
 `claim_owner` in config, otherwise the git user name, otherwise the worktree name, so

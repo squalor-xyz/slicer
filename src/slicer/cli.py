@@ -1191,10 +1191,15 @@ def _claim_width(
   return width
 
 
-def _status_width(cfg: Config, items: list[model.Item]) -> int:
+def _status_width(
+  cfg: Config, items: list[model.Item],
+  elsewhere: dict[str, list[dict[str, str]]] | None = None,
+) -> int:
   """At least the historical 7, wider when a label needs it (`reviewing`, or a
   project's own status), so a long label never pushes the rest of its row."""
-  return max([7, *(len(cfg.status_label(item.status)) for item in items)])
+  return max([7, *(len(cfg.status_label(store.displayed_status(
+    cfg, item, (elsewhere or {}).get(item.id, []),
+  ))) for item in items)])
 
 
 def _pass_width(index: model.Index, items: list[model.Item]) -> int | None:
@@ -1228,14 +1233,15 @@ def _item_rows(
   if pass_w is None:
     pass_w = _pass_width(state.index, items)
   if status_w is None:
-    status_w = _status_width(cfg, items)
+    status_w = _status_width(cfg, items, elsewhere)
   rows = []
   for n, item in enumerate(items, 1):
     score = str(eff[item.id]) + ("^" if eff[item.id] > item.score else "")
     effort = "-" if item.effort is None else str(item.effort)
     pass_cell = "" if pass_w is None else f"{item.pass_key or '-':<{pass_w}} "
+    label = cfg.status_label(store.displayed_status(cfg, item, elsewhere.get(item.id, [])))
     rows.append(
-      f"{n:>3}  {item.id:<5} {cfg.status_label(item.status):<{status_w}} "
+      f"{n:>3}  {item.id:<5} {label:<{status_w}} "
       f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
       f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
     )
@@ -1300,11 +1306,16 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if i.pass_key == args.pass_key]
   if args.flag:
     items = [i for i in items if set(args.flag) & set(i.flags)]
+  elsewhere, only_sibling = store.sibling_work(state.root, state.index)
   hidden_count = 0
   if view is not None:
-    items = [i for i in items if i.status in view]
+    items = [i for i in items if {i.status, store.displayed_status(
+      state.config, i, elsewhere.get(i.id, []),
+    )} & view]
   elif args.status:
-    items = [i for i in items if i.status in args.status]
+    items = [i for i in items if {i.status, store.displayed_status(
+      state.config, i, elsewhere.get(i.id, []),
+    )} & set(args.status)]
   elif not args.all:
     hidden = {state.config.done_status}
     if state.config.retired_status:
@@ -1321,10 +1332,9 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = sorted(items, key=model.effort_rank)
   else:
     items = _list_in_priority_order(state, items)
-  elsewhere, only_sibling = store.sibling_work(state.root, state.index)
   claim_w = _claim_width(state.config, items, elsewhere)
   pass_w = _pass_width(state.index, items)
-  status_w = _status_width(state.config, items)
+  status_w = _status_width(state.config, items, elsewhere)
   pass_head = "" if pass_w is None else f"{'PASS':<{pass_w}} "
   header = (
     f"{'#':>3}  {'ID':<5} {'STATUS':<{status_w}} {'CLAIM':<{claim_w}} {pass_head}{'SIZE':<4} "
@@ -1444,7 +1454,8 @@ def _emit_find(
     ]
   else:
     payload = [i.to_dict() | {"match": {"field": f, "snippet": s}} for i, f, s in hits]
-  rows = _item_rows(state, [i for i, _, _ in hits])
+  elsewhere = store.in_work_elsewhere(state.root, state.index) if not args.json else {}
+  rows = _item_rows(state, [i for i, _, _ in hits], elsewhere=elsewhere)
   text = "\n".join(
     f"{row}\n      matched in {f}: {s}" for row, (_, f, s) in zip(rows, hits)
   ) or "no matching items"
@@ -1481,8 +1492,9 @@ def cmd_deps(args: argparse.Namespace) -> int:
   unblocked = [it for it in index.items
                if it.status == cfg.open_status and not graph.blocked_by(index, it, satisfying)]
   unblocked.sort(key=lambda it: eff[it.id], reverse=True)
+  elsewhere = store.in_work_elsewhere(state.root, state.index) if not args.json else {}
   _emit(args, [it.to_dict() for it in unblocked],
-        "\n".join(_item_rows(state, unblocked)) or "nothing unblocked")
+        "\n".join(_item_rows(state, unblocked, elsewhere=elsewhere)) or "nothing unblocked")
   return OK
 
 

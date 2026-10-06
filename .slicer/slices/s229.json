@@ -1,0 +1,41 @@
+{
+  "id": "s229",
+  "title": "Show a sibling handoff as review in list and the TUI",
+  "lead": [
+    "List, find, deps, and the TUI print this checkout's review label when the item is still open here and a sibling worktree has it in review. The claim cell stays wt:NAME. Stored status stays open, and list JSON status stays that stored key. The review filters include the row."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request 2026-10-06: list status stays a dash while the worktree is in review",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** writing or changing this checkout's stored status; list or the TUI writing the index, the render, or the log; changing list JSON status or in_work_elsewhere; the CLAIM cell, including which worktree it names; next, the status command, show, and roadmap render; sibling started, reviewing, done, parked, or custom statuses; the in-work filter; a TUI claim column; reading another branch through git; the short skill loop.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On main, s170 and s228 are open. Their worktrees have handed them off, so each worktree's status is review, and list JSON on main already reports that under in_work_elsewhere. The text STATUS column still prints the open label, a dash, and the review filter on main is empty. s184 recorded the sibling and left the STATUS column and the CLAIM cell alone on purpose. The queue is hard to scan for work that is implemented and waiting to be reviewed and merged. next already skips those rows.\n\nThe owner chose the STATUS column, not the claim cell. The label is this checkout's review label. JSON status stays the stored key. The review filter and list --status review include the row. Only a sibling review counts, not reviewing or done. The TUI queue, detail pane, and review preset follow the same rule.\n\nA row can then appear under both the open filter and the review filter. That is intentional. The stored status is still open, so the open filter keeps the row, and the review filters also keep it. Every one of those text views prints the review label."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/store.py for a pure shared displayed-status helper. src/slicer/cli.py for shared list/find/deps rows, sibling discovery, column widths, and review membership. src/slicer/tui.py for a sibling snapshot per refresh, queue/detail labels and styles, status sorting, and review filters. tests/test_worktree_claims.py and tests/test_tui.py. docs/commands.md, docs/agents.md, docs/getting-started.md, docs/tui.md, and CHANGELOG.md. src/slicer/ai.py only outside the counted implement-one-slice section. Leave the short skill loop unchanged."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. Stored open, and a sibling status key of review. The STATUS cell in list, find, and deps is this checkout's review label, not the sibling config's label and not the open dash. CLAIM stays wt:NAME. list JSON status stays open. in_work_elsewhere stays the sibling key review. The review filter and list --status review include the row and use the same label. The open filter still includes the row. The in-work filter does not. next still skips the row.\n2. This checkout's review label is a custom word such as ready. The column prints ready. A sibling config that renames its own review label does not change the column.\n3. A sibling that is started, reviewing, or done leaves the open label in place. The review filter does not gain the row. An item whose stored status is already review is unchanged, and a matching sibling is still omitted from in_work_elsewhere.\n4. A stored status other than open, including started, later, and parked, keeps that label when a sibling is in review. The review filter does not gain the row from the sibling.\n5. Two sibling entries, only one of them review. The label is the review label. CLAIM still names the first worktree, with the extra-worktree mark when there is another.\n6. An empty review status, and a project directory that is not the git worktree root, do not show the label and do not add review membership.\n7. The TUI queue and the detail status line show the same review label and the review status role used for a stored review item. The review preset includes the row. The in-work preset does not. The unfinished preset still does. Sorting the queue by status uses the visible label. A review-only status filter includes the row. An open-only status filter still includes it. The TUI does not write.\n8. Update the existing list test that expects the open dash for a sibling review. No unit test asserts this roadmap's live ids."
+    },
+    {
+      "heading": "Implement",
+      "body": "Add a pure shared helper taking local config, item, and supplied sibling entries. Return the configured review key only when the stored status is open, review is configured, and a sibling entry has that exact key; otherwise return stored status. Use its label for shared text rows and widths. Discover siblings before list status filtering and supply sibling data to find and unblocked deps listings. Status filters match stored status plus the displayed review status, preserving open membership. Acquire one sibling snapshot per TUI refresh and supply it to filtering, status sorting, queue rendering, and detail rendering. Keep presentation helpers pure with optional supplied sibling data. Use displayed status for review styling and its label for status sorting. Preserve JSON and claim precedence, ranking, and lifecycle actions. Update docs and Unreleased changelog; preserve the short skill loop and keep the implement-one-slice instructions under 350 words."
+    },
+    {
+      "heading": "Check",
+      "body": "All eight cases in Failing tests pass. Also check long custom review labels keep columns aligned, queue and detail share review styling, and a TUI refresh reflects changed sibling status using one snapshot. Ordinary in-memory TUI fixtures must not discover live sibling state. Run affected tests, focused worktree/TUI tests, full unittest discover, slicer check, and git diff --check. Repeated reads leave tracking and generated output unchanged. Manually run this worktree code against main without writes: currently open main items with siblings in review show the local review label and enter the review filter. Select current ids through list JSON rather than assuming old live ids; never assert live roadmap ids in unit tests."
+    },
+    {
+      "heading": "Git",
+      "body": "One implementation slice in its own worktree. Commit or merge only when the owner requests it. Docs, tests, and the changelog land in that same change."
+    }
+  ],
+  "notes": []
+}

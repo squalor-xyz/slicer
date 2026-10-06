@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import store, vcs
+from slicer import store, tui, vcs
 from slicer.cli import main
 
 
@@ -45,6 +45,72 @@ class WorktreeClaimTests(unittest.TestCase):
     made = repo._git("worktree", "add", "-q", "-b", name, str(root), "HEAD")
     self.assertEqual(made.returncode, 0, made.stderr)
     return root
+
+  def test_ReviewDisplay_TextFiltersAndJson_PreserveStoredState(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "set", "S01", "--status", "review")
+      before = {p.relative_to(repo.root): p.read_bytes()
+                for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+      for args in (("list",), ("list", "--review"), ("list", "--status", "review"),
+                   ("list", "--status", "open"), ("find", "one"),
+                   ("find", "--title-exact", "one"), ("deps",)):
+        with self.subTest(args=args):
+          code, out, err = repo.run(*args)
+          self.assertEqual(code, 0, err)
+          self.assertEqual(_row(out, "S01").split()[2:4], ["review", "wt:other"])
+      for args in (("list", "--review"), ("list", "--status", "review")):
+        rows = json.loads(repo.run(*args, "--json")[1])
+        self.assertEqual([row["id"] for row in rows], ["S01"])
+        self.assertEqual(rows[0]["status"], "open")
+        self.assertEqual(rows[0]["in_work_elsewhere"][0]["status"], "review")
+      self.assertEqual(json.loads(repo.run("list", "--in-work", "--json")[1]), [])
+      self.assertEqual(json.loads(repo.run("find", "one", "--json")[1])[0]["status"], "open")
+      self.assertEqual(json.loads(repo.run("deps", "--json")[1])[0]["status"], "open")
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.handle(state, "v")
+      self.assertNotIn("S01", [r.item_id for r in view.listing])
+      view.handle(state, "v")
+      self.assertEqual([r.item_id for r in view.listing if r.kind == tui.ITEM], ["S01"])
+      self.assertEqual(next(r.status for r in view.listing if r.item_id == "S01"), "review")
+      self.assertTrue(any(line.text == "status     review" and line.role == "review"
+                          for line in tui.panel(state, "S01", view.elsewhere)))
+      after = {p.relative_to(repo.root): p.read_bytes()
+               for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+      self.assertEqual(after, before)
+
+  def test_ReviewDisplay_CustomLabelAndMultipleSiblings_AlignAndKeepFirstClaim(self) -> None:
+    with self.repo() as repo:
+      a = self.sibling(repo, "a")
+      b = self.sibling(repo, "b")
+      _run(a, "start", "S01")
+      _run(b, "set", "S01", "--status", "review")
+      path = repo.root / ".slicer/config.json"
+      cfg = json.loads(path.read_text(encoding="utf-8"))
+      cfg["statuses"]["review"] = "ready-for-review"
+      path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(_row(out, "S01").split()[2:4], ["ready-for-review", "wt:a+1"])
+      self.assertEqual(_row(out, "S01").index("wt:a+1"), _row(out, "S02").index("-"))
+      self.assertEqual(out.splitlines()[0].index("CLAIM"), _row(out, "S01").index("wt:a+1"))
+      for status in ("started", "later", "parked", "review"):
+        with self.subTest(status=status):
+          repo.run("set", "S01", "--status", status)
+          row = _row(repo.run("list")[1], "S01")
+          self.assertEqual(row.split()[2], repo.state().config.status_label(status))
+          filtered = json.loads(repo.run("list", "--review", "--json")[1])
+          self.assertEqual([r["id"] for r in filtered], ["S01"] if status == "review" else [])
+
+  def test_ReviewDisplay_OtherSiblingStatuses_DoNotEnterReview(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      for status in ("started", "reviewing", "done"):
+        with self.subTest(status=status):
+          _run(sibling, "set", "S01", "--status", status)
+          self.assertEqual(_row(repo.run("list")[1], "S01").split()[2], "—")
+          self.assertEqual(json.loads(repo.run("list", "--review", "--json")[1]), [])
 
   def test_NextReview_ItemReviewingInSibling_IsSkipped(self) -> None:
     with self.repo() as repo:
@@ -153,7 +219,7 @@ class WorktreeClaimTests(unittest.TestCase):
 
   def test_ProjectBelowTheWorktreeRoot_IgnoresTheEnclosingIndex(self) -> None:
     with self.repo() as repo:
-      _run(self.sibling(repo, "other"), "set", "S01", "--status", "done")
+      _run(self.sibling(repo, "other"), "set", "S01", "--status", "review")
       nested = repo.root / "nested"
       nested.mkdir()
       with support.isolated_discovery(nested):
@@ -163,6 +229,8 @@ class WorktreeClaimTests(unittest.TestCase):
         self.assertEqual(code, 0, err)
         row = json.loads(_run(nested, "list", "--json")[1])[0]
         self.assertEqual(row["in_work_elsewhere"], [])
+        self.assertEqual(_row(_run(nested, "list")[1], "S01").split()[2], "—")
+        self.assertEqual(json.loads(_run(nested, "list", "--review", "--json")[1]), [])
         payload = json.loads(_run(nested, "next", "--json")[1])
         self.assertEqual(payload["id"], "S01")
         self.assertNotIn("in_work_elsewhere", payload)
@@ -187,7 +255,7 @@ class WorktreeClaimTests(unittest.TestCase):
       code, out, err = repo.run("list")
       self.assertEqual(code, 0, err)
       self.assertEqual(_claim(out, "S01"), "wt:other")
-      self.assertEqual(_row(out, "S01").split()[2], "—")
+      self.assertEqual(_row(out, "S01").split()[2], "review")
       rows = {i["id"]: i for i in json.loads(repo.run("list", "--json")[1])}
       self.assertEqual(rows["S01"]["in_work_elsewhere"], [
         {"worktree": "other", "owner": "", "status": "review"},
@@ -273,6 +341,8 @@ class WorktreeClaimTests(unittest.TestCase):
       path.write_text(json.dumps(cfg) + "\n", encoding="utf-8")
       row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S01")
       self.assertEqual(row["in_work_elsewhere"], [])
+      self.assertEqual(_row(repo.run("list")[1], "S01").split()[2], "—")
+      self.assertEqual(json.loads(repo.run("list", "--review", "--json")[1]), [])
       _run(sibling, "set", "S02", "--status", "done")
       row = next(i for i in json.loads(repo.run("list", "--json")[1]) if i["id"] == "S02")
       self.assertEqual(row["in_work_elsewhere"], [

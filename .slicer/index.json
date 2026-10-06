@@ -6513,6 +6513,46 @@
         "effort": 2,
         "attempts": 0
       }
+    },
+    {
+      "id": "s229",
+      "title": "Show a sibling handoff as review in list and the TUI",
+      "short_title": "Show a sibling handoff as review in list and the TUI",
+      "status": "review",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [
+        {
+          "id": "09439124-ac9b-42e1-8754-8ed92a975f66",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: list, find, deps, and the TUI show this checkout's review label when an open item is in review in a sibling. Review filters include the row and open filters still do. JSON status stays open and claims are unchanged. Full unittest discovery: 1407 tests, OK (1 skipped); slicer check and git diff --check pass. A read-only list on this tree shows s226, s228, and s230 with the review label and wt claims while stored status stays open.",
+          "created_at": "2026-10-06T19:15:37Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-10-06: list status stays a dash while the worktree is in review",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.4",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 1
+      }
     }
   ],
   "epilogue": "",
