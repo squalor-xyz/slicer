@@ -54,11 +54,22 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `sync [--check]` | rewrite derived lines in other documents |
 | `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render or index merge driver (`render_driver_check`) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). Render freshness is `check`'s job. See [getting started](getting-started.md#9-when-something-goes-wrong) |
 | `check [--diff]` | the CI gate: render staleness (each stale file's text line and `stale_render_details` entry name its cause, including a renderer-format mismatch between the file's `Render format: N.` header and the running slicer), sync drift, integrity, and unknown flags in the backtick `slicer ...` commands of live slices (commands inside fenced code blocks are literal text and are not checked). It also warns (exit 0) when a sibling git worktree has an item under the same id with a different title, which would collide on merge. The warning does not fail the gate |
-| `stats` / `log [--limit N] [--item ID] [--action A] [--by NAME]` | counts + completion % and per-tree progress; history, newest first (`--limit` defaults to 20; `--item`/`--action`/`--by` scope it; `set` records old→new values; `by` is who started, claimed, released, handed off or finished an item) |
+| `stats` / `log [--limit N] [--item ID] [--action A] [--by NAME] [--since TIMESTAMP] [--until TIMESTAMP]` | counts + completion % and per-tree progress; history, newest first (`--limit` defaults to 20; `--item`/`--action`/`--by` scope it; `--since` is inclusive and `--until` exclusive, requiring timezone-aware ISO8601 timestamps; all filters apply before limit; `set` records old→new values; `by` is who started, claimed, released, handed off or finished an item) |
 | `status` | the front door: next item, progress census, and blockers in one view (`--json`). Text adds an `Only in a sibling` block, and JSON an `only_in_sibling` list, when a sibling worktree has an unclaimed open item this checkout lacks |
 | `tui` / `ui` | browse, read, reorder and edit interactively (two names for the same command) |
 
 For TUI keys, filters, the wizard, and display behavior, see the [TUI manual](tui.md).
+
+History windows accept either bound or both, for example
+`slicer log --since 2026-10-05T12:00:00Z --until 2026-10-05T14:00:00+02:00 --json`.
+Bounds and matching history timestamps compare as instants, including explicit UTC
+offsets and fractional seconds. Equal bounds give an empty result (exit 0).
+Malformed or timezone-less bounds and `since > until` are `usage` (exit 2),
+validated before history is read. A malformed or timezone-less stored timestamp
+encountered after item/action/by filtering is `corrupt` (exit 3) when a time bound
+is supplied. Original timestamp strings, existing newest-first ordering and
+reverse append-order ties are preserved. Timestamp windows cannot define an exact
+run boundary under clock skew.
 
 `attempts` counts fresh implementation starts: `start` from open or a custom
 queue into the configured started status increments it once. Repeated starts,

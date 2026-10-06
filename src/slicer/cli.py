@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 from contextlib import nullcontext, redirect_stderr, redirect_stdout
+from datetime import datetime, timezone
 from pathlib import Path
 
 from slicer import check as check_mod
@@ -2069,7 +2070,27 @@ def cmd_status(args: argparse.Namespace) -> int:
   return OK
 
 
+def _log_timestamp(value: str, where: str, *, code: str) -> datetime:
+  """Compare history windows as instants without rewriting stored timestamps."""
+  try:
+    instant = datetime.fromisoformat(value)
+    if instant.tzinfo is None or instant.utcoffset() is None:
+      raise ValueError("timezone required")
+    return instant.astimezone(timezone.utc)
+  except (TypeError, ValueError, OverflowError):
+    raise StateError(
+      f"{where}: invalid timestamp {value!r}; use an ISO8601 timestamp with "
+      "a timezone, for example 2026-10-05T12:00:00Z.", code=code,
+    ) from None
+
+
 def cmd_log(args: argparse.Namespace) -> int:
+  since = (_log_timestamp(args.since, "--since", code="usage")
+           if args.since is not None else None)
+  until = (_log_timestamp(args.until, "--until", code="usage")
+           if args.until is not None else None)
+  if since is not None and until is not None and since > until:
+    raise StateError("--since must be earlier than or equal to --until.", code="usage")
   state = _state(args)
   history = state.history()
   if args.item:
@@ -2081,12 +2102,25 @@ def cmd_log(args: argparse.Namespace) -> int:
   if args.by:
     actors = set(args.by)
     history = [e for e in history if e.by in actors]
+  if since is not None or until is not None:
+    window = []
+    for entry in history:
+      instant = _log_timestamp(
+        entry.when, f"{state.dir / store.LOG_NAME}: item {entry.item}", code="corrupt",
+      )
+      if (since is None or since <= instant) and (until is None or instant < until):
+        window.append(entry)
+    history = window
   # Newest first by timestamp so union-merged history (which can interleave the
   # lines two branches appended) still reads in order. Reverse the append order
   # first so that, among entries sharing a timestamp, the later-appended one is
   # shown first -- a stable sort then keeps that tie-break.
   entries = sorted(reversed(history), key=lambda e: e.when, reverse=True)[: args.limit]
   filters = (args.item or []) + (args.action or []) + (args.by or [])
+  if args.since is not None:
+    filters.append(f"since {args.since}")
+  if args.until is not None:
+    filters.append(f"until {args.until}")
   empty = ("no history for " + " ".join(filters)) if filters else "no history yet"
   text = "\n".join(
     (f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
@@ -2456,6 +2490,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--item", action="append", help="filter to these item ids (repeatable)")
   sp.add_argument("--action", action="append", help="filter to these actions, e.g. set, edit (repeatable)")
   sp.add_argument("--by", action="append", help="filter to actions recorded by these owners (repeatable)")
+  sp.add_argument("--since", help="include entries at or after this timezone-aware ISO8601 timestamp")
+  sp.add_argument("--until", help="include entries before this timezone-aware ISO8601 timestamp")
 
   add("tui", cmd_tui, "browse and reorder interactively (also: ui)",
       json_flag=False, aliases=("ui",))

@@ -234,7 +234,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `verify` | `{checked, git, errors, findings: [{level, item, message}]}` |
 | `stats` | `{total, completion, by_status, by_size, by_tree, by_pass, by_tree_status}`. `by_status` and `by_tree_status` are keyed by status key (`open`, `done`, …), the same value as an item's `status`, never by its configured display label; text output shows the labels. `status --json` carries the same `census`, and `import`/`migrate` key their `by_status` the same way |
 | `status` | `{next, census, blocked}`, plus `unspecified` and `in_work_elsewhere` when `next` would skip items, in the same shapes, and `only_in_sibling` (`[{id, title, worktree, status}]`, worktree-path then id order) when a sibling worktree has an open, unclaimed item whose id this checkout lacks. A done, review, claimed or in-work sibling row is not in it, and `check` does not fail on it. Text adds an `Only in a sibling` block |
-| `log` | array of `{when, item, action, from, to, note}`, newest first. Start, claim, release, handoff and done entries add `by`: who acted, resolved as `--owner`, then `SLICER_CLAIM_OWNER`, then `claim_owner`, then the git user, then the worktree name. `--by NAME` keeps only those |
+| `log` | array of `{when, item, action, from, to, note}`, newest first. Start, claim, release, handoff and done entries add `by`: who acted, resolved as `--owner`, then `SLICER_CLAIM_OWNER`, then `claim_owner`, then the git user, then the worktree name. `--by NAME` keeps only those. Optional timezone-aware ISO8601 `--since` (inclusive) and `--until` (exclusive) compare instants before limit, preserving original `when` strings |
 | `prose list` | `[{ref, lines, preview}]` |
 
 ## Failures are JSON too
@@ -394,6 +394,16 @@ one item with `slicer log --item ID --json` (repeat `--item` for several) or to 
 with `--action set` / `--action status`. `set` entries record old→new values, so
 `slicer log --item ID --action set --json` reconstructs an item's metadata history from slicer
 (section/prose body edits still live in git).
+
+For a time window, pass `--since 2026-10-05T12:00:00Z` and/or
+`--until 2026-10-05T13:00:00Z`. Explicit UTC offsets and fractional seconds work.
+Item/action/by filters and the time window apply before `--limit`; output ordering
+and append-order ties remain unchanged. Equal bounds or a window with no entries
+return an empty array with exit 0. Invalid or timezone-less bounds and `since > until`
+return `usage` (exit 2) before reading history. An invalid or timezone-less stored
+timestamp encountered during time filtering returns `corrupt` (exit 3), naming the
+history file and item. Timestamp windows cannot define an exact run boundary under
+clock skew; history has no per-entry cursor.
 
 **Read the project's direction before proposing work.** `slicer goals --json` returns
 `{"goals": ..., "non_goals": ...}` — what the project is *for*, kept separate from the

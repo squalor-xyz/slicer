@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-214 items · — 10 · done 200 · retired 4
+214 items · — 9 · done 200 · retired 4 · review 1
 
 v1.4.0 release
 
@@ -43,7 +43,7 @@ v1.4.0 release
 | 8 | [s211](slices/s211.md) | Return an existing item for a repeated filing key | M | 2 | slicer | agents feedback 2026-10-05 U4b; docs/feedback/agents-2026-10-05.md | done |
 | 9 | [s212](slices/s212.md) | Find items by exact title | S | 1 | slicer | agents feedback 2026-10-05 U4c; docs/feedback/agents-2026-10-05.md | done |
 | 10 | [s215](slices/s215.md) | Cap new implementation pickups while allowing resume | S | 1 | slicer | agents feedback 2026-10-05 U6b; docs/feedback/agents-2026-10-05.md | — |
-| 11 | [s216](slices/s216.md) | Filter history by timezone-aware timestamp windows | S | 1 | slicer | agents feedback 2026-10-05 U7; docs/feedback/agents-2026-10-05.md | — |
+| 11 | [s216](slices/s216.md) | Filter history by timezone-aware timestamp windows | S | 1 | slicer | agents feedback 2026-10-05 U7; docs/feedback/agents-2026-10-05.md | review |
 | 12 | [s218](slices/s218.md) | Filter next pickups with inclusive and exclusive flag patterns | S | 1 | slicer | agents feedback 2026-10-05 U9; docs/feedback/agents-2026-10-05.md | — |
 | 13 | [s219](slices/s219.md) | Resolve whole dependency titles before splitting outline commas | M | 2 | slicer | agents feedback 2026-10-05 U10; docs/feedback/agents-2026-10-05.md | — |
 | 14 | [s226](slices/s226.md) | Offer a list JSON envelope that can carry non-item data | M | 2 | cli | s223 landing 2026-10-05: list --json is a bare array, so sibling-only items could only go in status --json | — |
