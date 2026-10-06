@@ -269,9 +269,10 @@ run `next`, `stats`, and read `next`'s blocked set separately.
 
 Default `list` groups unblocked in-work items first, then unblocked open items,
 then other visible rows, with parked items last. Within each group, declared pass
-order precedes effective score; empty and undeclared passes share a final fallback
-rank. Without declared passes, each group uses effective score alone. `next` still
-selects by effective score within its eligible status groups. Done and retired
+order precedes effective score; empty passes merge by score, while named undeclared
+passes follow declared passes. Without declared passes, each group uses effective
+score alone. `next` follows this same ranking within its eligible status groups.
+Done and retired
 items are left out unless you pass `--all` or name them with `--status`.
 `list --sort score` is a flat score sort of that same set, which can rank a blocked
 item above work `next` would actually pick. `move` changes stored queue order and therefore
@@ -600,8 +601,9 @@ S01  Parse the config file
      (run `slicer show S01`)
 ```
 
-`next` is the highest-priority *startable* item: the highest effective score among items
-whose dependencies are all done. Because a blocker of a critical item inherits its
+`next` is the first eligible item in default `list` priority order, with started work
+first. Dependencies must be done or in a configured satisfying status. Because a
+blocker of a critical item inherits its
 priority, `next` surfaces the blocker first. Add `--json` and an agent can read it without
 parsing markdown — every read command takes `--json`.
 

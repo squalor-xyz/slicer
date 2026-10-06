@@ -1251,7 +1251,7 @@ def _item_rows(
 
 
 def _list_in_priority_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
-  """Keep readiness groups first, then declared passes and effective scores."""
+  """Use shared readiness and pass ranking, merging empty passes by score."""
   return graph.ranked_order(state.index, state.config, items, by_pass=True)
 
 
@@ -2505,7 +2505,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("prefix", nargs="?", help="the new prefix; only its case may differ")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
 
-  sp = add("list", cmd_list, "list items by readiness, pass and score, omitting done and retired unless asked")
+  sp = add("list", cmd_list, "list by readiness, pass and score; empty passes merge by score; omit done and retired unless asked")
   sp.add_argument("--all", action="store_true",
                   help="include done and retired items (default: omit them)")
   sp.add_argument("--status", action="append",

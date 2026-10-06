@@ -947,9 +947,11 @@ def _ranked_pool(
 ) -> _NextPool:
   """Open or started work in next's order, after tree, size, and skip rules.
 
-  Started items precede open ones. Each group is descending effective score,
-  and queue order breaks ties. With `review`, reviewing items precede review
-  items by those same rules. `tree` keeps an item when that tree is one of
+  Started items precede open ones. Each group uses the shared list ranking,
+  including declared passes, empty-pass score merging, and queue-order ties.
+  With `review`, reviewing items precede review items by those same rules.
+  A custom `queue` still ranks the caller's claims before unclaimed items,
+  each by effective score. `tree` keeps an item when that tree is one of
   its trees. `size` keeps an exact size match. Omit either and it does not
   narrow the pool. `flags` requires any case-sensitive shell pattern match;
   any `no_flags` match excludes the item before skip diagnostics. Dependency
@@ -964,7 +966,8 @@ def _ranked_pool(
   when blocked, and never enter the batch dependency plan.
 
   With `queue`, the pool is that custom status instead. Items claimed by
-  `holder` come first, then unclaimed ones, each by effective score. An item
+  `holder` come first, then unclaimed ones, each by effective score. That
+  queue does not use pass order. An item
   another owner claimed is skipped and reported as claimed elsewhere. The
   attempt cap applies there only when `cap_queue` says the pickup will start
   an implementation attempt.
@@ -994,6 +997,7 @@ def _ranked_pool(
   claimed_elsewhere: list[dict[str, str]] = []
   started: list[Item] = []
   candidates: list[Item] = []
+  eligible: set[str] = set()
   for item in state.index.items:
     if item.status not in active:
       continue
@@ -1028,11 +1032,19 @@ def _ranked_pool(
       if not pending:
         skipped.append((item.id, elsewhere[item.id]))
       continue
-    mine = bool(item.claim_owner) if queue is not None else item.status in cfg.in_work()
-    (started if mine else candidates).append(item)
-  eff = graph.effective_scores(state.index)
-  ranked = (sorted(started, key=lambda it: -eff[it.id])
-            + sorted(candidates, key=lambda it: -eff[it.id]))
+    if queue is not None:
+      (started if item.claim_owner else candidates).append(item)
+    eligible.add(item.id)
+  if queue is not None:
+    eff = graph.effective_scores(state.index)
+    ranked = (sorted(started, key=lambda it: -eff[it.id])
+              + sorted(candidates, key=lambda it: -eff[it.id]))
+  else:
+    hidden = {cfg.done_status, cfg.retired_status} - {""}
+    visible = [it for it in state.index.items if it.status not in hidden]
+    # Rank before eligibility exclusions: removing an unspecified or sibling-held
+    # named row must not relocate empty-pass rows in the default list order.
+    ranked = [it for it in graph.ranked_order(state.index, cfg, visible) if it.id in eligible]
   return _NextPool(
     items=ranked, blocked=blocked, unspecified=unspecified,
     elsewhere=skipped, capped=capped, claimed_elsewhere=claimed_elsewhere,
@@ -1048,18 +1060,17 @@ def next_item(
   queue: str | None = None,
   owner: str | None = None, start_to: str | None = None,
 ) -> NextResult:
-  """The most critical startable item: highest effective score, unblocked.
+  """The first eligible item in the shared list priority order.
 
-  Started items precede open items, with effective score ordering each group.
+  Started items precede open items, with shared list ranking in each group.
   With `review`, the pool is the review queue instead: reviewing items (a
   review someone already holds) precede review items, by the same rules.
   Offset skips currently eligible items without simulating their completion.
   `tree` and `size` narrow that pool; omit them and the pool is unchanged.
 
   Dependencies still hard-gate what is startable -- a blocked item is never
-  returned, whatever its score or status -- so the score only orders the items
-  that can actually be picked up. Stable sorting preserves manual queue order
-  for ties.
+  returned, whatever its score or status. Pass order and effective score only
+  order the items that can actually be picked up. Stored queue order breaks ties.
 
   `elsewhere` maps item ids to sibling rows (`store.in_work_elsewhere`):
   claimed, in work, or review and done when this checkout differs and is not

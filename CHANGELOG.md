@@ -37,6 +37,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- Default `list`, plain and review `next`, `next --batch`, and TUI ranked order share readiness, declared pass order, effective score and stored queue-order ties. Empty passes merge by score against the next named row; named undeclared passes follow declared passes. Batch dependencies still precede their dependents. Explicit score and effort sorts are unchanged. A custom `next --status` queue still ranks the caller's claims first, then unclaimed items, by effective score.
+
 - `list`, `find`, unblocked `deps`, and the TUI show the local review label for an open item handed off in a sibling worktree. Review filters include it alongside stored review items, while open filters still include it. TUI styling and status sorting follow the displayed label. Stored status, JSON, claims, and queue ranking stay unchanged.
 
 - `slicer setup-git` and the hint `slicer init` prints now give four `git config` lines: the two `slicer-generated` lines as before, plus `slicer-index` name and driver. `--json` is the same list with four strings. New projects get `index.json merge=slicer-index` in `.slicer/.gitattributes`; add that line to an existing project's file to use the driver.

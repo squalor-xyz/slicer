@@ -3,8 +3,12 @@
 ## Opening and ordering
 
 In the TUI, the queue opens in the same ranked order as `slicer list`: eligible
-started items, then eligible open items, then the other visible rows, each by
-effective score, with parked items last. Done and retired stay hidden until
+started items, then eligible open items, then the other visible rows, with parked
+items last. Within each group, declared
+pass order precedes effective score, with stored queue-order ties. Empty passes
+merge by score; named undeclared passes follow declared passes. Ascending reverses
+readiness groups, pass direction, and score direction, keeping queue-order ties.
+Done and retired stay hidden until
 you clear the filter or ask for them. `o` sorts that view by ranked order, ID, title, status, size,
 importance, urgency, effective score, or effort, ascending or descending. The
 choice lasts for the session and does not rewrite the stored queue. `J`, `K`,

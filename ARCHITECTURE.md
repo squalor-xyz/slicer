@@ -196,7 +196,10 @@ command, and `slicer render` deliberately does not reproduce the legacy shape.
 `slicer next` first considers started items whose dependencies are all satisfied (`done`,
 or the statuses in `satisfies_dependencies`, via `Config.satisfying_statuses`). If none
 qualify, it considers open items whose dependencies are all satisfied. Within that pool,
-it returns the highest *effective* score, breaking ties by stored queue order.
+it follows the shared default `list` ranking: declared pass order, then descending
+effective score, with stored queue order breaking ties. Empty passes merge against
+the next named row by score and queue position; named undeclared passes follow
+declared passes. The TUI ranked view and batch walk use the same helper.
 Effective score propagates a priority up the dependency graph (`graph.effective_scores`, a
 fixed-point relaxation, cycle-safe), so a blocker of a critical item inherits its priority
 and is surfaced first; dependencies still hard-gate, so a blocked item is never returned.
@@ -205,8 +208,8 @@ reproduces a queue a human reads top-down. A test locks the difference so nobody
 reconciles them by accident.
 
 `next -n N` selects one item at zero-based offset N from currently eligible started
-items followed by currently eligible open items. Each group is ordered by effective
-score, with stable queue-order ties. It never simulates completion of skipped items.
+items followed by currently eligible open items. Each group uses that shared
+pass-and-score order, with stable queue-order ties. It never simulates completion of skipped items.
 The default offset is zero; exhausted offsets return the existing empty result.
 
 ## What `check` is
