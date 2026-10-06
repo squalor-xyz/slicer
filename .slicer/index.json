@@ -2,7 +2,7 @@
   "version": 6,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 228,
+  "next_id": 229,
   "preamble": "",
   "passes": [
     {
@@ -6269,6 +6269,34 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s228",
+      "title": "Order next and the TUI from list priority, placing an empty pass by score",
+      "short_title": "Order next and the TUI from list priority, placing an empty pass by score",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-10-06: next follows list order; an empty pass is placed by score",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.4",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

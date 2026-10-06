@@ -1,0 +1,41 @@
+{
+  "id": "s228",
+  "title": "Order next and the TUI from list priority, placing an empty pass by score",
+  "lead": [
+    "Default `slicer list`, plain `slicer next`, review `next`, `next --batch`, and the TUI ranked view share one priority order. Readiness comes first, then declared pass order, then descending effective score, with stored queue order breaking ties. An empty pass is inserted by effective score."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request 2026-10-06: next follows list order; an empty pass is placed by score",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `list --sort score` and `list --sort effort`; `move` and `sort`; stored queue order; roadmap render grouping; the PASS, CLAIM, or STATUS columns; hiding done or retired rows; changing which rows `next` skips.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On this roadmap plain `next` returns s213, pass `later`, effective score 22. Default `list` starts with s170 and the other open `v1.4` items at a lower score, and only then reaches s213. s212 and s216 are done `v1.4` items with a higher score than s170, so they are ineligible and must stay skipped. s170's dependency s169 is done. The first eligible row is s170.\n\ns224 put every empty or undeclared pass after the declared passes. An empty pass is not a release. Insert it by effective score. A named pass that was not declared stays after the declared passes. `next` walks that order and keeps its current eligibility and claim exclusions."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/graph.py (ranked_order); src/slicer/ops.py (plain next, review next, and next --batch); src/slicer/cli.py (list help and the list ordering call); src/slicer/tui.py only if its ranked call must change; tests/test_list_pass_order.py; tests/test_cli.py; the TUI ranked test; README.md; docs/commands.md; docs/getting-started.md; docs/agents.md; docs/tui.md; CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. In one readiness group, declared passes keep declaration order even when a later pass scores higher. Empty 40, v1.3 20, v1.4 35, empty 10 come out in that pass-and-score merge: empty 40, v1.3 20, v1.4 35, empty 10. Empty 25, v1.3 20, v1.4 35 come out empty 25, v1.3 20, v1.4 35. A named undeclared pass stays after every declared pass. Inside one pass, descending effective score and stored queue order still apply. Equal scores keep the earlier stored item first.\n2. Started work precedes open work across passes and scores. A started v1.4 item at score 10 precedes an open v1.3 item at score 33. Blocked rows stay behind unblocked rows. Parked rows stay last. With no declared passes, the group stays descending effective score and queue order. Effective score still inherits from dependents.\n3. Text, JSON, and lean JSON for default list agree. Filters keep their membership and then use this order. `list --sort score` and `list --sort effort` stay flat. List does not write. Done and retired rows stay hidden unless asked.\n4. The eligible subsequence of default list is the plain `next` pool. `next -n` is that nth row. `--tree` and `--size` narrow the same subsequence. `next` still skips blocked, unspecified, elsewhere-only, done, and non-started non-open rows. A local claim or local in-work status stays eligible. A fixture shaped like s212 and s216 (done, earlier pass, higher score) is not returned. A fixture shaped like s170 (open, earlier pass, lower score, dependency satisfied) is returned ahead of a fixture shaped like s213 (open, later pass, higher score).\n5. `next --status review` returns reviewing items before review items. Each of those sets uses this within-group rule. It still skips blocked, unspecified, and elsewhere-only rows.\n6. `next --batch` walks this order. Its eligibility is unchanged, including a blocked dependency the batch can take. A dependency inside the batch still comes out before the item that waits on it.\n7. The TUI ranked view matches this order. Ascending flips readiness groups, pass direction, and score direction, and an equal score still keeps the earlier stored item first. Other TUI sorts are unchanged. `move`, `sort`, render grouping, and the claim and status columns stay on their existing tests."
+    },
+    {
+      "heading": "Implement",
+      "body": "Make `ranked_order` the shared order above, and use it for default list, the plain `next` pool, the review `next` pool, the `next --batch` walk, and the TUI ranked field. Do not add a flag. Update the help and the docs that say an empty pass ranks last and that `next` or `next --batch` selects by score alone. Keep the batch rule that a dependency comes out before its dependent."
+    },
+    {
+      "heading": "Check",
+      "body": "The seven cases above pass. Run the focused list, next, and TUI tests, then the full unittest suite, `slicer check`, and `git diff --check`. Repeated list and next reads leave tracking state and generated output unchanged. Do not assert this roadmap's live ids in a unit test; the s170, s212, s216, and s213 case is the motivating example."
+    },
+    {
+      "heading": "Git",
+      "body": "One implementation slice in its own worktree. Commit or merge only when the owner requests it."
+    }
+  ],
+  "notes": []
+}
