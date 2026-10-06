@@ -245,6 +245,20 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `log` | array of `{when, item, action, from, to, note}`, newest first. Start, claim, release, handoff and done entries add `by`: who acted, resolved as `--owner`, then `SLICER_CLAIM_OWNER`, then `claim_owner`, then the git user, then the worktree name. `--by NAME` keeps only those. Optional timezone-aware ISO8601 `--since` (inclusive) and `--until` (exclusive) compare instants before limit, preserving original `when` strings |
 | `prose list` | `[{ref, lines, preview}]` |
 
+Bound pickups with repeatable `next --flag PATTERN` and `--no-flag PATTERN`.
+Patterns match stored flags with case-sensitive shell syntax (`*`, `?`, `[abc]`);
+quote them, for example `next --no-flag 'risk-*' --batch 3 --ready --json`.
+Any inclusion match keeps an item; any exclusion match removes it, even when
+inclusion matches. Untagged items pass without inclusion and fail with it.
+Empty patterns are `usage`. `list --flag` still uses literal names.
+
+Filters apply before offsets, batch capacity and skip diagnostics, and combine
+with tree/size, ready sections, attempt caps and review selection. Excluded
+items appear in neither candidates nor diagnostics (`blocked`, `unspecified`,
+`capped`, `in_work_elsewhere`). Dependency checks and effective scores retain
+the full index, so a filtered-out blocker still blocks its dependent, even in
+a batch. Read and `--start` use the same pool; no filters preserve selection.
+
 For unattended implementation, pass `next --max-attempts N` (positive integer).
 Fresh pickups at or above N are excluded before offset or batch selection;
 started attempts still resume, including after release, and review claims are
