@@ -6490,7 +6490,7 @@
       "id": "s230",
       "title": "Keep a local feedback log separate from the roadmap",
       "short_title": "Keep a local feedback log separate from the roadmap",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

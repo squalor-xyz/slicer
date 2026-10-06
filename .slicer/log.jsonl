@@ -1065,3 +1065,4 @@
 {"when": "2026-10-06T19:19:57Z", "item": "s230", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:19:57Z", "item": "s230", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer feedback appends a gitignored local", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:19:57Z", "item": "s230", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:20:09Z", "item": "s230", "action": "status", "from": "review", "to": "done", "note": "slicer feedback keeps a gitignored local use-log at .slicer/feedback.md, separate from the roadmap. Verified by the feedback tests, full unittest discovery (1426 tests, 1 skipped), slicer check, and git diff --check.", "by": "Jon Robbins"}

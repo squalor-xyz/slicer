@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-217 items · — 2 · done 210 · retired 4 · review 1
+217 items · — 2 · done 211 · retired 4
 
 v1.4.0 release
 
@@ -48,7 +48,7 @@ v1.4.0 release
 | 13 | [s219](slices/s219.md) | Resolve whole dependency titles before splitting outline commas | M | 2 | slicer | agents feedback 2026-10-05 U10; docs/feedback/agents-2026-10-05.md | done |
 | 14 | [s226](slices/s226.md) | Offer a list JSON envelope that can carry non-item data | M | 2 | cli | s223 landing 2026-10-05: list --json is a bare array, so sibling-only items could only go in status --json | — |
 | 15 | [s228](slices/s228.md) | Order next and the TUI from list priority, placing an empty pass by score | M | 2 | slicer | owner request 2026-10-06: next follows list order; an empty pass is placed by score | — |
-| 16 | [s230](slices/s230.md) | Keep a local feedback log separate from the roadmap | M | 2 | slicer |  | review |
+| 16 | [s230](slices/s230.md) | Keep a local feedback log separate from the roadmap | M | 2 | slicer |  | done |
 | 17 | [s229](slices/s229.md) | Show a sibling handoff as review in list and the TUI | M | 2 | slicer | owner request 2026-10-06: list status stays a dash while the worktree is in review | done |
 
 ---
