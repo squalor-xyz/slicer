@@ -4859,7 +4859,7 @@
       "id": "s170",
       "title": "Install the agent skill into the project",
       "short_title": "Install the agent skill into the project",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s169"

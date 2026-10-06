@@ -1030,3 +1030,4 @@
 {"when": "2026-10-06T13:47:52Z", "item": "s170", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-06T13:47:53Z", "item": "s170", "action": "note", "from": "", "to": "", "note": "Ready for review: ai skill --output and --install write the "}
 {"when": "2026-10-06T13:47:53Z", "item": "s170", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-06T13:48:12Z", "item": "s170", "action": "status", "from": "review", "to": "done", "note": "Verified ai skill --install and --output write the printed skill bytes under the project root, and a different file or a directory writes nothing unless --force. Full discovery 1317 tests OK (1 skipped) and slicer check passed.", "by": "Jon Robbins"}
