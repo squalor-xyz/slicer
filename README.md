@@ -78,7 +78,7 @@ reproduce is never half-migrated.
 | `ai` | onboarding instructions for coding agents |
 | `init` | create .slicer/ in a project |
 | `setup-git` | print the git config that turns on the merge drivers (run once per clone) |
-| `merge-index` | the `index.json` merge driver Git runs; resolves a `next_id`-only conflict to the larger value |
+| `merge-index` | the `index.json` merge driver Git runs; merges independent items and fields, and takes the larger `next_id` |
 | `import` | add items in bulk from a markdown outline |
 | `migrate` | convert an existing markdown slice tree |
 | `next` | the highest-priority startable item |

@@ -418,9 +418,9 @@ render/ROADMAP.md merge=slicer-generated
 render/ROADMAP.html merge=slicer-generated
 render/slices/*.md merge=slicer-generated
 
-# index.json is merged by Git, except that the slicer-index driver resolves a
-# conflict on the next_id counter alone to the larger value, so ids are never
-# reused; any other overlap stays an ordinary conflict. Also defined once per clone:
+# index.json is merged by the slicer-index driver, which matches items by id and
+# fields by name: independent edits merge, next_id takes the larger value so ids are
+# never reused, and only a true disagreement stays a conflict. Also defined once per clone:
 #   git config merge.slicer-index.name "keep the larger next_id when merging the index"
 #   git config merge.slicer-index.driver "slicer merge-index %O %A %B"
 index.json merge=slicer-index
@@ -503,8 +503,9 @@ def cmd_init(args: argparse.Namespace) -> int:
 
 def cmd_merge_index(args: argparse.Namespace) -> int:
   """The `slicer-index` merge driver: Git passes %O %A %B and reads the result
-  from the second path. Needs no project and prints nothing; exit 1 leaves the
-  usual conflict markers in that file, and Git reports a normal conflict."""
+  from the second path. Needs no project. A clean merge prints nothing; exit 1
+  leaves conflict markers in that file and names each conflict on stderr, and
+  Git reports a normal conflict."""
   conflicts = mergeindex.merge(
     Path.cwd(), Path(args.base), Path(args.ours), Path(args.theirs)
   )
