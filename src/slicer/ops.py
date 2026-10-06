@@ -879,7 +879,7 @@ def reject_many(
     previous = item.status
     item.status = target
     _clear_claim(item)
-    _append_note(item, verdict)
+    _append_note(item, verdict, by=by)
     changed.append((item, previous))
   for item, previous in changed:
     if previous != item.status:
@@ -1187,13 +1187,34 @@ def _dated(text: str) -> str:
   return f"**{_now()[:10]}** — {text}"
 
 
-def _append_note(item: Item, text: str, kind: str = "") -> None:
+def _append_note(item: Item, text: str, kind: str = "", by: str = "", stale_after: str = "") -> None:
   created_at = _now()
   item.note_records.append(NoteRecord(str(uuid4()), kind,
-    f"**{created_at[:10]}** — {text}", created_at, item.attempts))
+    f"**{created_at[:10]}** — {text}", created_at, item.attempts,
+    by=by, stale_after=stale_after))
 
 
-def add_note(state: State, item_id: str, text: str, kind: str | None = None) -> Item:
+def _note_actor(value: str) -> str:
+  value = value.strip()
+  if not value or value.startswith("human:") or "\n" in value or "\r" in value:
+    raise StateError("note actor must be a nonempty, one-line name without the reserved human: prefix", code="usage")
+  return value
+
+
+def _note_expiry(value: str) -> str:
+  if not value:
+    return ""
+  try:
+    instant = datetime.fromisoformat(value)
+    if instant.utcoffset() is None:
+      raise ValueError("timezone required")
+    return instant.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+  except (ValueError, OverflowError):
+    raise StateError("--stale-after must be a timezone-aware ISO8601 timestamp", code="usage") from None
+
+
+def add_note(state: State, item_id: str, text: str, kind: str | None = None, *,
+             owner: str | None = None, stale_after: str = "") -> Item:
   """Append a dated note to the item itself — no slice required — visible in
   `show` and (once promoted) the rendered slice."""
   item = state.index.require(item_id)
@@ -1205,10 +1226,39 @@ def add_note(state: State, item_id: str, text: str, kind: str | None = None) -> 
       raise StateError("a note kind cannot be blank", code="usage")
     if state.config.note_kinds and kind not in state.config.note_kinds:
       raise StateError(f"unknown note kind {kind!r}; choose from {state.config.note_kinds}", code="usage")
-  _append_note(item, text, kind or "")
+  by = _note_actor(actor(state, owner))
+  expiry = _note_expiry(stale_after)
+  _append_note(item, text, kind or "", by, expiry)
   state.save_index()
-  _record(state, item_id, "note", note=text.splitlines()[0][:60])
+  _record(state, item_id, "note", note=text.splitlines()[0][:60], by=by)
   return item
+
+
+def verify_note(state: State, item_id: str, note_id: str, *, owner: str | None,
+                attest: bool = False) -> tuple[NoteRecord, bool]:
+  """Record workflow verification; this does not authenticate the caller.
+
+  Attestation needs an explicit owner. Machine verification falls back to the
+  usual actor precedence. Returns the record and whether anything was written."""
+  item = state.index.require(item_id)
+  record = next((n for n in item.note_records if n.id == note_id), None)
+  if record is None:
+    raise StateError(f"{item_id} has no item note {note_id!r}; use show --json to find its ID", code="usage")
+  if owner is not None and not owner.strip():
+    raise StateError("--owner cannot be blank", code="usage")
+  if attest and owner is None:
+    raise StateError("note-attest needs an explicit --owner name", code="usage")
+  name = _note_actor(owner if attest else actor(state, owner))
+  verifier = f"human:{name}" if attest else name
+  if record.verified_by == verifier:
+    return record, False
+  previous = record.verified_by
+  record.verified_by = verifier
+  record.verified_at = _now()
+  state.save_index()
+  _record(state, item_id, "note-attest" if attest else "note-verify",
+    frm=previous, to=verifier, note=record.id, by=verifier)
+  return record, True
 
 
 def _note_index(item: Item, index: int) -> None:
@@ -1220,9 +1270,15 @@ def set_note(state: State, item_id: str, index: int, text: str) -> Item:
   """Replace one note verbatim (the caller edited the full dated paragraph)."""
   item = state.index.require(item_id)
   _note_index(item, index)
-  item.note_records[index].text = text
+  record = item.note_records[index]
+  if record.text == text:
+    return item
+  previous_verifier, previous_time = record.verified_by, record.verified_at
+  record.text = text
+  record.verified_by = ""
+  record.verified_at = ""
   state.save_index()
-  _record(state, item_id, "note", note="edit")
+  _record(state, item_id, "note", note=f"edit {record.id}; cleared verified_by={previous_verifier}; verified_at={previous_time}")
   return item
 
 

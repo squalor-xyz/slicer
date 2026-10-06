@@ -163,7 +163,7 @@ class FilingKeyTests(unittest.TestCase):
       self.assertEqual(snapshot(repo), before)
       repo.run("add", "New", "--key", "K")
       stored = json.loads(path.read_text())
-      self.assertEqual(stored["version"], 6)
+      self.assertEqual(stored["version"], 7)
       self.assertEqual([item["fields"]["key"] for item in stored["items"]], ["", "K"])
       from slicer import model
       from slicer.errors import StateError

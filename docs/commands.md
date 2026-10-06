@@ -37,7 +37,9 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `recommended-workflow` | print the generic recommended project workflow: pick up one slice, start it, do the work, check it, and finish the way the project is configured. The text is [`docs/generic-recommended-project-workflow.md`](generic-recommended-project-workflow.md), which an installed copy carries too. It does not read the project, lock, or write, and it does not warn when there is no project. JSON is `{"workflow": "..."}`. A change to the recommended workflow updates that file in the same change |
 | `set ID [ID ...] --title/--short-title/--size/--tree/--findings/--status/--pass/--depends-on/--flag/--add-flag/--remove-flag/--no-flags/--group/--importance/--urgency/--effort/--no-effort/--attempts` | change fields. `--flag` replaces the list. Repeatable `--add-flag` and `--remove-flag` edit it in place and cannot be combined with `--flag` or `--no-flags`. `--no-effort` clears an estimate. `--attempts` sets the implementation attempt count and must be an integer >= 0. `add` and `set` refuse an unknown, self, retired, or cycle-closing `--depends-on` and write nothing |
 | `edit ID (--section NAME / --boundary) [--text/--file/--stdin]` | edit a section or scope boundary; sections also accept `--append` |
-| `note ID [--kind KIND] [--text/--file/--stdin] [--render]` | append a dated note to any item — no slice needed (shows in `show`/`render`, unlike `done --note`) |
+| `note ID [--kind KIND] [--owner ACTOR] [--stale-after TIMESTAMP] [--text/--file/--stdin] [--render]` | append a dated note to any item — no slice needed (shows in `show`/`render`, unlike `done --note`) |
+| `note-verify ID --note-id NOTE [--owner ACTOR]` | verify an item note as a machine actor; supports `--render` and `--strict` |
+| `note-attest ID --note-id NOTE --owner NAME` | attest an item note as `human:NAME`; a workflow convention, not caller authentication; supports `--render` and `--strict` |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `goals` | print the project's goals and non-goals together; supports `--json` |
@@ -105,10 +107,10 @@ Legacy unknown-attempt notes, wrong kinds, previous-attempt reports, and history
 `done` is unaffected. Manually changing `attempts` changes report association.
 
 Item notes keep their public `notes` array as display strings and add `note_records`
-with `{id, kind, text, created_at, attempt}`. `note ID --kind KIND` labels the dated
+with `{id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, trust}`; `trust` is derived and never stored. `note ID --kind KIND` labels the dated
 paragraph as `**DATE** — [KIND] text`; omitting `--kind` preserves the existing display.
 `note_kinds` optionally restricts explicit kinds. New notes store a UUID, UTC creation
-time, and the current implementation attempt. Editing preserves that metadata.
+time, and the current implementation attempt. Editing preserves creation and authorship metadata but clears verification on text changes.
 
 Repeat `--notes-kind KIND` on `show ID` or `next --ready` (including batches) to select
 the union of exact kinds in stored order. `--notes-kind ''` selects untyped notes,
@@ -379,3 +381,32 @@ declaration order.
 
 Goals and non-goals, and how agents should treat them, are covered in
 [getting started](getting-started.md#goals-and-non-goals).
+
+### Note verification and freshness
+
+`note --owner ACTOR` stores authorship, resolving the actor as an explicit owner,
+then `SLICER_CLAIM_OWNER`, configured `claim_owner`, Git user name, or worktree name.
+Authorship alone leaves a note unverified. Ordinary authorship and machine
+verification reject the reserved `human:` prefix, including actor fallbacks.
+
+Use `show ID --json` to obtain the stable `note_records[].id`, then
+`note-verify ID --note-id NOTE [--owner ACTOR]` for machine verification (actor
+precedence applies without `--owner`), or `note-attest ID --note-id NOTE --owner NAME`
+for owner attestation, which always needs an explicit name. Names are nonempty,
+one-line, and without `human:`. Attestation stores
+`verified_by` as `human:NAME`, retaining the original author and text. These
+commands record UTC `verified_at` and log the selected note ID and actor.
+Repeating the same verifier makes no writes; another verifier replaces the prior
+verification. Trust derives from the verifier: absent means `unverified`, a
+machine actor means `machine-confirmed`, and `human:` means `human-reviewed`.
+An actual text edit through ops or the TUI clears verification, preserving other
+metadata and recording the previous verifier and time in history.
+
+`note --stale-after TIMESTAMP` accepts timezone-aware ISO8601, normalizes it to
+UTC, and rejects naive or malformed input before writing. Rendering displays
+stored metadata and never computes expiry against the current clock. Old item
+notes load with unknown authorship, no verification, and no expiry. Legacy slice
+notes remain untyped read data and cannot be verified by these commands.
+
+Owner attestation is a workflow convention, not caller authentication: an agent
+can invoke the command. No identity or access-control boundary is claimed.
