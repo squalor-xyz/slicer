@@ -98,6 +98,7 @@ reproduce is never half-migrated.
 | `set` | change an item's fields |
 | `edit` | edit a slice section or scope boundary |
 | `note` | append a dated note to an item |
+| `feedback` | keep a gitignored local log of frictions, bugs, and feature ideas, apart from the roadmap |
 | `note-verify` | record machine verification of an item note |
 | `note-attest` | record owner attestation of an item note (workflow convention, not authentication) |
 | `done` | mark an item finished |

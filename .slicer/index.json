@@ -6490,10 +6490,22 @@
       "id": "s230",
       "title": "Keep a local feedback log separate from the roadmap",
       "short_title": "Keep a local feedback log separate from the roadmap",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c03af998-4dd3-42e1-86a2-38fc03a5225d",
+          "kind": "",
+          "text": "**2026-10-06** — Ready for review: slicer feedback appends a gitignored local use-log at .slicer/feedback.md for friction, bug, and feature notes, prints it, and copies the exact bytes with --out. It does not write the index, history, or render. Full unittest discovery: 1426 tests, OK (1 skipped); slicer check and git diff --check pass.",
+          "created_at": "2026-10-06T19:19:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -6511,7 +6523,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
