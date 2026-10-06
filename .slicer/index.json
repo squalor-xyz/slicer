@@ -6462,7 +6462,7 @@
       "id": "s228",
       "title": "Order next and the TUI from list priority, placing an empty pass by score",
       "short_title": "Order next and the TUI from list priority, placing an empty pass by score",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
