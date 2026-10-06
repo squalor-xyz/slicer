@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-06
+
 ### Added
 
 - `slicer list --json --envelope` opts into `{items: [...], only_in_sibling: [...]}`. The default JSON array is unchanged. Filters, sorts and `--lean` apply to `items` as before; sibling-only rows match `status --json`. Both envelope keys remain present when empty, including under `--lean`. `--envelope` without `--json` exits 2 with code `usage`. Sibling worktrees are still enumerated and read only once.
