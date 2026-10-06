@@ -544,6 +544,13 @@ To record an observation against an item — "tried X, it didn't work" — use `
 too), shown in `slicer show` and, once promoted, in the rendered slice; unlike `done --note`,
 which only writes the log.
 
+To record a friction, a bug, or a feature idea that is not a roadmap item yet, use `slicer
+feedback --kind friction --text "..."` (`bug` and `feature` are the other kinds; `--item ID`
+tags one, stored as written). It appends to `.slicer/feedback.md`, a local log that `init` and
+the first append list in `.slicer/.gitignore`. It is never rendered, parsed back, or committed.
+`slicer feedback` prints the log, and `slicer feedback --out PATH` copies its exact bytes to a
+file you can review and file items from.
+
 To fill the whole slice in one call rather than one `edit` per section, hand `promote` a
 one-item outline instead — the same `##` item / `### section` shape `import` reads (see
 [import.md](import.md)). The item already owns its fields, so the source is sections and

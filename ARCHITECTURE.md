@@ -38,6 +38,7 @@ never pays for curses.
   config.json              everything project-specific; "version": 2
   index.json               the ordered queue; "version": 5
   log.jsonl                append-only history, one LogEntry per line
+  feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
   slices/retired/<ID>.json retired, with the reason on the index item

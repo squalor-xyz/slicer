@@ -27,6 +27,7 @@ from pathlib import Path
 from slicer import check as check_mod
 from slicer import (
   ai,
+  feedback,
   graph,
   ids,
   jsonio,
@@ -490,6 +491,7 @@ def cmd_init(args: argparse.Namespace) -> int:
   for name, text in templates.defaults().items():
     jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
   jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
+  feedback.ensure_gitignore(root)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   text = f"initialised {base}"
   if args.id is not None:
@@ -1662,6 +1664,44 @@ def cmd_note(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_feedback(args: argparse.Namespace) -> int:
+  """Append to, print, or export the local feedback log. Not a roadmap write: it
+  takes the project lock itself and never touches the index, history, or render."""
+  if args.out is not None:
+    if args.kind is not None or args.item is not None or args.text is not None \
+        or args.file is not None or args.stdin:
+      raise StateError("--out cannot be combined with --kind, --text, --file, --stdin, or --item",
+        code="usage")
+  elif args.force:
+    raise StateError("--force is valid only with --out", code="usage")
+  appending = args.kind is not None
+  if not appending and args.out is None and (
+      args.item is not None or args.text is not None or args.file is not None or args.stdin):
+    raise StateError("--text, --file, --stdin, and --item need --kind", code="usage")
+  body = None
+  if appending:
+    if sum((args.text is not None, args.file is not None, args.stdin)) != 1:
+      raise StateError("give the feedback body with exactly one of --text, --file, or --stdin",
+        code="usage")
+    body = _body_from(args, "")
+  root = store.discover(Path(args.root) if args.root else None)
+  shown = f"{store.DIR_NAME}/{feedback.LOG_NAME}"
+  with store.project_lock(root):
+    if appending:
+      entry = feedback.append(root, args.kind, body, args.item or None)
+      _emit(args, {"path": shown, "entry": entry}, f"added feedback to {shown}")
+    elif args.out is not None:
+      dest = Path(args.out)
+      feedback.export(root, dest, force=args.force)
+      _emit(args, {"path": shown, "out": str(dest)}, f"wrote {shown} to {dest}")
+    else:
+      entries = feedback.read(root)
+      log = feedback.log_path(root)
+      text = log.read_bytes().decode("utf-8").rstrip("\n") if entries else f"no feedback entries in {shown}"
+      _emit(args, {"path": shown, "entries": entries}, text)
+  return OK
+
+
 def cmd_note_verify(args: argparse.Namespace) -> int:
   record, changed = ops.verify_note(_state(args), args.id, args.note_id,
     owner=args.owner, attest=args.command == "note-attest")
@@ -2595,6 +2635,15 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--text", help="inline note; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
+
+  sp = add("feedback", cmd_feedback, "keep a local log of frictions, bugs, and feature ideas")
+  sp.add_argument("--kind", help="friction, bug, or feature; appends an entry")
+  sp.add_argument("--item", help="optional item id, stored as written and not looked up")
+  sp.add_argument("--text", help="inline body; cannot combine with --file/--stdin")
+  sp.add_argument("--file")
+  sp.add_argument("--stdin", action="store_true")
+  sp.add_argument("--out", help="copy the log's exact bytes to PATH instead of appending")
+  sp.add_argument("--force", action="store_true", help="with --out, replace a different existing file")
 
   for command in ("note-verify", "note-attest"):
     sp = _strict_flag(_render_flag(add(command, _mutating(cmd_note_verify),

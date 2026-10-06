@@ -37,11 +37,15 @@ def _default_mode() -> int:
 
 
 def write_text(path: Path, text: str) -> None:
+  write_bytes(path, text.encode("utf-8"))
+
+
+def write_bytes(path: Path, data: bytes) -> None:
   path.parent.mkdir(parents=True, exist_ok=True)
   fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".slicer-tmp-")
   try:
-    with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
-      fh.write(text)
+    with os.fdopen(fd, "wb") as fh:
+      fh.write(data)
     os.chmod(tmp, _default_mode())
     os.replace(tmp, path)
   except BaseException:

@@ -20,5 +20,7 @@ venv/
 # markdown that is meant to be committed and diffed — `slicer check` fails
 # when it is stale. Do not add it here.
 #
-# The one exception: .slicer/lock is a transient advisory lock file, never state.
+# The exceptions are local, never state: .slicer/lock is a transient advisory lock
+# file, and .slicer/feedback.md is the local `slicer feedback` use-log.
 /.slicer/lock
+/.slicer/feedback.md

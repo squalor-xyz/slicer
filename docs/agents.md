@@ -263,6 +263,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `sort` | `{by, moved}` |
 | `edit` | `{id, section}`; boundary edits return `{id, boundary}` |
 | `note` | `{id, added}` |
+| `feedback` | append: `{path, entry}` with `at`, `kind`, `text`, and `item` only when given; print: `{path, entries}` (empty array when no log); `--out`: `{path, out}` |
 | `note-verify`, `note-attest` | `{id, note_record, trust}`; repeating the same verifier is a no-op (no write, no render) |
 | `find` | array of items with `match: {field, snippet}`; with `--lean`, each row is only `{id, title, status, has_slice, match}` |
 | `deps` | unblocked-item array; for `deps ID`, `{id, waits_on, blocked_by, dependents}`; mermaid format returns `{format, graph}` |
