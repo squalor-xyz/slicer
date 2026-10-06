@@ -306,17 +306,25 @@ def _state(args: argparse.Namespace) -> store.State:
   return state
 
 
-def _ai_policy(args: argparse.Namespace) -> tuple[str, str]:
+def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, str]:
   """Finish and report policy when config and index load; otherwise generic.
 
   Read-only: no lock and no write. A miss warns and keeps the generic text.
+  `strict` is for callers that write the text somewhere: a project that is found
+  but cannot be read raises instead, so a handoff project never gets the generic
+  `done` skill. Not finding a project still falls back.
   """
   root = Path(args.root).resolve() if getattr(args, "root", None) else None
+  project = None
   try:
     project = store.discover(root)
     cfg = Config.load(project / store.DIR_NAME / CONFIG_NAME)
     store.read_index(project)
   except (OSError, SlicerError) as exc:
+    if strict and project is not None:
+      if isinstance(exc, SlicerError):
+        raise
+      raise StateError(str(exc), code="io") from exc
     print(f"{exc}; printing the generic guide", file=sys.stderr)
     return "done", ""
   return cfg.implement_finish, cfg.handoff_requires_note_kind
@@ -336,10 +344,62 @@ def cmd_recommended_workflow(args: argparse.Namespace) -> int:
   return OK
 
 
+# Where a project's agent skill is installed. Codex reads `.agents/skills/`, so
+# there is no `.codex` copy; nothing goes in the home directory.
+SKILL_INSTALL_PATHS = (
+  ".claude/skills/slicer/SKILL.md",
+  ".agents/skills/slicer/SKILL.md",
+  ".grok/skills/slicer/SKILL.md",
+)
+
+
 def cmd_ai_skill(args: argparse.Namespace) -> int:
-  text = ai.skill_text(*_ai_policy(args))
-  _emit(args, {"skill": text}, text.rstrip("\n"))
+  writing = args.output is not None or args.install
+  if args.force and not writing:
+    raise StateError("--force needs --output or --install", code="usage")
+  root = Path(args.root or ".").resolve()
+  project = store.discover(root) if args.install else None  # --install needs a project
+  text = ai.skill_text(*_ai_policy(args, strict=writing))
+  if not writing:
+    _emit(args, {"skill": text}, text.rstrip("\n"))
+    return OK
+  targets = [root / args.output] if args.output is not None else []
+  if project is not None:
+    targets += [project / rel for rel in SKILL_INSTALL_PATHS]
+  # Same bytes the command prints, so a redirected copy and an installed one agree.
+  content = text.rstrip("\n") + "\n"
+  written = _write_skill(targets, content, force=args.force)
+  _emit(args, {"skill": text, "written": written}, "\n".join(f"wrote {p}" for p in written))
   return OK
+
+
+def _write_skill(targets: list[Path], content: str, *, force: bool) -> list[str]:
+  """Write `content` to every target, or to none when any one is refused."""
+  wanted = content.encode("utf-8")
+  unique = list(dict.fromkeys(path.resolve() for path in targets))
+  blocked: list[str] = []
+  for path in unique:
+    if path.is_dir():
+      raise StateError(f"{path} is a directory; nothing was written", code="state")
+    if path.exists() and not force:
+      try:
+        same = path.read_bytes() == wanted
+      except OSError:
+        same = False
+      if not same:
+        blocked.append(str(path))
+  if blocked:
+    raise StateError(
+      f"different text already exists at {', '.join(blocked)}; pass --force to replace "
+      "it. Nothing was written.",
+      code="state",
+    )
+  for path in unique:
+    try:
+      jsonio.write_text(path, content)
+    except OSError as exc:
+      raise StateError(f"{path}: {exc}", code="io") from exc
+  return [str(path) for path in unique]
 
 
 GITATTRIBUTES = """\
@@ -2230,15 +2290,25 @@ def build_parser() -> argparse.ArgumentParser:
   _json_flags(inner, suppress=True)
   _rest_flag(inner, suppress=True)
   inner = aisub.add_parser(
-    "skill", help="print the agent skill for Claude Code, Codex, and Grok",
+    "skill", help="print or install the agent skill for Claude Code, Codex, and Grok",
     description=(
       "Print the SKILL.md for the implement loop. Same project read and "
-      "fallback as instructions: warns on stderr, does not lock or write."
+      "fallback as instructions: warns on stderr, does not lock or write. "
+      "--output PATH and --install write the text it would have printed "
+      "instead, and stdout lists the paths written."
     ),
     parents=[common],
   )
   inner.set_defaults(func=cmd_ai_skill)
   _json_flags(inner, suppress=True)
+  inner.add_argument("--output", metavar="PATH", help="write the skill to PATH, creating parent directories")
+  inner.add_argument(
+    "--install", action="store_true",
+    help="write it to .claude/skills/slicer/, .agents/skills/slicer/ and .grok/skills/slicer/ under the project root",
+  )
+  inner.add_argument(
+    "--force", action="store_true", help="replace a destination that holds different text",
+  )
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")

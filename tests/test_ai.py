@@ -539,3 +539,173 @@ class AiInstructionsTests(unittest.TestCase):
     convert = agents.split("### Convert an agreed roadmap", 1)[1].split("```", 2)[1]
     for field in ("importance", "urgency", "effort"):
       self.assertIn(field, convert)
+
+
+INSTALL_PATHS = (
+  ".claude/skills/slicer/SKILL.md",
+  ".agents/skills/slicer/SKILL.md",
+  ".grok/skills/slicer/SKILL.md",
+)
+
+
+class AiSkillWriteTests(unittest.TestCase):
+  """`ai skill --output` and `--install` write the bytes the command prints."""
+
+  def project(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    self.addCleanup(repo.close)
+    self.assertEqual(repo.run("init")[0], 0)
+    return repo
+
+  def files(self, repo: support.TempRepo) -> dict[str, bytes]:
+    return {
+      str(p.relative_to(repo.root)): p.read_bytes()
+      for p in repo.root.rglob("*") if p.is_file() and ".slicer" not in p.parts
+    }
+
+  def test_SkillOutput_WritesThePrintedBytesAndCreatesParents(self) -> None:
+    repo = self.project()
+    printed = repo.run("ai", "skill")[1]
+    code, out, err = repo.run("ai", "skill", "--output", "deep/er/SKILL.md")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual((repo.root / "deep/er/SKILL.md").read_bytes(), printed.encode("utf-8"))
+    self.assertNotIn("name: slicer", out)
+    self.assertIn(str(repo.root / "deep/er/SKILL.md"), out)
+    self.assertEqual(list(self.files(repo)), ["deep/er/SKILL.md"])
+
+  def test_SkillInstall_WritesTheThreeProjectPathsOnly(self) -> None:
+    repo = self.project()
+    printed = repo.run("ai", "skill")[1].encode("utf-8")
+    code, out, err = repo.run("ai", "skill", "--install")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(self.files(repo), {path: printed for path in INSTALL_PATHS})
+    for path in INSTALL_PATHS:
+      self.assertIn(f"wrote {repo.root / path}", out)
+      self.assertFalse((repo.root / path).is_symlink())
+    self.assertFalse((repo.root / ".codex").exists())
+
+  def test_SkillInstall_HandoffProject_InstallsTheHandoffText(self) -> None:
+    repo = self.project()
+    path = repo.root / ".slicer/config.json"
+    data = json.loads(path.read_text())
+    data["implement_finish"] = "handoff"
+    path.write_text(json.dumps(data) + "\n")
+    self.assertEqual(repo.run("ai", "skill", "--install")[0], 0)
+    for dest in INSTALL_PATHS:
+      self.assertEqual(repo.read(dest), ai.skill_text("handoff"))
+      self.assertNotIn("slicer done", repo.read(dest))
+
+  def test_SkillInstall_EqualDestination_IsRewrittenCleanly(self) -> None:
+    repo = self.project()
+    self.assertEqual(repo.run("ai", "skill", "--install")[0], 0)
+    before = self.files(repo)
+    code, out, err = repo.run("ai", "skill", "--install")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(self.files(repo), before)
+    self.assertEqual(len(out.splitlines()), 3)
+
+  def test_SkillInstall_DifferentContents_RefuseAndWriteNothing(self) -> None:
+    repo = self.project()
+    repo.write(INSTALL_PATHS[1], "my own skill\n")
+    before = self.files(repo)
+    for argv in (("--install",), ("--install", "--output", "also.md")):
+      with self.subTest(argv=argv):
+        code, out, err = repo.run("ai", "skill", *argv, "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(out)["error"]["code"], "state")
+        self.assertIn(INSTALL_PATHS[1], err)
+        self.assertEqual(self.files(repo), before)
+
+  def test_SkillInstall_Force_OverwritesDifferentContents(self) -> None:
+    repo = self.project()
+    repo.write(INSTALL_PATHS[1], "my own skill\n")
+    code, out, err = repo.run("ai", "skill", "--install", "--force")
+    self.assertEqual((code, err), (0, ""))
+    for dest in INSTALL_PATHS:
+      self.assertEqual(repo.read(dest), ai.skill_text())
+
+  def test_SkillInstall_DirectoryDestination_IsRefused(self) -> None:
+    repo = self.project()
+    (repo.root / INSTALL_PATHS[0]).mkdir(parents=True)
+    code, out, err = repo.run("ai", "skill", "--install", "--force", "--json")
+    self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "state"))
+    self.assertFalse((repo.root / INSTALL_PATHS[2]).exists())
+
+  def test_SkillWrite_Json_ReportsSkillAndPathsWritten(self) -> None:
+    repo = self.project()
+    code, out, err = repo.run("ai", "skill", "--install", "--output", "x/SKILL.md", "--json")
+    self.assertEqual((code, err), (0, ""))
+    payload = json.loads(out)
+    self.assertEqual(payload["skill"], ai.skill_text())
+    self.assertEqual(
+      payload["written"],
+      [str(repo.root / "x/SKILL.md"), *(str(repo.root / p) for p in INSTALL_PATHS)],
+    )
+
+  def test_SkillWrite_OutputNamingAnInstallPath_IsWrittenOnce(self) -> None:
+    repo = self.project()
+    code, out, _ = repo.run("ai", "skill", "--install", "--output", INSTALL_PATHS[0], "--json")
+    self.assertEqual(code, 0)
+    written = json.loads(out)["written"]
+    self.assertEqual(len(written), len(set(written)))
+    self.assertEqual(len(written), 3)
+
+  def test_SkillWrite_NeverReadsTheCommittedSkillFile(self) -> None:
+    committed = (Path(__file__).resolve().parents[1] / "skills" / "slicer" / "SKILL.md").resolve()
+    repo = self.project()
+    real_bytes, real_text = Path.read_bytes, Path.read_text
+
+    def guard(real):
+      def wrapper(self_path, *args, **kwargs):
+        if self_path.resolve() == committed:
+          raise AssertionError("the committed skills/slicer/SKILL.md must not be read")
+        return real(self_path, *args, **kwargs)
+      return wrapper
+
+    with patch.object(Path, "read_bytes", guard(real_bytes)), \
+         patch.object(Path, "read_text", guard(real_text)):
+      self.assertEqual(repo.run("ai", "skill", "--install")[0], 0)
+
+  def test_SkillWrite_NoFlags_StillPrintsAndWritesNothing(self) -> None:
+    repo = self.project()
+    before = self.files(repo)
+    code, out, err = repo.run("ai", "skill")
+    self.assertEqual((code, err, out), (0, "", ai.skill_text()))
+    self.assertEqual(self.files(repo), before)
+
+  def test_SkillForce_WithoutAWriteFlag_IsUsage(self) -> None:
+    repo = self.project()
+    code, out, err = repo.run("ai", "skill", "--force", "--json")
+    self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "usage"))
+    self.assertEqual(self.files(repo), {})
+
+  def test_SkillInstall_OutsideAProject_RefusesAndWritesNothing(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, err = repo.run("ai", "skill", "--install", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_SkillOutput_OutsideAProject_FallsBackToTheGenericText(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, err = repo.run("ai", "skill", "--output", "SKILL.md")
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
+      self.assertEqual(repo.read("SKILL.md"), ai.skill_text())
+
+  def test_SkillWrite_UnreadableProject_RefusesInsteadOfWritingTheGenericText(self) -> None:
+    repo = self.project()
+    (repo.root / ".slicer/index.json").write_text("{not json", encoding="utf-8")
+    for argv in (("--install",), ("--output", "SKILL.md")):
+      with self.subTest(argv=argv):
+        code, _, _ = repo.run("ai", "skill", *argv)
+        self.assertNotEqual(code, 0)
+        self.assertEqual(self.files(repo), {})
+
+  def test_SkillHelp_ListsTheWriteFlags(self) -> None:
+    with redirect_stdout(io.StringIO()) as out:
+      with self.assertRaises(SystemExit):
+        cli.main(["ai", "skill", "--help"])
+    text = " ".join(out.getvalue().split())
+    for flag in ("--output", "--install", "--force"):
+      self.assertIn(flag, text)

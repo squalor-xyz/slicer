@@ -12,11 +12,19 @@ returns `{"instructions": "..."}` with the same Markdown as the text output.
 reusable prompts; the command is the single source for the quick start.
 
 `slicer ai skill` prints a `SKILL.md` for that implement loop and the exit-code
-rules, using the same finish choice and the same fallback. Claude Code, Codex, and Grok load the same file. Copy or symlink
-`skills/slicer/SKILL.md` to `.claude/skills/slicer/SKILL.md`,
-`.agents/skills/slicer/SKILL.md` (Codex also reads `.codex/skills/`), or
-`.grok/skills/slicer/SKILL.md` (Grok also reads the Claude and `.agents` paths).
-`--json` returns `{"skill": "..."}`. The skill ends by pointing at
+rules, using the same finish choice and the same fallback. Claude Code, Codex, and Grok load the same file.
+`slicer ai skill --install` writes it to `.claude/skills/slicer/SKILL.md`,
+`.agents/skills/slicer/SKILL.md` (Codex reads `.agents/skills/`, so there is no `.codex` copy),
+and `.grok/skills/slicer/SKILL.md` under the project root; it never touches the home directory.
+Use this instead of copying this repo's generic `skills/slicer/SKILL.md`: a project that
+finishes with `handoff` needs the adapted text. `--output PATH` writes one file, creating
+parent directories, and the two flags combine. The file holds exactly the bytes the command
+prints, so `slicer ai skill | diff - PATH` is a drift check for a given slicer version and
+finish mode. An existing destination with the same text is rewritten; one with different text
+exits 2 with code `state` and nothing is written, unless `--force`. `--install` needs a
+project, and a project whose config or index cannot be read is refused rather than given the
+generic text. Without either flag nothing is written. `--json` returns `{"skill": "..."}`, plus
+`written` (the absolute paths) when a write flag is given. The skill ends by pointing at
 `slicer ai instructions --rest`, which prints only the parts of the guide the skill
 leaves out, so an agent that loaded the skill does not read the same text twice.
 
@@ -204,7 +212,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | Command | Payload |
 |---|---|
 | `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
-| `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command |
+| `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command. With `--output` or `--install` it is `{skill, written}`, `written` being the absolute paths written, in order |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |
 | `merge-index` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged index to `OURS`; exit 1 left conflict markers there |
