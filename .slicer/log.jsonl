@@ -1070,3 +1070,7 @@
 {"when": "2026-10-06T19:39:57Z", "item": "s228", "action": "note", "from": "", "to": "", "note": "Ready for review: default list, plain and review next, batch", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:39:57Z", "item": "s228", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:40:29Z", "item": "s228", "action": "status", "from": "review", "to": "done", "note": "Default list, plain and review next, batch pickup, and the TUI ranked view share readiness, declared pass order, effective score, and stored queue ties. Empty passes merge by score against the next named row. Custom status queues still rank the caller's claims first. Verified with unittest discover: 1433 tests, 1 skipped.", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "note", "from": "", "to": "", "note": "Owner chose opt-in list --json --envelope with items and onl", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "note", "from": "", "to": "", "note": "Ready for review: opt-in list --json --envelope returns {ite", "by": "Jon Robbins"}
+{"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
