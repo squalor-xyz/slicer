@@ -265,7 +265,9 @@ When slicer itself gets in your way, record it without filing a roadmap item:
 the other kinds). The log is local and gitignored. Preview what would go upstream
 with `slicer feedback-report --dry-run`. Run it with `--yes` only when the owner
 asks: that files GitHub issues through `gh`, which is a publish. A missing or
-unauthenticated `gh` is code `external`.
+unauthenticated `gh` is code `external`. Open issues come back as roadmap rows
+with `slicer issues-pull`: preview with `--dry-run`, and pull only when the owner
+asks, because it files roadmap rows.
 
 """
 

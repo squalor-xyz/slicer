@@ -171,12 +171,14 @@ last to name a claim when `claim_owner` is empty. Any other argument is refused.
 `push` and `tag` are unreachable from the code — not by convention but because `vcs._run`
 refuses anything off the list, including for a caller that asks.
 
-**`gh` is reached from one place, for one command.** `github.py` is the only module that
+**`gh` is reached from one place, in two exact forms.** `github.py` is the only module that
 runs `gh`, and `github._run` accepts only `gh issue create --repo OWNER/REPO --title TITLE
---body-file PATH`, as an argv list with no shell. Only `feedback-report --yes` calls it. `gh`
-is an optional external binary, not a dependency: a missing or failing one is code
-`external` (exit 2), never an internal error. The command never holds `.slicer/lock` across
-a `gh` call. It records a filed entry in `.slicer/feedback-reported.json` only when the
+--body-file PATH` (from `feedback-report --yes`) and `gh issue list --repo OWNER/REPO --state
+open --limit N --json number,title,url` (from `issues-pull`), as argv lists with no shell.
+`gh` is an optional external binary, not a dependency: a missing or failing one is code
+`external` (exit 2), never an internal error. Neither command holds `.slicer/lock` across a
+`gh` call: `issues-pull` is a roadmap write but is not marked `mutates`, so it fetches
+unlocked, then takes the lock, refuses a merge, reloads, and adds rows through `ops`. It records a filed entry in `.slicer/feedback-reported.json` only when the
 entry still hashes to what was sent. Nothing in `src/slicer/` names a destination
 repository; it comes from `--repo` or config `issues_repo`.
 

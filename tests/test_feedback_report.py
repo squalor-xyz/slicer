@@ -345,11 +345,32 @@ class GithubAllowlistTests(unittest.TestCase):
       ("issue", "create", "--repo", REPO, "--title", "--web", "--body-file", "p"),
       ("pr", "create", "--repo", REPO, "--title", "t", "--body-file", "p"),
       ("api", "repos/x", "--method", "DELETE", "--title", "t", "--body-file", "p"),
+      ("issue", "list", "--repo", REPO, "--state", "open", "--limit", "30",
+       "--json", "number,title,url,body"),
+      ("issue", "list", "--repo", REPO, "--state", "all", "--limit", "30",
+       "--json", "number,title,url"),
+      ("issue", "list", "--repo", REPO, "--state", "open", "--limit", "-1",
+       "--json", "number,title,url"),
+      ("issue", "list", "--repo", REPO, "--state", "open", "--limit", "--web",
+       "--json", "number,title,url"),
+      ("issue", "list", "--repo", "a/b/c", "--state", "open", "--limit", "30",
+       "--json", "number,title,url"),
+      ("issue", "list", "--state", "open", "--repo", REPO, "--limit", "30",
+       "--json", "number,title,url"),
+      ("issue", "list", "--repo", REPO, "--state", "open", "--limit", "30",
+       "--json", "number,title,url", "--web"),
     ]
     with patch("slicer.github.subprocess.run", side_effect=AssertionError("gh was run")):
       for argv in refused:
         with self.assertRaises(StateError, msg=argv):
           github._run(argv)
+
+  def test_Run_AllowsTheExactIssueListForm(self) -> None:
+    argv = ("issue", "list", "--repo", REPO, "--state", "open", "--limit", "30",
+            "--json", "number,title,url")
+    with patch("slicer.github.subprocess.run", return_value=done(0, "[]")) as run:
+      github._run(argv)
+    self.assertEqual(run.call_args[0][0], ["gh", *argv])
 
   def test_Run_ExecsArgvListWithoutAShell(self) -> None:
     with patch("slicer.github.subprocess.run", return_value=done(0)) as run:

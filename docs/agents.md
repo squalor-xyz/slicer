@@ -265,6 +265,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `note` | `{id, added}` |
 | `feedback` | append: `{path, entry}` with `at`, `kind`, `text`, and `item` only when given; print: `{path, entries}` (empty array when no log); `--out`: `{path, out}` |
 | `feedback-report` | `{repo, dry_run, issues, unmarked}`; each issue has `entry` (sha256 of the entry's header and body), `kind`, `at`, `item` only when stored, and `title`, plus `body` under `--dry-run` or `issue` and `url` after `--yes`. `unmarked` lists issues filed for entries that changed while they were sent, which are not recorded and may be filed again. Both lists stay present under `--lean`. Nothing to file is exit 0 with empty lists |
+| `issues-pull` | `{repo, dry_run, created, reused, items}`. `created` and `reused` are id lists; `created` is empty under `--dry-run`, which creates nothing. Each item has `number`, `title` (as stored for a reused row), `key` (`github:OWNER/REPO#NUMBER`), `id` (null for a new row under `--dry-run`), and `existing`. Both lists stay present under `--lean`. Nothing new is exit 0 |
 | `note-verify`, `note-attest` | `{id, note_record, trust}`; repeating the same verifier is a no-op (no write, no render) |
 | `find` | array of items with `match: {field, snippet}`; with `--lean`, each row is only `{id, title, status, has_slice, match}` |
 | `deps` | unblocked-item array; for `deps ID`, `{id, waits_on, blocked_by, dependents}`; mermaid format returns `{format, graph}` |
@@ -360,7 +361,7 @@ when the meaning does. Branch on the code.
 | `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline |
 | `editor_aborted` | `$EDITOR` exited non-zero; nothing changed |
 | `wrong_command` | e.g. `import --from` (that flag belongs to `migrate`) |
-| `external` | An optional external tool failed: `feedback-report` found no `gh`, `gh` exited nonzero (often not authenticated), or it printed no issue URL. Exit 2. Earlier issues in the batch are already recorded; the message names the entry that stopped |
+| `external` | An optional external tool failed: `feedback-report` or `issues-pull` found no `gh`, `gh` exited nonzero (often not authenticated), or it printed output slicer cannot use (no issue URL, or an issue list that is not valid). Exit 2. For `feedback-report`, earlier issues in the batch are already recorded and the message names the entry that stopped; `issues-pull` writes nothing |
 | `usage` | Missing arguments, unknown options, invalid values, conflicting options, or other invocation errors |
 
 ## Exit codes

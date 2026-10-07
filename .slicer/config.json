@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 5,
   "id": {
     "prefix": "s",
     "width": 2
@@ -53,5 +53,6 @@
     "targets": []
   },
   "git_check": false,
-  "implement_finish": "handoff"
+  "implement_finish": "handoff",
+  "issues_repo": "squalor-xyz/slicer"
 }

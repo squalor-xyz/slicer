@@ -558,6 +558,11 @@ so it needs the GitHub CLI installed and logged in. It records what it filed in 
 gitignored `.slicer/feedback-reported.json` so a rerun skips those entries. Friction stays
 local unless you pass `--kind friction`. Set `issues_repo` in the config to drop `--repo`.
 
+To bring open issues the other way, preview with `slicer issues-pull --repo OWNER/REPO
+--dry-run`, then run it without `--dry-run`. Each open issue becomes one unscored roadmap
+row with no pass, keyed to the issue so a rerun files nothing twice; its findings is the
+issue URL, and the issue body is never read. Score and promote the rows as usual.
+
 To fill the whole slice in one call rather than one `edit` per section, hand `promote` a
 one-item outline instead — the same `##` item / `### section` shape `import` reads (see
 [import.md](import.md)). The item already owns its fields, so the source is sections and

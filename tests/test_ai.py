@@ -472,6 +472,9 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn(ai.FEEDBACK, ai.INSTRUCTIONS)
     self.assertIn(ai.FEEDBACK.rstrip("\n"), ai.rest_text())
     self.assertNotIn("feedback-report", ai.skill_text())
+    self.assertIn("slicer issues-pull", ai.FEEDBACK)
+    self.assertIn("pull only when the owner\nasks", ai.FEEDBACK)
+    self.assertNotIn("issues-pull", ai.skill_text())
 
   def test_Instructions_RestFlag_TextAndJson(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
