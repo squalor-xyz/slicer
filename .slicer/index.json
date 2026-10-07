@@ -6651,7 +6651,7 @@
       "id": "s232",
       "title": "File open GitHub issues as roadmap rows",
       "short_title": "File open GitHub issues as roadmap rows",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s231"
@@ -6669,10 +6669,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-07T17:42:04Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
