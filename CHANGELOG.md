@@ -6,14 +6,18 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-07
+
 ### Added
 
 - `slicer feedback-report` files entries from the local feedback log as GitHub issues, one issue per entry, through the optional `gh` CLI. `--dry-run` prints the issues and calls nothing. `--yes` runs `gh issue create --repo OWNER/REPO --title TITLE --body-file PATH` for each entry. Exactly one of the two is required. The destination is `--repo` or the new config key `issues_repo`; with neither, the command is `usage` and nothing is contacted. By default it files `bug` and `feature` entries; repeatable `--kind` changes that, so friction is sent only when asked for. `--item` matches the stored item string. Titles are `[kind] first line`, at most 120 characters. Each filed entry is recorded in the gitignored `.slicer/feedback-reported.json` by the sha256 of its header and body, with the repo, issue number and URL, and later runs to the same repo skip it. The log bytes are never rewritten. The project lock is not held across `gh`. An entry edited while it was being sent is reported as filed but not marked. A missing or failing `gh`, or output without an issue URL, is the new non-internal error code `external` (exit 2); creates that finished earlier in the batch stay recorded. The command never writes `index.json`, `log.jsonl`, or `render/`. `init` also lists the sidecar in `.slicer/.gitignore`, as does this repo's root `.gitignore`.
 - `slicer issues-pull` files a repository's open GitHub issues as roadmap rows, one open row with no slice per issue, through `gh issue list --repo OWNER/REPO --state open --limit N --json number,title,url`. Issue bodies are never requested. Rows are keyed `github:OWNER/REPO#NUMBER`, so a rerun reuses them in any status and never refiles; titles are not refreshed. New rows are unscored, have an empty pass, and carry the issue URL as findings. `--repo` or config `issues_repo` names the source. `--limit` defaults to 30 (1-100, one page). `--dry-run` previews without writing. Every issue is checked before anything is written. The project lock is not held while `gh` runs. `--render` and `--strict` work as for `add`.
+- `next --start` takes `--render` and `--strict`, so a pickup that claims an item regenerates `.slicer/render/` in the same step instead of leaving it stale for the next `check`. Both flags require `--start` (`--strict` also requires `--render`); otherwise the command exits 2 with code `usage`. A pickup that changes nothing, such as resuming your own claim, does not render. The pickup commands in the skill, `slicer ai instructions` and the docs now pass `--render`.
 
 ### Changed
 
 - Config schema is 5, protecting `issues_repo` from older readers. Older configs load with an empty `issues_repo` and are not restamped on read; a config save writes version 5.
+- The skill description from `slicer ai skill` now ends with the rule to read and change roadmap state only through slicer commands, never by opening `.slicer/` files, since the description is the only skill text an agent sees before the skill loads.
 
 ## [1.4.0] - 2026-10-06
 
