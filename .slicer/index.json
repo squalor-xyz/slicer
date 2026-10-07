@@ -6693,7 +6693,7 @@
       "id": "s233",
       "title": "Name the tracking-file read ban in the skill description",
       "short_title": "Name the tracking-file read ban in the skill description",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -6709,10 +6709,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-07T19:34:02Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

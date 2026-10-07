@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-220 items · done 215 · retired 4 · reviewing 1
+220 items · done 216 · retired 4
 
 v1.5.0 release
 
@@ -35,7 +35,7 @@ v1.5.0 release
 |---|---|---|---|---|---|---|---|
 | 1 | [s231](slices/s231.md) | Report local feedback entries as GitHub issues | L | 3 | slicer | follow-up to s230: feedback.md entries only leave the machine by hand-copying | done |
 | 2 | [s232](slices/s232.md) | File open GitHub issues as roadmap rows | M | 2 | slicer | follow-up to s231: issues filed on GitHub have to be retyped as roadmap rows | done |
-| 3 | [s233](slices/s233.md) | Name the tracking-file read ban in the skill description | S | 1 | slicer | session 2026-10-07: an agent read .slicer/slices/s231.json while the slicer skill was still loading; the always-visible skill description does not carry the read ban | reviewing |
+| 3 | [s233](slices/s233.md) | Name the tracking-file read ban in the skill description | S | 1 | slicer | session 2026-10-07: an agent read .slicer/slices/s231.json while the slicer skill was still loading; the always-visible skill description does not carry the read ban | done |
 
 ---
 
