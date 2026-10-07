@@ -2,7 +2,7 @@
   "version": 7,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 233,
+  "next_id": 234,
   "preamble": "",
   "passes": [
     {
@@ -6647,11 +6647,13 @@
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "",
+        "size": "M",
         "flags": [],
-        "trees": [],
+        "trees": [
+          "slicer"
+        ],
         "trees_literal": false,
-        "findings": "",
+        "findings": "follow-up to s231: issues filed on GitHub have to be retyped as roadmap rows",
         "discovered_from": "",
         "key": "",
         "pass": "v1.5",
@@ -6659,7 +6661,35 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
-        "effort": null,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s233",
+      "title": "Name the tracking-file read ban in the skill description",
+      "short_title": "Name the tracking-file read ban in the skill description",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "session 2026-10-07: an agent read .slicer/slices/s231.json while the slicer skill was still loading; the always-visible skill description does not carry the read ban",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.5",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }
