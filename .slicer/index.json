@@ -6773,11 +6773,26 @@
       "id": "s235",
       "title": "Move the landing procedure out of AGENTS.md",
       "short_title": "Move the landing procedure out of AGENTS.md",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "f31307bc-f4d2-454a-bfbb-5c29be002e10",
+          "kind": "",
+          "text": "**2026-10-07** — Ready for review: moved the Landing a slice steps verbatim to new docs/landing.md (plus the no-push rule from the spec); AGENTS.md keeps a 2-line stub (owner asks only, done on main never in a worktree, link). Roadmap section 3796 -> 3317 bytes. New test_AgentsGuide_LandingSection_PointsAtLandingDoc covers the stub, the doc's commands and >=300 bytes headroom; the 3800 cap is unchanged. Filing missed that test_AgentsGuide_UsesTheBoundedPickup_NotNextThenShow anchored on the landing done command; its two done assertions now read docs/landing.md. Full suite 1494 OK (1 skipped), check ok, git diff --check clean.",
+          "created_at": "2026-10-07T20:56:17Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-07T21:06:54Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -6794,7 +6809,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

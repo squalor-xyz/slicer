@@ -142,22 +142,8 @@ pushing and publishing wait for the owner (a slice's Git section does not author
 
 ### Landing a slice
 
-Only when the owner asks to merge. Pick up the handoff through `--root`, review
-the diff, and rerun the checks:
-
-```sh
-PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> next --status review --start --ready --render --section "Check" --json --lean
-```
-
-A failed review is `slicer reject <ID> --note "VERDICT: FAIL - reason" --render`.
-Otherwise commit on its branch, merge into `main` with `git merge --no-ff`, then on
-`main`:
-
-```sh
-PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render --check
-```
-
-Commit that, remove the worktree and branch, and leave `main` clean.
+Only when the owner asks to merge. Review, merge and run `done` on `main`, never in
+a worktree; [docs/landing.md](docs/landing.md) has the commands.
 
 **Read and change tracking state through the slicer CLI.** Never open, search, parse
 or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl` or `.slicer/render/`,

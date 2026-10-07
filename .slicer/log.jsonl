@@ -1112,3 +1112,7 @@
 {"when": "2026-10-07T20:46:48Z", "item": "s235", "action": "add", "from": "", "to": "open", "note": "Move the landing procedure out of AGENTS.md"}
 {"when": "2026-10-07T20:46:48Z", "item": "s235", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-07T20:46:48Z", "item": "s235", "action": "edit", "from": "", "to": "", "note": "boundary"}
+{"when": "2026-10-07T20:52:03Z", "item": "s235", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-07T20:56:17Z", "item": "s235", "action": "note", "from": "", "to": "", "note": "Ready for review: moved the Landing a slice steps verbatim t", "by": "Jon Robbins"}
+{"when": "2026-10-07T20:56:17Z", "item": "s235", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-07T21:06:54Z", "item": "s235", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
