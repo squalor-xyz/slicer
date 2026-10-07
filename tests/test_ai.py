@@ -460,11 +460,18 @@ class AiInstructionsTests(unittest.TestCase):
       f"{ai.TRACKING_RULE}\n\n"
       + ai.INTRO + ai.PLAN + ai.TRACKING + "\n"
       + "## Implement one slice\n\n" + ai.LOOP + ai.SPEC_GAP + "\n" + ai.IMPLEMENT_MORE
-      + ai.HANDOFF_SECTION + ai.STATE + ai.EXITS
+      + ai.HANDOFF_SECTION + ai.STATE + ai.FEEDBACK + ai.EXITS
       + "\n" + ai.DONE_CLOSER
     )
     self.assertEqual(ai.INSTRUCTIONS, expected)
     self.assertIn(ai.loop_text("handoff"), ai.instructions_text("handoff"))
+
+  def test_Instructions_Feedback_InTheGuideAndRestButNotTheSkill(self) -> None:
+    self.assertIn("slicer feedback-report --dry-run", ai.FEEDBACK)
+    self.assertIn("only when the owner\nasks", ai.FEEDBACK)
+    self.assertIn(ai.FEEDBACK, ai.INSTRUCTIONS)
+    self.assertIn(ai.FEEDBACK.rstrip("\n"), ai.rest_text())
+    self.assertNotIn("feedback-report", ai.skill_text())
 
   def test_Instructions_RestFlag_TextAndJson(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):

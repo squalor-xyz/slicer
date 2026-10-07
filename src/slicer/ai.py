@@ -257,13 +257,25 @@ run `slicer render` separately, and finish with `slicer check`.
 
 """
 
+FEEDBACK = """\
+## Local feedback
+
+When slicer itself gets in your way, record it without filing a roadmap item:
+`slicer feedback --kind friction --text "What happened"` (`bug` and `feature` are
+the other kinds). The log is local and gitignored. Preview what would go upstream
+with `slicer feedback-report --dry-run`. Run it with `--yes` only when the owner
+asks: that files GitHub issues through `gh`, which is a publish. A missing or
+unauthenticated `gh` is code `external`.
+
+"""
+
 IMPLEMENT_HEADING = "## Implement one slice\n\n"
 
 INSTRUCTIONS = (
   f"{TRACKING_RULE}\n\n"
   + INTRO + PLAN + TRACKING + "\n"
   + IMPLEMENT_HEADING + LOOP + SPEC_GAP + "\n" + IMPLEMENT_MORE
-  + HANDOFF_SECTION + STATE + EXITS
+  + HANDOFF_SECTION + STATE + FEEDBACK + EXITS
   + "\n" + DONE_CLOSER
 )
 
@@ -277,7 +289,7 @@ def rest_text() -> str:
   """What `INSTRUCTIONS` says beyond the skill, for an agent that loaded the skill."""
   body = (
     REST_LEAD + "\n\n" + INTRO + PLAN + IMPLEMENT_HEADING + IMPLEMENT_MORE
-    + HANDOFF_SECTION + STATE
+    + HANDOFF_SECTION + STATE + FEEDBACK
   )
   return body.rstrip("\n") + "\n"
 

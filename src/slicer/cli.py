@@ -28,6 +28,7 @@ from slicer import check as check_mod
 from slicer import (
   ai,
   feedback,
+  github,
   graph,
   ids,
   jsonio,
@@ -502,6 +503,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
   jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
   feedback.ensure_gitignore(root)
+  feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   text = f"initialised {base}"
   if args.id is not None:
@@ -1718,6 +1720,85 @@ def cmd_feedback(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_feedback_report(args: argparse.Namespace) -> int:
+  """File bug and feature entries from the local feedback log as GitHub issues.
+
+  Not a roadmap write: it never touches the index, history, or render. It takes
+  the project lock to read the entries and again to record each filed one, and
+  never holds it across `gh`, which may wait on the network or a login prompt.
+  """
+  if args.dry_run == args.yes:
+    raise StateError("pass exactly one of --dry-run (preview) or --yes (file the issues)",
+      code="usage")
+  kinds = list(dict.fromkeys(args.kind or ("bug", "feature")))
+  unknown = [kind for kind in kinds if kind not in feedback.KINDS]
+  if unknown:
+    raise StateError(f"unknown feedback kind {unknown[0]!r}; choose from {', '.join(feedback.KINDS)}",
+      code="usage")
+  root = store.discover(Path(args.root) if args.root else None)
+  repo = args.repo if args.repo is not None else Config.load(
+    root / store.DIR_NAME / CONFIG_NAME).issues_repo
+  if not repo:
+    raise StateError("no destination repository: pass --repo OWNER/REPO or set issues_repo in "
+      f"{store.DIR_NAME}/{CONFIG_NAME}", code="usage")
+  github.require_repo(repo)
+  shown = f"{store.DIR_NAME}/{feedback.LOG_NAME}"
+  with store.project_lock(root):
+    done = feedback.reported_hashes(root, repo)
+    selected = [
+      (digest, entry) for digest, entry in feedback.hashed(root)
+      if digest not in done and entry["kind"] in kinds
+      and (args.item is None or entry.get("item") == args.item)
+    ]
+
+  def shape(digest: str, entry: dict[str, str]) -> dict[str, object]:
+    out: dict[str, object] = {"entry": digest, "kind": entry["kind"], "at": entry["at"]}
+    if "item" in entry:
+      out["item"] = entry["item"]
+    out["title"] = feedback.issue_title(entry)
+    return out
+
+  if not selected:
+    _emit(args, {"repo": repo, "dry_run": args.dry_run, "issues": [], "unmarked": []},
+      f"nothing to file to {repo} from {shown}", keep_empty=("issues", "unmarked"))
+    return OK
+  if args.dry_run:
+    issues = [{**shape(d, e), "body": feedback.issue_body(e)} for d, e in selected]
+    blocks = [f"would file to {repo}: {issue['title']}\n{issue['body']}" for issue in issues]
+    _emit(args, {"repo": repo, "dry_run": True, "issues": issues, "unmarked": []},
+      "\n".join(blocks).rstrip("\n"), keep_empty=("unmarked",))
+    return OK
+  filed: list[dict[str, object]] = []
+  unmarked: list[dict[str, object]] = []
+  for position, (digest, entry) in enumerate(selected, 1):
+    try:
+      number, url = github.create_issue(repo, feedback.issue_title(entry), feedback.issue_body(entry))
+    except StateError as exc:
+      if exc.code != "external":
+        raise
+      earlier = ", ".join(str(issue["url"]) for issue in filed) or "none"
+      raise StateError(
+        f"stopped at entry {position} of {len(selected)} ({entry['kind']} at {entry['at']}): {exc}. "
+        f"Filed and recorded before it: {earlier}",
+        code="external",
+      ) from None
+    issue = {**shape(digest, entry), "issue": number, "url": url}
+    # Record only an entry that still reads as it did when it was sent.
+    with store.project_lock(root):
+      current = {d for d, _ in feedback.hashed(root)}
+      if digest in current:
+        feedback.record(root, digest, repo, number, url)
+        filed.append(issue)
+      else:
+        unmarked.append(issue)
+        _write_err(args, f"slicer: filed {url}, but the {entry['kind']} entry at {entry['at']} "
+          "changed while it was sent, so it is not marked; a later run may file it again")
+  lines = [f"filed {issue['url']} {issue['title']}" for issue in filed + unmarked]
+  _emit(args, {"repo": repo, "dry_run": False, "issues": filed, "unmarked": unmarked},
+    "\n".join(lines), keep_empty=("issues", "unmarked"))
+  return OK
+
+
 def cmd_note_verify(args: argparse.Namespace) -> int:
   record, changed = ops.verify_note(_state(args), args.id, args.note_id,
     owner=args.owner, attest=args.command == "note-attest")
@@ -2662,6 +2743,15 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--stdin", action="store_true")
   sp.add_argument("--out", help="copy the log's exact bytes to PATH instead of appending")
   sp.add_argument("--force", action="store_true", help="with --out, replace a different existing file")
+
+  sp = add("feedback-report", cmd_feedback_report,
+    "file bug and feature entries from the feedback log as GitHub issues with gh")
+  sp.add_argument("--repo", help="OWNER/REPO to file to; defaults to config issues_repo")
+  sp.add_argument("--kind", action="append",
+    help="repeatable; friction, bug, or feature (default: bug and feature)")
+  sp.add_argument("--item", help="only entries stored with exactly this item string")
+  sp.add_argument("--dry-run", action="store_true", help="print the issues and call nothing")
+  sp.add_argument("--yes", action="store_true", help="file the issues with `gh issue create`")
 
   for command in ("note-verify", "note-attest"):
     sp = _strict_flag(_render_flag(add(command, _mutating(cmd_note_verify),

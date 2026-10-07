@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
-from slicer import ids
+from slicer import github, ids
 from slicer.errors import ConfigError, reject_future_schema
 
 CONFIG_NAME = "config.json"
@@ -106,7 +106,7 @@ DEFAULT_LATER = {
 # higher number on disk means a newer slicer wrote it; `store.load` refuses it
 # rather than dropping the keys this build does not know. Bump only alongside a
 # reader that lifts the older shape.
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 @dataclass
@@ -156,6 +156,9 @@ class Config:
   # Statuses that let a dependent start. None (the key absent) means `done_status`
   # alone. An explicit list is authoritative: it is not widened to include done.
   satisfies_dependencies: list[str] | None = None
+  # Where `feedback-report` files issues, as OWNER/REPO. Empty means no default:
+  # the command needs `--repo`, and nothing is inferred from a git remote.
+  issues_repo: str = ""
 
   def in_work(self) -> set[str]:
     """Statuses that mean someone is on an item: started, or reviewing."""
@@ -190,6 +193,13 @@ class Config:
       raise ConfigError(
         f"handoff_requires_note_kind {self.handoff_requires_note_kind!r} is not in note_kinds; "
         "add the required kind to the whitelist"
+      )
+    if not isinstance(self.issues_repo, str):
+      raise ConfigError("issues_repo must be a string")
+    if self.issues_repo and not github.valid_repo(self.issues_repo):
+      raise ConfigError(
+        f"issues_repo {self.issues_repo!r} is not OWNER/REPO; use letters, digits, '.', '_' or '-' "
+        "in each part, or leave it empty"
       )
     if self.satisfies_dependencies is not None:
       listed = self.satisfies_dependencies
@@ -313,6 +323,7 @@ class Config:
       "render_driver_check": self.render_driver_check,
       "claim_owner": self.claim_owner,
       "implement_finish": self.implement_finish,
+      "issues_repo": self.issues_repo,
     }
 
   @staticmethod
@@ -391,6 +402,7 @@ class Config:
       claim_owner=_claim_owner(d.get("claim_owner", "")),
       implement_finish=_implement_finish(d),
       satisfies_dependencies=d.get("satisfies_dependencies"),
+      issues_repo=d.get("issues_repo", ""),
     )
     cfg.validate()
     return cfg

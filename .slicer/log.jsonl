@@ -1087,3 +1087,6 @@
 {"when": "2026-10-07T12:55:43Z", "item": "s233", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-07T13:12:05Z", "item": "s232", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-07T13:12:05Z", "item": "s232", "action": "set", "from": "", "to": "", "note": "size -→M; trees -→slicer; findings -→follow-up to s231: issues filed on GitHub have to be retyped as roadmap rows; effort -→2"}
+{"when": "2026-10-07T13:21:38Z", "item": "s231", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-07T13:21:38Z", "item": "s231", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer feedback-report files unreported bu", "by": "Jon Robbins"}
+{"when": "2026-10-07T13:21:38Z", "item": "s231", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

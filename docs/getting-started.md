@@ -552,6 +552,12 @@ the first append list in `.slicer/.gitignore`. It is never rendered, parsed back
 `slicer feedback` prints the log, and `slicer feedback --out PATH` copies its exact bytes to a
 file you can review and file items from.
 
+To send bug and feature entries upstream, preview with `slicer feedback-report --repo
+OWNER/REPO --dry-run`, then file them with `--yes`. It runs `gh issue create` once per entry,
+so it needs the GitHub CLI installed and logged in. It records what it filed in the
+gitignored `.slicer/feedback-reported.json` so a rerun skips those entries. Friction stays
+local unless you pass `--kind friction`. Set `issues_repo` in the config to drop `--repo`.
+
 To fill the whole slice in one call rather than one `edit` per section, hand `promote` a
 one-item outline instead — the same `##` item / `### section` shape `import` reads (see
 [import.md](import.md)). The item already owns its fields, so the source is sections and
