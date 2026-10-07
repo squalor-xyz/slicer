@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-222 items · done 217 · retired 4 · review 1
+222 items · done 217 · retired 4 · reviewing 1
 
 v1.5.0 release
 
@@ -37,7 +37,7 @@ v1.5.0 release
 | 2 | [s232](slices/s232.md) | File open GitHub issues as roadmap rows | M | 2 | slicer | follow-up to s231: issues filed on GitHub have to be retyped as roadmap rows | done |
 | 3 | [s233](slices/s233.md) | Name the tracking-file read ban in the skill description | S | 1 | slicer | session 2026-10-07: an agent read .slicer/slices/s231.json while the slicer skill was still loading; the always-visible skill description does not carry the read ban | done |
 | 4 | [s234](slices/s234.md) | Render in the same step when next --start claims an item | S | 2 | slicer | session 2026-10-07: landing s233, the documented review pickup (next --status review --start) moved s233 to reviewing and left ROADMAP.md and ROADMAP.html stale; slicer check failed until a manual slicer render. next has no --render because cmd_next is not wrapped in _mutating | done |
-| 5 | [s235](slices/s235.md) | Move the landing procedure out of AGENTS.md | S | 1 | slicer | session 2026-10-07: after s234 landed the AGENTS.md roadmap section is 3796 bytes against a 3800 cap in test_AgentsGuide_RoadmapSection_IsShorter, so the next addition fails the suite; Landing a slice is 631 bytes and only needed when the owner asks to merge | review |
+| 5 | [s235](slices/s235.md) | Move the landing procedure out of AGENTS.md | S | 1 | slicer | session 2026-10-07: after s234 landed the AGENTS.md roadmap section is 3796 bytes against a 3800 cap in test_AgentsGuide_RoadmapSection_IsShorter, so the next addition fails the suite; Landing a slice is 631 bytes and only needed when the owner asks to merge | reviewing |
 
 ---
 
