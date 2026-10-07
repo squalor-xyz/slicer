@@ -1104,3 +1104,6 @@
 {"when": "2026-10-07T19:35:32Z", "item": "s234", "action": "add", "from": "", "to": "open", "note": "Render in the same step when next --start claims an item"}
 {"when": "2026-10-07T19:35:48Z", "item": "s234", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-07T19:35:56Z", "item": "s234", "action": "edit", "from": "", "to": "", "note": "boundary"}
+{"when": "2026-10-07T19:43:22Z", "item": "s234", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-07T19:51:57Z", "item": "s234", "action": "note", "from": "", "to": "", "note": "Ready for review: next gains --render/--strict (only with --", "by": "Jon Robbins"}
+{"when": "2026-10-07T19:51:57Z", "item": "s234", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

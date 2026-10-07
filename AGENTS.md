@@ -140,8 +140,9 @@ git status --short
 
 Review code, documentation, and tracking state together. This project finishes with
 `handoff` (`implement_finish`): hand off only after the acceptance checks pass, and
-never run `done` in a worktree. Commit and publish only on the owner's instructions;
-a slice's Git section does not authorize them.
+never run `done` in a worktree. Once `handoff` passes, commit the slice on its worktree
+branch (code, tests, docs, state and render together). Merging into `main`, pushing and
+publishing wait for the owner; a slice's Git section does not authorize them.
 
 ### Landing a slice
 
@@ -149,7 +150,7 @@ Only when the owner asks to commit and merge; push only when asked. Pick up the
 handoff through `--root`, review the diff, and rerun the checks:
 
 ```sh
-PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> next --status review --start --ready --section "Check" --json --lean
+PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> next --status review --start --ready --render --section "Check" --json --lean
 ```
 
 A failed review is `slicer reject <ID> --note "VERDICT: FAIL - reason" --render`.

@@ -6733,10 +6733,22 @@
       "id": "s234",
       "title": "Render in the same step when next --start claims an item",
       "short_title": "Render in the same step when next --start claims an item",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "3effe93d-124e-4dec-8ab9-9ec6965c565e",
+          "kind": "",
+          "text": "**2026-10-07** — Ready for review: next gains --render/--strict (only with --start; else usage). cmd_next takes the writer lock for --render and runs _select_next through _mutating; a pickup that changes nothing sets _no_change so it skips the render; batch lock now follows an explicit locked flag. Pickup commands in ai.py, AGENTS.md, docs updated; SKILL.md regenerated. New tests/test_next_render.py (10). Full suite 1493: 1 failure, test_AgentsGuide_RoadmapSection_IsShorter (4213+ bytes vs 3800 cap), already failing on main since 7c47623 (3772 before it); not caused by this slice.",
+          "created_at": "2026-10-07T19:51:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -6754,7 +6766,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],
