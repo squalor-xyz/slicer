@@ -95,19 +95,18 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 
 This repo tracks its own roadmap with slicer; that is also the end-to-end test.
 
-Read README.md and ARCHITECTURE.md first. Use `slicer ai instructions` for agent
-onboarding; [docs/agents.md](docs/agents.md) has detailed command/JSON contracts
-and reusable prompts.
+Read README.md and ARCHITECTURE.md first. Use `slicer ai instructions` for
+onboarding; [docs/agents.md](docs/agents.md) has the command/JSON contracts.
 
-To pick up existing work, run this from the checkout root. The headings are
-examples; `slicer sections` lists this project's:
+To pick up existing work, run this from the checkout root (`slicer sections` lists
+this project's headings):
 
 ```sh
 PYTHONPATH=src python3 -m slicer next --ready --section "Implement" --section "Check" --json --lean
 ```
 
-Replace `<ID>` with the returned id. Read its scope, dependencies, acceptance
-checks, relevant source and tests before claiming. Resolve missing criteria first;
+Read the returned slice's scope, dependencies, acceptance checks, relevant source
+and tests before claiming. Resolve missing criteria first;
 a row without a slice needs `promote` and a specification.
 
 **Every implementation claim starts in a new worktree, one slice per worktree.**
@@ -120,17 +119,15 @@ git worktree add -b feature/<id>-<slug> .worktrees/<id> main
 
 A new worktree starts at `main`'s committed `HEAD`. If the slice has uncommitted
 filings, ask the owner to authorize committing them before cutting the worktree.
-Run the commands below against the worktree's code and state. To keep the launch
-working directory, use `PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root
-.worktrees/<id> ...`, `git -C .worktrees/<id> ...`, and unittest discovery with
-`-s .worktrees/<id>/tests -t .worktrees/<id>/tests`. Use that worktree's ignored
-TMPDIR for test fixtures.
+Run the commands below against the worktree's code and state. From the launch
+directory, use `PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id>`,
+`git -C .worktrees/<id>`, and `-s/-t .worktrees/<id>/tests`. Use that worktree's
+ignored TMPDIR for test fixtures.
 
 ```sh
 PYTHONPATH=src python3 -m slicer start <ID> --render --strict
 # While editing, run the tests that hit this diff. If that command exits 2, run the full discover.
 python3 tests/affected.py --run
-# Implement the slice and run its focused tests, then the repository checks:
 python3 -m unittest discover -s tests -t tests
 PYTHONPATH=src python3 -m slicer note <ID> --text "Ready for review: ..."
 PYTHONPATH=src python3 -m slicer handoff <ID> --render --check
@@ -138,15 +135,15 @@ git diff --check
 git status --short
 ```
 
-Review code, documentation, and tracking state together. This project finishes with
-`handoff` (`implement_finish`): hand off only after the acceptance checks pass, and
-never run `done` in a worktree. Commit and publish only on the owner's instructions;
+Review code, docs and tracking state together. This project finishes with `handoff`
+(`implement_finish`): hand off only after the acceptance checks pass; never run `done`
+in a worktree. Commit and publish only on the owner's instructions;
 a slice's Git section does not authorize them.
 
 ### Landing a slice
 
-Only when the owner asks to commit and merge; push only when asked. Pick up the
-handoff through `--root`, review the diff, and rerun the checks:
+Only when the owner asks to merge. Pick up the handoff through `--root`, review
+the diff, and rerun the checks:
 
 ```sh
 PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> next --status review --start --ready --section "Check" --json --lean
@@ -162,19 +159,15 @@ PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome
 
 Commit that, remove the worktree and branch, and leave `main` clean.
 
-**Read and change tracking state through the slicer CLI.** Do not open, search, parse,
-or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl`, or `.slicer/render/` to
-learn or change roadmap state, even when `git status` lists one of them. Read with
-`slicer show ID --json --lean`, `slicer list --json --lean`, or `slicer next --json --lean`.
-`config.json` is the exception: read it with `slicer config KEY`, and edit it by hand as
-[docs/configuration.md](docs/configuration.md) describes. The full rule is in
-`slicer ai instructions`; inspect tracking internals only when the task asks.
-
-**Never hand-edit `.slicer/*.json`.**
+**Read and change tracking state through the slicer CLI.** Never open, search, parse
+or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl` or `.slicer/render/`,
+even when `git status` lists one. Use `slicer show ID --json --lean`,
+`slicer list --json --lean` or `slicer next --json --lean`. `config.json` is the
+exception: read it with `slicer config KEY` and edit it by hand as
+[docs/configuration.md](docs/configuration.md) describes.
 
 To file a specification, pass `promote` a one-item outline (`##` item / `### section`)
-via `--file` or `--stdin`. It keeps the item's fields; supply sections and lead only.
-Use `edit` for subsequent section changes:
+via `--file` or `--stdin`. It keeps the item's fields; supply sections and lead only:
 
 ```sh
 slicer add "Some title"
