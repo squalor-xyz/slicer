@@ -56,7 +56,8 @@ If `next` JSON includes `unspecified`, those ids are not ready. Fill each missin
 
 SKILL_DESCRIPTION = (
   "Drive a slicer roadmap. Use when asked to review a roadmap, plan work, "
-  "take a slice, implement the next slice, or drive slicer."
+  "take a slice, implement the next slice, or drive slicer. "
+  "Read and change roadmap state only through slicer commands, never by opening .slicer/ files."
 )
 
 # Reads and edits of tracking state. The instructions and the skill both use
