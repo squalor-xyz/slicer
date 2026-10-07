@@ -162,7 +162,13 @@ PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome
 
 Commit that, remove the worktree and branch, and leave `main` clean.
 
-**Read and change tracking state through the slicer CLI.** The full rule is in `slicer ai instructions`; inspect tracking internals only when the task asks.
+**Read and change tracking state through the slicer CLI.** Do not open, search, parse,
+or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl`, or `.slicer/render/` to
+learn or change roadmap state, even when `git status` lists one of them. Read with
+`slicer show ID --json --lean`, `slicer list --json --lean`, or `slicer next --json --lean`.
+`config.json` is the exception: read it with `slicer config KEY`, and edit it by hand as
+[docs/configuration.md](docs/configuration.md) describes. The full rule is in
+`slicer ai instructions`; inspect tracking internals only when the task asks.
 
 **Never hand-edit `.slicer/*.json`.**
 
