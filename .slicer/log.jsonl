@@ -1075,3 +1075,11 @@
 {"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "note", "from": "", "to": "", "note": "Ready for review: opt-in list --json --envelope returns {ite", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:51:01Z", "item": "s226", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-06T19:51:25Z", "item": "s226", "action": "status", "from": "review", "to": "done", "note": "Opt-in list --json --envelope returns {items, only_in_sibling} while the default list JSON stays an array. Lean keeps both keys when empty. Filters and sorts apply to items only, and sibling indexes are still read once. Verified with unittest discover: 1437 tests, 1 skipped.", "by": "Jon Robbins"}
+{"when": "2026-10-07T12:15:30Z", "item": "s231", "action": "add", "from": "", "to": "open", "note": "Report local feedback entries as GitHub issues"}
+{"when": "2026-10-07T12:15:34Z", "item": "s231", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-07T12:15:42Z", "item": "s232", "action": "add", "from": "", "to": "open", "note": "File open GitHub issues as roadmap rows"}
+{"when": "2026-10-07T12:15:42Z", "item": "s232", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-07T12:46:16Z", "item": "pass.v1.5", "action": "prose", "from": "", "to": "v1.5", "note": "add-pass"}
+{"when": "2026-10-07T12:46:17Z", "item": "s231", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.5"}
+{"when": "2026-10-07T12:46:17Z", "item": "s232", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.5"}
+{"when": "2026-10-07T12:55:04Z", "item": "s231", "action": "set", "from": "", "to": "", "note": "size -→L; trees -→slicer; findings -→follow-up to s230: feedback.md entries only leave the machine by hand-copying; effort -→3"}

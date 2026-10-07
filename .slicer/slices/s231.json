@@ -1,0 +1,39 @@
+{
+  "id": "s231",
+  "title": "Report local feedback entries as GitHub issues",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "follow-up to s230: feedback.md entries only leave the machine by hand-copying",
+  "size": "L",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** reading GitHub issues, creating roadmap items, labels, assignees, milestones, commenting on an existing issue, or a TUI action. gh is not called from feedback append, print, or --out.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s230 keeps a gitignored use-log at `.slicer/feedback.md` until a person copies a note out. This slice is that copy. `feedback-report` walks the whole log and files one GitHub issue per unreported bug or feature entry, using the `gh` CLI when it is installed.\n\nThe whole file is not one issue. A mixed log refiled as one issue would republish private friction notes and file the same report again on the next run."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/github.py`, the only module that execs `gh`, with a closed argv allowlist. `vcs.py` stays closed: slicer still does not commit, push, or tag.\n- `src/slicer/cli.py` for `feedback-report`. It is not a roadmap write, and it is not wrapped so `main` holds the project lock for the whole run.\n- `src/slicer/feedback.py` for the gitignored sidecar `.slicer/feedback-reported.json`. The log bytes are not rewritten.\n- `src/slicer/config.py` for optional `issues_repo` and config schema 5. `src/slicer/errors.py` for the `external` code.\n- `tests/` covering the runner and the command, with `gh` mocked.\n- `README.md`, `docs/commands.md`, `docs/agents.md`, `docs/configuration.md`, `ARCHITECTURE.md`, and an `[Unreleased]` changelog entry.\n- `.slicer/.gitignore` and the root `.gitignore`, listing the sidecar next to `feedback.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- A missing `gh` exits 2 with code `external`, writes nothing, and does not affect `feedback`, `init`, or `check`.\n- The allowlist refuses every argv except `issue create` in the exact form below. User text is never passed through a shell.\n- A repo that is not `OWNER/REPO` exits 2 with code `usage` and calls nothing. There is no default to the current remote or to this package's URL.\n- `--dry-run` prints the issues, calls nothing, and writes no sidecar. Neither `--dry-run` nor `--yes`, or both, is `usage`.\n- `--yes` runs one create per selected entry. The title is `[bug]` or `[feature]` plus the entry's first line, truncated so the whole title is at most 120 characters. The body file holds the kind, timestamp, item attribute when present, the text verbatim, and one footer line that it came from `slicer feedback`.\n- Friction is skipped unless `--kind friction` is passed. Repeatable `--kind` narrows the set. `--item ID` keeps entries stored with that exact item string.\n- A successful create appends to the sidecar: sha256 of the entry header plus body, the repo, the issue number, and the URL. A second run skips that hash for that repo. The log file bytes are unchanged.\n- A failure mid-batch records only the creates that returned a parseable issue URL, then exits 2 with code `external` naming the entry that stopped.\n- An absent log, or a selection that is empty, exits 0 and reports that there was nothing to file.\n- The command does not change `index.json`, `log.jsonl`, or anything under `.slicer/render/`.\n- An older config with no `issues_repo` loads with an empty repo and is not restamped on read. A save by this build stamps config schema 5."
+    },
+    {
+      "heading": "Implement",
+      "body": "`slicer feedback-report` reads `.slicer/feedback.md`. It does not write `index.json`, `log.jsonl`, or `render/`. Appending, printing, and `--out` on `slicer feedback` stay local and never call `gh`.\n\n`gh` is an optional external binary, not a dependency. A missing binary or a nonzero exit is code `external`, exit 2, and not an internal code. The message names the next step: install `gh`, or authenticate with it. Success is exit 0 and a URL `https://github.com/OWNER/REPO/issues/N` in stdout. Any other success output is `external`, the entry is not marked, and the message says a later run may file a duplicate.\n\nThe destination is `--repo OWNER/REPO`, otherwise config `issues_repo` when that string is nonempty. Neither present is `usage`, and nothing is contacted. `OWNER` and `REPO` match `^[A-Za-z0-9_.-]+$`, and the value contains no `..`. `slicer --about` keeps printing the package issues URL from `__url__`. That URL is not a report destination. Nothing in `src/slicer/` hardcodes `squalor-xyz/slicer`.\n\nA nonempty `issues_repo` that fails that pattern is a config error on load. Absent or empty means no default. Config schema becomes 5. Older configs load with an empty repo and are not restamped on read. A save by this build writes the key and stamps 5, so an older reader refuses the file instead of dropping the key.\n\nThe default selection is entries whose kind is `bug` or `feature` and whose header-plus-body sha256 is not already in the sidecar for the destination repo. `friction` stays local unless `--kind friction` is given. Repeatable `--kind` narrows the set. `--item` compares the stored item string and does not look the id up.\n\n`--dry-run` prints the issues and calls nothing. `--yes` files them. Passing neither, or both, is `usage`. `--yes` is the shared side effect.\n\nOne create per selected entry, and no other `gh` arguments:\n\n```sh\ngh issue create --repo OWNER/REPO --title TITLE --body-file PATH\n```\n\nThe body file is temporary, removed after the call, and is not the feedback log. The title is the kind in brackets, a space, and the entry's first line, stripped, truncated so the whole title is at most 120 characters.\n\nDo not hold `.slicer/lock` across the `gh` call. Lock to read the entries, unlock, call `gh`, then lock again to record a result only when that entry's header and body still hash to the value that was sent. If they changed, do not mark the entry, and say so.\n\nThe sidecar is `.slicer/feedback-reported.json`. `init` and the first report add that filename to `.slicer/.gitignore` with the same plain file IO as `feedback.md`: no git, and an existing log is not deleted. The root `.gitignore` lists it too. The file is not roadmap state and is not parsed back. Its JSON is deterministic: version, then `reported` entries in append order, with keys `entry`, `repo`, `issue`, `url` in that order. Do not add an attribute to the log header. s230 leaves earlier entries unchanged, and a new header attribute would make an older `feedback --json` swallow the line into the previous body.\n\nA hand-edited body hashes differently and can be filed again. Re-running skips a hash already stored for that repo.\n\nThis slice does not read issues, create roadmap items, set labels, assignees, or milestones, comment on an issue, or add a TUI action.\n\nPut new command lines in fenced blocks in this slice. `slicer check` parses inline backtick commands in live slices, and these commands do not exist until the slice is implemented."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the new tests, then the repository acceptance commands against the implementation checkout:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```"
+    },
+    {
+      "heading": "Git",
+      "body": "One implementation commit on a feature worktree after those checks pass. Do not push unless asked. This filing does not authorize that commit."
+    }
+  ],
+  "notes": []
+}

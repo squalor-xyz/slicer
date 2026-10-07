@@ -1,0 +1,39 @@
+{
+  "id": "s232",
+  "title": "File open GitHub issues as roadmap rows",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** filing issues back to GitHub, refreshing a title after the first pull, closing or retiring a row when the issue closes, mapping labels to statuses, importing comments, paging past one gh response, or auto-promote.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Issues filed against a project's repository should become roadmap rows without someone retyping them. The command is for any project. This repo is only a configured user of it: `issues_repo` in this project's config is `squalor-xyz/slicer`, and that string does not appear as a constant in `src/slicer/`.\n\nAn issue body is untrusted. It becomes a URL on an open row, not a slice an agent would follow."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` and `src/slicer/ops.py` for `issues-pull`, reusing the `gh` runner and `issues_repo` from the dependency.\n- Tests with `gh issue list` mocked.\n- `README.md`, `docs/commands.md`, `docs/agents.md`, `docs/configuration.md`, `ARCHITECTURE.md`, and its own `[Unreleased]` changelog entry.\n- This project's `.slicer/config.json`, setting `issues_repo` to `squalor-xyz/slicer`. There is no config-set command; that edit is part of landing the key."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `--dry-run` calls `gh issue list`, writes nothing, and takes no lock.\n- The first pull files one open row per issue: no slice, filing key `github:OWNER/REPO#NUMBER`, findings equal to the issue URL. Importance stays 2, urgency stays 2, and effort stays unset.\n- The requested JSON fields are number, title, and url. The argv does not ask for the body, and body text never appears in a slice file.\n- A second pull returns the existing items and does not change title, status, or findings. When every issue already has a key, nothing is written and nothing is rendered.\n- A title `add` would refuse, named with its issue number, writes nothing.\n- A missing `gh`, or a nonzero `gh`, writes nothing and does not exec `issue create`.\n- `--limit` defaults to 30. A value below 1 or above 100 is `usage`. The command does not follow further pages.\n- Repo resolution matches `feedback-report`: `--repo`, else a nonempty `issues_repo`, else `usage` with nothing contacted."
+    },
+    {
+      "heading": "Implement",
+      "body": "`slicer issues-pull` is a roadmap write. It depends on the `gh` runner and on `issues_repo`.\n\n`main` holds the project lock for a whole handler when that handler is marked mutating. Do not mark this one that way, or the lock is held across the network call. Fetch first, with no lock. Preflight every issue with the same title rules as `add`. Any refusal names the issue number and writes nothing. Then take the lock, refuse a merge in progress, and add. `--render` and `--strict` behave as they do for `add`: render-after by default, render-first when strict, and a render failure under `--strict` leaves the previous state on disk.\n\n`--dry-run` still calls `gh`, because that call is a read, and it writes nothing. The real command writes. It does not take `--yes`. Creating issues is the other command.\n\nThe only list invocation is:\n\n```sh\ngh issue list --repo OWNER/REPO --state open --limit N --json number,title,url\n```\n\n`--limit` defaults to 30 and the maximum is 100, so one run cannot flood the queue. Above 100 or below 1 is `usage`, not a silent clamp. State stays open. There is no `--state` flag in this slice.\n\nEach new row is an open item with no slice. The filing key is `github:OWNER/REPO#NUMBER`, using the validated repo string with no case folding. Findings is the issue URL, one line. The body is not stored. A number that is not a positive integer, or a URL that is not `https://github.com/OWNER/REPO/issues/NUMBER` for that same repo, fails the preflight and writes nothing.\n\nA key that already exists returns that item, including when the GitHub title differs. This slice does not refresh titles. An all-existing pull writes nothing and does not render. New rows stay unscored, and the existing stderr hint applies. Labels do not become statuses.\n\nJSON is `{created, reused, items}`. Each item has number, title, key, id, and `existing`. Text names the ids filed and the ids reused.\n\nThis slice does not file issues back to GitHub, close or retire a row when the issue closes, import comments, page past one `gh` response, or promote the new rows.\n\nPut new command lines in fenced blocks in this slice, for the same reason as the report slice."
+    },
+    {
+      "heading": "Check",
+      "body": "Run the new tests, then the repository acceptance commands against the implementation checkout:\n\n```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```\n\nConfirm `issues_repo` in this project's config is `squalor-xyz/slicer`, and that `src/slicer/` does not contain that string as the command's default."
+    },
+    {
+      "heading": "Git",
+      "body": "Implement only after the report slice has landed. One implementation commit on a feature worktree after those checks pass. Do not push unless asked. This filing does not authorize that commit."
+    }
+  ],
+  "notes": []
+}

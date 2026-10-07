@@ -2,7 +2,7 @@
   "version": 7,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 231,
+  "next_id": 233,
   "preamble": "",
   "passes": [
     {
@@ -32,6 +32,12 @@
     {
       "key": "v1.4",
       "heading": "v1.4.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.5",
+      "heading": "v1.5.0 release",
       "intro": "",
       "outro": ""
     },
@@ -6599,6 +6605,62 @@
         "urgency": 2,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s231",
+      "title": "Report local feedback entries as GitHub issues",
+      "short_title": "Report local feedback entries as GitHub issues",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "L",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "follow-up to s230: feedback.md entries only leave the machine by hand-copying",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.5",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 3,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s232",
+      "title": "File open GitHub issues as roadmap rows",
+      "short_title": "File open GitHub issues as roadmap rows",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s231"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.5",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
+        "attempts": 0
       }
     }
   ],
