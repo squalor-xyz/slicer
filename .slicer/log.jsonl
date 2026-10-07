@@ -1090,3 +1090,4 @@
 {"when": "2026-10-07T13:21:38Z", "item": "s231", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-07T13:21:38Z", "item": "s231", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer feedback-report files unreported bu", "by": "Jon Robbins"}
 {"when": "2026-10-07T13:21:38Z", "item": "s231", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-07T13:22:04Z", "item": "s231", "action": "status", "from": "review", "to": "done", "note": "feedback-report files each unreported bug or feature entry as one GitHub issue through gh, records the hash, repo, issue number, and URL in the gitignored sidecar, and does not rewrite the log or roadmap state. Verified on the feature tree: 1463 tests, 1 skipped; slicer check and git diff --check passed.", "by": "Jon Robbins"}

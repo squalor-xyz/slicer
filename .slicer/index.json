@@ -6611,7 +6611,7 @@
       "id": "s231",
       "title": "Report local feedback entries as GitHub issues",
       "short_title": "Report local feedback entries as GitHub issues",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
