@@ -2,7 +2,7 @@
   "version": 7,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 234,
+  "next_id": 235,
   "preamble": "",
   "passes": [
     {
@@ -6727,6 +6727,34 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s234",
+      "title": "Render in the same step when next --start claims an item",
+      "short_title": "Render in the same step when next --start claims an item",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "session 2026-10-07: landing s233, the documented review pickup (next --status review --start) moved s233 to reviewing and left ROADMAP.md and ROADMAP.html stale; slicer check failed until a manual slicer render. next has no --render because cmd_next is not wrapped in _mutating",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.5",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

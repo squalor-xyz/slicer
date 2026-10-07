@@ -1,0 +1,41 @@
+{
+  "id": "s234",
+  "title": "Render in the same step when next --start claims an item",
+  "lead": [
+    "`next --start` is a mutation that cannot render, so every documented pickup that uses it leaves `.slicer/render/` stale."
+  ],
+  "depends_note": null,
+  "findings_note": "session 2026-10-07: landing s233, the documented review pickup (next --status review --start) moved s233 to reviewing and left ROADMAP.md and ROADMAP.html stale; slicer check failed until a manual slicer render. next has no --render because cmd_next is not wrapped in _mutating",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** rendering on read-only `next`, a config default that renders after every mutation, or changing `next` payloads.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`next --start` changes state: it claims an item and moves it to started, or moves a review item to reviewing. Unlike `start`, it has no `--render`, because `cmd_next` is registered without `_mutating` (`cli.py:2635`). S45 gave mutating commands `--render` but did not cover `next`.\n\nObserved 2026-10-07 while landing s233: the reviewer pickup in AGENTS.md, `next --status review --start --ready --section \"Check\" --json --lean`, moved s233 to reviewing. The next `slicer check` then failed with stale `ROADMAP.md` and `ROADMAP.html` until `slicer render` was run by hand. The skill's combined pickup (`ai.py` step 1, `next --start --ready ...`) and the handoff section's reviewer command (`ai.py:237`) have the same gap. An agent following the instructions exactly gets a red check that is only staleness, which is what S45 set out to remove."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: register `next` through `_strict_flag(_render_flag(...))` and `_mutating`, and reject `--render` without `--start` in `cmd_next`.\n- `src/slicer/ai.py`: add `--render` to the `next --start` commands in the loop (step 1) and in `HANDOFF_SECTION`.\n- `skills/slicer/SKILL.md`: regenerate from `ai.skill_text()`.\n- `AGENTS.md`: add `--render` to the reviewer pickup command under \"Landing a slice\".\n- `docs/commands.md` and `docs/agents.md`: add `[--render] [--strict]` to the `next` usage and say they apply only with `--start`.\n- Tests next to the existing `next --start` tests (`tests/test_next.py`, `tests/test_next_queue.py`, `tests/test_next_batch.py`)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `next --start --render` on an open item claims it and leaves `slicer check` passing, with no separate `render`.\n- `next --status review --start --render` moves a review item to reviewing and leaves `slicer check` passing.\n- `next --batch K --start --render` starts every returned id and renders once.\n- `next --render` without `--start` is `usage` and writes nothing.\n- `next --start --render` with no eligible item exits 2 with the usual `{\"item\": null, \"blocked\": [...]}` payload and does not render.\n- Resuming an item already started or claimed by the caller (which writes nothing) does not render or report a change.\n- `next --start --render --strict` follows the render-first policy of the other mutations: a render failure rolls the claim back.\n- `--json` stdout stays the single `next` document in every case above."
+    },
+    {
+      "heading": "Implement",
+      "body": "Register `next` the way `start` is registered (`cli.py:2848`), so `--render` and `--strict` go through `_mutating` and cannot drift from the other commands. In `cmd_next`, treat `--render` without `--start` as `usage`, the same way `--owner` without `--start` is handled. When a start or resume writes nothing, set `args._no_change` so `_mutating` skips the render. `cmd_next` takes its own lock for `--start`. Confirm that `_mutate_strict` and `_render_after_mutation` do not deadlock or double-lock with it, and that the exit 2 \"no item\" path returns before any render.\n\nThen add `--render` to the documented pickup commands listed in Files and regenerate the skill. Read-only `next` output and payloads stay the same."
+    },
+    {
+      "heading": "Check",
+      "body": "```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```\n\nIn a scratch project, hand off an item, run the AGENTS.md reviewer pickup with `--render`, and confirm that `slicer check` passes without a manual `render`."
+    },
+    {
+      "heading": "Git",
+      "body": "One implementation commit on a feature worktree after those checks pass. Do not push unless asked. This filing does not authorize that commit."
+    }
+  ],
+  "notes": []
+}

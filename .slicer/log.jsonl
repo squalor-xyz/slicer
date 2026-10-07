@@ -1101,3 +1101,6 @@
 {"when": "2026-10-07T18:12:55Z", "item": "s233", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-07T19:34:02Z", "item": "s233", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-07T19:34:21Z", "item": "s233", "action": "status", "from": "reviewing", "to": "done", "note": "SKILL_DESCRIPTION names the .slicer/ read ban after the unchanged trigger wording; skills/slicer/SKILL.md regenerated. Full suite 1483 OK (1 skipped), test_ai rerun on review, slicer check ok.", "by": "Jon Robbins"}
+{"when": "2026-10-07T19:35:32Z", "item": "s234", "action": "add", "from": "", "to": "open", "note": "Render in the same step when next --start claims an item"}
+{"when": "2026-10-07T19:35:48Z", "item": "s234", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-07T19:35:56Z", "item": "s234", "action": "edit", "from": "", "to": "", "note": "boundary"}
