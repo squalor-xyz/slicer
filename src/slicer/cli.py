@@ -1060,10 +1060,14 @@ def cmd_next(args: argparse.Namespace) -> int:
     raise StateError("--batch cannot be combined with --status", code="usage")
   if args.start_to is not None and not (args.start and args.status is not None):
     raise StateError("--start-to on next requires --start and --status", code="usage")
-  if args.start and (args.max_attempts is not None or args.status is not None):
+  if args.render and not args.start:
+    raise StateError("--render on next requires --start", code="usage")
+  if args.strict and not args.render:
+    raise StateError("--strict has no effect without --render", code="usage")
+  if args.start and (args.render or args.max_attempts is not None or args.status is not None):
     root = store.discover(Path(args.root) if args.root else None)
     with store.project_lock(root):
-      return _select_next(args, locked=True)
+      return _next_rendered(args) if args.render else _select_next(args, locked=True)
   return _select_next(args, locked=False)
 
 
@@ -1084,7 +1088,7 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
                      code="usage")
   elsewhere = store.in_work_elsewhere(state.root, state.index)
   if args.batch is not None:
-    return _cmd_next_batch(args, state, elsewhere)
+    return _cmd_next_batch(args, state, elsewhere, locked=locked)
   offset = 0 if args.n is None else args.n
   result = ops.next_item(
     state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
@@ -1104,11 +1108,13 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   item = result.item
   _reject_unknown_sections(args, state, [item])
   if args.start:
+    before = _claim_marks([item])
     with (nullcontext() if locked else store.project_lock(state.root)):
       if queue is not None:
         item = ops.claim_in_queue(state, item.id, queue=queue, owner=args.owner, to=args.start_to)
       else:
         item = ops.start(state, item.id, owner=args.owner)
+    args._no_change = before == _claim_marks([item])
   if args.ready:
     _emit_ready(args, state, item, result)
     return OK
@@ -1129,9 +1135,20 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   return OK
 
 
+# `next --start --render`: cmd_next holds the writer lock itself (next is not
+# marked `mutates`, so plain `next` stays lock-free), and the wrapper renders
+# inside it, skipping the render when the pickup changed nothing.
+_next_rendered = _mutating(lambda args: _select_next(args, locked=True))
+
+
+def _claim_marks(items: list[model.Item]) -> list[tuple[str, str]]:
+  """Status and claim owner per item, to tell whether a pickup changed anything."""
+  return [(item.status, item.claim_owner) for item in items]
+
+
 def _cmd_next_batch(
   args: argparse.Namespace, state: store.State,
-  elsewhere: dict[str, list[dict[str, str]]],
+  elsewhere: dict[str, list[dict[str, str]]], *, locked: bool,
 ) -> int:
   """Several items from one tree and size. One lock covers the whole start."""
   result = ops.next_batch(
@@ -1149,12 +1166,14 @@ def _cmd_next_batch(
   _reject_unknown_sections(args, state, result.items)
   items = result.items
   if args.start:
-    # Empty batches never start. Capped selection already holds the lock;
-    # otherwise take it here. One staged start_many ensures that a
+    # Empty batches never start. Capped and rendered selection already hold
+    # the lock; otherwise take it here. One staged start_many ensures that a
     # failure keeps every id unclaimed: no status, move, or log line.
-    with (nullcontext() if args.max_attempts is not None else store.project_lock(state.root)):
+    before = _claim_marks(items)
+    with (nullcontext() if locked else store.project_lock(state.root)):
       with state.staged():
         started = ops.start_many(state, [item.id for item in items], owner=args.owner)
+    args._no_change = before == _claim_marks(started)
     by_id = {item.id: item for item in started}
     items = [by_id[item.id] for item in items]
   lines: list[str] = []
@@ -2632,7 +2651,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
-  sp = add("next", cmd_next, "the highest-priority startable item")
+  sp = _strict_flag(_render_flag(add("next", cmd_next, "the highest-priority startable item")))
   sp.add_argument("-n", type=_nonnegative_int, default=None, metavar="N",
                   help="skip N currently eligible items (default 0); return one item")
   sp.add_argument("--max-attempts", type=_positive_int, default=None, metavar="N",

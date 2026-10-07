@@ -13,8 +13,8 @@ LOOP = """\
    pass the section names the project configures (`slicer sections`).
    Read its scope, dependencies, and acceptance checks. Resolve missing or
    ambiguous specifications before changing its status. If the specification is
-   trusted and needs no clarification, `slicer next --start --ready --section "Implement" --section "Check" --json --lean` may
-   combine these first steps.
+   trusted and needs no clarification, `slicer next --start --ready --render --section "Implement" --section "Check" --json --lean` may
+   combine them.
 2. Otherwise, run `slicer start ID --render --strict --json` after reviewing the slice.
    Implement the agreed scope, update
    affected documentation, and run the slice's checks and required project tests.
@@ -234,7 +234,7 @@ HANDOFF_SECTION = f"""\
 When the implementation is ready for someone else to review, merge, or clean up, record
 the context with `slicer note ID --text "Ready for review: ..."`, then run
 `slicer handoff ID --render --json`. A reviewer picks up the next review item with
-`slicer next --status review --start --ready --section "Check" --json`: it claims the
+`slicer next --status review --start --ready --render --section "Check" --json`: it claims the
 item and moves it to `reviewing`, so `next` never hands it to an implementer, and the
 same command resumes it later. If the review fails, run
 `slicer reject ID --note "VERDICT: FAIL - reason" --render --json`: it sends the item back
