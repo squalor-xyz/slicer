@@ -511,9 +511,11 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertNotIn("slicer show", pickup)
     self.assertIn("slicer start <ID> --render --strict", section)
     self.assertIn("slicer edit S07 --section Why --file note.md --render --strict", section)
+    # s235: the landing `done` moved to docs/landing.md.
+    landing = (Path(__file__).resolve().parents[1] / "docs" / "landing.md").read_text(encoding="utf-8")
     done = 'slicer done <ID> --note "Describe the verified outcome" --render --check'
-    self.assertIn(done, section)
-    self.assertNotIn(done + " --strict", section)
+    self.assertIn(done, landing)
+    self.assertNotIn(done + " --strict", landing)
 
   def test_AgentsGuide_NamesSuiteDurationAndBackgroundRun(self) -> None:
     text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
@@ -529,6 +531,21 @@ class AiInstructionsTests(unittest.TestCase):
     text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
     section = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
     self.assertLess(len(section.encode("utf-8")), 3800)
+
+  def test_AgentsGuide_LandingSection_PointsAtLandingDoc(self) -> None:
+    # s235: the landing steps live in docs/landing.md; AGENTS.md keeps a stub.
+    root = Path(__file__).resolve().parents[1]
+    text = (root / "AGENTS.md").read_text(encoding="utf-8")
+    roadmap = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
+    self.assertLessEqual(len(roadmap.encode("utf-8")), 3800 - 300)
+    stub = " ".join(roadmap.split("### Landing a slice", 1)[1].split("\n**", 1)[0].split())
+    self.assertIn("(docs/landing.md)", stub)
+    self.assertIn("only when the owner asks", stub.lower())
+    self.assertIn("`done` on `main`, never in a worktree", stub)
+    landing = (root / "docs" / "landing.md").read_text(encoding="utf-8")
+    for command in ("next --status review --start --ready --render", "slicer reject",
+                    "git merge --no-ff", "slicer done"):
+      self.assertIn(command, landing)
 
   def test_Instructions_ImplementSection_LeavesTheCommandCatalogueToHelp(self) -> None:
     # S138: the loop keeps the reads it needs; the rest is `--help`'s job.
