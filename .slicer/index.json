@@ -2,7 +2,7 @@
   "version": 7,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 235,
+  "next_id": 236,
   "preamble": "",
   "passes": [
     {
@@ -6767,6 +6767,34 @@
         "urgency": 2,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s235",
+      "title": "Move the landing procedure out of AGENTS.md",
+      "short_title": "Move the landing procedure out of AGENTS.md",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "session 2026-10-07: after s234 landed the AGENTS.md roadmap section is 3796 bytes against a 3800 cap in test_AgentsGuide_RoadmapSection_IsShorter, so the next addition fails the suite; Landing a slice is 631 bytes and only needed when the owner asks to merge",
+        "discovered_from": "",
+        "key": "",
+        "pass": "v1.5",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

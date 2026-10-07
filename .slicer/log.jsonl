@@ -1109,3 +1109,6 @@
 {"when": "2026-10-07T19:51:57Z", "item": "s234", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-07T20:42:34Z", "item": "s234", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-07T20:44:57Z", "item": "s234", "action": "status", "from": "reviewing", "to": "done", "note": "next --start accepts --render/--strict and renders in the same step; pickup commands and docs carry --render; commit-after-handoff added to AGENTS.md. Full suite 1493 OK (1 skipped) on merged main, slicer check ok.", "by": "Jon Robbins"}
+{"when": "2026-10-07T20:46:48Z", "item": "s235", "action": "add", "from": "", "to": "open", "note": "Move the landing procedure out of AGENTS.md"}
+{"when": "2026-10-07T20:46:48Z", "item": "s235", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-07T20:46:48Z", "item": "s235", "action": "edit", "from": "", "to": "", "note": "boundary"}

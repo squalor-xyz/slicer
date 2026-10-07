@@ -1,0 +1,41 @@
+{
+  "id": "s235",
+  "title": "Move the landing procedure out of AGENTS.md",
+  "lead": [
+    "AGENTS.md is read on every slice but its landing steps are needed only when the owner asks to merge, and the roadmap section has 4 bytes of headroom under its cap."
+  ],
+  "depends_note": null,
+  "findings_note": "session 2026-10-07: after s234 landed the AGENTS.md roadmap section is 3796 bytes against a 3800 cap in test_AgentsGuide_RoadmapSection_IsShorter, so the next addition fails the suite; Landing a slice is 631 bytes and only needed when the owner asks to merge",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** raising or removing the 3800 cap, rewording the landing commands, or moving any other AGENTS.md section.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`test_AgentsGuide_RoadmapSection_IsShorter` caps the roadmap section of AGENTS.md at 3800 bytes. It grew from 3772 to 4344 bytes in one session (the expanded read-ban paragraph, then s234's process sentence) and went red on `main` until a trim brought it to 3723. After s234 landed it was 3796, so the next addition fails the suite. Raising the cap only moves the problem, and trimming wording further starts cutting instructions every slice needs.\n\nThe `### Landing a slice` subsection is 631 bytes and applies only when the owner asks to merge. Every other block in the section is needed on each slice. The steps (pickup through `--root`, `reject`, `git merge --no-ff`, `done`, cleanup) are reference, so they can live in a doc with a short pointer left behind."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/landing.md`: new. The landing procedure as it reads in AGENTS.md now: the review pickup command with `--render`, the failed-review `reject` form, commit on the branch, `git merge --no-ff`, `done ... --render --check`, commit, remove the worktree and branch, leave `main` clean, and the rule that nothing is pushed unless asked.\n- `AGENTS.md`: replace the body of `### Landing a slice` with a stub that keeps the trigger and the one rule that must never be missed, and links to `docs/landing.md`.\n- `tests/test_ai.py`: one test for the new doc and the stub (below). The 3800 cap stays."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- AGENTS.md has a `### Landing a slice` heading whose body links to `docs/landing.md`, and that file exists.\n- `docs/landing.md` contains each command the old section carried: `next --status review --start --ready --render`, `slicer reject`, `git merge --no-ff`, and `slicer done`.\n- The stub says landing happens only when the owner asks, and that `done` is never run in a worktree.\n- The roadmap section of AGENTS.md is under 3800 bytes with at least 300 bytes to spare. This is a new assertion beside the existing cap test, not a lower cap."
+    },
+    {
+      "heading": "Implement",
+      "body": "Move the text, do not rewrite it. Copy the current subsection into `docs/landing.md` with a one-line lead, then reduce the AGENTS.md subsection to about 250 bytes. Do not change the commands. The pickup command keeps `--render` and `--root`.\n\nCheck `grep` over `tests/`, `docs/` and `src/slicer/ai.py` for anything that quotes the landing text before cutting it. At filing time nothing in `tests/` anchors on the subsection, and `docs/getting-started.md` and `ai.py` carry their own `reject` wording, which stays. If `docs/agents.md` or another doc already covers landing, link to that instead of adding a file.\n\nExpected effect: the roadmap section drops from 3796 to about 3400 bytes, which leaves about 400 bytes of headroom."
+    },
+    {
+      "heading": "Check",
+      "body": "```sh\npython3 -m unittest discover -s tests -t tests\nPYTHONPATH=src python3 -m slicer check --json\ngit diff --check\n```\n\nRead the stub as an agent would: an owner says \"land it\" and the stub plus `docs/landing.md` is enough to do it without the old text."
+    },
+    {
+      "heading": "Git",
+      "body": "One implementation commit on a feature worktree after those checks pass, committed once `handoff` passes per AGENTS.md. Do not push unless asked. This filing does not authorize that commit."
+    }
+  ],
+  "notes": []
+}
