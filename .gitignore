@@ -21,6 +21,8 @@ venv/
 # when it is stale. Do not add it here.
 #
 # The exceptions are local, never state: .slicer/lock is a transient advisory lock
-# file, and .slicer/feedback.md is the local `slicer feedback` use-log.
+# file, .slicer/feedback.md is the local `slicer feedback` use-log, and
+# .slicer/feedback-reported.json records which entries `feedback-report` filed.
 /.slicer/lock
 /.slicer/feedback.md
+/.slicer/feedback-reported.json

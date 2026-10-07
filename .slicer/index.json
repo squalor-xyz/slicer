@@ -6611,10 +6611,22 @@
       "id": "s231",
       "title": "Report local feedback entries as GitHub issues",
       "short_title": "Report local feedback entries as GitHub issues",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e974c297-5718-4ac8-81c1-0224c55ea1f0",
+          "kind": "",
+          "text": "**2026-10-07** — Ready for review: slicer feedback-report files unreported bug/feature entries of .slicer/feedback.md as GitHub issues via gh (new src/slicer/github.py, closed argv allowlist, no shell). --dry-run/--yes required, --repo or config issues_repo (schema 5), repeatable --kind, --item. Sidecar .slicer/feedback-reported.json records sha256/repo/issue/url; log bytes untouched; lock not held across gh; changed entries not marked; missing/failing gh is code external (exit 2). init and .gitignore list the sidecar. Docs: README, commands, agents (JSON + error code), configuration, getting-started, ARCHITECTURE, CHANGELOG; slicer ai instructions/--rest gain a Local feedback block (skill unchanged). Full discover: 1463 tests OK (1 skipped); slicer check and git diff --check pass.",
+          "created_at": "2026-10-07T13:21:38Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "L",
@@ -6632,7 +6644,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

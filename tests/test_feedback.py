@@ -190,10 +190,10 @@ class FeedbackGitignoreTests(FeedbackBase):
 
   def test_Init_WritesTheGitignoreAndAppendIsIdempotent(self) -> None:
     repo = self.repo()
-    self.assertEqual(self.lines(repo), ["feedback.md"])
+    self.assertEqual(self.lines(repo), ["feedback.md", "feedback-reported.json"])
     self.add(repo, "--kind", "bug", "--text", "x")
     self.add(repo, "--kind", "bug", "--text", "y")
-    self.assertEqual(self.lines(repo), ["feedback.md"])
+    self.assertEqual(self.lines(repo), ["feedback.md", "feedback-reported.json"])
 
   def test_FirstAppendAddsTheLineToAnExistingGitignore(self) -> None:
     repo = self.repo()
@@ -207,7 +207,7 @@ class FeedbackGitignoreTests(FeedbackBase):
     before = repo.read(LOG)
     repo.write(".slicer/.gitignore", "other\n")
     self.assertEqual(repo.run("init", "--force")[0], 0)
-    self.assertEqual(self.lines(repo), ["other", "feedback.md"])
+    self.assertEqual(self.lines(repo), ["other", "feedback.md", "feedback-reported.json"])
     self.assertEqual(repo.read(LOG), before)
 
   def test_Append_RunsNoGitCommand(self) -> None:

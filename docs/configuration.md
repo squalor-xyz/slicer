@@ -10,7 +10,7 @@ and the slice files, the config is yours to hand-edit.
 
 ```json
 {
-  "version": 4,
+  "version": 5,
   "note_kinds": [],
   "handoff_requires_note_kind": "",
   "id": { "prefix": "S", "width": 2 },
@@ -46,14 +46,15 @@ and the slice files, the config is yours to hand-edit.
   "git_check": true,
   "render_driver_check": true,
   "claim_owner": "",
-  "implement_finish": "done"
+  "implement_finish": "done",
+  "issues_repo": ""
 }
 ```
 
 Config schema 2 introduced `note_kinds`, schema 3 protects `handoff_requires_note_kind`
-from older readers, and schema 4 does the same for `satisfies_dependencies`. Older
-configs still load without writes, with no report requirement and the historical
-dependency default; a config save writes version 4.
+from older readers, schema 4 does the same for `satisfies_dependencies`, and schema 5 for
+`issues_repo`. Older configs still load without writes, with no report requirement, the
+historical dependency default and no issues repo; a config save writes version 5.
 
 ## Every key
 
@@ -89,6 +90,7 @@ Read any value without opening the file: `slicer config KEY` prints it, and
 | `render_driver_check` | `true` | Whether `slicer verify` reminds you to configure the `slicer-generated` render and `slicer-index` merge drivers (via `slicer setup-git`). Only fires when this checkout has other worktrees, so a single-worktree clone is already quiet; set **off** to silence it entirely. There is no way to force it on for a single worktree | **Yes** |
 | `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name. A per-call `--owner` or the `SLICER_CLAIM_OWNER` environment variable overrides it | **Yes** |
 | `implement_finish` | `"done"` | How `slicer ai instructions` and `slicer ai skill` finish the implement loop. `done` keeps step 4 as `done` and mentions the handoff alternative. The done-mode skill says step 4 is the finish, and the handoff-mode skill keeps the review-and-merge sentence. `handoff` makes step 4 handoff only, and that skill text does not contain the done command. A missing key means `done`. `handoff` is a config error when `review_status` is empty. The commands do not switch to handoff just because a review status is set | **Yes** |
+| `issues_repo` | `""` | Where `slicer feedback-report` files issues, as `OWNER/REPO`; each part is letters, digits, `.`, `_` or `-`, and `..` is refused. A per-call `--repo` overrides it. **Empty means no default**: the command then needs `--repo`, and slicer never falls back to a git remote or to its own repository. Any other value is a config error | **Yes** |
 
 ## The ones that will surprise you
 

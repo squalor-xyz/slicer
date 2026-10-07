@@ -99,6 +99,7 @@ reproduce is never half-migrated.
 | `edit` | edit a slice section or scope boundary |
 | `note` | append a dated note to an item |
 | `feedback` | keep a gitignored local log of frictions, bugs, and feature ideas, apart from the roadmap |
+| `feedback-report` | file the log's unreported bug and feature entries as GitHub issues through `gh`, one per entry |
 | `note-verify` | record machine verification of an item note |
 | `note-attest` | record owner attestation of an item note (workflow convention, not authentication) |
 | `done` | mark an item finished |

@@ -6,6 +6,14 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer feedback-report` files entries from the local feedback log as GitHub issues, one issue per entry, through the optional `gh` CLI. `--dry-run` prints the issues and calls nothing. `--yes` runs `gh issue create --repo OWNER/REPO --title TITLE --body-file PATH` for each entry. Exactly one of the two is required. The destination is `--repo` or the new config key `issues_repo`; with neither, the command is `usage` and nothing is contacted. By default it files `bug` and `feature` entries; repeatable `--kind` changes that, so friction is sent only when asked for. `--item` matches the stored item string. Titles are `[kind] first line`, at most 120 characters. Each filed entry is recorded in the gitignored `.slicer/feedback-reported.json` by the sha256 of its header and body, with the repo, issue number and URL, and later runs to the same repo skip it. The log bytes are never rewritten. The project lock is not held across `gh`. An entry edited while it was being sent is reported as filed but not marked. A missing or failing `gh`, or output without an issue URL, is the new non-internal error code `external` (exit 2); creates that finished earlier in the batch stay recorded. The command never writes `index.json`, `log.jsonl`, or `render/`. `init` also lists the sidecar in `.slicer/.gitignore`, as does this repo's root `.gitignore`.
+
+### Changed
+
+- Config schema is 5, protecting `issues_repo` from older readers. Older configs load with an empty `issues_repo` and are not restamped on read; a config save writes version 5.
+
 ## [1.4.0] - 2026-10-06
 
 ### Added

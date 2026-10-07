@@ -10,6 +10,8 @@ from __future__ import annotations
 
 # Hard failures: the project or the process cannot proceed. Usage and
 # validation stay outside this set so they keep a different exit status.
+# So does `external`: an optional outside tool such as `gh` is missing or failed,
+# which the person can fix without anything being wrong with the project.
 # `schema_too_new` is raised by `store.load` when the on-disk schema is newer
 # than this build understands.
 INTERNAL_CODES = frozenset({

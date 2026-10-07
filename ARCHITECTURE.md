@@ -21,7 +21,7 @@ errors                                      every module imports from here
 model · config · jsonio · ids · templates   data, defaults, atomic IO, id rules
 ai.py                                      project-independent agent instructions
 store                                       discovery and the on-disk layout
-graph · vcs · prose · legacy · outline      edges, git, prose, the two input formats
+graph · vcs · github · prose · legacy · outline  edges, git, gh, prose, the two input formats
 ops · render · sync · verify · migrator     behaviour
 check                                       composes render + sync + verify
 cli · tui · tui_style.py                  front ends and terminal presentation
@@ -39,6 +39,7 @@ never pays for curses.
   index.json               the ordered queue; "version": 5
   log.jsonl                append-only history, one LogEntry per line
   feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
+  feedback-reported.json   which entries `feedback-report` filed; gitignored, not roadmap state
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
   slices/retired/<ID>.json retired, with the reason on the index item
@@ -48,11 +49,11 @@ never pays for curses.
   render/slices/<ID>.md    GENERATED
 ```
 
-Config schema is `4` (`src/slicer/config.py`), protecting the optional
-`satisfies_dependencies` policy; schema 3 added `handoff_requires_note_kind` and schema 2
-the `note_kinds` whitelist. Older configs still load with the historical defaults
-(no report requirement, `done_status` alone satisfying dependencies); config saves
-stamp 4. Index schema is `7`
+Config schema is `5` (`src/slicer/config.py`), protecting the optional `issues_repo`
+destination for `feedback-report`; schema 4 added `satisfies_dependencies`, schema 3
+`handoff_requires_note_kind`, and schema 2 the `note_kinds` whitelist. Older configs still
+load with the historical defaults (no report requirement, `done_status` alone satisfying
+dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `7`
 (`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
 Schema 5 adds optional `fields.discovered_from`, an existing item ID independent
 of dependency and priority edges. Missing fields load empty without writes;
@@ -169,6 +170,15 @@ nothing. `start` uses the first two to notice another checkout, and the
 last to name a claim when `claim_owner` is empty. Any other argument is refused. `commit`,
 `push` and `tag` are unreachable from the code — not by convention but because `vcs._run`
 refuses anything off the list, including for a caller that asks.
+
+**`gh` is reached from one place, for one command.** `github.py` is the only module that
+runs `gh`, and `github._run` accepts only `gh issue create --repo OWNER/REPO --title TITLE
+--body-file PATH`, as an argv list with no shell. Only `feedback-report --yes` calls it. `gh`
+is an optional external binary, not a dependency: a missing or failing one is code
+`external` (exit 2), never an internal error. The command never holds `.slicer/lock` across
+a `gh` call. It records a filed entry in `.slicer/feedback-reported.json` only when the
+entry still hashes to what was sent. Nothing in `src/slicer/` names a destination
+repository; it comes from `--repo` or config `issues_repo`.
 
 **Nothing project-specific is compiled in.** Status vocabulary, the section list
 `promote` seeds, the scope-boundary marker, which flags exclude an item from derived
