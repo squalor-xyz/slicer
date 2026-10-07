@@ -6773,7 +6773,7 @@
       "id": "s235",
       "title": "Move the landing procedure out of AGENTS.md",
       "short_title": "Move the landing procedure out of AGENTS.md",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -6789,10 +6789,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-07T21:06:54Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

@@ -1116,3 +1116,4 @@
 {"when": "2026-10-07T20:56:17Z", "item": "s235", "action": "note", "from": "", "to": "", "note": "Ready for review: moved the Landing a slice steps verbatim t", "by": "Jon Robbins"}
 {"when": "2026-10-07T20:56:17Z", "item": "s235", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-07T21:06:54Z", "item": "s235", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-07T21:10:35Z", "item": "s235", "action": "status", "from": "reviewing", "to": "done", "note": "Reviewed and merged: landing steps live in docs/landing.md, AGENTS.md keeps a stub; roadmap section 3317 bytes under the 3800 cap. Full suite 1494 OK (1 skipped), check ok, diff --check clean.", "by": "Jon Robbins"}
