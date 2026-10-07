@@ -1108,3 +1108,4 @@
 {"when": "2026-10-07T19:51:57Z", "item": "s234", "action": "note", "from": "", "to": "", "note": "Ready for review: next gains --render/--strict (only with --", "by": "Jon Robbins"}
 {"when": "2026-10-07T19:51:57Z", "item": "s234", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-07T20:42:34Z", "item": "s234", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-07T20:44:57Z", "item": "s234", "action": "status", "from": "reviewing", "to": "done", "note": "next --start accepts --render/--strict and renders in the same step; pickup commands and docs carry --render; commit-after-handoff added to AGENTS.md. Full suite 1493 OK (1 skipped) on merged main, slicer check ok.", "by": "Jon Robbins"}

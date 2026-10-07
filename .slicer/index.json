@@ -6733,7 +6733,7 @@
       "id": "s234",
       "title": "Render in the same step when next --start claims an item",
       "short_title": "Render in the same step when next --start claims an item",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -6749,10 +6749,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-07T20:42:34Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
