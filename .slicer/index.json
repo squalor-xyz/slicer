@@ -6651,13 +6651,28 @@
       "id": "s232",
       "title": "File open GitHub issues as roadmap rows",
       "short_title": "File open GitHub issues as roadmap rows",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s231"
       ],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "4d4e4800-b51f-44b0-9f3a-90fa5dd72baa",
+          "kind": "",
+          "text": "**2026-10-07** — Ready for review: slicer issues-pull added (github.py second exact gh form + list_open_issues; ops.pull_issues; cli.cmd_issues_pull fetches unlocked then writes under project_lock via _mutating). tests/test_issues_pull.py (19 tests) plus allowlist and ai split cases; full suite 1483 OK (1 skipped). Docs, ARCHITECTURE, CHANGELOG updated. Config: issues_repo=squalor-xyz/slicer and version bumped 1->5 on owner's instruction. Dry run against squalor-xyz/slicer: zero open issues. Deviation: created is [] under --dry-run (items carries the would-file rows with id null).",
+          "created_at": "2026-10-07T13:32:30Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-07T17:42:04Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -6674,7 +6689,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

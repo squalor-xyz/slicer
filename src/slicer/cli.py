@@ -1799,6 +1799,77 @@ def cmd_feedback_report(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_issues_pull(args: argparse.Namespace) -> int:
+  """File a project's open GitHub issues as unscored roadmap rows, one per issue.
+
+  A roadmap write, but not marked `mutates`: `main` would hold the project lock
+  for the whole handler, and `gh` may wait on the network or a login prompt.
+  The fetch runs unlocked; the write takes the lock, refuses a merge, reloads,
+  and goes through `_mutating` so `--render` and `--strict` behave as for `add`.
+  """
+  if not 1 <= args.limit <= 100:
+    raise StateError(f"--limit must be 1-100, not {args.limit}", code="usage")
+  if args.strict and not (args.render and not args.dry_run):
+    raise StateError("--strict has no effect without --render", code="usage")
+  root = store.discover(Path(args.root) if args.root else None)
+  repo = args.repo if args.repo is not None else Config.load(
+    root / store.DIR_NAME / CONFIG_NAME).issues_repo
+  if not repo:
+    raise StateError("no source repository: pass --repo OWNER/REPO or set issues_repo in "
+      f"{store.DIR_NAME}/{CONFIG_NAME}", code="usage")
+  github.require_repo(repo)
+  issues = github.list_open_issues(repo, args.limit)
+  pulled = ops.pull_issues(store.load(root), repo, issues, write=False)
+  if args.dry_run:
+    _emit_pulled(args, repo, pulled)
+    return OK
+  args._pull = (repo, issues)
+  with store.project_lock(root):
+    vcs.require_no_merge(root)
+    return _issues_pull_write(args)
+
+
+def _issues_pull_locked(args: argparse.Namespace) -> int:
+  state = _state(args)
+  repo, issues = args._pull
+  pulled = ops.pull_issues(state, repo, issues, write=True)
+  created = [entry["item"].id for entry in pulled if not entry["existing"]]
+  if not created:
+    args._no_change = True
+  _emit_pulled(args, repo, pulled)
+  if created:
+    one = len(created) == 1
+    _write_err(args, (
+      f"slicer: {', '.join(created)} {'is' if one else 'are'} unscored (importance 2, urgency 2, "
+      f"no effort), so {'it ranks' if one else 'they rank'} on nothing; score with "
+      "`slicer set ID` later."
+    ))
+  return OK
+
+
+_issues_pull_write = _mutating(_issues_pull_locked)
+
+
+def _emit_pulled(args: argparse.Namespace, repo: str, pulled: list[dict[str, object]]) -> None:
+  items = [
+    {"number": entry["number"], "title": entry["title"], "key": entry["key"],
+     "id": entry["item"].id if entry["item"] is not None else None, "existing": entry["existing"]}
+    for entry in pulled
+  ]
+  # A dry run creates nothing, so `created` stays empty; `items` shows what it would file.
+  created = [item["id"] for item in items if not item["existing"] and item["id"] is not None]
+  reused = [item["id"] for item in items if item["existing"]]
+  if args.dry_run:
+    lines = [f"would file #{item['number']}  {item['title']}" for item in items if not item["existing"]]
+  else:
+    lines = [f"filed {item['id']}  #{item['number']}  {item['title']}" for item in items if not item["existing"]]
+  lines += [f"reused {item['id']}  #{item['number']}  {item['title']}" for item in items if item["existing"]]
+  if all(item["existing"] for item in items):
+    lines.append(f"nothing new to file from {repo}")
+  _emit(args, {"repo": repo, "dry_run": args.dry_run, "created": created, "reused": reused,
+    "items": items}, "\n".join(lines), keep_empty=("created", "reused"))
+
+
 def cmd_note_verify(args: argparse.Namespace) -> int:
   record, changed = ops.verify_note(_state(args), args.id, args.note_id,
     owner=args.owner, attest=args.command == "note-attest")
@@ -2752,6 +2823,12 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--item", help="only entries stored with exactly this item string")
   sp.add_argument("--dry-run", action="store_true", help="print the issues and call nothing")
   sp.add_argument("--yes", action="store_true", help="file the issues with `gh issue create`")
+
+  sp = _strict_flag(_render_flag(add("issues-pull", cmd_issues_pull,
+    "file a repository's open GitHub issues as unscored roadmap rows with gh")))
+  sp.add_argument("--repo", help="OWNER/REPO to read; defaults to config issues_repo")
+  sp.add_argument("--limit", type=int, default=30, help="most issues to read, 1-100 (default 30)")
+  sp.add_argument("--dry-run", action="store_true", help="list the issues and write nothing")
 
   for command in ("note-verify", "note-attest"):
     sp = _strict_flag(_render_flag(add(command, _mutating(cmd_note_verify),

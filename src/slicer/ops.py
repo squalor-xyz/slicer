@@ -205,6 +205,54 @@ def add(
   return item
 
 
+def issue_key(repo: str, number: int) -> str:
+  """The filing key `issues-pull` gives the row for one GitHub issue."""
+  return f"github:{repo}#{number}"
+
+
+def pull_issues(
+  state: State, repo: str, issues: list[dict[str, object]], *, write: bool,
+) -> list[dict[str, object]]:
+  """File one open row per issue whose key is new; reuse the rest in any status.
+
+  Every issue is checked before anything is added, so a bad one refuses the
+  whole pull. With `write` false nothing is added and a new row's `item` is
+  None. Rows land unscored and with no pass, in ascending issue number, and
+  findings is the issue URL; the issue body never reaches this function.
+  """
+  seen: set[int] = set()
+  checked: list[tuple[int, str, str]] = []
+  for issue in issues:
+    number, title, url = issue["number"], issue["title"], issue["url"]
+    if isinstance(number, bool) or not isinstance(number, int) or number < 1:
+      raise StateError(f"gh listed an issue whose number {number!r} is not a positive integer; "
+        "nothing was filed", code="external")
+    if number in seen:
+      raise StateError(f"gh listed issue #{number} twice; nothing was filed", code="external")
+    seen.add(number)
+    if url != f"https://github.com/{repo}/issues/{number}":
+      raise StateError(f"issue #{number} has URL {url!r}, not an issue URL on {repo}; "
+        "nothing was filed", code="external")
+    if not isinstance(title, str):
+      raise StateError(f"issue #{number} has a title that is not text; nothing was filed",
+        code="external")
+    try:
+      _reject_bad_text(title=title.strip(), findings=url)
+    except StateError as exc:
+      raise StateError(f"issue #{number}: {exc}; nothing was filed", code=exc.code) from None
+    checked.append((number, title.strip(), url))
+  pulled: list[dict[str, object]] = []
+  for number, title, url in sorted(checked):
+    key = issue_key(repo, number)
+    item = keyed_item(state, key)
+    existing = item is not None
+    if item is None and write:
+      item = add(state, title, key=key, findings=url, pass_key="")
+    pulled.append({"number": number, "title": item.title if existing else title,
+                   "key": key, "item": item, "existing": existing})
+  return pulled
+
+
 def promote(
   state: State,
   item_id: str,
