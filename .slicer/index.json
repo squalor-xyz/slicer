@@ -7076,7 +7076,7 @@
       "id": "s237",
       "title": "Cite catalog records from roadmap items",
       "short_title": "Cite catalog records from roadmap items",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s236"
@@ -7094,10 +7094,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-08T13:53:26Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
