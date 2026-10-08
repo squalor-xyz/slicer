@@ -7035,7 +7035,7 @@
       "id": "s236",
       "title": "Add a catalog of project-knowledge records",
       "short_title": "Add a catalog of project-knowledge records",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
