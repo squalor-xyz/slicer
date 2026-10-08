@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 238,
+  "next_id": 240,
   "preamble": "",
   "passes": [
     {
@@ -7113,6 +7113,64 @@
         "urgency": 2,
         "effort": null,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s238",
+      "title": "Write the affected map when the full suite passes",
+      "short_title": "Write the affected map when the full suite passes",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "session 2026-10-08 landing s237; affected.py --run exited 2 because the map was missing, and the full discover did not write it",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s239",
+      "title": "Point AGENTS.md at the short onboarding path",
+      "short_title": "Point AGENTS.md at the short onboarding path",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "session 2026-10-08; AGENTS.md sends every slice through README, the 16 KB ARCHITECTURE.md, and the 56 KB docs/agents.md",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

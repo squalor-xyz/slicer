@@ -1128,3 +1128,5 @@
 {"when": "2026-10-08T13:34:20Z", "item": "s237", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-08T13:53:26Z", "item": "s237", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-08T13:53:41Z", "item": "s237", "action": "status", "from": "reviewing", "to": "done", "note": "Roadmap items cite catalog records. cite appends and skips duplicates and writes nothing when nothing changed; uncite refuses a missing citation before writing; either command refuses an unknown id before writing; show resolves each citation; a retired assumption or decision is called out on the slice and the row. 1509 tests passed, 1 skipped; slicer check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-08T14:28:25Z", "item": "s238", "action": "add", "from": "", "to": "open", "note": "Write the affected map when the full suite passes"}
+{"when": "2026-10-08T14:28:25Z", "item": "s239", "action": "add", "from": "", "to": "open", "note": "Point AGENTS.md at the short onboarding path"}
