@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-226 items · done 221 · retired 4 · review 1
+226 items · done 221 · retired 4 · reviewing 1
 
 v1.5.0 release
 
@@ -201,7 +201,7 @@ Later (revisit after orchestrator use)
 |---|---|---|---|---|---|---|---|
 | 120 | S03 | Export back to a legacy markdown index for anything still expecting one | M | - | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
 | 121 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
-| 122 | [s239](slices/s239.md) | Point AGENTS.md at the short onboarding path | S | 1 | docs | session 2026-10-08; AGENTS.md sends every slice through README, the 16 KB ARCHITECTURE.md, and the 56 KB docs/agents.md | review |
+| 122 | [s239](slices/s239.md) | Point AGENTS.md at the short onboarding path | S | 1 | docs | session 2026-10-08; AGENTS.md sends every slice through README, the 16 KB ARCHITECTURE.md, and the 56 KB docs/agents.md | reviewing |
 
 ---
 
