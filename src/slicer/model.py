@@ -12,7 +12,30 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
+
+# Project knowledge, the same six kinds in every project. Not items, and not
+# a project's review vocabulary: an agent can rely on these names.
+CATALOG_KINDS = (
+  "goal",
+  "non_goal",
+  "requirement",
+  "constraint",
+  "decision",
+  "assumption",
+)
+CATALOG_HEADINGS = (
+  ("goal", "Goals"),
+  ("non_goal", "Non-goals"),
+  ("requirement", "Requirements"),
+  ("constraint", "Constraints"),
+  ("decision", "Decisions"),
+  ("assumption", "Assumptions"),
+)
+CATALOG_ACTIVE = "active"
+CATALOG_RETIRED = "retired"
+# Kinds whose retirement stays visible on a citing slice. Slice 2 renders this.
+CATALOG_CALLOUT_KINDS = ("assumption", "decision")
 
 
 @dataclass
@@ -231,6 +254,8 @@ class Item:
   # The time is stored on the item so render never invents one.
   claim_owner: str = ""
   claim_at: str = ""
+  # Catalog ids this item cites. A reference, not a dependency.
+  cites: list[str] = field(default_factory=list)
 
   @property
   def notes(self) -> list[str]:
@@ -299,6 +324,7 @@ class Item:
         "trees_literal": self.trees_literal,
         "findings": self.findings,
         "discovered_from": self.discovered_from,
+        "cites": list(self.cites),
         "key": self.key,
         "pass": self.pass_key,
         "group": self.group,
@@ -333,6 +359,7 @@ class Item:
       trees_literal=bool(f.get("trees_literal", False)),
       findings=f.get("findings", ""),
       discovered_from=_discovered_from(f.get("discovered_from", "")),
+      cites=_string_list(f.get("cites", []), "cites"),
       key=_stored_key(f.get("key", "")),
       pass_key=f.get("pass", ""),
       group=f.get("group", ""),
@@ -349,6 +376,175 @@ def _discovered_from(value: object) -> str:
   if not isinstance(value, str):
     raise StateError("discovered_from must be a string", code="corrupt")
   return value
+
+
+def _string_list(value: object, name: str) -> list[str]:
+  """A stored list of strings. Missing loads as empty; a wrong shape is corrupt."""
+  if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+    raise StateError(f"{name} must be a list of strings", code="corrupt")
+  return list(value)
+
+
+def canonical_kind(value: str) -> str:
+  """The stored kind for user input. `non-goal` and `non_goal` are one kind."""
+  kind = value.strip().casefold().replace("-", "_")
+  if kind not in CATALOG_KINDS:
+    known = ", ".join(CATALOG_KINDS)
+    raise StateError(f"unknown catalog kind {value!r}; known: {known}", code="usage")
+  return kind
+
+
+def successor_would_cycle(records: list["CatalogRecord"], origin: str, successor: str) -> bool:
+  """Whether pointing `origin` at `successor` loops, including a self-pointer."""
+  if not successor:
+    return False
+  by_id = {record.id: record.successor for record in records}
+  seen = {origin}
+  current = successor
+  while current:
+    if current in seen:
+      return True
+    seen.add(current)
+    current = by_id.get(current, "")
+  return False
+
+
+def successor_cycles(records: list["CatalogRecord"]) -> list[list[str]]:
+  """Stored successor loops. Each cycle repeats its first id at the end."""
+  by_id = {record.id: record.successor for record in records}
+  found: list[list[str]] = []
+  seen: set[str] = set()
+  for start in by_id:
+    if start in seen:
+      continue
+    path: list[str] = []
+    pos: dict[str, int] = {}
+    node = start
+    while node and node not in seen:
+      if node in pos:
+        found.append(path[pos[node]:] + [node])
+        break
+      pos[node] = len(path)
+      path.append(node)
+      node = by_id.get(node, "")
+    seen.update(path)
+  return found
+
+
+@dataclass
+class CatalogRecord:
+  """One project-knowledge statement. Not a roadmap item.
+
+  `status` is `active` or `retired`. Retire freezes the statement. `successor`
+  names one later record of the same kind, or is empty.
+  """
+
+  id: str
+  kind: str
+  title: str
+  body: str = ""
+  status: str = CATALOG_ACTIVE
+  reason: str = ""
+  successor: str = ""
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "id": self.id,
+      "kind": self.kind,
+      "title": self.title,
+      "body": self.body,
+      "status": self.status,
+      "reason": self.reason,
+      "successor": self.successor,
+    }
+
+  @staticmethod
+  def from_dict(d: Mapping[str, Any]) -> "CatalogRecord":
+    kind = d.get("kind")
+    status = d.get("status", CATALOG_ACTIVE)
+    if kind not in CATALOG_KINDS:
+      raise StateError(
+        f"catalog kind must be one of {', '.join(CATALOG_KINDS)}", code="corrupt",
+      )
+    if status not in (CATALOG_ACTIVE, CATALOG_RETIRED):
+      raise StateError("catalog status must be active or retired", code="corrupt")
+    for name in ("id", "title", "body", "reason", "successor"):
+      if name in d and not isinstance(d[name], str):
+        raise StateError(f"catalog {name} must be a string", code="corrupt")
+    if "id" not in d or "title" not in d:
+      raise StateError("a catalog record needs an id and a title", code="corrupt")
+    return CatalogRecord(
+      id=d["id"],
+      kind=kind,
+      title=d["title"],
+      body=d.get("body", ""),
+      status=status,
+      reason=d.get("reason", ""),
+      successor=d.get("successor", ""),
+    )
+
+
+@dataclass
+class Catalog:
+  """The ordered project-knowledge records. Position is editorial, per kind."""
+
+  next_id: int = 1
+  id_prefix: str = "C"
+  id_width: int = 2
+  records: list[CatalogRecord] = field(default_factory=list)
+
+  def get(self, record_id: str) -> CatalogRecord | None:
+    for record in self.records:
+      if record.id == record_id:
+        return record
+    return None
+
+  def require(self, record_id: str) -> CatalogRecord:
+    record = self.get(record_id)
+    if record is None:
+      raise StateError(f"no such record: {record_id}", code="no_such_record")
+    return record
+
+  def of_kind(self, kind: str, *, retired: bool = False) -> list[CatalogRecord]:
+    """Active records of `kind`, in stored order, then retired ones when asked."""
+    active = [
+      record for record in self.records
+      if record.kind == kind and record.status == CATALOG_ACTIVE
+    ]
+    if not retired:
+      return active
+    done = [
+      record for record in self.records
+      if record.kind == kind and record.status == CATALOG_RETIRED
+    ]
+    return active + done
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "next_id": self.next_id,
+      "id_prefix": self.id_prefix,
+      "id_width": self.id_width,
+      "records": [record.to_dict() for record in self.records],
+    }
+
+  @staticmethod
+  def from_dict(d: Mapping[str, Any] | None) -> "Catalog":
+    if d is None:
+      return Catalog()
+    if not isinstance(d, Mapping):
+      raise StateError("catalog must be an object", code="corrupt")
+    records = d.get("records", [])
+    if not isinstance(records, list):
+      raise StateError("catalog records must be a list", code="corrupt")
+    prefix = d.get("id_prefix", "C")
+    if not isinstance(prefix, str) or not prefix:
+      raise StateError("catalog id_prefix must be a nonempty string", code="corrupt")
+    return Catalog(
+      next_id=int(d.get("next_id", 1)),
+      id_prefix=prefix,
+      id_width=int(d.get("id_width", 2)),
+      records=[CatalogRecord.from_dict(record) for record in records],
+    )
 
 
 def _stored_key(value: object) -> str:
@@ -446,6 +642,7 @@ class Index:
   epilogue: str = ""
   goals: str = ""
   non_goals: str = ""
+  catalog: Catalog = field(default_factory=Catalog)
   version: int = SCHEMA_VERSION
 
   def get(self, item_id: str) -> Item | None:
@@ -502,6 +699,7 @@ class Index:
       "epilogue": self.epilogue,
       "goals": self.goals,
       "non_goals": self.non_goals,
+      "catalog": self.catalog.to_dict(),
     }
 
   @staticmethod
@@ -519,6 +717,7 @@ class Index:
       epilogue=d.get("epilogue", ""),
       goals=d.get("goals", ""),
       non_goals=d.get("non_goals", ""),
+      catalog=Catalog.from_dict(d["catalog"]) if "catalog" in d else Catalog(),
     )
 
 

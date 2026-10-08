@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer catalog` stores project-knowledge records — goals, non-goals, requirements, constraints, decisions, and assumptions — separately from the slice queue. A record has an id (`C01`), a title, one markdown body, and status `active` or `retired`. `add`, `list`, `show`, `edit`, `retire`, and `move` are the commands. `--kind non-goal` stores `non_goal`. Retire keeps the id, requires a reason, and may name one same-kind successor. Retired records freeze. `slicer goals` still returns the prose and now also lists goal and non-goal records. Empty catalogs leave the roadmap bytes unchanged; other kinds render from a `{{catalog}}` slot in the roadmap template. Index schema is 8, with `catalog` and an empty `fields.cites` on items. Missing values load without writes. The index merge driver merges catalog records by id and keeps the larger `catalog.next_id`.
+
 ## [1.5.0] - 2026-10-07
 
 ### Added

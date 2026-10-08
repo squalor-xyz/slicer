@@ -6,6 +6,8 @@
 
 {{non_goals}}
 
+{{catalog}}
+
 {{summary}}
 
 {{groups}}

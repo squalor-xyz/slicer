@@ -151,7 +151,7 @@ class VerificationTests(unittest.TestCase):
     with self.repo() as repo:
       original = self.note(repo)
       data = json.loads(repo.read(".slicer/index.json"))
-      self.assertEqual(data["version"], 7)
+      self.assertEqual(data["version"], model.SCHEMA_VERSION)
       self.assertEqual(data["items"][0]["note_records"][0], original.persisted_dict())
       self.assertNotIn("trust", data["items"][0]["note_records"][0])
       before = self.snapshot(repo)

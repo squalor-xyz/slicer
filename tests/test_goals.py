@@ -36,7 +36,9 @@ class GoalsCommandTests(unittest.TestCase):
       self.assertIn("(none set)", text)
       code, out, err = repo.run("goals", "--json")
       self.assertEqual((code, err), (0, ""))
-      self.assertEqual(json.loads(out), {"goals": "", "non_goals": ""})
+      self.assertEqual(json.loads(out), {
+        "goals": "", "non_goals": "", "records": {"goal": [], "non_goal": []},
+      })
 
   def test_Goals_AfterRecording_ReturnsBothBlocksTogether(self) -> None:
     with self.repo() as repo:
@@ -48,7 +50,10 @@ class GoalsCommandTests(unittest.TestCase):
       self.assertIn("- a goal", text)
       self.assertIn("- a non-goal", text)
       code, out, _ = repo.run("goals", "--json")
-      self.assertEqual(json.loads(out), {"goals": "- a goal", "non_goals": "- a non-goal"})
+      self.assertEqual(json.loads(out), {
+        "goals": "- a goal", "non_goals": "- a non-goal",
+        "records": {"goal": [], "non_goal": []},
+      })
 
 
 if __name__ == "__main__":

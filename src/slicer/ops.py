@@ -19,7 +19,11 @@ from typing import Callable, Mapping
 from slicer import graph, ids, outline, prose, render, vcs
 from slicer.config import Config
 from slicer.errors import StateError
-from slicer.model import Index, Item, NoteRecord, LogEntry, PassInfo, Section, Slice, effort_rank, extract_boundary, is_unscored
+from slicer.model import (
+  CATALOG_ACTIVE, CATALOG_RETIRED, CatalogRecord, Index, Item, LogEntry, NoteRecord,
+  PassInfo, Section, Slice, canonical_kind, effort_rank, extract_boundary, is_unscored,
+  successor_would_cycle,
+)
 from slicer.store import State
 
 
@@ -203,6 +207,163 @@ def add(
   state.save_index()
   _record(state, item.id, "add", to=item.status, note=title)
   return item
+
+
+def _refuse_catalog_prefix(index: Index) -> None:
+  """Catalog ids and item ids are different sequences and must not share a prefix."""
+  if index.catalog.id_prefix.casefold() == index.id_prefix.casefold():
+    raise StateError(
+      f"catalog id prefix {index.catalog.id_prefix!r} matches the item prefix "
+      f"{index.id_prefix!r}; catalog ids would collide with item ids",
+      code="state",
+    )
+
+
+def _refuse_catalog_case(index: Index, new_id: str) -> None:
+  folded = new_id.casefold()
+  clash = next((item.id for item in index.items if item.id.casefold() == folded), None)
+  if clash is None:
+    clash = next(
+      (record.id for record in index.catalog.records if record.id.casefold() == folded),
+      None,
+    )
+  if clash is not None:
+    raise StateError(
+      f"id {new_id} differs from {clash} only in case; on a case-insensitive "
+      f"filesystem they would be the same file",
+      code="case_collision",
+    )
+
+
+def _allocate_catalog(index: Index, *, floor: int = 0) -> str:
+  """The next catalog id. The counter only moves forward, and an id is never reused."""
+  _refuse_catalog_prefix(index)
+  catalog = index.catalog
+  number = max(catalog.next_id, floor)
+  new_id = ids.format_id(catalog.id_prefix, number, catalog.id_width)
+  ids.require_valid(new_id)
+  if catalog.get(new_id) is not None:
+    raise StateError(
+      f"next_id ({number}) would reuse the existing catalog id {new_id}; the "
+      f"index is inconsistent -- run `slicer verify`",
+      code="corrupt",
+    )
+  _refuse_catalog_case(index, new_id)
+  catalog.next_id = number + 1
+  return new_id
+
+
+def _active_record(index: Index, record_id: str) -> CatalogRecord:
+  record = index.catalog.require(record_id)
+  if record.status != CATALOG_ACTIVE:
+    raise StateError(
+      f"{record.id} is retired; a retired record stays as it was", code="state",
+    )
+  return record
+
+
+def catalog_add(
+  state: State, kind: str, title: str, body: str = "", *, id_floor: int = 0,
+) -> CatalogRecord:
+  """Append one catalog record. `kind` accepts `non-goal` as well as `non_goal`."""
+  stored = canonical_kind(kind)
+  _reject_bad_text(title=title)
+  record = CatalogRecord(
+    id=_allocate_catalog(state.index, floor=id_floor),
+    kind=stored,
+    title=title,
+    body=body,
+  )
+  state.index.catalog.records.append(record)
+  state.save_index()
+  _record(state, record.id, "catalog", note="add", to=title)
+  return record
+
+
+def catalog_edit(
+  state: State, record_id: str, *, title: str | None = None, body: str | None = None,
+) -> CatalogRecord:
+  """Replace the title, the body, or both. A retired record is frozen."""
+  record = _active_record(state.index, record_id)
+  if title is None and body is None:
+    return record
+  _reject_bad_text(title=title)
+  changed: list[str] = []
+  if title is not None and title != record.title:
+    record.title = title
+    changed.append("title")
+  if body is not None and body != record.body:
+    record.body = body
+    changed.append("body")
+  if not changed:
+    return record
+  state.save_index()
+  _record(state, record.id, "catalog", note="edit", to=",".join(changed))
+  return record
+
+
+def catalog_retire(
+  state: State, record_id: str, reason: str, successor: str = "",
+) -> CatalogRecord:
+  """Retire a record in place. The id stays, and the statement freezes."""
+  record = _active_record(state.index, record_id)
+  if not str(reason).strip():
+    raise StateError("a retire reason cannot be blank", code="usage")
+  if "\n" in reason:
+    raise StateError("reason cannot contain a newline", code="newline_in_field")
+  successor = successor.strip()
+  if successor:
+    other = state.index.catalog.require(successor)
+    if other.kind != record.kind:
+      raise StateError(
+        f"{other.id} is a {other.kind}; a successor has to be a {record.kind}",
+        code="state",
+      )
+    if successor_would_cycle(state.index.catalog.records, record.id, successor):
+      raise StateError(
+        f"successor {successor} would cycle back to {record.id}", code="state",
+      )
+  record.status = CATALOG_RETIRED
+  record.reason = reason.strip()
+  record.successor = successor
+  state.save_index()
+  _record(state, record.id, "catalog", frm=CATALOG_ACTIVE, to=CATALOG_RETIRED, note="retire")
+  return record
+
+
+def catalog_move(
+  state: State, record_id: str, *, before: str | None = None, after: str | None = None,
+) -> CatalogRecord:
+  """Move a record within its kind. Other kinds keep their relative order."""
+  if (before is None) == (after is None):
+    raise StateError("choose exactly one of --before or --after", code="usage")
+  catalog = state.index.catalog
+  record = catalog.require(record_id)
+  anchor_id = before if before is not None else after
+  if anchor_id is None:
+    raise StateError("choose exactly one of --before or --after", code="usage")
+  anchor = catalog.require(anchor_id)
+  if record.id == anchor.id:
+    raise StateError("a record cannot be moved relative to itself", code="usage")
+  if record.kind != anchor.kind:
+    raise StateError(
+      f"{record.id} is a {record.kind} and {anchor.id} is a {anchor.kind}; "
+      f"move stays inside one kind",
+      code="state",
+    )
+  kind_ids = [item.id for item in catalog.records if item.kind == record.kind]
+  old_at = kind_ids.index(record.id) + 1
+  rest = [item for item in catalog.records if item.id != record.id]
+  index = next(i for i, item in enumerate(rest) if item.id == anchor.id)
+  insert_at = index if before is not None else index + 1
+  rest.insert(insert_at, record)
+  new_at = [item.id for item in rest if item.kind == record.kind].index(record.id) + 1
+  if [item.id for item in rest] == [item.id for item in catalog.records]:
+    return record
+  catalog.records = rest
+  state.save_index()
+  _record(state, record.id, "catalog", frm=str(old_at), to=str(new_at), note="move")
+  return record
 
 
 def issue_key(repo: str, number: int) -> str:

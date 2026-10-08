@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass, field
 
 from slicer import graph, ids, vcs
+from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, successor_cycles
 from slicer.store import State
 
 
@@ -163,7 +164,63 @@ def offline(state: State) -> VerifyReport:
         Finding("error", sid, f"slice file {path.name} contains id {sid!r}; the name and the id disagree")
       )
 
+  report.findings.extend(_catalog_findings(index))
   return report
+
+
+def _catalog_findings(index) -> list[Finding]:
+  """Catalog ids, successors, and retire reasons. Citations are checked later."""
+  catalog = index.catalog
+  findings: list[Finding] = []
+  if catalog.id_prefix.casefold() == index.id_prefix.casefold():
+    findings.append(Finding(
+      "error", "",
+      f"catalog id prefix {catalog.id_prefix!r} matches the item prefix "
+      f"{index.id_prefix!r}; catalog ids would collide with item ids",
+    ))
+  folded: dict[str, list[str]] = {}
+  item_ids = {item.id.casefold(): item.id for item in index.items}
+  for record in catalog.records:
+    folded.setdefault(record.id.casefold(), []).append(record.id)
+    clash = item_ids.get(record.id.casefold())
+    if clash is not None:
+      findings.append(Finding(
+        "error", record.id, f"catalog id collides with item {clash}",
+      ))
+    if record.successor:
+      other = catalog.get(record.successor)
+      if other is None:
+        findings.append(Finding(
+          "error", record.id, f"successor unknown id {record.successor}",
+        ))
+      elif other.kind != record.kind:
+        findings.append(Finding(
+          "error", record.id,
+          f"successor {other.id} is a {other.kind}; a successor has to be a {record.kind}",
+        ))
+    if record.status == CATALOG_RETIRED and not record.reason.strip():
+      findings.append(Finding("error", record.id, "retired catalog record has a blank reason"))
+    if record.status == CATALOG_ACTIVE and record.reason.strip():
+      findings.append(Finding("error", record.id, "active catalog record has a retire reason"))
+  for same in folded.values():
+    if len(set(same)) == 1 and len(same) > 1:
+      findings.append(Finding("error", same[0], "duplicate catalog id"))
+    elif len(same) > 1:
+      findings.append(Finding(
+        "error", same[0], f"catalog ids {' and '.join(same)} differ only in case",
+      ))
+  for cycle in successor_cycles(catalog.records):
+    findings.append(Finding(
+      "error", cycle[0], "successor cycle: " + " -> ".join(cycle),
+    ))
+  water = ids.high_water([record.id for record in catalog.records], catalog.id_prefix)
+  if catalog.next_id < water:
+    findings.append(Finding(
+      "error", "",
+      f"catalog next_id is {catalog.next_id}, at or below an id already in use "
+      f"(it should be at least {water}); the next catalog add would reuse an id",
+    ))
+  return findings
 
 
 def against_git(state: State) -> VerifyReport:
