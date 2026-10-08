@@ -7160,7 +7160,7 @@
       "id": "s239",
       "title": "Point AGENTS.md at the short onboarding path",
       "short_title": "Point AGENTS.md at the short onboarding path",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7176,10 +7176,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-08T17:45:26Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
