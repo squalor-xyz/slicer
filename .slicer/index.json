@@ -42,6 +42,12 @@
       "outro": ""
     },
     {
+      "key": "v1.6",
+      "heading": "v1.6.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
       "key": "later",
       "heading": "Later (revisit after orchestrator use)",
       "intro": "",
@@ -7063,7 +7069,7 @@
         "discovered_from": "",
         "cites": [],
         "key": "",
-        "pass": "",
+        "pass": "v1.6",
         "group": "",
         "reason": "",
         "importance": 3,
@@ -7106,7 +7112,7 @@
         "discovered_from": "",
         "cites": [],
         "key": "",
-        "pass": "",
+        "pass": "v1.6",
         "group": "",
         "reason": "",
         "importance": 3,
@@ -7147,7 +7153,7 @@
         "discovered_from": "",
         "cites": [],
         "key": "",
-        "pass": "",
+        "pass": "v1.6",
         "group": "",
         "reason": "",
         "importance": 3,
@@ -7188,7 +7194,7 @@
         "discovered_from": "",
         "cites": [],
         "key": "",
-        "pass": "",
+        "pass": "v1.6",
         "group": "",
         "reason": "",
         "importance": 2,
