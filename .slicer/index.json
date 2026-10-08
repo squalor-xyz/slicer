@@ -7160,10 +7160,22 @@
       "id": "s239",
       "title": "Point AGENTS.md at the short onboarding path",
       "short_title": "Point AGENTS.md at the short onboarding path",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "bc5b5e33-1c46-41b9-a666-7527d9be2c91",
+          "kind": "",
+          "text": "**2026-10-08** — Ready for review: the two AGENTS.md onboarding sentences are the specified replacements, and the roadmap section is 3417 bytes. AiInstructionsTests passed (35), including the new onboarding test and both size caps. Full discover passed 1514 tests, 1 skipped. git diff --check is clean. The s238 Commands sentence is unchanged.",
+          "created_at": "2026-10-08T17:45:19Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -7182,7 +7194,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],
