@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-08
+
 ### Added
 
 - A successful `python3 -m unittest discover -s tests -t tests` writes the gitignored `.venv/affected-map.json` for that HEAD, so the next `python3 tests/affected.py --run` in that checkout can select tests. A failed discover does not create a map and does not replace one. `affected.py record` and `--run` are unchanged, and the full suite remains the gate before done.
@@ -15,6 +17,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Changed
 
 - Project agent onboarding uses `slicer ai instructions` and the invariants in `AGENTS.md`. Read `ARCHITECTURE.md` only when a change touches an invariant, and `docs/agents.md` only for the command whose JSON contract is being changed.
+- The next index save stamps schema 8, which slicer 1.5.0 refuses. An older project's roadmap template needs a `{{catalog}}` slot before requirements, constraints, decisions, and assumptions render. Goal and non-goal records render without that slot.
 
 ## [1.5.0] - 2026-10-07
 
