@@ -121,6 +121,31 @@ class AffectedTests(unittest.TestCase):
     self.assertTrue(lines)
     self.assertTrue(all(line.startswith("src/slicer/sample.py:") for line in lines))
 
+  def test_TraceSuite_RestoresAnOuterTracer(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    module = _load_sample(directory)
+
+    class Outer(unittest.TestCase):
+      def test_wraps(self) -> None:
+        module.only_a()
+
+        class Inner(unittest.TestCase):
+          def test_inner(self) -> None:
+            module.only_b()
+
+        affected.trace_suite(
+          unittest.defaultTestLoader.loadTestsFromTestCase(Inner), directory,
+        )
+        module.shared()
+
+    traced = affected.trace_suite(
+      unittest.defaultTestLoader.loadTestsFromTestCase(Outer), directory,
+    )
+    lines = next(iter(traced.values()))
+    self.assertIn("src/slicer/sample.py:2", lines)
+    self.assertIn("src/slicer/sample.py:8", lines)
+
   def test_Select_ChangedTestModule_IncludesItsTestsWithoutAMapHit(self) -> None:
     path = self.map_file({"not.a.Real.test_one": ["src/slicer/ops.py:1"]})
     code, out, err = _run([
@@ -255,6 +280,106 @@ class AffectedTests(unittest.TestCase):
     changed = affected.working_tree_lines(directory)
     self.assertIn(2, changed["src/slicer/ops.py"])
     self.assertEqual(changed["src/slicer/new.py"], {1, 2})
+
+  def _git_root(self) -> Path:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    subprocess.run(["git", "init", "-q"], cwd=directory, check=True)
+    subprocess.run(["git", "config", "user.email", "t@example.invalid"], cwd=directory, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=directory, check=True)
+    marker = directory / "marker.txt"
+    marker.write_text("marker\n", encoding="utf-8")
+    subprocess.run(["git", "add", "marker.txt"], cwd=directory, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "base"], cwd=directory, check=True)
+    return directory
+
+  def test_DiscoverSuccess_WritesMapForHead(self) -> None:
+    directory = self._git_root()
+    sha = subprocess.run(
+      ["git", "rev-parse", "HEAD"], cwd=directory, capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    path = directory / "affected-map.json"
+    affected.publish_map(
+      path, ok=True, tests={"pkg.T.test_a": ["src/slicer/sample.py:2"]}, root=directory,
+    )
+    text = path.read_text(encoding="utf-8")
+    self.assertLess(text.index('"sha"'), text.index('"tests"'))
+    self.assertEqual(json.loads(text), {
+      "sha": sha,
+      "tests": {"pkg.T.test_a": ["src/slicer/sample.py:2"]},
+    })
+    launcher = ["python3.14 -m unittest", "discover", "-s", "tests", "-t", "tests"]
+    module = ["/usr/lib/python3.14/unittest/__main__.py", "discover", "-s", "tests", "-t", "tests"]
+    self.assertTrue(affected.entrypoint_is_full_discover(launcher))
+    self.assertTrue(affected.entrypoint_is_full_discover(module))
+    self.assertFalse(affected.entrypoint_is_full_discover(launcher + ["-k", "One"]))
+    self._hook_writes_for_launcher(directory)
+
+
+  def _hook_writes_for_launcher(self, directory: Path) -> None:
+    """A fresh process with the launcher's argv writes that checkout's map."""
+    path = directory / "hook-map.json"
+    script = (
+      "import json, sys, unittest\n"
+      "from pathlib import Path\n"
+      "import affected\n"
+      "root = Path(sys.argv[1])\n"
+      "destination = Path(sys.argv[2])\n"
+      "sys.argv = ['python3.14 -m unittest', 'discover', '-s', 'tests', '-t', 'tests']\n"
+      "affected.install_discover_hook(destination, root)\n"
+      "class Tiny(unittest.TestCase):\n"
+      "  def test_ok(self):\n"
+      "    return None\n"
+      "runner = unittest.TextTestRunner(stream=open('/dev/null', 'w'), verbosity=0)\n"
+      "result = runner.run(unittest.defaultTestLoader.loadTestsFromTestCase(Tiny))\n"
+      "if not result.wasSuccessful():\n"
+      "  raise SystemExit(1)\n"
+      "doc = json.loads(destination.read_text())\n"
+      "if doc['sha'] != affected.git_head(root):\n"
+      "  raise SystemExit(2)\n"
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parent)
+    proc = subprocess.run(
+      [sys.executable, "-c", script, str(directory), str(path)],
+      cwd=directory, env=env, capture_output=True, text=True,
+    )
+    self.assertEqual(proc.returncode, 0, proc.stderr)
+    self.assertTrue(path.is_file())
+
+  def test_DiscoverFailure_LeavesAnExistingMap(self) -> None:
+    directory = self._git_root()
+    path = directory / "affected-map.json"
+    path.write_text("sentinel\n", encoding="utf-8")
+    before = path.read_bytes()
+    affected.publish_map(
+      path, ok=False, tests={"pkg.T.test_a": ["src/slicer/sample.py:2"]}, root=directory,
+    )
+    self.assertEqual(path.read_bytes(), before)
+    missing = directory / "missing.json"
+    affected.publish_map(missing, ok=False, tests={}, root=directory)
+    self.assertFalse(missing.exists())
+
+  def test_NestedDiscover_DoesNotTouchTheCheckoutMap(self) -> None:
+    checkout = affected.DEFAULT_MAP
+    before = checkout.read_bytes() if checkout.is_file() else None
+    affected.install_discover_hook()
+
+    class Tiny(unittest.TestCase):
+      def test_ok(self) -> None:
+        return None
+
+    with affected.nested_discover():
+      with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+        unittest.TextTestRunner(verbosity=0).run(
+          unittest.defaultTestLoader.loadTestsFromTestCase(Tiny)
+        )
+    after = checkout.read_bytes() if checkout.is_file() else None
+    self.assertEqual(after, before)
+
+
+if affected.entrypoint_is_full_discover():
+  affected.install_discover_hook()
 
 
 if __name__ == "__main__":

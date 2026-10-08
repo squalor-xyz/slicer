@@ -40,6 +40,7 @@ TMPDIR="$PWD/.venv/test-tmp" python3 -m unittest discover -s tests -t tests
 The full suite takes about one minute alone and longer under load. In an agent
 session, run it in the background or with a timeout over 180 s. While iterating,
 run `python3 tests/affected.py --run` first; run the full discover once before done.
+A successful full discover writes `.venv/affected-map.json` for that HEAD.
 
 The temporary directory does not require creating a virtual environment. Tests
 that need an outside-project fixture use `support.isolated_discovery(root)` to hide
