@@ -7119,7 +7119,7 @@
       "id": "s238",
       "title": "Write the affected map when the full suite passes",
       "short_title": "Write the affected map when the full suite passes",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7135,7 +7135,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-08T15:56:22Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],

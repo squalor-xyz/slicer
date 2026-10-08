@@ -1133,3 +1133,4 @@
 {"when": "2026-10-08T14:52:52Z", "item": "s238", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-08T15:44:05Z", "item": "s238", "action": "note", "from": "", "to": "", "note": "Ready for review: a passing full discover (1513 tests, 1 ski", "by": "Jon Robbins"}
 {"when": "2026-10-08T15:44:08Z", "item": "s238", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-08T15:56:22Z", "item": "s238", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
