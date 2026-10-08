@@ -226,6 +226,9 @@ def _problems(doc: dict[str, Any]) -> list[tuple[str, list[str]]]:
   for item in index.items:
     if item.discovered_from and index.get(item.discovered_from) is None:
       found.append((f"{item.id} was discovered from unknown id {item.discovered_from}", [item.id]))
+    for record_id in item.cites:
+      if index.catalog.get(record_id) is None:
+        found.append((f"{item.id} cites unknown id {record_id}", [item.id]))
   for cycle in graph.cycles(index):
     found.append((f"dependency cycle {' -> '.join(cycle)}", sorted(set(cycle))))
   water = idscheme.high_water([item.id for item in index.items], index.id_prefix)

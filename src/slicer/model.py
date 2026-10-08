@@ -34,7 +34,7 @@ CATALOG_HEADINGS = (
 )
 CATALOG_ACTIVE = "active"
 CATALOG_RETIRED = "retired"
-# Kinds whose retirement stays visible on a citing slice. Slice 2 renders this.
+# Kinds whose retirement stays visible on a citing slice and roadmap row.
 CATALOG_CALLOUT_KINDS = ("assumption", "decision")
 
 

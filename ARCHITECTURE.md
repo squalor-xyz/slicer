@@ -84,7 +84,10 @@ counter, prefix `C`, and the kinds goal, non-goal, requirement, constraint,
 decision, and assumption — plus optional `fields.cites` on items. Records are
 not roadmap items. Missing `catalog` and `cites` load empty without writes.
 The next index save stamps 8. Older readers refuse that schema rather than
-dropping the records. `done_dir` and
+dropping the records. An item's `fields.cites` names catalog records. The
+reference does not block, rescore, or change `next`. `check` fails when a cite
+names nothing. A slice header lists the citations, and a roadmap row names a
+retired assumption or decision the item cites. `done_dir` and
 `retired_dir` are config, not constants.
 
 ## Invariants

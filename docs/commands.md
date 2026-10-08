@@ -406,6 +406,8 @@ slicer catalog show C01
 slicer catalog edit C01 --title "..." --body "..."
 slicer catalog retire C01 --reason "..." [--successor C02]
 slicer catalog move C03 --before C01
+slicer catalog cite S01 C01 C02
+slicer catalog uncite S01 C01
 ```
 
 `--kind` accepts `non-goal` and stores `non_goal`. `add` and `edit` take the body
@@ -423,6 +425,24 @@ There is no purge: the id is never reused. `slicer log --item C01` shows the
 `slicer goals` still prints the prose blocks. It also lists goal and non-goal
 records, active unless `--retired` is set. Requirements and the other kinds are
 read with `slicer catalog`.
+
+`slicer catalog cite ITEM C01 C02` appends those ids to the item. An id already
+cited is skipped, and a command that changes nothing writes nothing. `slicer
+catalog uncite ITEM C01` drops ids. An id the item does not cite fails, and
+either command refuses the whole request before writing when any id is unknown.
+`slicer show` resolves each citation to its id, kind, title, status, reason,
+and successor. `slicer catalog show` includes `cited_by`, the citing item ids
+in queue order, including done and retired items. History actions are `cite`
+and `uncite` on the item id.
+
+A slice header gains a `Cites:` line only when the list is nonempty. Each entry
+is `C01 goal: title`. A retired assumption or decision adds `(retired)`. The
+roadmap table gains no column. A row that cites a retired assumption or
+decision appends `retired assumption C02` or `retired decision C04` the same
+way `discovered from` is joined. Other retired kinds do not change the row.
+`check` fails when a cite names nothing. `cites` stays an atomic list in the
+index merge, like `depends_on`. An empty cite list leaves the roadmap and the
+slice bytes unchanged.
 
 The roadmap renders goal and non-goal records under the existing prose headings,
 prose first, then active records, then retired ones. The other four kinds render

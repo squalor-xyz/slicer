@@ -1123,3 +1123,7 @@
 {"when": "2026-10-08T13:07:03Z", "item": "s236", "action": "note", "from": "", "to": "", "note": "Ready for review: catalog records for goals, non-goals, requ", "by": "Jon Robbins"}
 {"when": "2026-10-08T13:07:03Z", "item": "s236", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-08T13:21:04Z", "item": "s236", "action": "status", "from": "review", "to": "done", "note": "Catalog records for goals, non-goals, requirements, constraints, decisions, and assumptions. Schema 8. 1504 tests passed, 1 skipped; slicer check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-08T13:24:54Z", "item": "s237", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-08T13:34:20Z", "item": "s237", "action": "note", "from": "", "to": "", "note": "Ready for review: roadmap items cite catalog records. cite a", "by": "Jon Robbins"}
+{"when": "2026-10-08T13:34:20Z", "item": "s237", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-08T13:53:26Z", "item": "s237", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
