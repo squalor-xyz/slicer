@@ -7119,11 +7119,26 @@
       "id": "s238",
       "title": "Write the affected map when the full suite passes",
       "short_title": "Write the affected map when the full suite passes",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "28a5c89e-2692-4cab-beda-83f4c6bc4c68",
+          "kind": "",
+          "text": "**2026-10-08** — Ready for review: a passing full discover (1513 tests, 1 skipped) wrote .venv/affected-map.json for HEAD. A failed discover does not create or replace a map, and a nested runner does not write the checkout map.",
+          "created_at": "2026-10-08T15:44:05Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-08T15:56:22Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -7141,7 +7156,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

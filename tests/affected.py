@@ -1,7 +1,8 @@
 """Run the tests that executed the lines a working-tree diff touches.
 
-The full unittest discover stays the gate before done. This map is a local
-cache: when it is missing or stale, the caller is told to run that suite
+The full unittest discover stays the gate before done. When that discover is
+the process entry point and passes, it writes this map for HEAD. The map is a
+local cache: when it is missing or stale, the caller is told to run that suite
 instead of a list that only looks complete.
 """
 
@@ -61,10 +62,13 @@ def record(map_path: Path) -> int:
 def trace_suite(suite: unittest.TestSuite, root: Path) -> dict[str, list[str]]:
   """Lines each test executed under `src/slicer/` or `tests/`, one test at a time."""
   result = _TracingResult(root)
+  previous = sys.gettrace()
   try:
     suite.run(result)
   finally:
-    sys.settrace(None)
+    # An outer discover is tracing too. Clearing the hook here would drop the
+    # rest of that test's lines, so put the previous tracer back.
+    sys.settrace(previous)
   return {test_id: sorted(lines) for test_id, lines in result.seen.items()}
 
 
@@ -227,6 +231,7 @@ class _TracingResult(unittest.TestResult):
       self.root = root
     self.seen: dict[str, set[str]] = {}
     self._current: set[str] | None = None
+    self._files: dict[str, str | None] = {}
 
   def startTest(self, test: unittest.TestCase) -> None:
     self._current = set()
@@ -241,11 +246,24 @@ class _TracingResult(unittest.TestResult):
     self.seen[test.id()] = lines
 
   def _trace(self, frame, event, arg):
+    # Line events for every other file call resolve() once per line and make
+    # a full discover unusable. Those lines are never recorded.
+    if event == "call":
+      if self._project_file(frame.f_code.co_filename) is None:
+        return None
+      return self._trace
     if event == "line" and self._current is not None:
-      rel = self._relative(frame.f_code.co_filename)
+      rel = self._files.get(frame.f_code.co_filename)
       if rel is not None:
         self._current.add(f"{rel}:{frame.f_lineno}")
     return self._trace
+
+  def _project_file(self, filename: str) -> str | None:
+    if filename in self._files:
+      return self._files[filename]
+    rel = self._relative(filename) if _could_be_project(filename) else None
+    self._files[filename] = rel
+    return rel
 
   def _relative(self, filename: str) -> str | None:
     path = Path(filename)
@@ -403,6 +421,151 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
   parser.add_argument("--map", type=Path, help="map file (default: .venv/affected-map.json)")
   parser.add_argument("--sha", help="commit to compare with the map (default: HEAD)")
   return parser.parse_args(argv)
+
+
+def publish_map(map_path: Path, *, ok: bool, tests: dict[str, list[str]], root: Path) -> None:
+  """Write the discover map for HEAD, and only after a successful run.
+
+  A failed run returns without creating or replacing `map_path`.
+  """
+  if not ok:
+    return
+  sha = git_head(root)
+  if sha is None:
+    return
+  write_map(map_path, sha, tests)
+
+
+def entrypoint_is_full_discover(argv: list[str] | None = None) -> bool:
+  """True when this process is an unfiltered discover of the tests directory.
+
+  A `-k` filter is a partial run, so it does not qualify. Importing this
+  module does not look at argv and does not write a map.
+  """
+  args = list(sys.argv if argv is None else argv)
+  if not args or "discover" not in args:
+    return False
+  if not _is_unittest_program(args[0]):
+    return False
+  tail = args[args.index("discover") + 1:]
+  if "-k" in tail:
+    return False
+  start = _option(tail, "-s", "--start-directory")
+  top = _option(tail, "-t", "--top-level-directory")
+  return _is_tests_dir(start) and _is_tests_dir(top)
+
+
+def _option(args: list[str], short: str, long: str) -> str | None:
+  for index, token in enumerate(args):
+    if token in (short, long) and index + 1 < len(args):
+      return args[index + 1]
+    if token.startswith(long + "="):
+      return token.split("=", 1)[1]
+  return None
+
+
+def _is_unittest_program(program: str) -> bool:
+  """The unittest entry point, including a launcher that rewrites argv[0]."""
+  text = program.replace("\\", "/")
+  if text.endswith("/unittest/__main__.py") or text.endswith("/unittest"):
+    return True
+  return text.endswith("-m unittest") or text.endswith("-m unittest.__main__")
+
+
+def _could_be_project(filename: str) -> bool:
+  """True when `filename` might be under `src/slicer/` or `tests/`.
+
+  This is a string check so the tracer can ignore the standard library
+  before it touches the filesystem. `_relative` still decides.
+  """
+  text = filename.replace("\\", "/")
+  if text.startswith("./"):
+    text = text[2:]
+  if text.startswith("src/slicer/") or text.startswith("tests/"):
+    return True
+  return "/src/slicer/" in text or "/tests/" in text
+
+
+def _is_tests_dir(value: str | None) -> bool:
+  if not value:
+    return False
+  return Path(value).name == "tests"
+
+
+class _NestedDiscover:
+  """Marks a runner started inside an outer one so it cannot write the map."""
+
+  def __enter__(self) -> "_NestedDiscover":
+    global _discover_depth
+    self._previous = _discover_depth
+    if _discover_depth < 1:
+      _discover_depth = 1
+    return self
+
+  def __exit__(self, *exc: object) -> None:
+    global _discover_depth
+    _discover_depth = self._previous
+
+
+def nested_discover() -> _NestedDiscover:
+  return _NestedDiscover()
+
+
+def install_discover_hook(map_path: Path | None = None, root: Path | None = None) -> None:
+  """Trace the outer discover once and write the map when that run passes.
+
+  A runner started while the outer run is active does not write. Calling this
+  from an import of this module is the caller's choice; import alone does not.
+  """
+  global _hook_installed
+  if _hook_installed:
+    return
+  _hook_installed = True
+  destination = DEFAULT_MAP if map_path is None else map_path
+  base = ROOT if root is None else root
+  original = unittest.TextTestRunner.run
+
+  def run(self, test):
+    global _discover_depth
+    _discover_depth += 1
+    nested = _discover_depth > 1
+    tracer: _TracingResult | None = None
+    previous = self.resultclass
+    try:
+      if not nested:
+        tracer = _TracingResult(base)
+        self.resultclass = _traced_result(previous, tracer)
+      result = original(self, test)
+    finally:
+      self.resultclass = previous
+      _discover_depth -= 1
+    if (
+      tracer is not None
+      and result.wasSuccessful()
+      and entrypoint_is_full_discover()
+    ):
+      traced = {test_id: sorted(lines) for test_id, lines in tracer.seen.items()}
+      publish_map(destination, ok=True, tests=traced, root=base)
+    return result
+
+  unittest.TextTestRunner.run = run
+
+
+def _traced_result(result_class: type, tracer: _TracingResult) -> type:
+  class Tracing(result_class):
+    def startTest(self, test: unittest.TestCase) -> None:
+      tracer.startTest(test)
+      super().startTest(test)
+
+    def stopTest(self, test: unittest.TestCase) -> None:
+      super().stopTest(test)
+      tracer.stopTest(test)
+
+  return Tracing
+
+
+_discover_depth = 0
+_hook_installed = False
 
 
 if __name__ == "__main__":
