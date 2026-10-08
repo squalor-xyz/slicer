@@ -830,6 +830,31 @@ def cmd_catalog_list(args: argparse.Namespace) -> int:
   return OK
 
 
+def _cite_text(item: model.Item) -> str:
+  cited = ", ".join(item.cites) if item.cites else "nothing"
+  return f"{item.id} cites {cited}"
+
+
+def cmd_catalog_cite(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = state.index.require(args.item)
+  before = list(item.cites)
+  item = ops.catalog_cite(state, args.item, args.ids)
+  if item.cites == before:
+    args._no_change = True
+    _emit(args, item.to_dict() | {"changed": False}, f"{item.id} unchanged")
+    return OK
+  _emit(args, item.to_dict() | {"changed": True}, _cite_text(item))
+  return OK
+
+
+def cmd_catalog_uncite(args: argparse.Namespace) -> int:
+  state = _state(args)
+  item = ops.catalog_uncite(state, args.item, args.ids)
+  _emit(args, item.to_dict() | {"changed": True}, _cite_text(item))
+  return OK
+
+
 def cmd_catalog_show(args: argparse.Namespace) -> int:
   state = _state(args)
   record = state.index.catalog.require(args.id)
@@ -1708,15 +1733,22 @@ def cmd_show(args: argparse.Namespace) -> int:
       "--section Implement. `slicer sections` lists the names",
       code="usage",
     )
+  resolved = render.citations(state.index, item)
+  cite_line = render.cite_header(state.index, item)
   if sl is None:
-    lines = [f"{item.id}  {item.display_title()}", *item.rendered_notes,
-             f"(no slice yet; run `slicer promote {item.id}`)"]
-    _emit(args, item.to_dict() | _note_fields(item, manifest),
+    lines = [f"{item.id}  {item.display_title()}", *item.rendered_notes]
+    if cite_line:
+      lines.append(cite_line)
+    lines.append(f"(no slice yet; run `slicer promote {item.id}`)")
+    _emit(args, item.to_dict() | _note_fields(item, manifest) | {"citations": resolved},
           "\n".join(lines + _pack_text(item, sl, manifest, notes=False)))
     return OK
-  text = render.render_slice(sl, state.config, state.template("slice.md"), item.rendered_notes).decode("utf-8")
-  _emit(args, item.to_dict() | _note_fields(item, manifest) | {"slice": sl.to_dict()},
-        "\n".join([text, *_pack_text(item, sl, manifest, notes=False)]))
+  text = render.render_slice(
+    sl, state.config, state.template("slice.md"), item.rendered_notes, cite_line,
+  ).decode("utf-8")
+  _emit(args, item.to_dict() | _note_fields(item, manifest) | {
+    "slice": sl.to_dict(), "citations": resolved,
+  }, "\n".join([text, *_pack_text(item, sl, manifest, notes=False)]))
   return OK
 
 
@@ -3112,6 +3144,14 @@ def build_parser() -> argparse.ArgumentParser:
   place = inner.add_mutually_exclusive_group(required=True)
   place.add_argument("--before", metavar="ID")
   place.add_argument("--after", metavar="ID")
+
+  inner = cadd("cite", cmd_catalog_cite, "cite catalog records from a roadmap item", mutate=True)
+  inner.add_argument("item")
+  inner.add_argument("ids", nargs="+", metavar="ID")
+
+  inner = cadd("uncite", cmd_catalog_uncite, "drop catalog citations from a roadmap item", mutate=True)
+  inner.add_argument("item")
+  inner.add_argument("ids", nargs="+", metavar="ID")
 
   add("stats", cmd_stats, "counts by status, size, tree and pass")
 

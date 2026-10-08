@@ -366,6 +366,45 @@ def catalog_move(
   return record
 
 
+def _require_records(state: State, record_ids: list[str]) -> None:
+  """Refuse before any write when one id is not a catalog record."""
+  for record_id in record_ids:
+    state.index.catalog.require(record_id)
+
+
+def catalog_cite(state: State, item_id: str, record_ids: list[str]) -> Item:
+  """Append catalog ids the item does not already cite. An unknown id writes nothing."""
+  item = state.index.require(item_id)
+  _require_records(state, record_ids)
+  seen = set(item.cites)
+  added: list[str] = []
+  for record_id in record_ids:
+    if record_id in seen:
+      continue
+    seen.add(record_id)
+    added.append(record_id)
+  if not added:
+    return item
+  item.cites.extend(added)
+  state.save_index()
+  _record(state, item.id, "cite", to=",".join(added))
+  return item
+
+
+def catalog_uncite(state: State, item_id: str, record_ids: list[str]) -> Item:
+  """Drop cited ids. An unknown id, or one the item does not cite, writes nothing."""
+  item = state.index.require(item_id)
+  _require_records(state, record_ids)
+  missing = [record_id for record_id in record_ids if record_id not in item.cites]
+  if missing:
+    raise StateError(f"{item.id} does not cite {missing[0]}", code="state")
+  dropping = set(record_ids)
+  item.cites = [record_id for record_id in item.cites if record_id not in dropping]
+  state.save_index()
+  _record(state, item.id, "uncite", frm=",".join(record_ids))
+  return item
+
+
 def issue_key(repo: str, number: int) -> str:
   """The filing key `issues-pull` gives the row for one GitHub issue."""
   return f"github:{repo}#{number}"

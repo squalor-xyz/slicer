@@ -43,7 +43,8 @@ implementing a slice, and validating the result.
 
 Do not open, search, parse, or edit tracking JSON, the history file, or generated roadmap and slice output to obtain or change that state.
 
-- Goals: `slicer goals --json --lean`.
+- Goals: `slicer goals --json --lean` returns the prose plus goal and non-goal records.
+- Catalog: `slicer catalog list --json --lean` reads requirements, constraints, decisions, and assumptions.
 - Inventory: `slicer list --json --lean`, `slicer status --json --lean`, and `slicer stats --json --lean`.
 - Slice detail: `slicer show ID --json --lean` and `slicer next --ready --json --lean`.
 - Search: `slicer find topic --json --lean`.

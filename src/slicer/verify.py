@@ -131,6 +131,11 @@ def offline(state: State) -> VerifyReport:
       report.findings.append(Finding(
         "error", item.id, f"discovered_from unknown id {item.discovered_from}",
       ))
+    for record_id in item.cites:
+      if index.catalog.get(record_id) is None:
+        report.findings.append(Finding(
+          "error", item.id, f"cites unknown id {record_id}",
+        ))
 
   for item_id, dep in graph.dangling(index):
     report.findings.append(Finding("error", item_id, f"depends on unknown id {dep}"))
@@ -169,7 +174,7 @@ def offline(state: State) -> VerifyReport:
 
 
 def _catalog_findings(index) -> list[Finding]:
-  """Catalog ids, successors, and retire reasons. Citations are checked later."""
+  """Catalog ids, successors, and retire reasons. Citations are checked with the items."""
   catalog = index.catalog
   findings: list[Finding] = []
   if catalog.id_prefix.casefold() == index.id_prefix.casefold():

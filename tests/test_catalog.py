@@ -297,5 +297,132 @@ class CatalogMergeTests(unittest.TestCase):
       self.assertIn("Theirs", merged)
 
 
+class CiteTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def index_bytes(self, repo: support.TempRepo) -> bytes:
+    return (repo.root / DIR_NAME / INDEX_NAME).read_bytes()
+
+  def test_Cite_AppendsSkipsDuplicatesAndRefusesUnknownIds(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Ship")
+      repo.run("catalog", "add", "--kind", "goal", "Ship it")
+      repo.run("catalog", "add", "--kind", "assumption", "One file")
+      nxt = json.loads(repo.run("next", "--json")[1])["id"]
+      code, out, err = repo.run("catalog", "cite", "S01", "C02", "C01", "C02", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out)["fields"]["cites"], ["C02", "C01"])
+      before = self.index_bytes(repo)
+      code, out, err = repo.run("catalog", "cite", "S01", "C01", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertFalse(json.loads(out)["changed"])
+      self.assertEqual(self.index_bytes(repo), before)
+      message = CatalogCommandTests.refused(
+        self, repo, "no_such_record", "catalog", "cite", "S01", "C01", "C99",
+      )
+      self.assertIn("C99", message)
+      self.assertEqual(self.index_bytes(repo), before)
+      self.assertEqual(repo.state().index.require("S01").cites, ["C02", "C01"])
+      actions = [entry["action"] for entry in json.loads(repo.run("log", "--item", "S01", "--json")[1])]
+      self.assertEqual(actions.count("cite"), 1)
+      self.assertEqual(json.loads(repo.run("next", "--json")[1])["id"], nxt)
+
+  def test_Uncite_MissingCitation_RefusesBeforeWriting(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Ship")
+      repo.run("catalog", "add", "--kind", "goal", "Ship it")
+      repo.run("catalog", "add", "--kind", "goal", "Stay small")
+      repo.run("catalog", "add", "--kind", "goal", "Third")
+      repo.run("catalog", "cite", "S01", "C01", "C02")
+      before = self.index_bytes(repo)
+      message = CatalogCommandTests.refused(
+        self, repo, "no_such_record", "catalog", "uncite", "S01", "C99",
+      )
+      self.assertIn("C99", message)
+      message = CatalogCommandTests.refused(
+        self, repo, "state", "catalog", "uncite", "S01", "C01", "C03",
+      )
+      self.assertIn("does not cite", message)
+      self.assertEqual(self.index_bytes(repo), before)
+      code, out, err = repo.run("catalog", "uncite", "S01", "C01", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out)["fields"]["cites"], ["C02"])
+      actions = [entry["action"] for entry in json.loads(repo.run("log", "--item", "S01", "--json")[1])]
+      self.assertIn("uncite", actions)
+
+  def test_Show_ResolvesCitations(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "First")
+      repo.run("add", "Second")
+      repo.run("catalog", "add", "--kind", "goal", "Ship it", "--body", "Soon.")
+      repo.run("catalog", "cite", "S02", "C01")
+      repo.run("catalog", "cite", "S01", "C01")
+      state = repo.state()
+      state.index.require("S02").status = "done"
+      state.save_index()
+      code, out, err = repo.run("catalog", "show", "C01", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out)["cited_by"], ["S01", "S02"])
+      code, out, err = repo.run("show", "S01", "--json")
+      self.assertEqual((code, err), (0, ""))
+      shown = json.loads(out)["citations"]
+      self.assertEqual(shown, [{
+        "id": "C01",
+        "kind": "goal",
+        "title": "Ship it",
+        "status": "active",
+        "reason": "",
+        "successor": "",
+      }])
+
+  def test_Render_RetiredAssumptionAndDecision_CallOutOnTheRowAndSlice(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Ship", "--findings", "G1")
+      repo.run("promote", "S01")
+      repo.run("catalog", "add", "--kind", "goal", "Ship it")
+      repo.run("catalog", "add", "--kind", "assumption", "One file")
+      repo.run("catalog", "add", "--kind", "decision", "JSON")
+      repo.run("catalog", "add", "--kind", "requirement", "Stdlib")
+      repo.run("catalog", "retire", "C02", "--reason", "Wrong")
+      repo.run("catalog", "retire", "C03", "--reason", "Replaced")
+      repo.run("catalog", "retire", "C04", "--reason", "Dropped")
+      bare = repo.run("show", "S01")[1]
+      self.assertNotIn("Cites:", bare)
+      repo.run("catalog", "cite", "S01", "C01", "C02", "C03", "C04")
+      text = repo.run("show", "S01")[1]
+      self.assertIn(
+        "Cites: C01 goal: Ship it, C02 assumption: One file (retired), "
+        "C03 decision: JSON (retired), C04 requirement: Stdlib",
+        text,
+      )
+      state = repo.state()
+      roadmap = render.render_roadmap(
+        state.index, state.config, state.template("roadmap.md"), state.template("row.md"),
+      ).decode("utf-8")
+      html = render.render_html(state.index, state.config).decode("utf-8")
+      for body in (roadmap, html):
+        self.assertIn("retired assumption C02", body)
+        self.assertIn("retired decision C03", body)
+        self.assertNotIn("retired requirement", body)
+        self.assertNotIn("retired goal", body)
+
+  def test_Verify_DanglingCite_IsAnError(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Ship")
+      repo.run("catalog", "add", "--kind", "goal", "Ship it")
+      repo.run("catalog", "cite", "S01", "C01")
+      code, out, _ = repo.run("verify", "--json")
+      self.assertEqual(code, 0, out)
+      state = repo.state()
+      state.index.require("S01").cites.append("C99")
+      state.save_index()
+      code, out, _ = repo.run("verify", "--json")
+      self.assertEqual(code, 1)
+      self.assertIn("cites unknown id C99", _messages(json.loads(out)))
+
+
 if __name__ == "__main__":
   unittest.main()
