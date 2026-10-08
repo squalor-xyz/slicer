@@ -499,6 +499,15 @@ class AiInstructionsTests(unittest.TestCase):
       "it leaves out what this skill already says.",
     )
 
+  def test_AgentsGuide_Onboarding_DoesNotRequireTheLongDocs(self) -> None:
+    text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
+    opening = " ".join(text.split("## Install", 1)[0].split())
+    roadmap = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
+    self.assertNotIn("before changing anything non-trivial", opening)
+    self.assertNotIn("Read README.md", roadmap)
+    self.assertIn("one command", roadmap)
+    self.assertIn("docs/agents.md", roadmap)
+
   def test_AgentsGuide_UsesTheBoundedPickup_NotNextThenShow(self) -> None:
     text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
     section = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]

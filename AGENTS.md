@@ -1,7 +1,6 @@
 # AGENTS.md
 
-Project guidance for slicer. Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing
-anything non-trivial; it explains the invariants this file only names.
+Project guidance for slicer. The invariants are the list under "What a change must not break". Open ARCHITECTURE.md only when a change touches one of them.
 
 ## Install
 
@@ -96,8 +95,7 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 
 This repo tracks its own roadmap with slicer; that is also the end-to-end test.
 
-Read README.md and ARCHITECTURE.md first. Use `slicer ai instructions` for
-onboarding; [docs/agents.md](docs/agents.md) has the command/JSON contracts.
+Use `slicer ai instructions` for onboarding. The invariants named in this file are the session reading. Open ARCHITECTURE.md only when a change touches one of them, and open docs/agents.md only for the one command whose JSON contract you are changing.
 
 To pick up existing work, run this from the checkout root (`slicer sections` lists
 this project's headings):

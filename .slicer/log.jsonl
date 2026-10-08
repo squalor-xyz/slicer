@@ -1135,3 +1135,7 @@
 {"when": "2026-10-08T15:44:08Z", "item": "s238", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-08T15:56:22Z", "item": "s238", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-08T15:57:02Z", "item": "s238", "action": "status", "from": "reviewing", "to": "done", "note": "Full discover passed: 1513 tests, 1 skipped, and wrote .venv/affected-map.json for that HEAD. A failed discover does not create or replace a map, and a nested runner does not write the checkout map. slicer check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-08T17:40:50Z", "item": "s239", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-08T17:45:19Z", "item": "s239", "action": "note", "from": "", "to": "", "note": "Ready for review: the two AGENTS.md onboarding sentences are", "by": "Jon Robbins"}
+{"when": "2026-10-08T17:45:19Z", "item": "s239", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-08T17:45:26Z", "item": "s239", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
