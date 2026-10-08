@@ -1117,3 +1117,8 @@
 {"when": "2026-10-07T20:56:17Z", "item": "s235", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-07T21:06:54Z", "item": "s235", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-07T21:10:35Z", "item": "s235", "action": "status", "from": "reviewing", "to": "done", "note": "Reviewed and merged: landing steps live in docs/landing.md, AGENTS.md keeps a stub; roadmap section 3317 bytes under the 3800 cap. Full suite 1494 OK (1 skipped), check ok, diff --check clean.", "by": "Jon Robbins"}
+{"when": "2026-10-08T12:14:07Z", "item": "s236", "action": "add", "from": "", "to": "open", "note": "Add a catalog of project-knowledge records"}
+{"when": "2026-10-08T12:14:07Z", "item": "s237", "action": "add", "from": "", "to": "open", "note": "Cite catalog records from roadmap items"}
+{"when": "2026-10-08T12:14:45Z", "item": "s236", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-08T13:07:03Z", "item": "s236", "action": "note", "from": "", "to": "", "note": "Ready for review: catalog records for goals, non-goals, requ", "by": "Jon Robbins"}
+{"when": "2026-10-08T13:07:03Z", "item": "s236", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -3,12 +3,13 @@
 Two branches that each file or edit anything overlap in the one index file even
 when they touched different items or different fields of one item, and Git's line
 merge can only call that a conflict. The driver merges the three versions it is
-handed by identity instead: items by id, object fields by name. A value changed on
-one side takes that change; equal changes coalesce; only a value both sides changed
-differently conflicts, and then only at that field. Lists and prose strings are
-atomic, so two different edits to one list are never guessed into one. Item order
-follows the base unless exactly one side reordered it. `next_id` is the largest of
-the three (S191): an id is never reused.
+handed by identity instead: items by id, catalog records by id, object fields by
+name. A value changed on one side takes that change; equal changes coalesce; only
+a value both sides changed differently conflicts, and then only at that field.
+Lists and prose strings are atomic, so two different edits to one list are never
+guessed into one. `cites` stays one of those lists. Item order and catalog-record
+order follow the base unless exactly one side reordered them. `next_id` and
+`catalog.next_id` are each the largest of the three: an id is never reused.
 
 A merge that would leave the index inconsistent -- two ids for one filing key, ids
 that differ only in case, a dependency on an item the merge removed -- conflicts at
@@ -29,7 +30,7 @@ from typing import Any
 
 from slicer import graph, ids as idscheme, jsonio, vcs
 from slicer.errors import StateError
-from slicer.model import Index
+from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, Index, successor_cycles
 
 _MISSING: Any = object()
 
@@ -103,12 +104,38 @@ class _Merge:
         value = self._items(*sides, [*path, key])
       elif top and key == "next_id" and all(type(s) is int for s in sides):
         value = max(sides)
+      elif path == ["catalog"] and key == "records":
+        listed = self._record_lists(sides, [*path, key])
+        value = self._value(*sides, [*path, key]) if listed is None else listed
+      elif path == ["catalog"] and key == "next_id":
+        counted = self._largest_counter(sides)
+        value = self._value(*sides, [*path, key]) if counted is None else counted
       else:
         value = self._value(*sides, [*path, key])
       if value is not _MISSING:
         out[key] = value
     order = self._order(list(base), list(ours), list(theirs), set(out), [*path], False)
     return {key: out[key] for key in order}
+
+  def _largest_counter(self, sides: tuple[Any, Any, Any]) -> int | None:
+    """The larger catalog counter. A counter that exists on only one side is a
+    normal field edit; both sides setting it, or all three, take the max."""
+    if all(type(side) is int for side in sides):
+      return max(sides)
+    if sides[0] is _MISSING and type(sides[1]) is int and type(sides[2]) is int:
+      return max(sides[1], sides[2])
+    return None
+
+  def _record_lists(self, sides: tuple[Any, Any, Any], path: list[str]) -> list[dict[str, Any]] | None:
+    """Catalog records merge by id, the same way items do. A missing side is empty."""
+    if not all(side is _MISSING or isinstance(side, list) for side in sides):
+      return None
+    if not any(isinstance(side, list) for side in sides):
+      return None
+    return self._items(
+      *(side if isinstance(side, list) else [] for side in sides),
+      path,
+    )
 
   def _items(self, base, ours, theirs, path: list[str]) -> list[dict[str, Any]]:
     by_id = [{item["id"]: item for item in side} for side in (base, ours, theirs)]
@@ -204,6 +231,37 @@ def _problems(doc: dict[str, Any]) -> list[tuple[str, list[str]]]:
   water = idscheme.high_water([item.id for item in index.items], index.id_prefix)
   if index.next_id < water:
     found.append((f"next_id {index.next_id} is at or below an id in use", []))
+  catalog = index.catalog
+  if catalog.id_prefix.casefold() == index.id_prefix.casefold():
+    found.append((
+      f"catalog id prefix {catalog.id_prefix!r} matches the item prefix", [],
+    ))
+  folded: dict[str, list[str]] = defaultdict(list)
+  item_ids = {item.id.casefold() for item in index.items}
+  for record in catalog.records:
+    folded[record.id.casefold()].append(record.id)
+    if record.id.casefold() in item_ids:
+      found.append((f"{record.id} collides with an item id", []))
+    if record.successor and catalog.get(record.successor) is None:
+      found.append((f"{record.id} successor unknown id {record.successor}", []))
+    elif record.successor:
+      other = catalog.get(record.successor)
+      if other is not None and other.kind != record.kind:
+        found.append((f"{record.id} successor {other.id} is a different kind", []))
+    if record.status == CATALOG_RETIRED and not record.reason.strip():
+      found.append((f"{record.id} is retired without a reason", []))
+    if record.status == CATALOG_ACTIVE and record.reason.strip():
+      found.append((f"{record.id} is active and has a retire reason", []))
+  for same in folded.values():
+    if len(same) > 1:
+      found.append((f"catalog ids {' and '.join(same)} are not unique", []))
+  for cycle in successor_cycles(catalog.records):
+    found.append((f"successor cycle {' -> '.join(cycle)}", []))
+  catalog_water = idscheme.high_water(
+    [record.id for record in catalog.records], catalog.id_prefix,
+  )
+  if catalog.next_id < catalog_water:
+    found.append((f"catalog next_id {catalog.next_id} is at or below an id in use", []))
   return found
 
 

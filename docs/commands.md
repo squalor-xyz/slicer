@@ -45,7 +45,8 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `note-attest ID --note-id NOTE --owner NAME` | attest an item note as `human:NAME`; a workflow convention, not caller authentication; supports `--render` and `--strict` |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
-| `goals` | print the project's goals and non-goals together; supports `--json` |
+| `goals [--retired]` | print the project's goals and non-goals prose together, plus active goal and non-goal records; `--retired` includes retired ones. JSON keeps `goals` and `non_goals` and adds `records.goal` and `records.non_goal` |
+| `catalog` | add, list, show, edit, retire, and move project-knowledge records (goals, non-goals, requirements, constraints, decisions, assumptions). See [Catalog](#catalog) |
 | `start ID [ID ...] [--note TEXT] [--owner NAME]` | mark an item in progress and claim it (owner and time). The owner is `--owner`, otherwise `SLICER_CLAIM_OWNER`, otherwise `claim_owner` in config, otherwise the git user name, otherwise the worktree name; a blank value falls through and one with a newline is `usage`. A second start does not refresh the claim. The owner is also recorded as `by` on the history entry |
 | `release ID [ID ...] [--owner NAME]` | clear a claim without changing status; `--owner` names who released it in history (`by`). An item that was in progress stays in progress and lists as `*` |
 | `handoff ID [ID ...] [--note TEXT] [--owner NAME] [--render] [--strict] [--check]` | hand a started slice to review (`--owner` names who handed it off, as `by` in history): status becomes `review_status` and the claim is cleared. `next` skips review items and dependents stay blocked until `done`; a reviewer picks one up with `next --status review --start` (or `start ID`), which moves it to `reviewing_status` (also out of plain `next`). `handoff` refuses a reviewing item. `--check` with `--render` runs `slicer check` after the change lands: stdout stays the item, a failure exits 1 with the findings on stderr, and `--check` without `--render` is `usage` and writes nothing |
@@ -389,6 +390,53 @@ it turns that surprise into a decision.
 Retiring needs a status to move into. A tracking directory created before `remove` existed
 gains a `retired` status automatically on load — only that one key, so a project that
 dropped some other status does not get it back.
+
+## Catalog
+
+Project knowledge that is not a slice lives in `catalog` on the index: goals,
+non-goals, requirements, constraints, decisions, and assumptions. Each record
+has its own id (`C01`, prefix `C`), a title, one markdown body, and a status of
+`active` or `retired`. The slice queue does not include them. `slicer list`,
+`slicer next`, `slicer stats`, and `slicer deps` ignore them.
+
+```
+slicer catalog add --kind goal "Ship the editor" --body "One file, no service."
+slicer catalog list [--kind non-goal] [--retired]
+slicer catalog show C01
+slicer catalog edit C01 --title "..." --body "..."
+slicer catalog retire C01 --reason "..." [--successor C02]
+slicer catalog move C03 --before C01
+```
+
+`--kind` accepts `non-goal` and stores `non_goal`. `add` and `edit` take the body
+from `--body`, `--file`, or `--stdin`. `edit` with none of those, and no `--title`,
+opens `$EDITOR` on the body. `list` shows active records in editorial order;
+`--retired` appends retired records. `move` stays inside one kind. `--before` and
+`--after` name another record of that kind.
+
+Retire requires a nonempty reason. `--successor` names one later record of the
+same kind. A different kind, an unknown id, or a cycle is refused and nothing is
+written. A retired record's title, body, reason, and successor stay as they were.
+There is no purge: the id is never reused. `slicer log --item C01` shows the
+`catalog` history; the note is `add`, `edit`, `retire`, or `move`.
+
+`slicer goals` still prints the prose blocks. It also lists goal and non-goal
+records, active unless `--retired` is set. Requirements and the other kinds are
+read with `slicer catalog`.
+
+The roadmap renders goal and non-goal records under the existing prose headings,
+prose first, then active records, then retired ones. The other four kinds render
+from `{{catalog}}` in the roadmap template, between non-goals and the summary.
+An empty catalog leaves the roadmap bytes unchanged. A project created before
+this template slot needs `{{catalog}}` in `.slicer/templates/roadmap.md` for
+those four kinds to appear; goal and non-goal records render without it.
+
+The index merge driver merges catalog records by id, the way it merges items,
+and takes the larger `catalog.next_id`. Record order follows the base unless
+exactly one side reordered it.
+
+Index schema is 8. An index without `catalog` still loads. The next save writes
+the object and the new schema, which an older slicer refuses.
 
 ## Roadmap prose
 

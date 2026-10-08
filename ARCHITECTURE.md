@@ -53,8 +53,8 @@ Config schema is `5` (`src/slicer/config.py`), protecting the optional `issues_r
 destination for `feedback-report`; schema 4 added `satisfies_dependencies`, schema 3
 `handoff_requires_note_kind`, and schema 2 the `note_kinds` whitelist. Older configs still
 load with the historical defaults (no report requirement, `done_status` alone satisfying
-dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `7`
-(`SCHEMA_VERSION` in `src/slicer/model.py`): items store structured `note_records`.
+dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `8`
+(`SCHEMA_VERSION` in `src/slicer/model.py`). Schema 7 gave items structured `note_records`.
 Schema 5 adds optional `fields.discovered_from`, an existing item ID independent
 of dependency and priority edges. Missing fields load empty without writes;
 nonempty dangling sources fail integrity checks. Purge guards source references,
@@ -78,7 +78,13 @@ Rendering projects stored metadata without consulting the clock.
 Public item serialization keeps `notes` as display strings alongside `note_records`;
 index persistence uses a separate serialization without the derived strings.
 Legacy slice notes remain strings. `tests/test_schema.py` and `tests/test_note.py`
-cover read-only lifting, upgrades and future-schema refusal. `done_dir` and
+cover read-only lifting, upgrades and future-schema refusal.
+Schema 8 adds a `catalog` object — project-knowledge records with their own id
+counter, prefix `C`, and the kinds goal, non-goal, requirement, constraint,
+decision, and assumption — plus optional `fields.cites` on items. Records are
+not roadmap items. Missing `catalog` and `cites` load empty without writes.
+The next index save stamps 8. Older readers refuse that schema rather than
+dropping the records. `done_dir` and
 `retired_dir` are config, not constants.
 
 ## Invariants

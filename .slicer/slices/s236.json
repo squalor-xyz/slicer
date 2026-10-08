@@ -1,0 +1,41 @@
+{
+  "id": "s236",
+  "title": "Add a catalog of project-knowledge records",
+  "lead": [
+    "Goals, non-goals, requirements, constraints, decisions, and assumptions become records with their own ids. The slice queue is unchanged. Goals and non-goals prose stays the narrative above those records."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "L",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `catalog cite` and `catalog uncite`, the slice Cites line, the retired assumption or decision callout on a roadmap row, agent instructions, and the README command row. `fields.cites` is stored so the index schema bumps once; nothing writes it yet.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A prose blob cannot be cited, retired, or reordered one statement at a time. Records give each statement a stable id and a lifecycle without putting planning rows on `slicer next`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/model.py` holds `Catalog`, `CatalogRecord`, schema 8, and `fields.cites`.\n- `src/slicer/ops.py` adds, edits, retires, and moves records.\n- `src/slicer/cli.py` adds `slicer catalog` and extends `slicer goals`.\n- `src/slicer/verify.py` checks catalog ids, successors, and retired reasons.\n- `src/slicer/mergeindex.py` merges `catalog.records` by id and takes the larger `catalog.next_id`.\n- `src/slicer/render.py` renders records under the prose and in `{{catalog}}`.\n- `src/slicer/templates/roadmap.md` and this repo's `.slicer/templates/roadmap.md` gain the slot.\n- `docs/commands.md`, `ARCHITECTURE.md`, and `CHANGELOG.md`.\n- `tests/test_catalog.py`, plus schema, goals, and merge coverage."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Catalog_AddEditRetireMove_KeepsKindOrderAndHistory`\n2. `test_Catalog_Successor_RefusesAnotherKindAMissingIdAndACycle`\n3. `test_Catalog_LoadWithoutCatalogOrCites_DoesNotWrite`\n4. `test_Render_EmptyCatalog_MatchesTemplateWithoutTheSlot`\n5. `test_Merge_DisjointCatalogRecords_KeepsBothAndTheLargerCounter`"
+    },
+    {
+      "heading": "Implement",
+      "body": "Index schema is 8. A missing `catalog` object and a missing `fields.cites` load empty and do not write. The next index save stamps 8.\n\n`catalog` stores `next_id`, `id_prefix` `C`, `id_width` 2, and `records`. A record is `id`, `kind`, `title`, `body`, `status`, `reason`, `successor`. Kinds are `goal`, `non_goal`, `requirement`, `constraint`, `decision`, `assumption`. Status is `active` or `retired`.\n\n```\nslicer catalog add --kind goal \"Title\" --body \"text\"\nslicer catalog list --kind non-goal --retired\nslicer catalog show C01\nslicer catalog edit C01 --title \"Title\" --body \"text\"\nslicer catalog retire C01 --reason \"why\" --successor C02\nslicer catalog move C03 --before C01\n```\n\n`--kind` accepts `non-goal` and stores `non_goal`. `list` shows active records in editorial order; `--retired` appends retired ones. `move` stays inside one kind and preserves the relative order of other kinds. Retire requires a nonempty reason, may name one same-kind successor, and freezes the record. A successor cycle, a different kind, or an unknown id is refused before writing. Retired records are not purged and their ids are not reused.\n\n`slicer goals` keeps `goals` and `non_goals` and adds active goal and non-goal records. `--retired` includes retired ones. With no records, its text stays as it is now.\n\nEmpty records leave `ROADMAP.md` and `ROADMAP.html` byte-identical, so the render format stays 1. Goal and non-goal records render under the existing headings, prose first. The other four kinds render from `{{catalog}}`, one heading per nonempty kind, active records then retired. History uses action `catalog` with note `add`, `edit`, `retire`, or `move`.\n\n`check` fails when a successor names nothing, the successor's kind differs, a successor cycle exists, a retired record has a blank reason, an active record has a reason, a catalog id collides with an item id, or `catalog.next_id` would reuse an id. The new error code is `no_such_record`.\n\nAllocation uses the catalog counter and floors it from sibling worktrees the way item ids do. `list`, `next`, `stats`, and `deps` ignore records."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 tests/affected.py --run`, then `python3 -m unittest discover -s tests -t tests`. `slicer check` passes. `git diff --check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s236-catalog` in `.worktrees/s236`. Do not commit, merge, or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}

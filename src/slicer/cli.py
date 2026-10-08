@@ -761,6 +761,122 @@ def _id_floor(state: store.State) -> int:
   return ids.floor_from(siblings, state.index.id_prefix)
 
 
+def _catalog_floor(state: store.State) -> int:
+  """The highest catalog counter among siblings that use this catalog prefix."""
+  prefix = state.index.catalog.id_prefix.casefold()
+  siblings = [index for _, index in store.sibling_ids(state.root)]
+  return max(
+    (
+      index.catalog.next_id for index in siblings
+      if index.catalog.id_prefix.casefold() == prefix
+    ),
+    default=0,
+  )
+
+
+def _catalog_body(args: argparse.Namespace) -> str:
+  """The record body from exactly one of --body, --file, or --stdin."""
+  if sum((args.body is not None, args.file is not None, args.stdin)) > 1:
+    raise StateError("choose only one of --body, --file, or --stdin", code="usage")
+  if args.body is not None:
+    return args.body
+  if args.file:
+    return _read_user_file(args.file).rstrip("\n")
+  if args.stdin:
+    return sys.stdin.read().rstrip("\n")
+  return ""
+
+
+def _catalog_lines(records: list[model.CatalogRecord], *, heading: bool = True) -> list[str]:
+  headings = dict(model.CATALOG_HEADINGS)
+  lines: list[str] = []
+  kind = ""
+  for record in records:
+    if heading and record.kind != kind:
+      kind = record.kind
+      if lines:
+        lines.append("")
+      lines.append(headings[kind])
+    mark = "  retired" if record.status == model.CATALOG_RETIRED else ""
+    lines.append(f"  {record.id}  {record.title}{mark}")
+    if record.body.strip():
+      lines.extend(f"    {line}" for line in record.body.splitlines())
+    if record.status == model.CATALOG_RETIRED:
+      successor = f" Successor: {record.successor}." if record.successor else ""
+      lines.append(f"    Retired: {record.reason}.{successor}")
+  return lines
+
+
+def cmd_catalog_add(args: argparse.Namespace) -> int:
+  state = _state(args)
+  record = ops.catalog_add(
+    state, args.kind, args.title, _catalog_body(args), id_floor=_catalog_floor(state),
+  )
+  _emit(args, record.to_dict(), f"added {record.id}  {record.kind}  {record.title}")
+  return OK
+
+
+def cmd_catalog_list(args: argparse.Namespace) -> int:
+  state = _state(args)
+  if args.kind:
+    kinds = (model.canonical_kind(args.kind),)
+  else:
+    kinds = model.CATALOG_KINDS
+  records: list[model.CatalogRecord] = []
+  for kind in kinds:
+    records.extend(state.index.catalog.of_kind(kind, retired=args.retired))
+  text = "\n".join(_catalog_lines(records)) or "no catalog records"
+  _emit(args, [record.to_dict() for record in records], text)
+  return OK
+
+
+def cmd_catalog_show(args: argparse.Namespace) -> int:
+  state = _state(args)
+  record = state.index.catalog.require(args.id)
+  cited_by = [item.id for item in state.index.items if args.id in item.cites]
+  payload = record.to_dict() | {"cited_by": cited_by}
+  lines = _catalog_lines([record])
+  if cited_by:
+    lines.append(f"  cited by: {', '.join(cited_by)}")
+  _emit(args, payload, "\n".join(lines))
+  return OK
+
+
+def cmd_catalog_edit(args: argparse.Namespace) -> int:
+  state = _state(args)
+  record = state.index.catalog.require(args.id)
+  if record.status != model.CATALOG_ACTIVE:
+    raise StateError(
+      f"{record.id} is retired; a retired record stays as it was", code="state",
+    )
+  body_given = args.body is not None or args.file is not None or args.stdin
+  if args.title is None and not body_given:
+    body = _via_editor(record.body)
+    if body is None:
+      raise StateError("editor exited non-zero; catalog unchanged", code="editor_aborted")
+  elif body_given:
+    body = _catalog_body(args)
+  else:
+    body = None
+  updated = ops.catalog_edit(state, args.id, title=args.title, body=body)
+  _emit(args, updated.to_dict(), f"updated {updated.id}")
+  return OK
+
+
+def cmd_catalog_retire(args: argparse.Namespace) -> int:
+  state = _state(args)
+  record = ops.catalog_retire(state, args.id, args.reason, args.successor or "")
+  _emit(args, record.to_dict(), f"retired {record.id}")
+  return OK
+
+
+def cmd_catalog_move(args: argparse.Namespace) -> int:
+  state = _state(args)
+  record = ops.catalog_move(state, args.id, before=args.before, after=args.after)
+  _emit(args, record.to_dict(), f"moved {record.id}")
+  return OK
+
+
 def cmd_next_id(args: argparse.Namespace) -> int:
   state = _state(args)
   item_id = ids.format_next(state.index, floor=_id_floor(state))
@@ -2129,14 +2245,29 @@ def cmd_config(args: argparse.Namespace) -> int:
 
 
 def cmd_goals(args: argparse.Namespace) -> int:
-  """Project direction in one read: the goals and non_goals prose blocks."""
+  """Project direction in one read: prose, plus goal and non-goal records."""
   state = _state(args)
-  goals, non_goals = state.index.goals, state.index.non_goals
+  retired = bool(args.retired)
+  grouped = {
+    "goal": state.index.catalog.of_kind("goal", retired=retired),
+    "non_goal": state.index.catalog.of_kind("non_goal", retired=retired),
+  }
   blocks = []
-  for title, text in (("Goals", goals), ("Non-goals", non_goals)):
+  for title, text, kind in (
+    ("Goals", state.index.goals, "goal"),
+    ("Non-goals", state.index.non_goals, "non_goal"),
+  ):
     body = text.rstrip("\n") if text.strip() else "  (none set)"
-    blocks.append(f"{title}:\n{body}")
-  _emit(args, {"goals": goals, "non_goals": non_goals}, "\n\n".join(blocks))
+    extra = _catalog_lines(grouped[kind], heading=False)
+    blocks.append(f"{title}:\n{body}" + (f"\n\n{extra}" if extra else ""))
+  payload = {
+    "goals": state.index.goals,
+    "non_goals": state.index.non_goals,
+    "records": {
+      kind: [record.to_dict() for record in records] for kind, records in grouped.items()
+    },
+  }
+  _emit(args, payload, "\n\n".join(blocks))
   return OK
 
 
@@ -2937,7 +3068,50 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("check", cmd_check, "the CI gate: render, sync and integrity")
   sp.add_argument("--diff", action="store_true", help="show a diff for each stale file")
 
-  add("goals", cmd_goals, "show project goals and non-goals")
+  sp = add("goals", cmd_goals, "show project goals and non-goals, and their records")
+  sp.add_argument("--retired", action="store_true", help="include retired goal and non-goal records")
+
+  sp = sub.add_parser("catalog", help="project-knowledge records", parents=[common])
+  csub = sp.add_subparsers(dest="catalog_command", required=True)
+
+  def cadd(name: str, fn, help_: str, *, mutate: bool = False) -> argparse.ArgumentParser:
+    inner = csub.add_parser(name, help=help_, parents=[common])
+    inner.set_defaults(func=_mutating(fn) if mutate else fn)
+    _json_flags(inner)
+    if mutate:
+      return _strict_flag(_render_flag(inner))
+    return inner
+
+  inner = cadd("add", cmd_catalog_add, "add one record", mutate=True)
+  inner.add_argument("--kind", required=True, help="goal, non-goal, requirement, constraint, decision, or assumption")
+  inner.add_argument("title")
+  inner.add_argument("--body", help="record body; cannot combine with --file or --stdin")
+  inner.add_argument("--file")
+  inner.add_argument("--stdin", action="store_true")
+
+  inner = cadd("list", cmd_catalog_list, "list records")
+  inner.add_argument("--kind", help="limit to one kind; non-goal and non_goal are the same")
+  inner.add_argument("--retired", action="store_true", help="append retired records after the active ones")
+
+  cadd("show", cmd_catalog_show, "print one record").add_argument("id")
+
+  inner = cadd("edit", cmd_catalog_edit, "edit an active record's title or body", mutate=True)
+  inner.add_argument("id")
+  inner.add_argument("--title", help="replacement title")
+  inner.add_argument("--body", help="replacement body; cannot combine with --file or --stdin")
+  inner.add_argument("--file")
+  inner.add_argument("--stdin", action="store_true")
+
+  inner = cadd("retire", cmd_catalog_retire, "retire a record and keep its id", mutate=True)
+  inner.add_argument("id")
+  inner.add_argument("--reason", required=True, help="why it is no longer in force")
+  inner.add_argument("--successor", help="a later record of the same kind")
+
+  inner = cadd("move", cmd_catalog_move, "reorder a record within its kind", mutate=True)
+  inner.add_argument("id")
+  place = inner.add_mutually_exclusive_group(required=True)
+  place.add_argument("--before", metavar="ID")
+  place.add_argument("--after", metavar="ID")
 
   add("stats", cmd_stats, "counts by status, size, tree and pass")
 

@@ -117,6 +117,7 @@ reproduce is never half-migrated.
 | `verify` | check the index for consistency (and against git unless git_check is off) |
 | `check` | the CI gate: render, sync and integrity |
 | `goals` | show project goals and non-goals |
+| `catalog` | project-knowledge records: goals, non-goals, requirements, constraints, decisions, assumptions |
 | `stats` | counts by status, size, tree and pass |
 | `status` | next item, progress, and blockers in one view |
 | `log` | recent history, newest first |
