@@ -1174,3 +1174,4 @@
 {"when": "2026-10-09T17:04:36Z", "item": "s242", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-10-09T17:09:53Z", "item": "s242", "action": "note", "from": "", "to": "", "note": "Ready for review: init accepts --id-prefix and --id-width, v", "by": "Jon Robbins"}
 {"when": "2026-10-09T17:09:54Z", "item": "s242", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-09T17:45:48Z", "item": "s242", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

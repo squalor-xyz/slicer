@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-229 items · done 224 · retired 4 · review 1
+229 items · done 224 · retired 4 · reviewing 1
 
 ## v1.7
 
@@ -221,7 +221,7 @@ Later (revisit after orchestrator use)
 |---|---|---|---|---|---|---|---|
 | 126 | S03 | Export back to a legacy markdown index for anything still expecting one | M | - | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
 | 127 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
-| 128 | [s242](slices/s242.md) | init cannot choose the id prefix of a new queue | S | 1 | slicer | squalor-xyz/suite field report (2026-10-09), squalplot queue | review |
+| 128 | [s242](slices/s242.md) | init cannot choose the id prefix of a new queue | S | 1 | slicer | squalor-xyz/suite field report (2026-10-09), squalplot queue | reviewing |
 
 ---
 

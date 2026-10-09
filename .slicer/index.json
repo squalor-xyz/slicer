@@ -7289,7 +7289,7 @@
       "id": "s242",
       "title": "init cannot choose the id prefix of a new queue",
       "short_title": "init cannot choose the id prefix of a new queue",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7305,7 +7305,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-09T17:45:48Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
