@@ -59,6 +59,9 @@ class TempRepo:
       self._git("init", "-q")
       self._git("config", "user.email", "test@example.invalid")
       self._git("config", "user.name", "Test")
+      # A background `git maintenance` run creates a lock and deletes it.
+      # Python 3.11's shutil.rmtree raises if that happens during cleanup.
+      self._git("config", "maintenance.auto", "false")
 
   def _git(self, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
