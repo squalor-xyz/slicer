@@ -1,0 +1,41 @@
+{
+  "id": "s241",
+  "title": "Print the slice relay with ai relay",
+  "lead": [
+    "`slicer ai relay` prints the slice relay: one orchestrating session runs a slice through implementer, reviewer, architect and gate subagents, using slicer's own commands. Like `ai instructions`, it needs no project, follows the project's finish policy, and supports `--json`."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-09; the slice-relay playbook lives outside slicer, so agents in other projects cannot read it",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** running or spawning agents, a relay run over a whole queue, installing the relay as a skill, a pointer from `ai instructions` or the skill, and any vendor- or model-specific text.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The relay is how the owner runs slices with subagents, but its playbook lives outside slicer, so an agent in another slicer project cannot read it. `ai instructions` covers one agent's loop and says nothing about roles, review gates or who files which notes. Printing a generic relay from slicer puts it next to the commands it uses: `start`, `note`, `handoff`, `next --status review`, `reject` and `done`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: the relay text and `relay_text(finish, required_note_kind)`.\n- `src/slicer/cli.py`: `cmd_ai_relay` and the `relay` subparser under `ai`.\n- `docs/commands.md` (an `ai relay` row), `docs/agents.md` (the `{\"relay\": TEXT}` payload), `README.md` if its `ai` row lists subcommands, and `CHANGELOG.md`.\n- `tests/test_ai.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Relay_OutsideProject_TextAndJsonHaveIdenticalContent`\n2. `test_Relay_HandoffProject_ClosesWithHandoffAndNeverDone`\n3. `test_Relay_DoneProject_ClosesWithDone`\n4. `test_Relay_NamesRolesOrderAndTheGateVerdictLine`\n5. `test_Relay_CommandExamples_AreAcceptedByTheParser`\n6. `test_Relay_NamesNoVendorModelOrOutsidePath`\n7. `test_Relay_ReadsConfigAndIndex_WithoutLockingOrWriting`"
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `relay` as a third `ai` subcommand. Text output is the relay; `--json` returns `{\"relay\": TEXT}` with the same content. It reads the project's policy through `_ai_policy` exactly as `ai instructions` does: no project, or an unreadable config or index, prints the generic text and warns on stderr. It takes no lock and writes nothing.\n\nThe text is generic and mapped to slicer. It has these parts:\n\n- **Roles.** The orchestrator (the session the owner talks to) briefs every agent, reads every report and the lines it cites, reruns the tests, files notes on other items, and writes no product code. The implementer owns one slice: it starts the slice, writes the failing tests and watches them go red, implements, mutation-checks each new test, and closes the slice. The reviewer is read-only and reviews correctness, test strength and direction against `slicer goals`. The architect is read-only: it confirms each finding was fixed and reviews the shape. A reviewer never wrote code in this slice. The owner chooses the models.\n- **Order.** Worktree, `start ID --render --strict`, red tests, implementation, review, accepted findings back to the implementer, architect, then gate. Close with `note` plus the finish step. Commit, merge and push only when the owner authorizes them.\n- **Gate.** Name the diff under review, and list the criteria: earlier blockers resolved with a proving test, no new issue of medium severity or worse, tests green, and docs matching the code. The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`. FAIL goes back to the implementer and then the gate again. Any implementer change after a review needs another gate.\n- **Every brief.** The slice read through `show ID --json --lean`, the tracking rule (reuse `TRACKING_RULE`), workspace limits, and the report format: diff stat, red lines, test counts, a mutation table and deviations. Reviewers get the direction sources: goals and the queue.\n- **Stop conditions.** The same slice fails its gate three times, the spec turns out ambiguous or wrong, or an owner decision is needed.\n\nThe close step follows `implement_finish`. Under `handoff`, the implementer runs `handoff ID --render --check` and the text never names `done`. A failed review is `reject ID --note \"VERDICT: FAIL - reason\"`. When `handoff_requires_note_kind` is set, reuse `handoff_policy_text` so the implementer files that note kind for the current attempt. Under `done`, the close is `done ID --note ... --render --check`.\n\nThe text names no vendor, model, external repository or outside path. Every slicer command example parses."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 tests/affected.py --run`, then `python3 -m unittest discover -s tests -t tests`. `slicer check` passes. In this repo, which finishes with handoff, the new relay command ends with the handoff step. From a directory outside any project, it prints the done close and a stderr warning. `git diff --check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s241-ai-relay` in `.worktrees/s241`. Do not commit, merge, or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}

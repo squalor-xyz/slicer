@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 241,
+  "next_id": 242,
   "preamble": "",
   "passes": [
     {
@@ -7229,6 +7229,35 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s241",
+      "title": "Print the slice relay with ai relay",
+      "short_title": "Print the slice relay with ai relay",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-09; the slice-relay playbook lives outside slicer, so agents in other projects cannot read it",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.7",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }
