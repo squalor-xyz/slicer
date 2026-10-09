@@ -16,6 +16,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import affected
+from support import remove_temp_repo
 
 
 DISCOVER = "python3 -m unittest discover -s tests -t tests"
@@ -42,19 +43,6 @@ def _load_sample(directory: Path):
   assert spec.loader is not None
   spec.loader.exec_module(module)
   return module
-
-
-def _remove_tree(directory: Path) -> None:
-  """Remove a temp repo. Python 3.11 raises if a git lock vanishes mid-walk."""
-  if sys.version_info >= (3, 12):
-    shutil.rmtree(directory)
-    return
-
-  def onerror(func, path, exc_info):
-    if not isinstance(exc_info[1], FileNotFoundError):
-      raise exc_info[1]
-
-  shutil.rmtree(directory, onerror=onerror)
 
 
 def _run(argv: list[str]) -> tuple[int, str, str]:
@@ -278,7 +266,7 @@ class AffectedTests(unittest.TestCase):
 
   def test_WorkingTree_EditedAndUntrackedLines_ComeFromGit(self) -> None:
     directory = Path(tempfile.mkdtemp())
-    self.addCleanup(_remove_tree, directory)
+    self.addCleanup(remove_temp_repo, directory)
     subprocess.run(["git", "init", "-q"], cwd=directory, check=True)
     subprocess.run(["git", "config", "user.email", "t@example.invalid"], cwd=directory, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=directory, check=True)
@@ -297,7 +285,7 @@ class AffectedTests(unittest.TestCase):
 
   def _git_root(self) -> Path:
     directory = Path(tempfile.mkdtemp())
-    self.addCleanup(_remove_tree, directory)
+    self.addCleanup(remove_temp_repo, directory)
     subprocess.run(["git", "init", "-q"], cwd=directory, check=True)
     subprocess.run(["git", "config", "user.email", "t@example.invalid"], cwd=directory, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=directory, check=True)

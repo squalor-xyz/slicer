@@ -7330,10 +7330,33 @@
       "id": "s243",
       "title": "Python 3.13 test cleanup can fail when git writes into a temp repo",
       "short_title": "3.13 temp-repo cleanup flake",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "0c2893b5-9df6-475e-a050-881a27af84c7",
+          "kind": "",
+          "text": "**2026-10-09** — Git trace experiment: on local Git, a traced commit and non-fast-forward merge with maintenance.auto unset both spawned git maintenance run --auto (commit: --quiet --detach; merge: --no-quiet --detach). With maintenance.auto false, neither spawned maintenance or gc. This confirms the local writer mechanism and suppression; it does not prove the cause of the single Python 3.13 CI failure.",
+          "created_at": "2026-10-09T18:23:09Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "a179706e-a6bd-4cf3-913c-6d19ed67aa4a",
+          "kind": "",
+          "text": "**2026-10-09** — Ready for review: added shared remove_temp_repo cleanup with three total attempts and 10 ms between retries for FileNotFoundError and ENOTEMPTY; TempRepo.close and test_affected Git fixtures use it. Other errors propagate immediately. New simulated-race tests failed before the fix and pass after it, including bounded exhaustion, PermissionError/EIO propagation, and already-removed trees. Git 2.56.0 trace confirms maintenance auto invocation on commit/merge when unset and suppression with maintenance.auto false; original CI cause remains unproven. Python 3.14.8 full discover passed 1544 tests (1 skipped), including test_merge_fields and test_affected. affected.py --run exited 2 because the new worktree had no map, so full discover was run as required. slicer check and git diff --check pass. No src changes or dependencies. CI verification on 3.11–3.14 after landing remains pending.",
+          "created_at": "2026-10-09T18:27:52Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -7352,7 +7375,7 @@
         "importance": 1,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],
