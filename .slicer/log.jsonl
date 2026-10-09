@@ -1149,3 +1149,6 @@
 {"when": "2026-10-09T04:35:32Z", "item": "s240", "action": "set", "from": "", "to": "", "note": "size -→M; trees -→slicer; findings -→owner request, session 2026-10-09; discover() only walks up, so a folder of repos needs one call per project; pass_key v1.6→v1.7"}
 {"when": "2026-10-09T04:35:47Z", "item": "s240", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-09T04:35:51Z", "item": "s240", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-09T04:44:25Z", "item": "s241", "action": "add", "from": "", "to": "open", "note": "Print the slice relay with ai relay"}
+{"when": "2026-10-09T04:44:26Z", "item": "s241", "action": "set", "from": "", "to": "", "note": "size -→S; trees -→slicer; findings -→owner request, session 2026-10-09; the slice-relay playbook lives outside slicer, so agents in other projects cannot read it"}
+{"when": "2026-10-09T04:44:26Z", "item": "s241", "action": "promote", "from": "", "to": "", "note": ""}
