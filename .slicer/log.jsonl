@@ -1175,3 +1175,4 @@
 {"when": "2026-10-09T17:09:53Z", "item": "s242", "action": "note", "from": "", "to": "", "note": "Ready for review: init accepts --id-prefix and --id-width, v", "by": "Jon Robbins"}
 {"when": "2026-10-09T17:09:54Z", "item": "s242", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-09T17:45:48Z", "item": "s242", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-09T17:46:11Z", "item": "s242", "action": "status", "from": "reviewing", "to": "done", "note": "Reviewed init --id-prefix and --id-width, scheme checks, and force retention on empty and populated queues. Initialization now lives in ops.py. Full unittest discover: 1540 passed, 1 skipped. slicer check passed and git diff --check was clean.", "by": "Jon Robbins"}
