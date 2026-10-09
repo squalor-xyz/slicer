@@ -43,7 +43,6 @@ from slicer import (
   render,
   store,
   sync,
-  templates,
   verify,
   vcs,
   workflow,
@@ -449,31 +448,6 @@ def _write_skill(targets: list[Path], content: str, *, force: bool) -> list[str]
   return [str(path) for path in unique]
 
 
-GITATTRIBUTES = """\
-# slicer manages this file. History is append-only, so union-merge combines the
-# lines both sides added instead of conflicting when branches land in parallel.
-log.jsonl merge=union
-
-# render/ is a generated projection of index.json, never merged by hand. The
-# slicer-generated driver keeps the current branch's copy on merge instead of
-# writing conflict markers; re-run `slicer render` after resolving index.json so
-# the kept files match it. The name resolves only once a clone defines the driver
-# (one-time, per clone -- slicer's git allowlist cannot run `git config` for you):
-#   git config merge.slicer-generated.name "keep the current branch's generated files"
-#   git config merge.slicer-generated.driver true
-render/ROADMAP.md merge=slicer-generated
-render/ROADMAP.html merge=slicer-generated
-render/slices/*.md merge=slicer-generated
-
-# index.json is merged by the slicer-index driver, which matches items by id and
-# fields by name: independent edits merge, next_id takes the larger value so ids are
-# never reused, and only a true disagreement stays a conflict. Also defined once per clone:
-#   git config merge.slicer-index.name "keep the larger next_id when merging the index"
-#   git config merge.slicer-index.driver "slicer merge-index %O %A %B"
-index.json merge=slicer-index
-"""
-
-
 def _render_driver_commands() -> list[str]:
   """The per-clone `git config` commands that turn on the merge drivers named in
   `.gitattributes`: the render files (S109) and the index counter (S191). slicer's
@@ -499,46 +473,10 @@ def _render_driver_setup() -> str:
 
 def cmd_init(args: argparse.Namespace) -> int:
   root = Path(args.root or ".").resolve()
-  base = root / store.DIR_NAME
-  if (base / CONFIG_NAME).exists() and not args.force:
-    raise StateError(
-      f"{base} already exists; pass --force to overwrite its config and templates",
-      code="already_exists",
-    )
-  index_path = base / store.INDEX_NAME
-  existing = model.Index.from_dict(jsonio.read(index_path)) if index_path.is_file() else None
-  if existing is None:
-    scheme = Config()
-    prefix, width = scheme.id_prefix, scheme.id_width
-  else:
-    prefix, width = existing.id_prefix, existing.id_width
-  # Resolve --id before any write. A bad id, or a counter move over live items,
-  # leaves config, templates, and the index untouched.
-  next_id = None
-  if args.id is not None:
-    next_id = ids.starting_number(args.id, prefix, width)
-    if existing is not None and existing.items:
-      raise StateError(
-        f"{base} already has items; a starting id would move the counter over live ids. "
-        "Use `add --id` instead",
-        code="state",
-      )
-  cfg = Config()
-  jsonio.write(base / CONFIG_NAME, cfg.to_dict())
-  if existing is None:
-    index = model.Index(id_prefix=cfg.id_prefix, id_width=cfg.id_width)
-    if next_id is not None:
-      index.next_id = next_id
-    jsonio.write(index_path, index.to_dict())
-  elif next_id is not None:
-    existing.next_id = next_id
-    jsonio.write(index_path, existing.to_dict())
-  for name, text in templates.defaults().items():
-    jsonio.write_text(base / store.TEMPLATES_DIR / name, text)
-  jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
-  feedback.ensure_gitignore(root)
-  feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
-  (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
+  base = ops.init_project(
+    root, force=args.force, id_prefix=args.id_prefix,
+    id_width=args.id_width, starting_id=args.id,
+  )
   text = f"initialised {base}"
   if args.id is not None:
     text += f"\nnext id {args.id}"
@@ -2835,7 +2773,9 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
-  sp.add_argument("--id", help="id the first add allocates, such as S21")
+  sp.add_argument("--id-prefix", help="prefix for new ids (default S; --force retains the existing prefix)")
+  sp.add_argument("--id-width", type=int, help="minimum digits in new ids (default 2; --force retains the existing width)")
+  sp.add_argument("--id", help="id the first add allocates, matching the scheme, such as S21 or sp-21")
 
   add("setup-git", cmd_setup_git,
       "print the git config that turns on the merge drivers (run once per clone)")

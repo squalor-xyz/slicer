@@ -39,6 +39,107 @@ class CliTests(unittest.TestCase):
       repo.run("add", "y")
       self.assertEqual([i.id for i in repo.state().index.items], ["S21", "S22"])
 
+  def test_Init_CustomScheme_AllocatesAndPassesCheck(self) -> None:
+    for flags, prefix, width, first in (
+      ((), "S", 2, "S01"),
+      (("--id-prefix", "sp-"), "sp-", 2, "sp-01"),
+      (("--id-prefix", "TASK-", "--id-width", "3", "--id", "TASK-021"), "TASK-", 3, "TASK-021"),
+      (("--id-width", "3"), "S", 3, "S001"),
+    ):
+      with self.subTest(flags=flags), support.TempRepo() as repo:
+        code, out, err = repo.run("init", *flags, "--json")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(set(json.loads(out)), {"root", "dir"})
+        stored = json.loads(repo.read(".slicer/index.json"))
+        self.assertEqual((stored["id_prefix"], stored["id_width"]), (prefix, width))
+        self.assertEqual(json.loads(repo.run("config", "id", "--json")[1])["value"],
+                         {"prefix": prefix, "width": width})
+        self.assertEqual(repo.run("next-id")[1].strip(), first)
+        self.assertEqual(repo.run("render")[0], 0)
+        code, out, err = repo.run("check", "--json")
+        self.assertEqual(code, 0, out + err)
+        self.assertEqual(repo.run("add", "x")[0], 0)
+        self.assertEqual(repo.run("add", "y")[0], 0)
+        self.assertEqual(repo.state().index.items[0].id, first)
+        self.assertEqual(repo.state().index.items[1].id,
+                         f"{prefix}{int(first[len(prefix):]) + 1:0{width}d}")
+        self.assertEqual(repo.state().index.next_id,
+                         int(first[len(prefix):]) + 2)
+        self.assertEqual(repo.run("render")[0], 0)
+        code, out, err = repo.run("check", "--json")
+        self.assertEqual(code, 0, out + err)
+
+  def test_Init_InvalidSchemeOrStartingId_WritesNothing(self) -> None:
+    for flags in (
+      ("--id-prefix", ""), ("--id-prefix", "../sp-"),
+      ("--id-width", "0"), ("--id-width", "-1"), ("--id-width", "abc"),
+      ("--id-prefix", "sp-", "--id", "S21"),
+      ("--id-prefix", "sp-", "--id-width", "3", "--id", "sp-21"),
+    ):
+      with self.subTest(flags=flags), support.TempRepo() as repo:
+        code, out, _ = repo.run("init", *flags, "--json")
+        self.assertEqual(code, 2)
+        self.assertIn(json.loads(out)["error"]["code"], ("usage", "bad_id"))
+        self.assertFalse((repo.root / ".slicer").exists())
+
+  def test_Init_ForceEmptyQueue_ChangesSchemeAndPreservesCounter(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init", "--id", "S21")
+      code, _, err = repo.run("init", "--force", "--id-prefix", "sp-")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("next-id")[1].strip(), "sp-21")
+      code, _, err = repo.run("init", "--force", "--id-width", "3")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("next-id")[1].strip(), "sp-021")
+      code, _, err = repo.run("init", "--force", "--id", "sp-030")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("next-id")[1].strip(), "sp-030")
+
+  def test_Init_ForceCustomQueue_OmittedFlagsPreserveScheme(self) -> None:
+    for populated in (False, True):
+      with self.subTest(populated=populated), support.TempRepo() as repo:
+        repo.run("init", "--id-prefix", "sp-", "--id-width", "3")
+        if populated:
+          repo.run("add", "x")
+        before = repo.read(".slicer/index.json")
+        code, _, err = repo.run("init", "--force")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(repo.read(".slicer/index.json"), before)
+        self.assertEqual(json.loads(repo.run("config", "id", "--json")[1])["value"],
+                         {"prefix": "sp-", "width": 3})
+
+  def test_Init_ForceRejectedChanges_LeaveAllFilesUntouched(self) -> None:
+    for flags, expected in (
+      (("--id-prefix", "sp-"), "state"),
+      (("--id-prefix", "s"), "state"),
+      (("--id-width", "3"), "state"),
+      (("--id", "S21"), "state"),
+      (("--id", "S2"), "bad_id"),
+      (("--id-prefix", "../x"), "usage"),
+      (("--id-width", "0"), "usage"),
+    ):
+      with self.subTest(flags=flags), support.TempRepo() as repo:
+        repo.run("init")
+        repo.run("add", "x")
+        repo.write(".slicer/templates/row.md", "custom template\n")
+        def snapshot() -> dict[str, bytes]:
+          return {str(p.relative_to(repo.root)): p.read_bytes()
+                  for p in repo.root.rglob("*") if p.is_file()}
+        before = snapshot()
+        code, out, _ = repo.run("init", "--force", *flags, "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(out)["error"]["code"], expected)
+        self.assertEqual(snapshot(), before)
+
+  def test_Init_ForcePopulatedQueue_MatchingSchemeIsAllowed(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init", "--id-prefix", "sp-")
+      repo.run("add", "x")
+      before = repo.read(".slicer/index.json")
+      code, _, err = repo.run("init", "--force", "--id-prefix", "sp-", "--id-width", "2")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
   def test_Init_BadStartingId_ExitsBadIdAndWritesNothing(self) -> None:
     for bad in ("TASK-021", "S2", "../S21"):
       with self.subTest(bad=bad), support.TempRepo() as repo:

@@ -16,15 +16,107 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Callable, Mapping
 
-from slicer import graph, ids, outline, prose, render, vcs
-from slicer.config import Config
-from slicer.errors import StateError
+from slicer import feedback, graph, ids, jsonio, outline, prose, render, store, templates, vcs
+from slicer.config import CONFIG_NAME, Config
+from slicer.errors import ConfigError, StateError
 from slicer.model import (
   CATALOG_ACTIVE, CATALOG_RETIRED, CatalogRecord, Index, Item, LogEntry, NoteRecord,
   PassInfo, Section, Slice, canonical_kind, effort_rank, extract_boundary, is_unscored,
   successor_would_cycle,
 )
 from slicer.store import State
+
+
+GITATTRIBUTES = """\
+# slicer manages this file. History is append-only, so union-merge combines the
+# lines both sides added instead of conflicting when branches land in parallel.
+log.jsonl merge=union
+
+# render/ is a generated projection of index.json, never merged by hand. The
+# slicer-generated driver keeps the current branch's copy on merge instead of
+# writing conflict markers; re-run `slicer render` after resolving index.json so
+# the kept files match it. The name resolves only once a clone defines the driver
+# (one-time, per clone -- slicer's git allowlist cannot run `git config` for you):
+#   git config merge.slicer-generated.name "keep the current branch's generated files"
+#   git config merge.slicer-generated.driver true
+render/ROADMAP.md merge=slicer-generated
+render/ROADMAP.html merge=slicer-generated
+render/slices/*.md merge=slicer-generated
+
+# index.json is merged by the slicer-index driver, which matches items by id and
+# fields by name: independent edits merge, next_id takes the larger value so ids are
+# never reused, and only a true disagreement stays a conflict. Also defined once per clone:
+#   git config merge.slicer-index.name "keep the larger next_id when merging the index"
+#   git config merge.slicer-index.driver "slicer merge-index %O %A %B"
+index.json merge=slicer-index
+"""
+
+
+def init_project(
+  root: Path, *, force: bool = False, id_prefix: str | None = None,
+  id_width: int | None = None, starting_id: str | None = None,
+) -> Path:
+  """Create tracking files only after the proposed id scheme is validated.
+
+  Forced initialization resets config and templates, but retains an existing
+  index's scheme and counter unless explicitly changed on an empty queue.
+  """
+  base = root / store.DIR_NAME
+  if (base / CONFIG_NAME).exists() and not force:
+    raise StateError(
+      f"{base} already exists; pass --force to overwrite its config and templates",
+      code="already_exists",
+    )
+  index_path = base / store.INDEX_NAME
+  existing = Index.from_dict(jsonio.read(index_path)) if index_path.is_file() else None
+  cfg = Config()
+  if existing is not None:
+    cfg.id_prefix, cfg.id_width = existing.id_prefix, existing.id_width
+  if id_prefix is not None:
+    cfg.id_prefix = id_prefix
+  if id_width is not None:
+    cfg.id_width = id_width
+  try:
+    # Loading supplies compatibility defaults for the bootstrap config's
+    # status vocabulary; validate the same representation readers will see.
+    Config.from_dict(cfg.to_dict())
+  except ConfigError as exc:
+    # Invalid CLI choices are usage errors, not an unreadable stored config.
+    if id_prefix is not None or id_width is not None:
+      raise StateError(str(exc), code="usage") from exc
+    raise
+  scheme_changed = existing is not None and (
+    cfg.id_prefix, cfg.id_width
+  ) != (existing.id_prefix, existing.id_width)
+  if scheme_changed and existing.items:
+    raise StateError(
+      f"{base} already has items; its id prefix and width cannot change. "
+      "Use `id-prefix` for a case-only change, or initialize a new queue",
+      code="state",
+    )
+  next_id = None
+  if starting_id is not None:
+    next_id = ids.starting_number(starting_id, cfg.id_prefix, cfg.id_width)
+    if existing is not None and existing.items:
+      raise StateError(
+        f"{base} already has items; a starting id would move the counter over live ids. "
+        "Use `add --id` instead",
+        code="state",
+      )
+  index = existing if existing is not None else Index()
+  index.id_prefix, index.id_width = cfg.id_prefix, cfg.id_width
+  if next_id is not None:
+    index.next_id = next_id
+  jsonio.write(base / CONFIG_NAME, cfg.to_dict())
+  if existing is None or scheme_changed or next_id is not None:
+    jsonio.write(index_path, index.to_dict())
+  for name, content in templates.defaults().items():
+    jsonio.write_text(base / store.TEMPLATES_DIR / name, content)
+  jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
+  feedback.ensure_gitignore(root)
+  feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
+  (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
+  return base
 
 
 def _now() -> str:
