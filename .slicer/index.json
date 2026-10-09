@@ -7248,7 +7248,7 @@
       "id": "s241",
       "title": "Print the slice relay with ai relay",
       "short_title": "Print the slice relay with ai relay",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7264,10 +7264,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-09T16:56:41Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
