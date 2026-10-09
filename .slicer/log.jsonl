@@ -1152,3 +1152,6 @@
 {"when": "2026-10-09T04:44:25Z", "item": "s241", "action": "add", "from": "", "to": "open", "note": "Print the slice relay with ai relay"}
 {"when": "2026-10-09T04:44:26Z", "item": "s241", "action": "set", "from": "", "to": "", "note": "size -→S; trees -→slicer; findings -→owner request, session 2026-10-09; the slice-relay playbook lives outside slicer, so agents in other projects cannot read it"}
 {"when": "2026-10-09T04:44:26Z", "item": "s241", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-09T12:46:41Z", "item": "s242", "action": "add", "from": "", "to": "open", "note": "init cannot choose the id prefix of a new queue"}
+{"when": "2026-10-09T12:46:53Z", "item": "s242", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-09T12:46:55Z", "item": "s242", "action": "edit", "from": "", "to": "", "note": "Check"}

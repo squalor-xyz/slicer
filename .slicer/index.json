@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 242,
+  "next_id": 243,
   "preamble": "",
   "passes": [
     {
@@ -7253,6 +7253,35 @@
         "cites": [],
         "key": "",
         "pass": "v1.7",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s242",
+      "title": "init cannot choose the id prefix of a new queue",
+      "short_title": "init cannot choose the id prefix of a new queue",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "squalor-xyz/suite field report (2026-10-09), squalplot queue",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "",
         "group": "",
         "reason": "",
         "importance": 2,
