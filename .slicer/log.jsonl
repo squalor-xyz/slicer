@@ -1177,3 +1177,5 @@
 {"when": "2026-10-09T17:45:48Z", "item": "s242", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-09T17:46:11Z", "item": "s242", "action": "status", "from": "reviewing", "to": "done", "note": "Reviewed init --id-prefix and --id-width, scheme checks, and force retention on empty and populated queues. Initialization now lives in ops.py. Full unittest discover: 1540 passed, 1 skipped. slicer check passed and git diff --check was clean.", "by": "Jon Robbins"}
 {"when": "2026-10-09T17:52:47Z", "item": "s242", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.7"}
+{"when": "2026-10-09T18:19:00Z", "item": "s243", "action": "add", "from": "", "to": "open", "note": "Python 3.13 test cleanup can fail when git writes into a temp repo"}
+{"when": "2026-10-09T18:19:27Z", "item": "s243", "action": "promote", "from": "", "to": "", "note": ""}

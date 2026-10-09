@@ -1,0 +1,41 @@
+{
+  "id": "s243",
+  "title": "Python 3.13 test cleanup can fail when git writes into a temp repo",
+  "lead": [
+    "On CI run 37884752686 (the s240 merge, 2026-10-09), `test (3.13)` failed in `test_merge_fields.RealGitMergeTests.test_Merge_NextIdStaysTheLargest` with an error, not an assertion: `support.TempRepo.close()` → `TemporaryDirectory.cleanup()` → `shutil.rmtree` raised `OSError: [Errno 39] Directory not empty: '/tmp/slicer-test-…/.git'`. Something created a file in `.git` after rmtree had emptied it. The 3.11 failure on that run and on the README and Release 1.7.0 runs was the mirror case (`FileNotFoundError: 'maintenance.lock'`), which 5b2a788 attributed to background `git maintenance` and fixed by setting `maintenance.auto false` in `TempRepo` and in `test_affected.py`'s own repos, plus a 3.11-only `FileNotFoundError` tolerance in `test_affected._remove_tree`. That config change also applies to the 3.13 path, but the cause of the 3.13 failure is inferred from the timing, not shown in the log, and it has happened only once."
+  ],
+  "depends_note": null,
+  "findings_note": "CI run 37884752686 (s240 merge, 2026-10-09), test (3.13): test_Merge_NextIdStaysTheLargest",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** product code under src/, temp directories that are not git repos, retrying or rerunning failed tests in CI, and pinning or changing the git version CI uses.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Publish runs the full test matrix, so one cleanup flake on any Python version blocks a release: the 3.11 variant failed the first v1.7.0 publish and forced a retag. A test that passed should not fail in teardown because a background git process touched `.git`. The evidence that 5b2a788 also closes the 3.13 case is indirect, and the only defence against a writer we did not anticipate is a 3.11-only workaround in one test module."
+    },
+    {
+      "heading": "Files",
+      "body": "tests/support.py, tests/test_affected.py, tests/test_support.py (or the existing module that covers `support` helpers)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "The race cannot be reproduced on demand, so the new tests simulate it. Before the change, a `TempRepo` whose first `shutil.rmtree` attempt raises `OSError(errno.ENOTEMPTY)` (patched) fails `close()`; after it, `close()` retries and the directory is gone. Likewise for a first attempt that raises `FileNotFoundError`. A `PermissionError` from rmtree still propagates. Existing suites that use `TempRepo(git=True)` stay as regression coverage."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Confirm the cause: with `GIT_TRACE=1`, run a commit and a merge in a repo configured like `TempRepo(git=True)` and record whether git spawns `maintenance run --auto` or `gc --auto`, with and without `maintenance.auto false`. Record the result in a note on this slice.\n2. Add one cleanup helper in `tests/support.py` that removes a temp tree and, on `FileNotFoundError` or `OSError` with `errno.ENOTEMPTY`, retries a small fixed number of times, then re-raises. Use it in `TempRepo.close()` on every Python version.\n3. Replace `test_affected._remove_tree` with that helper, keeping the `maintenance.auto false` config lines.\n\nNo change under `src/`. No new dependencies."
+    },
+    {
+      "heading": "Check",
+      "body": "The new simulated-race tests pass, and the `PermissionError` case still raises. `test_merge_fields` and `test_affected` pass on the local Python. Run `python3 tests/affected.py --run`, then the full `python3 -m unittest discover -s tests -t tests`, `slicer check`, and `git diff --check`. Afterwards, CI on `main` passes on 3.11–3.14."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s243`; branch `feature/s243-temp-repo-cleanup`. After the checks pass, record the review note and run handoff with render and check. Commit only on the worktree branch, as AGENTS.md describes. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}
