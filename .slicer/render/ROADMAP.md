@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-230 items · — 1 · done 225 · retired 4
+230 items · done 225 · retired 4 · review 1
 
 ## v1.8
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s243](slices/s243.md) | 3.13 temp-repo cleanup flake | S | 1 | slicer | CI run 37884752686 (s240 merge, 2026-10-09), test (3.13): test_Merge_NextIdStaysTheLargest | — |
+| 1 | [s243](slices/s243.md) | 3.13 temp-repo cleanup flake | S | 1 | slicer | CI run 37884752686 (s240 merge, 2026-10-09), test (3.13): test_Merge_NextIdStaysTheLargest | review |
 
 ---
 

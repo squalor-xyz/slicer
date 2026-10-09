@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import errno
 import io
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
 from typing import Iterator
@@ -19,6 +21,23 @@ if str(SRC) not in sys.path:
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 LEGACY = FIXTURES / "legacy"
+
+
+def remove_temp_repo(directory: Path) -> None:
+  """Bound retries for locks that Git creates or removes during teardown."""
+  for attempt in range(3):
+    try:
+      shutil.rmtree(directory)
+      return
+    except OSError as exc:
+      if isinstance(exc, FileNotFoundError):
+        if not directory.exists():
+          return
+      elif exc.errno != errno.ENOTEMPTY:
+        raise
+      if attempt == 2:
+        raise
+      time.sleep(0.01)
 
 
 @contextmanager
@@ -60,7 +79,7 @@ class TempRepo:
       self._git("config", "user.email", "test@example.invalid")
       self._git("config", "user.name", "Test")
       # A background `git maintenance` run creates a lock and deletes it.
-      # Python 3.11's shutil.rmtree raises if that happens during cleanup.
+      # shutil.rmtree can race with those writes during cleanup.
       self._git("config", "maintenance.auto", "false")
 
   def _git(self, *args: str) -> subprocess.CompletedProcess[str]:
@@ -123,6 +142,8 @@ class TempRepo:
     return store.load(self.root)
 
   def close(self) -> None:
+    remove_temp_repo(self.root)
+    # Release TemporaryDirectory's finalizer after the tree is safely gone.
     self._tmp.cleanup()
 
   def __enter__(self) -> "TempRepo":

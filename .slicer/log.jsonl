@@ -1179,3 +1179,7 @@
 {"when": "2026-10-09T17:52:47Z", "item": "s242", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.7"}
 {"when": "2026-10-09T18:19:00Z", "item": "s243", "action": "add", "from": "", "to": "open", "note": "Python 3.13 test cleanup can fail when git writes into a temp repo"}
 {"when": "2026-10-09T18:19:27Z", "item": "s243", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-09T18:21:57Z", "item": "s243", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-09T18:23:09Z", "item": "s243", "action": "note", "from": "", "to": "", "note": "Git trace experiment: on local Git, a traced commit and non-", "by": "Jon Robbins"}
+{"when": "2026-10-09T18:27:52Z", "item": "s243", "action": "note", "from": "", "to": "", "note": "Ready for review: added shared remove_temp_repo cleanup with", "by": "Jon Robbins"}
+{"when": "2026-10-09T18:27:52Z", "item": "s243", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
