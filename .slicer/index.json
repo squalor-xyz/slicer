@@ -7330,7 +7330,7 @@
       "id": "s243",
       "title": "Python 3.13 test cleanup can fail when git writes into a temp repo",
       "short_title": "3.13 temp-repo cleanup flake",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
