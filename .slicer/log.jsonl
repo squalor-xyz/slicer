@@ -1149,3 +1149,6 @@
 {"when": "2026-10-09T04:35:32Z", "item": "s240", "action": "set", "from": "", "to": "", "note": "size -→M; trees -→slicer; findings -→owner request, session 2026-10-09; discover() only walks up, so a folder of repos needs one call per project; pass_key v1.6→v1.7"}
 {"when": "2026-10-09T04:35:47Z", "item": "s240", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-09T04:35:51Z", "item": "s240", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-09T04:41:58Z", "item": "s240", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-09T12:50:55Z", "item": "s240", "action": "note", "from": "", "to": "", "note": "Ready for review: list, check, status, stats and next take -", "by": "Jon Robbins"}
+{"when": "2026-10-09T12:50:55Z", "item": "s240", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

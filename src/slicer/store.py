@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import re
+import stat
 import sys
 import time
 from contextlib import contextmanager
@@ -52,6 +53,68 @@ def discover(start: Path | None = None) -> Path:
   raise StateError(
     f"no {DIR_NAME}/ found in {here} or any parent; run `slicer init` in the project root"
   )
+
+
+def _holds_config(directory: Path) -> bool:
+  """True when `directory/.slicer/config.json` is a file; an unreadable path raises.
+
+  `Path.is_file` swallows permission errors on some Python versions and raises on
+  others, so `discover_all` probes with `os.stat` to behave the same on all of them.
+  """
+  try:
+    return stat.S_ISREG(os.stat(directory / DIR_NAME / CONFIG_NAME).st_mode)
+  except (FileNotFoundError, NotADirectoryError):
+    return False
+
+
+def by_relative_parts(top: Path):
+  """The sort key shared by projects and unreadable directories under `top`."""
+  def key(item: Path | tuple[Path, OSError]) -> tuple[str, ...]:
+    path = item[0] if isinstance(item, tuple) else item
+    return path.relative_to(top).parts
+  return key
+
+
+def discover_all(start: Path | None = None) -> tuple[list[Path], list[tuple[Path, OSError]]]:
+  """Return every project root at or below `start`, never walking up.
+
+  `discover` answers "which project am I in"; a monorepo or a folder of repos
+  needs "which projects are here". A directory is a project when it holds
+  `.slicer/config.json`. The walk keeps descending inside a project, so a project
+  nested in another is found too. It skips dot-directories below `start`
+  (`.git`, `.slicer`, `.worktrees`, `.venv`), `node_modules` and symlinked
+  directories: a worktree or a link would otherwise report the same project twice.
+  The result is absolute and sorted by path relative to `start`, so output is
+  deterministic.
+
+  Returns `(found, unreadable)`. A directory the walk cannot list, or whose
+  `.slicer/config.json` cannot be examined for a reason other than being absent,
+  may hold a project, so it is not silently dropped: `unreadable` holds
+  `(directory, error)` for it, sorted the same way. A start that is missing or
+  not a directory yields neither. Nothing is printed here.
+  """
+  top = (start or Path.cwd()).resolve()
+  found: list[Path] = []
+  failed: list[tuple[Path, OSError]] = []
+
+  def walk_failed(exc: OSError) -> None:
+    if isinstance(exc, (FileNotFoundError, NotADirectoryError)):
+      return  # absent or not a directory (also a directory removed mid-walk): no project
+    failed.append((Path(exc.filename) if exc.filename else top, exc))
+
+  # followlinks=False lists a symlinked directory but never enters it.
+  for here, dirnames, _ in os.walk(top, followlinks=False, onerror=walk_failed):
+    dirnames[:] = sorted(
+      name for name in dirnames if not name.startswith(".") and name != "node_modules"
+    )
+    candidate = Path(here)
+    try:
+      if _holds_config(candidate):
+        found.append(candidate)
+    except OSError as exc:
+      failed.append((candidate, exc))
+  key = by_relative_parts(top)
+  return sorted(found, key=key), sorted(failed, key=key)
 
 
 def _lock_timeout() -> float:

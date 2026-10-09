@@ -308,6 +308,38 @@ never counts as completed, so dependents stay blocked. If all candidates are
 capped, the usual empty result and exit 2 remain, with no error object and no
 item-state or history writes. Lean output omits an empty `capped` array.
 
+## Every project under a directory (`-r`)
+
+`list`, `check`, `status`, `stats` and `next` take `-r`/`--recursive`. It finds every project
+at or below the start directory (`--root`, or the working directory; it never walks up) and runs
+the command once in each, reading only. It takes no lock. `next -r` with `--start`, `--render`,
+`--owner` or `--start-to` is `usage` and writes nothing. The walk skips dot-directories,
+`node_modules` and symlinked directories, and keeps descending inside a project. Only directory
+names below the start are skipped: an explicit start directory is walked even if it is itself a
+dot-directory.
+
+```console
+$ slicer check -r --json --lean
+{"projects":[{"path":".","exit":0,"result":{"ok":true,...}},{"path":"tools/api","exit":1,"result":{"ok":false,...}}]}
+```
+
+- `path` is POSIX and relative to the start directory (`.` for the start directory itself);
+  projects come in sorted path order.
+- `result` is exactly what the command prints without `-r`, including under `--lean`. A project
+  that fails to load has `error` (`{"code", "message"}`) in place of `result`, and its `exit` is
+  the code's usual exit (3 for `corrupt`, `locked`, `io`, `config`, `schema_too_new`; 2 otherwise).
+  One failing project never stops the others.
+- The process exit is the highest `exit` of any project. `next -r` returns one next item per
+  project and never ranks across projects.
+- Text output is a `== PATH ==` header and that project's normal text, with a blank line between
+  projects. A project that fails prints `error: MESSAGE` under its header on stdout. Nothing
+  per project goes to stderr, in text or JSON.
+- A directory slicer cannot examine is reported, not skipped, because it may hold a project: one
+  whose `.slicer/config.json` cannot be checked (for example an unreadable `.slicer/`), or that
+  cannot be listed. It gets its own entry, in the same sorted order, with `"exit": 3` and
+  `"error": {"code": "io", ...}`. No command runs there, and the other projects still run.
+- No project at or below the start directory is exit 2 with the error envelope, code `no_project`.
+
 ## Failures are JSON too
 
 With `--json`, a failure puts an envelope on **stdout** and still writes the human line
@@ -362,6 +394,7 @@ when the meaning does. Branch on the code.
 | `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline |
 | `editor_aborted` | `$EDITOR` exited non-zero; nothing changed |
 | `wrong_command` | e.g. `import --from` (that flag belongs to `migrate`) |
+| `no_project` | `-r` found no `.slicer/config.json` at or below the start directory. Exit 2; `-r` never walks up, so run `slicer init` or start higher |
 | `external` | An optional external tool failed: `feedback-report` or `issues-pull` found no `gh`, `gh` exited nonzero (often not authenticated), or it printed output slicer cannot use (no issue URL, or an issue list that is not valid). Exit 2. For `feedback-report`, earlier issues in the batch are already recorded and the message names the entry that stopped; `issues-pull` writes nothing |
 | `usage` | Missing arguments, unknown options, invalid values, conflicting options, or other invocation errors |
 

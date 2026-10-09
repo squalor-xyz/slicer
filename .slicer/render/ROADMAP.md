@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-227 items · — 1 · done 222 · retired 4
+227 items · done 222 · retired 4 · review 1
 
 ## v1.7
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s240](slices/s240.md) | Report on every nested project with -r | M | 2 | slicer | owner request, session 2026-10-09; discover() only walks up, so a folder of repos needs one call per project | — |
+| 1 | [s240](slices/s240.md) | Report on every nested project with -r | M | 2 | slicer | owner request, session 2026-10-09; discover() only walks up, so a folder of repos needs one call per project | review |
 
 ---
 
