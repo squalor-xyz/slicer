@@ -28,6 +28,12 @@ generic text. Without either flag nothing is written. `--json` returns `{"skill"
 `slicer ai instructions --rest`, which prints only the parts of the guide the skill
 leaves out, so an agent that loaded the skill does not read the same text twice.
 
+`slicer ai relay` prints the slice relay: one orchestrating session runs one slice
+through an implementer, a reviewer, an architect and a gate. It uses the same finish
+choice and the same fallback as `slicer ai instructions`. Handoff finish closes with
+handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
+the same Markdown as the text output. It does not lock or write.
+
 slicer is built to be called by a coding agent rather than hand-edited. The agent runs
 commands; slicer owns the files. Nothing an agent needs requires reading or writing
 `.slicer/*.json` directly — and doing so is how state gets corrupted, because the index,
@@ -243,6 +249,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command. With `--output` or `--install` it is `{skill, written}`, `written` being the absolute paths written, in order |
+| `ai relay` | `{relay}` with the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |
 | `merge-index` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged index to `OURS`; exit 1 left conflict markers there |

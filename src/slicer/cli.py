@@ -377,6 +377,13 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_ai_relay(args: argparse.Namespace) -> int:
+  """Print the slice relay. Same read-only policy as `ai instructions`."""
+  text = ai.relay_text(*_ai_policy(args))
+  _emit(args, {"relay": text}, text.rstrip("\n"))
+  return OK
+
+
 def cmd_recommended_workflow(args: argparse.Namespace) -> int:
   """The generic workflow document. Reads no project, takes no lock, writes nothing."""
   doc = workflow.text()
@@ -2813,6 +2820,18 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument(
     "--force", action="store_true", help="replace a destination that holds different text",
   )
+  inner = aisub.add_parser(
+    "relay", help="print the slice relay (no project needed)",
+    description=(
+      "Print the slice relay: one session runs one slice through an implementer, "
+      "a reviewer, an architect and a gate. A project with implement_finish handoff "
+      "closes with handoff. No project, or a config or index that cannot be read, "
+      "prints the generic text and warns on stderr. Does not lock or write."
+    ),
+    parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_relay)
+  _json_flags(inner, suppress=True)
 
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
