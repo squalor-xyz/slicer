@@ -1,5 +1,7 @@
 # slicer
 
+<img src="assets/slicer-512.png" alt="slicer" width="128" />
+
 Roadmap and slice management for the review → slice → implement → done loop.
 
 slicer is AI-friendly: a coding agent can review a project, turn accepted findings into
