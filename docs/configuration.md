@@ -95,8 +95,18 @@ Read any value without opening the file: `slicer config KEY` prints it, and
 ## The ones that will surprise you
 
 **`id.prefix` and `id.width` freeze once an id has been handed out.** Change them any
-time before the first item exists and the next id uses the new scheme — `init`, look at
-`S01`, decide you want `TASK-001`, edit the config, and the first `add` obeys it.
+time before the first item exists and the next id uses the new scheme. Choose them
+at initialization with `slicer init --id-prefix TASK- --id-width 3`; the first `add`
+gets `TASK-001`. The defaults are prefix `S` and width `2`. Width is a positive
+minimum digit count, and the prefix must produce IDs usable as filenames.
+
+`--id TASK-021` sets the starting counter and must match the selected scheme;
+it does not infer a prefix or width. To change an initialized empty queue, use
+`slicer init --force --id-prefix TASK- --id-width 3`. Omitted scheme flags retain
+the existing prefix or width, and the counter stays unchanged unless `--id` is
+supplied. `--force` still resets the other config settings and templates.
+Once items exist, `init --force` retains the scheme and refuses changes to it
+or a starting ID. Editing the config before the first item also remains supported.
 
 After that the index owns the scheme, because ids are never reused and renumbering would
 break every commit message and review that cites one. Editing the config then does not

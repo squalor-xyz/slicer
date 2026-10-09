@@ -18,23 +18,23 @@
     },
     {
       "heading": "Files",
-      "body": ""
+      "body": "src/slicer/cli.py, src/slicer/ops.py, tests/test_cli.py, README.md, docs/configuration.md, docs/commands.md."
     },
     {
       "heading": "Failing tests",
-      "body": ""
+      "body": "Before implementation, the new custom-scheme, force-empty, force-preservation, and populated-queue refusal tests failed because init rejected the new flags. Existing initialization tests remain regression coverage. New checks also assert persisted scheme values, empty and populated render/check success, and byte-for-byte preservation of files on validation failures."
     },
     {
       "heading": "Implement",
-      "body": ""
+      "body": "Add init --id-prefix PREFIX and --id-width WIDTH; retain --id as the starting ID validated against the chosen scheme. Fresh queues default to S, width 2, counter 1. With --force, omitted scheme flags retain the existing scheme and the counter is preserved unless --id is supplied. Allow scheme changes only when no items exist; reject scheme or starting-counter changes with items before any write. Keep id-prefix case-only. Move initialization validation and persistence into ops.py; keep parsing, output and Git hints in cli.py. Update help, README and configuration documentation. No dependencies or JSON response changes."
     },
     {
       "heading": "Check",
-      "body": "On an empty directory, the new init option (prefix sp-) gives `config id` = {\"prefix\":\"sp-\",\"width\":2} and `next-id` = sp-01; `check` passes; a queue that already has items still refuses a prefix change."
+      "body": "Initialize an empty directory with prefix sp- and width 2: config id is {\"prefix\":\"sp-\",\"width\":2}, next-id is sp-01, and render then check passes before and after adding items. Cover defaults, custom width and matching starting ID, sequential allocation, invalid scheme/starting ID without writes, force on empty queues retaining omitted scheme parts and counters, matching scheme on populated queues, and populated queues rejecting scheme/counter changes without writes. Run init-focused tests, affected tests (full discover if the map is missing), the full unittest suite, slicer check, and git diff --check."
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "Worktree .worktrees/s242; branch feature/s242-init-id-scheme. After passing checks, record a review note and handoff with render/check, then commit implementation, documentation, tests and tracking state together as: s242: Allow choosing the ID scheme during init. Owner authorized the commit; no merge or push."
     }
   ],
   "notes": []

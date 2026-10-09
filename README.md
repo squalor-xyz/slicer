@@ -56,6 +56,10 @@ slicer check                            # the gate: exit 1 if anything drifted
 
 `add` appends a roadmap row; `promote` gives it a slice file.
 
+Choose a distinct ID scheme when creating a queue with
+`slicer init --id-prefix sp- --id-width 2`: new IDs start at `sp-01`.
+Add `--id sp-21` to start at a different number in that scheme.
+
 Got a whole roadmap to load? Write it as a markdown outline and import it in one go:
 
 ```sh
@@ -78,7 +82,7 @@ reproduce is never half-migrated.
 | | |
 |---|---|
 | `ai` | onboarding instructions for coding agents |
-| `init` | create .slicer/ in a project |
+| `init` | create .slicer/ in a project; choose an ID prefix, width, and starting ID |
 | `setup-git` | print the git config that turns on the merge drivers (run once per clone) |
 | `merge-index` | the `index.json` merge driver Git runs; merges independent items and fields, and takes the larger `next_id` |
 | `import` | add items in bulk from a markdown outline |
