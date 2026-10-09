@@ -139,6 +139,81 @@ def handoff_policy_text(kind: str) -> str:
   )
 
 
+# The slice relay, shared by both finish modes. The close is appended separately
+# so the handoff text can avoid naming the other finish command.
+RELAY = """\
+# Slice relay
+
+One orchestrating session runs one slice through an implementer, a reviewer,
+an architect and a gate. The relay uses slicer's own commands.
+
+## Roles
+
+The orchestrator is the session the owner talks to. It briefs every agent,
+reads every report and the lines it cites, reruns the tests, files notes on
+other items, and writes no product code.
+
+The implementer owns one slice. It runs `slicer start ID --render --strict`,
+writes the failing tests and watches them go red, implements, mutation-checks
+each new test, and closes the slice.
+
+The reviewer is read-only. It reviews correctness, test strength and direction
+against `slicer goals`.
+
+The architect is read-only. It confirms each finding was fixed and reviews the
+shape.
+
+A reviewer never wrote code in this slice. The owner chooses the models.
+
+## Order
+
+Create a worktree, then `slicer start ID --render --strict`, red tests,
+implementation, review, accepted findings back to the implementer, the
+architect, then the gate. Close with `slicer note ID --text "Describe the verified outcome"`
+plus the finish step. Commit, merge and push only when the owner authorizes them.
+
+## Gate
+
+Name the diff under review. The criteria are: earlier blockers resolved with a
+proving test, no new issue of medium severity or worse, tests green, and
+docs matching the code. The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`.
+FAIL goes back to the implementer and then the gate again. A failed review is
+`slicer reject ID --note "VERDICT: FAIL - reason"`. Any implementer change after
+a review needs another gate.
+
+## Every brief
+
+Include the slice from `slicer show ID --json --lean`, the tracking rule below,
+and the workspace limit: stay inside the workspace the owner named and do not
+read or write outside it. The report is a diff stat, red lines, test counts, a
+mutation table and deviations.
+
+"""
+
+
+def relay_text(finish: str = "done", required_note_kind: str = "") -> str:
+  """The slice relay. `handoff` closes with handoff and does not name done."""
+  if finish == "handoff":
+    close = "Close the slice with `slicer handoff ID --render --check`.\n"
+  else:
+    close = (
+      "Close the slice with "
+      '`slicer done ID --note "Describe the verified outcome" --render --check`.\n'
+    )
+  return (
+    RELAY
+    + TRACKING_RULE + "\n\n"
+    + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
+    + "`slicer list --json --lean`.\n\n"
+    + "## Stop\n\n"
+    + "Stop when the same slice fails its gate three times, the spec turns out "
+    + "ambiguous or wrong, or an owner decision is needed.\n\n"
+    + handoff_policy_text(required_note_kind)
+    + "## Close\n\n"
+    + close
+  )
+
+
 def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
   """The SKILL.md Claude Code, Codex, and Grok all load.
 

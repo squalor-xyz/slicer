@@ -745,3 +745,142 @@ class AiSkillWriteTests(unittest.TestCase):
     text = " ".join(out.getvalue().split())
     for flag in ("--output", "--install", "--force"):
       self.assertIn(flag, text)
+
+
+class AiRelayTests(unittest.TestCase):
+  """`ai relay` prints the slice relay and writes nothing."""
+
+  def test_Relay_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, err = repo.run("ai", "relay")
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
+      code, out, err = repo.run("ai", "relay", "--json")
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
+      self.assertEqual(json.loads(out), {"relay": text})
+      self.assertEqual(text, ai.relay_text())
+      before = repo.run("ai", "--json", "relay")
+      after = repo.run("ai", "relay", "--json")
+      self.assertEqual(before, after)
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_Relay_HandoffProject_ClosesWithHandoffAndNeverDone(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      path = repo.root / ".slicer/config.json"
+      data = json.loads(path.read_text())
+      data["implement_finish"] = "handoff"
+      data["handoff_requires_note_kind"] = "implementation report"
+      path.write_text(json.dumps(data) + "\n")
+      code, text, err = repo.run("ai", "relay")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(text, ai.relay_text("handoff", "implementation report"))
+      self.assertIn("slicer handoff ID --render --check", text)
+      self.assertIn(ai.handoff_policy_text("implementation report").strip(), text)
+      self.assertNotIn("done", text)
+
+  def test_Relay_DoneProject_ClosesWithDone(self) -> None:
+    close = 'slicer done ID --note "Describe the verified outcome" --render --check'
+    self.assertEqual(ai.relay_text(), ai.relay_text("done"))
+    self.assertIn(close, ai.relay_text("done"))
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      code, text, err = repo.run("ai", "relay")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(text, ai.relay_text("done"))
+      self.assertIn(close, text)
+
+  def test_Relay_NamesRolesOrderAndTheGateVerdictLine(self) -> None:
+    text = ai.relay_text()
+    for phrase in (
+      "orchestrator",
+      "implementer",
+      "reviewer",
+      "architect",
+      "writes no product code",
+      "read-only",
+      "A reviewer never wrote code in this slice.",
+      "The owner chooses the models.",
+      "worktree",
+      "slicer start ID --render --strict",
+      "red",
+      "accepted findings",
+      "mutation-checks",
+      "VERDICT: PASS",
+      "VERDICT: FAIL",
+      "medium severity",
+      "proving test",
+      "docs matching the code",
+      "diff stat",
+      "slicer show ID --json --lean",
+      "slicer goals --json --lean",
+      "slicer list --json --lean",
+      "three times",
+      "ambiguous",
+      "owner decision",
+      ai.TRACKING_RULE,
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+    self.assertLess(text.index("## Roles"), text.index("## Order"))
+    self.assertLess(text.index("## Order"), text.index("## Gate"))
+    self.assertLess(text.index("## Gate"), text.index("## Every brief"))
+    self.assertLess(text.index("## Every brief"), text.index("## Stop"))
+    self.assertLess(text.index("## Stop"), text.index("## Close"))
+
+  def test_Relay_CommandExamples_AreAcceptedByTheParser(self) -> None:
+    blob = "\n".join((
+      ai.relay_text("done"),
+      ai.relay_text("handoff"),
+      ai.relay_text("handoff", "implementation report"),
+    ))
+    commands = re.findall(r"`(slicer [^`]+)`", blob)
+    self.assertTrue(commands)
+    parser = cli.build_parser()
+    for command in commands:
+      with self.subTest(command=command):
+        parser.parse_args(shlex.split(command)[1:])
+
+  def test_Relay_NamesNoVendorModelOrOutsidePath(self) -> None:
+    blob = "\n".join((
+      ai.relay_text("done"),
+      ai.relay_text("handoff"),
+      ai.relay_text("handoff", "implementation report"),
+    )).casefold()
+    self.assertIn("the owner chooses the models.", blob)
+    for token in (
+      "claude", "codex", "grok", "openai", "anthropic", "gemini", "gpt", "ollama",
+      "http", "github.com", "/users", "\\",
+    ):
+      with self.subTest(token=token):
+        self.assertNotIn(token, blob)
+
+  def test_Relay_ReadsConfigAndIndex_WithoutLockingOrWriting(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      data = json.loads((repo.root / ".slicer/config.json").read_text())
+      data["implement_finish"] = "handoff"
+      (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
+      before = {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+           patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+        code, text, err = repo.run("ai", "relay")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("slicer handoff ID --render --check", text)
+      self.assertNotIn("done", text)
+      after = {p.relative_to(repo.root): p.read_bytes()
+               for p in repo.root.rglob("*") if p.is_file()}
+      self.assertEqual(after, before)
+      repo.write(".slicer/index.json", "{")
+      before = {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      code, text, err = repo.run("ai", "relay")
+      self.assertEqual(code, 0)
+      self.assertEqual(text, ai.relay_text())
+      self.assertIn("printing the generic guide", err)
+      self.assertIn("done", text)
+      after = {p.relative_to(repo.root): p.read_bytes()
+               for p in repo.root.rglob("*") if p.is_file()}
+      self.assertEqual(after, before)

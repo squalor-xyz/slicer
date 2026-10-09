@@ -1160,3 +1160,6 @@
 {"when": "2026-10-09T12:50:55Z", "item": "s240", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-09T12:51:08Z", "item": "s240", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-09T12:51:17Z", "item": "s240", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: list, check, status, stats and next take -r/--recursive; one result per project under the start dir, unreadable dirs as io entries, no_project when none. Slice relay: 2 review rounds plus gate VERDICT: PASS; 1527 tests OK (1 skipped); 13 recursive tests on 3.14 and 3.12.", "by": "Jon Robbins"}
+{"when": "2026-10-09T16:43:54Z", "item": "s241", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-09T16:51:50Z", "item": "s241", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer ai relay prints the slice relay. A ", "by": "Jon Robbins"}
+{"when": "2026-10-09T16:51:50Z", "item": "s241", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
