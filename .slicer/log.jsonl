@@ -1155,3 +1155,7 @@
 {"when": "2026-10-09T12:46:41Z", "item": "s242", "action": "add", "from": "", "to": "open", "note": "init cannot choose the id prefix of a new queue"}
 {"when": "2026-10-09T12:46:53Z", "item": "s242", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-10-09T12:46:55Z", "item": "s242", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-09T04:41:58Z", "item": "s240", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-09T12:50:55Z", "item": "s240", "action": "note", "from": "", "to": "", "note": "Ready for review: list, check, status, stats and next take -", "by": "Jon Robbins"}
+{"when": "2026-10-09T12:50:55Z", "item": "s240", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-09T12:51:08Z", "item": "s240", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

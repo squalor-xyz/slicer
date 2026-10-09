@@ -11,6 +11,7 @@ Exit codes are stable because scripts depend on them:
 from __future__ import annotations
 
 import argparse
+import copy
 import io
 import json
 import os
@@ -78,12 +79,23 @@ def _rest_flag(parser: argparse.ArgumentParser, *, suppress: bool = False) -> No
   )
 
 
+def _recursive_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
+  """`-r/--recursive` on the read-only reports: one result per nested project."""
+  sp.add_argument(
+    "-r", "--recursive", action="store_true",
+    help="report on every project at or below the start directory (--root or the working "
+    "directory), one result each; reads only and never walks up",
+  )
+  return sp
+
+
 def _emit(
   args: argparse.Namespace, payload: object, text: str, *, keep_empty: tuple[str, ...] = (),
 ) -> None:
+  collected = getattr(args, "_collect", None)
   if getattr(args, "json", False):
+    shaped = payload
     if getattr(args, "lean", False):
-      compact = (",", ":")
       shaped = model.lean(payload)
       if keep_empty and isinstance(payload, dict) and isinstance(shaped, dict):
         # Lean drops empty lists. These keys are part of the shape even then.
@@ -92,11 +104,26 @@ def _emit(
           for key, value in payload.items()
           if key in shaped or key in keep_empty
         }
-      _write_out(args, json.dumps(shaped, ensure_ascii=False, separators=compact))
+    if collected is not None:
+      # `-r` gathers each project's result instead of printing it.
+      collected.append(shaped)
     else:
-      _write_out(args, json.dumps(payload, ensure_ascii=False, indent=2))
+      _dump_json(args, shaped)
+  elif collected is not None:
+    collected.append(text)
   elif text:
     _write_out(args, text)
+
+
+def _dump_json(args: argparse.Namespace, obj: object) -> None:
+  """Write `obj` as JSON: compact under `--lean`, indented otherwise.
+
+  This only formats. Lean shaping of the payload itself is `_emit`'s job.
+  """
+  if getattr(args, "lean", False):
+    _write_out(args, json.dumps(obj, ensure_ascii=False, separators=(",", ":")))
+  else:
+    _write_out(args, json.dumps(obj, ensure_ascii=False, indent=2))
 
 
 def _write_out(args: argparse.Namespace, line: str) -> None:
@@ -2815,6 +2842,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
   sp = _strict_flag(_render_flag(add("next", cmd_next, "the highest-priority startable item")))
+  _recursive_flag(sp)
   sp.add_argument("-n", type=_nonnegative_int, default=None, metavar="N",
                   help="skip N currently eligible items (default 0); return one item")
   sp.add_argument("--max-attempts", type=_positive_int, default=None, metavar="N",
@@ -2855,7 +2883,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("prefix", nargs="?", help="the new prefix; only its case may differ")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
 
-  sp = add("list", cmd_list, "list by readiness, pass and score; empty passes merge by score; omit done and retired unless asked")
+  sp = _recursive_flag(add("list", cmd_list, "list by readiness, pass and score; empty passes merge by score; omit done and retired unless asked"))
   sp.add_argument("--envelope", action="store_true",
                   help="with --json, wrap items and sibling-only rows in an object")
   sp.add_argument("--all", action="store_true",
@@ -3097,7 +3125,7 @@ def build_parser() -> argparse.ArgumentParser:
 
   add("verify", cmd_verify, "check the index for consistency (and against git unless git_check is off)")
 
-  sp = add("check", cmd_check, "the CI gate: render, sync and integrity")
+  sp = _recursive_flag(add("check", cmd_check, "the CI gate: render, sync and integrity"))
   sp.add_argument("--diff", action="store_true", help="show a diff for each stale file")
 
   sp = add("goals", cmd_goals, "show project goals and non-goals, and their records")
@@ -3153,9 +3181,9 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("item")
   inner.add_argument("ids", nargs="+", metavar="ID")
 
-  add("stats", cmd_stats, "counts by status, size, tree and pass")
+  _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))
 
-  add("status", cmd_status, "next item, progress, and blockers in one view")
+  _recursive_flag(add("status", cmd_status, "next item, progress, and blockers in one view"))
 
   sp = add("log", cmd_log, "recent history, newest first")
   sp.add_argument("--limit", type=int, default=20, help="how many entries (default 20)")
@@ -3168,6 +3196,70 @@ def build_parser() -> argparse.ArgumentParser:
   add("tui", cmd_tui, "browse and reorder interactively (also: ui)",
       json_flag=False, aliases=("ui",))
   return p
+
+
+def _recursive(args: argparse.Namespace) -> int:
+  """Run a read-only report once in every project at or below the start directory.
+
+  The handler runs unchanged with `root` pointed at each project; `_emit` hands
+  back what it would have printed, so no handler is copied. A project that fails
+  is reported in place and the rest still run. The exit is the worst any project
+  returned. Nothing here takes the writer lock, because nothing is written.
+  """
+  if args.command == "next":
+    changes = [
+      flag for flag, on in (
+        ("--start", args.start), ("--render", args.render),
+        ("--owner", args.owner is not None), ("--start-to", args.start_to is not None),
+      ) if on
+    ]
+    if changes:
+      raise StateError(
+        f"--recursive is read-only and cannot be combined with {', '.join(changes)}; "
+        "drop -r to change one project",
+        code="usage",
+      )
+  start = (Path(args.root) if args.root else Path.cwd()).resolve()
+  found, unreadable = store.discover_all(start)
+  if not found and not unreadable:
+    raise StateError(
+      f"no {store.DIR_NAME}/ found in {start} or any directory below it; "
+      "run `slicer init` in a project root, or drop -r",
+      code="no_project",
+    )
+  # An unreadable directory may hold a project, so it gets an io entry of its own
+  # and no handler runs there. Entries keep the sorted order of the projects.
+  slots = sorted([(path, None) for path in found] + unreadable, key=store.by_relative_parts(start))
+  projects: list[dict[str, object]] = []
+  for project, failure in slots:
+    entry: dict[str, object] = {"path": project.relative_to(start).as_posix() or "."}
+    if failure is not None:
+      entry["exit"] = INTERNAL
+      entry["error"] = {"code": "io", "message": str(failure)}
+      projects.append(entry)
+      continue
+    sub = copy.copy(args)
+    sub.root = str(project)
+    sub._collect = []
+    try:
+      code = int(args.func(sub))
+      entry["exit"] = code
+      if sub._collect:
+        entry["result"] = sub._collect[-1]
+    except (SlicerError, OSError) as exc:
+      error_code = exc.code if isinstance(exc, SlicerError) else "io"
+      entry["exit"] = _exit_for(error_code)
+      entry["error"] = {"code": error_code, "message": str(exc)}
+    projects.append(entry)
+  if getattr(args, "json", False):
+    _dump_json(args, {"projects": projects})  # formatted only: each result is already lean
+  else:
+    blocks = []
+    for entry in projects:
+      body = entry["result"] if "result" in entry else f"error: {entry['error']['message']}"
+      blocks.append(f"== {entry['path']} ==" + (f"\n{body}" if body else ""))
+    _write_out(args, "\n\n".join(blocks))
+  return max(int(entry["exit"]) for entry in projects)
 
 
 def _error_envelope(args: argparse.Namespace, exc: SlicerError) -> None:
@@ -3183,6 +3275,11 @@ def _error_envelope(args: argparse.Namespace, exc: SlicerError) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
+def _exit_for(code: str) -> int:
+  """Exit status for an error code: internal/state codes are 3, the rest 2."""
+  return INTERNAL if is_internal(code) else USAGE
+
+
 def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
   """Report a deliberate failure: an envelope for agents, prose for people.
 
@@ -3191,7 +3288,7 @@ def _fail(args: argparse.Namespace, exc: SlicerError) -> int:
   """
   _error_envelope(args, exc)
   print(f"slicer: {exc}", file=sys.stderr)
-  return INTERNAL if is_internal(exc.code) else USAGE
+  return _exit_for(exc.code)
 
 
 _parser: argparse.ArgumentParser | None = None
@@ -3259,6 +3356,8 @@ def main(argv: list[str] | None = None) -> int:
       return OK
     parser.parse_args(argv, namespace=args)
     root = Path(args.root) if args.root else Path.cwd()
+    if getattr(args, "recursive", False):
+      return _recursive(args)
     _warn_code_mismatch(args)
     if _changes_state(args):
       vcs.require_no_merge(root)

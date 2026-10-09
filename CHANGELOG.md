@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `list`, `check`, `status`, `stats` and `next` take `-r/--recursive`: find every slicer project at or below the start directory (`--root` or the working directory; never upward) and run the command once in each, reading only and without the writer lock. The walk skips dot-directories, `node_modules` and symlinked directories and keeps descending inside a project. Text prints a `== PATH ==` header per project; `--json` returns `{"projects": [{"path", "exit", "result"}]}`, with `error` (`code`, `message`) in place of `result` for a project that fails to load, and `--lean` applies inside each result. A directory it cannot list or examine gets its own entry with exit 3 and code `io`, and no command runs there. One failing project does not stop the others; the exit code is the highest any project returned. `next -r` returns one item per project and never ranks across projects, and `-r` with `next --start`, `--render`, `--owner` or `--start-to` is `usage`. No project found is the new non-internal error code `no_project` (exit 2). The TUI and commands that change state do not take `-r`.
+
 ## [1.6.0] - 2026-10-08
 
 ### Added
