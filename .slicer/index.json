@@ -7207,7 +7207,7 @@
       "id": "s240",
       "title": "Report on every nested project with -r",
       "short_title": "Report on every nested project with -r",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7223,10 +7223,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-09T12:51:08Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
