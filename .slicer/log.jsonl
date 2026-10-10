@@ -1186,3 +1186,7 @@
 {"when": "2026-10-09T18:33:31Z", "item": "s243", "action": "status", "from": "review", "to": "done", "note": "Reviewed and landed: remove_temp_repo retries FileNotFoundError/ENOTEMPTY up to 3 attempts and re-raises others; TempRepo.close and test_affected use it. Full suite passed on Python 3.12 (1544 tests, 1 skipped) and 3.14 at handoff; slicer check and git diff --check clean. CI on 3.11-3.14 confirms after push.", "by": "Jon Robbins"}
 {"when": "2026-10-10T01:58:13Z", "item": "s244", "action": "add", "from": "", "to": "open", "note": "Point to ai relay from --help and ai instructions"}
 {"when": "2026-10-10T01:58:29Z", "item": "s244", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-10T02:03:11Z", "item": "s244", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-10T02:31:43Z", "item": "s244", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer --help lists the ai subcommands (in", "by": "Jon Robbins"}
+{"when": "2026-10-10T02:31:57Z", "item": "s244", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-10T02:43:10Z", "item": "s244", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

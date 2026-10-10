@@ -321,6 +321,9 @@ requires `slicer note ID --kind KIND --text "Describe the verified outcome"` for
 current attempt. Previous-attempt and legacy unknown-attempt notes do not satisfy it;
 `handoff --note` only records history. Changing attempts manually changes report association.
 
+To run one slice through implementer, reviewer, architect and gate agents, print
+the slice relay with `slicer ai relay`.
+
 """
 
 STATE = """\

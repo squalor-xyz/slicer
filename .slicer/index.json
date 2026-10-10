@@ -7382,11 +7382,26 @@
       "id": "s244",
       "title": "Point to ai relay from --help and ai instructions",
       "short_title": "Point to ai relay from --help and ai instructions",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "914e9d4f-bd77-45a9-ab77-d81251dd9d85",
+          "kind": "",
+          "text": "**2026-10-10** — Ready for review: slicer --help lists the ai subcommands (instructions, skill, relay); ai instructions and --rest point to slicer ai relay at the end of Hand off for review (the Implement section is capped at 350 words and was at 348). Skill text unchanged. README ai row and CHANGELOG updated. Four new tests went red before the change. Full suite: 1548 tests OK, 1 skipped (Python 3.14). git diff --check clean.",
+          "created_at": "2026-10-10T02:31:43Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-10T02:43:10Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -7404,7 +7419,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

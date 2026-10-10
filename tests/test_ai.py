@@ -247,7 +247,7 @@ class AiInstructionsTests(unittest.TestCase):
 
   def test_Instructions_HelpAtEveryLevel_IsDiscoverableAndHumanReadable(self) -> None:
     for argv, expected in (
-      (("--help",), "onboarding instructions for coding agents"),
+      (("--help",), "agent onboarding: instructions, skill, relay"),
       (("ai", "--help"), "instructions"),
       (("ai", "--help"), "skill"),
       (("ai", "instructions", "--json", "--help"), "warns on stderr"),
@@ -884,3 +884,36 @@ class AiRelayTests(unittest.TestCase):
       after = {p.relative_to(repo.root): p.read_bytes()
                for p in repo.root.rglob("*") if p.is_file()}
       self.assertEqual(after, before)
+
+  def test_TopLevelHelp_AiRow_NamesRelay(self) -> None:
+    with redirect_stdout(io.StringIO()) as out, redirect_stderr(io.StringIO()):
+      with self.assertRaises(SystemExit):
+        cli.main(["--help"])
+    row = next(line for line in out.getvalue().splitlines() if line.strip().startswith("ai "))
+    for name in ("instructions", "skill", "relay"):
+      self.assertIn(name, row)
+
+  def test_Instructions_PointToAiRelay(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertIn("`slicer ai relay`", ai.instructions_text(finish))
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, _err = repo.run("ai", "instructions")
+      self.assertEqual(code, 0)
+      self.assertIn("`slicer ai relay`", text)
+      code, out, _err = repo.run("ai", "instructions", "--json")
+      self.assertEqual(code, 0)
+      self.assertIn("`slicer ai relay`", json.loads(out)["instructions"])
+
+  def test_InstructionsRest_PointToAiRelay(self) -> None:
+    self.assertIn("`slicer ai relay`", ai.rest_text())
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, _err = repo.run("ai", "instructions", "--rest", "--json")
+      self.assertEqual(code, 0)
+      self.assertIn("`slicer ai relay`", json.loads(out)["instructions"])
+
+  def test_SkillText_UnchangedByRelayPointer(self) -> None:
+    # The pointer reaches skill users through `--rest`; the installed skill copies stay current.
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertNotIn("relay", ai.skill_text(finish))
