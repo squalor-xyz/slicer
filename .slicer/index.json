@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 244,
+  "next_id": 245,
   "preamble": "",
   "passes": [
     {
@@ -7376,6 +7376,35 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s244",
+      "title": "Point to ai relay from --help and ai instructions",
+      "short_title": "Point to ai relay from --help and ai instructions",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner report, session 2026-10-09: slicer --help gives no sign of the relay; ai instructions and ai skill do not mention it (s241 left the pointer out of scope)",
+        "discovered_from": "s241",
+        "cites": [],
+        "key": "",
+        "pass": "v1.8",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],
