@@ -7382,7 +7382,7 @@
       "id": "s244",
       "title": "Point to ai relay from --help and ai instructions",
       "short_title": "Point to ai relay from --help and ai instructions",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7398,10 +7398,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-10T02:43:10Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
