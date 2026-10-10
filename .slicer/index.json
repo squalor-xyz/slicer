@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 245,
+  "next_id": 247,
   "preamble": "",
   "passes": [
     {
@@ -7417,6 +7417,68 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s245",
+      "title": "slicer verify must confirm that an item's done state landed on a branch",
+      "short_title": "slicer verify must confirm that an item's done state landed on a branch",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "DataBall slice relays db-07 to db-09, owner 2026-10-10",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s246",
+      "title": "slicer must check and refresh file:line references in slice text",
+      "short_title": "slicer must check and refresh file:line references in slice text",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "DataBall slice relays db-07 to db-10, owner 2026-10-10",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

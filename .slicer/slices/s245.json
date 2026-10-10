@@ -1,0 +1,41 @@
+{
+  "id": "s245",
+  "title": "slicer verify must confirm that an item's done state landed on a branch",
+  "lead": [
+    "After merging a slice, an orchestrator has to confirm the slice really landed: the commit that recorded the item as done is reachable from the target branch. `slicer verify` only warns when a done item has no commit subject mentioning its id, and it scans `git log --all --no-merges`, so a done commit sitting on an unmerged branch satisfies it. During the DataBall relays the orchestrator checked this by hand with `git show --name-status <merge>^2 | grep done/<id>`. Add a read-only `slicer verify --landed ID [--on REF]` that answers the question and exits non-zero when the answer is no."
+  ],
+  "depends_note": null,
+  "findings_note": "DataBall slice relays db-07 to db-09, owner 2026-10-10",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** committing, merging, or any write (slicer never commits, pushes or tags); telling \"mentions\" from \"completes\" in general (S20); the agents-repo `relay-land.sh` (filed in the agents queue as S59), which will call this.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The agents repo is adding `relay-land.sh` (S59) to script the land sequence. Its \"confirm the done state is in the slice commit\" step needs a stable, tracking-aware answer. Without one, it hard-codes the done-file path (`.slicer/slices/<done_dir>/<id>.json`), which depends on slicer's config (`done_dir`) and on its storage layout.\n\nToday `verify.against_git` (`src/slicer/verify.py:~230-285`) only checks that some commit subject mentions a done item, using `vcs.subjects` (`src/slicer/vcs.py:94`). It does not check reachability from a branch or which commit changed the item's status. The tool already knows `done_dir` and the slice file paths, so it is the right owner for this question."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py`: a helper that finds the commits that changed a given path (`git log --format=%H -- <path>`, limited the same way as `subjects`), and a reachability check (`git merge-base --is-ancestor <commit> <ref>`).\n- `src/slicer/verify.py`: `landed(state, item_id, ref)` returns a report.\n  - **Pass** when all three hold: the item is done in the index at `REF`; `REF`'s tree has the item's done slice file (or, for an item with no slice, an index entry with the done status); and the commit that introduced that done state is an ancestor of `REF`.\n  - **Fail** otherwise. The report names the reason: not done, done only in the working tree, done on another branch, or unknown id.\n  - It reads `REF`'s tree with `git show REF:<path>`, not the working tree.\n- `src/slicer/cli.py`: `slicer verify` gains `--landed ID` and `--on REF` (default `HEAD`), with `--json`/`--lean` output. Exit 0 when landed, `DRIFT` (1) when not, `usage` (2) for an unknown id or a bad ref.\n- Docs: `README.md` command table, `docs/agents.md` (the verify row), `docs/getting-started.md` (\"verify\"), and `CHANGELOG.md`.\n- Tests: `tests/test_verify.py`, or the existing verify test module, using the fixture git helpers in `tests/support.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Each asserts:\n\n1. `Landed_DoneCommittedOnRef`: an item marked done and committed on `main` passes.\n2. `NotLanded_DoneOnUnmergedBranch`: done and committed only on a feature branch. `--on main` fails with \"done on another branch\"; `--on <feature>` passes.\n3. `NotLanded_WorkingTreeOnly`: done but uncommitted fails with \"done only in the working tree\".\n4. `NotLanded_Open`: an open item fails with \"not done\".\n5. `DoneDirConfig_Respected`: a custom `done_dir` still passes.\n6. `UnknownIdOrBadRef_Usage`: exit 2, no write.\n7. `ReadOnly`: `.slicer/` and the git index are byte-identical before and after."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write tests 1–7 and watch them fail.\n2. Add the `vcs` helpers, then `verify.landed`, then the CLI flags.\n3. Update the docs and the changelog.\n4. Full suite: `python3 -m unittest discover -s tests -t tests`. Then `slicer check`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`\n- `slicer check`\n- Manual: in a scratch repo, mark an item done on a feature branch, then run the new landed check against main before and after merging that branch (it fails before the merge and passes after)."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on a feature branch, merged after review and the owner's go-ahead."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,41 @@
+{
+  "id": "s246",
+  "title": "slicer must check and refresh file:line references in slice text",
+  "lead": [
+    "Slice specs cite code as `path:line` (for example `src/DataBall/DataBall.Open.cs:84`). After each landing the line numbers drift, so implementers and reviewers keep having to re-grep. In the DataBall relays, every brief had to say \"line numbers moved after db-07\". slicer should report stale references and offer to refresh them."
+  ],
+  "depends_note": null,
+  "findings_note": "DataBall slice relays db-07 to db-10, owner 2026-10-10",
+  "size": "M",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** resolving references across repositories; editing anything other than slice sections and notes through the normal edit path.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "slicer owns the slice text, and only its CLI may change it. A reference is checkable when the cited line still holds a symbol named next to it, for example \"`OpenAsync` (`DataBall.Open.cs:60`)\". When the symbol has moved, slicer can find its new line by search. A reference with no symbol nearby can only be reported, not fixed."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer`: a `slicer refs [ID...] [--json] [--fix]` command, read-only by default.\n  - It finds `path:line` and `path:a-b` references in slice sections, resolved against the project root.\n  - It reports each one: OK, missing file, out of range, or moved (the backticked symbol nearby now sits at a different line).\n  - With `--fix`, it rewrites moved references through the normal edit path, so history and render stay consistent.\n- `docs`: a command reference entry.\n- `tests`: a fixture project and slice with OK, moved, missing and out-of-range references; `--fix` updates only the moved ones."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the fixture tests and watch them fail.\n2. Write the read-only report, then `--fix`.\n3. Docs."
+    },
+    {
+      "heading": "Check",
+      "body": "- The project's test suite.\n- `slicer check` on the fixture."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

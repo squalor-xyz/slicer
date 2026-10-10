@@ -1191,3 +1191,6 @@
 {"when": "2026-10-10T02:31:57Z", "item": "s244", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-10T02:43:10Z", "item": "s244", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-10T02:43:28Z", "item": "s244", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer --help names the ai subcommands and ai instructions (full and --rest) point to slicer ai relay; skill text unchanged. Full suite 1548 OK, 1 skipped; slicer check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-10T21:56:05Z", "item": "s245", "action": "add", "from": "", "to": "open", "note": "slicer verify must confirm that an item's done state landed on a branch"}
+{"when": "2026-10-10T21:56:12Z", "item": "s245", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-10T23:25:21Z", "item": "s246", "action": "add", "from": "", "to": "open", "note": "slicer must check and refresh file:line references in slice text"}
