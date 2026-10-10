@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `slicer --help` lists the `ai` subcommands (`instructions`, `skill`, `relay`), and `ai instructions` and `ai instructions --rest` point to `slicer ai relay` under "Hand off for review". The skill text does not change, so installed skill copies stay current.
+
 ## [1.7.0] - 2026-10-09
 
 ### Added

@@ -27,14 +27,14 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-231 items · — 1 · done 226 · retired 4
+231 items · done 226 · retired 4 · reviewing 1
 
 ## v1.8
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
 | 1 | [s243](slices/s243.md) | 3.13 temp-repo cleanup flake | S | 1 | slicer | CI run 37884752686 (s240 merge, 2026-10-09), test (3.13): test_Merge_NextIdStaysTheLargest | done |
-| 2 | [s244](slices/s244.md) | Point to ai relay from --help and ai instructions | S | 1 | slicer | owner report, session 2026-10-09: slicer --help gives no sign of the relay; ai instructions and ai skill do not mention it (s241 left the pointer out of scope) · discovered from s241 | — |
+| 2 | [s244](slices/s244.md) | Point to ai relay from --help and ai instructions | S | 1 | slicer | owner report, session 2026-10-09: slicer --help gives no sign of the relay; ai instructions and ai skill do not mention it (s241 left the pointer out of scope) · discovered from s241 | reviewing |
 
 ---
 

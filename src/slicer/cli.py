@@ -2719,7 +2719,7 @@ def build_parser() -> argparse.ArgumentParser:
       _json_flags(sp)
     return sp
 
-  sp = sub.add_parser("ai", help="onboarding instructions for coding agents", parents=[common])
+  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay", parents=[common])
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
   _json_flags(sp)
