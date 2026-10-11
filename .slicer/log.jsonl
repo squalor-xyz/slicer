@@ -1204,3 +1204,7 @@
 {"when": "2026-10-11T13:44:26Z", "item": "s246", "action": "edit", "from": "", "to": "", "note": "Files"}
 {"when": "2026-10-11T13:44:27Z", "item": "s246", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-10-11T13:44:28Z", "item": "s246", "action": "edit", "from": "", "to": "", "note": "Git"}
+{"when": "2026-10-11T14:18:18Z", "item": "s247", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-11T14:18:18Z", "item": "s247", "action": "note", "from": "", "to": "", "note": "2026-10-11 owner: the architect runs only on size-L slices (", "by": "Jon Robbins"}
+{"when": "2026-10-11T14:48:12Z", "item": "s248", "action": "add", "from": "", "to": "open", "note": "refs must not let a later reference borrow an earlier reference's anchor"}
+{"when": "2026-10-11T14:48:12Z", "item": "s248", "action": "promote", "from": "", "to": "", "note": ""}

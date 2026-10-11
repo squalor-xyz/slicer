@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 248,
+  "next_id": 249,
   "preamble": "",
   "passes": [
     {
@@ -7500,7 +7500,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "22a789d3-103e-43e5-b646-47e33d7824d2",
+          "kind": "",
+          "text": "**2026-10-11** — 2026-10-11 owner: the architect runs only on size-L slices (agents playbook 0413109). slicer stays policy-neutral: Setup and Order make the architect optional and owner-chosen; the size rule lives in the agents binding (layering decision: slicer ai relay = contract, agents playbook = binding).",
+          "created_at": "2026-10-11T14:18:18Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -7520,6 +7532,39 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s248",
+      "title": "refs must not let a later reference borrow an earlier reference's anchor",
+      "short_title": "refs: one anchor per reference",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s246"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "s246 reviewer probe, 2026-10-11: `Box` (`src/app.py:1`) and `src/app.py:9` rewrote :9 to :3",
+        "discovered_from": "s246",
+        "cites": [],
+        "key": "",
+        "pass": "v1.8",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1,
         "attempts": 0
       }

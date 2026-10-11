@@ -1,0 +1,41 @@
+{
+  "id": "s248",
+  "title": "refs must not let a later reference borrow an earlier reference's anchor",
+  "lead": [
+    "On a line such as \"`Box` (`src/app.py:1`) and `src/app.py:9` later\", `slicer refs` anchors both references to `Box`. The second one was never anchored by its author, yet `--fix` rewrites it. An anchor should belong to the first reference after it, and to no other."
+  ],
+  "depends_note": null,
+  "findings_note": "s246 reviewer probe, 2026-10-11: `Box` (`src/app.py:1`) and `src/app.py:9` rewrote :9 to :3",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** other anchor rules (qualified names, common-word anchors); the range rule (s246); any change to which text refs scans.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Found by the s246 reviewer (2026-10-11): the probe rewrote `src/app.py:9` to `:3`. That follows the owner's rule, \"the nearest backticked identifier before it on the same line\". But the rule did not consider two references sharing one line, so an unanchored reference gets silently rewritten. The real roadmap shows the same pattern. S133 anchors four files to `_census`, and S148 anchors `docs/agents.md:271` to `_strict_flag`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/refs.py`, in `find`: an anchor is consumed by the first reference that follows it. A later reference on the same line with no backticked identifier between the two is `unanchored`.\n- `tests/test_refs.py`.\n- `docs/commands.md`, if it states the anchor rule. `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Find_SharedLine_SecondRefIsUnanchored`\n2. `test_RefsFix_SharedLine_SecondRefNotRewritten`\n3. `test_Find_EachRefOwnAnchor_BothAnchored`: \"`A` (`a.py:1`), `B` (`a.py:5`)\" keeps both anchors."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write tests 1–3 and watch them fail.\n2. Change the anchor assignment in `find`.\n3. Run `python3 tests/affected.py --run`, then the full suite, then `slicer check`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`.\n- `slicer refs --json` on this roadmap reports S133's later references as `unanchored`.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s248-refs-anchor` in `.worktrees/s248`. Do not commit, merge or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}
