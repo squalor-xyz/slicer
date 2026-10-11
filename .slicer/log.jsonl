@@ -1246,3 +1246,10 @@
 {"when": "2026-10-11T17:39:47Z", "item": "s249", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T17:44:05Z", "item": "s249", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T17:44:17Z", "item": "s249", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: refs skips fenced code blocks and lines containing <!-- example -->, keeping line numbers and offsets. Relay gate PASS; full suite 1623 OK. s248's lead examples wait for s252 (edit --lead).", "by": "Jon Robbins"}
+{"when": "2026-10-11T17:52:34Z", "item": "s252", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T17:52:41Z", "item": "s252", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-11T17:54:48Z", "item": "s248", "action": "edit", "from": "", "to": "", "note": "lead"}
+{"when": "2026-10-11T18:23:22Z", "item": "s252", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-11T18:23:28Z", "item": "s252", "action": "note", "from": "", "to": "", "note": "Ready for review: edit ID --lead replaces a slice's lead thr", "by": "Jon Robbins"}
+{"when": "2026-10-11T18:23:28Z", "item": "s252", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-11T20:58:00Z", "item": "s252", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
