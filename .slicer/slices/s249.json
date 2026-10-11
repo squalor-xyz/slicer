@@ -14,7 +14,7 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "On 2026-10-11, the first run of `slicer refs` on main after s246 landed reported 7 problems. 6 of them came from the example lines in s248's own spec (`src/app.py:1`, `a.py:5`, ...), and nothing could silence them. If an example counts as drift, `refs` becomes noise exactly in the specs that describe it.\n\n**Owner decision needed before claiming.** Pick the marker:\n\n- (a) Skip references inside fenced code blocks only. This is the simplest option, but inline examples stay flagged.\n- (b) Add a line marker, an HTML comment `` at the end of a line, which hides every reference on that line. Rendered Markdown does not show it.\n- (c) Both (a) and (b).\n\nThe recommendation is (c)."
+      "body": "On 2026-10-11, the first run of `slicer refs` on main after s246 landed reported 7 problems. 6 of them came from the example lines in s248's own spec (`src/app.py:1`, `a.py:5`, ...), and nothing could silence them. If an example counts as drift, `refs` becomes noise exactly in the specs that describe it. <!-- example -->\n\n**Decision (owner, final): option (c), both rules apply.**\n\n1. References inside fenced code blocks are skipped. Fences open with ``` or ~~~ (optionally indented up to 3 spaces). A fence closes on a line of the same character, at least as long as the opener, with nothing after it but spaces or tabs, up to 3 spaces in. A backtick opener's info string may not contain a backtick.\n2. Every reference on a line that contains the HTML comment `<!-- example -->` is skipped."
     },
     {
       "heading": "Files",

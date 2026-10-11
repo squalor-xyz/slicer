@@ -407,6 +407,68 @@ class RefsParserTests(unittest.TestCase):
     self.assertEqual(ref.anchor, "store.discover_all")
     self.assertEqual(ref.symbol, "discover_all")
 
+  def test_Find_FencedBlock_IsSkipped(self) -> None:
+    text = source(
+      "a.py:1",
+      "```python",
+      "b.py:2",
+      "~~~",
+      "f.py:6",
+      "```",
+      "c.py:3",
+      "   ~~~",
+      "d.py:4",
+      "   ~~~",
+      "e.py:5",
+      "````",
+      "g.py:7",
+      "```",
+      "h.py:8",
+      "````",
+      "i.py:9",
+    )
+    self.assertEqual(
+      [(r.path, r.line) for r in refs.find(text)],
+      [("a.py", 1), ("c.py", 7), ("e.py", 11), ("i.py", 17)],
+    )
+
+  def test_Find_ExampleMarker_SkipsWholeLine(self) -> None:
+    text = source("see a.py:1 and b.py:2 <!-- example -->", "c.py:3")
+    self.assertEqual([(r.path, r.line) for r in refs.find(text)], [("c.py", 2)])
+
+  def test_Find_UnmarkedLine_StillParsed(self) -> None:
+    text = source("a.py:1 <!-- example -->", "b.py:2", "c.py:3 <!-- example -->")
+    self.assertEqual([(r.path, r.line) for r in refs.find(text)], [("b.py", 2)])
+    [ref] = refs.find(text)
+    self.assertEqual(text[ref.begin:ref.stop], "2")
+
+  def test_Find_RefAfterFenceCloses_KeepsLineAndOffsets(self) -> None:
+    text = source("```", "q.py:9", "```", "alpha `Thing` (`src/a.py:3-5`)")
+    self.assertEqual([(r.path, r.line) for r in refs.find(text)], [("src/a.py", 4)])
+    [ref] = refs.find(text)
+    self.assertEqual(ref.line, 4)
+    self.assertEqual(text[ref.begin:ref.stop], "3-5")
+    self.assertEqual(ref.anchor, "Thing")
+
+  def test_Find_CloserWithInfoString_DoesNotClose(self) -> None:
+    text = source("```", "a.py:2", "```python", "b.py:4", "```", "c.py:6")
+    self.assertEqual([(r.path, r.line) for r in refs.find(text)], [("c.py", 6)])
+
+  def test_Find_BacktickInInfoString_IsNotAFence(self) -> None:
+    text = source("```x``` is inline", "a.py:2", "~~~ tilde ` info", "b.py:4", "~~~", "c.py:6")
+    self.assertEqual(
+      [(r.path, r.line) for r in refs.find(text)],
+      [("a.py", 2), ("c.py", 6)],
+    )
+
+  def test_Find_FourSpaceFence_IsNotAFence(self) -> None:
+    text = source("    ```", "a.py:2", "    ```", "b.py:4")
+    self.assertEqual([(r.path, r.line) for r in refs.find(text)], [("a.py", 2), ("b.py", 4)])
+
+  def test_Find_UnclosedFence_SkipsToEnd(self) -> None:
+    text = source("a.py:1", "```", "b.py:3", "", "c.py:5")
+    self.assertEqual([(r.path, r.line) for r in refs.find(text)], [("a.py", 1)])
+
 
 if __name__ == "__main__":
   unittest.main()

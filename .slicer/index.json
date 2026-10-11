@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 252,
+  "next_id": 253,
   "preamble": "",
   "passes": [
     {
@@ -7568,7 +7568,19 @@
       "depends_on": [
         "s246"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e8346823-ba0e-438a-81b7-95cbbf84274f",
+          "kind": "",
+          "text": "**2026-10-11** — s249 relay: the Why examples are marked. The lead's example refs (src/app.py lines 1 and 9) wait for s252 (edit --lead); mark them with that flag once it lands.",
+          "created_at": "2026-10-11T17:35:03Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -7596,11 +7608,26 @@
       "id": "s249",
       "title": "refs must let slice text mark a reference as an example",
       "short_title": "refs: example references",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "6b941c18-35c2-4bf0-99eb-35ceee55e8a1",
+          "kind": "",
+          "text": "**2026-10-11** — Ready for review: refs skips examples. Lines inside fenced code blocks (backtick or tilde, up to 3 spaces in, closer with no trailing text) and lines containing <!-- example --> are not checked; line numbers and offsets still count them. 8 new find() tests, mutation-checked; full suite 1623 OK; relay gate VERDICT: PASS. Owner decision: s248's lead examples stay unmarked until s252 (edit --lead) lands, so refs still reports those two; s248's Why examples are marked.",
+          "created_at": "2026-10-11T17:39:47Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T17:44:05Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -7620,7 +7647,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -7692,6 +7719,37 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s252",
+      "title": "edit cannot change a slice's lead",
+      "short_title": "edit: lead flag",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "s249 relay, 2026-10-11: s248's lead example refs could not be marked; only promote --force reaches a lead",
+        "discovered_from": "s249",
+        "cites": [],
+        "key": "",
+        "pass": "v1.8",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 1,
         "attempts": 0
       }

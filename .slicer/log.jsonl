@@ -1231,3 +1231,17 @@
 {"when": "2026-10-11T16:21:40Z", "item": "s250", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: merge-index unions an item's note_records by note id (ordered by created_at, id; deletion kept only if the other side left the note unchanged; a note changed two ways still conflicts). Lite relay, Sonnet implementer; gate VERDICT: PASS in one round; full suite 1615 OK (1 skipped).", "by": "Jon Robbins"}
 {"when": "2026-10-11T16:40:59Z", "item": "s251", "action": "add", "from": "", "to": "open", "note": "merge-index note union must not crash or reorder on edge input"}
 {"when": "2026-10-11T16:40:59Z", "item": "s251", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-11T16:51:48Z", "item": "s249", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T16:51:57Z", "item": "s249", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T16:54:04Z", "item": "s248", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T16:54:04Z", "item": "s248", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-11T17:12:10Z", "item": "s249", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T17:34:26Z", "item": "s249", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T17:34:44Z", "item": "s252", "action": "add", "from": "", "to": "open", "note": "edit cannot change a slice's lead"}
+{"when": "2026-10-11T17:35:03Z", "item": "s252", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-11T17:35:03Z", "item": "s248", "action": "note", "from": "", "to": "", "note": "s249 relay: the Why examples are marked. The lead's example ", "by": "Jon Robbins"}
+{"when": "2026-10-11T17:35:11Z", "item": "s252", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T17:35:11Z", "item": "s252", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-11T17:39:47Z", "item": "s249", "action": "note", "from": "", "to": "", "note": "Ready for review: refs skips examples. Lines inside fenced c", "by": "Jon Robbins"}
+{"when": "2026-10-11T17:39:47Z", "item": "s249", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-11T17:44:05Z", "item": "s249", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

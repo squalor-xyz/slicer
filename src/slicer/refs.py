@@ -5,6 +5,8 @@ the numbers rot and every reader re-greps. A reference is checkable when a
 backticked identifier stands next to it on the same line, for example
 "`OpenAsync` (`Open.cs:60`)": if the cited line still names that identifier the
 reference is fine, and if not, a search of the file can usually say where it went.
+A reference inside a fenced code block, or on a line marked `<!-- example -->`, is
+an example and is not checked.
 
 `find` is the pure half, text in and references out, like `outline.py`. `Checker`
 is the half that reads the project's files. Neither mutates anything: rewriting a
@@ -48,6 +50,14 @@ _REF = re.compile(
 # A path needs a real extension: it keeps `12:30` and `v1.2:3` out.
 _EXTENSION = re.compile(r"\.[A-Za-z0-9]*[A-Za-z][A-Za-z0-9]*$")
 _SPAN = re.compile(r"`([^`\n]+)`")
+# A fence opens a code block: three or more backticks or tildes, up to three
+# spaces in. A backtick run's info string holds no backtick, so "```x``` is
+# inline" is a code span and not a fence. A fence closes on a line of the same
+# character, at least as long as the opener, with no text after the run.
+_FENCE = re.compile(r"^ {0,3}(`{3,}(?=[^`]*$)|~{3,})")
+_CLOSE = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*$")
+# A line carrying this HTML comment is an example, not a reference.
+_EXAMPLE = "<!-- example -->"
 _IDENTIFIER = re.compile(r"^[A-Za-z_]\w*(?:(?:\.|::|#)[A-Za-z_]\w*)*(?:\(\))?$")
 _COMPONENT = re.compile(r"\.|::|#")
 # A dotted span ending in one of these is a file name, not a qualified symbol,
@@ -117,10 +127,32 @@ def find(text: str) -> list[Ref]:
   The anchor is the nearest backticked identifier before the reference on the
   same line. A reference written inside backticks never anchors itself: its
   span holds a `:` and so is not an identifier.
+
+  An example is not a reference, so it is not returned. A fenced code block is
+  skipped whole. Its opening line is a run of three or more backticks or tildes
+  (up to three spaces of indent; a backtick run's info string holds no backtick).
+  Its closing line is the same character, at least as long, with no text after
+  the run. A fence that never closes runs to the end of `text`. Each line
+  containing `<!-- example -->` is skipped too. Skipped lines still advance
+  `line`, `begin` and `stop`.
   """
   found: list[Ref] = []
   offset = 0
+  fence = ""
   for number, line in enumerate(text.split("\n"), start=1):
+    line_start = offset
+    offset += len(line) + 1
+    opening = _FENCE.match(line)
+    if fence:
+      closing = _CLOSE.match(line)
+      if closing and closing.group(1)[0] == fence[0] and len(closing.group(1)) >= len(fence):
+        fence = ""
+      continue
+    if opening:
+      fence = opening.group(1)
+      continue
+    if _EXAMPLE in line:
+      continue
     spans = [m for m in _SPAN.finditer(line) if _identifier_span(m.group(1))]
     for match in _REF.finditer(line):
       path = match.group("path")
@@ -137,10 +169,9 @@ def find(text: str) -> list[Ref]:
         approx=bool(match.group("tilde")),
         anchor=anchor,
         line=number,
-        begin=offset + (match.start("tilde") if match.group("tilde") else match.start("start")),
-        stop=offset + match.end(),
+        begin=line_start + (match.start("tilde") if match.group("tilde") else match.start("start")),
+        stop=line_start + match.end(),
       ))
-    offset += len(line) + 1
   return found
 
 
