@@ -1222,3 +1222,5 @@
 {"when": "2026-10-11T15:46:22Z", "item": "s247", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T15:51:22Z", "item": "s247", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T15:51:22Z", "item": "s247", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: ai relay has a Setup section before Order (roles with the architect optional and owner-chosen, vendor/model/effort, end point); the skill points relay requests at ai relay. Lite relay with a Haiku implementer; gate VERDICT: PASS in one round; full suite 1609 OK (1 skipped).", "by": "Jon Robbins"}
+{"when": "2026-10-11T16:04:11Z", "item": "s250", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-11T16:04:11Z", "item": "s250", "action": "edit", "from": "", "to": "", "note": "Git"}

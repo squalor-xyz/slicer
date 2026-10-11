@@ -24,7 +24,7 @@
     },
     {
       "heading": "Failing tests",
-      "body": ""
+      "body": "1. `test_MergeIndex_BothSidesAppendNotesToSameItem_KeepsBoth`\n2. `test_MergeIndex_NotesAppendedToDifferentItems_KeepsAll`\n3. `test_MergeIndex_SameNoteIdIdenticalOnBothSides_KeptOnce`\n4. `test_MergeIndex_FieldConflictWithNoteAppends_FailsNamingOnlyTheField`\n5. `test_SetupGit_Attributes_MapIndexJsonToSlicerIndex`\n\nEach test is red before the change, and its reason is stated in the slice-done report."
     },
     {
       "heading": "Implement",
@@ -36,7 +36,7 @@
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "Branch `feature/s250-merge-notes` in `.worktrees/s250`. One commit on the branch after handoff; merge to main with --no-ff and `done` on main only when the owner asks. This repo finishes with `handoff`."
     }
   ],
   "notes": []
