@@ -102,7 +102,7 @@ reproduce is never half-migrated.
 | `move` | reorder the queue |
 | `sort` | reorder the whole queue by priority score |
 | `set` | change an item's fields |
-| `edit` | edit a slice section or scope boundary |
+| `edit` | edit a slice section, scope boundary or lead |
 | `refs` | check `path:line` references in slice text against the files they cite; `--fix` rewrites the ones that moved |
 | `note` | append a dated note to an item |
 | `feedback` | keep a gitignored local log of frictions, bugs, and feature ideas, apart from the roadmap |

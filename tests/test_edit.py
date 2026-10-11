@@ -110,6 +110,78 @@ class EditInputTests(unittest.TestCase):
         target = "slices/S01.md" if command[0] == "edit" else "ROADMAP.md"
         self.assertIn("Inline replacement", repo.read(".slicer/render/" + target))
 
+  def test_Edit_Lead_ReplacesLeadParagraphs(self) -> None:
+    with self.repo() as repo:
+      repo.run("edit", "S01", "--section", "Why", "--text", "Because.")
+      repo.run("edit", "S01", "--boundary", "--text", "**Not in this slice:** other.")
+      code, _, err = repo.run("edit", "S01", "--lead", "--text", "First.\n\nSecond line\nof two.")
+      self.assertEqual(code, 0, err)
+      sl = repo.state().slices["S01"]
+      self.assertEqual(sl.lead, ["First.", "Second line\nof two."])
+      self.assertEqual(sl.section("Why").body, "Because.")
+      self.assertEqual(sl.boundary, "**Not in this slice:** other.")
+
+  def test_Edit_LeadJson_ReportsParagraphs(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("edit", "S01", "--lead", "--text", "A.\n\n\nB.", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out), {"id": "S01", "lead": ["A.", "B."]})
+
+  def test_Edit_LeadWithSection_IsUsage(self) -> None:
+    for extra in (("--section", "Why"), ("--boundary",)):
+      with self.subTest(extra=extra), self.repo() as repo:
+        before = self.snapshot(repo)
+        with patch("slicer.cli._via_editor") as editor:
+          code, out, err = repo.run("edit", "S01", "--lead", *extra, "--text", "x", "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(out)["error"]["code"], "usage")
+        self.assertIn("choose exactly one of --section, --boundary, or --lead", err)
+        editor.assert_not_called()
+        self.assertEqual(self.snapshot(repo), before)
+
+  def test_Edit_LeadAppend_IsUsage(self) -> None:
+    with self.repo() as repo:
+      before = self.snapshot(repo)
+      with patch("slicer.cli._via_editor") as editor:
+        code, out, err = repo.run("edit", "S01", "--lead", "--append", "--text", "x", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertIn("--append cannot be used with --lead", err)
+      editor.assert_not_called()
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Edit_Lead_LogsEditLead(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("edit", "S01", "--lead", "--text", "Lead.")
+      self.assertEqual(code, 0, err)
+      entries = json.loads(repo.run("log", "--json")[1])
+      self.assertEqual((entries[0]["item"], entries[0]["action"], entries[0]["note"]),
+                       ("S01", "edit", "lead"))
+
+  def test_Edit_LeadEmptyBody_ClearsLead(self) -> None:
+    for body in ("", " \n\n "):
+      with self.subTest(body=body), self.repo() as repo:
+        repo.run("edit", "S01", "--lead", "--text", "Lead.")
+        code, _, err = repo.run("edit", "S01", "--lead", "--text", body)
+        self.assertEqual(code, 0, err)
+        self.assertEqual(repo.state().slices["S01"].lead, [])
+
+  def test_Edit_LeadNoSource_EditorOpensWithJoinedLead(self) -> None:
+    with self.repo() as repo:
+      repo.run("edit", "S01", "--lead", "--text", "One.\n\nTwo.")
+      with patch("slicer.cli._via_editor", return_value="Three.") as editor:
+        code, _, err = repo.run("edit", "S01", "--lead")
+      self.assertEqual(code, 0, err)
+      editor.assert_called_once_with("One.\n\nTwo.")
+      self.assertEqual(repo.state().slices["S01"].lead, ["Three."])
+
+  def test_Edit_LeadFile_SplitsParagraphs(self) -> None:
+    with self.repo() as repo:
+      path = repo.write("lead.md", "First.\n\n\nSecond line\nof two.\n")
+      code, _, err = repo.run("edit", "S01", "--lead", "--file", str(path))
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().slices["S01"].lead, ["First.", "Second line\nof two."])
+
   def test_ProseEdit_IdenticalInlineText_DoesNotWriteOrLog(self) -> None:
     with self.repo() as repo:
       repo.run("prose", "edit", "preamble", "--text", "same\n")

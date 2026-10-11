@@ -7724,10 +7724,22 @@
       "id": "s252",
       "title": "edit cannot change a slice's lead",
       "short_title": "edit: lead flag",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "71f0433d-f259-408d-bdbd-742bf19b2b4e",
+          "kind": "",
+          "text": "**2026-10-11** — Ready for review: edit ID --lead replaces a slice's lead through ops.edit_lead. The body splits on blank lines with outline.blocks (renamed from _blocks), an empty body clears the lead, and --lead excludes --section, --boundary and --append (usage). 8 new edit tests, mutation-checked; full suite 1631 OK; relay gate VERDICT: PASS. s248's lead examples are marked, and refs s248 reports no drift.",
+          "created_at": "2026-10-11T18:23:28Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -7748,7 +7760,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

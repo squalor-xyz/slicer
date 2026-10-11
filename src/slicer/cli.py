@@ -2021,8 +2021,10 @@ def cmd_note_verify(args: argparse.Namespace) -> int:
 
 
 def cmd_edit(args: argparse.Namespace) -> int:
-  if (args.section is not None) == args.boundary:
-    raise StateError("choose exactly one of --section or --boundary", code="usage")
+  if sum((args.section is not None, args.boundary, args.lead)) != 1:
+    raise StateError("choose exactly one of --section, --boundary, or --lead", code="usage")
+  if args.lead and args.append:
+    raise StateError("--append cannot be used with --lead", code="usage")
   state = _state(args)
   # Look the item up first: "S99 has no slice" is a confusing thing to say
   # about an item that does not exist at all.
@@ -2037,11 +2039,19 @@ def cmd_edit(args: argparse.Namespace) -> int:
   section = sl.section(args.section)
   if args.append and args.text is None and args.file is None and not args.stdin:
     raise StateError("--append requires --text, --file, or --stdin", code="usage")
-  initial = sl.boundary if args.boundary else (section.body if section else "")
+  if args.lead:
+    initial = "\n\n".join(sl.lead)
+  else:
+    initial = sl.boundary if args.boundary else (section.body if section else "")
   body = _body_from(args, initial)
   if body is None:
     raise StateError("editor exited non-zero; slice unchanged", code="editor_aborted")
-  if args.boundary:
+  if args.lead:
+    # The same blank-line split `promote` uses for a lead; an empty body clears it.
+    lead = outline.blocks(body.split("\n"))
+    ops.edit_lead(state, args.id, lead)
+    _emit(args, {"id": args.id, "lead": lead}, f"updated {args.id} / lead")
+  elif args.boundary:
     ops.edit_boundary(state, args.id, body)
     _emit(args, {"id": args.id, "boundary": body}, f"updated {args.id} / boundary")
   else:
@@ -3041,10 +3051,11 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--no-effort", action="store_true", help="clear the effort estimate")
   sp.add_argument("--attempts", type=int, help="implementation attempt count; an integer >= 0")
 
-  sp = _strict_flag(_render_flag(add("edit", _mutating(cmd_edit), "edit a slice section or scope boundary")))
+  sp = _strict_flag(_render_flag(add("edit", _mutating(cmd_edit), "edit a slice section, scope boundary or lead")))
   sp.add_argument("id")
-  sp.add_argument("--section", help="section to edit; cannot combine with --boundary")
-  sp.add_argument("--boundary", action="store_true", help="replace the full scope-boundary paragraph")
+  sp.add_argument("--section", help="section to edit; cannot combine with --boundary or --lead")
+  sp.add_argument("--boundary", action="store_true", help="replace the full scope-boundary paragraph; cannot combine with --section or --lead")
+  sp.add_argument("--lead", action="store_true", help="replace the lead paragraphs (blank-line separated; empty clears); cannot combine with --section, --boundary, or --append")
   sp.add_argument("--append", action="store_true", help="append with a blank line; requires --text, --file, or --stdin; empty input leaves the body unchanged")
   sp.add_argument("--text", help="inline body (exact in replacement mode); empty text clears unless appending; cannot combine with --file/--stdin")
   sp.add_argument("--file")

@@ -106,7 +106,7 @@ def split_list(value: str) -> list[str]:
   return [part.strip() for part in value.split(",") if part.strip()]
 
 
-def _blocks(lines: list[str]) -> list[str]:
+def blocks(lines: list[str]) -> list[str]:
   """Blank-line-separated paragraphs, blanks dropped."""
   out: list[str] = []
   current: list[str] = []
@@ -148,7 +148,7 @@ def parse(text: str, *, path: str = "<outline>") -> ParsedOutline:
   def close_lead() -> None:
     nonlocal buffer
     if current is not None and buffer:
-      current.lead.extend(_blocks(buffer))
+      current.lead.extend(blocks(buffer))
     buffer = []
 
   for n, line in enumerate(lines, 1):
