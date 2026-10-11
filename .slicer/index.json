@@ -7466,7 +7466,7 @@
       "id": "s246",
       "title": "slicer must check and refresh file:line references in slice text",
       "short_title": "slicer must check and refresh file:line references in slice text",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7482,7 +7482,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T15:07:24Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],

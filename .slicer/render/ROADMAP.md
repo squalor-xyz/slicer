@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-234 items · — 1 · done 228 · retired 4 · review 1
+234 items · — 1 · done 228 · retired 4 · reviewing 1
 
 ## v1.8
 
@@ -232,7 +232,7 @@ Later (revisit after orchestrator use)
 |---|---|---|---|---|---|---|---|
 | 130 | S03 | Export back to a legacy markdown index for anything still expecting one | M | - | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
 | 131 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
-| 132 | [s246](slices/s246.md) | slicer must check and refresh file:line references in slice text | M | 2 | src/slicer, tests, docs | DataBall slice relays db-07 to db-10, owner 2026-10-10 | review |
+| 132 | [s246](slices/s246.md) | slicer must check and refresh file:line references in slice text | M | 2 | src/slicer, tests, docs | DataBall slice relays db-07 to db-10, owner 2026-10-10 | reviewing |
 
 ---
 
