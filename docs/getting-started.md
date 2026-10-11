@@ -900,6 +900,25 @@ Inside a git checkout it adds two checks. Both are warnings, so `verify` still e
   repo split from another. Outside a repository, or with no history, it reports
   `git checks skipped` and stops there.
 
+To confirm that a merge really carried an item's done state, ask for that item by id:
+
+```sh
+slicer verify --landed S07 --on main      # --on defaults to HEAD
+```
+
+It exits 0 when `main`'s own index has S07 done and, if S07 has a slice, `main`'s tree
+holds the done slice file, added by a commit reachable from `main`. It reads that tree
+with `git show`, not your working tree, so an uncommitted `done` or a commit still on a
+feature branch does not count. When it has not landed it exits 1 and names why:
+`other_branch` when some other branch, remote branch or tag outside `main`'s history has
+S07 done right now (a branch that has since reopened it does not count; stashes are
+ignored), `working_tree_only` when only your working tree has it done, else `not_done`.
+Exit 2 means there is no answer to give: an unknown id (`no_such_item`), an unusable id
+(`bad_id`), a ref that names no commit (`bad_ref`), a project outside a git repository
+(`not_git`), or `--on` without `--landed`. An index that cannot be read on `main` itself is
+exit 3; one that cannot be read on some other branch is skipped. `--json` returns `{id, ref, ref_commit, landed, reason, message, commit}`. It
+writes nothing, and it follows `done_dir`, so scripts need not hard-code the done path.
+
 ---
 
 Next: [configuration.md](configuration.md) for every config key,

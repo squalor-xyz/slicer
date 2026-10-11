@@ -8,12 +8,15 @@ wrong.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from slicer import graph, ids, vcs
-from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, successor_cycles
-from slicer.store import State
+from slicer.errors import StateError
+from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, Index, successor_cycles
+from slicer.store import INDEX_NAME, State
 
 
 @dataclass
@@ -42,6 +45,35 @@ class VerifyReport:
       "git": self.git,
       "errors": len(self.problems),
       "findings": [f.to_dict() for f in self.findings],
+    }
+
+
+@dataclass
+class LandedReport:
+  """The answer to "is this item's done state reachable from REF?".
+
+  `reason` is the stable word an agent branches on (`not_done`,
+  `working_tree_only`, `other_branch`); it is empty when the item landed.
+  `commit` is the commit that put the done slice file in place, when one is known.
+  """
+
+  id: str
+  ref: str
+  ref_commit: str
+  landed: bool
+  reason: str = ""
+  message: str = ""
+  commit: str = ""
+
+  def to_dict(self) -> dict[str, object]:
+    return {
+      "id": self.id,
+      "ref": self.ref,
+      "ref_commit": self.ref_commit,
+      "landed": self.landed,
+      "reason": self.reason,
+      "message": self.message,
+      "commit": self.commit,
     }
 
 
@@ -273,3 +305,123 @@ def against_git(state: State) -> VerifyReport:
         Finding("warn", item.id, "recorded done, but no commit subject mentions it")
       )
   return report
+
+
+def _index_at(state: State, commit: str) -> Index | None:
+  """The index as `commit` recorded it; None when that commit has no index.
+
+  An index that cannot be read raises, so the caller decides whether that is fatal.
+  """
+  text = vcs.show_file(state.root, commit, _relative(state, state.dir / INDEX_NAME))
+  if text is None:
+    return None
+  try:
+    return Index.from_dict(json.loads(text))
+  except (ValueError, KeyError, TypeError, AttributeError) as exc:
+    raise StateError(
+      f"the index at {commit[:12]} cannot be read ({exc}); check that commit with `git show`",
+      code="corrupt",
+    ) from exc
+
+
+def _relative(state: State, path: Path) -> str:
+  return path.relative_to(state.root).as_posix()
+
+
+def landed(state: State, item_id: str, ref: str) -> LandedReport:
+  """Whether `item_id` is done in the tree `ref` points at, and committed there.
+
+  Read-only. `ref`'s own index and done slice file decide, read with `git show`, so
+  the working tree and unmerged branches cannot satisfy it. A pass needs the item
+  done in `ref`'s index and, for an item with a slice, the done slice file in
+  `ref`'s tree, created by a commit in `ref`'s history.
+
+  When it has not landed, `reason` says why, in this order: `other_branch` when the
+  tip of some other branch, remote branch or tag outside `ref`'s history has the item
+  done now; `not_done` when `ref`'s index says done but the slice file is missing
+  there; `working_tree_only` when only the working tree has it done; else
+  `not_done`. A branch that once had it done and has since reopened it does not
+  count. An unusable id, an unknown id, or a ref that names no commit is a
+  `usage`-class error, not a failed report. An index that cannot be read on a ref
+  other than `ref` is skipped; on `ref` itself it is an error.
+  """
+  ids.require_valid(item_id)
+  root = state.root
+  if not vcs.is_repo(root):
+    raise StateError(
+      f"{root} is not inside a git repository; `--landed` reads commits and has nothing to read",
+      code="not_git",
+    )
+  commit = vcs.resolve(root, ref)
+  if commit is None:
+    raise StateError(
+      f"{ref!r} does not name a commit; pass a branch, tag or commit with `--on`",
+      code="bad_ref",
+    )
+  there_index = _index_at(state, commit)
+  here = state.index.get(item_id)
+  there = there_index.get(item_id) if there_index is not None else None
+
+  done = state.config.done_status
+  slice_path = _relative(state, state.done_dir / f"{item_id}.json")
+
+  def report(landed_: bool, reason: str, message: str, introduced: str = "") -> LandedReport:
+    return LandedReport(item_id, ref, commit, landed_, reason, message, introduced)
+
+  if there is not None and there.status == done:
+    if not there.has_slice:
+      return report(True, "", f"{item_id} is done in the index at {ref} ({commit[:12]})")
+    if vcs.show_file(root, commit, slice_path) is not None:
+      added = vcs.adding_commits(root, commit, slice_path)
+      return report(
+        True, "", f"{item_id} is done and committed on {ref} ({commit[:12]})",
+        added[0] if added else "",
+      )
+  if _done_on_another_tip(state, item_id, slice_path, commit):
+    return report(
+      False, "other_branch",
+      f"{item_id} is done on another branch, not on {ref}; merge that branch into {ref} "
+      "and check again",
+    )
+  if there is not None and there.status == done:
+    # Done in the index at REF, yet its slice file is not in the done folder there.
+    return report(
+      False, "not_done",
+      f"{item_id} is not done: the index at {ref} says done but its slice file is "
+      "missing from the done folder there; run `slicer verify` and fix the folder",
+    )
+  if here is not None and here.status == done:
+    return report(
+      False, "working_tree_only",
+      f"{item_id} is done only in the working tree; commit it, and merge it into {ref} "
+      "if that is another branch",
+    )
+  known = here or there
+  if known is None:
+    raise StateError(
+      f"no such item: {item_id}; run `slicer list` for the ids in this project",
+      code="no_such_item",
+    )
+  return report(False, "not_done", f"{item_id} is not done (status {known.status})")
+
+
+def _done_on_another_tip(state: State, item_id: str, slice_path: str, commit: str) -> bool:
+  """Whether a branch, remote branch or tag outside `commit`'s history has the item done.
+
+  Each such tip's own index decides, and for an item with a slice its done slice file
+  too. A tip whose index cannot be read is skipped: it is no evidence either way.
+  """
+  root = state.root
+  for tip in vcs.ref_tips(root):
+    if vcs.is_ancestor(root, tip, commit):
+      continue
+    try:
+      seen = _index_at(state, tip)
+    except StateError:
+      continue
+    recorded = seen.get(item_id) if seen is not None else None
+    if recorded is None or recorded.status != state.config.done_status:
+      continue
+    if not recorded.has_slice or vcs.show_file(root, tip, slice_path) is not None:
+      return True
+  return False

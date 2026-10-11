@@ -16,7 +16,12 @@ from slicer.errors import StateError
 
 ALLOWED = frozenset({
   "rev-parse", "status", "log", "worktree", "branch", "config", "merge-file",
+  "show", "merge-base",
 })
+
+_COMMIT = r"[0-9a-f]{40}(?:[0-9a-f]{24})?"
+_BLOB_AT = re.compile(rf"{_COMMIT}:\./[^\0]+")
+_COMMIT_ONLY = re.compile(_COMMIT)
 
 # These subcommands are allowlisted only for the exact read-only forms below.
 READ_ONLY = {
@@ -27,6 +32,19 @@ READ_ONLY = {
     ("--get", "merge.slicer-generated.driver"),
     ("--get", "merge.slicer-index.driver"),
   }),
+}
+
+# These take arguments that vary, so a predicate on the arguments after the
+# subcommand stands in for an exact list. `show` prints one blob named
+# `COMMIT:./PATH` and accepts no option. `merge-base` answers only
+# `--is-ancestor COMMIT COMMIT`. Both take full object names, never a ref a caller
+# typed, so a branch named like an option cannot reach git.
+SHAPED = {
+  "show": lambda rest: len(rest) == 1 and _BLOB_AT.fullmatch(rest[0]) is not None,
+  "merge-base": lambda rest: (
+    len(rest) == 3 and rest[0] == "--is-ancestor"
+    and all(_COMMIT_ONLY.fullmatch(part) for part in rest[1:])
+  ),
 }
 
 # `merge-file` rewrites its first file argument unless `-p` sends the result to
@@ -41,6 +59,11 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     )
   exact = READ_ONLY.get(args[0])
   if exact is not None and args[1:] not in exact:
+    raise StateError(
+      f"git {' '.join(args)} is not permitted; slicer never writes history"
+    )
+  shaped = SHAPED.get(args[0])
+  if shaped is not None and not shaped(args[1:]):
     raise StateError(
       f"git {' '.join(args)} is not permitted; slicer never writes history"
     )
@@ -97,6 +120,60 @@ def subjects(root: Path, limit: int = 2000) -> list[str]:
     return []
   done = _run(root, "log", "--all", "--no-merges", f"--max-count={limit}", "--pretty=%h %s")
   return done.stdout.splitlines() if done.returncode == 0 else []
+
+
+def resolve(root: Path, ref: str) -> str | None:
+  """The full commit name `ref` points at, or None when it names no commit.
+
+  The `^{commit}` suffix means an option-looking `ref` is read as a revision, and
+  fails, rather than as a flag to `rev-parse`.
+  """
+  if not is_repo(root):
+    return None
+  done = _run(root, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
+  name = done.stdout.strip()
+  return name if done.returncode == 0 and _COMMIT_ONLY.fullmatch(name) else None
+
+
+def show_file(root: Path, commit: str, relpath: str) -> str | None:
+  """The text of `relpath` (relative to `root`) as `commit` recorded it, or None.
+
+  Reads the commit's tree, never the working tree, so an uncommitted file does not
+  count. `root` may sit below the repository top: `./` makes the path relative to it.
+  """
+  done = _run(root, "show", f"{commit}:./{relpath}")
+  return done.stdout if done.returncode == 0 else None
+
+
+def adding_commits(root: Path, commit: str, relpath: str, limit: int = 2000) -> list[str]:
+  """Commits in `commit`'s history that created `relpath`, newest first, at most `limit`.
+
+  Rename detection is off, so a slice file moved into the done folder reads as
+  created there.
+  """
+  done = _run(
+    root, "log", f"--max-count={limit}", "--format=%H", "--diff-filter=A", "--no-renames",
+    commit, "--", relpath,
+  )
+  return done.stdout.split() if done.returncode == 0 else []
+
+
+def ref_tips(root: Path, limit: int = 1000) -> list[str]:
+  """The commit each branch, remote branch and tag points at, without repeats.
+
+  Stashes and other internal refs are left out on purpose: they hold uncommitted
+  work, not anything that was recorded on a branch.
+  """
+  # No `--max-count`: with it git walks past the tips into their parents.
+  done = _run(root, "log", "--branches", "--remotes", "--tags", "--no-walk", "--format=%H")
+  if done.returncode != 0:
+    return []
+  return list(dict.fromkeys(done.stdout.split()))[:limit]
+
+
+def is_ancestor(root: Path, commit: str, descendant: str) -> bool:
+  """Whether `commit` is reachable from `descendant` (a commit is its own ancestor)."""
+  return _run(root, "merge-base", "--is-ancestor", commit, descendant).returncode == 0
 
 
 CLAIM_OWNER_ENV = "SLICER_CLAIM_OWNER"

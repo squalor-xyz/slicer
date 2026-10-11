@@ -2377,7 +2377,13 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
+  if args.landed is None and args.on is not None:
+    raise StateError("--on only applies to `verify --landed ID`", code="usage")
   state = _state(args)
+  if args.landed is not None:
+    found = verify.landed(state, args.landed, "HEAD" if args.on is None else args.on)
+    _emit(args, found.to_dict(), found.message)
+    return OK if found.landed else DRIFT
   offline = verify.offline(state)
   report = verify.against_git(state)
   report.findings = offline.findings + report.findings
@@ -3082,7 +3088,12 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("sync", cmd_sync, "rewrite derived lines in other documents")
   sp.add_argument("--check", action="store_true", help="report drift instead of writing")
 
-  add("verify", cmd_verify, "check the index for consistency (and against git unless git_check is off)")
+  sp = add("verify", cmd_verify, "check the index for consistency (and against git unless git_check is off)")
+  sp.add_argument(
+    "--landed", metavar="ID",
+    help="instead, check that ID's done state is committed in REF's history; exit 1 when it is not",
+  )
+  sp.add_argument("--on", metavar="REF", help="with --landed, the branch, tag or commit to check (default HEAD)")
 
   sp = _recursive_flag(add("check", cmd_check, "the CI gate: render, sync and integrity"))
   sp.add_argument("--diff", action="store_true", help="show a diff for each stale file")
