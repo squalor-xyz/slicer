@@ -1260,3 +1260,18 @@
 {"when": "2026-10-11T21:31:36Z", "item": "s248", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T21:31:40Z", "item": "s248", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T21:31:44Z", "item": "s248", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: an anchor belongs only to the first reference after it; later shared-line references are unanchored and refs --fix leaves them alone. Relay gate PASS; full suite 1635 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-11T21:41:44Z", "item": "s251", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T22:06:53Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T22:06:53Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-11T22:06:53Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-11T22:06:53Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-11T22:06:54Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "lead"}
+{"when": "2026-10-11T22:07:31Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T22:18:54Z", "item": "s251", "action": "set", "from": "", "to": "", "note": "title merge-index note union must not crash or reorder on edge input→merge-index note union must keep same-timestamp notes in union order"}
+{"when": "2026-10-11T22:19:32Z", "item": "s253", "action": "add", "from": "", "to": "open", "note": "check must not report a collision when a branch retitles an existing item"}
+{"when": "2026-10-11T22:19:32Z", "item": "s253", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-11T22:27:33Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T22:32:41Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T22:32:50Z", "item": "s251", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T22:39:46Z", "item": "s251", "action": "note", "from": "", "to": "", "note": "Ready for review: the note union in merge-index sorts by cre", "by": "Jon Robbins"}
+{"when": "2026-10-11T22:39:46Z", "item": "s251", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

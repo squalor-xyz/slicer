@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 253,
+  "next_id": 254,
   "preamble": "",
   "passes": [
     {
@@ -7713,12 +7713,24 @@
     },
     {
       "id": "s251",
-      "title": "merge-index note union must not crash or reorder on edge input",
+      "title": "merge-index note union must keep same-timestamp notes in union order",
       "short_title": "merge-index note union edges",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "43a4afca-d345-4096-87c3-073269d1f4b9",
+          "kind": "",
+          "text": "**2026-10-11** — Ready for review: the note union in merge-index sorts by created_at only, so notes that share a timestamp keep union order (ours, then notes only theirs has). The crash premise was false (_load refuses a non-string created_at as corrupt before the union runs), so no guard, per owner decision. Docs: sort wording in getting-started, commands and two docstrings; delete-vs-edit conflict case added. Full suite 1636 OK; relay gate VERDICT: PASS.",
+          "created_at": "2026-10-11T22:39:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -7739,7 +7751,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -7783,6 +7795,37 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s253",
+      "title": "check must not report a collision when a branch retitles an existing item",
+      "short_title": "check: retitle is not a collision",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "s251 relay, 2026-10-11: retitling s251 on its branch warned 'will collide on merge' and advised refiling under a new id",
+        "discovered_from": "s251",
+        "cites": [],
+        "key": "",
+        "pass": "v1.8",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

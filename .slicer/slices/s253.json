@@ -1,0 +1,41 @@
+{
+  "id": "s253",
+  "title": "check must not report a collision when a branch retitles an existing item",
+  "lead": [
+    "`slicer check` warns when a sibling worktree has an id under a different title (s185, `_sibling_collisions` in `src/slicer/check.py`). Retitling an existing item on a slice branch trips the same warning, and its advice, to file this checkout's item under a new id, would duplicate the item. A collision is two different filings of one id, so only an id that is new on both sides can collide."
+  ],
+  "depends_note": null,
+  "findings_note": "s251 relay, 2026-10-11: retitling s251 on its branch warned 'will collide on merge' and advised refiling under a new id",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** other sibling-worktree reports (in-work, review, sibling-only items); changing merge-index; renumbering ids.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-11, during the s251 relay, s251 was retitled on its slice branch after its scope changed. `slicer check` then warned \"s251 is '...' here but '...' in worktree slicer; the two will collide on merge. File this checkout's item under a new id before merging.\" It is the same item, and only one side changed the title, so `merge-index` takes the change cleanly. A false warning that recommends a harmful fix trains people to ignore the real one.\n\n**Owner decision needed before claiming.** How check tells a retitle from a collision:\n\n- (a) Read the merge base's index (`git merge-base` of the two checkouts, then `git show BASE:./.slicer/index.json`), and warn only for ids absent from the base. This is exact, but it needs `merge-base A B` in the `vcs.py` allowlist (it already has `show COMMIT:./PATH` and `merge-base --is-ancestor`).\n- (b) Compare the filing `key` when both sides have one, else fall back to the title. This needs no git, but most items have no key, so it does not fix the common case.\n- (c) Downgrade the message for a title-only difference to a softer hint, with no \"file under a new id\" advice.\n\nThe recommendation is (a)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/check.py`: `_sibling_collisions`.\n- `src/slicer/vcs.py`: the allowlist, if (a).\n- `tests/` (the s185 tests for the sibling collision warning).\n- `docs/commands.md` (the `check` row), `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Check_SiblingRetitledExistingItem_NoCollisionWarning`\n2. `test_Check_SiblingFiledDifferentItemSameNewId_StillWarns`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. The owner picks (a), (b) or (c); record it in Why with `slicer edit`.\n2. Write the tests and watch them fail.\n3. Change the check, then the docs.\n4. Run `python3 tests/affected.py --run`, then the full suite, then `slicer check`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`\n- Retitling an item in a worktree no longer produces a collision warning in `slicer check`.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/<id>-retitle-collision` in `.worktrees/<id>`. Do not commit, merge or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}

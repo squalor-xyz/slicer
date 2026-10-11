@@ -1,18 +1,18 @@
 """The `slicer-index` merge driver for `.slicer/index.json`.
 
-Two branches that each file or edit anything overlap in the one index file even
-when they touched different items or different fields of one item, and Git's line
-merge can only call that a conflict. The driver merges the three versions it is
-handed by identity instead: items by id, catalog records by id, object fields by
-name. A value changed on one side takes that change; equal changes coalesce; only
-a value both sides changed differently conflicts, and then only at that field.
-Lists and prose strings are atomic, so two different edits to one list are never
-guessed into one. `cites` stays one of those lists. An item's `note_records` is the
-exception: notes are append-only records with unique ids, so two edited lists merge
-as the union by note id, ordered by (`created_at`, `id`), and a note removed on one
-side stays removed only when the other side left it unchanged. Item order and catalog-record
-order follow the base unless exactly one side reordered them. `next_id` and
-`catalog.next_id` are each the largest of the three: an id is never reused.
+Two branches that each file or edit anything overlap in the one index file even when
+they touched different items or different fields of one item, and Git's line merge can
+only call that a conflict. The driver merges the three versions it is handed by identity
+instead: items by id, catalog records by id, object fields by name. A value changed on
+one side takes that change; equal changes coalesce; only a value both sides changed
+differently conflicts, and then only at that field. Lists and prose strings are atomic,
+so two different edits to one list are never guessed into one. `cites` stays one of
+those lists. An item's `note_records` is the exception: notes are append-only records
+with unique ids, so two edited lists merge as the union by note id, ordered by
+`created_at` (ties keep ours first, then theirs-only notes), and a note removed on one
+side stays removed only when the other side left it unchanged. Item order and
+catalog-record order follow the base unless exactly one side reordered them. `next_id`
+and `catalog.next_id` are each the largest of the three: an id is never reused.
 
 A merge that would leave the index inconsistent -- two ids for one filing key, ids
 that differ only in case, a dependency on an item the merge removed -- conflicts at
@@ -124,10 +124,11 @@ class _Merge:
 
   def _note_records(self, sides: tuple[Any, Any, Any], path: list[str]) -> Any:
     """Notes are append-only records with unique ids, so two edited lists merge as the
-    union of the three by note id, ordered by (created_at, id). A note one side
-    removed stays removed only when the other side left it as it was in the base; a
-    note both sides changed differently conflicts at the note list. A list that is not
-    a plain list of id-keyed notes is atomic, like any other list."""
+    union of the three by note id, ordered by created_at (ties keep ours first, then the
+    notes only theirs has). A note one side removed stays removed only when the other
+    side left it as it was in the base; a note both sides changed differently conflicts
+    at the note list. A list that is not a plain list of id-keyed notes is atomic, like
+    any other list."""
     base, ours, theirs = sides
     if _same(ours, theirs) or _same(ours, base) or _same(theirs, base):
       return self._value(*sides, path)
@@ -153,7 +154,8 @@ class _Merge:
         value = self._conflict(path, b, o, t)
       if value is not _MISSING:
         merged.append(value)
-    return sorted(merged, key=lambda n: (n.get("created_at", ""), n["id"]))
+    # stable: equal created_at keeps union order
+    return sorted(merged, key=lambda n: n.get("created_at", ""))
 
   def _largest_counter(self, sides: tuple[Any, Any, Any]) -> int | None:
     """The larger catalog counter. A counter that exists on only one side is a
