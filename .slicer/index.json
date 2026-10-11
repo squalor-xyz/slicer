@@ -7608,7 +7608,7 @@
       "id": "s249",
       "title": "refs must let slice text mark a reference as an example",
       "short_title": "refs: example references",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7624,10 +7624,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-11T17:44:05Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
