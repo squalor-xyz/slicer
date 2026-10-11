@@ -7423,7 +7423,7 @@
       "id": "s245",
       "title": "slicer verify must confirm that an item's done state landed on a branch",
       "short_title": "slicer verify must confirm that an item's done state landed on a branch",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7439,7 +7439,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T13:28:26Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
