@@ -1,0 +1,41 @@
+{
+  "id": "s252",
+  "title": "edit cannot change a slice's lead",
+  "lead": [
+    "`slicer edit` takes `--section NAME` or `--boundary`, but no flag reaches a slice's lead paragraphs. The only CLI path to a lead is `promote ID --force`, which rewrites the whole spec. The op already exists: `edit_lead` (`src/slicer/ops.py:1658`) replaces the lead and logs an `edit` entry with note `lead`, and `refs --fix` uses it. Only the command is missing."
+  ],
+  "depends_note": null,
+  "findings_note": "s249 relay, 2026-10-11: s248's lead example refs could not be marked; only promote --force reaches a lead",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** editing notes; a general field editor; changing `refs --fix`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "During the s249 relay on 2026-10-11, s248's example references had to be marked with `<!-- example -->`. Its Why section could be edited, but its lead could not, so `slicer refs` still reports `src/app.py:1` and `src/app.py:9` there as `missing_file`. <!-- example -->\n\nRewriting s248 through `promote --force` just to change one line risks dropping text from a spec that is otherwise fine."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: `cmd_edit` (`src/slicer/cli.py:2023`) and the `edit` parser. Add `--lead`, exclusive with `--section` and `--boundary`.\n- `src/slicer/ops.py`: reuse `edit_lead`; no new op.\n- `tests/`: CLI tests for `edit --lead`.\n- `docs/commands.md` (the `edit` row), `docs/agents.md` if `edit`'s JSON gains a key, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Edit_Lead_ReplacesLeadParagraphs`: a body with two paragraphs separated by a blank line becomes two lead paragraphs; sections and boundary are unchanged.\n2. `test_Edit_LeadWithSection_IsUsage`: `--lead` with `--section` or `--boundary` exits 2 with code `usage`.\n3. `test_Edit_LeadAppend_IsUsage`, unless the owner decides `--append` adds a paragraph.\n4. `test_Edit_Lead_LogsEditLead`: the history entry is `edit` with note `lead`, as `refs --fix` writes it."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Owner decision: whether `--append` works with `--lead`, and how the body splits into paragraphs (the same blank-line split `promote` uses for a lead is the default).\n2. Write the tests and watch them fail.\n3. Add the flag and route it to `ops.edit_lead`; the editor path opens with the current lead joined by blank lines.\n4. Update the docs, then use the new flag to mark s248's lead examples with `<!-- example -->`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`.\n- `slicer refs s248` no longer reports the lead's example references.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s252-edit-lead` in `.worktrees/s252`. Do not commit, merge or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}

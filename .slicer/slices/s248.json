@@ -14,7 +14,7 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "Found by the s246 reviewer (2026-10-11): the probe rewrote `src/app.py:9` to `:3`. That follows the owner's rule, \"the nearest backticked identifier before it on the same line\". But the rule did not consider two references sharing one line, so an unanchored reference gets silently rewritten. The real roadmap shows the same pattern. S133 anchors four files to `_census`, and S148 anchors `docs/agents.md:271` to `_strict_flag`."
+      "body": "Found by the s246 reviewer (2026-10-11): the probe rewrote `src/app.py:9` to `:3`. That follows the owner's rule, \"the nearest backticked identifier before it on the same line\". But the rule did not consider two references sharing one line, so an unanchored reference gets silently rewritten. The real roadmap shows the same pattern. S133 anchors four files to `_census`, and S148 anchors `docs/agents.md:271` to `_strict_flag`. <!-- example -->"
     },
     {
       "heading": "Files",
@@ -22,7 +22,7 @@
     },
     {
       "heading": "Failing tests",
-      "body": "1. `test_Find_SharedLine_SecondRefIsUnanchored`\n2. `test_RefsFix_SharedLine_SecondRefNotRewritten`\n3. `test_Find_EachRefOwnAnchor_BothAnchored`: \"`A` (`a.py:1`), `B` (`a.py:5`)\" keeps both anchors."
+      "body": "1. `test_Find_SharedLine_SecondRefIsUnanchored`\n2. `test_RefsFix_SharedLine_SecondRefNotRewritten`\n3. `test_Find_EachRefOwnAnchor_BothAnchored`: \"`A` (`a.py:1`), `B` (`a.py:5`)\" keeps both anchors. <!-- example -->"
     },
     {
       "heading": "Implement",
