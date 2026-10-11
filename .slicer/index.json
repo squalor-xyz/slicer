@@ -7724,7 +7724,7 @@
       "id": "s252",
       "title": "edit cannot change a slice's lead",
       "short_title": "edit: lead flag",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7740,10 +7740,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-11T20:58:00Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
