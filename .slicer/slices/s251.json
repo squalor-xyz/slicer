@@ -1,0 +1,42 @@
+{
+  "id": "s251",
+  "title": "merge-index note union must not crash or reorder on edge input",
+  "lead": [
+    "s250's note union in `merge-index` has three small gaps, found by its review gate:",
+    "- A non-string `created_at` crashes the sort.\n- Notes that share a timestamp are reordered by id.\n- The getting-started docs leave out one conflict case."
+  ],
+  "depends_note": null,
+  "findings_note": "s250 gate nits, 2026-10-11: TypeError on non-string created_at; same-second notes reordered by id; getting-started omits delete-vs-edit",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** per-note conflict paths; merging non-note fields; repairing projects whose .gitattributes lacks the index.json line.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "**The crash.** `_Merge._note_records` (`src/slicer/mergeindex.py:156`) sorts by (`created_at`, `id`). If a `created_at` is `None` or not a string, `sorted` raises a TypeError, so the driver crashes in the middle of `git merge`. Before s250 the same input was an ordinary conflict. That state is already invalid, since `model.py` refuses it as corrupt, but a crashing merge driver is worse than a conflict.\n\n**The reorder.** On the union path, existing notes that share a `created_at` are re-sorted by uuid instead of keeping their append order. The reviewer's probe: base `[z, a]` with one timestamp merged to `[a, z, o, t]`.\n\n**The docs gap.** `docs/getting-started.md:701` lists \"one note edited two ways\" as a conflict, but not \"a note removed on one side and edited on the other\"."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/mergeindex.py`:\n  - The `_note_records` guard also requires a string `created_at`. If any note lacks one, the list stays atomic.\n  - Sort by `created_at` only, relying on Python's stable sort, so that equal timestamps keep the union order: base, then ours, then theirs.\n- `docs/getting-started.md`: add the delete-vs-edit conflict case.\n- `tests/test_merge_index.py`.\n- `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_MergeIndex_NonStringCreatedAt_FallsBackToConflict`\n2. `test_MergeIndex_SameTimestampNotes_KeepUnionOrder`\n3. `test_GettingStarted_MergeConflicts_NameDeleteVsEdit`. If the repo has no doc tests, drop this test and verify the doc line by review instead."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them fail.\n2. Change the guard and the sort key.\n3. Fix the doc line and the changelog.\n4. Run `python3 tests/affected.py --run`, then the full suite, then `slicer check`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`\n- `slicer check`"
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s251-merge-notes-edges` in `.worktrees/s251`. Do not commit, merge or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}
