@@ -7,7 +7,10 @@ handed by identity instead: items by id, catalog records by id, object fields by
 name. A value changed on one side takes that change; equal changes coalesce; only
 a value both sides changed differently conflicts, and then only at that field.
 Lists and prose strings are atomic, so two different edits to one list are never
-guessed into one. `cites` stays one of those lists. Item order and catalog-record
+guessed into one. `cites` stays one of those lists. An item's `note_records` is the
+exception: notes are append-only records with unique ids, so two edited lists merge
+as the union by note id, ordered by (`created_at`, `id`), and a note removed on one
+side stays removed only when the other side left it unchanged. Item order and catalog-record
 order follow the base unless exactly one side reordered them. `next_id` and
 `catalog.next_id` are each the largest of the three: an id is never reused.
 
@@ -104,6 +107,8 @@ class _Merge:
         value = self._items(*sides, [*path, key])
       elif top and key == "next_id" and all(type(s) is int for s in sides):
         value = max(sides)
+      elif len(path) == 2 and path[0] == "items" and key == "note_records":
+        value = self._note_records(sides, [*path, key])
       elif path == ["catalog"] and key == "records":
         listed = self._record_lists(sides, [*path, key])
         value = self._value(*sides, [*path, key]) if listed is None else listed
@@ -116,6 +121,39 @@ class _Merge:
         out[key] = value
     order = self._order(list(base), list(ours), list(theirs), set(out), [*path], False)
     return {key: out[key] for key in order}
+
+  def _note_records(self, sides: tuple[Any, Any, Any], path: list[str]) -> Any:
+    """Notes are append-only records with unique ids, so two edited lists merge as the
+    union of the three by note id, ordered by (created_at, id). A note one side
+    removed stays removed only when the other side left it as it was in the base; a
+    note both sides changed differently conflicts at the note list. A list that is not
+    a plain list of id-keyed notes is atomic, like any other list."""
+    base, ours, theirs = sides
+    if _same(ours, theirs) or _same(ours, base) or _same(theirs, base):
+      return self._value(*sides, path)
+    lists = [[] if side is _MISSING else side for side in sides]
+    if not isinstance(ours, list) or not isinstance(theirs, list) or not all(
+      isinstance(side, list)
+      and all(isinstance(n, dict) and isinstance(n.get("id"), str) for n in side)
+      and len({n["id"] for n in side}) == len(side)
+      for side in lists
+    ):
+      return self._value(*sides, path)
+    by_id = [{n["id"]: n for n in side} for side in lists]
+    merged: list[dict[str, Any]] = []
+    for note_id in dict.fromkeys([*by_id[1], *by_id[2], *by_id[0]]):
+      b, o, t = (side.get(note_id, _MISSING) for side in by_id)
+      if _same(o, t):
+        value = o
+      elif _same(o, b):
+        value = t
+      elif _same(t, b):
+        value = o
+      else:
+        value = self._conflict(path, b, o, t)
+      if value is not _MISSING:
+        merged.append(value)
+    return sorted(merged, key=lambda n: (n.get("created_at", ""), n["id"]))
 
   def _largest_counter(self, sides: tuple[Any, Any, Any]) -> int | None:
     """The larger catalog counter. A counter that exists on only one side is a
