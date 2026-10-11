@@ -8,8 +8,10 @@ code to read.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from slicer import render, store, sync, vcs, verify
+from slicer.errors import StateError
 from slicer.store import State
 
 
@@ -63,17 +65,47 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
 
 
 def _sibling_collisions(state: State) -> list[str]:
-  """Ids a sibling worktree filed under a different title than this checkout did."""
+  """Ids a sibling worktree filed under a different title than this checkout did.
+
+  An id both checkouts inherited from their merge base is one item that one side
+  retitled, which merges cleanly, so only an id new on both sides can collide.
+  """
   if not vcs.is_repo(state.root):
     return []
   warnings: list[str] = []
-  for name, sibling in store.sibling_ids(state.root):
+  ours_head = vcs.resolve(state.root, "HEAD")
+  for path, sibling in store.sibling_checkouts(state.root):
+    inherited: set[str] | None = None  # read once per sibling, and only if titles differ
     for theirs in sibling.items:
       ours = state.index.get(theirs.id)
-      if ours is not None and ours.title != theirs.title:
+      if ours is None or ours.title == theirs.title:
+        continue
+      if inherited is None:
+        inherited = _inherited_ids(state, ours_head, path)
+      if theirs.id not in inherited:
         warnings.append(
-          f"{theirs.id} is {ours.title!r} here but {theirs.title!r} in worktree {name}; "
-          f"the two will collide on merge. File this checkout's item under a new id "
-          f"before merging."
+          f"{theirs.id} is {ours.title!r} here but {theirs.title!r} in worktree "
+          f"{path.name}; the two will collide on merge. File this checkout's item "
+          f"under a new id before merging."
         )
   return warnings
+
+
+def _inherited_ids(state: State, ours_head: str | None, sibling: Path) -> set[str]:
+  """Ids in the index at the merge base of this checkout (at `ours_head`) and `sibling`.
+
+  Empty when the base cannot be found or read (unrelated histories, no index
+  there, an index that does not parse), so every id counts as new and the
+  warning stays. One merge base and one index read per sibling.
+  """
+  theirs_head = vcs.resolve(sibling, "HEAD")
+  if ours_head is None or theirs_head is None:
+    return set()
+  base = vcs.merge_base(state.root, ours_head, theirs_head)
+  if base is None:
+    return set()
+  try:
+    index = verify.index_at(state, base)
+  except StateError:
+    return set()
+  return {item.id for item in index.items} if index is not None else set()

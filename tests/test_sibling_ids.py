@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -165,13 +166,91 @@ class SiblingIdTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertFalse([w for w in json.loads(out)["warnings"] if "collide" in w])
 
+  def collisions(self, repo: support.TempRepo) -> list[str]:
+    repo.run("render")
+    code, out, err = repo.run("check", "--json")
+    self.assertEqual(code, 0, err)
+    return [w for w in json.loads(out)["warnings"] if "collide" in w]
+
+  def git(self, root: Path, *args: str) -> None:
+    done = subprocess.run(
+      ["git", *args], cwd=str(root), capture_output=True, text=True, check=False
+    )
+    self.assertEqual(done.returncode, 0, done.stderr)
+
+  def test_Check_SiblingRetitledExistingItem_NoCollisionWarning(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      code, _, err = _run(sibling, "set", "S01", "--title", "one, renamed")
+      self.assertEqual(code, 0, err)
+      self.git(sibling, "add", "-A")
+      self.git(sibling, "commit", "-q", "-m", "retitle S01")
+      self.assertEqual(self.collisions(repo), [])
+
+  def test_Check_SiblingFiledDifferentItemSameNewId_StillWarns(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "add", "their item", "--id", "S02")
+      self.git(sibling, "add", "-A")
+      self.git(sibling, "commit", "-q", "-m", "file S02")
+      repo.run("add", "our item", "--id", "S02")
+      self.assertEqual(self.collisions(repo), [
+        "S02 is 'our item' here but 'their item' in worktree other; the two will "
+        "collide on merge. File this checkout's item under a new id before merging."
+      ])
+
+  def test_Check_BothBranchesCommittedDifferentNewId_StillWarns(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "add", "their item", "--id", "S02")
+      self.git(sibling, "add", "-A")
+      self.git(sibling, "commit", "-q", "-m", "file S02 there")
+      repo.run("add", "our item", "--id", "S02")
+      repo.commit("file S02 here")
+      self.assertEqual(self.collisions(repo), [
+        "S02 is 'our item' here but 'their item' in worktree other; the two will "
+        "collide on merge. File this checkout's item under a new id before merging."
+      ])
+
+  def test_Check_NoMergeBase_KeepsTheWarning(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "set", "S01", "--title", "one, renamed")
+      self.git(sibling, "checkout", "-q", "--orphan", "unrelated")
+      self.git(sibling, "add", "-A")
+      self.git(sibling, "commit", "-q", "-m", "unrelated root")
+      self.assertEqual(len(self.collisions(repo)), 1)
+
+  def test_Check_UnreadableIndexAtMergeBase_KeepsTheWarning(self) -> None:
+    with self.repo() as repo:
+      good = repo.read(".slicer/index.json")
+      repo.write(".slicer/index.json", "{not json")
+      repo.commit("break the index")
+      sibling = self.sibling(repo, "other")
+      repo.write(".slicer/index.json", good)
+      (sibling / ".slicer" / "index.json").write_text(good, encoding="utf-8")
+      _run(sibling, "set", "S01", "--title", "one, renamed")
+      self.assertEqual(len(self.collisions(repo)), 1)
+
+  def test_Check_NoIndexAtMergeBase_KeepsTheWarning(self) -> None:
+    repo = support.TempRepo(git=True)
+    with repo:
+      repo.write("README.md", "base\n")
+      repo.commit("base without a project")
+      sibling = self.sibling(repo, "other")
+      repo.run("init")
+      _run(sibling, "init")
+      repo.run("add", "our item", "--id", "S01")
+      _run(sibling, "add", "their item", "--id", "S01")
+      self.assertEqual(len(self.collisions(repo)), 1)
+
   def test_Check_NotAGitRepo_DoesNoSiblingWork(self) -> None:
     repo = support.TempRepo()
     with repo, support.isolated_discovery(repo.root):
       repo.run("init")
       repo.run("add", "one")
       repo.run("render")
-      with patch.object(store, "sibling_ids", side_effect=AssertionError("git work")):
+      with patch.object(store, "sibling_checkouts", side_effect=AssertionError("git work")):
         code, _, err = repo.run("check", "--json")
       self.assertEqual(code, 0, err)
 

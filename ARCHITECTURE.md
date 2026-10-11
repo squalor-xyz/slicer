@@ -177,8 +177,12 @@ and restores it if rendering fails.
 drivers; `merge-file` is only the `-p` form, which prints the merge to stdout and writes
 nothing. `start` uses the first two to notice another checkout, and the
 last to name a claim when `claim_owner` is empty. `show` is only the one-argument
-`COMMIT:./PATH` form and `merge-base` only `--is-ancestor COMMIT COMMIT`, both used by
-`verify --landed` and both taking full commit names. Any other argument is refused. `commit`,
+`COMMIT:./PATH` form and `merge-base` only `--is-ancestor COMMIT COMMIT` or `COMMIT COMMIT`
+(no option), all taking full commit names. `verify --landed` uses `show` and `--is-ancestor`;
+`check` uses the two-commit `merge-base` and `show` to read the index at the merge base of
+this checkout and a sibling, so a retitle is not reported as a collision. Each checkout's
+commit comes from `rev-parse --verify` run in that checkout, the sibling's included, an
+existing form. Any other argument is refused. `commit`,
 `push` and `tag` are unreachable from the code — not by convention but because `vcs._run`
 refuses anything off the list, including for a caller that asks.
 

@@ -307,7 +307,7 @@ def against_git(state: State) -> VerifyReport:
   return report
 
 
-def _index_at(state: State, commit: str) -> Index | None:
+def index_at(state: State, commit: str) -> Index | None:
   """The index as `commit` recorded it; None when that commit has no index.
 
   An index that cannot be read raises, so the caller decides whether that is fatal.
@@ -358,7 +358,7 @@ def landed(state: State, item_id: str, ref: str) -> LandedReport:
       f"{ref!r} does not name a commit; pass a branch, tag or commit with `--on`",
       code="bad_ref",
     )
-  there_index = _index_at(state, commit)
+  there_index = index_at(state, commit)
   here = state.index.get(item_id)
   there = there_index.get(item_id) if there_index is not None else None
 
@@ -416,7 +416,7 @@ def _done_on_another_tip(state: State, item_id: str, slice_path: str, commit: st
     if vcs.is_ancestor(root, tip, commit):
       continue
     try:
-      seen = _index_at(state, tip)
+      seen = index_at(state, tip)
     except StateError:
       continue
     recorded = seen.get(item_id) if seen is not None else None

@@ -429,9 +429,31 @@ class LandedTests(unittest.TestCase):
         ("show", sha),
         ("show", "--stat", f"{sha}:./x"),
         ("show", f"{sha}:./a", f"{sha}:./b"),
-        ("merge-base", sha, sha),
         ("merge-base", "--is-ancestor", "--all", sha),
         ("merge-base", "--octopus", sha, sha),
+      ):
+        with self.subTest(forbidden):
+          with self.assertRaises(StateError):
+            vcs._run(repo.root, *forbidden)
+
+  def test_Vcs_MergeBaseOfTwoCommits_IsAllowedAndNothingLooser(self) -> None:
+    with project() as repo:
+      sha = repo._git("rev-parse", "HEAD").stdout.strip()
+      base = vcs._run(repo.root, "merge-base", sha, sha)
+      self.assertEqual(base.returncode, 0, base.stderr)
+      self.assertEqual(base.stdout.strip(), sha)
+      for forbidden in (
+        ("merge-base", "HEAD", sha),
+        ("merge-base", sha, "main"),
+        ("merge-base", sha, sha[:12]),
+        ("merge-base", "--all", sha, sha),
+        ("merge-base", "--octopus", sha, sha),
+        ("merge-base", sha, "--all"),
+        ("merge-base", sha),
+        ("merge-base", sha, sha, sha),
+        ("merge-base", sha, "--is-ancestor", sha),
+        ("merge-base", "--is-ancestor", sha),
+        ("merge-base",),
       ):
         with self.subTest(forbidden):
           with self.assertRaises(StateError):

@@ -1277,3 +1277,8 @@
 {"when": "2026-10-11T22:39:46Z", "item": "s251", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T22:39:51Z", "item": "s251", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T22:39:56Z", "item": "s251", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: note union sorts by created_at only, keeping union order for equal timestamps; no guard (crash premise false). Relay gate PASS; full suite 1636 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-11T23:15:47Z", "item": "s253", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T23:16:23Z", "item": "s253", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T23:46:38Z", "item": "s253", "action": "note", "from": "", "to": "", "note": "Ready for review: check's sibling collision warning now fire", "by": "Jon Robbins"}
+{"when": "2026-10-11T23:46:38Z", "item": "s253", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-11T23:46:44Z", "item": "s253", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
