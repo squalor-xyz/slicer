@@ -26,11 +26,16 @@ project, and a project whose config or index cannot be read is refused rather th
 generic text. Without either flag nothing is written. `--json` returns `{"skill": "..."}`, plus
 `written` (the absolute paths) when a write flag is given. The skill ends by pointing at
 `slicer ai instructions --rest`, which prints only the parts of the guide the skill
-leaves out, so an agent that loaded the skill does not read the same text twice.
+leaves out, so an agent that loaded the skill does not read the same text twice. The skill
+also says that a slice relay request goes to `slicer ai relay`, and that its Setup is confirmed
+with the owner before the worktree is created.
 
 `slicer ai relay` prints the slice relay: one orchestrating session runs one slice
-through an implementer, a reviewer, an architect and a gate. It uses the same finish
-choice and the same fallback as `slicer ai instructions`. Handoff finish closes with
+through an implementer, a reviewer, an architect and a gate. Its Setup section, before Order,
+asks the owner which roles run (the architect is optional), the vendor, model and effort per
+role, and where the run ends (after the finish step, after a commit on the slice branch, or
+landed). It uses the same finish choice and the same fallback as `slicer ai instructions`.
+Handoff finish closes with
 handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
 the same Markdown as the text output. It does not lock or write.
 
