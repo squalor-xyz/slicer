@@ -1254,3 +1254,7 @@
 {"when": "2026-10-11T18:23:28Z", "item": "s252", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T20:58:00Z", "item": "s252", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T20:58:05Z", "item": "s252", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: edit --lead replaces a slice's lead (blank-line split via outline.blocks, empty clears, exclusive with --section/--boundary/--append). Relay gate PASS; full suite 1631 OK. s248's lead examples marked; refs s248 reports no drift.", "by": "Jon Robbins"}
+{"when": "2026-10-11T21:03:42Z", "item": "s248", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T21:31:36Z", "item": "s248", "action": "note", "from": "", "to": "", "note": "S148's docs/agents.md:271 keeps the _strict_flag anchor: it ", "by": "Jon Robbins"}
+{"when": "2026-10-11T21:31:36Z", "item": "s248", "action": "note", "from": "", "to": "", "note": "Ready for review: an anchor belongs only to the first refere", "by": "Jon Robbins"}
+{"when": "2026-10-11T21:31:36Z", "item": "s248", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

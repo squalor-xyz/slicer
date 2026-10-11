@@ -125,8 +125,11 @@ def find(text: str) -> list[Ref]:
   """Every reference in `text`, in order, with the anchor each one has.
 
   The anchor is the nearest backticked identifier before the reference on the
-  same line. A reference written inside backticks never anchors itself: its
-  span holds a `:` and so is not an identifier.
+  same line that the reference is the first to follow: an identifier sits
+  between the previous reference on the line (or the line start) and this one.
+  So "`Box` (`a.py:1`) and `b.py:9`" anchors only `a.py:1`, and `b.py:9` has no
+  anchor. A reference written inside backticks never anchors itself: its span
+  holds a `:` and so is not an identifier.
 
   An example is not a reference, so it is not returned. A fenced code block is
   skipped whole. Its opening line is a run of three or more backticks or tildes
@@ -154,14 +157,16 @@ def find(text: str) -> list[Ref]:
     if _EXAMPLE in line:
       continue
     spans = [m for m in _SPAN.finditer(line) if _identifier_span(m.group(1))]
+    previous = 0
     for match in _REF.finditer(line):
       path = match.group("path")
       if not _is_path(path):
         continue
       anchor = None
       for span in spans:
-        if span.end() <= match.start():
+        if previous <= span.start() and span.end() <= match.start():
           anchor = span.group(1)
+      previous = match.end()
       found.append(Ref(
         path=path,
         start=int(match.group("start")),

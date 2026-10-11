@@ -7563,7 +7563,7 @@
       "id": "s248",
       "title": "refs must not let a later reference borrow an earlier reference's anchor",
       "short_title": "refs: one anchor per reference",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s246"
@@ -7575,6 +7575,28 @@
           "text": "**2026-10-11** — s249 relay: the Why examples are marked. The lead's example refs (src/app.py lines 1 and 9) wait for s252 (edit --lead); mark them with that flag once it lands.",
           "created_at": "2026-10-11T17:35:03Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "08424a19-14ed-44ab-b156-3f225215c601",
+          "kind": "",
+          "text": "**2026-10-11** — S148's docs/agents.md:271 keeps the _strict_flag anchor: it is the first reference after that identifier (a cross-sentence anchor), which this slice's rule does not cover. The earlier note's lead-marking step is done (s252 marked the lead).",
+          "created_at": "2026-10-11T21:31:36Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "2d9f1093-149a-49e5-b0e0-32f4d57e1853",
+          "kind": "",
+          "text": "**2026-10-11** — Ready for review: an anchor belongs only to the first reference after it on a line; a later reference with no identifier of its own since the previous reference is unanchored, and a rejected match (host:port) does not consume an anchor. refs S133 now reports migrator.py:346, test_cli.py:77 and test_start.py:199 as unanchored. 4 new tests plus 1 changed expectation, mutation-checked; full suite 1635 OK; relay gate VERDICT: PASS.",
+          "created_at": "2026-10-11T21:31:36Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -7601,7 +7623,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
