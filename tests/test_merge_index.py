@@ -27,6 +27,24 @@ def _index(next_id: int, **status: str) -> str:
   return jsonio.dumps({"version": 3, "id_prefix": "s", "next_id": next_id, "items": items})
 
 
+def _notes_index(notes: dict[str, list[tuple[str, str]]], **status: str) -> str:
+  """Like `_index`, with note records: `notes` maps an item id to (note id, created_at)."""
+  doc = json.loads(_index(10, **status))
+  for item in doc["items"]:
+    item["note_records"] = [
+      {"id": note_id, "kind": "", "text": f"text of {note_id}", "created_at": when, "attempt": None}
+      for note_id, when in notes.get(item["id"], [])
+    ]
+  return jsonio.dumps(doc)
+
+
+def _note_ids(text: str) -> dict[str, list[str]]:
+  return {
+    item["id"]: [n["id"] for n in item["note_records"]]
+    for item in json.loads(text)["items"]
+  }
+
+
 class MergeIndexCommandTests(unittest.TestCase):
   def _merge(self, repo: support.TempRepo, base: str, ours: str, theirs: str):
     for name, text in (("base", base), ("ours", ours), ("theirs", theirs)):
@@ -69,6 +87,60 @@ class MergeIndexCommandTests(unittest.TestCase):
       # The counter was settled either way, so it is not part of the conflict.
       self.assertEqual(merged.count("next_id"), 1)
       self.assertIn('"next_id": 12', merged)
+
+  def test_MergeIndex_BothSidesAppendNotesToSameItem_KeepsBoth(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = _notes_index({"s01": [("n1", "2026-01-01")]})
+      ours = _notes_index({"s01": [("n1", "2026-01-01"), ("n3", "2026-01-03")]})
+      theirs = _notes_index({"s01": [("n1", "2026-01-01"), ("n2", "2026-01-02")]})
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(_note_ids(merged)["s01"], ["n1", "n2", "n3"])
+
+  def test_MergeIndex_NotesAppendedToDifferentItems_KeepsAll(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = _notes_index({})
+      ours = _notes_index({"s01": [("n1", "2026-01-01")]})
+      theirs = _notes_index({"s02": [("n2", "2026-01-02")]})
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(
+        _note_ids(merged), {"s01": ["n1"], "s02": ["n2"], "s03": []}
+      )
+
+  def test_MergeIndex_SameNoteIdIdenticalOnBothSides_KeptOnce(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = _notes_index({})
+      ours = _notes_index({"s01": [("n1", "2026-01-01")]})
+      theirs = _notes_index({"s01": [("n1", "2026-01-01"), ("n2", "2026-01-02")]})
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(_note_ids(merged)["s01"], ["n1", "n2"])
+
+  def test_MergeIndex_FieldConflictWithNoteAppends_FailsNamingOnlyTheField(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = _notes_index({})
+      ours = _notes_index({"s01": [("n1", "2026-01-01")]}, s02="started")
+      theirs = _notes_index({"s01": [("n2", "2026-01-02")]}, s02="done")
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual(code, 1)
+      self.assertIn("conflict at items/s02/status", err)
+      self.assertNotIn("note_records", err)
+      self.assertIn("<<<<<<<", merged)
+
+  def test_MergeIndex_NoteDeletedOneSideUnchangedOnTheOther_StaysDeleted(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = _notes_index({"s01": [("n1", "2026-01-01"), ("n2", "2026-01-02")]})
+      ours = _notes_index({"s01": [("n2", "2026-01-02")]})
+      theirs = _notes_index({"s01": [("n1", "2026-01-01"), ("n2", "2026-01-02"), ("n3", "2026-01-03")]})
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(_note_ids(merged)["s01"], ["n2", "n3"])
 
   def test_MergeIndex_NoCounterLine_IsMergedAsItIs(self) -> None:
     with support.TempRepo(git=True) as repo:

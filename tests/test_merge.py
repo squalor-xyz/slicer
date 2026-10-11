@@ -278,6 +278,15 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertIn(self.DRIVER, out)
       self.assertIn(self.INDEX_DRIVER, out)
 
+  def test_SetupGit_Attributes_MapIndexJsonToSlicerIndex(self) -> None:
+    # setup-git prints the driver config; the attribute that names the driver is the
+    # file `init` writes, so check what Git itself resolves for the index.
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self.assertIn(self.INDEX_DRIVER, repo.run("setup-git")[1])
+      found = repo._git("check-attr", "merge", "--", ".slicer/index.json")
+      self.assertEqual(found.stdout.strip(), ".slicer/index.json: merge: slicer-index")
+
   def test_SetupGit_Json_ReturnsTheCommandsAsAList(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       text = repo.run("setup-git")[1]

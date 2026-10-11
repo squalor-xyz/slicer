@@ -122,12 +122,13 @@ class RealGitMergeTests(unittest.TestCase):
       self.assertIn('"S02"', text)
       self.assertIn('"S03"', text)
 
-  def test_Merge_BothAppendToOneNoteList_Conflicts(self) -> None:
+  def test_Merge_BothAppendToOneNoteList_KeepsBoth(self) -> None:
     with self._branches(
       ours=[("note", "S01", "--text", "ours says")], theirs=[("note", "S01", "--text", "theirs says")]
     ) as (repo, merged):
-      self._conflicted(repo, merged)
-      self.assertIn("conflict at items/S01/note_records", merged.stdout + merged.stderr)
+      self._clean(repo, merged)
+      texts = [n["text"].partition(" — ")[2] for n in _items(repo)["S01"]["note_records"]]
+      self.assertEqual(sorted(texts), ["ours says", "theirs says"])
 
   def test_Merge_ListChangedOnOneSideOnly_TakesTheChange(self) -> None:
     with self._branches(
