@@ -688,17 +688,20 @@ git config merge.slicer-index.driver "slicer merge-index %O %A %B"
 ```
 
 The last two turn on the `slicer-index` driver for `index.json`. Every filing moves the
-single `next_id` line, and edits to neighbouring items or fields overlap as lines, so two
-branches conflict there even when they changed different things. The driver merges by
-identity instead: items by id, object fields by name. It takes the larger `next_id`, so an
-id is never reused; a value only one side changed takes that change; equal changes
+single `next_id` line, and edits to neighbouring items or fields overlap as lines, so
+two branches conflict there even when they changed different things. The driver merges
+by identity instead: items by id, object fields by name. It takes the larger `next_id`,
+so an id is never reused; a value only one side changed takes that change; equal changes
 coalesce; new ids from both sides are kept, yours first. An item's notes are append-only
 records with unique ids, so two branches that each added notes keep both, ordered by
-creation time then id (a note removed on one side stays removed only if the other side
-left it unchanged). Other lists (dependencies, flags) and prose are never combined, and the shared items' order follows whichever side
-reordered it, so these still conflict when both sides changed them differently:
+creation time, with notes that share a time kept yours first, then theirs (a note
+removed on one side stays removed only if the other side left it unchanged). Other lists
+(dependencies, flags) and prose are never combined, and the shared items' order follows
+whichever side reordered it, so these still conflict when both sides changed them
+differently:
 
 - one field, list or order changed two ways, or one note edited two ways;
+- a note removed on one side and edited on the other;
 - an item deleted on one side and edited on the other;
 - the same new id filed on both sides with different content;
 - a result that would break the index: two ids sharing a filing key, ids differing only

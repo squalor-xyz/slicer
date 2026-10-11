@@ -98,6 +98,17 @@ class MergeIndexCommandTests(unittest.TestCase):
       self.assertEqual((code, err), (0, ""))
       self.assertEqual(_note_ids(merged)["s01"], ["n1", "n2", "n3"])
 
+  def test_MergeIndex_SameTimestampNotes_KeepUnionOrder(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = _notes_index({"s01": [("nz", "2026-01-01"), ("na", "2026-01-01")]})
+      ours = _notes_index({"s01": [("nz", "2026-01-01"), ("na", "2026-01-01"), ("no", "2026-01-01")]})
+      theirs = _notes_index({"s01": [("nz", "2026-01-01"), ("na", "2026-01-01"), ("nt", "2026-01-01")]})
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      # Ours' notes first, then the notes only theirs has; the ids are not re-sorted.
+      self.assertEqual(_note_ids(merged)["s01"], ["nz", "na", "no", "nt"])
+
   def test_MergeIndex_NotesAppendedToDifferentItems_KeepsAll(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")
