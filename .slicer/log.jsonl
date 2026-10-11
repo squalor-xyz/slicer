@@ -1259,3 +1259,4 @@
 {"when": "2026-10-11T21:31:36Z", "item": "s248", "action": "note", "from": "", "to": "", "note": "Ready for review: an anchor belongs only to the first refere", "by": "Jon Robbins"}
 {"when": "2026-10-11T21:31:36Z", "item": "s248", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T21:31:40Z", "item": "s248", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T21:31:44Z", "item": "s248", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: an anchor belongs only to the first reference after it; later shared-line references are unanchored and refs --fix leaves them alone. Relay gate PASS; full suite 1635 OK.", "by": "Jon Robbins"}

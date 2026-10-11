@@ -7563,7 +7563,7 @@
       "id": "s248",
       "title": "refs must not let a later reference borrow an earlier reference's anchor",
       "short_title": "refs: one anchor per reference",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s246"
@@ -7603,10 +7603,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-11T21:31:40Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
