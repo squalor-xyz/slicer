@@ -269,6 +269,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `move` | `{id, position}` |
 | `sort` | `{by, moved}` |
 | `edit` | `{id, section}`; boundary edits return `{id, boundary}` |
+| `refs` | `{fix, items, references, counts, fixed, drift}`. `items` is the ids scanned, in index order, or in the order named. `counts` has every status key (`ok`, `unanchored`, `missing_file`, `ambiguous_path`, `out_of_range`, `moved`, `ambiguous_symbol`, `symbol_gone`), zeros included. `drift` is the number of references that are neither `ok` nor an in-range `unanchored` and were not fixed; `fixed` is how many `--fix` rewrote. Each reference is `{id, where, line, ref, path, file, start, end, approx, anchor, status, found, to, paths, lines, fixed}`: `where` is `lead`, `boundary`, `section HEADING` or `note N` (1-based) and `line` counts within it; `ref` is the reference as written, `path` the path part and `file` the root-relative file it resolved to; `start` and `end` are the cited lines (`end` is null for one line); `anchor` is the backticked identifier or null; `found` is the new first line and `to` the rewritten reference when `status` is `moved`; `paths` lists the matches for `ambiguous_path` and `lines` the occurrences for `ambiguous_symbol`; `fixed` is true when `--fix` rewrote it. A fixed reference keeps `status: moved`. Under `--lean`, null and empty values drop out but `items` and `references` stay. Without `--fix` nothing is written. Exit 0 when `drift` is 0, 1 otherwise; an unknown id is `no_such_item` and `--render` or `--strict` without `--fix` is `usage`, both exit 2 |
 | `note` | `{id, added}` |
 | `feedback` | append: `{path, entry}` with `at`, `kind`, `text`, and `item` only when given; print: `{path, entries}` (empty array when no log); `--out`: `{path, out}` |
 | `feedback-report` | `{repo, dry_run, issues, unmarked}`; each issue has `entry` (sha256 of the entry's header and body), `kind`, `at`, `item` only when stored, and `title`, plus `body` under `--dry-run` or `issue` and `url` after `--yes`. `unmarked` lists issues filed for entries that changed while they were sent, which are not recorded and may be filed again. Both lists stay present under `--lean`. Nothing to file is exit 0 with empty lists |
@@ -417,9 +418,9 @@ when the meaning does. Branch on the code.
 Exit 3 is a hard failure. Exit 2 is usage, validation, or an empty queue, so status
 alone separates them.
 
-Exit 1 belongs to `check`, `verify` (and `verify --landed`, when the item has not landed), `sync --check`, `import` and `migrate`. Inspect
+Exit 1 belongs to `check`, `verify` (and `verify --landed`, when the item has not landed), `refs` (a reference that no longer holds), `sync --check`, `import` and `migrate`. Inspect
 each command's report: `check` has drift lists and `problems`; `verify` has `errors`
-and `findings`; `sync --check` returns an array with `stale` on each target; import and
+and `findings`; `refs` has `drift` and `references`; `sync --check` returns an array with `stale` on each target; import and
 migration validation reports have `problems`. Do not assume
 that every failed report has the same keys. An error envelope, when present, still
 takes precedence over interpreting the payload as a normal report.
