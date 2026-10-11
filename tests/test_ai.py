@@ -318,6 +318,23 @@ class AiInstructionsTests(unittest.TestCase):
     path = Path(__file__).resolve().parents[1] / "skills" / "slicer" / "SKILL.md"
     self.assertEqual(path.read_text(encoding="utf-8"), text)
 
+  def test_CommittedSkill_MatchesSkillText(self) -> None:
+    root = Path(__file__).resolve().parents[1]
+    text = ai.skill_text()
+    for rel in (
+      "skills/slicer/SKILL.md",
+      ".claude/skills/slicer/SKILL.md",
+      ".agents/skills/slicer/SKILL.md",
+    ):
+      with self.subTest(path=rel):
+        committed = (root / rel).read_text(encoding="utf-8")
+        self.assertEqual(committed, text)
+        self.assertIn(
+          "When the owner asks for a slice relay, run `slicer ai relay` and confirm its "
+          "Setup with the owner before creating the worktree.",
+          committed,
+        )
+
   def test_Skill_OutsideProject_TextAndJsonMatch(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, err = repo.run("ai", "skill")
@@ -912,8 +929,51 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("`slicer ai relay`", json.loads(out)["instructions"])
 
-  def test_SkillText_UnchangedByRelayPointer(self) -> None:
-    # The pointer reaches skill users through `--rest`; the installed skill copies stay current.
+  def test_SkillText_RelayRequest_PointsToAiRelay(self) -> None:
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
-        self.assertNotIn("relay", ai.skill_text(finish))
+        text = ai.skill_text(finish)
+        self.assertIn(
+          "When the owner asks for a slice relay, run `slicer ai relay` and confirm its "
+          "Setup with the owner before creating the worktree.",
+          text,
+        )
+
+  def test_SkillText_RelayMention_IsOnlyTheRequestLine(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        lines = [line for line in ai.skill_text(finish).splitlines() if "relay" in line]
+        self.assertEqual(len(lines), 1)
+
+  def test_RelayText_Setup_BeforeOrder(self) -> None:
+    text = ai.relay_text()
+    self.assertIn("## Setup", text)
+    self.assertLess(text.index("## Roles"), text.index("## Setup"))
+    self.assertLess(text.index("## Setup"), text.index("## Order"))
+
+  def test_RelayText_Setup_NamesRolesModelsAndEndPoint(self) -> None:
+    text = ai.relay_text()
+    self.assertIn("## Setup", text)
+    setup = text.split("## Setup", 1)[1].split("## Order", 1)[0]
+    for phrase in (
+      "Before the worktree exists",
+      "size",
+      "which roles run",
+      "The architect is optional",
+      "the owner decides",
+      "vendor, model and effort",
+      "after the finish step",
+      "after a commit on the slice branch",
+      "landed",
+      "Land only when the owner asks.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, setup)
+    order = text.split("## Order", 1)[1].split("## Gate", 1)[0]
+    self.assertIn("the architect, when the owner chose one", order)
+
+  def test_RelayText_Handoff_StillOmitsDone(self) -> None:
+    text = ai.relay_text("handoff", "implementation report")
+    self.assertIn("## Setup", text)
+    self.assertIn("slicer handoff ID --render --check", text)
+    self.assertNotIn("done", text.casefold())

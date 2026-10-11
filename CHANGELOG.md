@@ -13,7 +13,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
-- `slicer --help` lists the `ai` subcommands (`instructions`, `skill`, `relay`), and `ai instructions` and `ai instructions --rest` point to `slicer ai relay` under "Hand off for review". The skill text does not change, so installed skill copies stay current.
+- `slicer --help` lists the `ai` subcommands (`instructions`, `skill`, `relay`), and `ai instructions` and `ai instructions --rest` point to `slicer ai relay` under "Hand off for review".
+- `slicer ai relay` has a Setup section before Order. Before the worktree exists, the orchestrator reads the slice's size and confirms with the owner which roles run (the architect is optional), the vendor, model and effort per role, and where the run ends: after the finish step, after a commit on the slice branch, or landed. Order names the architect as optional. The skill now has one line that sends a slice relay request to `slicer ai relay` and its Setup, so `skills/slicer/SKILL.md` changes; an installed copy that differs needs `slicer ai skill --install --force`.
 
 ## [1.7.0] - 2026-10-09
 

@@ -165,12 +165,27 @@ shape.
 
 A reviewer never wrote code in this slice. The owner chooses the models.
 
+## Setup
+
+Before the worktree exists, the orchestrator reads the slice's size with
+`slicer show ID --json --lean` and confirms these with the owner:
+
+- which roles run. The architect is optional: the owner decides.
+- the vendor, model and effort for each role.
+- where the run ends:
+  - after the finish step,
+  - after a commit on the slice branch, or
+  - landed. Land only when the owner asks.
+
+Wait for the owner's answers before creating the worktree.
+
 ## Order
 
 Create a worktree, then `slicer start ID --render --strict`, red tests,
-implementation, review, accepted findings back to the implementer, the
-architect, then the gate. Close with `slicer note ID --text "Describe the verified outcome"`
-plus the finish step. Commit, merge and push only when the owner authorizes them.
+implementation, review, accepted findings back to the implementer, then
+the architect, when the owner chose one, then the gate. Close with
+`slicer note ID --text "Describe the verified outcome"` plus the finish step.
+Commit, merge and push only when the owner authorizes them.
 
 ## Gate
 
@@ -234,6 +249,8 @@ def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
     f"{EXITS}\n"
     f"{TRACKING}\n"
     f"{HANDOFF_CLOSER if finish == 'handoff' else DONE_CLOSER}\n"
+    "When the owner asks for a slice relay, run `slicer ai relay` and confirm its "
+    "Setup with the owner before creating the worktree.\n"
     "For planning, filing, claims, and review, run `slicer ai instructions --rest`; "
     "it leaves out what this skill already says.\n"
   )

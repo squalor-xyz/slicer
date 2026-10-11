@@ -7509,7 +7509,7 @@
       "id": "s247",
       "title": "A relay request must reach ai relay and confirm the setup with the owner",
       "short_title": "Relay setup confirmation",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7523,9 +7523,23 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "08a2fefe-0040-4f16-9a43-0a87705c8869",
+          "kind": "",
+          "text": "**2026-10-11** — Ready for review: ai relay gains a Setup section before Order (roles with the architect optional and owner-chosen, vendor/model/effort per role, end point; land only when the owner asks); Order names the architect as optional; the skill has one line sending a relay request to ai relay and its Setup; SKILL.md is regenerated (generic text; the .claude and .agents copies are symlinks). 5 spec tests plus 1 replacement; full suite 1609 OK (skipped=1); gate VERDICT: PASS in one round. Nits left: docs/agents.md:33 still lists the architect unconditionally, and docs/agents.md:38-39 wraps oddly.",
+          "created_at": "2026-10-11T15:46:12Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T15:51:22Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -7545,7 +7559,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
