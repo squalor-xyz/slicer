@@ -1213,3 +1213,6 @@
 {"when": "2026-10-11T15:02:50Z", "item": "s246", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T15:07:24Z", "item": "s246", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T15:07:29Z", "item": "s246", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer refs [ID...] [--fix] reports path:line references in slice text (ok, unanchored, moved, missing_file, ambiguous_path, out_of_range, ambiguous_symbol, symbol_gone) and --fix rewrites moved ones through ops. Lite relay: one fix round (range-anchor rule, host:port rejection, EOF guard), gate VERDICT: PASS; full suite 1604 OK (1 skipped). Follow-up s248.", "by": "Jon Robbins"}
+{"when": "2026-10-11T15:15:52Z", "item": "s247", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-11T15:16:08Z", "item": "s249", "action": "add", "from": "", "to": "open", "note": "refs must let slice text mark a reference as an example"}
+{"when": "2026-10-11T15:16:08Z", "item": "s249", "action": "promote", "from": "", "to": "", "note": ""}

@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 249,
+  "next_id": 250,
   "preamble": "",
   "passes": [
     {
@@ -7577,6 +7577,37 @@
         "reason": "",
         "importance": 2,
         "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s249",
+      "title": "refs must let slice text mark a reference as an example",
+      "short_title": "refs: example references",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "first slicer refs run on main, 2026-10-11: 6 of 7 reports were s248's example refs; no way to silence them",
+        "discovered_from": "s246",
+        "cites": [],
+        "key": "",
+        "pass": "v1.8",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 1,
         "attempts": 0
       }

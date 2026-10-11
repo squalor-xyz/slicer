@@ -1,0 +1,41 @@
+{
+  "id": "s249",
+  "title": "refs must let slice text mark a reference as an example",
+  "lead": [
+    "`slicer refs` checks every `path:line` it finds. Slice text that quotes example references, for instance a spec for `refs` itself, therefore always reports `missing_file`, and `refs` can never exit 0 for that item. There needs to be a way to say \"this is an example, not a reference\"."
+  ],
+  "depends_note": null,
+  "findings_note": "first slicer refs run on main, 2026-10-11: 6 of 7 reports were s248's example refs; no way to silence them",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** the shared-line anchor rule (s248); config-level ignore lists; changing which text refs scans.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-11, the first run of `slicer refs` on main after s246 landed reported 7 problems. 6 of them came from the example lines in s248's own spec (`src/app.py:1`, `a.py:5`, ...), and nothing could silence them. If an example counts as drift, `refs` becomes noise exactly in the specs that describe it.\n\n**Owner decision needed before claiming.** Pick the marker:\n\n- (a) Skip references inside fenced code blocks only. This is the simplest option, but inline examples stay flagged.\n- (b) Add a line marker, an HTML comment `` at the end of a line, which hides every reference on that line. Rendered Markdown does not show it.\n- (c) Both (a) and (b).\n\nThe recommendation is (c)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/refs.py`: the pure parser skips references according to the chosen rule.\n- `tests/test_refs.py`.\n- `docs/commands.md`: state the rule. `CHANGELOG.md`.\n- s248's spec: mark its examples, through `slicer edit`, once this lands."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_Find_FencedBlock_IsSkipped` (if (a) or (c) is chosen).\n2. `test_Find_ExampleMarker_SkipsWholeLine` (if (b) or (c) is chosen).\n3. `test_Find_UnmarkedLine_StillParsed`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. The owner picks (a), (b) or (c). Record the choice in Why with `slicer edit`.\n2. Write the tests and watch them fail.\n3. Change the parser, then the docs.\n4. Run `python3 tests/affected.py --run`, then the full suite, then `slicer check`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`.\n- After s248's examples are marked, `slicer refs` on this roadmap no longer reports them.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s249-refs-examples` in `.worktrees/s249`. Do not commit, merge or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}
