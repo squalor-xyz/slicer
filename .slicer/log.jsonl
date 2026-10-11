@@ -1276,3 +1276,4 @@
 {"when": "2026-10-11T22:39:46Z", "item": "s251", "action": "note", "from": "", "to": "", "note": "Ready for review: the note union in merge-index sorts by cre", "by": "Jon Robbins"}
 {"when": "2026-10-11T22:39:46Z", "item": "s251", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T22:39:51Z", "item": "s251", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T22:39:56Z", "item": "s251", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: note union sorts by created_at only, keeping union order for equal timestamps; no guard (crash premise false). Relay gate PASS; full suite 1636 OK.", "by": "Jon Robbins"}

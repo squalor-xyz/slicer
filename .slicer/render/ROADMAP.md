@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-240 items · — 1 · done 234 · retired 4 · reviewing 1
+240 items · — 1 · done 235 · retired 4
 
 ## v1.8
 
@@ -38,7 +38,7 @@
 | 3 | [s247](slices/s247.md) | Relay setup confirmation | S | 1 | src/slicer, tests, docs | owner, session 2026-10-11 (s245 relay): skill never names ai relay; relay text has no setup step, so roles, models and end point were improvised from outside guidance · discovered from s244 | done |
 | 4 | [s248](slices/s248.md) | refs: one anchor per reference | S | 1 | src/slicer, tests, docs | s246 reviewer probe, 2026-10-11: `Box` (`src/app.py:1`) and `src/app.py:9` rewrote :9 to :3 · discovered from s246 | done |
 | 5 | [s249](slices/s249.md) | refs: example references | S | 1 | src/slicer, tests, docs | first slicer refs run on main, 2026-10-11: 6 of 7 reports were s248's example refs; no way to silence them · discovered from s246 | done |
-| 6 | [s251](slices/s251.md) | merge-index note union edges | S | 1 | src/slicer, tests, docs | s250 gate nits, 2026-10-11: TypeError on non-string created_at; same-second notes reordered by id; getting-started omits delete-vs-edit · discovered from s250 | reviewing |
+| 6 | [s251](slices/s251.md) | merge-index note union edges | S | 1 | src/slicer, tests, docs | s250 gate nits, 2026-10-11: TypeError on non-string created_at; same-second notes reordered by id; getting-started omits delete-vs-edit · discovered from s250 | done |
 | 7 | [s252](slices/s252.md) | edit: lead flag | S | 1 | src/slicer, tests, docs | s249 relay, 2026-10-11: s248's lead example refs could not be marked; only promote --force reaches a lead · discovered from s249 | done |
 | 8 | [s253](slices/s253.md) | check: retitle is not a collision | S | 2 | src/slicer, tests, docs | s251 relay, 2026-10-11: retitling s251 on its branch warned 'will collide on merge' and advised refiling under a new id · discovered from s251 | — |
 
