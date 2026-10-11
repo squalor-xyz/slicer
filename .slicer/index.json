@@ -7801,7 +7801,7 @@
       "id": "s253",
       "title": "check must not report a collision when a branch retitles an existing item",
       "short_title": "check: retitle is not a collision",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7817,10 +7817,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-11T23:46:44Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
