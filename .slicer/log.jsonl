@@ -1227,3 +1227,4 @@
 {"when": "2026-10-11T16:04:46Z", "item": "s250", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T16:18:20Z", "item": "s250", "action": "note", "from": "", "to": "", "note": "Ready for review: merge-index merges an item's note_records ", "by": "Jon Robbins"}
 {"when": "2026-10-11T16:18:20Z", "item": "s250", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-11T16:21:39Z", "item": "s250", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

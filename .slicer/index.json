@@ -7627,7 +7627,7 @@
       "id": "s250",
       "title": "slicer merge-index must union note records appended on both sides",
       "short_title": "slicer merge-index must union note records appended on both sides",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7643,7 +7643,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T16:21:39Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
