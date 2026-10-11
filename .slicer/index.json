@@ -7715,7 +7715,7 @@
       "id": "s251",
       "title": "merge-index note union must keep same-timestamp notes in union order",
       "short_title": "merge-index note union edges",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7731,7 +7731,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T22:39:51Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
