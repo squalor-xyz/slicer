@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 247,
+  "next_id": 248,
   "preamble": "",
   "passes": [
     {
@@ -7478,6 +7478,37 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s247",
+      "title": "A relay request must reach ai relay and confirm the setup with the owner",
+      "short_title": "Relay setup confirmation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "src/slicer",
+          "tests",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "owner, session 2026-10-11 (s245 relay): skill never names ai relay; relay text has no setup step, so roles, models and end point were improvised from outside guidance",
+        "discovered_from": "s244",
+        "cites": [],
+        "key": "",
+        "pass": "v1.8",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }

@@ -1,0 +1,41 @@
+{
+  "id": "s247",
+  "title": "A relay request must reach ai relay and confirm the setup with the owner",
+  "lead": [
+    "When an owner asks for a slice relay, an agent loads the slicer skill and should arrive at `slicer ai relay`. Before it creates the worktree, the relay should have it confirm the setup with the owner. Today neither happens. The skill never names the relay, and the relay text names no setup step, so the agent improvises the roles and the end point or follows outside guidance."
+  ],
+  "depends_note": null,
+  "findings_note": "owner, session 2026-10-11 (s245 relay): skill never names ai relay; relay text has no setup step, so roles, models and end point were improvised from outside guidance",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** reading any vendor or agents-repo config (relay.conf, playbooks); asking the setup questions in code (it stays guidance text); changing the gate, the roles or the close; the s245 `verify --landed` command.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Session 2026-10-11, s245: the owner said \"start s245 in a slicer relay. ask me about setup to confirm (agent roles)\". The agent loaded the skill. The skill says to run `slicer ai instructions --rest` only \"for planning, filing, claims, and review\", so the agent never reached the pointer that s244 added. It also never ran `slicer ai relay`. Instead it ran the relay from the agents-repo playbook and `relay.conf`, outside the workspace. The setup questions it asked came from the owner's prompt, not from slicer:\n\n- which roles run (no architect on a size-S slice)\n- which model each role uses\n- where the run stops: after handoff, a commit on the branch, or landing\n\n`RELAY` (`src/slicer/ai.py:142`) says \"The owner chooses the models\" but has no step that asks the owner. Its Order section starts at \"Create a worktree\". s244 kept the skill text unchanged on purpose, so installed copies would stay current. That left the skill as the one entry point without the pointer."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`:\n  - `skill_text()` (line 217): one line that sends a relay request to `slicer ai relay`.\n  - `RELAY`: a \"Setup\" section placed before \"Order\". Before the worktree exists, the orchestrator reads the slice's size and confirms three things with the owner:\n    - which roles run, with the architect optional on a size-S slice\n    - the vendor, model and effort per role\n    - where the run ends: after the finish step, after a commit on the slice branch, or landed. Land only when the owner asks.\n\n    The section names no vendor, model or file outside slicer.\n- `.claude/skills/slicer/SKILL.md` and any other committed skill copies, regenerated with `slicer ai skill`.\n- `docs/agents.md` (the relay and skill rows), if they quote either text. `CHANGELOG.md`.\n- `tests/test_ai.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_SkillText_RelayRequest_PointsToAiRelay`\n2. `test_RelayText_Setup_BeforeOrder`: the relay has a Setup section, and it comes before Order.\n3. `test_RelayText_Setup_NamesRolesModelsAndEndPoint`\n4. `test_RelayText_Handoff_StillOmitsDone`: the handoff variant still does not name `done`.\n5. `test_CommittedSkill_MatchesSkillText`: the committed copy is current. Extend the existing test if there is one."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write tests 1–5 and watch them fail.\n2. Add the skill line and the Setup section. Keep both neutral about vendors and the finish step.\n3. Regenerate the committed skill copies, then update the docs and the changelog.\n4. Run `python3 tests/affected.py --run`, then the full suite, then `slicer check`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests`.\n- `slicer ai skill` names `slicer ai relay` for a relay request.\n- `slicer ai relay` (both plain and `--json`, under both `implement_finish` values) has Setup before Order. The handoff text does not name `done`.\n- `slicer check` passes, and `git diff --check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": "Branch `feature/s247-relay-setup` in `.worktrees/s247`. Do not commit, merge or push until the owner asks. This repo finishes with `handoff`."
+    }
+  ],
+  "notes": []
+}
