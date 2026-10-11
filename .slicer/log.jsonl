@@ -1200,3 +1200,4 @@
 {"when": "2026-10-11T06:17:35Z", "item": "s245", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer verify --landed ID [--on REF] (defa", "by": "Jon Robbins"}
 {"when": "2026-10-11T06:17:35Z", "item": "s245", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T13:28:26Z", "item": "s245", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T13:28:50Z", "item": "s245", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer verify --landed ID [--on REF] reports whether an item's done state is committed in REF's history (exit 0/1, reasons not_done, working_tree_only, other_branch; exit 2 for no_such_item, bad_id, bad_ref, not_git, --on without --landed). Lite relay: one fix round, gate VERDICT: PASS; full suite 1578 OK (1 skipped).", "by": "Jon Robbins"}
