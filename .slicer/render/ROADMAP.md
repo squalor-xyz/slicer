@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-239 items · — 2 · done 233 · retired 4
+239 items · — 1 · done 233 · retired 4 · reviewing 1
 
 ## v1.8
 
@@ -36,7 +36,7 @@
 | 1 | [s243](slices/s243.md) | 3.13 temp-repo cleanup flake | S | 1 | slicer | CI run 37884752686 (s240 merge, 2026-10-09), test (3.13): test_Merge_NextIdStaysTheLargest | done |
 | 2 | [s244](slices/s244.md) | Point to ai relay from --help and ai instructions | S | 1 | slicer | owner report, session 2026-10-09: slicer --help gives no sign of the relay; ai instructions and ai skill do not mention it (s241 left the pointer out of scope) · discovered from s241 | done |
 | 3 | [s247](slices/s247.md) | Relay setup confirmation | S | 1 | src/slicer, tests, docs | owner, session 2026-10-11 (s245 relay): skill never names ai relay; relay text has no setup step, so roles, models and end point were improvised from outside guidance · discovered from s244 | done |
-| 4 | [s248](slices/s248.md) | refs: one anchor per reference | S | 1 | src/slicer, tests, docs | s246 reviewer probe, 2026-10-11: `Box` (`src/app.py:1`) and `src/app.py:9` rewrote :9 to :3 · discovered from s246 | — |
+| 4 | [s248](slices/s248.md) | refs: one anchor per reference | S | 1 | src/slicer, tests, docs | s246 reviewer probe, 2026-10-11: `Box` (`src/app.py:1`) and `src/app.py:9` rewrote :9 to :3 · discovered from s246 | reviewing |
 | 5 | [s249](slices/s249.md) | refs: example references | S | 1 | src/slicer, tests, docs | first slicer refs run on main, 2026-10-11: 6 of 7 reports were s248's example refs; no way to silence them · discovered from s246 | done |
 | 6 | [s251](slices/s251.md) | merge-index note union edges | S | 1 | src/slicer, tests, docs | s250 gate nits, 2026-10-11: TypeError on non-string created_at; same-second notes reordered by id; getting-started omits delete-vs-edit · discovered from s250 | — |
 | 7 | [s252](slices/s252.md) | edit: lead flag | S | 1 | src/slicer, tests, docs | s249 relay, 2026-10-11: s248's lead example refs could not be marked; only promote --force reaches a lead · discovered from s249 | done |

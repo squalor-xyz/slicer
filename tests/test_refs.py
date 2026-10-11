@@ -316,6 +316,16 @@ class RefsFixTests(RefsFixture):
       )
       self.assertEqual(repo.run("check")[0], 0)
 
+  def test_RefsFix_SharedLine_SecondRefNotRewritten(self) -> None:
+    with self.repo() as repo:
+      item_id = self.add(repo, "A", why="`close_thing` (`src/app.py:3`) and `src/app.py:3` later.")
+      code, report, err = self.refs(repo, item_id, "--fix")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(report["fixed"], 1)
+      self.assertEqual([r["status"] for r in report["references"]], ["moved", "unanchored"])
+      self.assertEqual(self.section(repo, item_id, "Why"),
+                       "`close_thing` (`src/app.py:7`) and `src/app.py:3` later.")
+
 
 class RefsContractTests(RefsFixture):
   def test_Refs_ExitCodes_ZeroOneTwo(self) -> None:
@@ -391,16 +401,36 @@ class RefsParserTests(unittest.TestCase):
     )
     self.assertEqual(refs.find(text), [])
 
-  def test_Find_Anchor_IsNearestIdentifierBeforeOnSameLine(self) -> None:
+  def test_Find_Anchor_IsNearestIdentifierSincePreviousRef(self) -> None:
     text = (
       "`Outer` and `Inner` (`a.py:1`)\n`Other` then `--flag` `b.py:2` and `c.py:3`\n"
       "plain d.py:4\n`util.py` (`e.py:5`)\n`Before`\n`f.py:6`"
     )
     anchors = [(r.path, r.anchor) for r in refs.find(text)]
     self.assertEqual(anchors, [
-      ("a.py", "Inner"), ("b.py", "Other"), ("c.py", "Other"), ("d.py", None),
+      ("a.py", "Inner"), ("b.py", "Other"), ("c.py", None), ("d.py", None),
       ("e.py", None), ("f.py", None),
     ])
+
+  def test_Find_SharedLine_SecondRefIsUnanchored(self) -> None:
+    found = refs.find("`Box` (`src/app.py:1`) and `src/app.py:9` later")
+    self.assertEqual([(r.start, r.anchor) for r in found], [(1, "Box"), (9, None)])
+
+  def test_Find_EachRefOwnAnchor_BothAnchored(self) -> None:
+    found = refs.find("`A` (`a.py:1`), `B` (`a.py:5`)")
+    self.assertEqual([(r.start, r.anchor) for r in found], [(1, "A"), (5, "B")])
+
+  def test_Find_IdentifierBetweenRefs_AnchorsSecondOnlyOnce(self) -> None:
+    cases = {
+      "`Box` (`a.py:1`), `Pen` (`b.py:2`), `c.py:3`": [("a.py", "Box"), ("b.py", "Pen"), ("c.py", None)],
+      "`Box` (`a.py:1`) and `b.py:2`": [("a.py", "Box"), ("b.py", None)],
+      "a.py:1`Pen` and `b.py:2`": [("a.py", None), ("b.py", "Pen")],
+      "`Pen`b.py:2": [("b.py", "Pen")],
+      "`Box` at host:443 (`a.py:1`)": [("a.py", "Box")],
+    }
+    for text, expected in cases.items():
+      with self.subTest(text=text):
+        self.assertEqual([(r.path, r.anchor) for r in refs.find(text)], expected)
 
   def test_Find_QualifiedAnchor_SearchesLastComponent(self) -> None:
     [ref] = refs.find("`store.discover_all` (`store.py:78`) and `Open()`")
