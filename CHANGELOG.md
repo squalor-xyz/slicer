@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer verify --landed ID [--on REF]` answers whether an item's done state landed on a branch. It reads REF's own index and done slice file (default `HEAD`) with `git show`, so an uncommitted `done` or a commit on an unmerged branch does not count, and it follows `done_dir`. Exit 0 when landed, 1 when not, with `reason` `other_branch` (a branch, remote branch or tag outside REF's history has the item done now; a branch that reopened it does not count), `working_tree_only` or `not_done`; exit 2 for an unknown id (`no_such_item`), an unusable id (`bad_id`), a ref that names no commit (`bad_ref`), a project outside a git repository (`not_git`) or `--on` without `--landed`; exit 3 when REF's own index cannot be read, while an unreadable index on another ref is skipped. `--json` returns `{id, ref, ref_commit, landed, reason, message, commit}`. It writes nothing. The git allowlist gains two read-only forms: `show COMMIT:./PATH` and `merge-base --is-ancestor COMMIT COMMIT`.
+
 ### Changed
 
 - `slicer --help` lists the `ai` subcommands (`instructions`, `skill`, `relay`), and `ai instructions` and `ai instructions --rest` point to `slicer ai relay` under "Hand off for review". The skill text does not change, so installed skill copies stay current.

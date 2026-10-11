@@ -120,7 +120,7 @@ reproduce is never half-migrated.
 | `remove` | retire an obsolete item, or purge one outright |
 | `render` | regenerate .slicer/render/ |
 | `sync` | rewrite derived lines in other documents |
-| `verify` | check the index for consistency (and against git unless git_check is off) |
+| `verify` | check the index for consistency (and against git unless git_check is off); `verify --landed ID [--on REF]` checks that an item's done state is committed in REF's history |
 | `check` | the CI gate: render, sync and integrity |
 | `goals` | show project goals and non-goals |
 | `catalog` | project-knowledge records, and citations from roadmap items |

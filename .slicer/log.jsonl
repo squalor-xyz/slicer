@@ -1196,3 +1196,7 @@
 {"when": "2026-10-10T23:25:21Z", "item": "s246", "action": "add", "from": "", "to": "open", "note": "slicer must check and refresh file:line references in slice text"}
 {"when": "2026-10-11T05:36:57Z", "item": "s247", "action": "add", "from": "", "to": "open", "note": "A relay request must reach ai relay and confirm the setup with the owner"}
 {"when": "2026-10-11T05:36:57Z", "item": "s247", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-11T05:36:54Z", "item": "s245", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-11T06:17:35Z", "item": "s245", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer verify --landed ID [--on REF] (defa", "by": "Jon Robbins"}
+{"when": "2026-10-11T06:17:35Z", "item": "s245", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-11T13:28:26Z", "item": "s245", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
