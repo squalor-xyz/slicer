@@ -1,0 +1,43 @@
+{
+  "id": "s250",
+  "title": "slicer merge-index must union note records appended on both sides",
+  "lead": [
+    "Two branches each appended a note to the same item, and the merge failed in two ways:",
+    "- `slicer merge-index` reported `conflict at items/db-11/note_records` and `items/db-16/note_records`, then exited 1, leaving `.slicer/index.json` unmerged. This happened when landing DataBall db-23 after db-18 (2026-10-11).\n- Separately, the project's `.slicer/.gitattributes` assigned no merge driver to `index.json` at all, so git did a plain text merge. That repo has now been fixed; check whether `slicer init` and `setup-git` add the line.",
+    "Notes are append-only records with unique ids, so a three-way merge can always combine them safely."
+  ],
+  "depends_note": null,
+  "findings_note": "DataBall db-23 landing, owner 2026-10-11",
+  "size": "S",
+  "flags": [],
+  "trees_note": "src/slicer, tests",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** merging conflicting edits to non-note fields (status, fields, sections), which stay real conflicts.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Parallel slice relays now land one after another. Each relay files notes on shared later items such as db-11 and db-16, so this conflict will recur on every second landing. In the DataBall case the owner authorized a one-off manual resolution: union the note records by id, order them by `created_at`, then rerun the driver."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer` (`merge-index`): for each item, merge `note_records` as the union of base, ours and theirs, keyed by note `id`. Keep a deletion only if one side removed a note that existed in base and the other side left it unchanged. Order by (`created_at`, `id`). Other fields keep today's three-way rules.\n- `src/slicer` (`init`/`setup-git`): make sure the project `.slicer/.gitattributes` maps `index.json merge=slicer-index`, the way it already maps `log.jsonl` and the renders.\n- `tests`:\n  - both sides append different notes to the same item, and the merge succeeds with both;\n  - both sides append to different items;\n  - the same note id appears on both sides with identical content, and it is kept once;\n  - a real field conflict alongside note appends still fails, naming only the field;\n  - `setup-git` output includes the `index.json` attribute."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them fail.\n2. Implement the union and the attribute.\n3. Update the docs."
+    },
+    {
+      "heading": "Check",
+      "body": "- the project's test suite\n- `slicer check`"
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
