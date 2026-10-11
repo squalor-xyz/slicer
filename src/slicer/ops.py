@@ -16,7 +16,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Callable, Mapping
 
-from slicer import feedback, graph, ids, jsonio, outline, prose, render, store, templates, vcs
+from slicer import feedback, graph, ids, jsonio, outline, prose, refs, render, store, templates, vcs
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import ConfigError, StateError
 from slicer.model import (
@@ -1653,6 +1653,59 @@ def edit_boundary(state: State, item_id: str, body: str) -> Slice:
   state.save_slice(sl)
   _record(state, item_id, "edit", note="boundary")
   return sl
+
+
+def edit_lead(state: State, item_id: str, lead: list[str]) -> Slice:
+  """Replace the lead paragraphs, independently of the sections."""
+  state.index.require(item_id)
+  sl = state.slices.get(item_id)
+  if sl is None:
+    raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first", code="no_slice")
+  sl.lead = list(lead)
+  state.save_slice(sl)
+  _record(state, item_id, "edit", note="lead")
+  return sl
+
+
+def fix_refs(state: State, located: list[refs.Located]) -> int:
+  """Rewrite the `moved` references in `located` and mark them `fixed`.
+
+  Only the numbers change: the lead, the boundary and the sections are saved
+  through their own edit ops, so each logs the history entry an ordinary edit
+  does. Notes are never rewritten, and neither is a section that shares its
+  heading with an earlier one, because `edit_section` finds a section by
+  heading and would overwrite the first. Returns how many references it fixed.
+  """
+  fixed = 0
+  for item_id in dict.fromkeys(loc.item for loc in located):
+    sl = state.slices.get(item_id)
+    if sl is None:
+      continue
+    groups: dict[tuple[str, int], list[refs.Located]] = {}
+    for loc in located:
+      if loc.item == item_id and loc.finding.status == refs.MOVED and loc.place.rewritable:
+        groups.setdefault((loc.place.kind, loc.place.index), []).append(loc)
+    done: list[refs.Located] = []
+    lead = list(sl.lead)
+    lead_moved = False
+    for (kind, at), group in groups.items():
+      if kind == "lead":
+        lead[at] = refs.rewrite(lead[at], group)
+        lead_moved = True
+      elif kind == "boundary":
+        edit_boundary(state, item_id, refs.rewrite(sl.boundary, group))
+      else:  # a section: the lead, the boundary and sections are the rewritable places
+        section = sl.sections[at]
+        if sl.section(section.heading) is not section:
+          continue
+        edit_section(state, item_id, section.heading, refs.rewrite(section.body, group))
+      done += group
+    if lead_moved:
+      edit_lead(state, item_id, lead)
+    for loc in done:
+      loc.fixed = True
+    fixed += len(done)
+  return fixed
 
 
 def edit_prose(state: State, ref: str, text: str) -> str:

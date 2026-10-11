@@ -40,6 +40,7 @@ from slicer import (
   ops,
   outline,
   prose,
+  refs,
   render,
   store,
   sync,
@@ -2394,6 +2395,83 @@ def cmd_verify(args: argparse.Namespace) -> int:
   return DRIFT if report.problems else OK
 
 
+def _refs_items(state: store.State, named: list[str]) -> list[model.Item]:
+  """The items `refs` scans: those named, whatever their status, else every
+  item with a slice that is neither done nor retired."""
+  if named:
+    return [state.index.require(item_id) for item_id in dict.fromkeys(named)]
+  cfg = state.config
+  skip = {cfg.done_status, cfg.retired_status} - {""}
+  return [item for item in state.index.items if item.id in state.slices and item.status not in skip]
+
+
+def _refs_text(items: list[model.Item], located: list[refs.Located], fixed: int, drift: int) -> str:
+  lines: list[str] = []
+  for loc in located:
+    finding = loc.finding
+    anchor = f"`{loc.ref.anchor}` " if loc.ref.anchor else ""
+    detail = ""
+    if finding.found is not None:
+      detail = f" -> {loc.ref.written(finding.found)}" + (" (fixed)" if loc.fixed else "")
+    elif finding.paths:
+      detail = f" ({', '.join(finding.paths)})"
+    elif finding.lines:
+      detail = f" (lines {', '.join(map(str, finding.lines))})"
+    lines.append(
+      f"{loc.item:<5} {loc.place.where}:{loc.place.base + loc.ref.line}  "
+      f"{anchor}{loc.ref.written()}  {finding.status}{detail}"
+    )
+  summary = f"{len(located)} reference(s) in {len(items)} item(s)"
+  if fixed:
+    summary += f"; fixed {fixed}"
+  lines.append(summary + (f"; {drift} need attention" if drift else ""))
+  return "\n".join(lines)
+
+
+def _refs_run(args: argparse.Namespace, state: store.State, *, fix: bool) -> int:
+  """Scan, optionally fix, report; returns OK when nothing is left wrong, else DRIFT."""
+  items = _refs_items(state, args.id)
+  checker = refs.Checker(state.root)
+  located = [loc for item in items for loc in refs.scan(item, state.slices.get(item.id), checker)]
+  fixed = ops.fix_refs(state, located) if fix else 0
+  counts = {status: 0 for status in refs.STATUSES}
+  for loc in located:
+    counts[loc.finding.status] += 1
+  drift = sum(loc.drift for loc in located)
+  if fix and not fixed:
+    args._no_change = True
+  _emit(args, {
+    "fix": fix, "items": [item.id for item in items],
+    "references": [loc.to_dict() for loc in located],
+    "counts": counts, "fixed": fixed, "drift": drift,
+  }, _refs_text(items, located, fixed, drift), keep_empty=("items", "references"))
+  return DRIFT if drift else OK
+
+
+def _refs_fixed(args: argparse.Namespace) -> int:
+  # `_mutating` stops at a nonzero return before it renders, so the handler
+  # returns OK and leaves the verdict for cmd_refs to read.
+  args._refs_exit = _refs_run(args, _state(args), fix=True)
+  return OK
+
+
+_refs_write = _mutating(_refs_fixed)
+
+
+def cmd_refs(args: argparse.Namespace) -> int:
+  """Report file:line references in slice text that no longer hold; `--fix`
+  rewrites the moved ones. A read unless `--fix`, which takes the writer lock."""
+  if not args.fix:
+    if args.render or args.strict:
+      raise StateError("--render and --strict only apply with --fix", code="usage")
+    return _refs_run(args, _state(args), fix=False)
+  root = store.discover(Path(args.root) if args.root else None)
+  with store.project_lock(root):
+    vcs.require_no_merge(root)
+    code = _refs_write(args)
+  return code if code != OK else args._refs_exit
+
+
 _BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
 _FENCE_OPEN = re.compile(r"(`{3,}|~{3,})")
 
@@ -2971,6 +3049,11 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--text", help="inline body (exact in replacement mode); empty text clears unless appending; cannot combine with --file/--stdin")
   sp.add_argument("--file")
   sp.add_argument("--stdin", action="store_true")
+
+  sp = _strict_flag(_render_flag(add("refs", cmd_refs,
+    "check file:line references in slice text; --fix rewrites the moved ones")))
+  sp.add_argument("id", nargs="*", help="item ids to scan, whatever their status (default: every open slice)")
+  sp.add_argument("--fix", action="store_true", help="rewrite moved references in the lead, boundary and sections; notes are only reported")
 
   sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")
