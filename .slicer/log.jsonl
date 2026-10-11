@@ -1219,3 +1219,4 @@
 {"when": "2026-10-11T15:20:13Z", "item": "s247", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T15:46:12Z", "item": "s247", "action": "note", "from": "", "to": "", "note": "Ready for review: ai relay gains a Setup section before Orde", "by": "Jon Robbins"}
 {"when": "2026-10-11T15:46:22Z", "item": "s247", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-11T15:51:22Z", "item": "s247", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

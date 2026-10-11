@@ -7509,7 +7509,7 @@
       "id": "s247",
       "title": "A relay request must reach ai relay and confirm the setup with the owner",
       "short_title": "Relay setup confirmation",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7536,7 +7536,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-11T15:51:22Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
