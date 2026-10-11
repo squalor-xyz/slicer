@@ -37,13 +37,15 @@ READ_ONLY = {
 # These take arguments that vary, so a predicate on the arguments after the
 # subcommand stands in for an exact list. `show` prints one blob named
 # `COMMIT:./PATH` and accepts no option. `merge-base` answers only
-# `--is-ancestor COMMIT COMMIT`. Both take full object names, never a ref a caller
-# typed, so a branch named like an option cannot reach git.
+# `--is-ancestor COMMIT COMMIT` or `COMMIT COMMIT`, with no option. All take full
+# object names, never a ref a caller typed, so a branch named like an option cannot
+# reach git.
 SHAPED = {
   "show": lambda rest: len(rest) == 1 and _BLOB_AT.fullmatch(rest[0]) is not None,
   "merge-base": lambda rest: (
-    len(rest) == 3 and rest[0] == "--is-ancestor"
-    and all(_COMMIT_ONLY.fullmatch(part) for part in rest[1:])
+    len(rest) in (2, 3)
+    and (len(rest) == 2 or rest[0] == "--is-ancestor")
+    and all(_COMMIT_ONLY.fullmatch(part) for part in rest[-2:])
   ),
 }
 
@@ -174,6 +176,13 @@ def ref_tips(root: Path, limit: int = 1000) -> list[str]:
 def is_ancestor(root: Path, commit: str, descendant: str) -> bool:
   """Whether `commit` is reachable from `descendant` (a commit is its own ancestor)."""
   return _run(root, "merge-base", "--is-ancestor", commit, descendant).returncode == 0
+
+
+def merge_base(root: Path, commit: str, other: str) -> str | None:
+  """The best common ancestor of two full commit names, or None when they share none."""
+  done = _run(root, "merge-base", commit, other)
+  name = done.stdout.strip()
+  return name if done.returncode == 0 and _COMMIT_ONLY.fullmatch(name) else None
 
 
 CLAIM_OWNER_ENV = "SLICER_CLAIM_OWNER"

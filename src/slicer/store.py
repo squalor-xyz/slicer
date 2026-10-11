@@ -466,9 +466,14 @@ def sibling_ids(root: Path) -> list[tuple[str, Index]]:
   inside some other checkout, because that checkout's siblings are not this
   project's.
   """
+  return [(path.name, index) for path, index in sibling_checkouts(root)]
+
+
+def sibling_checkouts(root: Path) -> list[tuple[Path, Index]]:
+  """`(path, index)` for every readable sibling checkout, under `sibling_ids`' rule."""
   if not vcs.at_worktree_root(root):
     return []
-  return [(path.name, index) for path, index in _read_siblings(root)]
+  return _read_siblings(root)
 
 
 def _id_order(item_id: str) -> list[tuple[int, int, str]]:
