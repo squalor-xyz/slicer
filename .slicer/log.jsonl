@@ -1290,3 +1290,4 @@
 {"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "note", "from": "", "to": "", "note": "Ready for review: ci.yml and publish.yml use actions/checkou", "by": "Jon Robbins"}
 {"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-12T15:53:08Z", "item": "s254", "action": "status", "from": "reviewing", "to": "done", "note": "Landed on main. CI on draft PR #1 (run 38273120308) passed on 3.11-3.14 with no Node 20 or ubuntu-latest annotations; gate VERDICT: PASS. The next tag's Publish run is the remaining proof.", "by": "Jon Robbins"}
