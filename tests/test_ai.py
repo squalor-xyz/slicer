@@ -792,7 +792,10 @@ class AiRelayTests(unittest.TestCase):
       path.write_text(json.dumps(data) + "\n")
       code, text, err = repo.run("ai", "relay")
       self.assertEqual((code, err), (0, ""))
-      self.assertEqual(text, ai.relay_text("handoff", "implementation report"))
+      # A project with no role matrix yet gets the --init-roles line on top of the text.
+      self.assertEqual(
+        text, ai.relay_text("handoff", "implementation report", in_project=True),
+      )
       self.assertIn("slicer handoff ID --render --check", text)
       self.assertIn(ai.handoff_policy_text("implementation report").strip(), text)
       self.assertNotIn("done", text)
@@ -805,7 +808,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(repo.run("init")[0], 0)
       code, text, err = repo.run("ai", "relay")
       self.assertEqual((code, err), (0, ""))
-      self.assertEqual(text, ai.relay_text("done"))
+      self.assertEqual(text, ai.relay_text("done", in_project=True))
       self.assertIn(close, text)
 
   def test_Relay_NamesRolesOrderAndTheGateVerdictLine(self) -> None:
@@ -977,3 +980,244 @@ class AiRelayTests(unittest.TestCase):
     self.assertIn("## Setup", text)
     self.assertIn("slicer handoff ID --render --check", text)
     self.assertNotIn("done", text.casefold())
+
+
+class AiRelayRolesTests(unittest.TestCase):
+  """`ai relay --init-roles` writes the role matrix; `ai relay-roles` and `ai relay` read it."""
+
+  ROLES = ".slicer/relay-roles.md"
+  OWNER_MATRIX = (
+    "# Owner matrix\n"
+    "\n"
+    "| Role | Vendor | Model | Effort |\n"
+    "| --- | --- | --- | --- |\n"
+    "| Architect | `vendor-x` | big · model | 50% \\ high |\n"
+    "\n"
+  )
+
+  def project(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    self.addCleanup(repo.close)
+    self.assertEqual(repo.run("init")[0], 0)
+    return repo
+
+  def snapshot(self, repo: support.TempRepo) -> dict[str, bytes]:
+    return {
+      str(p.relative_to(repo.root)): p.read_bytes()
+      for p in repo.root.rglob("*") if p.is_file()
+    }
+
+  def test_RelayInitRoles_NoFile_WritesSkeletonWithMatrixAndRules(self) -> None:
+    repo = self.project()
+    before = self.snapshot(repo)
+    code, out, err = repo.run("ai", "relay", "--init-roles", "--json")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(json.loads(out), {"written": [str(repo.root / self.ROLES)]})
+    after = self.snapshot(repo)
+    self.assertEqual(set(after) - set(before), {self.ROLES})
+    self.assertEqual({k for k in before if before[k] != after.get(k)}, set())
+    text = repo.read(self.ROLES)
+    for phrase in (
+      "This file is an example",
+      "The owner edits it by hand",
+      "## Matrix",
+      "| Role | When | Vendor | Model | Effort |",
+      "| Implementer | well specified, effort 1, size S or M | Claude | haiku | xhigh |",
+      "| Implementer | well specified, effort 2, size S | Claude | haiku | xhigh |",
+      "| Implementer | anything else | Claude | sonnet | high |",
+      "| Reviewer and gate | every slice | Claude | opus | medium |",
+      "| Architect | only on a size L slice | Claude | opus | high |",
+      "## Rules",
+      "A reviewer never wrote code in the slice it reviews.",
+      "No cross-vendor reviewer unless the owner asks.",
+      "Claude roles run as subagents.",
+      "\"well specified\" means the slice names its files, failing tests, implementation "
+      "steps and checks, and needs no open owner decision.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+
+  def test_RelayInitRoles_FileExists_RefusesWithoutForce(self) -> None:
+    repo = self.project()
+    repo.write(self.ROLES, self.OWNER_MATRIX)
+    before = self.snapshot(repo)
+    code, out, err = repo.run("ai", "relay", "--init-roles", "--json")
+    self.assertEqual(code, 2)
+    self.assertEqual(json.loads(out)["error"]["code"], "state")
+    self.assertIn("--force", err)
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayInitRoles_Force_ReplacesFile(self) -> None:
+    repo = self.project()
+    repo.write(self.ROLES, self.OWNER_MATRIX)
+    code, out, err = repo.run("ai", "relay", "--init-roles", "--force")
+    self.assertEqual((code, err), (0, ""))
+    text = repo.read(self.ROLES)
+    self.assertNotIn("# Owner matrix", text)
+    self.assertIn("## Matrix", text)
+
+  def test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError(self) -> None:
+    repo = self.project()
+    before = self.snapshot(repo)
+    code, out, err = repo.run("ai", "relay", "--force", "--json")
+    self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "usage"))
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayInitRoles_OutsideProject_RefusesAndWritesNothing(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, err = repo.run("ai", "relay", "--init-roles", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_Relay_RolesFilePresent_EmbedsItVerbatimUnderRolesMatrixHeading(self) -> None:
+    repo = self.project()
+    repo.write(self.ROLES, self.OWNER_MATRIX)
+    code, out, err = repo.run("ai", "relay")
+    self.assertEqual((code, err), (0, ""))
+    self.assertIn("## Roles matrix\n\n" + self.OWNER_MATRIX.rstrip("\n") + "\n\n## Order", out)
+    setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
+    self.assertIn("Propose each role's vendor, model and effort from the matrix below", setup)
+    self.assertNotIn("--init-roles", out)
+    code, out_json, err = repo.run("ai", "relay", "--json")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(json.loads(out_json)["relay"].rstrip("\n"), out.rstrip("\n"))
+
+  def test_Relay_NoRolesFile_SetupNamesInitRoles(self) -> None:
+    repo = self.project()
+    code, out, err = repo.run("ai", "relay")
+    self.assertEqual((code, err), (0, ""))
+    self.assertNotIn("## Roles matrix", out)
+    setup = out.split("## Setup", 1)[1].split("## Order", 1)[0]
+    self.assertIn("`slicer ai relay --init-roles`", setup)
+
+  def test_Relay_OutsideProject_PrintsGenericTextWithoutRoles(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, err = repo.run("ai", "relay")
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
+      self.assertEqual(text, ai.relay_text())
+      self.assertNotIn("Roles matrix", text)
+      self.assertNotIn("--init-roles", text)
+    with self.subTest(case="unreadable index beside a roles file"):
+      repo = self.project()
+      repo.write(self.ROLES, self.OWNER_MATRIX)
+      repo.write(".slicer/index.json", "{")
+      code, text, err = repo.run("ai", "relay")
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
+      self.assertEqual(text, ai.relay_text())
+
+  def test_RelayRoles_TextAndJsonHaveIdenticalContent(self) -> None:
+    repo = self.project()
+    repo.write(self.ROLES, self.OWNER_MATRIX)
+    code, text, err = repo.run("ai", "relay-roles")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(text, self.OWNER_MATRIX.rstrip("\n") + "\n")
+    code, out, err = repo.run("ai", "relay-roles", "--json")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(json.loads(out), {"relay_roles": self.OWNER_MATRIX})
+
+  def test_RelayRoles_NoFile_ExitsTwoWithCodeAndNamesInitRoles(self) -> None:
+    repo = self.project()
+    code, out, err = repo.run("ai", "relay-roles", "--json")
+    self.assertEqual(code, 2)
+    error = json.loads(out)["error"]
+    self.assertEqual(error["code"], "no_relay_roles")
+    self.assertIn("slicer ai relay --init-roles", error["message"])
+    self.assertIn("slicer ai relay --init-roles", err)
+    self.assertFalse((repo.root / self.ROLES).exists())
+
+  def test_RelayRoles_ReadsWithoutLockingOrWriting(self) -> None:
+    repo = self.project()
+    repo.write(self.ROLES, self.OWNER_MATRIX)
+    before = self.snapshot(repo)
+    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+         patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+      code, out, err = repo.run("ai", "relay-roles", "--json")
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(json.loads(out), {"relay_roles": self.OWNER_MATRIX})
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRoles_OutsideProject_RefusesWithStateCode(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, err = repo.run("ai", "relay-roles", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_Skill_RelayLine_PointsToAiRelayRoles(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        lines = [
+          line for line in ai.skill_text(finish).splitlines()
+          if "When the owner asks for a slice relay" in line
+        ]
+        self.assertEqual(len(lines), 1)
+        self.assertIn("`slicer ai relay-roles`", lines[0])
+        self.assertIn("never from `.slicer/relay-roles.md`", lines[0])
+
+  def test_Instructions_PointToAiRelayRoles(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertIn("`slicer ai relay-roles`", ai.instructions_text(finish))
+    self.assertIn("`slicer ai relay-roles`", ai.rest_text())
+
+  def test_CommandsDoc_ListsRelayRolesAndInitRoles(self) -> None:
+    root = Path(__file__).resolve().parents[1]
+    rows = [
+      line for line in (root / "docs" / "commands.md").read_text(encoding="utf-8").splitlines()
+      if line.startswith("| `")
+    ]
+    init = [row for row in rows if row.startswith("| `ai relay --init-roles")]
+    roles = [row for row in rows if row.startswith("| `ai relay-roles`")]
+    self.assertEqual(len(init), 1)
+    self.assertEqual(len(roles), 1)
+    for flag in ("--init-roles", "--force", ".slicer/relay-roles.md"):
+      self.assertIn(flag, init[0])
+    self.assertIn("no_relay_roles", roles[0])
+
+  def test_AgentsDoc_DocumentsRelayRolesPayloadAndCode(self) -> None:
+    root = Path(__file__).resolve().parents[1]
+    text = (root / "docs" / "agents.md").read_text(encoding="utf-8")
+    self.assertIn("`ai relay-roles`", text)
+    self.assertIn("`relay_roles`", text)
+    self.assertIn("| `no_relay_roles` |", text)
+
+  def test_RelayRoles_UnreadableFile_IsIoExitThree(self) -> None:
+    repo = self.project()
+    (repo.root / self.ROLES).mkdir()
+    for argv in (("ai", "relay-roles", "--json"), ("ai", "relay", "--json")):
+      with self.subTest(argv=argv, case="directory"):
+        code, out, err = repo.run(*argv)
+        self.assertEqual(code, 3)
+        error = json.loads(out)["error"]
+        self.assertEqual(error["code"], "io")
+        self.assertIn(self.ROLES, error["message"])
+        self.assertIn("cannot be read", error["message"])
+    (repo.root / self.ROLES).rmdir()
+    (repo.root / self.ROLES).write_bytes(b"\xff\xfe not UTF-8\n")
+    for argv in (("ai", "relay-roles", "--json"), ("ai", "relay", "--json")):
+      with self.subTest(argv=argv, case="not UTF-8"):
+        code, out, err = repo.run(*argv)
+        self.assertEqual(code, 3)
+        error = json.loads(out)["error"]
+        self.assertEqual(error["code"], "io")
+        self.assertIn("cannot be read", error["message"])
+
+  def test_Relay_WhitespaceOnlyRolesFile_TreatedAsMissing(self) -> None:
+    repo = self.project()
+    for blank in ("", " \n\t\n\n"):
+      with self.subTest(blank=blank):
+        repo.write(self.ROLES, blank)
+        code, out, err = repo.run("ai", "relay")
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(out, ai.relay_text("done", in_project=True))
+        self.assertNotIn("## Roles matrix", out)
+        self.assertNotIn("Propose each role's vendor", out)
+        code, out_json, err = repo.run("ai", "relay", "--json")
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(json.loads(out_json)["relay"].rstrip("\n"), out.rstrip("\n"))
+        code, out_roles, err = repo.run("ai", "relay-roles", "--json")
+        self.assertEqual((code, err), (0, ""))
+        self.assertEqual(json.loads(out_roles), {"relay_roles": blank})

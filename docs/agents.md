@@ -28,7 +28,8 @@ generic text. Without either flag nothing is written. `--json` returns `{"skill"
 `slicer ai instructions --rest`, which prints only the parts of the guide the skill
 leaves out, so an agent that loaded the skill does not read the same text twice. The skill
 also says that a slice relay request goes to `slicer ai relay`, and that its Setup is confirmed
-with the owner before the worktree is created.
+with the owner before the worktree is created. It says to read the role matrix only through
+`slicer ai relay-roles`, never from `.slicer/relay-roles.md`.
 
 `slicer ai relay` prints the slice relay: one orchestrating session runs one slice
 through an implementer, a reviewer, an architect and a gate. Its Setup section, before Order,
@@ -37,7 +38,20 @@ role, and where the run ends (after the finish step, after a commit on the slice
 landed). It uses the same finish choice and the same fallback as `slicer ai instructions`.
 Handoff finish closes with
 handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
-the same Markdown as the text output. It does not lock or write.
+the same Markdown as the text output. It does not lock or write, except `--init-roles`, which
+writes `.slicer/relay-roles.md` only.
+
+The owner's role matrix lives in `.slicer/relay-roles.md`, a Markdown file the owner
+edits by hand. `slicer ai relay` adds a `## Roles matrix` section after Setup that holds
+the file's text verbatim, and Setup gets one line proposing each role's vendor, model and
+effort from it. Without the file, Setup names `slicer ai relay --init-roles` instead. That
+command writes a skeleton (an example matrix and rules) and refuses to replace an existing
+file unless `--force` is given. `slicer ai relay-roles` prints the file alone; `--json`
+returns the text under the `relay_roles` key. A missing file is exit 2 with code
+`no_relay_roles`; an unreadable one is `io` (exit 3). A file that holds only whitespace
+counts as missing in `ai relay`. Agents read the matrix only through these commands, never
+by opening the file. When the config or index cannot be read, the relay is the generic text
+and the file is not read.
 
 slicer is built to be called by a coding agent rather than hand-edited. The agent runs
 commands; slicer owns the files. Nothing an agent needs requires reading or writing
@@ -254,7 +268,9 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command. With `--output` or `--install` it is `{skill, written}`, `written` being the absolute paths written, in order |
-| `ai relay` | `{relay}` with the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
+| `ai relay` | `{relay}` with the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. A project with `.slicer/relay-roles.md` gets a `## Roles matrix` section after Setup holding that file, and Setup gets the propose line; a project without it gets the `--init-roles` line in Setup. A blank file counts as missing. An unreadable `.slicer/relay-roles.md` is `io` (exit 3). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write, except `--init-roles` (below) |
+| `ai relay --init-roles` | `{written}`, a one-element list `[PATH]` holding the absolute path of `.slicer/relay-roles.md`, when it writes the skeleton. Needs a project; an existing file is `state` (exit 2) unless `--force` is given, and `--force` without `--init-roles` is `usage`. Writes that one file and nothing else |
+| `ai relay-roles` | `{relay_roles}` with the file's text as the owner wrote it. Needs a project, and reads without a lock or a write. A missing file is exit 2 with code `no_relay_roles`. An unreadable `.slicer/relay-roles.md` is `io` (exit 3) |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |
 | `merge-index` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged index to `OURS`; exit 1 left conflict markers there |
@@ -407,6 +423,7 @@ when the meaning does. Branch on the code.
 | `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline |
 | `editor_aborted` | `$EDITOR` exited non-zero; nothing changed |
 | `wrong_command` | e.g. `import --from` (that flag belongs to `migrate`) |
+| `no_relay_roles` | `ai relay-roles` found no `.slicer/relay-roles.md`. Exit 2; run `slicer ai relay --init-roles` to write the skeleton for the owner to edit |
 | `no_project` | `-r` found no `.slicer/config.json` at or below the start directory. Exit 2; `-r` never walks up, so run `slicer init` or start higher |
 | `external` | An optional external tool failed: `feedback-report` or `issues-pull` found no `gh`, `gh` exited nonzero (often not authenticated), or it printed output slicer cannot use (no issue URL, or an issue list that is not valid). Exit 2. For `feedback-report`, earlier issues in the batch are already recorded and the message names the entry that stopped; `issues-pull` writes nothing |
 | `usage` | Missing arguments, unknown options, invalid values, conflicting options, or other invocation errors |

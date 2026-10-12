@@ -140,8 +140,9 @@ def handoff_policy_text(kind: str) -> str:
 
 
 # The slice relay, shared by both finish modes. The close is appended separately
-# so the handoff text can avoid naming the other finish command.
-RELAY = """\
+# so the handoff text can avoid naming the other finish command. It is two constants
+# so the owner's role matrix can sit between Setup and Order (see relay_text).
+RELAY_HEAD = """\
 # Slice relay
 
 One orchestrating session runs one slice through an implementer, a reviewer,
@@ -179,6 +180,9 @@ Before the worktree exists, the orchestrator reads the slice's size with
 
 Wait for the owner's answers before creating the worktree.
 
+"""
+
+RELAY_ORDER = """\
 ## Order
 
 Create a worktree, then `slicer start ID --render --strict`, red tests,
@@ -206,8 +210,60 @@ mutation table and deviations.
 """
 
 
-def relay_text(finish: str = "done", required_note_kind: str = "") -> str:
-  """The slice relay. `handoff` closes with handoff and does not name done."""
+# The owner's role matrix lives in `.slicer/relay-roles.md`. Its text is added to the
+# relay only for a project that has it, so the generic text never names a vendor.
+ROLES_PROPOSE = (
+  "Propose each role's vendor, model and effort from the matrix below, and let the owner "
+  "confirm or override each one.\n\n"
+)
+
+ROLES_MISSING = (
+  "This project has no role matrix. `slicer ai relay --init-roles` writes a skeleton "
+  "for the owner to edit.\n\n"
+)
+
+# What `ai relay --init-roles` writes. The owner edits it by hand from then on.
+ROLES_SKELETON = """\
+# Relay roles
+
+This file is an example. The owner edits it by hand. `slicer ai relay` embeds it in
+the slice relay so the orchestrator can propose each role from it, and
+`slicer ai relay-roles` prints it alone. Agents read it only through those commands.
+
+## Matrix
+
+| Role | When | Vendor | Model | Effort |
+| --- | --- | --- | --- | --- |
+| Implementer | well specified, effort 1, size S or M | Claude | haiku | xhigh |
+| Implementer | well specified, effort 2, size S | Claude | haiku | xhigh |
+| Implementer | anything else | Claude | sonnet | high |
+| Reviewer and gate | every slice | Claude | opus | medium |
+| Architect | only on a size L slice | Claude | opus | high |
+
+## Rules
+
+- A reviewer never wrote code in the slice it reviews.
+- No cross-vendor reviewer unless the owner asks.
+- Claude roles run as subagents.
+- "well specified" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision.
+"""
+
+
+def relay_text(
+  finish: str = "done", required_note_kind: str = "", *,
+  roles: str | None = None, in_project: bool = False,
+) -> str:
+  """The slice relay. `handoff` closes with handoff and does not name done.
+
+  `roles` is the text of the project's role matrix. `in_project` without `roles`
+  means the project has no matrix yet. Both are left unset for the generic text.
+  """
+  if roles is not None:
+    matrix = ROLES_PROPOSE + "## Roles matrix\n\n" + roles.rstrip("\n") + "\n\n"
+  elif in_project:
+    matrix = ROLES_MISSING
+  else:
+    matrix = ""
   if finish == "handoff":
     close = "Close the slice with `slicer handoff ID --render --check`.\n"
   else:
@@ -216,7 +272,7 @@ def relay_text(finish: str = "done", required_note_kind: str = "") -> str:
       '`slicer done ID --note "Describe the verified outcome" --render --check`.\n'
     )
   return (
-    RELAY
+    RELAY_HEAD + matrix + RELAY_ORDER
     + TRACKING_RULE + "\n\n"
     + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
     + "`slicer list --json --lean`.\n\n"
@@ -250,7 +306,8 @@ def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
     f"{TRACKING}\n"
     f"{HANDOFF_CLOSER if finish == 'handoff' else DONE_CLOSER}\n"
     "When the owner asks for a slice relay, run `slicer ai relay` and confirm its "
-    "Setup with the owner before creating the worktree.\n"
+    "Setup with the owner before creating the worktree. Read the role matrix only through "
+    "`slicer ai relay-roles`, never from `.slicer/relay-roles.md`.\n"
     "For planning, filing, claims, and review, run `slicer ai instructions --rest`; "
     "it leaves out what this skill already says.\n"
   )
@@ -339,7 +396,8 @@ current attempt. Previous-attempt and legacy unknown-attempt notes do not satisf
 `handoff --note` only records history. Changing attempts manually changes report association.
 
 To run one slice through implementer, reviewer, architect and gate agents, print
-the slice relay with `slicer ai relay`.
+the slice relay with `slicer ai relay`. Read the project's role matrix with
+`slicer ai relay-roles`.
 
 """
 
