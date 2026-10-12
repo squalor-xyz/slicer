@@ -1,0 +1,41 @@
+{
+  "id": "s256",
+  "title": "Keep the relay roles matrix in the project and print it in ai relay",
+  "lead": [
+    "A project keeps its slice-relay role, vendor, model and effort matrix in `.slicer/relay-roles.md`, a free Markdown file the owner edits by hand. `slicer ai relay --init-roles` writes a skeleton, `slicer ai relay` embeds the file so the orchestrator can propose each role from it, and `slicer ai relay-roles` prints the file alone. Agents never open the file; they get its text from these commands."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-12; larder keeps docs/relay-roles.md by hand and ai relay cannot show it",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** parsing or validating the matrix, resolving the roles for a given slice, `check` rules for the file, a config key for its path, editing the file through the CLI beyond writing the skeleton, and running or spawning agents.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`ai relay` tells the orchestrator to confirm every role's vendor, model and effort with the owner on every run, but slicer has nowhere to keep the owner's standing answer. larder keeps one by hand in `docs/relay-roles.md` (a matrix keyed on size, effort and \"well specified\", plus rules such as \"a reviewer never wrote code in the slice it reviews\"), and `ai relay` cannot show it. Keeping the matrix under `.slicer/` and handing it out through the CLI gives every project the same place for it and keeps the rule that agents read project state only through slicer commands. Humans and agents both need to find it, so the docs and the skill change with the code."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: the skeleton text, the roles section and Setup line in `relay_text`, and the skill's relay line in `skill_text`.\n- `src/slicer/cli.py`: `--init-roles` and `--force` on `ai relay`, and a new `ai relay-roles` subparser. Reuse the no-overwrite pattern of `_write_skill`.\n- `.claude/skills/slicer/SKILL.md`, `.agents/skills/slicer/SKILL.md` and `.grok/skills/slicer/SKILL.md`, regenerated with `slicer ai skill --install --force`.\n- `docs/commands.md`, `docs/agents.md`, `docs/configuration.md` or `docs/getting-started.md`, `README.md` if its `ai` row lists subcommands, `AGENTS.md` and `CHANGELOG.md`.\n- `tests/test_ai.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `test_RelayInitRoles_NoFile_WritesSkeletonWithMatrixAndRules`\n2. `test_RelayInitRoles_FileExists_RefusesWithoutForce`\n3. `test_RelayInitRoles_Force_ReplacesFile`\n4. `test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError`\n5. `test_Relay_RolesFilePresent_EmbedsItVerbatimUnderRolesMatrixHeading`\n6. `test_Relay_NoRolesFile_SetupNamesInitRoles`\n7. `test_Relay_OutsideProject_PrintsGenericTextWithoutRoles`. The existing test that the relay text names no vendor or model still holds for the generic text.\n8. `test_RelayRoles_TextAndJsonHaveIdenticalContent`\n9. `test_RelayRoles_NoFile_ExitsTwoWithCodeAndNamesInitRoles`\n10. `test_RelayRoles_ReadsWithoutLockingOrWriting`\n11. `test_Skill_RelayLine_PointsToAiRelayRoles`\n12. `test_CommandsDoc_ListsRelayRolesAndInitRoles`. If a docs-coverage test already exists, extend it instead."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. **Skeleton.** It starts with a line saying the file is an example the owner edits, then follows larder's `docs/relay-roles.md`. The `## Matrix` table has the columns Role, When, Vendor, Model and Effort, with these rows:\n   - Implementer, when well specified with effort 1 and size S or M: Claude haiku, xhigh.\n   - Implementer, when well specified with effort 2 and size S: Claude haiku, xhigh.\n   - Implementer, anything else: Claude sonnet, high.\n   - Reviewer and gate, every slice: Claude opus, medium.\n   - Architect, only on a size L slice: Claude opus, high.\n\n   The `## Rules` list says:\n   - a reviewer never wrote code in the slice it reviews;\n   - no cross-vendor reviewer unless the owner asks;\n   - Claude roles run as subagents;\n   - \"well specified\" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision.\n2. **`slicer ai relay` with `--init-roles` (and optional `--force`)** needs a project. It writes the skeleton to `.slicer/relay-roles.md`, refuses an existing file unless `--force` is given, and writes nothing else. `--force` without `--init-roles` is a usage error.\n3. **`slicer ai relay`.** When the file exists, add a `## Roles matrix` section after Setup that holds the file verbatim, and Setup says to propose each role from the matrix and let the owner confirm or override it. When there is no file, Setup adds one line naming `slicer ai relay` with `--init-roles`. Outside a project the output stays the generic text.\n4. **`slicer ai relay-roles`** prints the file. With `--json` it returns `{\"relay_roles\": TEXT}` with the same content. When there is no file it exits 2 with a stable error code (settle the name at start) and a message naming `slicer ai relay` with `--init-roles`. It takes no lock and writes nothing.\n5. **Docs for humans.** Add `docs/commands.md` rows for `ai relay --init-roles` and `ai relay-roles`. Add a short \"Relay roles\" note to `docs/configuration.md` or `docs/getting-started.md`: what the file is for, where it lives, that the owner edits it by hand, and how to create it. Update `README.md` if its `ai` row lists subcommands. Add a `CHANGELOG.md` [Unreleased] Added entry.\n6. **Docs for agents.** Document the `relay_roles` payload in `docs/agents.md`. Change the skill's relay line to say the role matrix comes from `slicer ai relay-roles` (or `ai relay`) and never from the file, then regenerate the three installed SKILL.md copies. Add the same pointer to `ai instructions --rest` if it mentions the relay. Name `.slicer/relay-roles.md` in this repo's `AGENTS.md` tracking-state list as owner-edited and read only through `slicer ai relay-roles`. Update any test that pins the skill or instructions text."
+    },
+    {
+      "heading": "Check",
+      "body": "- All tests above pass, and so does the full discover.\n- In a scratch project, `slicer ai relay` prints the Setup line naming `--init-roles`. After running `slicer ai relay` with `--init-roles`, it shows the `## Roles matrix` section and `slicer ai relay-roles --json` returns the file.\n- The installed SKILL.md copies match `slicer ai skill`.\n- `slicer check` passes and `git diff --check` is clean."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s256`, branch `feature/s256-relay-roles`. After the checks pass, record the review note and run handoff with render and check. Commit only on the worktree branch, as AGENTS.md describes. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

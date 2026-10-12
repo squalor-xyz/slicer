@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 256,
+  "next_id": 257,
   "preamble": "",
   "passes": [
     {
@@ -7906,6 +7906,35 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s256",
+      "title": "Keep the relay roles matrix in the project and print it in ai relay",
+      "short_title": "Relay roles matrix",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-12; larder keeps docs/relay-roles.md by hand and ai relay cannot show it",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.9",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 1,
         "attempts": 0
       }
