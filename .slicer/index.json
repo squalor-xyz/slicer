@@ -7844,7 +7844,7 @@
       "id": "s254",
       "title": "CI workflows use deprecated Node 20 actions and an unpinned runner moving to Ubuntu 26",
       "short_title": "CI actions and runner update",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7860,7 +7860,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-12T15:53:02Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
