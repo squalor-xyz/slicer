@@ -1287,3 +1287,5 @@
 {"when": "2026-10-12T15:28:44Z", "item": "s254", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-12T15:39:29Z", "item": "s254", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-12T15:47:04Z", "item": "s254", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "note", "from": "", "to": "", "note": "Ready for review: ci.yml and publish.yml use actions/checkou", "by": "Jon Robbins"}
+{"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

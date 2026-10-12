@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-241 items · done 236 · retired 4 · started 1
+241 items · done 236 · retired 4 · review 1
 
 ## v1.9
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s254](slices/s254.md) | CI actions and runner update | S | 1 | slicer | Publish run 38268868207 and CI run 38268865465 (v1.8.0, 2026-10-12): Node 20 deprecation and ubuntu-latest to Ubuntu 26 annotations | started |
+| 1 | [s254](slices/s254.md) | CI actions and runner update | S | 1 | slicer | Publish run 38268868207 and CI run 38268865465 (v1.8.0, 2026-10-12): Node 20 deprecation and ubuntu-latest to Ubuntu 26 annotations | review |
 
 ---
 
