@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-243 items · — 1 · done 237 · retired 4 · review 1
+243 items · — 1 · done 237 · retired 4 · reviewing 1
 
 ## v1.9
 
@@ -35,7 +35,7 @@
 |---|---|---|---|---|---|---|---|
 | 1 | [s254](slices/s254.md) | CI actions and runner update | S | 1 | slicer | Publish run 38268868207 and CI run 38268865465 (v1.8.0, 2026-10-12): Node 20 deprecation and ubuntu-latest to Ubuntu 26 annotations | done |
 | 2 | [s255](slices/s255.md) | Runners to Ubuntu 26.04 | S | 1 | slicer | actions/runner-images#14748: ubuntu-latest moves to 26.04 from 2026-10-19 to 2026-11-19; s254 pinned ubuntu-24.04 · discovered from s254 | — |
-| 3 | [s256](slices/s256.md) | Relay roles matrix | M | 1 | slicer | owner request, session 2026-10-12; larder keeps docs/relay-roles.md by hand and ai relay cannot show it | review |
+| 3 | [s256](slices/s256.md) | Relay roles matrix | M | 1 | slicer | owner request, session 2026-10-12; larder keeps docs/relay-roles.md by hand and ai relay cannot show it | reviewing |
 
 ---
 
