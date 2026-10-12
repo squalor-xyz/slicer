@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-12
+
 ### Added
 
 - `slicer edit ID --lead [--text/--file/--stdin]` replaces a slice's lead paragraphs, which the CLI could only reach through `promote --force`. The body splits into paragraphs on blank lines, the same split `promote` uses, and an empty body clears the lead. `--lead` cannot combine with `--section`, `--boundary` or `--append` (`usage`). It logs the same `edit` history entry (`lead`) that `refs --fix` writes, and `--json` returns `{id, lead}`.
