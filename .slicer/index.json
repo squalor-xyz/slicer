@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 255,
+  "next_id": 256,
   "preamble": "",
   "passes": [
     {
@@ -7879,6 +7879,35 @@
         "urgency": 3,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s255",
+      "title": "Move CI and publish runners from ubuntu-24.04 to Ubuntu 26.04",
+      "short_title": "Runners to Ubuntu 26.04",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "actions/runner-images#14748: ubuntu-latest moves to 26.04 from 2026-10-19 to 2026-11-19; s254 pinned ubuntu-24.04",
+        "discovered_from": "s254",
+        "cites": [],
+        "key": "",
+        "pass": "v1.9",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

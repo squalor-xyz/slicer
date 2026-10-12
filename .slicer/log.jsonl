@@ -1291,3 +1291,5 @@
 {"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-12T15:53:02Z", "item": "s254", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-12T15:53:08Z", "item": "s254", "action": "status", "from": "reviewing", "to": "done", "note": "Landed on main. CI on draft PR #1 (run 38273120308) passed on 3.11-3.14 with no Node 20 or ubuntu-latest annotations; gate VERDICT: PASS. The next tag's Publish run is the remaining proof.", "by": "Jon Robbins"}
+{"when": "2026-10-12T16:47:09Z", "item": "s255", "action": "add", "from": "", "to": "open", "note": "Move CI and publish runners from ubuntu-24.04 to Ubuntu 26.04"}
+{"when": "2026-10-12T16:47:09Z", "item": "s255", "action": "promote", "from": "", "to": "", "note": ""}
