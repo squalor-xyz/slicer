@@ -743,6 +743,16 @@ slicer unpark S02 --note "Upstream fix is available" --render
 
 Notes are optional on both commands, as on `done` and `start`.
 
+### Relay roles
+
+A project can keep its slice-relay role matrix in `.slicer/relay-roles.md`: which vendor,
+model and effort each role (implementer, reviewer and gate, architect) gets, and the rules
+that go with it. The owner edits the file by hand. `slicer ai relay --init-roles` writes a
+skeleton to start from, and refuses to replace an existing file unless `--force` is given.
+`slicer ai relay` then embeds the matrix so the orchestrating agent proposes each role from
+it, and `slicer ai relay-roles` prints the file alone. Agents read the matrix through those
+commands and never open the file. See [agents.md](agents.md) for the relay itself.
+
 ## Batch changes
 
 Use multiple IDs to apply the same status, fields, or history note in one command:

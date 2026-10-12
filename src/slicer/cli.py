@@ -346,13 +346,13 @@ def _state(args: argparse.Namespace) -> store.State:
   return state
 
 
-def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, str]:
-  """Finish and report policy when config and index load; otherwise generic.
+def _ai_project(args: argparse.Namespace, *, strict: bool = False) -> tuple[Path | None, str, str]:
+  """The project root, finish and report policy when config and index load.
 
-  Read-only: no lock and no write. A miss warns and keeps the generic text.
-  `strict` is for callers that write the text somewhere: a project that is found
-  but cannot be read raises instead, so a handoff project never gets the generic
-  `done` skill. Not finding a project still falls back.
+  Read-only: no lock and no write. A miss warns and keeps the generic text, and the
+  root comes back None. `strict` is for callers that write the text somewhere: a project
+  that is found but cannot be read raises instead, so a handoff project never gets the
+  generic `done` skill. Not finding a project still falls back.
   """
   root = Path(args.root).resolve() if getattr(args, "root", None) else None
   project = None
@@ -366,8 +366,14 @@ def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, 
         raise
       raise StateError(str(exc), code="io") from exc
     print(f"{exc}; printing the generic guide", file=sys.stderr)
-    return "done", ""
-  return cfg.implement_finish, cfg.handoff_requires_note_kind
+    return None, "done", ""
+  return project, cfg.implement_finish, cfg.handoff_requires_note_kind
+
+
+def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, str]:
+  """The finish and report policy that `_ai_project` reads, without the root."""
+  _project, finish, required = _ai_project(args, strict=strict)
+  return finish, required
 
 
 def cmd_ai_instructions(args: argparse.Namespace) -> int:
@@ -377,11 +383,70 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
+# The owner's slice-relay role matrix, in the project's `.slicer/`. Plain Markdown the
+# owner edits by hand; it is not tracking state and agents read it only through the CLI.
+RELAY_ROLES_NAME = "relay-roles.md"
+
+
 def cmd_ai_relay(args: argparse.Namespace) -> int:
-  """Print the slice relay. Same read-only policy as `ai instructions`."""
-  text = ai.relay_text(*_ai_policy(args))
+  """Print the slice relay. Same read-only policy as `ai instructions`, except
+  `--init-roles`, which writes the role matrix skeleton and nothing else."""
+  if args.force and not args.init_roles:
+    raise StateError("--force needs --init-roles", code="usage")
+  if args.init_roles:
+    return _init_roles(args)
+  project, finish, required = _ai_project(args)
+  roles = None
+  if project is not None:
+    roles = _read_relay_roles(project / store.DIR_NAME / RELAY_ROLES_NAME)
+    # A blank file is no matrix yet: the relay names --init-roles instead of an empty section.
+    if roles is not None and not roles.strip():
+      roles = None
+  text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
   _emit(args, {"relay": text}, text.rstrip("\n"))
   return OK
+
+
+def _init_roles(args: argparse.Namespace) -> int:
+  """Write the role matrix skeleton. Needs a project; an existing file needs --force."""
+  root = Path(args.root).resolve() if args.root else None
+  path = store.discover(root) / store.DIR_NAME / RELAY_ROLES_NAME
+  if path.exists() and not args.force:
+    raise StateError(
+      f"{path} already exists; pass --force to replace it. Nothing was written.",
+      code="state",
+    )
+  try:
+    jsonio.write_text(path, ai.ROLES_SKELETON)
+  except OSError as exc:
+    raise StateError(f"{path}: {exc}", code="io") from exc
+  _emit(args, {"written": [str(path)]}, f"wrote {path}")
+  return OK
+
+
+def cmd_ai_relay_roles(args: argparse.Namespace) -> int:
+  """Print the project's role matrix alone. Reads only: no lock and no write."""
+  root = Path(args.root).resolve() if args.root else None
+  path = store.discover(root) / store.DIR_NAME / RELAY_ROLES_NAME
+  text = _read_relay_roles(path)
+  if text is None:
+    raise StateError(
+      f"{path} does not exist; run `slicer ai relay --init-roles` to write the skeleton "
+      "for the owner to edit",
+      code="no_relay_roles",
+    )
+  _emit(args, {"relay_roles": text}, text.rstrip("\n"))
+  return OK
+
+
+def _read_relay_roles(path: Path) -> str | None:
+  """The role matrix text, or None when the file is absent. Unreadable is `io`."""
+  try:
+    return path.read_text(encoding="utf-8")
+  except FileNotFoundError:
+    return None
+  except (OSError, UnicodeDecodeError) as exc:
+    raise StateError(f"{path} cannot be read: {exc}", code="io") from exc
 
 
 def cmd_recommended_workflow(args: argparse.Namespace) -> int:
@@ -2813,7 +2878,7 @@ def build_parser() -> argparse.ArgumentParser:
       _json_flags(sp)
     return sp
 
-  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay", parents=[common])
+  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles", parents=[common])
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
   _json_flags(sp)
@@ -2853,16 +2918,39 @@ def build_parser() -> argparse.ArgumentParser:
     "--force", action="store_true", help="replace a destination that holds different text",
   )
   inner = aisub.add_parser(
-    "relay", help="print the slice relay (no project needed)",
+    "relay", help="print the slice relay, or write the role matrix skeleton with --init-roles",
     description=(
       "Print the slice relay: one session runs one slice through an implementer, "
       "a reviewer, an architect and a gate. A project with implement_finish handoff "
-      "closes with handoff. No project, or a config or index that cannot be read, "
-      "prints the generic text and warns on stderr. Does not lock or write."
+      "closes with handoff. A project whose .slicer/relay-roles.md exists gets a "
+      "## Roles matrix section after Setup holding that file verbatim, and Setup proposes "
+      "roles from it; without the file, Setup names --init-roles. No project, or "
+      "a config or index that cannot be read, prints the generic text and warns on "
+      "stderr. Does not lock or write, except --init-roles, which writes "
+      ".slicer/relay-roles.md and nothing else."
     ),
     parents=[common],
   )
+  inner.add_argument(
+    "--init-roles", action="store_true",
+    help="write the role matrix skeleton to .slicer/relay-roles.md for the owner to edit",
+  )
+  inner.add_argument(
+    "--force", action="store_true",
+    help="with --init-roles, replace an existing .slicer/relay-roles.md",
+  )
   inner.set_defaults(func=cmd_ai_relay)
+  _json_flags(inner, suppress=True)
+  inner = aisub.add_parser(
+    "relay-roles", help="print the project's relay role matrix (no lock, no write)",
+    description=(
+      "Print .slicer/relay-roles.md, the role matrix the slice relay embeds, as the owner "
+      "wrote it. Needs a project. Without the file it exits 2 with code no_relay_roles. "
+      "Does not lock or write."
+    ),
+    parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_relay_roles)
   _json_flags(inner, suppress=True)
 
   sp = add("init", cmd_init, "create .slicer/ in a project")

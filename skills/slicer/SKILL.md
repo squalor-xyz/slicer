@@ -70,5 +70,5 @@ for this implementation attempt. A report from a previous attempt cannot satisfy
 
 Step 4 is the finish. Commit or publish only when the project instructions authorize it.
 
-When the owner asks for a slice relay, run `slicer ai relay` and confirm its Setup with the owner before creating the worktree.
+When the owner asks for a slice relay, run `slicer ai relay` and confirm its Setup with the owner before creating the worktree. Read the role matrix only through `slicer ai relay-roles`, never from `.slicer/relay-roles.md`.
 For planning, filing, claims, and review, run `slicer ai instructions --rest`; it leaves out what this skill already says.

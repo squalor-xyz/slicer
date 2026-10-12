@@ -1297,3 +1297,8 @@
 {"when": "2026-10-12T18:00:05Z", "item": "s256", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-12T18:00:15Z", "item": "s256", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-12T18:00:15Z", "item": "s256", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-12T18:02:20Z", "item": "s256", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-12T18:22:59Z", "item": "s256", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer ai relay --init-roles writes .slice", "by": "Jon Robbins"}
+{"when": "2026-10-12T18:23:01Z", "item": "s256", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-12T18:34:05Z", "item": "s256", "action": "note", "from": "", "to": "", "note": "Round 1 findings applied: (1) test_RelayRoles_UnreadableFile", "by": "Jon Robbins"}
+{"when": "2026-10-12T18:40:09Z", "item": "s256", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

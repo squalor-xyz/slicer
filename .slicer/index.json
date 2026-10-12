@@ -7914,11 +7914,37 @@
       "id": "s256",
       "title": "Keep the relay roles matrix in the project and print it in ai relay",
       "short_title": "Relay roles matrix",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "686b6dca-70ac-43f6-8173-2630ad12ac6b",
+          "kind": "",
+          "text": "**2026-10-12** — Ready for review: slicer ai relay --init-roles writes .slicer/relay-roles.md (skeleton, refuses overwrite without --force, needs a project); slicer ai relay embeds the file verbatim under ## Roles matrix after Setup, or names --init-roles when absent; slicer ai relay-roles prints it (--json relay_roles; missing file exits 2 with no_relay_roles). Skill relay line and ai instructions --rest point at relay-roles. Tests: 16 new in tests/test_ai.py (AiRelayRolesTests); 2 existing relay tests now expect the no-file Setup line for in-project text. Full suite on Python 3.12: 1659 run, OK, 1 skipped (SLICER_LEGACY_TREE unset). slicer check passes; git diff --check clean. 22 mutations each turned a targeted test red; files restored.",
+          "created_at": "2026-10-12T18:22:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "6ec613b0-7ab2-4575-a558-012e343a7caa",
+          "kind": "",
+          "text": "**2026-10-12** — Round 1 findings applied: (1) test_RelayRoles_UnreadableFile_IsIoExitThree covers a directory and a non-UTF-8 roles file: ai relay-roles and ai relay exit 3 with code io. (2) A whitespace-only or empty roles file counts as missing in ai relay (test_Relay_WhitespaceOnlyRolesFile_TreatedAsMissing); relay-roles still returns the file as-is. (3) RELAY split into RELAY_HEAD and RELAY_ORDER, concatenated; generic and matrix relay output stayed byte-identical across 8 variants (before/after compare). (4-8) docs/agents.md and docs/commands.md: except --init-roles wording, skill relay-roles line, one-element written list, matrix section wording, io rows; CHANGELOG sentence on io and blank files. Mutations: removing the read except clause turns the new unreadable test red; removing the blank check turns the whitespace test red. Wording probes on RELAY_HEAD and RELAY_ORDER stayed green: no existing test pins generic relay bytes. test_ai.py 85 OK; full suite 1661 run, OK, 1 skipped (SLICER_LEGACY_TREE unset); slicer check passes; git diff --check clean. Not rerun handoff.",
+          "created_at": "2026-10-12T18:34:05Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-12T18:40:09Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -7936,7 +7962,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

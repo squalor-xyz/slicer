@@ -81,7 +81,7 @@ reproduce is never half-migrated.
 
 | | |
 |---|---|
-| `ai` | agent onboarding: instructions, skill, relay |
+| `ai` | agent onboarding: instructions, skill, relay, relay-roles |
 | `init` | create .slicer/ in a project; choose an ID prefix, width, and starting ID |
 | `setup-git` | print the git config that turns on the merge drivers (run once per clone) |
 | `merge-index` | the `index.json` merge driver Git runs; merges independent items and fields, unions notes both sides added, and takes the larger `next_id` |
