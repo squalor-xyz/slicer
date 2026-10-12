@@ -1,0 +1,41 @@
+{
+  "id": "s254",
+  "title": "CI workflows use deprecated Node 20 actions and an unpinned runner moving to Ubuntu 26",
+  "lead": [
+    "The v1.8.0 Publish run (38268868207, 2026-10-12) and the CI run on main (38268865465) passed, but GitHub posted two annotations. First, \"Node.js 20 is deprecated\", because `actions/checkout@v4` and `actions/setup-python@v5` target Node 20 and GitHub now forces them onto Node 24. Second, \"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026\". Both `.github/workflows/ci.yml` and `.github/workflows/publish.yml` use `runs-on: ubuntu-latest` in every job. As of 2026-10-12 the latest releases are `actions/checkout` v7.0.1 and `actions/setup-python` v7.0.0, and both declare `using: node24` in their `action.yml`. `pypa/gh-action-pypi-publish@release/v1` is a moving branch, and the run did not flag it."
+  ],
+  "depends_note": null,
+  "findings_note": "Publish run 38268868207 and CI run 38268865465 (v1.8.0, 2026-10-12): Node 20 deprecation and ubuntu-latest to Ubuntu 26 annotations",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the Python matrix, the test command, the publish or release steps, or the PyPI trusted-publisher setup; pinning actions to commit SHAs; and any change under `src/` or `tests/`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Publish runs the full matrix before it uploads, so a broken action or runner image blocks a release. The Node 20 actions only run because GitHub forces them onto Node 24, which is not a supported setup. The runner image changes under us on 2026-10-19 whether or not we act. It is better to move on purpose, with a run that proves the new setup, than to find out on the next tag."
+    },
+    {
+      "heading": "Files",
+      "body": ".github/workflows/ci.yml, .github/workflows/publish.yml, CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "There is no unit test for the workflows; the evidence is a GitHub Actions run. Before the change, both workflows log the Node 20 deprecation annotation. After it, a CI run on the slice branch or on main logs no Node 20 annotation and passes on 3.11–3.14."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. In both workflows, change `actions/checkout@v4` to `@v7` and `actions/setup-python@v5` to `@v7`. Before editing, read each action's release notes from v4/v5 to v7 for input or default changes, for example checkout's credential persistence and setup-python's handling of `python-version`. Note anything that affects these workflows.\n2. Change `runs-on: ubuntu-latest` to `runs-on: ubuntu-24.04` in every job in both files. The owner decided this on 2026-10-12. Moving to Ubuntu 26 is a separate, later item.\n3. Leave `pypa/gh-action-pypi-publish@release/v1` as it is.\n4. Add a CHANGELOG `[Unreleased]` entry under Changed."
+    },
+    {
+      "heading": "Check",
+      "body": "- `git diff --check` passes, and the diff touches only the two workflow files and CHANGELOG.md.\n- Push the slice branch (only with the owner's approval) or wait for the merge to main. The CI run passes on 3.11–3.14 and shows no Node 20 deprecation annotation.\n- Publish cannot be tested without a tag, so confirm its steps match CI's. The next release's Publish run, including its GitHub Release job, is the final check.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s254`, branch `feature/s254-ci-actions`. After the checks pass, record the review note and run handoff with render and check. Commit only on the worktree branch, as AGENTS.md describes. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

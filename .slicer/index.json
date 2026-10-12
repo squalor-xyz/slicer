@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 254,
+  "next_id": 255,
   "preamble": "",
   "passes": [
     {
@@ -7838,6 +7838,35 @@
         "urgency": 2,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s254",
+      "title": "CI workflows use deprecated Node 20 actions and an unpinned runner moving to Ubuntu 26",
+      "short_title": "CI actions and runner update",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "Publish run 38268868207 and CI run 38268865465 (v1.8.0, 2026-10-12): Node 20 deprecation and ubuntu-latest to Ubuntu 26 annotations",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.9",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 3,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

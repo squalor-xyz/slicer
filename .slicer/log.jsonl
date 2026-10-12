@@ -1283,3 +1283,6 @@
 {"when": "2026-10-11T23:46:38Z", "item": "s253", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-11T23:46:44Z", "item": "s253", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-11T23:46:45Z", "item": "s253", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: check warns of a sibling collision only for ids absent from the merge base; retitles no longer warn. Allowlist gains merge-base COMMIT COMMIT. Relay gate PASS; full suite 1643 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-12T15:28:44Z", "item": "s254", "action": "add", "from": "", "to": "open", "note": "CI workflows use deprecated Node 20 actions and an unpinned runner moving to Ubuntu 26"}
+{"when": "2026-10-12T15:28:44Z", "item": "s254", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-12T15:39:29Z", "item": "s254", "action": "edit", "from": "", "to": "", "note": "Implement"}
