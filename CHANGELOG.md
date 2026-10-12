@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-12
+
 ### Added
 
 - A project keeps its slice-relay role matrix (vendor, model and effort per role, plus rules) in `.slicer/relay-roles.md`, a Markdown file the owner edits by hand. `slicer ai relay --init-roles` writes a skeleton and refuses to replace an existing file unless `--force` is given; it writes that one file and needs a project. `slicer ai relay` puts the file's text verbatim under a `## Roles matrix` heading after Setup, and a project without the file gets a Setup line naming `--init-roles`. The generic text, and a project whose config or index cannot be read, never show the matrix. `slicer ai relay-roles` prints the file alone, and `--json` returns `{"relay_roles": TEXT}`. Without the file it exits 2 with the new code `no_relay_roles`; an unreadable file is `io` (exit 3), and a blank file counts as missing in `ai relay`. The skill and `ai instructions --rest` point agents at `ai relay-roles`, and no agent opens the file.
