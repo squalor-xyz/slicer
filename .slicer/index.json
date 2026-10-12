@@ -7914,7 +7914,7 @@
       "id": "s256",
       "title": "Keep the relay roles matrix in the project and print it in ai relay",
       "short_title": "Relay roles matrix",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -7941,10 +7941,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-12T18:40:09Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
