@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- CI and the publish workflow use `actions/checkout@v7` and `actions/setup-python@v7`, which run on Node 24, and pin their runners to `ubuntu-24.04` instead of `ubuntu-latest`, which starts moving to Ubuntu 26 on 2026-10-19. The steps and their inputs are otherwise unchanged.
+
 ## [1.8.0] - 2026-10-12
 
 ### Added
