@@ -1344,3 +1344,7 @@
 {"when": "2026-10-13T20:29:34Z", "item": "s263", "action": "edit", "from": "", "to": "", "note": "Check"}
 {"when": "2026-10-13T20:30:31Z", "item": "s264", "action": "add", "from": "", "to": "open", "note": "Show, replace and reset render templates through the CLI instead of hand-editing them"}
 {"when": "2026-10-13T20:30:36Z", "item": "s264", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-13T20:59:12Z", "item": "s261", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-13T21:12:39Z", "item": "s261", "action": "note", "from": "", "to": "", "note": "Ready for review: legacy_roles_advice uses is_file(), matchi", "by": "Jon Robbins"}
+{"when": "2026-10-13T21:12:46Z", "item": "s261", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-13T21:13:15Z", "item": "s261", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

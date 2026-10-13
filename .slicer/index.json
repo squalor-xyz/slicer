@@ -8133,11 +8133,26 @@
       "id": "s261",
       "title": "legacy relay-roles advice must treat a directory the same way init does",
       "short_title": "Legacy roles advice is_file",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "19a30a5d-68dd-4711-b137-2b1abccf12f0",
+          "kind": "",
+          "text": "**2026-10-13** — Ready for review: legacy_roles_advice uses is_file(), matching roles_init; a directory at .slicer/relay-roles.md no longer gets the legacy_relay_roles warning from check or ai relay. 2 new tests (red before, mutation-checked); full suite 1754 OK (1 skipped); check and diff --check clean. Gate PASS.",
+          "created_at": "2026-10-13T21:12:39Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-13T21:13:15Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -8155,7 +8170,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

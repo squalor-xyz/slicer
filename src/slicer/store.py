@@ -481,7 +481,7 @@ def legacy_roles_advice(root: Path) -> str | None:
   the JSON exists it keeps the matrix someone built instead of writing the example.
   """
   base = root / DIR_NAME
-  if not (base / LEGACY_ROLES_NAME).exists():
+  if not (base / LEGACY_ROLES_NAME).is_file():
     return None
   if (base / ROLES_NAME).exists():
     return (
