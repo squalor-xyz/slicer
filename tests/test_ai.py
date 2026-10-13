@@ -1069,6 +1069,21 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual((code, err), (0, ""))
     self.assertEqual(json.loads(out_json)["relay"].rstrip("\n"), out.rstrip("\n"))
 
+  def test_Relay_MatrixPresent_SetupNamesTheRecommendCommand(self) -> None:
+    repo = self.with_matrix()
+    code, out, err = repo.run("ai", "relay")
+    self.assertEqual((code, err), (0, ""))
+    setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
+    self.assertIn(
+      "`slicer relay-roles recommend ID --well-specified yes|no --split yes|no`", setup,
+    )
+
+  def test_Relay_NoMatrixOrOutsideProject_DoesNotNameRecommend(self) -> None:
+    repo = self.project()
+    self.assertNotIn("recommend", repo.run("ai", "relay")[1])
+    self.assertNotIn("recommend", ai.relay_text())
+    self.assertNotIn("recommend", ai.relay_text("done", in_project=True))
+
   def test_Relay_NoMatrix_SetupNamesRelayRolesInit(self) -> None:
     repo = self.project()
     code, out, err = repo.run("ai", "relay")
@@ -1168,6 +1183,26 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertIn("`ai relay-roles`", text)
     self.assertIn("`relay_roles`", text)
     self.assertIn("| `no_relay_roles` |", text)
+
+  def test_CommandsDoc_ListsRelayRolesRecommend(self) -> None:
+    root = Path(__file__).resolve().parents[1]
+    rows = [
+      line for line in (root / "docs" / "commands.md").read_text(encoding="utf-8").splitlines()
+      if line.startswith("| `relay-roles recommend ID ")
+    ]
+    self.assertEqual(len(rows), 1)
+    for word in ("--well-specified", "--split", "no_relay_roles", "no_such_item", "first row"):
+      self.assertIn(word, rows[0])
+
+  def test_AgentsDoc_DocumentsRelayRolesRecommendPayload(self) -> None:
+    root = Path(__file__).resolve().parents[1]
+    rows = [
+      line for line in (root / "docs" / "agents.md").read_text(encoding="utf-8").splitlines()
+      if line.startswith("| `relay-roles recommend`")
+    ]
+    self.assertEqual(len(rows), 1)
+    self.assertIn("{id, well_specified, split, roles, unmatched}", rows[0])
+    self.assertIn("no_relay_roles", rows[0])
 
   def test_Relay_NonUtf8Matrix_IsCorruptExitThree(self) -> None:
     repo = self.project()

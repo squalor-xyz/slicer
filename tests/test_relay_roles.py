@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
-from slicer import ai, jsonio, render, roles, store
+from slicer import ai, jsonio, model, render, roles, store
 
 JSON = ".slicer/relay-roles.json"
 RENDER = ".slicer/render/RELAY-ROLES.md"
@@ -163,6 +163,93 @@ class RoleModelTests(unittest.TestCase):
     with self.assertRaises(roles.StateError) as caught:
       roles.RoleMatrix.from_dict(data)
     self.assertEqual(caught.exception.code, "schema_too_new")
+
+
+def _row(row_id: str, role: str, **when: object) -> roles.RoleRow:
+  return roles.RoleRow(id=row_id, role=role, when=roles.RoleWhen(**when), agent="A")
+
+
+def _ids(picks: list) -> list:
+  return [row.id if row else None for _, row in picks]
+
+
+def _item(**fields: object) -> model.Item:
+  return model.Item(id="s1", title="T", status="open", **fields)
+
+
+def _pick(rows: list[roles.RoleRow], item: model.Item, ws: bool = True, split: bool = False) -> dict:
+  matrix = roles.RoleMatrix(rows=rows)
+  return {role: (row.id if row else None) for role, row in roles.recommend(matrix, item, ws, split)}
+
+
+class RoleRecommendTests(unittest.TestCase):
+  def test_Recommend_RowsOfEveryRole_ReturnsRolesInRoleOrderWithTheFirstMatch(self) -> None:
+    rows = [
+      _row("r1", "architect"), _row("r2", "gate"), _row("r3", "reviewer"),
+      _row("r4", "implementer", size=["L"]), _row("r5", "implementer"), _row("r6", "implementer"),
+    ]
+    got = roles.recommend(roles.RoleMatrix(rows=rows), _item(size="S"), True, False)
+    self.assertEqual([role for role, _ in got], list(roles.ROLE_NAMES))
+    self.assertEqual([row.id for _, row in got], ["r5", "r3", "r2", "r1"])
+
+  def test_Recommend_RowOrder_DecidesBetweenTwoMatchingRows(self) -> None:
+    first = [_row("r1", "gate", size=["S"]), _row("r2", "gate")]
+    self.assertEqual(_pick(first, _item(size="S"))["gate"], "r1")
+    self.assertEqual(_pick(first[::-1], _item(size="S"))["gate"], "r2")
+
+  def test_Recommend_NoRowForARole_IsNoneForThatRoleOnly(self) -> None:
+    got = _pick([_row("r1", "gate"), _row("r2", "reviewer", size=["L"])], _item(size="S"))
+    self.assertEqual(got, {"implementer": None, "reviewer": None, "gate": "r1", "architect": None})
+
+  def test_Recommend_SizeCondition_MustContainTheSlicesSize(self) -> None:
+    rows = [_row("r1", "gate", size=["S", "M"]), _row("r2", "gate")]
+    self.assertEqual(_pick(rows, _item(size="M"))["gate"], "r1")
+    self.assertEqual(_pick(rows, _item(size="L"))["gate"], "r2")
+
+  def test_Recommend_EffortCondition_MustContainTheSlicesEffort(self) -> None:
+    rows = [_row("r1", "gate", effort=[1, 2]), _row("r2", "gate")]
+    self.assertEqual(_pick(rows, _item(effort=2))["gate"], "r1")
+    self.assertEqual(_pick(rows, _item(effort=3))["gate"], "r2")
+
+  def test_Recommend_ImportanceCondition_MustContainTheSlicesImportance(self) -> None:
+    rows = [_row("r1", "gate", importance=[3]), _row("r2", "gate")]
+    self.assertEqual(_pick(rows, _item(importance=3))["gate"], "r1")
+    self.assertEqual(_pick(rows, _item(importance=1))["gate"], "r2")
+
+  def test_Recommend_UrgencyCondition_MustContainTheSlicesUrgency(self) -> None:
+    rows = [_row("r1", "gate", urgency=[3]), _row("r2", "gate")]
+    self.assertEqual(_pick(rows, _item(urgency=3))["gate"], "r1")
+    self.assertEqual(_pick(rows, _item(urgency=1))["gate"], "r2")
+
+  def test_Recommend_UnsetSizeAndEffort_MatchOnlyEmptyConditions(self) -> None:
+    rows = [
+      _row("r1", "gate", size=["S"]), _row("r2", "gate", effort=[1, 2, 3]), _row("r3", "gate"),
+    ]
+    self.assertEqual(_pick(rows, _item())["gate"], "r3")
+    self.assertEqual(_pick(rows[:2], _item())["gate"], None)
+
+  def test_Recommend_WellSpecifiedCondition_TrueFalseAndNull(self) -> None:
+    rows = [_row("r1", "gate", well_specified=True), _row("r2", "gate", well_specified=False)]
+    self.assertEqual(_pick(rows, _item(), ws=True)["gate"], "r1")
+    self.assertEqual(_pick(rows, _item(), ws=False)["gate"], "r2")
+    either = [_row("r1", "gate", well_specified=None)]
+    self.assertEqual(_pick(either, _item(), ws=True)["gate"], "r1")
+    self.assertEqual(_pick(either, _item(), ws=False)["gate"], "r1")
+
+  def test_Recommend_SplitCondition_TrueFalseAndNull(self) -> None:
+    rows = [_row("r1", "gate", split=False), _row("r2", "gate", split=True)]
+    self.assertEqual(_pick(rows, _item(), split=True)["gate"], "r2")
+    self.assertEqual(_pick(rows, _item(), split=False)["gate"], "r1")
+    either = [_row("r1", "gate", split=None)]
+    self.assertEqual(_pick(either, _item(), split=True)["gate"], "r1")
+    self.assertEqual(_pick(either, _item(), split=False)["gate"], "r1")
+
+  def test_Recommend_Skeleton_ProposesTheExampleRowsForSmallAndLargeSlices(self) -> None:
+    matrix = roles.skeleton()
+    small = roles.recommend(matrix, _item(size="S", effort=1), True, False)
+    self.assertEqual(_ids(small), ["r1", "r4", "r5", None])
+    large = roles.recommend(matrix, _item(size="L", effort=3), False, False)
+    self.assertEqual(_ids(large), ["r3", "r4", "r5", "r6"])
 
 
 class RelayRolesInitTests(RelayRolesCase):
@@ -781,6 +868,147 @@ class RelayRolesLegacyTests(RelayRolesCase):
     code, out, err = repo.run("ai", "relay")
     self.assertEqual((code, err), (0, ""))
     self.assertNotIn("legacy_relay_roles", out)
+
+
+class RelayRolesRecommendTests(RelayRolesCase):
+  def item(self, repo: support.TempRepo, *flags: str) -> str:
+    scores = ("--importance", "2", "--urgency", "2", "--effort", "2")  # unscored items warn
+    return json.loads(self.ok(repo, "add", "A slice", "--json", *scores, *flags))["id"]
+
+  def recommend(self, repo: support.TempRepo, item: str, ws: str = "yes", split: str = "no") -> dict:
+    return json.loads(self.ok(
+      repo, "relay-roles", "recommend", item, "--well-specified", ws, "--split", split, "--json",
+    ))
+
+  def test_Recommend_Json_ReturnsRoleOrderedRowsAndUnmatched(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo, "--size", "S", "--effort", "1")
+    self.ok(repo, "relay-roles", "remove", "r6")
+    payload = self.recommend(repo, item)
+    self.assertEqual(list(payload), ["id", "well_specified", "split", "roles", "unmatched"])
+    self.assertEqual((payload["id"], payload["well_specified"], payload["split"]), (item, True, False))
+    self.assertEqual([r["role"] for r in payload["roles"]], list(roles.ROLE_NAMES))
+    self.assertEqual(list(payload["roles"][0]), ["role", "row"])
+    rows = {r["id"]: r for r in self.matrix(repo)["rows"]}
+    self.assertEqual(payload["roles"][0]["row"], rows["r1"])
+    self.assertEqual(payload["roles"][1]["row"], rows["r4"])
+    self.assertEqual(payload["roles"][2]["row"], rows["r5"])
+    self.assertIsNone(payload["roles"][3]["row"])
+    self.assertEqual(payload["unmatched"], ["architect"])
+
+  def test_Recommend_Json_NothingUnmatched_ListsNone(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo, "--size", "L")
+    payload = self.recommend(repo, item, ws="no")
+    self.assertEqual(payload["unmatched"], [])
+    self.assertEqual(payload["roles"][0]["row"]["id"], "r3")
+    self.assertEqual(payload["roles"][3]["row"]["id"], "r6")
+
+  def test_Recommend_Lean_KeepsTheShapeWhenRolesAreUnmatched(self) -> None:
+    repo = self.with_matrix()
+    for row_id in ("r1", "r2", "r3", "r4", "r5", "r6"):
+      self.ok(repo, "relay-roles", "remove", row_id)
+    item = self.item(repo)
+    payload = json.loads(self.ok(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
+      "--json", "--lean",
+    ))
+    self.assertEqual(payload["roles"], [{"role": r, "row": None} for r in roles.ROLE_NAMES])
+    out = self.ok(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
+      "--json", "--lean",
+    )
+    self.assertEqual(out.count("\n"), 1 if out.endswith("\n") else 0)
+    self.assertNotIn('": ', out)
+    self.assertNotIn("\n ", out)
+    self.assertEqual(payload["unmatched"], list(roles.ROLE_NAMES))
+
+  def test_Recommend_Text_IsOneLinePerRoleAndNamesUnmatchedRoles(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo, "--size", "S", "--effort", "1")
+    lines = self.ok(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
+    ).splitlines()
+    self.assertEqual(len(lines), 4)
+    self.assertTrue(lines[0].startswith("implementer  r1  Claude Code  Claude  haiku  xhigh"))
+    self.assertTrue(lines[1].startswith("reviewer  r4  "))
+    self.assertTrue(lines[2].startswith("gate  r5  "))
+    self.assertEqual(lines[3], "architect  (no matching row)")
+
+  def test_Recommend_RowWithEmptyFields_PrintsDashesNotBlankColumns(self) -> None:
+    repo = self.with_matrix()
+    for row_id in ("r1", "r2", "r3"):
+      self.ok(repo, "relay-roles", "remove", row_id)
+    self.ok(repo, "relay-roles", "add", "--role", "implementer", "--model", "whole")
+    item = self.item(repo)
+    line = self.ok(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
+    ).splitlines()[0]
+    self.assertEqual(line, "implementer  r7  -  -  whole  -")
+
+  def test_Recommend_FlagsMissing_AreUsageErrors(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo)
+    for flags in ((), ("--well-specified", "yes"), ("--split", "no")):
+      with self.subTest(flags=flags):
+        self.refuse(repo, "relay-roles", "recommend", item, *flags, code=2, error="usage")
+
+  def test_Recommend_FlagValueOtherThanYesOrNo_IsBadRoleField(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo)
+    for ws, split in (("any", "no"), ("maybe", "no"), ("yes", "any"), ("yes", "true")):
+      with self.subTest(ws=ws, split=split):
+        self.refuse(
+          repo, "relay-roles", "recommend", item, "--well-specified", ws, "--split", split,
+          code=2, error="bad_role_field",
+        )
+
+  def test_Recommend_UnknownItem_IsNoSuchItem(self) -> None:
+    repo = self.with_matrix()
+    self.refuse(
+      repo, "relay-roles", "recommend", "s99", "--well-specified", "yes", "--split", "no",
+      code=2, error="no_such_item",
+    )
+
+  def test_Recommend_NoMatrix_IsNoRelayRoles(self) -> None:
+    repo = self.project()
+    item = self.item(repo)
+    self.refuse(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
+      code=2, error="no_relay_roles",
+    )
+
+  def test_Recommend_ReadsWithoutLockingOrWriting(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo, "--size", "S")
+    before = self.snapshot(repo)
+    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+      self.recommend(repo, item)
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_Recommend_SplitPart_GetsTheSplitRowAndNeverTheWholeSliceRow(self) -> None:
+    repo = self.with_matrix()
+    for row_id in ("r1", "r2", "r3"):
+      self.ok(repo, "relay-roles", "remove", row_id)
+    self.ok(repo, "relay-roles", "add", "--role", "implementer", "--split", "no", "--model", "whole")
+    self.ok(repo, "relay-roles", "add", "--role", "implementer", "--split", "yes", "--model", "part")
+    item = self.item(repo)
+    part = self.recommend(repo, item, split="yes")
+    self.assertEqual(part["roles"][0]["row"]["model"], "part")
+    self.assertIs(part["roles"][0]["row"]["when"]["split"], True)
+    whole = self.recommend(repo, item, split="no")
+    self.assertEqual(whole["roles"][0]["row"]["model"], "whole")
+    self.ok(repo, "relay-roles", "remove", "r8")
+    self.assertEqual(self.recommend(repo, item, split="yes")["roles"][0]["row"], None)
+
+  def test_Recommend_ItemScores_SelectRowsByImportanceAndUrgency(self) -> None:
+    repo = self.with_matrix()
+    self.ok(repo, "relay-roles", "add", "--role", "gate", "--importance", "3", "--urgency", "3", "--model", "hot")
+    self.ok(repo, "relay-roles", "move", "r7", "--before", "r5")
+    hot = self.item(repo, "--importance", "3", "--urgency", "3")
+    calm = self.item(repo, "--importance", "3", "--urgency", "1")
+    self.assertEqual(self.recommend(repo, hot)["roles"][2]["row"]["model"], "hot")
+    self.assertEqual(self.recommend(repo, calm)["roles"][2]["row"]["id"], "r5")
 
 
 class AiRelayJsonTests(RelayRolesCase):

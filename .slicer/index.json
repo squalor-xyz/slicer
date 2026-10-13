@@ -8073,13 +8073,28 @@
       "id": "s259",
       "title": "Recommend relay roles for a slice from the matrix",
       "short_title": "Relay roles recommend",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s257"
       ],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "8e6c6367-7016-4761-a25d-cc6d4e5718d9",
+          "kind": "",
+          "text": "**2026-10-13** — Ready for review: relay-roles recommend ID --well-specified yes|no --split yes|no returns each role's first matching matrix row (or null, listed in unmatched); read-only; --json keeps the full shape and --lean only compacts; ai relay Setup names the command when a matrix exists. Review findings fixed (--lean formatting, '-' for empty fields). Full suite 1781 OK (1 skipped); check and diff --check clean. Gate PASS.",
+          "created_at": "2026-10-13T21:57:53Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-13T21:58:04Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -8097,7 +8112,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

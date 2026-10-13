@@ -215,7 +215,10 @@ mutation table and deviations.
 # so the generic text never names a vendor.
 ROLES_PROPOSE = (
   "Propose each role's agent, vendor, model and reasoning effort from the matrix below, "
-  "and let the owner confirm or override each one.\n\n"
+  "and let the owner confirm or override each one. "
+  "`slicer relay-roles recommend ID --well-specified yes|no --split yes|no` matches the "
+  "slice against the matrix and returns the first row for each role; you judge whether the "
+  "slice is well specified and whether it is a part of a split slice.\n\n"
 )
 
 ROLES_MISSING = (

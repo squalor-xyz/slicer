@@ -457,6 +457,36 @@ def cmd_relay_roles_show(args: argparse.Namespace) -> int:
   return OK
 
 
+def _recommend_line(role: str, row: role_matrix.RoleRow | None) -> str:
+  if row is None:
+    return f"{role}  (no matching row)"
+  cells = [row.id, row.agent, row.vendor, row.model, row.reasoning]
+  return f"{role}  " + "  ".join(cell or role_matrix.EMPTY_CELL for cell in cells)
+
+
+def cmd_relay_roles_recommend(args: argparse.Namespace) -> int:
+  """Match a slice against the matrix. Reads only: no lock, no write, nothing stored."""
+  well_specified = ops.parse_yes_no("well-specified", args.well_specified)
+  split = ops.parse_yes_no("split", args.split)
+  matrix = _read_matrix(args)
+  item = _state(args).index.require(args.id)
+  picks = role_matrix.recommend(matrix, item, well_specified, split)
+  payload = {
+    "id": item.id,
+    "well_specified": well_specified,
+    "split": split,
+    "roles": [{"role": role, "row": row.to_dict() if row else None} for role, row in picks],
+    "unmatched": [role for role, row in picks if row is None],
+  }
+  if args.json:
+    # The shape is the contract, so --lean must not drop a null row or an empty list;
+    # it only makes the output compact.
+    _dump_json(args, payload)
+  else:
+    _emit(args, payload, "\n".join(_recommend_line(role, row) for role, row in picks))
+  return OK
+
+
 def cmd_relay_roles_init(args: argparse.Namespace) -> int:
   state = _state(args)
   written, removed = ops.roles_init(
@@ -3465,6 +3495,21 @@ def build_parser() -> argparse.ArgumentParser:
     inner.add_argument("--note", help="one line shown in the Note column")
 
   radd("show", cmd_relay_roles_show, "print the matrix as Markdown (no lock, no write)")
+
+  inner = radd(
+    "recommend", cmd_relay_roles_recommend,
+    "propose each role's row for a slice from its size, effort, importance and urgency "
+    "(no lock, no write)",
+  )
+  inner.add_argument("id")
+  inner.add_argument(
+    "--well-specified", required=True, metavar="yes|no",
+    help="your judgement of whether the slice is well specified; rows with well_specified null match either",
+  )
+  inner.add_argument(
+    "--split", required=True, metavar="yes|no",
+    help="yes for a part of a split slice, no for a whole one; rows with split null match either",
+  )
 
   inner = radd("init", cmd_relay_roles_init, "write the example matrix", mutate=True)
   inner.add_argument("--force", action="store_true", help="replace an existing relay-roles.json")
