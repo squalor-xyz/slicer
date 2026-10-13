@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Owner decides before start: pin `ubuntu-26.04`, or go back to `ubuntu-latest` once the rollout is complete (after 2026-11-19).\n2. Change `runs-on` in all 4 jobs (ci.yml `test`; publish.yml `test`, `publish`, `release`) to the chosen label.\n3. Confirm the `release` job's script still runs on the new image: it uses the system `python3` (`os`, `pathlib`, `str.removeprefix`) and `gh release create`.\n4. Add a CHANGELOG `[Unreleased]` entry under Changed."
+      "body": "1. Owner decided on 2026-10-13: pin `ubuntu-26.04`.\n2. Change `runs-on` in all 4 jobs (ci.yml `test`; publish.yml `test`, `publish`, `release`) to `ubuntu-26.04`.\n3. Confirm the `release` job's script still runs on the new image: it uses the system `python3` (`os`, `pathlib`, `str.removeprefix`) and `gh release create`.\n4. Add a CHANGELOG `[Unreleased]` entry under Changed."
     },
     {
       "heading": "Check",
