@@ -1,0 +1,41 @@
+{
+  "id": "s263",
+  "title": "Set a config value through the CLI instead of hand-editing config.json",
+  "lead": [
+    "`slicer config KEY` reads one value. `slicer config KEY VALUE` writes it: it patches only that key in `.slicer/config.json`, validates the result the way `Config.load` would, and refuses the whole write if the result does not load. `slicer config KEY --unset` removes the key, so the default applies again. After this, AGENTS.md, docs/configuration.md and the skill no longer tell anyone to edit `config.json` by hand."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; config.json is the one documented hand-edit exception in AGENTS.md and docs/configuration.md",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** editing `.slicer/templates/*.md` through the CLI (docs/configuration.md also calls those \"yours to edit\"); setting `id.prefix` (it stays with `slicer id-prefix`, which also renames the index); setting `version`; changing which keys exist or their defaults; an interactive or TUI config editor; merging `config.json` across branches.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner's rule, set on 2026-10-13 while s257 was being re-scoped, is that every `.slicer/` file changes only through slicer. s257 moved the relay roles matrix onto the CLI. That leaves `config.json` as the one documented exception: AGENTS.md says \"edit it by hand as docs/configuration.md describes\", and docs/configuration.md opens with \"Edit the file directly — unlike index.json and the slice files, the config is yours to hand-edit.\" s202 added the read side (`cmd_config`, cli.py:2403) and left setting a value out of scope. `Store.save_config_prefix` (store.py:343) is the precedent for the write side. It patches the raw file instead of rewriting it from `Config.to_dict()`, because loading back-fills statuses that the owner's file may not spell out. It also writes through the stage, so the lock and all-or-nothing rules hold."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: `cmd_config` gains an optional `value` positional and `--unset`. A write is routed through `_mutating`, so it takes the lock and supports `--render/--strict`. A read stays lock-free.\n- `src/slicer/ops.py`: a `config_set` op. It resolves the dotted key, coerces the value, validates and stages the write, and logs history as `config.<key>`.\n- `src/slicer/store.py`: generalise `save_config_prefix` into a raw-patch helper that `set_id_prefix` keeps using.\n- `tests/test_config_command.py`\n- `docs/configuration.md`, `docs/commands.md`, `docs/agents.md` (the JSON contract and error codes), `README.md` (the command row, if `test_docs_coverage` requires it), `AGENTS.md`, `skills/slicer/SKILL.md` and `.claude/skills/slicer/SKILL.md` if `ai.py` generates that text, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `config implement_finish handoff` exits 0. Afterwards `config implement_finish` prints `handoff`, and every other byte of `config.json` is unchanged: keys that were absent are not back-filled, and key order is preserved.\n2. Values are coerced by the key's type. Strings are taken literally. `id.width 3` stores the int 3. `git_check false` stores false. `sections '[\"Why\",\"Check\"]'` and `statuses '{...}'` take JSON for lists and objects. A value that does not coerce, such as `git_check maybe` or `id.width x`, exits 2 with `bad_config_value` and writes nothing.\n3. A coerced value that makes the config invalid exits 2 and leaves the file byte-identical. Two examples: `done_status` naming a status not in `statuses`, and `implement_finish handoff` with an empty `review_status`. The error code is `config` or `bad_config_value` (decide which and document it); the message is the one `Config.validate` gives.\n4. An unknown key exits 2 with `usage` and names the top-level keys, the same as reading one does. `config id.prefix X` and `config version 2` exit 2, and the message for `id.prefix` names `slicer id-prefix`.\n5. `config satisfies_dependencies --unset` removes the key, and a later read shows it absent. `--unset` on a key with a default restores that default. `--unset` together with a VALUE is a usage error.\n6. A write takes the lock: with the lock held, it fails with `locked`, the same as other mutations. A plain read still works while the lock is held.\n7. A write logs one history entry naming the key, and the old and new values.\n8. `--render` after a key that changes the render, such as a status label or `boundary`, re-renders, and `slicer check` is clean afterwards. Without `--render`, `check` reports drift, as it does for other mutations.\n9. `--json` on a write prints `{key, value, previous}`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add the raw-patch store helper and move `set_id_prefix` onto it, with no change in behaviour.\n2. Add `ops.config_set(state, key, value, unset)`. It maps the dotted key onto the raw dict (`id.width` → `raw[\"id\"][\"width\"]`, `pointers.next_format`, …), coerces by the type in `Config().to_dict()` for that key, runs `Config.from_dict` on the patched copy, and stages the write.\n3. Wire up the CLI. With no VALUE and no `--unset`, keep today's read path. Otherwise go through `_mutating`.\n4. Add `bad_config_value` to docs/agents.md if that is the decision.\n5. Change the docs:\n   - Rewrite the opening of docs/configuration.md and the hand-edit sentence in AGENTS.md to say that keys are set with `slicer config KEY VALUE`.\n   - Keep the key reference.\n   - Note that `sync.targets` is set as a JSON list.\n6. Add a CHANGELOG entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- On this repo, this round trip leaves `git diff .slicer/config.json` empty:\n\n  ```sh\n  slicer config claim_owner X\n  slicer config claim_owner --unset\n  ```\n\n- `slicer check` and `git diff --check` pass.\n- Searching AGENTS.md, docs/ and the skill for \"hand-edit\" and \"by hand\" finds nothing about config.json."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s263`, branch `feature/s263-config-set`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 263,
+  "next_id": 265,
   "preamble": "",
   "passes": [
     {
@@ -8177,6 +8177,64 @@
         ],
         "trees_literal": false,
         "findings": "s257 architect, 2026-10-13: two branches that each add a row take the same r-id and conflict as text; merge-index handles index.json but not relay-roles.json",
+        "discovered_from": "s257",
+        "cites": [],
+        "key": "",
+        "pass": "v1.10",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s263",
+      "title": "Set a config value through the CLI instead of hand-editing config.json",
+      "short_title": "Write config through the CLI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; config.json is the one documented hand-edit exception in AGENTS.md and docs/configuration.md",
+        "discovered_from": "s257",
+        "cites": [],
+        "key": "",
+        "pass": "v1.10",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s264",
+      "title": "Show, replace and reset render templates through the CLI instead of hand-editing them",
+      "short_title": "Edit templates through the CLI",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; docs/configuration.md and docs/commands.md call .slicer/templates/*.md yours to edit, and a missing template's fix is init --force, which also rewrites config",
         "discovered_from": "s257",
         "cites": [],
         "key": "",

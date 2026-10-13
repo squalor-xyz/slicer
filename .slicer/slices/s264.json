@@ -1,0 +1,43 @@
+{
+  "id": "s264",
+  "title": "Show, replace and reset render templates through the CLI instead of hand-editing them",
+  "lead": [
+    "Add a `slicer template` group to manage `.slicer/templates/`:",
+    "- `list` names the templates and says whether each one differs from the default.\n- `show NAME` prints a project template, and `show NAME --default` prints the built-in one.\n- `set NAME --file F|--stdin` replaces a template. It refuses a template that names an unknown placeholder, and it writes nothing when it refuses.\n- `reset NAME` restores the built-in default.",
+    "After this, the docs stop calling the templates \"yours to edit\", and the message for a missing template points at `template reset` instead of `init --force`."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; docs/configuration.md and docs/commands.md call .slicer/templates/*.md yours to edit, and a missing template's fix is init --force, which also rewrites config",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the placeholder language (loops, conditionals) or the set of placeholders; adding template names beyond `slice.md`, `roadmap.md` and `row.md`; editing parts of a template in place (a set replaces the whole file); config.json (s263); a TUI template editor; merging templates across branches.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner's rule, set on 2026-10-13, is that every `.slicer/` file changes only through slicer. s257 moved the relay roles matrix onto the CLI, and s263 does the same for `config.json`. The templates are the last owner-edited files under `.slicer/`:\n\n- docs/configuration.md (\"Not configurable\") calls them \"copied into your project by `init` and yours to edit\".\n- docs/commands.md:349 says \"render templates, yours to edit\".\n- A missing template fails with \"re-run `slicer init --force` to restore it\" (store.py:290). That command also rewrites `config.json`.\n- An unknown placeholder is found only at the next render, as a `render` error from `render.expand` (render.py:40), after the bad file is already on disk."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`: `template_set` and `template_reset` ops. Each stages the write, checks the proposed template by rendering with it, and logs history as `template.<name>`.\n- `src/slicer/store.py`: stage support for template writes, and the missing-template message.\n- `src/slicer/templates.py`: the names and defaults (already there).\n- `src/slicer/cli.py`: the `template` group with `list`, `show`, `set` and `reset`. `set` and `reset` go through `_mutating` for the lock and `--render/--strict`.\n- `tests/test_template_command.py` (new)\n- `docs/configuration.md`, `docs/commands.md`, `docs/agents.md` (the JSON contract and error codes), `README.md` (a command row, if `test_docs_coverage` requires it), `src/slicer/ai.py`, if its \"templates stay readable\" wording needs to point at the command, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "1. `template list --json` returns one `{name, customized}` per name in `TEMPLATE_NAMES`. `customized` is false on a fresh `init` and true after a `set` that changes the bytes.\n2. `template show row.md` prints the project file byte for byte, and `--default` prints `templates.default(\"row.md\")`. An unknown name exits 2 with `unknown_template` and lists the valid names.\n3. `template set row.md --stdin` with valid text replaces the file and logs one history entry. Afterwards `slicer render` then `slicer check` is clean.\n4. `template set row.md` with text that uses `{{nope}}` exits 2 with the `render` code or a new `bad_template` code (decide which and document it). The message names the placeholder, and the file is unchanged. `set` with `--strict --render` and a failing render also leaves the file unchanged.\n5. `template reset slice.md` after a `set` restores the default bytes. It also recreates a deleted template, which fixes the \"template missing\" case without `init --force`, and that error message now names `slicer template reset NAME`.\n6. `set` and `reset` take the lock (`locked` when it is held). `list` and `show` do not.\n7. `reset` on a template that already matches the default writes nothing, logs nothing and reports `changed: false`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add a staged template write to `_Stage` and `State`, committed in the same order as the other staged files.\n2. Add `ops.template_set(state, name, text)` and `ops.template_reset(state, name)`. Each validates the name against `TEMPLATE_NAMES`, then renders the current state with the proposed template so an unknown placeholder is refused before anything is written, then stages the write and logs it.\n3. Add the CLI group and register its error codes in docs/agents.md.\n4. Change the docs:\n   - Rewrite the templates paragraph in docs/configuration.md and the docs/commands.md:349 line to name `slicer template`.\n   - Keep the placeholder reference.\n5. Change the missing-template message in store.py.\n6. Add a CHANGELOG entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- On this repo, `slicer template list` reports all three templates, and running `slicer template reset row.md` on an unchanged template leaves `git status` clean.\n- `slicer check` and `git diff --check` pass.\n- Searching the docs for \"yours to edit\" finds nothing about templates."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s264`, branch `feature/s264-template-cli`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}
