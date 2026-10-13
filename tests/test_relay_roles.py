@@ -769,6 +769,19 @@ class RelayRolesLegacyTests(RelayRolesCase):
     self.assertIn("relay-roles init --replace-legacy", err)
     self.assertEqual(out, ai.relay_text("done", in_project=True))
 
+  def test_Check_DirectoryAtLegacyPath_NoLegacyWarning(self) -> None:
+    repo = self.with_matrix()
+    (repo.root / LEGACY).mkdir()
+    warnings = json.loads(repo.run("check", "--json")[1])["warnings"]
+    self.assertEqual([w for w in warnings if "legacy_relay_roles" in w], [])
+
+  def test_AiRelay_DirectoryAtLegacyPath_NoStderrWarning(self) -> None:
+    repo = self.with_matrix()
+    (repo.root / LEGACY).mkdir()
+    code, out, err = repo.run("ai", "relay")
+    self.assertEqual((code, err), (0, ""))
+    self.assertNotIn("legacy_relay_roles", out)
+
 
 class AiRelayJsonTests(RelayRolesCase):
   def test_AiRelay_WithMatrix_EmbedsTheRenderUnderRolesMatrix(self) -> None:
