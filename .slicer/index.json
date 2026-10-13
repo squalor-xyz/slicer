@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 259,
+  "next_id": 260,
   "preamble": "",
   "passes": [
     {
@@ -7976,30 +7976,30 @@
     },
     {
       "id": "s257",
-      "title": "Name the agent that runs each relay role",
-      "short_title": "Relay role agent",
+      "title": "Store the relay roles matrix as JSON edited through the CLI",
+      "short_title": "Relay roles as JSON",
       "status": "open",
       "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "S",
+        "size": "L",
         "flags": [],
         "trees": [
           "slicer"
         ],
         "trees_literal": false,
-        "findings": "owner request, session 2026-10-13: configure the agent (Claude Code, Codex CLI, Grok Build) per relay role",
+        "findings": "owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row",
         "discovered_from": "",
         "cites": [],
         "key": "",
         "pass": "v1.10",
         "group": "",
         "reason": "",
-        "importance": 2,
+        "importance": 3,
         "urgency": 2,
-        "effort": 1,
+        "effort": 3,
         "attempts": 0
       }
     },
@@ -8010,7 +8010,8 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [
-        "s257"
+        "s257",
+        "s259"
       ],
       "note_records": [],
       "claim": null,
@@ -8030,6 +8031,37 @@
         "reason": "",
         "importance": 2,
         "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s259",
+      "title": "Recommend relay roles for a slice from the matrix",
+      "short_title": "Relay roles recommend",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s257"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-13: slicer should recommend role values from the slice's parameters",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.10",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 2,
         "attempts": 0
       }
