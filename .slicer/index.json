@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 260,
+  "next_id": 263,
   "preamble": "",
   "passes": [
     {
@@ -8096,6 +8096,95 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s260",
+      "title": "Refresh .slicer/.gitattributes in an existing project through the CLI",
+      "short_title": "Refresh gitattributes",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates",
+        "discovered_from": "s257",
+        "cites": [],
+        "key": "",
+        "pass": "v1.10",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s261",
+      "title": "legacy relay-roles advice must treat a directory the same way init does",
+      "short_title": "Legacy roles advice is_file",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s257 gate, 2026-10-13: store.legacy_roles_advice uses exists() while roles_init uses is_file(); a directory at .slicer/relay-roles.md gets advice that init --replace-legacy refuses",
+        "discovered_from": "s257",
+        "cites": [],
+        "key": "",
+        "pass": "v1.10",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s262",
+      "title": "Merge relay-roles.json changes from parallel branches without an id collision",
+      "short_title": "Relay roles merge",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s260"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s257 architect, 2026-10-13: two branches that each add a row take the same r-id and conflict as text; merge-index handles index.json but not relay-roles.json",
+        "discovered_from": "s257",
+        "cites": [],
+        "key": "",
+        "pass": "v1.10",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 2,
         "attempts": 0
       }

@@ -1327,3 +1327,15 @@
 {"when": "2026-10-13T16:12:01Z", "item": "s257", "action": "note", "from": "", "to": "", "note": "Round 1 findings applied: split condition (D1), free single-", "by": "Jon Robbins"}
 {"when": "2026-10-13T16:22:52Z", "item": "s257", "action": "note", "from": "", "to": "", "note": "Round 2: init --force numbers the example rows and rules aft", "by": "Jon Robbins"}
 {"when": "2026-10-13T16:27:44Z", "item": "s257", "action": "status", "from": "review", "to": "done", "note": "Landed: relay roles matrix is .slicer/relay-roles.json (version 1), changed only through slicer relay-roles (show, init [--force] [--replace-legacy], add, set, remove, move, rule-add, rule-edit, rule-remove); rows carry role, when (size, effort, importance, urgency, well_specified, split), agent, vendor, model, reasoning, note; rendered to .slicer/render/RELAY-ROLES.md with ID column, embedded in ai relay at level 2. This repo migrated via init --replace-legacy. Two review rounds (id reuse on init --force, CLI-only legacy removal, ids visible, directory is io, sizes free text, merge-driver template, namespaced history). Gate VERDICT: PASS; architect confirmed all findings. Full suite Python 3.14: 1752 run, OK, 1 skipped; slicer check clean.", "by": "Jon Robbins"}
+{"when": "2026-10-13T16:28:05Z", "item": "s259", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-13T16:28:05Z", "item": "s258", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-13T16:28:06Z", "item": "s260", "action": "add", "from": "", "to": "open", "note": "Refresh .slicer/.gitattributes in an existing project through the CLI"}
+{"when": "2026-10-13T16:28:06Z", "item": "s261", "action": "add", "from": "", "to": "open", "note": "legacy relay-roles advice must treat a directory the same way init does"}
+{"when": "2026-10-13T16:28:06Z", "item": "s262", "action": "add", "from": "", "to": "open", "note": "Merge relay-roles.json changes from parallel branches without an id collision"}
+{"when": "2026-10-13T16:28:27Z", "item": "s260", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-13T16:28:27Z", "item": "s261", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-13T16:28:27Z", "item": "s262", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-13T16:28:27Z", "item": "s262", "action": "set", "from": "", "to": "", "note": "depends_on -→s260"}
+{"when": "2026-10-13T16:28:33Z", "item": "s260", "action": "edit", "from": "", "to": "", "note": "boundary"}
+{"when": "2026-10-13T16:28:33Z", "item": "s261", "action": "edit", "from": "", "to": "", "note": "boundary"}
+{"when": "2026-10-13T16:28:33Z", "item": "s262", "action": "edit", "from": "", "to": "", "note": "boundary"}

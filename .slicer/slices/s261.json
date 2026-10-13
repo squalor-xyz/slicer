@@ -1,0 +1,41 @@
+{
+  "id": "s261",
+  "title": "legacy relay-roles advice must treat a directory the same way init does",
+  "lead": [
+    "`store.legacy_roles_advice` tests the leftover `.slicer/relay-roles.md` with `exists()`, while `roles_init` tests it with `is_file()`. Both should use `is_file()`, so `check` never suggests a command that then refuses."
+  ],
+  "depends_note": null,
+  "findings_note": "s257 gate, 2026-10-13: store.legacy_roles_advice uses exists() while roles_init uses is_file(); a directory at .slicer/relay-roles.md gets advice that init --replace-legacy refuses",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** any other legacy-file handling, and changing roles_init.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s257 gate found that a directory at `.slicer/relay-roles.md` makes `check` warn \"run `relay-roles init --replace-legacy`\". That command then refuses, because the path is not a file. The warning should match what the command does."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/store.py (`legacy_roles_advice`), tests/test_relay_roles.py, CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- With a directory at `.slicer/relay-roles.md`, `check` gives no `legacy_relay_roles` warning, and `ai relay` gives no stderr warning."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Use `is_file()` in `legacy_roles_advice`.\n2. Add the test and a CHANGELOG `[Unreleased]` Fixed entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s261`, branch `feature/s261-legacy-roles-isfile`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}
