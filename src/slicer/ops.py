@@ -16,7 +16,9 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Callable, Mapping
 
-from slicer import feedback, graph, ids, jsonio, outline, prose, refs, render, store, templates, vcs
+from slicer import (
+  feedback, graph, ids, jsonio, outline, prose, refs, render, roles, store, templates, vcs,
+)
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import ConfigError, StateError
 from slicer.model import (
@@ -24,6 +26,7 @@ from slicer.model import (
   PassInfo, Section, Slice, canonical_kind, effort_rank, extract_boundary, is_unscored,
   successor_would_cycle,
 )
+from slicer.roles import RoleMatrix, RoleRow, RoleRule, RoleWhen
 from slicer.store import State
 
 
@@ -42,6 +45,7 @@ log.jsonl merge=union
 render/ROADMAP.md merge=slicer-generated
 render/ROADMAP.html merge=slicer-generated
 render/slices/*.md merge=slicer-generated
+render/RELAY-ROLES.md merge=slicer-generated
 
 # index.json is merged by the slicer-index driver, which matches items by id and
 # fields by name: independent edits merge, next_id takes the larger value so ids are
@@ -2213,3 +2217,282 @@ def _slice_from_spec(spec: object, item: Item, cfg: object) -> Slice:
     sections=sections,
     boundary=boundary,
   )
+
+
+# ---- relay role matrix ----------------------------------------------------
+# Every change to `.slicer/relay-roles.json` goes through these. Each validates
+# before it mutates, so a refused call leaves memory and disk as they were.
+
+ROLES_ACTION = "relay-roles"
+
+
+def _record_role(
+  state: State, suffix: str, note: str, *, frm: str = "", to: str = "",
+) -> None:
+  """History for a matrix edit, under `relay-roles.r1` or `relay-roles.u1` (`relay-roles` for init)."""
+  item = f"{ROLES_ACTION}.{suffix}" if suffix else ROLES_ACTION
+  _record(state, item, ROLES_ACTION, frm=frm, to=to, note=note)
+
+
+def _require_roles(state: State) -> RoleMatrix:
+  matrix = state.roles
+  if matrix is None:
+    raise StateError(
+      f"{state.dir / store.ROLES_NAME} does not exist; run `slicer relay-roles init` "
+      "to write the example matrix",
+      code="no_relay_roles",
+    )
+  return matrix
+
+
+def _bad_role_field(message: str) -> StateError:
+  return StateError(message, code="bad_role_field")
+
+
+def _parse_sizes(values: list[str]) -> list[str]:
+  """Sizes are free text: any nonblank single-line value, de-duplicated and ordered."""
+  sizes: list[str] = []
+  for value in values:
+    _reject_bad_role_text(size=value)
+    if value.strip():
+      sizes.append(value.strip())
+  return roles.normalize_sizes(sizes)
+
+
+def _parse_scores(name: str, values: list[str | int]) -> list[int]:
+  out: list[int] = []
+  for value in values:
+    try:
+      n = int(value)
+    except (TypeError, ValueError):
+      raise _bad_role_field(f"{name} must be 1, 2 or 3, not {value!r}") from None
+    if n not in roles.SCORES:
+      raise _bad_role_field(f"{name} must be 1, 2 or 3, not {n}")
+    if n not in out:
+      out.append(n)
+  return sorted(out)
+
+
+def _parse_yes_no_any(flag: str, value: str) -> bool | None:
+  choices = {"yes": True, "no": False, "any": None}
+  if value not in choices:
+    raise _bad_role_field(f"{flag} must be yes, no or any, not {value!r}")
+  return choices[value]
+
+
+def _check_role(role: str) -> str:
+  if role not in roles.ROLE_NAMES:
+    raise _bad_role_field(f"role {role!r} is not one of {', '.join(roles.ROLE_NAMES)}")
+  return role
+
+
+def _reject_bad_role_text(**fields: str | None) -> None:
+  for name, value in fields.items():
+    if value is not None and "\n" in value:
+      raise StateError(f"{name} cannot contain a newline", code="newline_in_field")
+
+
+def _rule_text(text: str) -> str:
+  if not text.strip():
+    raise StateError("a rule cannot be blank", code="blank_title")
+  _reject_bad_role_text(rule=text)
+  return text.strip()
+
+
+def _allocate_role_id(prefix: str, number: int, taken: set[str]) -> str:
+  new_id = f"{prefix}{number}"
+  if new_id in taken:
+    raise StateError(
+      f"next_{'row' if prefix == 'r' else 'rule'} ({number}) would reuse the existing id "
+      f"{new_id}; relay-roles.json is inconsistent",
+      code="corrupt",
+    )
+  return new_id
+
+
+def roles_init(
+  state: State, *, force: bool = False, replace_legacy: bool = False,
+) -> tuple[list[Path], list[Path]]:
+  """Write the example matrix, or just drop the old Markdown file when a matrix exists.
+
+  Returns the paths written and the paths removed. The JSON is saved before the
+  Markdown file is deleted, so a failed write leaves the Markdown file where it was.
+  `--force` replaces a matrix and numbers the example rows and rules from its id
+  counters, so no row or rule id is ever issued twice; a corrupt matrix has no
+  counters, so the example starts at `r1` and `u1`.
+  """
+  path = state.dir / store.ROLES_NAME
+  legacy = state.dir / store.LEGACY_ROLES_NAME
+  if path.exists() and not path.is_file():
+    raise StateError(f"{path} is not a file", code="io")
+  has_legacy = legacy.is_file()
+  if path.exists() and not force:
+    if not (replace_legacy and has_legacy):
+      raise StateError(
+        f"{path} already exists; pass --force to replace it. Nothing was written.",
+        code="state",
+      )
+    # The matrix stays; only the file it replaced goes.
+    state.delete_file(legacy)
+    _record_role(state, "", "remove-legacy")
+    return [], [legacy]
+  old = None
+  if path.exists():
+    try:
+      old = state.roles
+    except StateError as exc:
+      if exc.code != "corrupt":
+        raise
+  fresh = (
+    roles.skeleton(first_row=old.next_row, first_rule=old.next_rule)
+    if old is not None else roles.skeleton()
+  )
+  removed = [legacy] if replace_legacy and has_legacy else []
+  state.roles = fresh
+  state.save_roles()
+  for old_file in removed:
+    state.delete_file(old_file)
+  _record_role(state, "", "init")
+  return [path], removed
+
+
+def role_add(
+  state: State, role: str, *, size: list[str] | None = None,
+  effort: list[str | int] | None = None, importance: list[str | int] | None = None,
+  urgency: list[str | int] | None = None, well_specified: str | None = None,
+  split: str | None = None, agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", note: str = "",
+) -> RoleRow:
+  """Append a row with the next id. The counter only moves forward."""
+  matrix = _require_roles(state)
+  _check_role(role)
+  when = RoleWhen(
+    size=_parse_sizes(size or []),
+    effort=_parse_scores("effort", effort or []),
+    importance=_parse_scores("importance", importance or []),
+    urgency=_parse_scores("urgency", urgency or []),
+    well_specified=_parse_yes_no_any("well-specified", well_specified or "any"),
+    split=_parse_yes_no_any("split", split or "any"),
+  )
+  _reject_bad_role_text(agent=agent, vendor=vendor, model=model, reasoning=reasoning, note=note)
+  row = RoleRow(
+    id=_allocate_role_id("r", matrix.next_row, {r.id for r in matrix.rows}),
+    role=role, when=when, agent=agent, vendor=vendor, model=model, reasoning=reasoning,
+    note=note,
+  )
+  matrix.next_row += 1
+  matrix.rows.append(row)
+  state.save_roles()
+  _record_role(state, row.id, "add", to=role)
+  return row
+
+
+def role_set(
+  state: State, row_id: str, *, role: str | None = None, size: list[str] | None = None,
+  effort: list[str | int] | None = None, importance: list[str | int] | None = None,
+  urgency: list[str | int] | None = None, well_specified: str | None = None,
+  split: str | None = None, agent: str | None = None, vendor: str | None = None, model: str | None = None,
+  reasoning: str | None = None, note: str | None = None,
+) -> tuple[RoleRow, list[str]]:
+  """Change only the fields given. Returns the row and the names that changed."""
+  row = _require_roles(state).row(row_id)
+  if role is not None:
+    _check_role(role)
+  when = RoleWhen.from_dict(row.when.to_dict())
+  if size is not None:
+    when.size = _parse_sizes(size)
+  if effort is not None:
+    when.effort = _parse_scores("effort", effort)
+  if importance is not None:
+    when.importance = _parse_scores("importance", importance)
+  if urgency is not None:
+    when.urgency = _parse_scores("urgency", urgency)
+  if well_specified is not None:
+    when.well_specified = _parse_yes_no_any("well-specified", well_specified)
+  if split is not None:
+    when.split = _parse_yes_no_any("split", split)
+  texts = {"agent": agent, "vendor": vendor, "model": model, "reasoning": reasoning, "note": note}
+  _reject_bad_role_text(**texts)
+  wanted: dict[str, object] = {"role": role, **texts}
+  changed = [
+    name for name, value in wanted.items() if value is not None and value != getattr(row, name)
+  ]
+  when_changed = [
+    name for name, value in when.to_dict().items() if value != row.when.to_dict()[name]
+  ]
+  if not changed and not when_changed:
+    return row, []
+  for name in changed:
+    setattr(row, name, wanted[name])
+  row.when = when
+  changed += when_changed
+  state.save_roles()
+  _record_role(state, row.id, "set", to=",".join(changed))
+  return row, changed
+
+
+def role_remove(state: State, row_id: str) -> RoleRow:
+  matrix = _require_roles(state)
+  row = matrix.row(row_id)
+  matrix.rows.remove(row)
+  state.save_roles()
+  _record_role(state, row.id, "remove", to=row.role)
+  return row
+
+
+def role_move(
+  state: State, row_id: str, *, before: str | None = None, last: bool = False,
+) -> tuple[RoleRow, bool]:
+  """Place a row before another, or at the end. Returns the row and whether it moved."""
+  if (before is None) == (not last):
+    raise StateError("choose exactly one of --before or --last", code="usage")
+  matrix = _require_roles(state)
+  row = matrix.row(row_id)
+  anchor = matrix.row(before) if before is not None else None
+  if anchor is not None and anchor.id == row.id:
+    raise StateError("a row cannot be moved before itself", code="usage")
+  old_order = [r.id for r in matrix.rows]
+  rest = [r for r in matrix.rows if r.id != row.id]
+  at = len(rest) if anchor is None else [r.id for r in rest].index(anchor.id)
+  rest.insert(at, row)
+  if [r.id for r in rest] == old_order:
+    return row, False
+  matrix.rows = rest
+  state.save_roles()
+  _record_role(
+    state, row.id, "move", frm=str(old_order.index(row.id) + 1),
+    to=str([r.id for r in rest].index(row.id) + 1),
+  )
+  return row, True
+
+
+def rule_add(state: State, text: str) -> RoleRule:
+  matrix = _require_roles(state)
+  text = _rule_text(text)
+  rule = RoleRule(
+    id=_allocate_role_id("u", matrix.next_rule, {r.id for r in matrix.rules}), text=text,
+  )
+  matrix.next_rule += 1
+  matrix.rules.append(rule)
+  state.save_roles()
+  _record_role(state, rule.id, "rule-add")
+  return rule
+
+
+def rule_edit(state: State, rule_id: str, text: str) -> tuple[RoleRule, bool]:
+  rule = _require_roles(state).rule(rule_id)
+  text = _rule_text(text)
+  if text == rule.text:
+    return rule, False
+  rule.text = text
+  state.save_roles()
+  _record_role(state, rule.id, "rule-edit")
+  return rule, True
+
+
+def rule_remove(state: State, rule_id: str) -> RoleRule:
+  matrix = _require_roles(state)
+  rule = matrix.rule(rule_id)
+  matrix.rules.remove(rule)
+  state.save_roles()
+  _record_role(state, rule.id, "rule-remove")
+  return rule

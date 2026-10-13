@@ -20,6 +20,7 @@ from slicer import ids, jsonio, vcs
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import SlicerError, StateError
 from slicer.model import SCHEMA_VERSION, Index, Item, LogEntry, Slice
+from slicer.roles import RoleMatrix
 
 # flock is POSIX-only; on a platform without it the lock degrades to a no-op
 # rather than crashing, so a Windows user still gets a working (if unguarded)
@@ -32,6 +33,9 @@ except ImportError:  # pragma: no cover - exercised only off POSIX
 DIR_NAME = ".slicer"
 INDEX_NAME = "index.json"
 LOG_NAME = "log.jsonl"
+ROLES_NAME = "relay-roles.json"
+# The hand-edited matrix that ROLES_NAME replaced. Nothing reads it any more.
+LEGACY_ROLES_NAME = "relay-roles.md"
 GITATTRIBUTES_NAME = ".gitattributes"
 LOCK_NAME = "lock"
 SLICES_DIR = "slices"
@@ -178,6 +182,9 @@ def project_lock(start: Path | None = None, *, timeout: float | None = None) -> 
     os.close(fd)
 
 
+_UNLOADED = object()
+
+
 @dataclass
 class _Stage:
   """Buffered writes for a `State.staged()` transaction.
@@ -188,11 +195,12 @@ class _Stage:
   """
 
   index: bool = False
+  roles: bool = False
   slices: dict[str, Slice] = field(default_factory=dict)
   logs: list[LogEntry] = field(default_factory=list)
   moves: list[tuple[Path, Path]] = field(default_factory=list)
-  # Slice files to unlink after the index write. A purge records the path
-  # here so a failed render never deletes a file the index still names.
+  # Files to unlink after the index write. A purge records the path here so a
+  # failed render never deletes a file the index still names.
   deletes: list[Path] = field(default_factory=list)
   config: dict | None = None
 
@@ -212,6 +220,10 @@ class State:
   # every persistence side effect buffers here instead of hitting disk, so a
   # mutation can be rendered before it is allowed to land.
   _stage: "_Stage | None" = field(default=None, init=False, repr=False, compare=False)
+  # The relay role matrix, read on first use: most commands never need it.
+  _roles: "RoleMatrix | None | object" = field(
+    default=_UNLOADED, init=False, repr=False, compare=False,
+  )
 
   @property
   def dir(self) -> Path:
@@ -292,6 +304,33 @@ class State:
       return
     jsonio.write(self.dir / INDEX_NAME, self.index.to_dict())
 
+  @property
+  def roles(self) -> RoleMatrix | None:
+    """The relay role matrix, or None when the project has none."""
+    if self._roles is _UNLOADED:
+      self._roles = read_roles(self.root)
+    return self._roles  # type: ignore[return-value]
+
+  @roles.setter
+  def roles(self, matrix: RoleMatrix | None) -> None:
+    self._roles = matrix
+
+  def save_roles(self) -> None:
+    matrix = self.roles
+    if matrix is None:
+      raise StateError("there is no relay role matrix to save", code="state")
+    if self._stage is not None:
+      self._stage.roles = True
+      return
+    jsonio.write(self.dir / ROLES_NAME, matrix.to_dict())
+
+  def delete_file(self, path: Path) -> None:
+    """Unlink a file after the writes that replace it, when this change is staged."""
+    if self._stage is not None:
+      self._stage.deletes.append(path)
+      return
+    path.unlink()
+
   def save_slice(self, sl: Slice) -> Path:
     path = self.slice_path(sl.id)
     self.slices[sl.id] = sl
@@ -343,10 +382,7 @@ class State:
     Purge saves the index first and deletes the file second. Buffering the
     unlink keeps that order, and lets a failed render drop the delete.
     """
-    if self._stage is not None:
-      self._stage.deletes.append(path)
-      return
-    path.unlink()
+    self.delete_file(path)
 
   @contextmanager
   def staged(self) -> Iterator[None]:
@@ -389,6 +425,8 @@ class State:
       jsonio.write(self.slice_path(sl.id), sl.to_dict())
     if stage.index:
       jsonio.write(self.dir / INDEX_NAME, self.index.to_dict())
+    if stage.roles and self.roles is not None:
+      jsonio.write(self.dir / ROLES_NAME, self.roles.to_dict())
     # After the index, matching an unstaged purge: a crash here leaves an
     # orphan file, not a row whose slice was already deleted.
     for path in stage.deletes:
@@ -422,6 +460,40 @@ def _from_dict(path: Path, loader, data):
     return loader(data)
   except (KeyError, TypeError, ValueError) as e:
     raise StateError(f"{path}: not usable, a required field is missing or malformed: {e}", code="corrupt") from None
+
+
+def read_roles(root: Path) -> RoleMatrix | None:
+  """Read only the relay role matrix. A missing file is None; a bad one is `corrupt`."""
+  path = root / DIR_NAME / ROLES_NAME
+  if not path.exists():
+    return None
+  try:
+    data = jsonio.read(path)
+  except OSError as exc:
+    raise StateError(f"{path} cannot be read: {exc}", code="io") from exc
+  return _from_dict(path, RoleMatrix.from_dict, data)
+
+
+def legacy_roles_advice(root: Path) -> str | None:
+  """What to do about a leftover `relay-roles.md`, or None when there is none.
+
+  Nothing reads that file any more. The same command removes it either way, but once
+  the JSON exists it keeps the matrix someone built instead of writing the example.
+  """
+  base = root / DIR_NAME
+  if not (base / LEGACY_ROLES_NAME).exists():
+    return None
+  if (base / ROLES_NAME).exists():
+    return (
+      f"legacy_relay_roles: {DIR_NAME}/{LEGACY_ROLES_NAME} is ignored; the matrix is "
+      f"{DIR_NAME}/{ROLES_NAME}. Run `slicer relay-roles init --replace-legacy` to remove "
+      "the old file and keep the matrix."
+    )
+  return (
+    f"legacy_relay_roles: {DIR_NAME}/{LEGACY_ROLES_NAME} is ignored; the matrix is now "
+    f"{DIR_NAME}/{ROLES_NAME}. Run `slicer relay-roles init --replace-legacy` to write "
+    "the example matrix and remove the old file."
+  )
 
 
 def read_index(root: Path) -> Index:

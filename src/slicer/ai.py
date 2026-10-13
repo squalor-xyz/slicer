@@ -172,7 +172,7 @@ Before the worktree exists, the orchestrator reads the slice's size with
 `slicer show ID --json --lean` and confirms these with the owner:
 
 - which roles run. The architect is optional: the owner decides.
-- the vendor, model and effort for each role.
+- the agent, vendor, model and reasoning effort for each role.
 - where the run ends:
   - after the finish step,
   - after a commit on the slice branch, or
@@ -210,43 +210,18 @@ mutation table and deviations.
 """
 
 
-# The owner's role matrix lives in `.slicer/relay-roles.md`. Its text is added to the
-# relay only for a project that has it, so the generic text never names a vendor.
+# The role matrix lives in `.slicer/relay-roles.json` and changes only through
+# `slicer relay-roles`. Its render is added to the relay only for a project that has it,
+# so the generic text never names a vendor.
 ROLES_PROPOSE = (
-  "Propose each role's vendor, model and effort from the matrix below, and let the owner "
-  "confirm or override each one.\n\n"
+  "Propose each role's agent, vendor, model and reasoning effort from the matrix below, "
+  "and let the owner confirm or override each one.\n\n"
 )
 
 ROLES_MISSING = (
-  "This project has no role matrix. `slicer ai relay --init-roles` writes a skeleton "
-  "for the owner to edit.\n\n"
+  "This project has no role matrix. `slicer relay-roles init` writes an example "
+  "for the owner to adjust.\n\n"
 )
-
-# What `ai relay --init-roles` writes. The owner edits it by hand from then on.
-ROLES_SKELETON = """\
-# Relay roles
-
-This file is an example. The owner edits it by hand. `slicer ai relay` embeds it in
-the slice relay so the orchestrator can propose each role from it, and
-`slicer ai relay-roles` prints it alone. Agents read it only through those commands.
-
-## Matrix
-
-| Role | When | Vendor | Model | Effort |
-| --- | --- | --- | --- | --- |
-| Implementer | well specified, effort 1, size S or M | Claude | haiku | xhigh |
-| Implementer | well specified, effort 2, size S | Claude | haiku | xhigh |
-| Implementer | anything else | Claude | sonnet | high |
-| Reviewer and gate | every slice | Claude | opus | medium |
-| Architect | only on a size L slice | Claude | opus | high |
-
-## Rules
-
-- A reviewer never wrote code in the slice it reviews.
-- No cross-vendor reviewer unless the owner asks.
-- Claude roles run as subagents.
-- "well specified" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision.
-"""
 
 
 def relay_text(
@@ -255,7 +230,7 @@ def relay_text(
 ) -> str:
   """The slice relay. `handoff` closes with handoff and does not name done.
 
-  `roles` is the text of the project's role matrix. `in_project` without `roles`
+  `roles` is the project's role matrix as Markdown. `in_project` without `roles`
   means the project has no matrix yet. Both are left unset for the generic text.
   """
   if roles is not None:
@@ -306,8 +281,9 @@ def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
     f"{TRACKING}\n"
     f"{HANDOFF_CLOSER if finish == 'handoff' else DONE_CLOSER}\n"
     "When the owner asks for a slice relay, run `slicer ai relay` and confirm its "
-    "Setup with the owner before creating the worktree. Read the role matrix only through "
-    "`slicer ai relay-roles`, never from `.slicer/relay-roles.md`.\n"
+    "Setup with the owner before creating the worktree. Read the role matrix with "
+    "`slicer relay-roles show` and change it with the other `relay-roles` commands, "
+    "never from `.slicer/relay-roles.json`.\n"
     "For planning, filing, claims, and review, run `slicer ai instructions --rest`; "
     "it leaves out what this skill already says.\n"
   )
@@ -397,7 +373,7 @@ current attempt. Previous-attempt and legacy unknown-attempt notes do not satisf
 
 To run one slice through implementer, reviewer, architect and gate agents, print
 the slice relay with `slicer ai relay`. Read the project's role matrix with
-`slicer ai relay-roles`.
+`slicer relay-roles show`, and change it only with the other `relay-roles` commands.
 
 """
 

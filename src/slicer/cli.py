@@ -42,6 +42,7 @@ from slicer import (
   prose,
   refs,
   render,
+  roles as role_matrix,
   store,
   sync,
   verify,
@@ -383,14 +384,9 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
-# The owner's slice-relay role matrix, in the project's `.slicer/`. Plain Markdown the
-# owner edits by hand; it is not tracking state and agents read it only through the CLI.
-RELAY_ROLES_NAME = "relay-roles.md"
-
-
 def cmd_ai_relay(args: argparse.Namespace) -> int:
   """Print the slice relay. Same read-only policy as `ai instructions`, except
-  `--init-roles`, which writes the role matrix skeleton and nothing else."""
+  `--init-roles`, which writes the example role matrix and renders."""
   if args.force and not args.init_roles:
     raise StateError("--force needs --init-roles", code="usage")
   if args.init_roles:
@@ -398,55 +394,156 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
   project, finish, required = _ai_project(args)
   roles = None
   if project is not None:
-    roles = _read_relay_roles(project / store.DIR_NAME / RELAY_ROLES_NAME)
-    # A blank file is no matrix yet: the relay names --init-roles instead of an empty section.
-    if roles is not None and not roles.strip():
-      roles = None
+    legacy = store.legacy_roles_advice(project)
+    if legacy is not None:
+      print(f"slicer: {legacy}", file=sys.stderr)
+    matrix = store.read_roles(project)
+    if matrix is not None:
+      # The section sits under `## Roles matrix`, so its headings start one level down.
+      roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
   _emit(args, {"relay": text}, text.rstrip("\n"))
   return OK
 
 
 def _init_roles(args: argparse.Namespace) -> int:
-  """Write the role matrix skeleton. Needs a project; an existing file needs --force."""
+  """`ai relay --init-roles`: `relay-roles init --render` under the project lock."""
   root = Path(args.root).resolve() if args.root else None
-  path = store.discover(root) / store.DIR_NAME / RELAY_ROLES_NAME
-  if path.exists() and not args.force:
-    raise StateError(
-      f"{path} already exists; pass --force to replace it. Nothing was written.",
-      code="state",
+  with store.project_lock(root):
+    state = store.load(root)
+    (written, _removed), _rendered = ops.render_gated(
+      state, lambda: ops.roles_init(state, force=args.force),
     )
-  try:
-    jsonio.write_text(path, ai.ROLES_SKELETON)
-  except OSError as exc:
-    raise StateError(f"{path}: {exc}", code="io") from exc
-  _emit(args, {"written": [str(path)]}, f"wrote {path}")
+  _emit(args, {"written": [str(p) for p in written]}, "".join(f"wrote {p}" for p in written))
   return OK
 
 
 def cmd_ai_relay_roles(args: argparse.Namespace) -> int:
-  """Print the project's role matrix alone. Reads only: no lock and no write."""
-  root = Path(args.root).resolve() if args.root else None
-  path = store.discover(root) / store.DIR_NAME / RELAY_ROLES_NAME
-  text = _read_relay_roles(path)
-  if text is None:
+  """`ai relay-roles` is `relay-roles show`."""
+  return cmd_relay_roles_show(args)
+
+
+def _csv(value: str | None) -> list[str] | None:
+  """A comma-separated flag value. None means the flag was not given; empty clears."""
+  if value is None:
+    return None
+  if value.strip().casefold() == "any":
+    return []
+  return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def _read_matrix(args: argparse.Namespace) -> role_matrix.RoleMatrix:
+  """The matrix without loading the rest of the project: no lock, no write."""
+  root = store.discover(Path(args.root).resolve() if args.root else None)
+  matrix = store.read_roles(root)
+  if matrix is None:
     raise StateError(
-      f"{path} does not exist; run `slicer ai relay --init-roles` to write the skeleton "
-      "for the owner to edit",
+      f"{root / store.DIR_NAME / store.ROLES_NAME} does not exist; run "
+      "`slicer relay-roles init` to write the example matrix",
       code="no_relay_roles",
     )
-  _emit(args, {"relay_roles": text}, text.rstrip("\n"))
+  return matrix
+
+
+def cmd_relay_roles_show(args: argparse.Namespace) -> int:
+  matrix = _read_matrix(args)
+  text = role_matrix.render_markdown(matrix)
+  payload = {
+    "relay_roles": text,
+    "rows": [row.to_dict() for row in matrix.rows],
+    "rules": [rule.to_dict() for rule in matrix.rules],
+  }
+  _emit(args, payload, text.rstrip("\n"), keep_empty=("rows", "rules"))
   return OK
 
 
-def _read_relay_roles(path: Path) -> str | None:
-  """The role matrix text, or None when the file is absent. Unreadable is `io`."""
-  try:
-    return path.read_text(encoding="utf-8")
-  except FileNotFoundError:
-    return None
-  except (OSError, UnicodeDecodeError) as exc:
-    raise StateError(f"{path} cannot be read: {exc}", code="io") from exc
+def cmd_relay_roles_init(args: argparse.Namespace) -> int:
+  state = _state(args)
+  written, removed = ops.roles_init(
+    state, force=args.force, replace_legacy=args.replace_legacy,
+  )
+  payload: dict[str, object] = {"written": [str(p) for p in written]}
+  if removed:
+    payload["removed"] = [str(old) for old in removed]
+  lines = [f"wrote {p}" for p in written] + [f"removed {old}" for old in removed]
+  _emit(args, payload, "\n".join(lines), keep_empty=("written",))
+  return OK
+
+
+def _row_fields(args: argparse.Namespace) -> dict[str, object]:
+  return {
+    "size": _csv(args.size),
+    "effort": _csv(args.effort),
+    "importance": _csv(args.importance),
+    "urgency": _csv(args.urgency),
+    "well_specified": args.well_specified,
+    "split": args.split,
+    "agent": args.agent,
+    "vendor": args.vendor,
+    "model": args.model,
+    "reasoning": args.reasoning,
+    "note": args.note,
+  }
+
+
+def _row_line(row: role_matrix.RoleRow) -> str:
+  return f"{row.id}  {row.role}  {row.when.describe()}  {row.agent}  {row.model}  {row.reasoning}"
+
+
+def cmd_relay_roles_add(args: argparse.Namespace) -> int:
+  state = _state(args)
+  fields = {k: v for k, v in _row_fields(args).items() if v is not None}
+  row = ops.role_add(state, args.role, **fields)
+  _emit(args, row.to_dict(), f"added {_row_line(row)}")
+  return OK
+
+
+def cmd_relay_roles_set(args: argparse.Namespace) -> int:
+  state = _state(args)
+  row, changed = ops.role_set(state, args.id, role=args.role, **_row_fields(args))
+  if not changed:
+    args._no_change = True
+  _emit(args, row.to_dict(), f"set {_row_line(row)}" if changed else f"{row.id} unchanged")
+  return OK
+
+
+def cmd_relay_roles_remove(args: argparse.Namespace) -> int:
+  state = _state(args)
+  row = ops.role_remove(state, args.id)
+  _emit(args, row.to_dict(), f"removed {row.id}  {row.role}")
+  return OK
+
+
+def cmd_relay_roles_move(args: argparse.Namespace) -> int:
+  state = _state(args)
+  row, moved = ops.role_move(state, args.id, before=args.before, last=args.last)
+  if not moved:
+    args._no_change = True
+  _emit(args, row.to_dict(), f"moved {row.id}" if moved else f"{row.id} unchanged")
+  return OK
+
+
+def cmd_relay_roles_rule_add(args: argparse.Namespace) -> int:
+  state = _state(args)
+  rule = ops.rule_add(state, args.text)
+  _emit(args, rule.to_dict(), f"added {rule.id}  {rule.text}")
+  return OK
+
+
+def cmd_relay_roles_rule_edit(args: argparse.Namespace) -> int:
+  state = _state(args)
+  rule, changed = ops.rule_edit(state, args.id, args.text)
+  if not changed:
+    args._no_change = True
+  _emit(args, rule.to_dict(), f"edited {rule.id}" if changed else f"{rule.id} unchanged")
+  return OK
+
+
+def cmd_relay_roles_rule_remove(args: argparse.Namespace) -> int:
+  state = _state(args)
+  rule = ops.rule_remove(state, args.id)
+  _emit(args, rule.to_dict(), f"removed {rule.id}")
+  return OK
 
 
 def cmd_recommended_workflow(args: argparse.Namespace) -> int:
@@ -2918,35 +3015,36 @@ def build_parser() -> argparse.ArgumentParser:
     "--force", action="store_true", help="replace a destination that holds different text",
   )
   inner = aisub.add_parser(
-    "relay", help="print the slice relay, or write the role matrix skeleton with --init-roles",
+    "relay", help="print the slice relay, or write the example role matrix with --init-roles",
     description=(
       "Print the slice relay: one session runs one slice through an implementer, "
       "a reviewer, an architect and a gate. A project with implement_finish handoff "
-      "closes with handoff. A project whose .slicer/relay-roles.md exists gets a "
-      "## Roles matrix section after Setup holding that file verbatim, and Setup proposes "
-      "roles from it; without the file, Setup names --init-roles. No project, or "
+      "closes with handoff. A project whose .slicer/relay-roles.json exists gets a "
+      "## Roles matrix section after Setup holding the matrix as Markdown, and Setup "
+      "proposes roles from it; without the file, Setup names `slicer relay-roles init`. "
+      "A leftover .slicer/relay-roles.md is ignored with a stderr warning. No project, or "
       "a config or index that cannot be read, prints the generic text and warns on "
-      "stderr. Does not lock or write, except --init-roles, which writes "
-      ".slicer/relay-roles.md and nothing else."
+      "stderr. Does not lock or write, except --init-roles, which is "
+      "`relay-roles init --render` under the project lock."
     ),
     parents=[common],
   )
   inner.add_argument(
     "--init-roles", action="store_true",
-    help="write the role matrix skeleton to .slicer/relay-roles.md for the owner to edit",
+    help="write the example role matrix to .slicer/relay-roles.json and render it",
   )
   inner.add_argument(
     "--force", action="store_true",
-    help="with --init-roles, replace an existing .slicer/relay-roles.md",
+    help="with --init-roles, replace an existing .slicer/relay-roles.json",
   )
   inner.set_defaults(func=cmd_ai_relay)
   _json_flags(inner, suppress=True)
   inner = aisub.add_parser(
     "relay-roles", help="print the project's relay role matrix (no lock, no write)",
     description=(
-      "Print .slicer/relay-roles.md, the role matrix the slice relay embeds, as the owner "
-      "wrote it. Needs a project. Without the file it exits 2 with code no_relay_roles. "
-      "Does not lock or write."
+      "Print the role matrix the slice relay embeds, the same as `slicer relay-roles show`. "
+      "Needs a project. Without .slicer/relay-roles.json it exits 2 with code "
+      "no_relay_roles. Does not lock or write."
     ),
     parents=[common],
   )
@@ -3332,6 +3430,72 @@ def build_parser() -> argparse.ArgumentParser:
   inner = cadd("uncite", cmd_catalog_uncite, "drop catalog citations from a roadmap item", mutate=True)
   inner.add_argument("item")
   inner.add_argument("ids", nargs="+", metavar="ID")
+
+  sp = sub.add_parser(
+    "relay-roles", help="the slice-relay role matrix: rows, conditions and rules",
+    description=(
+      "The slice-relay role matrix lives in .slicer/relay-roles.json and changes only "
+      "through these commands. Each row names a role, the slice conditions it applies to, "
+      "and the agent, vendor, model and reasoning effort that run it. slicer renders the "
+      "matrix to .slicer/render/RELAY-ROLES.md."
+    ),
+    parents=[common],
+  )
+  rsub = sp.add_subparsers(dest="relay_roles_command", required=True)
+
+  def radd(name: str, fn, help_: str, *, mutate: bool = False) -> argparse.ArgumentParser:
+    inner = rsub.add_parser(name, help=help_, parents=[common])
+    inner.set_defaults(func=_mutating(fn) if mutate else fn)
+    _json_flags(inner)
+    if mutate:
+      return _strict_flag(_render_flag(inner))
+    return inner
+
+  def row_flags(inner: argparse.ArgumentParser) -> None:
+    inner.add_argument("--size", help="sizes the row applies to, comma-separated such as S,M (any text); empty or any for every size")
+    inner.add_argument("--effort", help="slice effort scores 1-3, comma-separated; empty for any")
+    inner.add_argument("--importance", help="slice importance scores 1-3, comma-separated; empty for any")
+    inner.add_argument("--urgency", help="slice urgency scores 1-3, comma-separated; empty for any")
+    inner.add_argument("--well-specified", help="yes, no or any")
+    inner.add_argument("--split", help="yes for a part of a split slice, no for a whole one, or any")
+    inner.add_argument("--agent", help="the harness that runs the role, such as Claude Code")
+    inner.add_argument("--vendor", help="the model vendor")
+    inner.add_argument("--model", help="the model")
+    inner.add_argument("--reasoning", help="reasoning effort such as low, medium, high or xhigh")
+    inner.add_argument("--note", help="one line shown in the Note column")
+
+  radd("show", cmd_relay_roles_show, "print the matrix as Markdown (no lock, no write)")
+
+  inner = radd("init", cmd_relay_roles_init, "write the example matrix", mutate=True)
+  inner.add_argument("--force", action="store_true", help="replace an existing relay-roles.json")
+  inner.add_argument(
+    "--replace-legacy", action="store_true",
+    help="also remove a leftover relay-roles.md once the JSON is written",
+  )
+
+  inner = radd("add", cmd_relay_roles_add, "add a row", mutate=True)
+  inner.add_argument("--role", required=True, help="implementer, reviewer, gate or architect")
+  row_flags(inner)
+
+  inner = radd("set", cmd_relay_roles_set, "change only the fields given on a row", mutate=True)
+  inner.add_argument("id")
+  inner.add_argument("--role", help="implementer, reviewer, gate or architect")
+  row_flags(inner)
+
+  radd("remove", cmd_relay_roles_remove, "drop a row", mutate=True).add_argument("id")
+
+  inner = radd("move", cmd_relay_roles_move, "reorder a row", mutate=True)
+  inner.add_argument("id")
+  inner.add_argument("--before", metavar="ID", help="place the row before this row")
+  inner.add_argument("--last", action="store_true", help="place the row at the end")
+
+  radd("rule-add", cmd_relay_roles_rule_add, "add a rule", mutate=True).add_argument("text")
+
+  inner = radd("rule-edit", cmd_relay_roles_rule_edit, "replace a rule's text", mutate=True)
+  inner.add_argument("id")
+  inner.add_argument("text")
+
+  radd("rule-remove", cmd_relay_roles_rule_remove, "drop a rule", mutate=True).add_argument("id")
 
   _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))
 

@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "rows": [
+    {
+      "id": "r1",
+      "role": "implementer",
+      "when": {
+        "size": [
+          "S",
+          "M"
+        ],
+        "effort": [
+          1
+        ],
+        "importance": [],
+        "urgency": [],
+        "well_specified": true,
+        "split": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "haiku",
+      "reasoning": "xhigh",
+      "note": ""
+    },
+    {
+      "id": "r2",
+      "role": "implementer",
+      "when": {
+        "size": [
+          "S"
+        ],
+        "effort": [
+          2
+        ],
+        "importance": [],
+        "urgency": [],
+        "well_specified": true,
+        "split": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "haiku",
+      "reasoning": "xhigh",
+      "note": ""
+    },
+    {
+      "id": "r3",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "sonnet",
+      "reasoning": "high",
+      "note": "anything the rows above do not match"
+    },
+    {
+      "id": "r4",
+      "role": "reviewer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "opus",
+      "reasoning": "medium",
+      "note": ""
+    },
+    {
+      "id": "r5",
+      "role": "gate",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "opus",
+      "reasoning": "medium",
+      "note": ""
+    },
+    {
+      "id": "r6",
+      "role": "architect",
+      "when": {
+        "size": [
+          "L"
+        ],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "opus",
+      "reasoning": "high",
+      "note": ""
+    }
+  ],
+  "rules": [
+    {
+      "id": "u1",
+      "text": "A reviewer never wrote code in the slice it reviews."
+    },
+    {
+      "id": "u2",
+      "text": "No cross-vendor reviewer unless the owner asks."
+    },
+    {
+      "id": "u3",
+      "text": "Roles on the orchestrator's own agent run as subagents; a role on another agent runs headless in the slice worktree with the same brief."
+    },
+    {
+      "id": "u4",
+      "text": "\"well specified\" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision."
+    }
+  ],
+  "next_row": 7,
+  "next_rule": 5
+}

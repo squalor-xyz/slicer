@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
-from slicer import ids
+from slicer import ids, roles
 from slicer.config import Config
 from slicer.errors import RenderError
 from slicer.model import (
@@ -28,6 +28,7 @@ RENDER_FORMAT = 1
 _FORMAT_RE = re.compile(r" Render format: (\d+)\. ")
 ROADMAP_NAME = "ROADMAP.md"
 ROADMAP_HTML_NAME = "ROADMAP.html"
+RELAY_ROLES_RENDER_NAME = "RELAY-ROLES.md"
 SLICES_SUBDIR = "slices"
 
 EMDASH = "—"
@@ -609,6 +610,11 @@ def plan(state) -> dict[str, bytes]:
     ),
     ROADMAP_HTML_NAME: render_html(state.index, cfg),
   }
+  matrix = state.roles
+  if matrix is not None:
+    out[RELAY_ROLES_RENDER_NAME] = (
+      banner(".slicer/relay-roles.json") + "\n\n" + roles.render_markdown(matrix)
+    ).encode("utf-8")
   slice_template = state.template("slice.md")
   for item in state.index.items:
     sl = state.slices.get(item.id)

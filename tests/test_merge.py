@@ -145,6 +145,7 @@ class RenderDriverGitattributesTests(unittest.TestCase):
       self.assertIn("render/ROADMAP.md merge=slicer-generated", text)
       self.assertIn("render/ROADMAP.html merge=slicer-generated", text)
       self.assertIn("render/slices/*.md merge=slicer-generated", text)
+      self.assertIn("render/RELAY-ROLES.md merge=slicer-generated", text)
       # log.jsonl still union-merges; the render driver does not replace it.
       self.assertIn("log.jsonl merge=union", text)
 
