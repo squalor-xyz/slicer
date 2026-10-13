@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-251 items · — 6 · done 241 · retired 4
+251 items · — 5 · done 241 · retired 4 · reviewing 1
 
 ## v1.10
 
@@ -35,7 +35,7 @@
 |---|---|---|---|---|---|---|---|
 | 1 | [s257](slices/s257.md) | Relay roles as JSON | L | 3 | slicer | owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row | done |
 | 2 | [s258](slices/s258.md) | Relay split implementers | M | 2 | slicer | owner request, session 2026-10-13: more than one Haiku/xhigh implementer per slice when it makes sense | — |
-| 3 | [s259](slices/s259.md) | Relay roles recommend | M | 2 | slicer | owner request, session 2026-10-13: slicer should recommend role values from the slice's parameters | — |
+| 3 | [s259](slices/s259.md) | Relay roles recommend | M | 2 | slicer | owner request, session 2026-10-13: slicer should recommend role values from the slice's parameters | reviewing |
 | 4 | [s260](slices/s260.md) | Refresh gitattributes | S | 1 | slicer | s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates · discovered from s257 | — |
 | 5 | [s261](slices/s261.md) | Legacy roles advice is_file | S | 1 | slicer | s257 gate, 2026-10-13: store.legacy_roles_advice uses exists() while roles_init uses is_file(); a directory at .slicer/relay-roles.md gets advice that init --replace-legacy refuses · discovered from s257 | done |
 | 6 | [s262](slices/s262.md) | Relay roles merge | M | 2 | slicer | s257 architect, 2026-10-13: two branches that each add a row take the same r-id and conflict as text; merge-index handles index.json but not relay-roles.json · discovered from s257 | — |

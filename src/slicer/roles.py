@@ -11,9 +11,12 @@ state: only the `relay-roles` commands change it, and the Markdown in
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from slicer.errors import StateError, reject_future_schema
+
+if TYPE_CHECKING:
+  from slicer.model import Item
 
 ROLES_VERSION = 1
 # The roles the relay knows. A row for any other role has nothing to run.
@@ -92,6 +95,25 @@ class RoleWhen:
       well_specified=flags["well_specified"],
       split=flags["split"],
     )
+
+  def matches(self, item: Item, well_specified: bool, split: bool) -> bool:
+    """Whether every condition holds for the slice and the two answers given.
+
+    An empty list matches anything; a nonempty one must contain the slice's value, so
+    a slice with no size or effort set matches only rows that do not name one.
+    `well_specified` and `split` are not slice fields: the caller judges them.
+    """
+    if self.well_specified is not None and self.well_specified != well_specified:
+      return False
+    if self.split is not None and self.split != split:
+      return False
+    for allowed, value in (
+      (self.size, item.size), (self.effort, item.effort),
+      (self.importance, item.importance), (self.urgency, item.urgency),
+    ):
+      if allowed and value not in allowed:
+        return False
+    return True
 
   def describe(self) -> str:
     """The When cell, generated from the conditions so it cannot drift from them."""
@@ -227,6 +249,23 @@ class RoleMatrix:
       f"no such relay role rule: {rule_id}; `slicer relay-roles show` lists them",
       code="unknown_role_rule",
     )
+
+
+def recommend(
+  matrix: RoleMatrix, item: Item, well_specified: bool, split: bool,
+) -> list[tuple[str, RoleRow | None]]:
+  """For each role, in `ROLE_NAMES` order, the first row that matches the slice.
+
+  Row order in the matrix decides between two matching rows. A role with no
+  matching row maps to None. This only reads; it proposes and stores nothing.
+  """
+  return [
+    (role, next(
+      (row for row in matrix.rows if row.role == role and row.when.matches(item, well_specified, split)),
+      None,
+    ))
+    for role in ROLE_NAMES
+  ]
 
 
 def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
