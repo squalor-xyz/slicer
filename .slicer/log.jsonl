@@ -1308,3 +1308,7 @@
 {"when": "2026-10-13T14:06:06Z", "item": "s255", "action": "note", "from": "", "to": "", "note": "Ready for review: set the 4 runs-on lines (ci.yml test; publ", "by": "Jon Robbins"}
 {"when": "2026-10-13T14:06:08Z", "item": "s255", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-13T14:11:57Z", "item": "s255", "action": "status", "from": "review", "to": "done", "note": "Landed: all 4 jobs (ci.yml test; publish.yml test, publish, release) pinned to ubuntu-26.04; CHANGELOG [Unreleased] Changed entry. Gate VERDICT: PASS. Full suite on Python 3.14: 1661 run, OK, 1 skipped; slicer check and git diff --check clean. Release script needs Python 3.9+ and gh; ran locally under 3.9. Pending (deferred by owner): CI run on ubuntu-26.04 after push, and the next Publish run including the release job.", "by": "Jon Robbins"}
+{"when": "2026-10-13T14:12:39Z", "item": "s257", "action": "add", "from": "", "to": "open", "note": "Name the agent that runs each relay role"}
+{"when": "2026-10-13T14:12:39Z", "item": "s257", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-13T14:12:39Z", "item": "s258", "action": "add", "from": "", "to": "open", "note": "Let a relay split one slice across several implementers"}
+{"when": "2026-10-13T14:12:39Z", "item": "s258", "action": "promote", "from": "", "to": "", "note": ""}

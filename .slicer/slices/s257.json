@@ -1,0 +1,41 @@
+{
+  "id": "s257",
+  "title": "Name the agent that runs each relay role",
+  "lead": [
+    "The role matrix names a vendor, model and effort for each role, but not the agent (the coding harness) that runs it. The relay already works with Claude Code, Codex and Grok, so the owner can pick, for example, a Codex CLI implementer and a Claude Code reviewer. Add an Agent column to the skeleton, and have Setup ask for and propose the agent along with the vendor, model and effort. The generic relay text still names no product."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-13: configure the agent (Claude Code, Codex CLI, Grok Build) per relay role",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** parsing or validating the matrix, launching or spawning agents (slicer calls no AI service), a launcher script or per-agent command lines, changing the owner's existing `.slicer/relay-roles.md`, and splitting a slice across implementers (s258).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner asked for per-role configuration of the agent as well as the model (session 2026-10-13). Vendor alone does not say how a role is run: a Claude Code subagent and a headless CLI in the slice worktree are briefed and read back differently. The skeleton rule \"Claude roles run as subagents\" covers only one agent. With the agent named, the orchestrator knows whether to spawn a subagent or run another agent headless, and the cross-vendor reviewer rule still keys on Vendor."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/ai.py (RELAY_HEAD Setup bullet and Roles paragraph, ROLES_PROPOSE, ROLES_SKELETON), tests/test_ai.py, docs/agents.md, docs/getting-started.md (Relay roles), CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayText_Setup_NamesRolesModelsAndEndPoint`: Setup contains \"agent, vendor, model and effort\".\n- `test_RelayInitRoles_NoFile_WritesSkeletonWithMatrixAndRules`: the header is `| Role | When | Agent | Vendor | Model | Effort |`, each example row has an agent cell, and the rule \"Roles on the orchestrator's own agent run as subagents; a role on another agent runs headless in the slice worktree with the same brief.\" replaces \"Claude roles run as subagents.\".\n- New `test_Relay_RolesFilePresent_ProposeLineNamesAgent`: with a roles file present, the propose line reads \"Propose each role's agent, vendor, model and effort\".\n- `test_Relay_NamesNoVendorModelOrOutsidePath` stays green unchanged, because the generic text names no agent product."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. RELAY_HEAD Setup bullet: \"the agent, vendor, model and effort for each role.\" Roles paragraph: one generic sentence saying a role may run on a different agent from the orchestrator's. It gets the same brief, and its report is read the same way.\n2. ROLES_PROPOSE: \"Propose each role's agent, vendor, model and effort from the matrix below, ...\".\n3. ROLES_SKELETON: add an Agent column (Claude Code in every example row) and one sentence under Matrix: \"Agent is the harness that runs the role, for example Claude Code, Codex CLI or Grok Build.\" Replace the subagent rule as above.\n4. Update docs/agents.md (Setup and matrix paragraphs), docs/getting-started.md (Relay roles), and a CHANGELOG `[Unreleased]` entry under Changed. The entry notes that an existing `.slicer/relay-roles.md` is not touched, and that the owner adds the column by hand or regenerates the file with `ai relay --init-roles --force`.\n5. Mutation-check each new or changed assertion."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- `slicer ai relay` in a project with no roles file, and `slicer ai relay --init-roles` in a temp project, show the new Setup line and skeleton.\n- The generic relay text still names no vendor or agent product.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s257`, branch `feature/s257-relay-agent`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}
