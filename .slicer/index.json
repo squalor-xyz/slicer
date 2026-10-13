@@ -7885,7 +7885,7 @@
       "id": "s255",
       "title": "Move CI and publish runners from ubuntu-24.04 to Ubuntu 26.04",
       "short_title": "Runners to Ubuntu 26.04",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
