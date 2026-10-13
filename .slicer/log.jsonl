@@ -1348,3 +1348,4 @@
 {"when": "2026-10-13T21:12:39Z", "item": "s261", "action": "note", "from": "", "to": "", "note": "Ready for review: legacy_roles_advice uses is_file(), matchi", "by": "Jon Robbins"}
 {"when": "2026-10-13T21:12:46Z", "item": "s261", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-13T21:13:15Z", "item": "s261", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-13T21:13:19Z", "item": "s261", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: legacy_roles_advice uses is_file(), so a directory at .slicer/relay-roles.md gets no legacy_relay_roles warning from check or ai relay. Relay: haiku/xhigh implementer, opus reviewer and gate; gate PASS. Full suite 1754 OK (1 skipped).", "by": "Jon Robbins"}

@@ -8133,7 +8133,7 @@
       "id": "s261",
       "title": "legacy relay-roles advice must treat a directory the same way init does",
       "short_title": "Legacy roles advice is_file",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8149,10 +8149,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-13T21:13:15Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
