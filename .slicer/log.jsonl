@@ -1353,3 +1353,4 @@
 {"when": "2026-10-13T21:57:53Z", "item": "s259", "action": "note", "from": "", "to": "", "note": "Ready for review: relay-roles recommend ID --well-specified ", "by": "Jon Robbins"}
 {"when": "2026-10-13T21:57:53Z", "item": "s259", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-13T21:58:04Z", "item": "s259", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-13T21:58:04Z", "item": "s259", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: relay-roles recommend ID --well-specified yes|no --split yes|no proposes each role's first matching matrix row, read-only; ai relay Setup names it. Relay: sonnet/high implementer, opus reviewer and gate; one medium finding (--lean formatting) fixed; gate PASS. Full suite 1781 OK (1 skipped).", "by": "Jon Robbins"}

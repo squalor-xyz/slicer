@@ -44,12 +44,12 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">251 items · — 5 · done 241 · retired 4 · reviewing 1</p>
+<p class="summary">251 items · — 5 · done 242 · retired 4</p>
 <h2>v1.10</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>s257</td><td>Relay roles as JSON</td><td>L</td><td>3</td><td>slicer</td><td>owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row</td><td class="status">done</td></tr>
 <tr class="open"><td>2</td><td>s258</td><td>Relay split implementers</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-13: more than one Haiku/xhigh implementer per slice when it makes sense</td><td class="status">—</td></tr>
-<tr class="started"><td>3</td><td>s259</td><td>Relay roles recommend</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-13: slicer should recommend role values from the slice&#x27;s parameters</td><td class="status">reviewing</td></tr>
+<tr class="done"><td>3</td><td>s259</td><td>Relay roles recommend</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-13: slicer should recommend role values from the slice&#x27;s parameters</td><td class="status">done</td></tr>
 <tr class="open"><td>4</td><td>s260</td><td>Refresh gitattributes</td><td>S</td><td>1</td><td>slicer</td><td>s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates · discovered from s257</td><td class="status">—</td></tr>
 <tr class="done"><td>5</td><td>s261</td><td>Legacy roles advice is_file</td><td>S</td><td>1</td><td>slicer</td><td>s257 gate, 2026-10-13: store.legacy_roles_advice uses exists() while roles_init uses is_file(); a directory at .slicer/relay-roles.md gets advice that init --replace-legacy refuses · discovered from s257</td><td class="status">done</td></tr>
 <tr class="open"><td>6</td><td>s262</td><td>Relay roles merge</td><td>M</td><td>2</td><td>slicer</td><td>s257 architect, 2026-10-13: two branches that each add a row take the same r-id and conflict as text; merge-index handles index.json but not relay-roles.json · discovered from s257</td><td class="status">—</td></tr>

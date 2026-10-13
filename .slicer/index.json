@@ -8073,7 +8073,7 @@
       "id": "s259",
       "title": "Recommend relay roles for a slice from the matrix",
       "short_title": "Relay roles recommend",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s257"
@@ -8091,10 +8091,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-13T21:58:04Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
