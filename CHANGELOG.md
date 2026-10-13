@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- CI and the publish workflow run their jobs on `ubuntu-26.04` instead of `ubuntu-24.04`. The steps, action versions and Python matrix are otherwise unchanged.
+
 ## [1.9.0] - 2026-10-12
 
 ### Added
