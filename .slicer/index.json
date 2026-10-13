@@ -7978,7 +7978,7 @@
       "id": "s257",
       "title": "Store the relay roles matrix as JSON edited through the CLI",
       "short_title": "Relay roles as JSON",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
