@@ -61,6 +61,9 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
     if f.level == "warn"
   ]
   report.warnings.extend(_sibling_collisions(state))
+  legacy = store.legacy_roles_advice(state.root)
+  if legacy is not None:
+    report.warnings.append(legacy)
   return report, expected, diff
 
 

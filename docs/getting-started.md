@@ -745,13 +745,20 @@ Notes are optional on both commands, as on `done` and `start`.
 
 ### Relay roles
 
-A project can keep its slice-relay role matrix in `.slicer/relay-roles.md`: which vendor,
-model and effort each role (implementer, reviewer and gate, architect) gets, and the rules
-that go with it. The owner edits the file by hand. `slicer ai relay --init-roles` writes a
-skeleton to start from, and refuses to replace an existing file unless `--force` is given.
-`slicer ai relay` then embeds the matrix so the orchestrating agent proposes each role from
-it, and `slicer ai relay-roles` prints the file alone. Agents read the matrix through those
-commands and never open the file. See [agents.md](agents.md) for the relay itself.
+A project can keep its slice-relay role matrix in `.slicer/relay-roles.json`: which agent
+(Claude Code, Codex CLI, Grok Build), vendor, model and reasoning effort each role
+(implementer, reviewer, gate, architect) gets for which kind of slice, plus the rules that
+go with it. Only `slicer relay-roles` changes it, so never open the file. `relay-roles init`
+writes an example to start from (add `--render` to render it), `add`, `set`, `remove` and
+`move` edit rows, and `rule-add`, `rule-edit` and `rule-remove` edit rules. `slicer ai relay`
+then embeds the matrix so the orchestrating agent proposes each role from it, and
+`slicer relay-roles show` prints it alone. slicer renders it to
+`.slicer/render/RELAY-ROLES.md`, and `slicer check` fails if that render is stale. A
+project that still has the hand-edited `.slicer/relay-roles.md` from slicer 1.9 runs
+`slicer relay-roles init --replace-legacy`, which writes the example matrix and removes the
+old file (or, when the JSON already exists, removes just the old file); the Markdown table is
+not converted, so re-enter your rows with `relay-roles add`. A row can also say whether it
+applies to a part of a split slice (`--split yes`) or a whole one (`--split no`). See [agents.md](agents.md) for the relay itself.
 
 ## Batch changes
 

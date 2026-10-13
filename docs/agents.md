@@ -28,30 +28,31 @@ generic text. Without either flag nothing is written. `--json` returns `{"skill"
 `slicer ai instructions --rest`, which prints only the parts of the guide the skill
 leaves out, so an agent that loaded the skill does not read the same text twice. The skill
 also says that a slice relay request goes to `slicer ai relay`, and that its Setup is confirmed
-with the owner before the worktree is created. It says to read the role matrix only through
-`slicer ai relay-roles`, never from `.slicer/relay-roles.md`.
+with the owner before the worktree is created. It says to read the role matrix with
+`slicer relay-roles show` and change it with the other `relay-roles` commands, never from
+`.slicer/relay-roles.json`.
 
 `slicer ai relay` prints the slice relay: one orchestrating session runs one slice
 through an implementer, a reviewer, an architect and a gate. Its Setup section, before Order,
-asks the owner which roles run (the architect is optional), the vendor, model and effort per
-role, and where the run ends (after the finish step, after a commit on the slice branch, or
-landed). It uses the same finish choice and the same fallback as `slicer ai instructions`.
-Handoff finish closes with
+asks the owner which roles run (the architect is optional), the agent, vendor, model and
+reasoning effort per role, and where the run ends (after the finish step, after a commit on
+the slice branch, or landed). It uses the same finish choice and the same fallback as
+`slicer ai instructions`. Handoff finish closes with
 handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
 the same Markdown as the text output. It does not lock or write, except `--init-roles`, which
-writes `.slicer/relay-roles.md` only.
+is `relay-roles init --render` under the project lock.
 
-The owner's role matrix lives in `.slicer/relay-roles.md`, a Markdown file the owner
-edits by hand. `slicer ai relay` adds a `## Roles matrix` section after Setup that holds
-the file's text verbatim, and Setup gets one line proposing each role's vendor, model and
-effort from it. Without the file, Setup names `slicer ai relay --init-roles` instead. That
-command writes a skeleton (an example matrix and rules) and refuses to replace an existing
-file unless `--force` is given. `slicer ai relay-roles` prints the file alone; `--json`
-returns the text under the `relay_roles` key. A missing file is exit 2 with code
-`no_relay_roles`; an unreadable one is `io` (exit 3). A file that holds only whitespace
-counts as missing in `ai relay`. Agents read the matrix only through these commands, never
-by opening the file. When the config or index cannot be read, the relay is the generic text
-and the file is not read.
+The role matrix is `.slicer/relay-roles.json`, versioned state that only `slicer relay-roles`
+changes (see [commands.md](commands.md#relay-roles)); agents and people never open the JSON
+or its render. `slicer ai relay` adds a `## Roles matrix` section after Setup that holds the
+matrix as Markdown, and Setup gets one line proposing each role's agent, vendor, model and
+reasoning effort from it. Without the file, Setup names `slicer relay-roles init` instead.
+`slicer ai relay-roles` is `slicer relay-roles show`; `--json` returns the Markdown under
+`relay_roles` and the structured `rows` and `rules`. A missing file is exit 2 with code
+`no_relay_roles`; a malformed one is `corrupt` and one from a newer slicer is
+`schema_too_new` (exit 3). A leftover hand-edited `.slicer/relay-roles.md` is ignored: `ai relay`
+warns on stderr and `check` adds the `legacy_relay_roles` warning. When the config or index
+cannot be read, the relay is the generic text and the matrix is not read.
 
 slicer is built to be called by a coding agent rather than hand-edited. The agent runs
 commands; slicer owns the files. Nothing an agent needs requires reading or writing
@@ -268,9 +269,12 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command. With `--output` or `--install` it is `{skill, written}`, `written` being the absolute paths written, in order |
-| `ai relay` | `{relay}` with the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. A project with `.slicer/relay-roles.md` gets a `## Roles matrix` section after Setup holding that file, and Setup gets the propose line; a project without it gets the `--init-roles` line in Setup. A blank file counts as missing. An unreadable `.slicer/relay-roles.md` is `io` (exit 3). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write, except `--init-roles` (below) |
-| `ai relay --init-roles` | `{written}`, a one-element list `[PATH]` holding the absolute path of `.slicer/relay-roles.md`, when it writes the skeleton. Needs a project; an existing file is `state` (exit 2) unless `--force` is given, and `--force` without `--init-roles` is `usage`. Writes that one file and nothing else |
-| `ai relay-roles` | `{relay_roles}` with the file's text as the owner wrote it. Needs a project, and reads without a lock or a write. A missing file is exit 2 with code `no_relay_roles`. An unreadable `.slicer/relay-roles.md` is `io` (exit 3) |
+| `ai relay` | `{relay}` with the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. A project with `.slicer/relay-roles.json` gets a `## Roles matrix` section after Setup holding the matrix as Markdown, and Setup gets the propose line; a project without it gets the `relay-roles init` line in Setup. A leftover `.slicer/relay-roles.md` is ignored with a stderr warning. A corrupt matrix is `corrupt` and a newer one `schema_too_new` (exit 3). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write, except `--init-roles` (below) |
+| `ai relay --init-roles` | `{written}`, a one-element list `[PATH]` holding the absolute path of `.slicer/relay-roles.json`, when it writes the example matrix and renders it. Needs a project; an existing file is `state` (exit 2) unless `--force` is given, and `--force` without `--init-roles` is `usage` |
+| `ai relay-roles` / `relay-roles show` | `{relay_roles, rows, rules}`: the Markdown render without its banner, then each row as `{id, role, when: {size, effort, importance, urgency, well_specified, split}, agent, vendor, model, reasoning, note}` and each rule as `{id, text}`. `--lean` keeps `rows` and `rules` even when empty. Needs a project, and reads without a lock or a write. A missing file is exit 2 with code `no_relay_roles` |
+| `relay-roles init` | `{written: [PATH]}`, plus `removed: [PATH]` when `--replace-legacy` deleted `.slicer/relay-roles.md`. `written` is empty when the matrix already existed and only the old file was removed. An existing file is `state` (exit 2) unless `--force` (or `--replace-legacy` with a leftover `.md`); a path that is not a file is `io` (exit 3) |
+| `relay-roles add` / `set` / `remove` / `move` | the row, as in `show`. `remove` returns the row it dropped. A `set` or `move` that changes nothing returns the row and writes nothing |
+| `relay-roles rule-add` / `rule-edit` / `rule-remove` | the rule `{id, text}` |
 | `init` | `{root, dir}` |
 | `setup-git` | array of the `git config` command strings; needs no project |
 | `merge-index` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged index to `OURS`; exit 1 left conflict markers there |
@@ -302,7 +306,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `catalog list` / `catalog show ID` | `list` is an array of records. `show` is one record plus `cited_by`, the citing item ids in queue order, including done and retired items. `cite` and `uncite` return the item; a cite that changes nothing sets `changed` false and writes nothing |
 | `render` | `{written: [...]}` |
 | `sync` | array of `{target, path, stale, detail}` |
-| `check` | `{ok, stale_render, stale_render_details, orphan_render, stale_sync, problems, warnings}`. `stale_render` stays the sorted list of paths; `stale_render_details` has one `{file, cause, detail}` per path in the same order. `cause` is `missing`, `renderer_format`, `unknown_provenance` (an unstamped legacy banner or an unreadable format), or `content`; `renderer_format` also carries `rendered_format` and `running_format`, and means the renderer's layout differs, so state or templates may also have changed. Run `slicer render` for any of them. `warnings` also names an id that a sibling git worktree holds under a different title when the id is new on both sides, not in their merge base (it would collide on merge); it does not change `ok` or the exit code |
+| `check` | `{ok, stale_render, stale_render_details, orphan_render, stale_sync, problems, warnings}`. `stale_render` stays the sorted list of paths; `stale_render_details` has one `{file, cause, detail}` per path in the same order. `cause` is `missing`, `renderer_format`, `unknown_provenance` (an unstamped legacy banner or an unreadable format), or `content`; `renderer_format` also carries `rendered_format` and `running_format`, and means the renderer's layout differs, so state or templates may also have changed. Run `slicer render` for any of them. `warnings` also names an id that a sibling git worktree holds under a different title when the id is new on both sides, not in their merge base (it would collide on merge), and a leftover hand-edited `.slicer/relay-roles.md` as `legacy_relay_roles` (nothing reads it any more; the message names `relay-roles init --replace-legacy`, which removes the file and keeps an existing matrix); neither changes `ok` or the exit code |
 | `verify` | `{checked, git, errors, findings: [{level, item, message}]}`. `verify --landed ID [--on REF]` returns `{id, ref, ref_commit, landed, reason, message, commit}` instead. `ref` is `HEAD` unless `--on` names a branch, tag or commit; `ref_commit` is what it resolved to. `landed` is true only when `ref`'s own index has the item done and, for an item with a slice, `ref`'s tree holds the done slice file (under `done_dir`), created by a commit reachable from `ref`; `commit` is that commit (empty for an item with no slice, or when none is found). `reason` is empty when landed, else `other_branch` (the tip of some other branch, remote branch or tag outside `ref`'s history has the item done now, in its own index and, for a slice item, its done slice file; a branch that reopened it does not count, and stashes are ignored), `working_tree_only` (done in the working tree and on no such tip) or `not_done` (everything else, including an index that says done at `ref` with no done slice file there). Exit 0 when landed, 1 when not. An unknown id is `no_such_item`, an unusable id is `bad_id`, a `--on` that names no commit is `bad_ref`, a project outside a git repository is `not_git`, and `--on` without `--landed` is `usage`; all five exit 2 and print no report. An unreadable index at `ref` is exit 3 (`corrupt` or `schema_too_new`); on any other ref it is skipped as no evidence. It reads `ref`'s tree with `git show`, never the working tree, and writes nothing |
 | `stats` | `{total, completion, by_status, by_size, by_tree, by_pass, by_tree_status}`. `by_status` and `by_tree_status` are keyed by status key (`open`, `done`, …), the same value as an item's `status`, never by its configured display label; text output shows the labels. `status --json` carries the same `census`, and `import`/`migrate` key their `by_status` the same way |
 | `status` | `{next, census, blocked}`, plus `unspecified` and `in_work_elsewhere` when `next` would skip items, in the same shapes, and `only_in_sibling` (`[{id, title, worktree, status}]`, worktree-path then id order) when a sibling worktree has an open, unclaimed item whose id this checkout lacks. A done, review, claimed or in-work sibling row is not in it, and `check` does not fail on it. Text adds an `Only in a sibling` block |
@@ -419,11 +423,14 @@ when the meaning does. Branch on the code.
 | `bad_id` | An id is unusable as a filename, or a config prefix would produce one |
 | `case_collision` | An id differs from an existing one only in case |
 | `already_exists` | `init` or `migrate` over a project that already has state |
-| `blank_title` | A title is empty or whitespace |
-| `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline |
+| `blank_title` | A title is empty or whitespace; also a `relay-roles` rule's text |
+| `newline_in_field` | A one-line field (title, size, findings, tree, flag) contains a newline; also a `relay-roles` rule's text, or a row's agent, vendor, model, reasoning, note or size |
 | `editor_aborted` | `$EDITOR` exited non-zero; nothing changed |
 | `wrong_command` | e.g. `import --from` (that flag belongs to `migrate`) |
-| `no_relay_roles` | `ai relay-roles` found no `.slicer/relay-roles.md`. Exit 2; run `slicer ai relay --init-roles` to write the skeleton for the owner to edit |
+| `no_relay_roles` | `relay-roles` or `ai relay-roles` found no `.slicer/relay-roles.json`. Exit 2; run `slicer relay-roles init` to write the example matrix |
+| `unknown_role_row` | A `relay-roles` command named a row id that is not in the matrix. Exit 2, and nothing is written; `relay-roles show` lists the ids |
+| `unknown_role_rule` | A `relay-roles` command named a rule id that is not in the matrix. Exit 2, and nothing is written |
+| `bad_role_field` | `relay-roles add` or `set` was given a role outside implementer, reviewer, gate and architect, an effort, importance or urgency outside 1-3, or a `--well-specified` or `--split` other than yes, no or any. Exit 2, and nothing is written |
 | `no_project` | `-r` found no `.slicer/config.json` at or below the start directory. Exit 2; `-r` never walks up, so run `slicer init` or start higher |
 | `external` | An optional external tool failed: `feedback-report` or `issues-pull` found no `gh`, `gh` exited nonzero (often not authenticated), or it printed output slicer cannot use (no issue URL, or an issue list that is not valid). Exit 2. For `feedback-report`, earlier issues in the batch are already recorded and the message names the entry that stopped; `issues-pull` writes nothing |
 | `usage` | Missing arguments, unknown options, invalid values, conflicting options, or other invocation errors |

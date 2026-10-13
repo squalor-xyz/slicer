@@ -15,9 +15,9 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 |---|---|
 | `ai [instructions]` | agent quick start. `slicer ai` and `slicer ai --json` are `slicer ai instructions` with the same flags. The project can set `implement_finish` to `handoff`, making step 4 handoff only, and `handoff_requires_note_kind` to name its required current-attempt report. No project, or an unreadable config or index, prints the generic text and warns on stderr. Does not lock or write. Supports `--json`. `--rest` prints only what the skill does not already carry and does not read the project |
 | `ai skill [--output PATH] [--install] [--force]` | the same loop as a `SKILL.md` for Claude Code, Codex, and Grok. Same project read and fallback as `ai instructions`. `--output` writes the printed bytes to PATH (parents created); `--install` writes them to `.claude/`, `.agents/` and `.grok/` `skills/slicer/SKILL.md` under the project root. Different existing text exits 2 (`state`) with nothing written unless `--force`; stdout lists the paths written |
-| `ai relay` | the slice relay for one slice: orchestrator, implementer, reviewer, architect and gate. Same project read and fallback as `ai instructions`. Handoff finish closes with `handoff` and that text does not name `done`; otherwise the close is `done`. A project whose `.slicer/relay-roles.md` exists gets a `## Roles matrix` section after Setup holding that file, and Setup gets the propose line; without the file, Setup names `ai relay --init-roles`. A blank file counts as missing. An unreadable `.slicer/relay-roles.md` is `io` (exit 3). No project, or an unreadable config or index, prints the generic text and warns on stderr. Does not lock or write, except `--init-roles` below. `--json` returns `{"relay": TEXT}` with the same text |
-| `ai relay --init-roles [--force]` | write the role matrix skeleton to `.slicer/relay-roles.md` for the owner to edit by hand. Needs a project (exit 2, code `state`, without one). An existing file exits 2 with code `state` and nothing is written unless `--force` replaces it; `--force` without `--init-roles` is `usage`. Writes that one file and nothing else. `--json` returns `{"written": [PATH]}` |
-| `ai relay-roles` | print `.slicer/relay-roles.md` exactly as the owner wrote it. Needs a project. Without the file it exits 2 with code `no_relay_roles` and names `ai relay --init-roles`. An unreadable `.slicer/relay-roles.md` is `io` (exit 3). Does not lock or write. `--json` returns `{"relay_roles": TEXT}` with the same text |
+| `ai relay` | the slice relay for one slice: orchestrator, implementer, reviewer, architect and gate. Same project read and fallback as `ai instructions`. Handoff finish closes with `handoff` and that text does not name `done`; otherwise the close is `done`. A project whose `.slicer/relay-roles.json` exists gets a `## Roles matrix` section after Setup holding the matrix as Markdown (what `relay-roles show` prints), and Setup gets the propose line naming agent, vendor, model and reasoning effort; without the file, Setup names `relay-roles init`. A leftover `.slicer/relay-roles.md` is ignored with a stderr warning. A corrupt matrix is `corrupt` and one from a newer slicer is `schema_too_new` (exit 3). No project, or an unreadable config or index, prints the generic text and warns on stderr. Does not lock or write, except `--init-roles` below. `--json` returns `{"relay": TEXT}` with the same text |
+| `ai relay --init-roles [--force]` | the same as `relay-roles init --render`: write the example matrix to `.slicer/relay-roles.json` and render it, under the project lock. Needs a project (exit 2, code `state`, without one). An existing file exits 2 with code `state` and nothing is written unless `--force` replaces it; `--force` without `--init-roles` is `usage`. `--json` returns `{"written": [PATH]}` |
+| `ai relay-roles` | the same as `relay-roles show`. Needs a project. Without `.slicer/relay-roles.json` it exits 2 with code `no_relay_roles` and names `relay-roles init`. Does not lock or write. `--json` returns `{"relay_roles": TEXT, "rows": [...], "rules": [...]}` |
 | `init [--force] [--id-prefix PREFIX] [--id-width WIDTH] [--id ID]` | create `.slicer/` with config and templates; choose an ID prefix and minimum digit width (defaults `S` and `2`). `--force` rewrites config and templates, retaining omitted scheme settings and the counter; scheme changes require an empty queue. `--id` sets the ID the first `add` allocates (`S21` or `sp-21`), must match the scheme, and is refused when the index already has items |
 | `setup-git` | print the four `git config` lines that enable the `slicer-generated` render merge driver and the `slicer-index` driver for `index.json` in this clone (`slicer setup-git \| sh` applies them); needs no project |
 | `merge-index BASE OURS THEIRS` | the `slicer-index` merge driver, which Git runs with its `%O %A %B` files and a person does not. It merges items by id and object fields by name, takes `next_id` as the largest of the three, and writes the result over `OURS`. A value changed on one side takes that change, equal changes coalesce, lists and prose are atomic, except an item's notes: those merge as the union by note id, ordered by creation time, with notes that share a time kept yours first then theirs, and a note removed on one side stays removed only if the other side left it unchanged. Exit 0 is a clean merge. Exit 1 leaves conflict markers in `OURS` only where both sides changed a value differently, a record was deleted on one side and edited on the other, the same new id was filed twice with different content, both sides reordered the shared items differently, both sides changed one note differently or one removed a note the other edited, or the result would break the index (two ids for one filing key, ids differing only in case, a dependency cycle or on a removed item); stderr names each. Input that is not a readable index conflicts and is never merged cleanly. It needs no project, prints nothing when the merge is clean, and is left out of `--help`'s command list |
@@ -51,6 +51,15 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
 | `goals [--retired]` | print the project's goals and non-goals prose together, plus active goal and non-goal records; `--retired` includes retired ones. JSON keeps `goals` and `non_goals` and adds `records.goal` and `records.non_goal` |
 | `catalog` | add, list, show, edit, retire, and move project-knowledge records (goals, non-goals, requirements, constraints, decisions, assumptions). See [Catalog](#catalog) |
+| `relay-roles show` | print the slice-relay role matrix as Markdown, with row ids in an `ID` column and rule ids before each rule, the same bytes as `.slicer/render/RELAY-ROLES.md` without its banner. Needs a project. Without `.slicer/relay-roles.json` it exits 2 with code `no_relay_roles`. Does not lock or write. See [Relay roles](#relay-roles) |
+| `relay-roles init [--force] [--replace-legacy]` | write the example matrix to `.slicer/relay-roles.json`: six rows (implementer three times, reviewer, gate, architect), all on the agent `Claude Code`, and four rules. An existing file exits 2 with code `state` unless `--force` replaces it; `--force` numbers the new example rows and rules after every id the old matrix issued (so it never reissues one, even for a row removed earlier), and a corrupt file starts again at `r1` and `u1`. `--replace-legacy` also removes a leftover `.slicer/relay-roles.md`, only after the JSON is written; when the JSON already exists it removes just that file and keeps the matrix (and with no leftover file it is the `state` error). A path that is not a file is `io`. Takes the project lock; honours `--render` and `--strict` |
+| `relay-roles add --role ROLE [--size S,M] [--effort 1,2] [--importance 1-3,...] [--urgency 1-3,...] [--well-specified yes\|no\|any] [--split yes\|no\|any] [--agent A] [--vendor V] [--model M] [--reasoning R] [--note N]` | append a row with the next id (`r7`, ...; an id is never reused). `ROLE` is implementer, reviewer, gate or architect. The conditions say which slices the row applies to; an empty one matches anything. A bad value exits 2 with code `bad_role_field`. Prints the row |
+| `relay-roles set ID [--role ROLE] [--size ...] [--effort ...] [--importance ...] [--urgency ...] [--well-specified ...] [--split ...] [--agent ...] [--vendor ...] [--model ...] [--reasoning ...] [--note ...]` | change only the fields given. For a condition, an empty value or `any` clears it. An unknown ID exits 2 with code `unknown_role_row`. A call that changes nothing writes nothing |
+| `relay-roles remove ID` | drop a row. The id is not reused |
+| `relay-roles move ID (--before ID \| --last)` | reorder a row. Choose exactly one placement |
+| `relay-roles rule-add TEXT` | append a rule with the next id (`u5`, ...). Blank text exits 2 with `blank_title`, text with a newline with `newline_in_field` |
+| `relay-roles rule-edit ID TEXT` | replace a rule's text. An unknown ID exits 2 with code `unknown_role_rule` |
+| `relay-roles rule-remove ID` | drop a rule |
 | `start ID [ID ...] [--note TEXT] [--owner NAME]` | mark an item in progress and claim it (owner and time). The owner is `--owner`, otherwise `SLICER_CLAIM_OWNER`, otherwise `claim_owner` in config, otherwise the git user name, otherwise the worktree name; a blank value falls through and one with a newline is `usage`. A second start does not refresh the claim. The owner is also recorded as `by` on the history entry |
 | `release ID [ID ...] [--owner NAME]` | clear a claim without changing status; `--owner` names who released it in history (`by`). An item that was in progress stays in progress and lists as `*` |
 | `handoff ID [ID ...] [--note TEXT] [--owner NAME] [--render] [--strict] [--check]` | hand a started slice to review (`--owner` names who handed it off, as `by` in history): status becomes `review_status` and the claim is cleared. `next` skips review items and dependents stay blocked until `done`; a reviewer picks one up with `next --status review --start` (or `start ID`), which moves it to `reviewing_status` (also out of plain `next`). `handoff` refuses a reviewing item. `--check` with `--render` runs `slicer check` after the change lands: stdout stays the item, a failure exits 1 with the findings on stderr, and `--check` without `--render` is `usage` and writes nothing |
@@ -338,7 +347,8 @@ slices/<ID>.json     one open slice: title, lead, sections (ordered list)
 slices/done/<ID>.json    finished slices
 slices/retired/<ID>.json obsolete slices, with the reason on the item
 templates/*.md       render templates, yours to edit
-render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), and one file per slice
+relay-roles.json     the slice-relay role matrix, when the project keeps one (see Relay roles)
+render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), one file per slice, and RELAY-ROLES.md
 log.jsonl            append-only history of status changes
 .gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
@@ -464,6 +474,39 @@ exactly one side reordered it.
 
 Index schema is 8. An index without `catalog` still loads. The next save writes
 the object and the new schema, which an older slicer refuses.
+
+## Relay roles
+
+The slice-relay role matrix lives in `.slicer/relay-roles.json`, and only the `relay-roles`
+commands change it. Never open the JSON or its render. A row names a role (implementer,
+reviewer, gate or architect), the slice conditions it applies to, and the agent, vendor,
+model and reasoning effort that run it. The agent is the harness (Claude Code, Codex CLI,
+Grok Build), so one relay can mix them. Conditions are `size`, `effort`, `importance` and
+`urgency` (each a list; an empty list matches anything), `well_specified` (yes, no or
+any) and `split` (yes for a part of a split slice, no for a whole one, or any); the When
+cell reads "split part" or "whole slice", and says nothing for any. `reasoning` is free text such as low, medium, high or xhigh, named so it is not
+confused with the slice's own effort score. A size is any
+single-line text, kept de-duplicated in a stable order (S, M, L, then the rest). Rules are
+short texts.
+
+```sh
+slicer relay-roles init --render
+slicer relay-roles add --role reviewer --size L --agent "Codex CLI" --vendor OpenAI --model gpt --reasoning high --render
+slicer relay-roles set r3 --model opus --effort 1,2 --render
+slicer relay-roles move r6 --before r2 --render
+slicer relay-roles rule-add "No cross-vendor reviewer unless the owner asks." --render
+slicer relay-roles show
+```
+
+Row ids (`r1`, ...) and rule ids (`u1`, ...) are never reused, and each change writes a
+history entry (`slicer log --action relay-roles`). `slicer render` writes
+`.slicer/render/RELAY-ROLES.md`, and `slicer check` reports it stale when the JSON changed
+without a render. `slicer ai relay` embeds the same Markdown. A project that still has the
+hand-edited `.slicer/relay-roles.md` from slicer 1.9 gets the `legacy_relay_roles` warning
+from `check`; `slicer relay-roles init --replace-legacy` writes the JSON and removes the
+old file in one step, after the write succeeds. Once the JSON exists, the same command
+removes just the old file and keeps the matrix. The Markdown table is not converted into
+rows.
 
 ## Roadmap prose
 

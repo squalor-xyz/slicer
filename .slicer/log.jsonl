@@ -1320,3 +1320,9 @@
 {"when": "2026-10-13T15:07:03Z", "item": "s258", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-13T15:07:03Z", "item": "s258", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-10-13T15:07:03Z", "item": "s258", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-13T15:11:12Z", "item": "s257", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-13T15:42:05Z", "item": "s257", "action": "note", "from": "", "to": "", "note": "Ready for review: relay role matrix moved to .slicer/relay-r", "by": "Jon Robbins"}
+{"when": "2026-10-13T15:42:06Z", "item": "s257", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-13T16:07:21Z", "item": "relay-roles", "action": "relay-roles", "from": "", "to": "", "note": "init"}
+{"when": "2026-10-13T16:12:01Z", "item": "s257", "action": "note", "from": "", "to": "", "note": "Round 1 findings applied: split condition (D1), free single-", "by": "Jon Robbins"}
+{"when": "2026-10-13T16:22:52Z", "item": "s257", "action": "note", "from": "", "to": "", "note": "Round 2: init --force numbers the example rows and rules aft", "by": "Jon Robbins"}

@@ -7978,10 +7978,44 @@
       "id": "s257",
       "title": "Store the relay roles matrix as JSON edited through the CLI",
       "short_title": "Relay roles as JSON",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "f244c24c-d21b-4e36-b191-7cc1eb4dbe7f",
+          "kind": "",
+          "text": "**2026-10-13** — Ready for review: relay role matrix moved to .slicer/relay-roles.json with the relay-roles command group (show, init, add, set, remove, move, rule-add, rule-edit, rule-remove), RELAY-ROLES.md render, stale-render and legacy_relay_roles checks, ai relay/relay-roles/--init-roles on the JSON. Full suite 1734 tests OK; mutation table clean; walk-through done.",
+          "created_at": "2026-10-13T15:42:05Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "fd61dfeb-3e2f-451e-acfd-cdae126a93c8",
+          "kind": "",
+          "text": "**2026-10-13** — Round 1 findings applied: split condition (D1), free single-line sizes (D3), repo migrated to relay-roles.json (D2), force keeps id counters, replace-legacy keeps an existing matrix, ID column and rule ids in the render, directory path is io, sizes normalised, RELAY-ROLES.md in gitattributes, docs code table, embed headings demoted, namespaced history items. Full suite 1751 tests OK; new tests mutation-checked.",
+          "created_at": "2026-10-13T16:12:01Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "dea4e0b5-d4b7-4d98-9b65-166a0ffa6057",
+          "kind": "",
+          "text": "**2026-10-13** — Round 2: init --force numbers the example rows and rules after the old next_row and next_rule (roles.skeleton(first_row, first_rule)), so no id is reissued; docs and CHANGELOG corrected. Full suite 1752 tests OK; new tests mutation-checked.",
+          "created_at": "2026-10-13T16:22:52Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "L",
@@ -8000,7 +8034,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

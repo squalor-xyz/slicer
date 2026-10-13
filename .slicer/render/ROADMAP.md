@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-246 items · — 3 · done 239 · retired 4
+246 items · — 2 · done 239 · retired 4 · review 1
 
 ## v1.10
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s257](slices/s257.md) | Relay roles as JSON | L | 3 | slicer | owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row | — |
+| 1 | [s257](slices/s257.md) | Relay roles as JSON | L | 3 | slicer | owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row | review |
 | 2 | [s258](slices/s258.md) | Relay split implementers | M | 2 | slicer | owner request, session 2026-10-13: more than one Haiku/xhigh implementer per slice when it makes sense | — |
 | 3 | [s259](slices/s259.md) | Relay roles recommend | M | 2 | slicer | owner request, session 2026-10-13: slicer should recommend role values from the slice's parameters | — |
 

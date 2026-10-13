@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import ai, cli
+from slicer import ai, cli, roles
 
 
 class AiInstructionsTests(unittest.TestCase):
@@ -964,7 +964,7 @@ class AiRelayTests(unittest.TestCase):
       "which roles run",
       "The architect is optional",
       "the owner decides",
-      "vendor, model and effort",
+      "agent, vendor, model and reasoning effort",
       "after the finish step",
       "after a commit on the slice branch",
       "landed",
@@ -983,17 +983,13 @@ class AiRelayTests(unittest.TestCase):
 
 
 class AiRelayRolesTests(unittest.TestCase):
-  """`ai relay --init-roles` writes the role matrix; `ai relay-roles` and `ai relay` read it."""
+  """`ai relay --init-roles` writes the role matrix; `ai relay-roles` and `ai relay` read it.
 
-  ROLES = ".slicer/relay-roles.md"
-  OWNER_MATRIX = (
-    "# Owner matrix\n"
-    "\n"
-    "| Role | Vendor | Model | Effort |\n"
-    "| --- | --- | --- | --- |\n"
-    "| Architect | `vendor-x` | big · model | 50% \\ high |\n"
-    "\n"
-  )
+  The matrix is `.slicer/relay-roles.json` (s257); `tests/test_relay_roles.py` covers the
+  `relay-roles` commands themselves and this class keeps the `ai` entry points honest.
+  """
+
+  ROLES = ".slicer/relay-roles.json"
 
   def project(self) -> support.TempRepo:
     repo = support.TempRepo()
@@ -1001,45 +997,33 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(repo.run("init")[0], 0)
     return repo
 
+  def with_matrix(self) -> support.TempRepo:
+    repo = self.project()
+    self.assertEqual(repo.run("relay-roles", "init", "--render")[0], 0)
+    return repo
+
   def snapshot(self, repo: support.TempRepo) -> dict[str, bytes]:
     return {
       str(p.relative_to(repo.root)): p.read_bytes()
-      for p in repo.root.rglob("*") if p.is_file()
+      for p in repo.root.rglob("*") if p.is_file() and p.name != "lock"
     }
 
-  def test_RelayInitRoles_NoFile_WritesSkeletonWithMatrixAndRules(self) -> None:
+  def test_RelayInitRoles_NoFile_WritesSkeletonRowsAndRules(self) -> None:
     repo = self.project()
-    before = self.snapshot(repo)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--json")
     self.assertEqual((code, err), (0, ""))
     self.assertEqual(json.loads(out), {"written": [str(repo.root / self.ROLES)]})
-    after = self.snapshot(repo)
-    self.assertEqual(set(after) - set(before), {self.ROLES})
-    self.assertEqual({k for k in before if before[k] != after.get(k)}, set())
-    text = repo.read(self.ROLES)
-    for phrase in (
-      "This file is an example",
-      "The owner edits it by hand",
-      "## Matrix",
-      "| Role | When | Vendor | Model | Effort |",
-      "| Implementer | well specified, effort 1, size S or M | Claude | haiku | xhigh |",
-      "| Implementer | well specified, effort 2, size S | Claude | haiku | xhigh |",
-      "| Implementer | anything else | Claude | sonnet | high |",
-      "| Reviewer and gate | every slice | Claude | opus | medium |",
-      "| Architect | only on a size L slice | Claude | opus | high |",
-      "## Rules",
-      "A reviewer never wrote code in the slice it reviews.",
-      "No cross-vendor reviewer unless the owner asks.",
-      "Claude roles run as subagents.",
-      "\"well specified\" means the slice names its files, failing tests, implementation "
-      "steps and checks, and needs no open owner decision.",
-    ):
-      with self.subTest(phrase=phrase):
-        self.assertIn(phrase, text)
+    data = json.loads(repo.read(self.ROLES))
+    self.assertEqual(
+      [(row["role"], row["agent"]) for row in data["rows"]],
+      [("implementer", "Claude Code")] * 3
+      + [("reviewer", "Claude Code"), ("gate", "Claude Code"), ("architect", "Claude Code")],
+    )
+    self.assertEqual(len(data["rules"]), 4)
+    self.assertEqual(repo.run("check")[0], 0)
 
   def test_RelayInitRoles_FileExists_RefusesWithoutForce(self) -> None:
-    repo = self.project()
-    repo.write(self.ROLES, self.OWNER_MATRIX)
+    repo = self.with_matrix()
     before = self.snapshot(repo)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--json")
     self.assertEqual(code, 2)
@@ -1048,13 +1032,11 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(self.snapshot(repo), before)
 
   def test_RelayInitRoles_Force_ReplacesFile(self) -> None:
-    repo = self.project()
-    repo.write(self.ROLES, self.OWNER_MATRIX)
+    repo = self.with_matrix()
+    self.assertEqual(repo.run("relay-roles", "remove", "r1")[0], 0)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--force")
     self.assertEqual((code, err), (0, ""))
-    text = repo.read(self.ROLES)
-    self.assertNotIn("# Owner matrix", text)
-    self.assertIn("## Matrix", text)
+    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 6)
 
   def test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError(self) -> None:
     repo = self.project()
@@ -1070,26 +1052,31 @@ class AiRelayRolesTests(unittest.TestCase):
       self.assertEqual(json.loads(out)["error"]["code"], "state")
       self.assertEqual(list(repo.root.iterdir()), [])
 
-  def test_Relay_RolesFilePresent_EmbedsItVerbatimUnderRolesMatrixHeading(self) -> None:
-    repo = self.project()
-    repo.write(self.ROLES, self.OWNER_MATRIX)
+  def test_Relay_MatrixPresent_EmbedsItsRenderUnderRolesMatrixHeading(self) -> None:
+    repo = self.with_matrix()
     code, out, err = repo.run("ai", "relay")
     self.assertEqual((code, err), (0, ""))
-    self.assertIn("## Roles matrix\n\n" + self.OWNER_MATRIX.rstrip("\n") + "\n\n## Order", out)
+    embedded = roles.render_markdown(roles.skeleton(), level=2)
+    self.assertIn("## Roles matrix\n\n" + embedded.rstrip("\n") + "\n\n## Order", out)
+    self.assertNotIn("# Relay roles", out)
     setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
-    self.assertIn("Propose each role's vendor, model and effort from the matrix below", setup)
-    self.assertNotIn("--init-roles", out)
+    self.assertIn(
+      "Propose each role's agent, vendor, model and reasoning effort from the matrix below",
+      setup,
+    )
+    self.assertNotIn("relay-roles init", out)
     code, out_json, err = repo.run("ai", "relay", "--json")
     self.assertEqual((code, err), (0, ""))
     self.assertEqual(json.loads(out_json)["relay"].rstrip("\n"), out.rstrip("\n"))
 
-  def test_Relay_NoRolesFile_SetupNamesInitRoles(self) -> None:
+  def test_Relay_NoMatrix_SetupNamesRelayRolesInit(self) -> None:
     repo = self.project()
     code, out, err = repo.run("ai", "relay")
     self.assertEqual((code, err), (0, ""))
     self.assertNotIn("## Roles matrix", out)
     setup = out.split("## Setup", 1)[1].split("## Order", 1)[0]
-    self.assertIn("`slicer ai relay --init-roles`", setup)
+    self.assertIn("`slicer relay-roles init`", setup)
+    self.assertEqual(out, ai.relay_text("done", in_project=True))
 
   def test_Relay_OutsideProject_PrintsGenericTextWithoutRoles(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -1098,10 +1085,9 @@ class AiRelayRolesTests(unittest.TestCase):
       self.assertIn("printing the generic guide", err)
       self.assertEqual(text, ai.relay_text())
       self.assertNotIn("Roles matrix", text)
-      self.assertNotIn("--init-roles", text)
-    with self.subTest(case="unreadable index beside a roles file"):
-      repo = self.project()
-      repo.write(self.ROLES, self.OWNER_MATRIX)
+      self.assertNotIn("relay-roles init", text)
+    with self.subTest(case="unreadable index beside a matrix"):
+      repo = self.with_matrix()
       repo.write(".slicer/index.json", "{")
       code, text, err = repo.run("ai", "relay")
       self.assertEqual(code, 0)
@@ -1109,34 +1095,33 @@ class AiRelayRolesTests(unittest.TestCase):
       self.assertEqual(text, ai.relay_text())
 
   def test_RelayRoles_TextAndJsonHaveIdenticalContent(self) -> None:
-    repo = self.project()
-    repo.write(self.ROLES, self.OWNER_MATRIX)
+    repo = self.with_matrix()
     code, text, err = repo.run("ai", "relay-roles")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(text, self.OWNER_MATRIX.rstrip("\n") + "\n")
+    self.assertTrue(text.startswith("# Relay roles\n"))
     code, out, err = repo.run("ai", "relay-roles", "--json")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(json.loads(out), {"relay_roles": self.OWNER_MATRIX})
+    self.assertEqual(json.loads(out)["relay_roles"], text)
+    self.assertEqual(text, roles.render_markdown(roles.skeleton()))
 
-  def test_RelayRoles_NoFile_ExitsTwoWithCodeAndNamesInitRoles(self) -> None:
+  def test_RelayRoles_NoFile_ExitsTwoWithCodeAndNamesInit(self) -> None:
     repo = self.project()
     code, out, err = repo.run("ai", "relay-roles", "--json")
     self.assertEqual(code, 2)
     error = json.loads(out)["error"]
     self.assertEqual(error["code"], "no_relay_roles")
-    self.assertIn("slicer ai relay --init-roles", error["message"])
-    self.assertIn("slicer ai relay --init-roles", err)
+    self.assertIn("slicer relay-roles init", error["message"])
+    self.assertIn("slicer relay-roles init", err)
     self.assertFalse((repo.root / self.ROLES).exists())
 
   def test_RelayRoles_ReadsWithoutLockingOrWriting(self) -> None:
-    repo = self.project()
-    repo.write(self.ROLES, self.OWNER_MATRIX)
+    repo = self.with_matrix()
     before = self.snapshot(repo)
     with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
          patch("slicer.cli.store.load", side_effect=AssertionError("load")):
       code, out, err = repo.run("ai", "relay-roles", "--json")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(json.loads(out), {"relay_roles": self.OWNER_MATRIX})
+    self.assertIn("rows", json.loads(out))
     self.assertEqual(self.snapshot(repo), before)
 
   def test_RelayRoles_OutsideProject_RefusesWithStateCode(self) -> None:
@@ -1146,7 +1131,7 @@ class AiRelayRolesTests(unittest.TestCase):
       self.assertEqual(json.loads(out)["error"]["code"], "state")
       self.assertEqual(list(repo.root.iterdir()), [])
 
-  def test_Skill_RelayLine_PointsToAiRelayRoles(self) -> None:
+  def test_Skill_RelayLine_PointsToRelayRolesCommands(self) -> None:
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         lines = [
@@ -1154,14 +1139,14 @@ class AiRelayRolesTests(unittest.TestCase):
           if "When the owner asks for a slice relay" in line
         ]
         self.assertEqual(len(lines), 1)
-        self.assertIn("`slicer ai relay-roles`", lines[0])
-        self.assertIn("never from `.slicer/relay-roles.md`", lines[0])
+        self.assertIn("`slicer relay-roles show`", lines[0])
+        self.assertIn("never from `.slicer/relay-roles.json`", lines[0])
 
-  def test_Instructions_PointToAiRelayRoles(self) -> None:
+  def test_Instructions_PointToRelayRolesShow(self) -> None:
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
-        self.assertIn("`slicer ai relay-roles`", ai.instructions_text(finish))
-    self.assertIn("`slicer ai relay-roles`", ai.rest_text())
+        self.assertIn("`slicer relay-roles show`", ai.instructions_text(finish))
+    self.assertIn("`slicer relay-roles show`", ai.rest_text())
 
   def test_CommandsDoc_ListsRelayRolesAndInitRoles(self) -> None:
     root = Path(__file__).resolve().parents[1]
@@ -1173,7 +1158,7 @@ class AiRelayRolesTests(unittest.TestCase):
     roles = [row for row in rows if row.startswith("| `ai relay-roles`")]
     self.assertEqual(len(init), 1)
     self.assertEqual(len(roles), 1)
-    for flag in ("--init-roles", "--force", ".slicer/relay-roles.md"):
+    for flag in ("--init-roles", "--force", ".slicer/relay-roles.json"):
       self.assertIn(flag, init[0])
     self.assertIn("no_relay_roles", roles[0])
 
@@ -1184,40 +1169,12 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertIn("`relay_roles`", text)
     self.assertIn("| `no_relay_roles` |", text)
 
-  def test_RelayRoles_UnreadableFile_IsIoExitThree(self) -> None:
+  def test_Relay_NonUtf8Matrix_IsCorruptExitThree(self) -> None:
     repo = self.project()
-    (repo.root / self.ROLES).mkdir()
+    path = repo.root / self.ROLES
+    path.write_bytes(b"\xff\xfe not UTF-8\n")
     for argv in (("ai", "relay-roles", "--json"), ("ai", "relay", "--json")):
-      with self.subTest(argv=argv, case="directory"):
+      with self.subTest(argv=argv):
         code, out, err = repo.run(*argv)
         self.assertEqual(code, 3)
-        error = json.loads(out)["error"]
-        self.assertEqual(error["code"], "io")
-        self.assertIn(self.ROLES, error["message"])
-        self.assertIn("cannot be read", error["message"])
-    (repo.root / self.ROLES).rmdir()
-    (repo.root / self.ROLES).write_bytes(b"\xff\xfe not UTF-8\n")
-    for argv in (("ai", "relay-roles", "--json"), ("ai", "relay", "--json")):
-      with self.subTest(argv=argv, case="not UTF-8"):
-        code, out, err = repo.run(*argv)
-        self.assertEqual(code, 3)
-        error = json.loads(out)["error"]
-        self.assertEqual(error["code"], "io")
-        self.assertIn("cannot be read", error["message"])
-
-  def test_Relay_WhitespaceOnlyRolesFile_TreatedAsMissing(self) -> None:
-    repo = self.project()
-    for blank in ("", " \n\t\n\n"):
-      with self.subTest(blank=blank):
-        repo.write(self.ROLES, blank)
-        code, out, err = repo.run("ai", "relay")
-        self.assertEqual((code, err), (0, ""))
-        self.assertEqual(out, ai.relay_text("done", in_project=True))
-        self.assertNotIn("## Roles matrix", out)
-        self.assertNotIn("Propose each role's vendor", out)
-        code, out_json, err = repo.run("ai", "relay", "--json")
-        self.assertEqual((code, err), (0, ""))
-        self.assertEqual(json.loads(out_json)["relay"].rstrip("\n"), out.rstrip("\n"))
-        code, out_roles, err = repo.run("ai", "relay-roles", "--json")
-        self.assertEqual((code, err), (0, ""))
-        self.assertEqual(json.loads(out_roles), {"relay_roles": blank})
+        self.assertEqual(json.loads(out)["error"]["code"], "corrupt")

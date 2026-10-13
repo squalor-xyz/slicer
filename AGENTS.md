@@ -149,8 +149,8 @@ or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl` or `.slicer/ren
 even when `git status` lists one. Use `slicer show ID --json --lean`,
 `slicer list --json --lean` or `slicer next --json --lean`. `config.json` is the
 exception: read it with `slicer config KEY` and edit it by hand as
-[docs/configuration.md](docs/configuration.md) describes. Owner-edited
-`.slicer/relay-roles.md` is read only via `slicer ai relay-roles`.
+[docs/configuration.md](docs/configuration.md) describes. `.slicer/relay-roles.json`
+changes only through `slicer relay-roles`.
 
 To file a specification, pass `promote` a one-item outline (`##` item / `### section`)
 via `--file` or `--stdin`. It keeps the item's fields; supply sections and lead only:
