@@ -35,10 +35,14 @@ with the owner before the worktree is created. It says to read the role matrix w
 `slicer ai relay` prints the slice relay: one orchestrating session runs one slice
 through an implementer, a reviewer, an architect and a gate. Its Setup section, before Order,
 asks the owner which roles run (the architect is optional), the agent, vendor, model and
-reasoning effort per role, and where the run ends (after the finish step, after a commit on
-the slice branch, or landed). It uses the same finish choice and the same fallback as
-`slicer ai instructions`. Handoff finish closes with
-handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
+reasoning effort per role, whether the implementation splits into parts, and where the run
+ends (after the finish step, after a commit on the slice branch, or landed). A split needs
+parts with disjoint files and their own tests. One lead implementer runs `start`, the note
+and the finish step; part implementers change only their own files and run no slicer command
+that writes; the orchestrator runs the full suite on the combined diff, and one review and
+one gate cover the whole slice. A slice too big for one implementer is two slices. It uses
+the same finish choice and the same fallback as `slicer ai instructions`. Handoff finish
+closes with handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
 the same Markdown as the text output. It does not lock or write, except `--init-roles`, which
 is `relay-roles init --render` under the project lock.
 
@@ -48,7 +52,10 @@ or its render. `slicer ai relay` adds a `## Roles matrix` section after Setup th
 matrix as Markdown, and Setup gets one line proposing each role's agent, vendor, model and
 reasoning effort from it and names
 `slicer relay-roles recommend ID --well-specified yes|no --split yes|no`, which does the
-matching. Without the file, Setup names `slicer relay-roles init` instead.
+matching; it tells the orchestrator to pass `--split yes` for a part of a split slice. The
+example matrix from `relay-roles init` has its whole-slice implementer rows on `--split no`
+and a per-part implementer row (haiku, xhigh) on `--split yes`. Without the file, Setup
+names `slicer relay-roles init` instead.
 `slicer ai relay-roles` is `slicer relay-roles show`; `--json` returns the Markdown under
 `relay_roles` and the structured `rows` and `rules`. A missing file is exit 2 with code
 `no_relay_roles`; a malformed one is `corrupt` and one from a newer slicer is

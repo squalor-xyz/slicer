@@ -158,13 +158,19 @@ The implementer owns one slice. It runs `slicer start ID --render --strict`,
 writes the failing tests and watches them go red, implements, mutation-checks
 each new test, and closes the slice.
 
+In a split, one lead implementer owns the slice. It runs
+`slicer start ID --render --strict`, the note and the finish step. Part
+implementers change only their own files, write and run their own tests, and
+run no slicer command that writes.
+
 The reviewer is read-only. It reviews correctness, test strength and direction
 against `slicer goals`.
 
 The architect is read-only. It confirms each finding was fixed and reviews the
 shape.
 
-A reviewer never wrote code in this slice. The owner chooses the models.
+A reviewer never wrote code in this slice. In a split, that holds for every part.
+The owner chooses the models.
 
 ## Setup
 
@@ -172,6 +178,9 @@ Before the worktree exists, the orchestrator reads the slice's size with
 `slicer show ID --json --lean` and confirms these with the owner:
 
 - which roles run. The architect is optional: the owner decides.
+- whether the implementation splits into parts. The default is one implementer.
+  A split needs parts with disjoint files and their own tests; a slice too big
+  for one implementer is two slices.
 - the agent, vendor, model and reasoning effort for each role.
 - where the run ends:
   - after the finish step,
@@ -191,6 +200,11 @@ the architect, when the owner chose one, then the gate. Close with
 `slicer note ID --text "Describe the verified outcome"` plus the finish step.
 Commit, merge and push only when the owner authorizes them.
 
+In a split, the parts run in the slice worktree, in parallel only when their
+files are disjoint, otherwise one after another. The orchestrator runs the full
+suite on the combined diff, then one review and one gate cover the whole slice.
+Accepted findings go back to the part that owns the file.
+
 ## Gate
 
 Name the diff under review. The criteria are: earlier blockers resolved with a
@@ -205,7 +219,8 @@ a review needs another gate.
 Include the slice from `slicer show ID --json --lean`, the tracking rule below,
 and the workspace limit: stay inside the workspace the owner named and do not
 read or write outside it. The report is a diff stat, red lines, test counts, a
-mutation table and deviations.
+mutation table and deviations. A part brief names the part's own files, the
+files it must not touch, and its own temp directory.
 
 """
 
@@ -218,7 +233,8 @@ ROLES_PROPOSE = (
   "and let the owner confirm or override each one. "
   "`slicer relay-roles recommend ID --well-specified yes|no --split yes|no` matches the "
   "slice against the matrix and returns the first row for each role; you judge whether the "
-  "slice is well specified and whether it is a part of a split slice.\n\n"
+  "slice is well specified and whether it is a part of a split slice. "
+  "Pass `--split yes` for a part of a split slice and `--split no` for a whole one.\n\n"
 )
 
 ROLES_MISSING = (

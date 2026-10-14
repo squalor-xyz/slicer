@@ -77,9 +77,9 @@ class RoleModelTests(unittest.TestCase):
 
   def test_Skeleton_FirstRowAndFirstRule_NumberTheExampleFromThere(self) -> None:
     matrix = roles.skeleton(first_row=8, first_rule=6)
-    self.assertEqual([r.id for r in matrix.rows], [f"r{n}" for n in range(8, 14)])
-    self.assertEqual([r.id for r in matrix.rules], [f"u{n}" for n in range(6, 10)])
-    self.assertEqual((matrix.next_row, matrix.next_rule), (14, 10))
+    self.assertEqual([r.id for r in matrix.rows], [f"r{n}" for n in range(8, 15)])
+    self.assertEqual([r.id for r in matrix.rules], [f"u{n}" for n in range(6, 11)])
+    self.assertEqual((matrix.next_row, matrix.next_rule), (15, 11))
     plain = roles.skeleton()
     self.assertEqual([r.id for r in plain.rows][0], "r1")
     self.assertEqual(
@@ -87,40 +87,64 @@ class RoleModelTests(unittest.TestCase):
       [(r.role, r.when.to_dict()) for r in plain.rows],
     )
 
-  def test_Skeleton_HoldsSixStructuredRowsAndFourRules(self) -> None:
+  def test_Skeleton_HoldsSevenStructuredRowsAndFiveRules(self) -> None:
     matrix = roles.skeleton()
     self.assertEqual(
       [(r.id, r.role) for r in matrix.rows],
       [("r1", "implementer"), ("r2", "implementer"), ("r3", "implementer"),
-       ("r4", "reviewer"), ("r5", "gate"), ("r6", "architect")],
+       ("r4", "implementer"), ("r5", "reviewer"), ("r6", "gate"), ("r7", "architect")],
     )
     self.assertEqual({r.agent for r in matrix.rows}, {"Claude Code"})
     first = matrix.rows[0]
     self.assertEqual(first.when.size, ["S", "M"])
     self.assertEqual(first.when.effort, [1])
     self.assertIs(first.when.well_specified, True)
-    self.assertEqual(matrix.rows[2].when.to_dict(), roles.RoleWhen().to_dict())
-    self.assertEqual({r.when.split for r in matrix.rows}, {None})
-    self.assertEqual(matrix.rows[5].when.size, ["L"])
+    self.assertEqual(
+      matrix.rows[2].when.to_dict(), roles.RoleWhen(split=False).to_dict(),
+    )
+    self.assertEqual(matrix.rows[6].when.size, ["L"])
     self.assertEqual(
       [rule.text for rule in matrix.rules][2],
       "Roles on the orchestrator's own agent run as subagents; a role on another agent "
       "runs headless in the slice worktree with the same brief.",
     )
-    self.assertEqual([rule.id for rule in matrix.rules], ["u1", "u2", "u3", "u4"])
-    self.assertEqual((matrix.next_row, matrix.next_rule), (7, 5))
+    self.assertEqual([rule.id for rule in matrix.rules], ["u1", "u2", "u3", "u4", "u5"])
+    self.assertEqual((matrix.next_row, matrix.next_rule), (8, 6))
+
+  def test_Skeleton_ImplementerRows_GeneralOnesAreWholeSliceAndPartRowIsSplit(self) -> None:
+    matrix = roles.skeleton()
+    self.assertEqual(
+      [(r.id, r.when.split) for r in matrix.rows],
+      [("r1", False), ("r2", False), ("r3", False), ("r4", True),
+       ("r5", None), ("r6", None), ("r7", None)],
+    )
+    part = matrix.rows[3]
+    self.assertEqual(
+      (part.role, part.agent, part.vendor, part.model, part.reasoning),
+      ("implementer", "Claude Code", "Claude", "haiku", "xhigh"),
+    )
+    self.assertIn("per part", part.note)
+    self.assertEqual(part.when.to_dict(), roles.RoleWhen(split=True).to_dict())
+
+  def test_Skeleton_Rules_NameTheSplitRule(self) -> None:
+    rules = {r.id: r.text for r in roles.skeleton().rules}
+    self.assertEqual(
+      rules["u5"],
+      "Split a slice only into parts with disjoint files and their own tests; "
+      "a slice too big for one implementer is two slices.",
+    )
 
   def test_RenderMarkdown_Skeleton_ShowsGeneratedWhenCells(self) -> None:
     text = roles.render_markdown(roles.skeleton())
     self.assertIn("| Role | When | Agent | Vendor | Model | Reasoning | Note |", text)
     self.assertIn("| ID | Role | When | Agent | Vendor | Model | Reasoning | Note |", text)
     self.assertIn(
-      "| r1 | Implementer | well specified, effort 1, size S or M | Claude Code | Claude | haiku "
+      "| r1 | Implementer | well specified, whole slice, effort 1, size S or M | Claude Code | Claude | haiku "
       "| xhigh |",
       text,
     )
-    self.assertIn("| r6 | Architect | size L | Claude Code |", text)
-    self.assertIn("| r5 | Gate | every slice | Claude Code |", text)
+    self.assertIn("| r7 | Architect | size L | Claude Code |", text)
+    self.assertIn("| r6 | Gate | every slice | Claude Code |", text)
     self.assertIn("\n- u1: A reviewer never wrote code in the slice it reviews.\n", text)
     self.assertEqual(roles.render_markdown(roles.skeleton()), text)
     self.assertTrue(text.endswith("\n") and not text.endswith("\n\n"))
@@ -247,9 +271,23 @@ class RoleRecommendTests(unittest.TestCase):
   def test_Recommend_Skeleton_ProposesTheExampleRowsForSmallAndLargeSlices(self) -> None:
     matrix = roles.skeleton()
     small = roles.recommend(matrix, _item(size="S", effort=1), True, False)
-    self.assertEqual(_ids(small), ["r1", "r4", "r5", None])
+    self.assertEqual(_ids(small), ["r1", "r5", "r6", None])
     large = roles.recommend(matrix, _item(size="L", effort=3), False, False)
-    self.assertEqual(_ids(large), ["r3", "r4", "r5", "r6"])
+    self.assertEqual(_ids(large), ["r3", "r5", "r6", "r7"])
+
+  def test_Recommend_Skeleton_SplitYesReturnsThePartRowAndSplitNoTheWholeSliceRows(self) -> None:
+    matrix = roles.skeleton()
+    item = _item(size="S", effort=1)
+    part = roles.recommend(matrix, item, True, True)
+    self.assertEqual(_ids(part), ["r4", "r5", "r6", None])
+    self.assertEqual(
+      (part[0][1].model, part[0][1].reasoning), ("haiku", "xhigh"),
+    )
+    whole = roles.recommend(matrix, item, True, False)
+    self.assertEqual(_ids(whole), ["r1", "r5", "r6", None])
+    # A whole slice that no specific row matches still falls to the general row, never the part row.
+    other = roles.recommend(matrix, _item(size="M", effort=3), False, False)
+    self.assertEqual(_ids(other), ["r3", "r5", "r6", None])
 
 
 class RelayRolesInitTests(RelayRolesCase):
@@ -272,8 +310,8 @@ class RelayRolesInitTests(RelayRolesCase):
     self.assertEqual(self.snapshot(repo), before)
     self.ok(repo, "relay-roles", "init", "--force")
     data = self.matrix(repo)
-    self.assertEqual([r["id"] for r in data["rows"]], [f"r{n}" for n in range(7, 13)])
-    expected = roles.skeleton(first_row=7, first_rule=5).to_dict()
+    self.assertEqual([r["id"] for r in data["rows"]], [f"r{n}" for n in range(8, 15)])
+    expected = roles.skeleton(first_row=8, first_rule=6).to_dict()
     self.assertEqual(data, expected)
 
   def test_Init_ReplaceLegacy_WritesJsonAndRemovesMarkdown(self) -> None:
@@ -292,13 +330,13 @@ class RelayRolesInitTests(RelayRolesCase):
     self.ok(repo, "relay-roles", "rule-add", "Extra.")
     self.ok(repo, "relay-roles", "init", "--force")
     data = self.matrix(repo)
-    self.assertEqual([r["id"] for r in data["rows"]], [f"r{n}" for n in range(8, 14)])
-    self.assertEqual([r["id"] for r in data["rules"]], [f"u{n}" for n in range(6, 10)])
-    self.assertEqual((data["next_row"], data["next_rule"]), (14, 10))
+    self.assertEqual([r["id"] for r in data["rows"]], [f"r{n}" for n in range(9, 16)])
+    self.assertEqual([r["id"] for r in data["rules"]], [f"u{n}" for n in range(7, 12)])
+    self.assertEqual((data["next_row"], data["next_rule"]), (16, 12))
     self.assertEqual([r["role"] for r in data["rows"]], [r.role for r in roles.skeleton().rows])
     row = json.loads(self.ok(repo, "relay-roles", "add", "--role", "gate", "--json"))
     rule = json.loads(self.ok(repo, "relay-roles", "rule-add", "Again.", "--json"))
-    self.assertEqual((row["id"], rule["id"]), ("r14", "u10"))
+    self.assertEqual((row["id"], rule["id"]), ("r16", "u12"))
 
   def test_Init_Force_CorruptFile_StartsFromTheSkeleton(self) -> None:
     repo = self.with_matrix()
@@ -431,7 +469,7 @@ class RelayRolesAddTests(RelayRolesCase):
       "--agent", "Codex CLI", "--vendor", "OpenAI", "--model", "m1", "--reasoning", "high",
       "--note", "second opinion", "--json",
     ))
-    self.assertEqual(row["id"], "r7")
+    self.assertEqual(row["id"], "r8")
     self.assertEqual(row["when"], {
       "size": ["S", "M"], "effort": [1], "importance": [2, 3], "urgency": [1],
       "well_specified": True, "split": False,
@@ -441,13 +479,13 @@ class RelayRolesAddTests(RelayRolesCase):
       ("reviewer", "Codex CLI", "OpenAI", "m1", "high", "second opinion"),
     )
     self.assertEqual(self.matrix(repo)["rows"][-1], row)
-    self.assertEqual(self.matrix(repo)["next_row"], 8)
+    self.assertEqual(self.matrix(repo)["next_row"], 9)
 
   def test_Add_IdIsNeverReusedAfterRemove(self) -> None:
     repo = self.with_matrix()
-    self.ok(repo, "relay-roles", "remove", "r6")
+    self.ok(repo, "relay-roles", "remove", "r7")
     row = json.loads(self.ok(repo, "relay-roles", "add", "--role", "architect", "--json"))
-    self.assertEqual(row["id"], "r7")
+    self.assertEqual(row["id"], "r8")
 
   def test_Add_WellSpecifiedValues(self) -> None:
     repo = self.with_matrix()
@@ -564,17 +602,17 @@ class RelayRolesEditTests(RelayRolesCase):
     repo = self.with_matrix()
     row = json.loads(self.ok(repo, "relay-roles", "remove", "r2", "--json"))
     self.assertEqual(row["id"], "r2")
-    self.assertEqual([r["id"] for r in self.matrix(repo)["rows"]], ["r1", "r3", "r4", "r5", "r6"])
+    self.assertEqual([r["id"] for r in self.matrix(repo)["rows"]], ["r1", "r3", "r4", "r5", "r6", "r7"])
 
   def test_Move_BeforeAndLast_ReorderRows(self) -> None:
     repo = self.with_matrix()
-    self.ok(repo, "relay-roles", "move", "r6", "--before", "r2")
+    self.ok(repo, "relay-roles", "move", "r7", "--before", "r2")
     self.assertEqual(
-      [r["id"] for r in self.matrix(repo)["rows"]], ["r1", "r6", "r2", "r3", "r4", "r5"],
+      [r["id"] for r in self.matrix(repo)["rows"]], ["r1", "r7", "r2", "r3", "r4", "r5", "r6"],
     )
     self.ok(repo, "relay-roles", "move", "r1", "--last")
     self.assertEqual(
-      [r["id"] for r in self.matrix(repo)["rows"]], ["r6", "r2", "r3", "r4", "r5", "r1"],
+      [r["id"] for r in self.matrix(repo)["rows"]], ["r7", "r2", "r3", "r4", "r5", "r6", "r1"],
     )
 
   def test_Move_NeedsExactlyOnePlacementAndNotItself(self) -> None:
@@ -605,10 +643,10 @@ class RelayRolesRuleTests(RelayRolesCase):
   def test_RuleAdd_AssignsNextIdAndNeverReusesOne(self) -> None:
     repo = self.with_matrix()
     rule = json.loads(self.ok(repo, "relay-roles", "rule-add", "Keep it small.", "--json"))
-    self.assertEqual(rule, {"id": "u5", "text": "Keep it small."})
-    self.ok(repo, "relay-roles", "rule-remove", "u5")
+    self.assertEqual(rule, {"id": "u6", "text": "Keep it small."})
+    self.ok(repo, "relay-roles", "rule-remove", "u6")
     rule = json.loads(self.ok(repo, "relay-roles", "rule-add", "Again.", "--json"))
-    self.assertEqual(rule["id"], "u6")
+    self.assertEqual(rule["id"], "u7")
 
   def test_RuleEditAndRemove_ChangeOnlyThatRule(self) -> None:
     repo = self.with_matrix()
@@ -617,7 +655,7 @@ class RelayRolesRuleTests(RelayRolesCase):
     self.assertEqual(rule, {"id": "u2", "text": "New text."})
     self.ok(repo, "relay-roles", "rule-remove", "u1")
     after = self.matrix(repo)
-    self.assertEqual([r["id"] for r in after["rules"]], ["u2", "u3", "u4"])
+    self.assertEqual([r["id"] for r in after["rules"]], ["u2", "u3", "u4", "u5"])
     self.assertEqual(after["rules"][1:], before["rules"][2:])
     self.assertEqual(after["rows"], before["rows"])
 
@@ -664,11 +702,11 @@ class RelayRolesMutationContractTests(RelayRolesCase):
     repo = self.with_matrix()
     seen = len(self.history(repo))
     expected = (
-      ("relay-roles.r7", "add", "", "gate"),
+      ("relay-roles.r8", "add", "", "gate"),
       ("relay-roles.r1", "set", "", "model"),
       ("relay-roles.r1", "remove", "", "implementer"),
-      ("relay-roles.r2", "move", "1", "6"),
-      ("relay-roles.u5", "rule-add", "", ""),
+      ("relay-roles.r2", "move", "1", "7"),
+      ("relay-roles.u6", "rule-add", "", ""),
       ("relay-roles.u1", "rule-edit", "", ""),
       ("relay-roles.u1", "rule-remove", "", ""),
     )
@@ -770,9 +808,9 @@ class RelayRolesShowAndRenderTests(RelayRolesCase):
 
   def test_Show_LeanJson_KeepsRowsAndRulesWhenEmpty(self) -> None:
     repo = self.with_matrix()
-    for row_id in ("r1", "r2", "r3", "r4", "r5", "r6"):
+    for row_id in ("r1", "r2", "r3", "r4", "r5", "r6", "r7"):
       self.ok(repo, "relay-roles", "remove", row_id)
-    for rule_id in ("u1", "u2", "u3", "u4"):
+    for rule_id in ("u1", "u2", "u3", "u4", "u5"):
       self.ok(repo, "relay-roles", "rule-remove", rule_id)
     payload = json.loads(self.ok(repo, "relay-roles", "show", "--json", "--lean"))
     self.assertEqual((payload["rows"], payload["rules"]), ([], []))
@@ -900,7 +938,7 @@ class RelayRolesRecommendTests(RelayRolesCase):
   def test_Recommend_Json_ReturnsRoleOrderedRowsAndUnmatched(self) -> None:
     repo = self.with_matrix()
     item = self.item(repo, "--size", "S", "--effort", "1")
-    self.ok(repo, "relay-roles", "remove", "r6")
+    self.ok(repo, "relay-roles", "remove", "r7")
     payload = self.recommend(repo, item)
     self.assertEqual(list(payload), ["id", "well_specified", "split", "roles", "unmatched"])
     self.assertEqual((payload["id"], payload["well_specified"], payload["split"]), (item, True, False))
@@ -908,8 +946,8 @@ class RelayRolesRecommendTests(RelayRolesCase):
     self.assertEqual(list(payload["roles"][0]), ["role", "row"])
     rows = {r["id"]: r for r in self.matrix(repo)["rows"]}
     self.assertEqual(payload["roles"][0]["row"], rows["r1"])
-    self.assertEqual(payload["roles"][1]["row"], rows["r4"])
-    self.assertEqual(payload["roles"][2]["row"], rows["r5"])
+    self.assertEqual(payload["roles"][1]["row"], rows["r5"])
+    self.assertEqual(payload["roles"][2]["row"], rows["r6"])
     self.assertIsNone(payload["roles"][3]["row"])
     self.assertEqual(payload["unmatched"], ["architect"])
 
@@ -919,11 +957,11 @@ class RelayRolesRecommendTests(RelayRolesCase):
     payload = self.recommend(repo, item, ws="no")
     self.assertEqual(payload["unmatched"], [])
     self.assertEqual(payload["roles"][0]["row"]["id"], "r3")
-    self.assertEqual(payload["roles"][3]["row"]["id"], "r6")
+    self.assertEqual(payload["roles"][3]["row"]["id"], "r7")
 
   def test_Recommend_Lean_KeepsTheShapeWhenRolesAreUnmatched(self) -> None:
     repo = self.with_matrix()
-    for row_id in ("r1", "r2", "r3", "r4", "r5", "r6"):
+    for row_id in ("r1", "r2", "r3", "r4", "r5", "r6", "r7"):
       self.ok(repo, "relay-roles", "remove", row_id)
     item = self.item(repo)
     payload = json.loads(self.ok(
@@ -948,20 +986,20 @@ class RelayRolesRecommendTests(RelayRolesCase):
     ).splitlines()
     self.assertEqual(len(lines), 4)
     self.assertTrue(lines[0].startswith("implementer  r1  Claude Code  Claude  haiku  xhigh"))
-    self.assertTrue(lines[1].startswith("reviewer  r4  "))
-    self.assertTrue(lines[2].startswith("gate  r5  "))
+    self.assertTrue(lines[1].startswith("reviewer  r5  "))
+    self.assertTrue(lines[2].startswith("gate  r6  "))
     self.assertEqual(lines[3], "architect  (no matching row)")
 
   def test_Recommend_RowWithEmptyFields_PrintsDashesNotBlankColumns(self) -> None:
     repo = self.with_matrix()
-    for row_id in ("r1", "r2", "r3"):
+    for row_id in ("r1", "r2", "r3", "r4"):
       self.ok(repo, "relay-roles", "remove", row_id)
     self.ok(repo, "relay-roles", "add", "--role", "implementer", "--model", "whole")
     item = self.item(repo)
     line = self.ok(
       repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
     ).splitlines()[0]
-    self.assertEqual(line, "implementer  r7  -  -  whole  -")
+    self.assertEqual(line, "implementer  r8  -  -  whole  -")
 
   def test_Recommend_FlagsMissing_AreUsageErrors(self) -> None:
     repo = self.with_matrix()
@@ -1034,7 +1072,7 @@ class RelayRolesRecommendTests(RelayRolesCase):
 
   def test_Recommend_SplitPart_GetsTheSplitRowAndNeverTheWholeSliceRow(self) -> None:
     repo = self.with_matrix()
-    for row_id in ("r1", "r2", "r3"):
+    for row_id in ("r1", "r2", "r3", "r4"):
       self.ok(repo, "relay-roles", "remove", row_id)
     self.ok(repo, "relay-roles", "add", "--role", "implementer", "--split", "no", "--model", "whole")
     self.ok(repo, "relay-roles", "add", "--role", "implementer", "--split", "yes", "--model", "part")
@@ -1044,17 +1082,17 @@ class RelayRolesRecommendTests(RelayRolesCase):
     self.assertIs(part["roles"][0]["row"]["when"]["split"], True)
     whole = self.recommend(repo, item, split="no")
     self.assertEqual(whole["roles"][0]["row"]["model"], "whole")
-    self.ok(repo, "relay-roles", "remove", "r8")
+    self.ok(repo, "relay-roles", "remove", "r9")
     self.assertEqual(self.recommend(repo, item, split="yes")["roles"][0]["row"], None)
 
   def test_Recommend_ItemScores_SelectRowsByImportanceAndUrgency(self) -> None:
     repo = self.with_matrix()
     self.ok(repo, "relay-roles", "add", "--role", "gate", "--importance", "3", "--urgency", "3", "--model", "hot")
-    self.ok(repo, "relay-roles", "move", "r7", "--before", "r5")
+    self.ok(repo, "relay-roles", "move", "r8", "--before", "r6")
     hot = self.item(repo, "--importance", "3", "--urgency", "3")
     calm = self.item(repo, "--importance", "3", "--urgency", "1")
     self.assertEqual(self.recommend(repo, hot)["roles"][2]["row"]["model"], "hot")
-    self.assertEqual(self.recommend(repo, calm)["roles"][2]["row"]["id"], "r5")
+    self.assertEqual(self.recommend(repo, calm)["roles"][2]["row"]["id"], "r6")
 
 
 class AiRelayJsonTests(RelayRolesCase):

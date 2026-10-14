@@ -975,6 +975,54 @@ class AiRelayTests(unittest.TestCase):
     order = text.split("## Order", 1)[1].split("## Gate", 1)[0]
     self.assertIn("the architect, when the owner chose one", order)
 
+  def test_RelayText_Setup_AsksWhetherToSplit(self) -> None:
+    text = ai.relay_text()
+    setup = " ".join(text.split("## Setup", 1)[1].split("## Order", 1)[0].split())
+    for phrase in (
+      "whether the implementation splits into parts",
+      "The default is one implementer.",
+      "parts with disjoint files and their own tests",
+      "a slice too big for one implementer is two slices",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, setup)
+
+  def test_RelayText_Roles_LeadImplementerOwnsTracking(self) -> None:
+    text = ai.relay_text()
+    roles_section = " ".join(text.split("## Roles", 1)[1].split("## Setup", 1)[0].split())
+    for phrase in (
+      "In a split, one lead implementer owns the slice",
+      "runs `slicer start ID --render --strict`, the note and the finish step",
+      "Part implementers change only their own files",
+      "run no slicer command that writes",
+      "A reviewer never wrote code in this slice. In a split, that holds for every part.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, roles_section)
+
+  def test_RelayText_Order_SplitPartsThenOneReview(self) -> None:
+    text = ai.relay_text()
+    order = " ".join(text.split("## Order", 1)[1].split("## Gate", 1)[0].split())
+    for phrase in (
+      "In a split, the parts run in the slice worktree",
+      "in parallel only when their files are disjoint, otherwise one after another",
+      "The orchestrator runs the full suite on the combined diff",
+      "one review and one gate cover the whole slice",
+      "Accepted findings go back to the part that owns the file.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+
+  def test_RelayText_EveryBrief_PartBriefNamesItsFiles(self) -> None:
+    text = ai.relay_text()
+    brief = " ".join(text.split("## Every brief", 1)[1].split(ai.TRACKING_RULE, 1)[0].split())
+    for phrase in (
+      "A part brief names the part's own files, the files it must not touch, "
+      "and its own temp directory",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, brief)
+
   def test_RelayText_Handoff_StillOmitsDone(self) -> None:
     text = ai.relay_text("handoff", "implementation report")
     self.assertIn("## Setup", text)
@@ -1016,10 +1064,10 @@ class AiRelayRolesTests(unittest.TestCase):
     data = json.loads(repo.read(self.ROLES))
     self.assertEqual(
       [(row["role"], row["agent"]) for row in data["rows"]],
-      [("implementer", "Claude Code")] * 3
+      [("implementer", "Claude Code")] * 4
       + [("reviewer", "Claude Code"), ("gate", "Claude Code"), ("architect", "Claude Code")],
     )
-    self.assertEqual(len(data["rules"]), 4)
+    self.assertEqual(len(data["rules"]), 5)
     self.assertEqual(repo.run("check")[0], 0)
 
   def test_RelayInitRoles_FileExists_RefusesWithoutForce(self) -> None:
@@ -1036,7 +1084,7 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(repo.run("relay-roles", "remove", "r1")[0], 0)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--force")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 6)
+    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 7)
 
   def test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError(self) -> None:
     repo = self.project()
@@ -1076,6 +1124,16 @@ class AiRelayRolesTests(unittest.TestCase):
     setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
     self.assertIn(
       "`slicer relay-roles recommend ID --well-specified yes|no --split yes|no`", setup,
+    )
+
+  def test_Relay_MatrixPresent_SetupTellsPartsToPassSplitYes(self) -> None:
+    repo = self.with_matrix()
+    code, out, err = repo.run("ai", "relay")
+    self.assertEqual((code, err), (0, ""))
+    setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
+    self.assertIn(
+      "Pass `--split yes` for a part of a split slice and `--split no` for a whole one.",
+      " ".join(setup.split()),
     )
 
   def test_Relay_NoMatrixOrOutsideProject_DoesNotNameRecommend(self) -> None:
