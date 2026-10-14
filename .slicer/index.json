@@ -8287,7 +8287,7 @@
       "id": "s265",
       "title": "relay-roles recommend's yes/no error must not offer any",
       "short_title": "Recommend yes/no message",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8303,10 +8303,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T02:14:06Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
