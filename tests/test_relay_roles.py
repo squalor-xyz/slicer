@@ -869,6 +869,23 @@ class RelayRolesLegacyTests(RelayRolesCase):
     self.assertEqual((code, err), (0, ""))
     self.assertNotIn("legacy_relay_roles", out)
 
+  def test_AiRelay_DirectoryAtJsonPathAndLeftoverMarkdown_FailsIoWithoutAdvice(self) -> None:
+    repo = self.project()
+    (repo.root / JSON).mkdir()
+    repo.write(LEGACY, "# old matrix\n")
+    code, out, err = repo.run("ai", "relay", "--json")
+    self.assertEqual((code, json.loads(out)["error"]["code"]), (3, "io"))
+    self.assertNotIn("legacy_relay_roles", err)
+
+  def test_AiRelay_ReadableMatrixAndLeftoverMarkdown_StillWarnsOnStderr(self) -> None:
+    repo = self.with_matrix()
+    repo.write(LEGACY, "# old matrix\n")
+    code, out, err = repo.run("ai", "relay")
+    self.assertEqual(code, 0)
+    self.assertIn("legacy_relay_roles", err)
+    self.assertIn("keep the matrix", err)
+    self.assertIn("## Roles matrix", out)
+
 
 class RelayRolesRecommendTests(RelayRolesCase):
   def item(self, repo: support.TempRepo, *flags: str) -> str:

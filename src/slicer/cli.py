@@ -394,10 +394,11 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
   project, finish, required = _ai_project(args)
   roles = None
   if project is not None:
+    # Read first: an unreadable matrix must fail with its own error, not after the advice.
+    matrix = store.read_roles(project)
     legacy = store.legacy_roles_advice(project)
     if legacy is not None:
       print(f"slicer: {legacy}", file=sys.stderr)
-    matrix = store.read_roles(project)
     if matrix is not None:
       # The section sits under `## Roles matrix`, so its headings start one level down.
       roles = role_matrix.render_markdown(matrix, level=2)

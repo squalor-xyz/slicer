@@ -1375,3 +1375,7 @@
 {"when": "2026-10-14T02:13:54Z", "item": "s265", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T02:14:06Z", "item": "s265", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T02:14:06Z", "item": "s265", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: parse_yes_no checks yes/no itself, so a bad recommend --well-specified/--split value says 'must be yes or no'. Relay: haiku/xhigh implementer, opus reviewer and gate; no findings; gate PASS. Full suite 1793 OK (1 skipped).", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:14:30Z", "item": "s266", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:28:31Z", "item": "s266", "action": "note", "from": "", "to": "", "note": "Ready for review: ai relay reads the role matrix before prin", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:28:34Z", "item": "s266", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:28:46Z", "item": "s266", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
