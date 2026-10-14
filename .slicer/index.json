@@ -8328,7 +8328,7 @@
       "id": "s266",
       "title": "ai relay must not print the legacy roles advice before failing on an unreadable matrix",
       "short_title": "ai relay advice before io",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8344,10 +8344,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T02:28:46Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

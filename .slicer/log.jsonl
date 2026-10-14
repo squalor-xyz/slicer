@@ -1379,3 +1379,4 @@
 {"when": "2026-10-14T02:28:31Z", "item": "s266", "action": "note", "from": "", "to": "", "note": "Ready for review: ai relay reads the role matrix before prin", "by": "Jon Robbins"}
 {"when": "2026-10-14T02:28:34Z", "item": "s266", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T02:28:46Z", "item": "s266", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:28:46Z", "item": "s266", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: ai relay reads the role matrix before the legacy_relay_roles advice, so an unreadable or invalid matrix fails with its own error and no advice. Relay: haiku/xhigh implementer, opus reviewer and gate; one CHANGELOG wording fix; gate PASS. Full suite 1795 OK (1 skipped).", "by": "Jon Robbins"}
