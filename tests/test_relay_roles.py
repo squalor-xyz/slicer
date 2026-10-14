@@ -963,6 +963,35 @@ class RelayRolesRecommendTests(RelayRolesCase):
           code=2, error="bad_role_field",
         )
 
+  def test_Recommend_WellSpecifiedMaybe_MessageSaysYesOrNoNotAny(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo)
+    payload = self.refuse(
+      repo, "relay-roles", "recommend", item, "--well-specified", "maybe", "--split", "no",
+      code=2, error="bad_role_field",
+    )
+    self.assertIn("yes or no", payload["message"])
+    self.assertNotIn("any", payload["message"])
+
+  def test_Recommend_SplitMaybe_MessageSaysYesOrNoNotAny(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo)
+    payload = self.refuse(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "maybe",
+      code=2, error="bad_role_field",
+    )
+    self.assertIn("yes or no", payload["message"])
+    self.assertNotIn("any", payload["message"])
+
+  def test_Recommend_SplitAny_MessageSaysYesOrNo(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo)
+    payload = self.refuse(
+      repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "any",
+      code=2, error="bad_role_field",
+    )
+    self.assertIn("yes or no", payload["message"])
+
   def test_Recommend_UnknownItem_IsNoSuchItem(self) -> None:
     repo = self.with_matrix()
     self.refuse(

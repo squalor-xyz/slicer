@@ -1370,3 +1370,7 @@
 {"when": "2026-10-14T02:00:04Z", "item": "s260", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T02:00:16Z", "item": "s260", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T02:00:16Z", "item": "s260", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer setup-git --attributes rewrites .slicer/.gitattributes from the template under the lock; plain setup-git unchanged. This repo's file now carries the RELAY-ROLES line. Relay: haiku/xhigh implementer, opus reviewer and gate; one doc fix from review; gate PASS. Full suite 1790 OK (1 skipped).", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:00:40Z", "item": "s265", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:13:52Z", "item": "s265", "action": "note", "from": "", "to": "", "note": "Ready for review: parse_yes_no checks yes/no itself, so reco", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:13:54Z", "item": "s265", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-14T02:14:06Z", "item": "s265", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
