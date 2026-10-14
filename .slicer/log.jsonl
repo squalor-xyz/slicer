@@ -1387,3 +1387,4 @@
 {"when": "2026-10-14T12:10:51Z", "item": "s258", "action": "note", "from": "", "to": "", "note": "Ready for review: relay text gains the split bullet, lead/pa", "by": "Jon Robbins"}
 {"when": "2026-10-14T12:10:52Z", "item": "s258", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T12:37:09Z", "item": "s258", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T12:37:14Z", "item": "s258", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: relay text covers splitting a slice into parts (Setup bullet, lead/part roles, Order split sequence, part brief, --split yes); relay-roles init skeleton has split:false on r1-r3 and a per-part haiku/xhigh row r4 plus rule u5. Full suite 1803 OK (1 skipped) on the final tree; gate VERDICT: PASS.", "by": "Jon Robbins"}

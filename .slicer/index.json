@@ -8041,7 +8041,7 @@
       "id": "s258",
       "title": "Let a relay split one slice across several implementers",
       "short_title": "Relay split implementers",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s257",
@@ -8060,10 +8060,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T12:37:09Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
