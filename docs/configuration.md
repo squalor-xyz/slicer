@@ -283,10 +283,13 @@ The tracking directory name (`.slicer`) and the render output paths
 (`render/ROADMAP.md`, `render/ROADMAP.html`, `render/slices/<ID>.md`) are fixed.
 
 The escape hatch is `.slicer/templates/*.md` — `slice.md`, `roadmap.md` and `row.md`,
-copied into your project by `init` and yours to edit. They are plain `{{key}}`
-substitution with no loops, no conditionals and no eval; an unknown placeholder raises
-rather than rendering empty. Anything that repeats is flattened before it reaches a
-template.
+copied into your project by `init` and changed with `slicer template`: `list` says which
+differ from the built-in text, `show NAME` prints one (`--default` prints the built-in
+one), `set NAME --file FILE` or `--stdin` replaces it, and `reset NAME` restores the
+built-in text, recreating a deleted file. They are plain `{{key}}` substitution with no
+loops, no conditionals and no eval; an unknown placeholder raises rather than rendering
+empty, and `set` refuses text that names one (`bad_template`) before it writes anything.
+Anything that repeats is flattened before it reaches a template.
 
 Row templates can use `{{discovered_from}}` for the raw source ID (empty when
 absent). `{{findings}}` includes the optional `discovered from ID` annotation,

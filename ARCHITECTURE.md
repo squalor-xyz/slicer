@@ -43,7 +43,7 @@ never pays for curses.
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
   slices/retired/<ID>.json retired, with the reason on the index item
-  templates/*.md           slice.md, roadmap.md, row.md — yours to edit
+  templates/*.md           slice.md, roadmap.md, row.md — changed with `slicer template`
   render/ROADMAP.md        GENERATED
   render/ROADMAP.html      GENERATED, standalone browser view
   render/slices/<ID>.md    GENERATED

@@ -21,7 +21,7 @@ from slicer import (
   feedback, graph, ids, jsonio, outline, prose, refs, render, roles, store, templates, vcs,
 )
 from slicer.config import CONFIG_NAME, Config
-from slicer.errors import ConfigError, StateError
+from slicer.errors import ConfigError, RenderError, StateError
 from slicer.model import (
   CATALOG_ACTIVE, CATALOG_RETIRED, CatalogRecord, Index, Item, LogEntry, NoteRecord,
   PassInfo, Section, Slice, canonical_kind, effort_rank, extract_boundary, is_unscored,
@@ -929,6 +929,55 @@ def config_set(state: State, key: str, value: str | None, *, unset: bool = False
     frm=_config_value_text(previous), to=_config_value_text(now),
   )
   return ConfigChange(key, previous, now, True)
+
+
+# ---- templates -------------------------------------------------------------
+
+TEMPLATE_ACTION = "template"
+
+
+@dataclass
+class TemplateChange:
+  name: str
+  changed: bool
+  customized: bool
+
+
+def _template_kind(text: str | None, name: str) -> str:
+  """How a template reads in history: absent, the built-in text, or the project's own."""
+  if text is None:
+    return "missing"
+  return "default" if text == templates.default(name) else "custom"
+
+
+def template_set(state: State, name: str, text: str) -> TemplateChange:
+  """Replace one project template, refusing text that names an unknown placeholder.
+
+  The proposed text is expanded before anything is staged, so a refusal writes
+  nothing. Text equal to what the file already holds changes nothing and logs
+  nothing. `customized` is whether the file now differs from the built-in text.
+  """
+  templates.require(name)
+  try:
+    render.validate_template(name, text, state.config, state.index)
+  except RenderError as exc:
+    raise StateError(f"{name}: {exc}; nothing was written", code="bad_template") from None
+  before = state.template_exact(name)
+  customized = text != templates.default(name)
+  if before == text:
+    return TemplateChange(name, False, customized)
+  state.save_template(name, text)
+  _record(
+    state, f"{TEMPLATE_ACTION}.{name}", TEMPLATE_ACTION,
+    frm=_template_kind(before, name), to=_template_kind(text, name),
+  )
+  return TemplateChange(name, True, customized)
+
+
+def template_reset(state: State, name: str) -> TemplateChange:
+  """Restore one template to the built-in text, recreating it if it was deleted."""
+  templates.require(name)
+  return template_set(state, name, templates.default(name))
 
 
 def _relocate_slice(state: State, item_id: str) -> None:

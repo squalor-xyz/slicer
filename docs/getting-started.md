@@ -81,7 +81,7 @@ That creates four things:
 ```
 .slicer/config.json        everything project-specific
 .slicer/index.json         the ordered queue — empty, next id S01
-.slicer/templates/*.md     slice.md, roadmap.md, row.md — yours to edit
+.slicer/templates/*.md     slice.md, roadmap.md, row.md — changed with `slicer template`
 .slicer/slices/done/       where finished slices land
 ```
 
@@ -97,8 +97,8 @@ $ slicer init
 ```
 
 `--force` rewrites `config.json` and the three templates. It still leaves `index.json`,
-your slices and your log alone — it is for restoring a template you edited into a corner,
-not for starting over.
+your slices and your log alone — it is not for starting over. To restore one template you
+changed into a corner, `slicer template reset NAME` does that without touching the config.
 
 ## 3. Configure before you add anything
 
@@ -899,7 +899,8 @@ nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
 | `unknown status 'x'; known: [...]` | The status is not a key in `config.statuses`. |
 | `id <X> already exists; ids are never reused` | `add --id` naming a claimed id. Ids are claimed for the life of the project. |
 | `stale render: …` / `check failed` | Run `slicer render` (and `slicer sync` if you have sync targets). |
-| `template missing; re-run \`slicer init --force\` to restore it` | A file under `.slicer/templates/` was deleted. |
+| `template missing; run \`slicer template reset NAME\` to restore it` | A file under `.slicer/templates/` was deleted. |
+| `template uses {{x}}, which is not a known placeholder; nothing was written` | `slicer template set` refused text that names a placeholder the renderer does not know (`bad_template`). The file is unchanged. |
 | `… written by a newer slicer (schema N; this build knows M). Upgrade slicer to open this project.` | The project was saved by a newer slicer. 1.0.0 writes index schema 2 (`config.json` stays at 1): it opens a schema-1 project with no migration step, and the first change it saves stamps schema 2, after which an older build refuses the project rather than dropping claims. Upgrade every clone that shares the project. Pre-release checkouts from before this guard (S72) do not refuse; they can drop claims and rewrite the file at schema 1. |
 | `Git merge in progress in …; finish or abort it before changing slicer state.` | slicer refuses state changes, including TUI saves, while this checkout has a merge to finish (`merge_in_progress`, exit 2). Read-only commands, dry runs, `render` and `sync` still work for the repair; finish or abort the merge, then retry. |
 | `running code from …, but this project is … -- a different worktree of the same repo` | A stderr note, not an error: an editable install from one worktree is running against another worktree's `.slicer/`, so that checkout's `src/` edits are not what runs. Use `PYTHONPATH=src python3 -m slicer` in the checkout you are editing, or set `SLICER_NO_CODE_WARNING=1` to silence it. |

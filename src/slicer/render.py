@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import html
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Mapping
 
-from slicer import ids, roles
+from slicer import ids, roles, templates
 from slicer.config import Config
 from slicer.errors import RenderError
 from slicer.model import (
@@ -51,6 +51,32 @@ def expand(template: str, ctx: Mapping[str, str]) -> str:
     return ctx[key]
 
   return PLACEHOLDER_RE.sub(replace, template)
+
+
+def validate_template(name: str, text: str, cfg: Config, index: Index) -> None:
+  """Render with a proposed template to find out whether it would render, writing nothing.
+
+  Expands it once against stand-in data, because the project's own data only reaches
+  a template it uses: a project with no slice never expands `slice.md`. The real
+  renderers build each context, so the set of known placeholders stays defined in
+  one place. A row template is also rendered in the roadmap table, over the project's
+  own items and a stand-in, which is where a row with the wrong number of cells shows. The other templates a render
+  needs are the built-in ones, so a project missing one can still fix this one.
+  Raises `RenderError` naming the first problem.
+  """
+  if name == "slice.md":
+    slice_body(Slice(id="S00", title="stand-in"), cfg, text)
+  elif name == "row.md":
+    # The project's items plus a stand-in, so a project with no item yet still gets
+    # a table header to measure the row against.
+    stand_in = Item(id="S00", title="stand-in", status=cfg.open_status)
+    render_roadmap(
+      replace(index, items=[*index.items, stand_in]), cfg, templates.default("roadmap.md"), text,
+    )
+  elif name == "roadmap.md":
+    render_roadmap(Index(), cfg, text, "")
+  else:
+    raise RenderError(f"{name} is not a template")
 
 
 def tidy(text: str) -> str:
