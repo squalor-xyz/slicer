@@ -685,9 +685,11 @@ git config merge.slicer-generated.name "keep the current branch's generated file
 git config merge.slicer-generated.driver true
 git config merge.slicer-index.name "keep the larger next_id when merging the index"
 git config merge.slicer-index.driver "slicer merge-index %O %A %B"
+git config merge.slicer-relay-roles.name "keep both sides' relay roles rows and rules with fresh ids"
+git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"
 ```
 
-The last two turn on the `slicer-index` driver for `index.json`. Every filing moves the
+The middle two turn on the `slicer-index` driver for `index.json`. Every filing moves the
 single `next_id` line, and edits to neighbouring items or fields overlap as lines, so
 two branches conflict there even when they changed different things. The driver merges
 by identity instead: items by id, object fields by name. It takes the larger `next_id`,
@@ -720,6 +722,29 @@ resolving a merge — the driver only skips the markers, it does not re-project 
 configured the driver, so a forgotten setup is caught before a merge writes markers rather
 than after. A single-worktree clone stays quiet, and `render_driver_check: false` in config
 turns the reminder off entirely.
+
+The last two `git config` lines turn on the `slicer-relay-roles` driver for
+`relay-roles.json`. (`slicer verify` does not warn when it is missing.) Two branches that
+each run `relay-roles add` issue the same `r` id, and `rule-add` the same `u` id, so Git
+can only call that a text conflict, and the file may not be repaired by hand. The driver
+matches rows and rules by id and fields by name, so edits to different rows, rules or
+fields all merge. A row or rule that both sides issued under one id with different
+content (or that the other side added under an id you issued and then removed) is kept
+twice: yours keeps the id and the one merged in gets a fresh id past every id either side
+issued, with its text unchanged; the counters end past every issued id, so they never
+issue an id twice. The reverse case is the one exception: an id that only the merged-in
+side issued and then removed can be kept by a row your side added under it, and its
+history then shows an add and a remove for that id before your row. The driver's stderr
+line is the only record of a renumbering: it writes no `log.jsonl` entry, and history
+keeps the original ids. Rows added identically on both sides are kept once. It refuses,
+with code `merge_conflict`, when both sides changed one value differently, one removed a
+row or rule the other edited, or both reordered the rows differently. A refusal leaves
+the file as it was, and slicer refuses writes while the merge is unfinished, so: keep one
+side with `git checkout --ours|--theirs .slicer/relay-roles.json`, `git add` it, finish
+the merge, then re-apply the other side's changes (every row and rule it added or
+edited, not only the conflicting value) with `slicer relay-roles`. A project created
+before this driver takes the line `relay-roles.json merge=slicer-relay-roles` with
+`slicer setup-git --attributes`.
 
 ### Priority
 
@@ -904,7 +929,7 @@ nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
 | `Git merge in progress in …; finish or abort it before changing slicer state.` | slicer refuses state changes, including TUI saves, while this checkout has a merge to finish (`merge_in_progress`, exit 2). Read-only commands, dry runs, `render` and `sync` still work for the repair; finish or abort the merge, then retry. |
 | `running code from …, but this project is … -- a different worktree of the same repo` | A stderr note, not an error: an editable install from one worktree is running against another worktree's `.slicer/`, so that checkout's `src/` edits are not what runs. Use `PYTHONPATH=src python3 -m slicer` in the checkout you are editing, or set `SLICER_NO_CODE_WARNING=1` to silence it. |
 | `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
-| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth. With the `slicer-index` driver configured (see below), independent items and fields merge and `next_id` takes the larger value, so resolve only the conflicts it leaves (markers around the single field or item; stderr names them). For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see below) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. |
+| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth. With the `slicer-index` driver configured (see below), independent items and fields merge and `next_id` takes the larger value, so resolve only the conflicts it leaves (markers around the single field or item; stderr names them). For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see below) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. A conflict on `relay-roles.json` is either the `slicer-relay-roles` driver refusing a disagreement (`merge_conflict`, or `corrupt` when an input is not a readable matrix; the file is left as it was) or, with the driver not configured in this clone, Git's text markers in the file. Either way never edit it by hand: keep one side with `git checkout --ours|--theirs .slicer/relay-roles.json`, `git add` it, finish the merge, then re-apply the other side's changes (every row and rule it added or edited, not only the conflicting value) with `slicer relay-roles`. |
 
 `slicer verify` is the broader health check — dangling dependencies, cycles, a dependency
 on a retired item, slices in the wrong folder for their status, a slice file whose name

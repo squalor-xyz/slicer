@@ -85,6 +85,7 @@ reproduce is never half-migrated.
 | `init` | create .slicer/ in a project; choose an ID prefix, width, and starting ID |
 | `setup-git` | print the git config that turns on the merge drivers (run once per clone) |
 | `merge-index` | the `index.json` merge driver Git runs; merges independent items and fields, unions notes both sides added, and takes the larger `next_id` |
+| `merge-relay-roles` | the `relay-roles.json` merge driver Git runs; keeps both sides' rows and rules, gives the one merged in a fresh id when both issued the same id, and refuses a same-field disagreement without writing |
 | `import` | add items in bulk from a markdown outline |
 | `migrate` | convert an existing markdown slice tree |
 | `next` | the highest-priority startable item |
