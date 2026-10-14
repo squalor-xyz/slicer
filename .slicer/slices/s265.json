@@ -1,0 +1,41 @@
+{
+  "id": "s265",
+  "title": "relay-roles recommend's yes/no error must not offer any",
+  "lead": [
+    "`ops.parse_yes_no` delegates to `_parse_yes_no_any`. That function rejects any value that is not yes, no or any with the message \"must be yes, no or any\", so `relay-roles recommend --split maybe` tells the user to try `any`, which `recommend` also refuses. `parse_yes_no` should check for yes or no itself, so every refused value gets \"must be yes or no\"."
+  ],
+  "depends_note": null,
+  "findings_note": "s259 gate, 2026-10-13: recommend --split maybe fails with 'must be yes, no or any', but recommend accepts only yes or no",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the `bad_role_field` code, changing `_parse_yes_no_any` or the `add`/`set` flags that accept `any`, and changing which values `recommend` accepts.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s259 gate found this (low). The error code is correct, but the message points at a value the command then refuses. It was left out of s259 because any code change after the gate would have needed another gate."
+    },
+    {
+      "heading": "Files",
+      "body": "src/slicer/ops.py (`parse_yes_no`), tests/test_relay_roles.py, CHANGELOG.md."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `relay-roles recommend ID --well-specified maybe --split no` exits 2 with `bad_role_field`. Its message says \"yes or no\" and does not contain \"any\".\n- The same holds for `--split maybe`.\n- `--split any` still exits 2 with `bad_role_field` and \"yes or no\"."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. In `parse_yes_no`, refuse any value other than yes or no with the \"must be yes or no\" message before mapping it, without going through `_parse_yes_no_any`.\n2. Add the tests and a CHANGELOG `[Unreleased]` entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s265`, branch `feature/s265-recommend-yes-no-message`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

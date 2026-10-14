@@ -1354,3 +1354,7 @@
 {"when": "2026-10-13T21:57:53Z", "item": "s259", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-13T21:58:04Z", "item": "s259", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-13T21:58:04Z", "item": "s259", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: relay-roles recommend ID --well-specified yes|no --split yes|no proposes each role's first matching matrix row, read-only; ai relay Setup names it. Relay: sonnet/high implementer, opus reviewer and gate; one medium finding (--lean formatting) fixed; gate PASS. Full suite 1781 OK (1 skipped).", "by": "Jon Robbins"}
+{"when": "2026-10-14T00:49:23Z", "item": "s265", "action": "add", "from": "", "to": "open", "note": "relay-roles recommend's yes/no error must not offer any"}
+{"when": "2026-10-14T00:49:23Z", "item": "s266", "action": "add", "from": "", "to": "open", "note": "ai relay must not print the legacy roles advice before failing on an unreadable matrix"}
+{"when": "2026-10-14T00:49:38Z", "item": "s265", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-14T00:49:38Z", "item": "s266", "action": "promote", "from": "", "to": "", "note": ""}
