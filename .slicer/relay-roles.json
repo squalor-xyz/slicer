@@ -15,7 +15,7 @@
         "importance": [],
         "urgency": [],
         "well_specified": true,
-        "split": null
+        "split": false
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -36,7 +36,7 @@
         "importance": [],
         "urgency": [],
         "well_specified": true,
-        "split": null
+        "split": false
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -53,13 +53,30 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": null
+        "split": false
       },
       "agent": "Claude Code",
       "vendor": "Claude",
       "model": "sonnet",
       "reasoning": "high",
       "note": "anything the rows above do not match"
+    },
+    {
+      "id": "r7",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": true
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "haiku",
+      "reasoning": "xhigh",
+      "note": "per part of a split slice"
     },
     {
       "id": "r4",
@@ -131,8 +148,12 @@
     {
       "id": "u4",
       "text": "\"well specified\" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision."
+    },
+    {
+      "id": "u5",
+      "text": "Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices."
     }
   ],
-  "next_row": 7,
-  "next_rule": 5
+  "next_row": 8,
+  "next_rule": 6
 }
