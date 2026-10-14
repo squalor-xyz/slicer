@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">255 items · — 1 · done 249 · retired 4 · reviewing 1</p>
+<p class="summary">255 items · — 1 · done 250 · retired 4</p>
 <h2>v1.10</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>s257</td><td>Relay roles as JSON</td><td>L</td><td>3</td><td>slicer</td><td>owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row</td><td class="status">done</td></tr>
@@ -57,7 +57,7 @@
 <tr class="done"><td>8</td><td>s264</td><td>Edit templates through the CLI</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; docs/configuration.md and docs/commands.md call .slicer/templates/*.md yours to edit, and a missing template&#x27;s fix is init --force, which also rewrites config · discovered from s257</td><td class="status">done</td></tr>
 <tr class="done"><td>9</td><td>s265</td><td>Recommend yes/no message</td><td>S</td><td>1</td><td>slicer</td><td>s259 gate, 2026-10-13: recommend --split maybe fails with &#x27;must be yes, no or any&#x27;, but recommend accepts only yes or no · discovered from s259</td><td class="status">done</td></tr>
 <tr class="done"><td>10</td><td>s266</td><td>ai relay advice before io</td><td>S</td><td>1</td><td>slicer</td><td>s261 relay, 2026-10-13: with a directory at .slicer/relay-roles.json and a leftover relay-roles.md, ai relay prints the legacy_relay_roles advice on stderr and then fails with io · discovered from s261</td><td class="status">done</td></tr>
-<tr class="started"><td>11</td><td>s267</td><td>Relay roles driver warning</td><td>S</td><td>1</td><td>slicer</td><td>s262 implementer and reviewer, 2026-10-14: verify warns for unconfigured slicer-generated and slicer-index drivers but not slicer-relay-roles; owner chose a follow-up · discovered from s262</td><td class="status">reviewing</td></tr>
+<tr class="done"><td>11</td><td>s267</td><td>Relay roles driver warning</td><td>S</td><td>1</td><td>slicer</td><td>s262 implementer and reviewer, 2026-10-14: verify warns for unconfigured slicer-generated and slicer-index drivers but not slicer-relay-roles; owner chose a follow-up · discovered from s262</td><td class="status">done</td></tr>
 <tr class="open"><td>12</td><td>s268</td><td>Init relay roles</td><td>S</td><td>1</td><td>slicer</td><td>owner, 2026-10-14: a new project should get the example matrix or be told about it at init; chose opt-in init --relay-roles plus a hint</td><td class="status">—</td></tr>
 </tbody></table>
 <h2>v1.9</h2>

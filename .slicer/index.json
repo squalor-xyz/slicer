@@ -8439,7 +8439,7 @@
       "id": "s267",
       "title": "Warn in verify when the relay-roles merge driver is not configured",
       "short_title": "Relay roles driver warning",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s262"
@@ -8457,10 +8457,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T17:25:32Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
