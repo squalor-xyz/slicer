@@ -31,6 +31,7 @@ READ_ONLY = {
     ("--get", "user.name"),
     ("--get", "merge.slicer-generated.driver"),
     ("--get", "merge.slicer-index.driver"),
+    ("--get", "merge.slicer-relay-roles.driver"),
   }),
 }
 
@@ -245,6 +246,13 @@ def index_driver_configured(root: Path) -> bool:
   up. Same read-only query and the same reading of "not configured" as the render
   driver."""
   return _driver_configured(root, "slicer-index")
+
+
+def relay_roles_driver_configured(root: Path) -> bool:
+  """Whether this clone has the `slicer-relay-roles` merge driver for
+  `relay-roles.json` set up. Same read-only query and the same reading of "not
+  configured" as the render and index drivers."""
+  return _driver_configured(root, "slicer-relay-roles")
 
 
 def merge_file(cwd: Path, base: Path, ours: Path, theirs: Path) -> tuple[int, str]:

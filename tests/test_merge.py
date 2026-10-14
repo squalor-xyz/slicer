@@ -11,6 +11,7 @@ from unittest.mock import patch
 import support
 
 from slicer import ops, store, tui, vcs
+from slicer.errors import StateError
 
 
 def start_merge(repo: support.TempRepo) -> None:
@@ -263,16 +264,32 @@ class RenderDriverSetupHintTests(unittest.TestCase):
 
   def test_Vcs_Config_AllowsOnlyReadOnlyGets(self) -> None:
     # config is allowlisted only for read-only `--get`s: the git user (S114, for
-    # claims) and the two merge drivers (S123, S191, to warn when unset). slicer must
-    # still never *write* config, so no other form is permitted.
+    # claims) and the three merge drivers (S123, S191, s267, to warn when unset). slicer
+    # must still never *write* config, so no other form is permitted.
     self.assertEqual(
       vcs.READ_ONLY.get("config"),
       frozenset({
         ("--get", "user.name"),
         ("--get", "merge.slicer-generated.driver"),
         ("--get", "merge.slicer-index.driver"),
+        ("--get", "merge.slicer-relay-roles.driver"),
       }),
     )
+
+  def test_Vcs_RelayRolesDriverRead_IsAllowedButOtherConfigIsRefused(self) -> None:
+    # s267: the one new read is the relay-roles driver. Reading it must not raise
+    # (unset reads as exit 1), while writing, unsetting and reading another name stay
+    # refused before git runs.
+    with support.TempRepo(git=True) as repo:
+      read = vcs._run(repo.root, "config", "--get", "merge.slicer-relay-roles.driver")
+      self.assertEqual(read.returncode, 1)
+      for argv in (
+        ("config", "merge.slicer-relay-roles.driver", "slicer merge-relay-roles %O %A %B"),
+        ("config", "--unset", "merge.slicer-relay-roles.driver"),
+        ("config", "--get", "merge.slicer-relay-roles.name"),
+      ):
+        with self.assertRaises(StateError):
+          vcs._run(repo.root, *argv)
 
 
 class SetupGitCommandTests(unittest.TestCase):
@@ -462,9 +479,14 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
 
   MISSING = "render merge driver not configured"
   INDEX_MISSING = "index merge driver not configured"
+  RELAY_MISSING = "relay-roles merge driver not configured"
 
   def _configure_driver(self, repo: support.TempRepo) -> None:
     repo._git("config", "merge.slicer-generated.driver", "true")
+
+  def _configure_render_and_index(self, repo: support.TempRepo) -> None:
+    self._configure_driver(repo)
+    repo._git("config", "merge.slicer-index.driver", "slicer merge-index %O %A %B")
 
   def _add_sibling(self, repo: support.TempRepo) -> None:
     repo.commit("base")  # `git worktree add` needs a commit
@@ -486,22 +508,30 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
       self.assertIn("setup-git", out)
 
   def test_Verify_SingleWorktree_StaysQuiet(self) -> None:
-    # The solo case: one worktree, driver unset -> no nag.
+    # The solo case: one worktree, driver unset -> no nag, even with a matrix (s267).
     with support.TempRepo(git=True) as repo:
       repo.run("init")
+      repo.run("relay-roles", "init")
       repo.commit("base")
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
       self.assertNotIn(self.MISSING, out)
+      self.assertNotIn(self.RELAY_MISSING, out)
+      self._add_sibling(repo)  # the control: the same matrix warns once there is a sibling
+      self.assertIn(self.RELAY_MISSING, repo.run("verify")[1])
 
   def test_Verify_RenderDriverCheckOff_SilencesEvenWithSibling(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")
+      repo.run("relay-roles", "init")
       self._set_config(repo, render_driver_check=False)
       self._add_sibling(repo)
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
       self.assertNotIn(self.MISSING, out)
+      self.assertNotIn(self.RELAY_MISSING, out)
+      self._set_config(repo, render_driver_check=True)  # the control: the flag is what silenced it
+      self.assertIn(self.RELAY_MISSING, repo.run("verify")[1])
 
   def test_Verify_DriverConfigured_NoWarning(self) -> None:
     with support.TempRepo(git=True) as repo:
@@ -534,6 +564,44 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
       self._set_config(repo, render_driver_check=False)
       self._add_sibling(repo)
       self.assertNotIn(self.INDEX_MISSING, repo.run("verify")[1])
+
+  def test_Verify_SiblingWorktreeRelayRolesDriverUnset_WarnsAndPointsAtSetupGit(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      repo.run("relay-roles", "init")
+      self._configure_render_and_index(repo)
+      self._add_sibling(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)  # a warning never fails verify
+      self.assertIn(self.RELAY_MISSING, out)
+      self.assertIn("setup-git", out)
+      self.assertNotIn(self.MISSING, out)  # only the relay-roles driver is unset
+      self.assertNotIn(self.INDEX_MISSING, out)
+
+  def test_Verify_RelayRolesDriverConfigured_DoesNotWarn(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      repo.run("relay-roles", "init")
+      self._configure_render_and_index(repo)
+      self._add_sibling(repo)
+      self.assertIn(self.RELAY_MISSING, repo.run("verify")[1])  # the control: unset warns
+      repo._git("config", "merge.slicer-relay-roles.driver", "slicer merge-relay-roles %O %A %B")
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertNotIn(self.RELAY_MISSING, out)
+
+  def test_Verify_NoRelayRolesMatrix_DoesNotWarnAboutItsDriver(self) -> None:
+    with support.TempRepo(git=True) as repo:  # a matrix and the driver unset: it warns
+      repo.run("init")
+      repo.run("relay-roles", "init")
+      self._add_sibling(repo)
+      self.assertIn(self.RELAY_MISSING, repo.run("verify")[1])
+    with support.TempRepo(git=True) as repo:  # no matrix, driver unset: it stays quiet
+      repo.run("init")
+      self._add_sibling(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)
+      self.assertNotIn(self.RELAY_MISSING, out)
 
   def test_Verify_OutsideGitRepo_NoDriverWarning(self) -> None:
     with support.TempRepo() as repo:  # not a git repo
