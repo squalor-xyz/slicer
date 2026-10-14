@@ -49,6 +49,29 @@ LOCK_TIMEOUT_ENV = "SLICER_LOCK_TIMEOUT"
 DEFAULT_LOCK_TIMEOUT = 5.0
 
 
+def _template_missing(path: Path, name: str) -> str:
+  return f"{path}: template missing; run `slicer template reset {name}` to restore it"
+
+
+def read_template_exact(root: Path, name: str) -> str | None:
+  """One project template without loading the project; None when the file is missing."""
+  path = root / DIR_NAME / TEMPLATES_DIR / name
+  try:
+    return path.read_bytes().decode("utf-8")
+  except FileNotFoundError:
+    return None
+  except UnicodeDecodeError as exc:
+    raise StateError(f"{path}: not valid UTF-8: {exc}", code="io") from None
+
+
+def require_template_text(root: Path, name: str) -> str:
+  """`read_template_exact`, but a missing file is the `template missing` error."""
+  text = read_template_exact(root, name)
+  if text is None:
+    raise StateError(_template_missing(root / DIR_NAME / TEMPLATES_DIR / name, name))
+  return text
+
+
 def discover(start: Path | None = None) -> Path:
   """Return the repo root holding `.slicer/`, walking up from `start`."""
   here = (start or Path.cwd()).resolve()
@@ -204,6 +227,7 @@ class _Stage:
   # failed render never deletes a file the index still names.
   deletes: list[Path] = field(default_factory=list)
   config: dict | None = None
+  templates: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -289,10 +313,30 @@ class State:
     return None
 
   def template(self, name: str) -> str:
+    """A project template, or the text a staged change would give it."""
+    if self._stage is not None and name in self._stage.templates:
+      return self._stage.templates[name]
     path = self.templates_dir / name
     if not path.is_file():
-      raise StateError(f"{path}: template missing; re-run `slicer init --force` to restore it")
+      raise StateError(_template_missing(path, name))
     return path.read_text(encoding="utf-8")
+
+  def template_exact(self, name: str) -> str | None:
+    """A template's text as stored, newlines untranslated, or None when it is missing.
+
+    `template` reads like the renderer does; this is for comparing against a
+    default or printing the file, where CRLF must stay CRLF.
+    """
+    if self._stage is not None and name in self._stage.templates:
+      return self._stage.templates[name]
+    return read_template_exact(self.root, name)
+
+  def save_template(self, name: str, text: str) -> None:
+    """Write a template, or hold it until the staged change commits."""
+    if self._stage is not None:
+      self._stage.templates[name] = text
+      return
+    jsonio.write_text(self.templates_dir / name, text)
 
   def save_index(self) -> None:
     # Stamp the schema this build writes so an older slicer refuses the file
@@ -444,6 +488,9 @@ class State:
     # a mismatch `verify` reports and re-running `id-prefix` repairs.
     if stage.config is not None:
       jsonio.write(self.dir / CONFIG_NAME, stage.config)
+    # Nothing names a template, so no write has to precede it; history stays last.
+    for name, text in stage.templates.items():
+      jsonio.write_text(self.templates_dir / name, text)
     try:
       for entry in stage.logs:
         jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())

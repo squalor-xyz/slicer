@@ -96,6 +96,7 @@ reproduce is never half-migrated.
 | `show` | print one slice |
 | `sections` | list configured section names, marking the ones next requires |
 | `config` | print the effective config, or one value by dotted key; set or unset one key |
+| `template` | list, show, replace and reset the render templates |
 | `recommended-workflow` | print the generic recommended project workflow |
 | `add` | append a roadmap item |
 | `promote` | give an item a slice file |

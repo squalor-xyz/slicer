@@ -8282,11 +8282,26 @@
       "id": "s264",
       "title": "Show, replace and reset render templates through the CLI instead of hand-editing them",
       "short_title": "Edit templates through the CLI",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "116a88b9-ade5-475c-b86e-63cbc1b18142",
+          "kind": "",
+          "text": "**2026-10-14** — Ready for review: slicer template list/show/set/reset added (ops.template_set/template_reset, staged template writes in store, render.validate_template). set refuses an unknown placeholder or a row with the wrong cell count as the new code bad_template and writes nothing; unknown names are unknown_template; the missing-template message names template reset. Docs, README row, CHANGELOG, ai.py/SKILL.md wording updated; ARCHITECTURE.md also reworded (not in the slice's Files list). Full suite 1875 tests OK (1 skipped); check and diff --check clean.",
+          "created_at": "2026-10-14T13:38:19Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-14T13:43:46Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -8304,7 +8319,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

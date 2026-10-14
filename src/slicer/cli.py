@@ -45,6 +45,7 @@ from slicer import (
   roles as role_matrix,
   store,
   sync,
+  templates,
   verify,
   vcs,
   workflow,
@@ -2520,6 +2521,90 @@ def _config_set_locked(args: argparse.Namespace) -> int:
 _config_write = _mutating(_config_set_locked)
 
 
+def _template_rows(root: Path) -> list[dict[str, object]]:
+  rows = []
+  for name in templates.TEMPLATE_NAMES:
+    text = store.read_template_exact(root, name)
+    rows.append({
+      "name": name,
+      "customized": text != templates.default(name),
+      "missing": text is None,
+    })
+  return rows
+
+
+def cmd_template_list(args: argparse.Namespace) -> int:
+  """Each template and whether the project's copy differs from the built-in one."""
+  root = store.discover(Path(args.root).resolve() if args.root else None)
+  rows = _template_rows(root)
+  width = max(len(str(row["name"])) for row in rows)
+  lines = [
+    f"{str(row['name']).ljust(width)}  "
+    + ("missing" if row["missing"] else "customized" if row["customized"] else "default")
+    for row in rows
+  ]
+  _emit(args, rows, "\n".join(lines))
+  return OK
+
+
+def cmd_template_show(args: argparse.Namespace) -> int:
+  """One template, byte for byte: the project's copy, or the built-in one with --default."""
+  name = templates.require(args.name)
+  if args.default:
+    text = templates.default(name)
+  else:
+    root = store.discover(Path(args.root).resolve() if args.root else None)
+    text = store.require_template_text(root, name)
+  if args.json:
+    _emit(args, {"name": name, "text": text}, "")
+  else:
+    # Not `_emit`: it ends the text with a newline, and a template is whole as it is.
+    sys.stdout.write(text)
+  return OK
+
+
+def _template_source(args: argparse.Namespace) -> str:
+  """The new template text from exactly one of --file or --stdin, newlines untouched."""
+  if args.file is not None and args.stdin:
+    raise StateError("choose only one of --file or --stdin", code="usage")
+  if args.file is not None:
+    try:
+      return Path(args.file).read_bytes().decode("utf-8")
+    except UnicodeDecodeError as exc:
+      raise StateError(f"{args.file}: not valid UTF-8: {exc}", code="io") from None
+  if args.stdin:
+    try:
+      return sys.stdin.read()
+    except UnicodeDecodeError as exc:
+      raise StateError(f"stdin: not valid UTF-8: {exc}", code="io") from None
+  raise StateError("give the template text with --file or --stdin", code="usage")
+
+
+def _template_write(args: argparse.Namespace, change: ops.TemplateChange) -> int:
+  if not change.changed:
+    args._no_change = True
+    text = f"{change.name} is already " + (
+      "that text" if change.customized else "the default")
+  else:
+    verb = "reset" if args.template_command == "reset" else "replaced"
+    hint = _render_hint(args)
+    text = f"{verb} {change.name}" + (f"; {hint}" if hint else "")
+  _emit(args, {"name": change.name, "changed": change.changed,
+               "customized": change.customized}, text)
+  return OK
+
+
+def cmd_template_set(args: argparse.Namespace) -> int:
+  name = templates.require(args.name)
+  text = _template_source(args)
+  return _template_write(args, ops.template_set(_state(args), name, text))
+
+
+def cmd_template_reset(args: argparse.Namespace) -> int:
+  name = templates.require(args.name)
+  return _template_write(args, ops.template_reset(_state(args), name))
+
+
 def cmd_goals(args: argparse.Namespace) -> int:
   """Project direction in one read: prose, plus goal and non-goal records."""
   state = _state(args)
@@ -3458,6 +3543,28 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("--after", help="insert after this pass instead of at the end")
 
   _strict_flag(_render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty pass group"))).add_argument("key")
+
+  sp = sub.add_parser("template", help="show, replace and reset the render templates", parents=[common])
+  tsub = sp.add_subparsers(dest="template_command", required=True)
+
+  def tadd(name: str, fn, help_: str, *, write: bool = False) -> argparse.ArgumentParser:
+    inner = tsub.add_parser(name, help=help_, parents=[common])
+    inner.set_defaults(func=_mutating(fn) if write else fn)
+    _json_flags(inner)
+    if write:
+      _check_flag(_strict_flag(_render_flag(inner)))
+    return inner
+
+  tadd("list", cmd_template_list, "name each template and say whether it differs from the default")
+  inner = tadd("show", cmd_template_show, "print a template byte for byte")
+  inner.add_argument("name", help="slice.md, roadmap.md or row.md")
+  inner.add_argument("--default", action="store_true", help="print the built-in template, not the project's")
+  inner = tadd("set", cmd_template_set, "replace a template with new text", write=True)
+  inner.add_argument("name", help="slice.md, roadmap.md or row.md")
+  inner.add_argument("--file", help="read the new text from this file, exactly")
+  inner.add_argument("--stdin", action="store_true", help="read the new text from stdin")
+  tadd("reset", cmd_template_reset, "restore a template to the built-in text",
+       write=True).add_argument("name", help="slice.md, roadmap.md or row.md")
 
   sp = _strict_flag(_render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright")))
   sp.add_argument("id")
