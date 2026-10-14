@@ -2,7 +2,7 @@
   "id": "s260",
   "title": "Refresh .slicer/.gitattributes in an existing project through the CLI",
   "lead": [
-    "`slicer setup-git` (or a flag on it) rewrites `.slicer/.gitattributes` from the current template, so an existing project picks up new merge-driver lines without running `init` or editing the file by hand."
+    "`slicer setup-git --attributes` rewrites `.slicer/.gitattributes` from the current template, so an existing project picks up new merge-driver lines without running `init` or editing the file by hand. Without the flag, `setup-git` is unchanged: it is read-only, it works outside a project, and its stdout is the `git config` commands, for piping to `sh`. The owner chose this shape on 2026-10-13."
   ],
   "depends_note": null,
   "findings_note": "s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates",
@@ -18,19 +18,19 @@
     },
     {
       "heading": "Files",
-      "body": "src/slicer/ops.py (the GITATTRIBUTES write), src/slicer/cli.py (`setup-git`), tests/test_merge.py, docs/commands.md, docs/agents.md, CHANGELOG.md."
+      "body": "src/slicer/ops.py (the GITATTRIBUTES write), src/slicer/cli.py (`setup-git`), tests/test_merge.py, docs/commands.md, docs/agents.md, docs/getting-started.md, CHANGELOG.md."
     },
     {
       "heading": "Failing tests",
-      "body": "- `setup-git` on a project whose `.slicer/.gitattributes` lacks a template line rewrites the file to the template. It reports the path in its JSON payload and touches no other `.slicer/` file.\n- A file that already matches the template is left byte-identical and reported as unchanged."
+      "body": "- `setup-git --attributes` in a project whose `.slicer/.gitattributes` lacks a template line rewrites the file to the template and touches no other `.slicer/` file. In text mode, stdout is still exactly the `git config` commands, byte-identical to plain `setup-git`, so `| sh` keeps working, and the attributes report goes to stderr. With `--json`, the payload is `{commands, attributes: {path, changed}}`.\n- A file that already matches the template is left byte-identical and reported with `changed: false`.\n- A missing `.slicer/.gitattributes` is created.\n- `setup-git --attributes` outside a project exits 2 with the usual no-project error and writes nothing.\n- Plain `setup-git` (no flag) is unchanged: its output and `--json` list are identical to before, it writes nothing, and it still works outside a project.\n- The write takes the project lock. With the lock held, `--attributes` fails with `locked`."
     },
     {
       "heading": "Implement",
-      "body": "1. Factor the GITATTRIBUTES write out of `init` into an op that compares bytes and writes only when they differ.\n2. Call that op from `setup-git` after its existing git config step.\n3. Update the docs and the CHANGELOG.\n4. Run it on this repo so `.slicer/.gitattributes` gains the RELAY-ROLES line."
+      "body": "1. Factor the GITATTRIBUTES write out of `init` into an op in `ops.py` that compares bytes and writes only when they differ. `init` keeps using it.\n2. Add `--attributes` to `setup-git`. With the flag, discover the project, call the op under the lock, print the commands as before, and report the attributes result on stderr in text mode or in the `--json` object.\n3. Update docs/commands.md, docs/agents.md (the `setup-git` JSON contract with and without the flag) and the CHANGELOG.\n4. After landing, the orchestrator runs this on main so this repo's `.slicer/.gitattributes` gains the RELAY-ROLES line:\n\n   ```sh\n   slicer setup-git --attributes\n   ```"
     },
     {
       "heading": "Check",
-      "body": "- The full suite passes on Python 3.11+.\n- `slicer setup-git` on this repo adds the line, and a second run changes nothing.\n- `slicer check` and `git diff --check` pass."
+      "body": "- The full suite passes on Python 3.11+.\n- On this repo, the command below adds the RELAY-ROLES line, and a second run reports no change:\n\n  ```sh\n  slicer setup-git --attributes\n  ```\n\n- `slicer check` and `git diff --check` pass."
     },
     {
       "heading": "Git",

@@ -56,6 +56,25 @@ index.json merge=slicer-index
 """
 
 
+def write_gitattributes(root: Path) -> tuple[Path, bool]:
+  """Write `.slicer/.gitattributes` from the template, and only when its bytes differ.
+
+  `init` and `setup-git --attributes` share it, so a project that predates a template
+  line can take it without `init --force`, which also rewrites config and templates.
+  Returns the path and whether this call changed it. The caller holds the project lock.
+  """
+  path = root / store.DIR_NAME / store.GITATTRIBUTES_NAME
+  data = GITATTRIBUTES.encode("utf-8")
+  try:
+    current: bytes | None = path.read_bytes()
+  except FileNotFoundError:
+    current = None
+  if current == data:
+    return path, False
+  jsonio.write_bytes(path, data)
+  return path, True
+
+
 def init_project(
   root: Path, *, force: bool = False, id_prefix: str | None = None,
   id_width: int | None = None, starting_id: str | None = None,
@@ -116,7 +135,7 @@ def init_project(
     jsonio.write(index_path, index.to_dict())
   for name, content in templates.defaults().items():
     jsonio.write_text(base / store.TEMPLATES_DIR / name, content)
-  jsonio.write_text(base / store.GITATTRIBUTES_NAME, GITATTRIBUTES)
+  write_gitattributes(root)
   feedback.ensure_gitignore(root)
   feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)

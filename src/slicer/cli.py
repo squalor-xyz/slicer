@@ -695,13 +695,31 @@ def cmd_merge_index(args: argparse.Namespace) -> int:
 def cmd_setup_git(args: argparse.Namespace) -> int:
   """Print the per-clone git config that turns on the merge drivers.
 
-  Read-only and project-independent: it needs no `.slicer/`, so a fresh clone can
-  run it before anything else, and it never loads or locks state. slicer's git
-  allowlist forbids running `git config`, so this only prints the commands -- run
-  them, or `slicer setup-git | sh`. `--json` returns them as a list.
+  Without `--attributes` it is read-only and project-independent: it needs no
+  `.slicer/`, so a fresh clone can run it before anything else, and it never loads
+  or locks state. slicer's git allowlist forbids running `git config`, so this only
+  prints the commands -- run them, or `slicer setup-git | sh`. `--json` returns them
+  as a list.
+
+  `--attributes` is the one write: it refreshes `.slicer/.gitattributes` from the
+  template under the project lock, so an existing project picks up new lines. It
+  needs a project. Stdout stays the same, and the report goes to stderr, or to the
+  `attributes` object under `--json`.
   """
   commands = _render_driver_commands()
+  if not getattr(args, "attributes", False):
+    _emit(args, commands, "\n".join(commands))
+    return OK
+  root = store.discover(Path(args.root) if args.root else None)
+  with store.project_lock(root):
+    vcs.require_no_merge(root)
+    path, changed = ops.write_gitattributes(root)
+  if getattr(args, "json", False):
+    attributes = {"path": str(path), "changed": changed}
+    _emit(args, {"commands": commands, "attributes": attributes}, "")
+    return OK
   _emit(args, commands, "\n".join(commands))
+  _write_err(args, f"{'wrote' if changed else 'unchanged'} {path}")
   return OK
 
 
@@ -3087,8 +3105,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--id-width", type=int, help="minimum digits in new ids (default 2; --force retains the existing width)")
   sp.add_argument("--id", help="id the first add allocates, matching the scheme, such as S21 or sp-21")
 
-  add("setup-git", cmd_setup_git,
+  sp = add("setup-git", cmd_setup_git,
       "print the git config that turns on the merge drivers (run once per clone)")
+  sp.add_argument("--attributes", action="store_true",
+      help="also refresh .slicer/.gitattributes from the current template")
 
   # Git calls this, not a person, so it stays out of the command list.
   sp = add("merge-index", cmd_merge_index, argparse.SUPPRESS, json_flag=False)
