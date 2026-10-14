@@ -1392,3 +1392,4 @@
 {"when": "2026-10-14T12:49:37Z", "item": "s263", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer config KEY VALUE and KEY --unset pa", "by": "Jon Robbins"}
 {"when": "2026-10-14T12:49:37Z", "item": "s263", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T12:54:47Z", "item": "s263", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T12:59:52Z", "item": "s263", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer config KEY VALUE / --unset patches one key under the lock with --render/--strict and logs config.KEY; prefix changes by any route are usage (slicer id-prefix), width changes once items exist are state (owner decision); bad values are bad_config_value. Full suite 1836 OK (1 skipped) on merged main; gate VERDICT: PASS.", "by": "Jon Robbins"}

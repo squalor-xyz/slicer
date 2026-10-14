@@ -8241,7 +8241,7 @@
       "id": "s263",
       "title": "Set a config value through the CLI instead of hand-editing config.json",
       "short_title": "Write config through the CLI",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8257,10 +8257,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T12:54:47Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
