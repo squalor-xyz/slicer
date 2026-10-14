@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Add the flag and help text: \"also write the example relay roles matrix (see `relay-roles init`)\".\n2. In `cmd_init`, after `init_project`, when the flag is set and no matrix exists, write it through `ops.roles_init` and render it. When one exists, report that it was kept.\n3. Without the flag, append the hint line before the git setup hint.\n4. Update the docs and the CHANGELOG. Mutation-check each new assertion."
+      "body": "1. Add the flag and help text: \"also write the example relay roles matrix (see `relay-roles init`)\".\n2. In `cmd_init`, after `init_project`, when the flag is set and no matrix exists, write it through `ops.roles_init` and render it. When one exists, report that it was kept.\n3. Without the flag, append the hint line before the git setup hint when no matrix exists.\n4. Update the docs and the CHANGELOG. Mutation-check each new assertion."
     },
     {
       "heading": "Check",

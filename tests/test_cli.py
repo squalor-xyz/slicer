@@ -169,6 +169,76 @@ class CliTests(unittest.TestCase):
       repo.run("add", "x")
       self.assertEqual(repo.state().index.items[0].id, "S21")
 
+  def test_Init_RelayRolesFlag_WritesExampleMatrixAndRender(self) -> None:
+    # The matrix is byte for byte what `relay-roles init` writes, and the render is current.
+    with support.TempRepo() as repo, support.TempRepo() as fresh:
+      code, _, err = repo.run("init", "--relay-roles")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(fresh.run("init")[0], 0)
+      self.assertEqual(fresh.run("relay-roles", "init")[0], 0)
+      self.assertEqual(
+        repo.read(".slicer/relay-roles.json"), fresh.read(".slicer/relay-roles.json"),
+      )
+      self.assertEqual(repo.run("relay-roles", "show")[0], 0)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Init_NoRelayRolesFlag_PrintsHintAndWritesNoMatrix(self) -> None:
+    with support.TempRepo() as repo:
+      code, out, err = repo.run("init")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("slicer relay-roles init", out)
+      self.assertFalse((repo.root / ".slicer" / "relay-roles.json").exists())
+
+  def test_Init_Json_PayloadUnchangedWithoutFlag(self) -> None:
+    with support.TempRepo() as plain, support.TempRepo() as flagged:
+      code, out, err = plain.run("init", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(
+        json.loads(out), {"root": str(plain.root), "dir": str(plain.root / ".slicer")},
+      )
+      code, out, err = flagged.run("init", "--relay-roles", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out), {
+        "root": str(flagged.root),
+        "dir": str(flagged.root / ".slicer"),
+        "relay_roles": str(flagged.root / ".slicer" / "relay-roles.json"),
+      })
+
+  def test_Init_ForceRelayRolesExistingMatrix_KeepsIt(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      self.assertEqual(repo.run("relay-roles", "init")[0], 0)
+      self.assertEqual(repo.run("relay-roles", "add", "--role", "gate")[0], 0)
+      before = repo.read(".slicer/relay-roles.json")
+      code, out, err = repo.run("init", "--force", "--relay-roles")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(repo.read(".slicer/relay-roles.json"), before)
+      self.assertIn("kept", out)
+
+  def test_Init_RelayRolesFlag_NoHintLine(self) -> None:
+    with support.TempRepo() as repo:
+      code, out, err = repo.run("init", "--relay-roles")
+      self.assertEqual((code, err), (0, ""))
+      self.assertNotIn("slicer relay-roles init", out)
+
+  def test_Init_ForceWithoutFlagExistingMatrix_NoHint(self) -> None:
+    # The hint names `relay-roles init`, which refuses once a matrix exists.
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init", "--relay-roles")[0], 0)
+      code, out, err = repo.run("init", "--force")
+      self.assertEqual((code, err), (0, ""))
+      self.assertNotIn("slicer relay-roles init", out)
+
+  def test_Init_RelayRolesFlag_MatrixPathIsDirectory_ExitsIo(self) -> None:
+    # A directory is not a kept matrix: it falls through to the write, which refuses it as
+    # `io` the way `relay-roles init` does, and nothing else changes.
+    with support.TempRepo() as repo:
+      (repo.root / ".slicer" / "relay-roles.json").mkdir(parents=True)
+      code, out, _ = repo.run("init", "--relay-roles", "--json")
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "io")
+      self.assertTrue((repo.root / ".slicer" / "relay-roles.json").is_dir())
+
   def test_AnyCommand_OutsideATrackedProject_ExitsTwoWithAnInitHint(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, _, err = repo.run("next")

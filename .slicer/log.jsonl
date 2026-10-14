@@ -1421,3 +1421,8 @@
 {"when": "2026-10-14T17:25:05Z", "item": "s267", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T17:25:32Z", "item": "s267", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T17:25:38Z", "item": "s267", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: verify now warns, in a clone with sibling worktrees and a relay roles matrix, when the slicer-relay-roles merge driver is not configured, pointing at slicer setup-git; the allowlist gains only the exact read-only config --get merge.slicer-relay-roles.driver. Full suite 1912 OK (skipped 1); review clean, gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:06:46Z", "item": "s268", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:21:48Z", "item": "s268", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-14T17:30:00Z", "item": "s268", "action": "note", "from": "", "to": "", "note": "Ready for review: init --relay-roles writes and renders the ", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:30:00Z", "item": "s268", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:30:17Z", "item": "s268", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
