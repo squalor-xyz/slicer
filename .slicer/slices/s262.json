@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Open question for the owner before start: should a renumbered row keep its old id in the note, or is the log enough?\n2. Add a three-way merge over `RoleMatrix` that matches rows and rules by id, with all-or-nothing behaviour like `merge-index`.\n3. Wire it as a git merge driver and add it to the GITATTRIBUTES template.\n4. Document the driver and add a CHANGELOG entry."
+      "body": "1. Owner decision (2026-10-14): a renumbered row does not keep its old id in its note; the merge log entry is enough.\n2. Add a three-way merge over `RoleMatrix` that matches rows and rules by id, with all-or-nothing behaviour like `merge-index`.\n3. Wire it as a git merge driver and add it to the GITATTRIBUTES template.\n4. Document the driver and add a CHANGELOG entry."
     },
     {
       "heading": "Check",
