@@ -16,7 +16,7 @@ from pathlib import Path
 from slicer import graph, ids, vcs
 from slicer.errors import StateError
 from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, Index, successor_cycles
-from slicer.store import INDEX_NAME, State
+from slicer.store import INDEX_NAME, ROLES_NAME, State
 
 
 @dataclass
@@ -266,10 +266,11 @@ def against_git(state: State) -> VerifyReport:
   report = VerifyReport(checked=len(state.index.items))
   # Clone setup, not history: independent of git_check. Warn once here rather than
   # let an unconfigured merge driver write conflict markers on the next merge: the
-  # render one for render/, the index one for a next_id-only conflict in index.json.
+  # render one for render/, the index one for a next_id-only conflict in index.json,
+  # and the relay-roles one for a same-id conflict in relay-roles.json.
   # Only when this checkout has sibling worktrees -- the parallel workflow the drivers
   # serve -- so a solo, single-worktree clone stays quiet. `render_driver_check` off
-  # silences both.
+  # silences all three.
   if cfg.render_driver_check and vcs.is_repo(state.root) and vcs.sibling_worktrees(state.root):
     if not vcs.render_driver_configured(state.root):
       report.findings.append(Finding(
@@ -282,6 +283,15 @@ def against_git(state: State) -> VerifyReport:
         "warn", "",
         "index merge driver not configured in this clone; run `slicer setup-git` so "
         "a merge that conflicts only on the id counter keeps the larger one",
+      ))
+    # Only a project with a matrix can conflict on relay-roles.json. Test the file, not
+    # `state.roles`: loading the matrix would turn a malformed one into a `corrupt` error.
+    if (state.dir / ROLES_NAME).exists() and not vcs.relay_roles_driver_configured(state.root):
+      report.findings.append(Finding(
+        "warn", "",
+        "relay-roles merge driver not configured in this clone; run `slicer setup-git` so "
+        "merges keep both sides' rows and rules with fresh ids instead of writing conflict "
+        "markers into relay-roles.json",
       ))
   if not cfg.git_check:
     return report

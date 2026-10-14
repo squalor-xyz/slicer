@@ -173,7 +173,7 @@ and restores it if rendering fails.
 **slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
 `ls-files`, `worktree`, `branch`, `config`, `merge-file`, `show`, and `merge-base`. `worktree`, `branch`, and
 `config` are only the read-only forms `worktree list --porcelain`,
-`branch --all --format=%(refname)`, and `config --get` of `user.name` and the two merge
+`branch --all --format=%(refname)`, and `config --get` of `user.name` and the three merge
 drivers; `merge-file` is only the `-p` form, which prints the merge to stdout and writes
 nothing. `start` uses the first two to notice another checkout, and the
 last to name a claim when `claim_owner` is empty. `show` is only the one-argument

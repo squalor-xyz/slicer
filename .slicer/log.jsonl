@@ -1416,3 +1416,7 @@
 {"when": "2026-10-14T17:02:11Z", "item": "s268", "action": "add", "from": "", "to": "open", "note": "Offer the example relay roles matrix from slicer init"}
 {"when": "2026-10-14T17:02:15Z", "item": "s268", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-14T17:02:21Z", "item": "s268", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-14T17:07:44Z", "item": "s267", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:25:05Z", "item": "s267", "action": "note", "from": "", "to": "", "note": "Ready for review: verify warns for an unconfigured slicer-re", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:25:05Z", "item": "s267", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-14T17:25:32Z", "item": "s267", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

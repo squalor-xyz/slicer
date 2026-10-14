@@ -8439,13 +8439,28 @@
       "id": "s267",
       "title": "Warn in verify when the relay-roles merge driver is not configured",
       "short_title": "Relay roles driver warning",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s262"
       ],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "06deb89b-2920-4a8a-9f83-d70b52a6126f",
+          "kind": "",
+          "text": "**2026-10-14** — Ready for review: verify warns for an unconfigured slicer-relay-roles merge driver when a relay roles matrix exists and the checkout has sibling worktrees; one exact read-only config form (--get merge.slicer-relay-roles.driver) added to the git allowlist; 4 new tests and 2 extended; full suite 1912 OK (skipped 1); gate PASS.",
+          "created_at": "2026-10-14T17:25:05Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-14T17:25:32Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -8463,7 +8478,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

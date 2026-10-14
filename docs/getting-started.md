@@ -724,7 +724,8 @@ than after. A single-worktree clone stays quiet, and `render_driver_check: false
 turns the reminder off entirely.
 
 The last two `git config` lines turn on the `slicer-relay-roles` driver for
-`relay-roles.json`. (`slicer verify` does not warn when it is missing.) Two branches that
+`relay-roles.json`. (`slicer verify` warns when it is missing, under the same sibling-worktree and
+`render_driver_check` gates as the other two, and only in a project with a relay role matrix.) Two branches that
 each run `relay-roles add` issue the same `r` id, and `rule-add` the same `u` id, so Git
 can only call that a text conflict, and the file may not be repaired by hand. The driver
 matches rows and rules by id and fields by name, so edits to different rows, rules or
@@ -941,7 +942,8 @@ rewrites. Render freshness belongs to `slicer check`, not `verify`.
 Inside a git checkout it adds two checks. Both are warnings, so `verify` still exits 0:
 
 - With `render_driver_check` on (the default), it warns when this clone has sibling
-  worktrees and the `slicer-generated` or `slicer-index` merge driver is not configured. A single-worktree
+  worktrees and the `slicer-generated`, `slicer-index` or (in a project with a relay role
+  matrix) `slicer-relay-roles` merge driver is not configured. A single-worktree
   clone stays quiet. Set `render_driver_check` to `false` to silence the reminder.
 - With `git_check` on (the default), it warns when a done item has no commit subject
   mentioning its id. The scan is `git log --all --no-merges`, at most 2000 commits.
