@@ -8116,7 +8116,7 @@
       "id": "s260",
       "title": "Refresh .slicer/.gitattributes in an existing project through the CLI",
       "short_title": "Refresh gitattributes",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8132,10 +8132,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T02:00:16Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

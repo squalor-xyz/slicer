@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-253 items · — 6 · done 242 · retired 4 · reviewing 1
+253 items · — 6 · done 243 · retired 4
 
 ## v1.10
 
@@ -36,7 +36,7 @@
 | 1 | [s257](slices/s257.md) | Relay roles as JSON | L | 3 | slicer | owner request, session 2026-10-13: .slicer files are managed only through the CLI; the matrix needs structured conditions so slicer can recommend roles (s259) and an agent per row | done |
 | 2 | [s258](slices/s258.md) | Relay split implementers | M | 2 | slicer | owner request, session 2026-10-13: more than one Haiku/xhigh implementer per slice when it makes sense | — |
 | 3 | [s259](slices/s259.md) | Relay roles recommend | M | 2 | slicer | owner request, session 2026-10-13: slicer should recommend role values from the slice's parameters | done |
-| 4 | [s260](slices/s260.md) | Refresh gitattributes | S | 1 | slicer | s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates · discovered from s257 | reviewing |
+| 4 | [s260](slices/s260.md) | Refresh gitattributes | S | 1 | slicer | s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates · discovered from s257 | done |
 | 5 | [s261](slices/s261.md) | Legacy roles advice is_file | S | 1 | slicer | s257 gate, 2026-10-13: store.legacy_roles_advice uses exists() while roles_init uses is_file(); a directory at .slicer/relay-roles.md gets advice that init --replace-legacy refuses · discovered from s257 | done |
 | 6 | [s262](slices/s262.md) | Relay roles merge | M | 2 | slicer | s257 architect, 2026-10-13: two branches that each add a row take the same r-id and conflict as text; merge-index handles index.json but not relay-roles.json · discovered from s257 | — |
 | 7 | [s263](slices/s263.md) | Write config through the CLI | M | 2 | slicer | owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; config.json is the one documented hand-edit exception in AGENTS.md and docs/configuration.md · discovered from s257 | — |
