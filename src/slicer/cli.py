@@ -2450,7 +2450,31 @@ def _config_text(value: object, *, joined: bool) -> str:
 
 
 def cmd_config(args: argparse.Namespace) -> int:
-  """The effective config, or one dotted key of it. Config only: no index, lock, or write."""
+  """The effective config, one dotted key of it, or a write of one key.
+
+  A read takes no lock and touches no index. A write (a VALUE, or `--unset`) is not
+  marked `mutates`, since `main` would lock a read too; it takes the lock itself and
+  goes through `_mutating` so `--render` and `--strict` behave as for other writes.
+  """
+  writing = args.value is not None or args.unset
+  if args.unset and args.value is not None:
+    raise StateError("--unset takes no VALUE; pass one or the other", code="usage")
+  if args.unset and args.key is None:
+    raise StateError("--unset needs a KEY", code="usage")
+  if not writing:
+    for flag in ("render", "strict", "check"):
+      if getattr(args, flag):
+        raise StateError(
+          f"--{flag} has no effect on a read; pass a VALUE or --unset to write", code="usage",
+        )
+    return _config_read(args)
+  root = store.discover(Path(args.root).resolve() if args.root else None)
+  with store.project_lock(root):
+    vcs.require_no_merge(root)
+    return _config_write(args)
+
+
+def _config_read(args: argparse.Namespace) -> int:
   root = store.discover(Path(args.root).resolve() if args.root else None)
   data = Config.load(root / store.DIR_NAME / CONFIG_NAME).to_dict()
   if args.key is None:
@@ -2468,6 +2492,32 @@ def cmd_config(args: argparse.Namespace) -> int:
     value = value[part]
   _emit(args, {"key": args.key, "value": value}, _config_text(value, joined=False))
   return OK
+
+
+def _config_shown(value: object) -> str:
+  """A value in a write's one-line report: an empty string or list and an absent key stay visible."""
+  if value is None:
+    return "(unset)"
+  if value == "" or value == []:
+    return json.dumps(value)
+  return _config_text(value, joined=True)
+
+
+def _config_set_locked(args: argparse.Namespace) -> int:
+  state = _state(args)
+  change = ops.config_set(state, args.key, args.value, unset=args.unset)
+  if not change.changed:
+    args._no_change = True
+  if change.changed:
+    text = (f"{change.key}: {_config_shown(change.previous)} -> {_config_shown(change.value)}"
+            + (" (default)" if args.unset and change.value is not None else ""))
+  else:
+    text = f"{change.key} is already {_config_shown(change.value)}"
+  _emit(args, {"key": change.key, "value": change.value, "previous": change.previous}, text)
+  return OK
+
+
+_config_write = _mutating(_config_set_locked)
 
 
 def cmd_goals(args: argparse.Namespace) -> int:
@@ -3225,9 +3275,14 @@ def build_parser() -> argparse.ArgumentParser:
   add("sections", cmd_sections,
       "list configured section names, marking the ones next requires")
 
-  sp = add("config", cmd_config,
-           "print the effective config, or one value by dotted key; read-only")
-  sp.add_argument("key", nargs="?", help="a top-level key or a dotted path such as id.prefix")
+  sp = _check_flag(_strict_flag(_render_flag(add(
+    "config", cmd_config,
+    "print the effective config, or one value by dotted key; set or unset one key",
+  ))))
+  sp.add_argument("key", nargs="?", help="a top-level key or a dotted path such as id.width")
+  sp.add_argument("value", nargs="?", help="the new value; JSON for a list or an object")
+  sp.add_argument("--unset", action="store_true",
+                  help="remove the key from config.json so its default applies again")
 
   add("recommended-workflow", cmd_recommended_workflow,
       "print the generic recommended project workflow")

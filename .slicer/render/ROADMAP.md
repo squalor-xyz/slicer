@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-253 items · — 3 · done 246 · retired 4
+253 items · — 2 · done 246 · retired 4 · reviewing 1
 
 ## v1.10
 
@@ -39,7 +39,7 @@
 | 4 | [s260](slices/s260.md) | Refresh gitattributes | S | 1 | slicer | s257 relay, 2026-10-13: GITATTRIBUTES gained render/RELAY-ROLES.md, but only init writes .slicer/.gitattributes and init also rewrites config and templates · discovered from s257 | done |
 | 5 | [s261](slices/s261.md) | Legacy roles advice is_file | S | 1 | slicer | s257 gate, 2026-10-13: store.legacy_roles_advice uses exists() while roles_init uses is_file(); a directory at .slicer/relay-roles.md gets advice that init --replace-legacy refuses · discovered from s257 | done |
 | 6 | [s262](slices/s262.md) | Relay roles merge | M | 2 | slicer | s257 architect, 2026-10-13: two branches that each add a row take the same r-id and conflict as text; merge-index handles index.json but not relay-roles.json · discovered from s257 | — |
-| 7 | [s263](slices/s263.md) | Write config through the CLI | M | 2 | slicer | owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; config.json is the one documented hand-edit exception in AGENTS.md and docs/configuration.md · discovered from s257 | — |
+| 7 | [s263](slices/s263.md) | Write config through the CLI | M | 2 | slicer | owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; config.json is the one documented hand-edit exception in AGENTS.md and docs/configuration.md · discovered from s257 | reviewing |
 | 8 | [s264](slices/s264.md) | Edit templates through the CLI | M | 2 | slicer | owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; docs/configuration.md and docs/commands.md call .slicer/templates/*.md yours to edit, and a missing template's fix is init --force, which also rewrites config · discovered from s257 | — |
 | 9 | [s265](slices/s265.md) | Recommend yes/no message | S | 1 | slicer | s259 gate, 2026-10-13: recommend --split maybe fails with 'must be yes, no or any', but recommend accepts only yes or no · discovered from s259 | done |
 | 10 | [s266](slices/s266.md) | ai relay advice before io | S | 1 | slicer | s261 relay, 2026-10-13: with a directory at .slicer/relay-roles.json and a leftover relay-roles.md, ai relay prints the legacy_relay_roles advice on stderr and then fails with io · discovered from s261 | done |

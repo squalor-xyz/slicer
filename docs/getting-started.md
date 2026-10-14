@@ -102,8 +102,8 @@ not for starting over.
 
 ## 3. Configure before you add anything
 
-Most of `.slicer/config.json` is safe to change whenever you like. Two are not, and one
-is a trap:
+Most of `.slicer/config.json` is safe to change whenever you like, with
+`slicer config KEY VALUE`. Two are not, and one is a trap:
 
 | Key | Default | Change it… |
 |---|---|---|
@@ -115,7 +115,7 @@ is a trap:
 
 **One-way door:** `id.prefix` and `id.width` are yours to change until the first item
 exists. Run `init`, look at what `S01` would be, decide you want `TASK-001` instead,
-edit the config — the first `add` obeys it. Once an id has been handed out the index
+run `slicer init --force --id-prefix TASK- --id-width 3` — the first `add` obeys it. Once an id has been handed out the index
 owns the scheme, because ids are never reused, and `slicer check` reports a config that
 disagrees rather than ignoring it. The one exception is the prefix's case:
 `slicer id-prefix s` makes new ids lowercase, and existing ids keep theirs.
