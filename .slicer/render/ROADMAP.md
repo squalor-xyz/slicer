@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-255 items · — 2 · done 249 · retired 4
+255 items · — 1 · done 249 · retired 4 · reviewing 1
 
 ## v1.10
 
@@ -44,7 +44,7 @@
 | 9 | [s265](slices/s265.md) | Recommend yes/no message | S | 1 | slicer | s259 gate, 2026-10-13: recommend --split maybe fails with 'must be yes, no or any', but recommend accepts only yes or no · discovered from s259 | done |
 | 10 | [s266](slices/s266.md) | ai relay advice before io | S | 1 | slicer | s261 relay, 2026-10-13: with a directory at .slicer/relay-roles.json and a leftover relay-roles.md, ai relay prints the legacy_relay_roles advice on stderr and then fails with io · discovered from s261 | done |
 | 11 | [s267](slices/s267.md) | Relay roles driver warning | S | 1 | slicer | s262 implementer and reviewer, 2026-10-14: verify warns for unconfigured slicer-generated and slicer-index drivers but not slicer-relay-roles; owner chose a follow-up · discovered from s262 | — |
-| 12 | [s268](slices/s268.md) | Init relay roles | S | 1 | slicer | owner, 2026-10-14: a new project should get the example matrix or be told about it at init; chose opt-in init --relay-roles plus a hint | — |
+| 12 | [s268](slices/s268.md) | Init relay roles | S | 1 | slicer | owner, 2026-10-14: a new project should get the example matrix or be told about it at init; chose opt-in init --relay-roles plus a hint | reviewing |
 
 ---
 

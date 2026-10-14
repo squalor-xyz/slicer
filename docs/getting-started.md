@@ -74,6 +74,7 @@ Run `init` in the root of the project you want to track:
 $ cd ~/code/my-project
 $ slicer init
 initialised ~/code/my-project/.slicer
+relay roles: no matrix written; run `slicer relay-roles init` to write the example one
 ```
 
 That creates four things:
@@ -85,7 +86,7 @@ That creates four things:
 .slicer/slices/done/       where finished slices land
 ```
 
-It deliberately does **not** create `.slicer/render/` (first `slicer render`),
+Plain `init` deliberately does **not** create `.slicer/render/` (first `slicer render`),
 `.slicer/slices/retired/` (first `slicer remove --reason`), or `.slicer/log.jsonl`
 (first change). They appear when they are first needed.
 
@@ -775,16 +776,18 @@ A project can keep its slice-relay role matrix in `.slicer/relay-roles.json`: wh
 (Claude Code, Codex CLI, Grok Build), vendor, model and reasoning effort each role
 (implementer, reviewer, gate, architect) gets for which kind of slice, plus the rules that
 go with it. Only `slicer relay-roles` changes it, so never open the file. `relay-roles init`
-writes an example to start from (add `--render` to render it), `add`, `set`, `remove` and
-`move` edit rows, and `rule-add`, `rule-edit` and `rule-remove` edit rules. `slicer ai relay`
-then embeds the matrix so the orchestrating agent proposes each role from it, and
-`slicer relay-roles show` prints it alone. slicer renders it to
-`.slicer/render/RELAY-ROLES.md`, and `slicer check` fails if that render is stale. A
-project that still has the hand-edited `.slicer/relay-roles.md` from slicer 1.9 runs
-`slicer relay-roles init --replace-legacy`, which writes the example matrix and removes the
-old file (or, when the JSON already exists, removes just the old file); the Markdown table is
-not converted, so re-enter your rows with `relay-roles add`. A row can also say whether it
-applies to a part of a split slice (`--split yes`) or a whole one (`--split no`). See [agents.md](agents.md) for the relay itself.
+writes an example to start from (add `--render` to render it). `init --relay-roles` writes the
+same example during `init`, unless a matrix already exists, and renders it, so with the flag
+`init` also creates `.slicer/render/`. `add`, `set`, `remove` and `move` edit rows, and
+`rule-add`, `rule-edit` and `rule-remove` edit rules. `slicer ai relay` then embeds the matrix so
+the orchestrating agent proposes each role from it, and `slicer relay-roles show` prints it alone.
+slicer renders it to `.slicer/render/RELAY-ROLES.md`, and `slicer check` fails if that render is
+stale. A project that still has the hand-edited `.slicer/relay-roles.md` from slicer 1.9 runs
+`slicer relay-roles init --replace-legacy`, which writes the example matrix and removes the old
+file (or, when the JSON already exists, removes just the old file); the Markdown table is not
+converted, so re-enter your rows with `relay-roles add`. A row can also say whether it applies
+to a part of a split slice (`--split yes`) or a whole one (`--split no`). See [agents.md](agents.md)
+for the relay itself.
 
 ## Batch changes
 

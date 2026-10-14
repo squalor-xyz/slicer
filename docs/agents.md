@@ -285,7 +285,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `relay-roles init` | `{written: [PATH]}`, plus `removed: [PATH]` when `--replace-legacy` deleted `.slicer/relay-roles.md`. `written` is empty when the matrix already existed and only the old file was removed. An existing file is `state` (exit 2) unless `--force` (or `--replace-legacy` with a leftover `.md`); a path that is not a file is `io` (exit 3) |
 | `relay-roles add` / `set` / `remove` / `move` | the row, as in `show`. `remove` returns the row it dropped. A `set` or `move` that changes nothing returns the row and writes nothing |
 | `relay-roles rule-add` / `rule-edit` / `rule-remove` | the rule `{id, text}` |
-| `init` | `{root, dir}` |
+| `init` | `{root, dir}`; with `--relay-roles`, also `relay_roles: PATH`, the absolute path of `.slicer/relay-roles.json`, whether this call wrote the example or kept an existing file |
 | `setup-git` | array of the six `git config` command strings; needs no project |
 | `setup-git --attributes` | `{commands, attributes}`: `commands` is the same array, and `attributes` is `{path, changed}`, the absolute path of `.slicer/.gitattributes` and whether this call wrote it (`false` when the bytes already matched). Needs a project; `--lean` keeps `changed: false`. Text stdout is the command lines alone, and the `wrote` or `unchanged` report is on stderr |
 | `merge-index` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged index to `OURS`; exit 1 left conflict markers there |

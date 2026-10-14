@@ -8470,11 +8470,26 @@
       "id": "s268",
       "title": "Offer the example relay roles matrix from slicer init",
       "short_title": "Init relay roles",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "b3a6cb64-05ca-405e-8abc-f2e2081ba3f2",
+          "kind": "",
+          "text": "**2026-10-14** — Ready for review: init --relay-roles writes and renders the example matrix via ops.roles_init under the project lock and keeps an existing one; plain init prints the relay-roles hint only while no matrix exists, and a directory at the matrix path exits io. 7 new tests; full suite 1915 OK (skipped 1); gate PASS.",
+          "created_at": "2026-10-14T17:30:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-14T17:30:17Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -8492,7 +8507,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

@@ -671,6 +671,19 @@ def _render_driver_setup() -> str:
   )
 
 
+def _init_relay_roles(root: Path) -> tuple[Path, bool]:
+  """`init --relay-roles`: the example matrix `relay-roles init --render` writes, under the
+  project lock. An existing matrix is kept, never replaced. Returns its path and whether
+  this call wrote it."""
+  with store.project_lock(root):
+    state = store.load(root)
+    path = state.dir / store.ROLES_NAME
+    if path.is_file():
+      return path, False
+    ops.render_gated(state, lambda: ops.roles_init(state))
+  return path, True
+
+
 def cmd_init(args: argparse.Namespace) -> int:
   root = Path(args.root or ".").resolve()
   base = ops.init_project(
@@ -680,11 +693,26 @@ def cmd_init(args: argparse.Namespace) -> int:
   text = f"initialised {base}"
   if args.id is not None:
     text += f"\nnext id {args.id}"
+  payload: dict[str, object] = {"root": str(root), "dir": str(base)}
+  if args.relay_roles:
+    matrix, written = _init_relay_roles(root)
+    payload["relay_roles"] = str(matrix)
+    if written:
+      text += f"\nwrote {matrix}"
+    else:
+      text += (
+        f"\nkept {matrix}: it already exists, and init never replaces it; "
+        "`slicer relay-roles init --force` replaces it"
+      )
+  elif not (base / store.ROLES_NAME).exists():
+    # Only while no matrix exists: the hint names `relay-roles init`, which refuses otherwise.
+    text += "\nrelay roles: no matrix written; run `slicer relay-roles init` to write the example one"
   # Point people at the one-time merge-driver setup where it is git-relevant. The
-  # JSON payload stays {root, dir}; the hint is human output only.
+  # JSON payload stays {root, dir} unless --relay-roles adds relay_roles; the hints
+  # are human output only.
   if vcs.is_repo(root):
     text += "\n\n" + _render_driver_setup()
-  _emit(args, {"root": str(root), "dir": str(base)}, text)
+  _emit(args, payload, text)
   return OK
 
 
@@ -3254,6 +3282,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--id-prefix", help="prefix for new ids (default S; --force retains the existing prefix)")
   sp.add_argument("--id-width", type=int, help="minimum digits in new ids (default 2; --force retains the existing width)")
   sp.add_argument("--id", help="id the first add allocates, matching the scheme, such as S21 or sp-21")
+  sp.add_argument(
+    "--relay-roles", action="store_true",
+    help="also write the example relay roles matrix (see `relay-roles init`)",
+  )
 
   sp = add("setup-git", cmd_setup_git,
       "print the git config that turns on the merge drivers (run once per clone)")
