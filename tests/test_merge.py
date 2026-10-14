@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import support
 
-from slicer import store, tui, vcs
+from slicer import ops, store, tui, vcs
 
 
 def start_merge(repo: support.TempRepo) -> None:
@@ -105,6 +107,16 @@ class MergeGuardTests(unittest.TestCase):
       view._save_wizard(state)
       self.assertIn("merge in progress", view.wizard.error)
       self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_MergeInProgress_SetupGitAttributesIsRefusedAndWritesNothing(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      start_merge(repo)
+      stale = ops.GITATTRIBUTES.replace(SetupGitAttributesTests.RELAY_LINE, "")
+      repo.write(f".slicer/{store.GITATTRIBUTES_NAME}", stale)
+      code, out, _ = repo.run("setup-git", "--attributes", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "merge_in_progress")
+      self.assertEqual(repo.read(f".slicer/{store.GITATTRIBUTES_NAME}"), stale)
 
 
 
@@ -309,6 +321,138 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertEqual((code, err), (0, ""))
       self.assertIn(self.DRIVER, out)
       self.assertEqual(list(repo.root.iterdir()), [])  # created nothing
+
+
+class SetupGitAttributesTests(unittest.TestCase):
+  """`slicer setup-git --attributes` refreshes `.slicer/.gitattributes` from the
+  template under the project lock and writes nothing else. Without the flag,
+  setup-git stays a read-only print (S260)."""
+
+  ATTRS = store.GITATTRIBUTES_NAME
+  RELAY_LINE = "render/RELAY-ROLES.md merge=slicer-generated\n"
+  OLD_NS = 10**18  # an mtime no write in these tests produces
+
+  def _stale_project(self, repo: support.TempRepo) -> None:
+    """An initialised project whose .gitattributes predates the RELAY-ROLES line."""
+    repo.run("init")
+    repo.write(f".slicer/{self.ATTRS}", ops.GITATTRIBUTES.replace(self.RELAY_LINE, ""))
+
+  def _age(self, repo: support.TempRepo) -> None:
+    """Date every .slicer/ file, so a rewrite shows as a new mtime."""
+    for path in self._files(repo):
+      os.utime(path, ns=(self.OLD_NS, self.OLD_NS))
+
+  def _files(self, repo: support.TempRepo) -> list[Path]:
+    """Files under .slicer/, minus the lock file, which the lock itself creates."""
+    base = repo.root / store.DIR_NAME
+    return [p for p in sorted(base.rglob("*")) if p.is_file() and p.name != store.LOCK_NAME]
+
+  def _snapshot(self, repo: support.TempRepo) -> dict[str, tuple[bytes, int]]:
+    base = repo.root / store.DIR_NAME
+    return {
+      path.relative_to(base).as_posix(): (path.read_bytes(), path.stat().st_mtime_ns)
+      for path in self._files(repo)
+    }
+
+  def _without_attrs(self, snapshot: dict[str, tuple[bytes, int]]) -> dict[str, tuple[bytes, int]]:
+    return {name: value for name, value in snapshot.items() if name != self.ATTRS}
+
+  def _attrs_path(self, repo: support.TempRepo) -> str:
+    return str(repo.root / store.DIR_NAME / self.ATTRS)
+
+  def test_SetupGitAttributes_StaleFile_RewritesToTemplateAndTouchesNoOtherFile(self) -> None:
+    with support.TempRepo() as repo:
+      self._stale_project(repo)
+      self._age(repo)
+      before = self._snapshot(repo)
+      code, _, err = repo.run("setup-git", "--attributes")
+      self.assertEqual(code, 0, err)
+      after = self._snapshot(repo)
+      self.assertEqual(after[self.ATTRS][0], ops.GITATTRIBUTES.encode("utf-8"))
+      self.assertEqual(self._without_attrs(after), self._without_attrs(before))
+
+  def test_SetupGitAttributes_CurrentFile_IsLeftByteIdenticalAndReportedUnchanged(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      self._age(repo)
+      before = self._snapshot(repo)
+      code, out, err = repo.run("setup-git", "--attributes", "--json", "--lean")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(
+        json.loads(out)["attributes"], {"path": self._attrs_path(repo), "changed": False},
+      )
+      # Same bytes and same mtime: nothing was written, not even identical text.
+      self.assertEqual(self._snapshot(repo), before)
+
+  def test_SetupGitAttributes_MissingFile_IsCreatedFromTemplate(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      (repo.root / ".slicer" / self.ATTRS).unlink()
+      code, out, err = repo.run("setup-git", "--attributes", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.read(f".slicer/{self.ATTRS}"), ops.GITATTRIBUTES)
+      self.assertEqual(
+        json.loads(out)["attributes"], {"path": self._attrs_path(repo), "changed": True},
+      )
+
+  def test_SetupGitAttributes_Json_ReturnsCommandsAndAttributesObject(self) -> None:
+    with support.TempRepo() as repo:
+      self._stale_project(repo)
+      code, out, err = repo.run("setup-git", "--attributes", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(set(payload), {"commands", "attributes"})
+      self.assertEqual(payload["commands"], repo.run("setup-git")[1].splitlines())
+      self.assertEqual(
+        payload["attributes"], {"path": self._attrs_path(repo), "changed": True},
+      )
+
+  def test_SetupGitAttributes_Text_StdoutIsPlainSetupGitAndReportGoesToStderr(self) -> None:
+    with support.TempRepo() as repo:
+      self._stale_project(repo)
+      plain = repo.run("setup-git")[1]
+      code, out, err = repo.run("setup-git", "--attributes")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out, plain)  # `| sh` still receives only the git config lines
+      self.assertIn(f"wrote {self._attrs_path(repo)}", err)
+      code, out, err = repo.run("setup-git", "--attributes")
+      self.assertEqual(out, plain)
+      self.assertIn(f"unchanged {self._attrs_path(repo)}", err)
+
+  def test_SetupGitAttributes_OutsideProject_ExitsTwoWithNoProjectErrorAndWritesNothing(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, _ = repo.run("setup-git", "--attributes", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_SetupGitAttributes_LockHeldByAnotherWriter_FailsLockedAndLeavesFileAlone(self) -> None:
+    if store.fcntl is None:  # pragma: no cover - POSIX only
+      self.skipTest("no flock on this platform")
+    with support.TempRepo() as repo:
+      self._stale_project(repo)
+      stale = repo.read(f".slicer/{self.ATTRS}")
+      fd = os.open(repo.root / store.DIR_NAME / store.LOCK_NAME, os.O_CREAT | os.O_RDWR, 0o666)
+      store.fcntl.flock(fd, store.fcntl.LOCK_EX)
+      try:
+        with patch.dict(os.environ, {store.LOCK_TIMEOUT_ENV: "0.2"}):
+          code, out, _ = repo.run("setup-git", "--attributes", "--json")
+      finally:
+        store.fcntl.flock(fd, store.fcntl.LOCK_UN)
+        os.close(fd)
+      self.assertEqual(code, 3)
+      self.assertEqual(json.loads(out)["error"]["code"], "locked")
+      self.assertEqual(repo.read(f".slicer/{self.ATTRS}"), stale)
+
+  def test_SetupGit_NoFlag_LeavesStaleAttributesAlone(self) -> None:
+    # Green before the flag exists: it pins that plain setup-git never writes.
+    with support.TempRepo() as repo:
+      self._stale_project(repo)
+      self._age(repo)
+      before = self._snapshot(repo)
+      code, _, err = repo.run("setup-git")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(self._snapshot(repo), before)
 
 
 class RenderDriverConfiguredWarningTests(unittest.TestCase):

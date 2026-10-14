@@ -709,9 +709,10 @@ differently:
 
 Each conflict is written as markers around just that field or item, and stderr names it;
 resolve it by hand, run `slicer render`, then `slicer check`. A file that is not a readable
-index is never merged as clean. A project created before this driver gains the line
-`index.json merge=slicer-index` in `.slicer/.gitattributes` by adding it there; without it
-Git does not call the driver. `slicer` must be on the `PATH` Git runs with.
+index is never merged as clean. A project created before this driver picks up the line
+`index.json merge=slicer-index` by running `slicer setup-git --attributes`, which rewrites
+`.slicer/.gitattributes` from the current template; without it Git does not call the
+driver. `slicer` must be on the `PATH` Git runs with.
 
 The kept copy still has to match the merged `index.json`, so re-run `slicer render` after
 resolving a merge — the driver only skips the markers, it does not re-project the state.
