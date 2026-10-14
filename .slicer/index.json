@@ -8041,14 +8041,29 @@
       "id": "s258",
       "title": "Let a relay split one slice across several implementers",
       "short_title": "Relay split implementers",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s257",
         "s259"
       ],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "fe571451-e753-425a-be59-9ceee7f675e9",
+          "kind": "",
+          "text": "**2026-10-14** — Ready for review: relay text gains the split bullet, lead/part roles, Order split sequence, part brief and --split yes line; roles.skeleton() sets split=false on r1-r3, adds the per-part haiku/xhigh row r4 and a split rule u5. Full suite 1803 tests OK (1 skipped), slicer check and git diff --check pass.",
+          "created_at": "2026-10-14T12:10:51Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-14T12:37:09Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -8066,7 +8081,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

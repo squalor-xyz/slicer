@@ -285,13 +285,16 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
 
   rows = [
     row(1, "implementer", "haiku", "xhigh",
-        when=RoleWhen(size=["S", "M"], effort=[1], well_specified=True)),
+        when=RoleWhen(size=["S", "M"], effort=[1], well_specified=True, split=False)),
     row(2, "implementer", "haiku", "xhigh",
-        when=RoleWhen(size=["S"], effort=[2], well_specified=True)),
-    row(3, "implementer", "sonnet", "high", note="anything the rows above do not match"),
-    row(4, "reviewer", "opus", "medium"),
-    row(5, "gate", "opus", "medium"),
-    row(6, "architect", "opus", "high", when=RoleWhen(size=["L"])),
+        when=RoleWhen(size=["S"], effort=[2], well_specified=True, split=False)),
+    row(3, "implementer", "sonnet", "high", when=RoleWhen(split=False),
+        note="anything the rows above do not match"),
+    row(4, "implementer", "haiku", "xhigh", when=RoleWhen(split=True),
+        note="per part of a split slice"),
+    row(5, "reviewer", "opus", "medium"),
+    row(6, "gate", "opus", "medium"),
+    row(7, "architect", "opus", "high", when=RoleWhen(size=["L"])),
   ]
   texts = [
     "A reviewer never wrote code in the slice it reviews.",
@@ -300,6 +303,8 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
     "runs headless in the slice worktree with the same brief.",
     "\"well specified\" means the slice names its files, failing tests, implementation "
     "steps and checks, and needs no open owner decision.",
+    "Split a slice only into parts with disjoint files and their own tests; a slice too "
+    "big for one implementer is two slices.",
   ]
   rules = [RoleRule(id=f"u{n}", text=text) for n, text in enumerate(texts, first_rule)]
   return RoleMatrix(
