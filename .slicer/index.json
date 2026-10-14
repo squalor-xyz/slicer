@@ -8523,7 +8523,7 @@
       "id": "s269",
       "title": "Explain why to use slicer in docs/why-slicer.md",
       "short_title": "Why slicer doc",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8539,10 +8539,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T21:10:06Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
