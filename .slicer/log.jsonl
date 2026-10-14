@@ -1383,3 +1383,7 @@
 {"when": "2026-10-14T11:57:25Z", "item": "s258", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-14T11:57:25Z", "item": "s258", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-10-14T12:02:07Z", "item": "s262", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-14T12:02:34Z", "item": "s263", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T12:49:37Z", "item": "s263", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer config KEY VALUE and KEY --unset pa", "by": "Jon Robbins"}
+{"when": "2026-10-14T12:49:37Z", "item": "s263", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-14T12:54:47Z", "item": "s263", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

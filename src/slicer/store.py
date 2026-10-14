@@ -6,6 +6,7 @@ subdirectory of a project, the way git does.
 
 from __future__ import annotations
 
+import copy
 import os
 import re
 import stat
@@ -340,22 +341,30 @@ class State:
     jsonio.write(path, sl.to_dict())
     return path
 
-  def save_config_prefix(self, prefix: str) -> None:
-    """Write a new id prefix into config.json, touching no other key.
+  def config_raw(self) -> dict:
+    """A copy of config.json as written, or as this staged change last held it.
 
-    The file is patched rather than rewritten from `Config.to_dict()`: loading
-    back-fills statuses and roles the file may not spell out, and a prefix
-    change should not also rewrite those into someone's hand-kept config.
+    Not `Config.to_dict()`: loading back-fills statuses and roles the file may
+    not spell out, and a one-key change should not write those into someone's
+    config.
     """
-    path = self.dir / CONFIG_NAME
-    raw = jsonio.read(path)
-    ident = raw.get("id")
-    raw["id"] = (dict(ident) if isinstance(ident, dict) else {}) | {"prefix": prefix}
-    self.config.id_prefix = prefix
+    held = self._stage.config if self._stage is not None else None
+    return copy.deepcopy(held if held is not None else jsonio.read(self.dir / CONFIG_NAME))
+
+  def save_config_raw(self, raw: dict) -> None:
+    """Write config.json from `raw`, or hold it until the staged change commits."""
     if self._stage is not None:
       self._stage.config = raw
       return
-    jsonio.write(path, raw)
+    jsonio.write(self.dir / CONFIG_NAME, raw)
+
+  def save_config_prefix(self, prefix: str) -> None:
+    """Write a new id prefix into config.json, touching no other key."""
+    raw = self.config_raw()
+    ident = raw.get("id")
+    raw["id"] = (dict(ident) if isinstance(ident, dict) else {}) | {"prefix": prefix}
+    self.save_config_raw(raw)
+    self.config.id_prefix = prefix
 
   def log(self, entry: LogEntry) -> None:
     if self._stage is not None:

@@ -60,6 +60,25 @@ class StagingTransactionTests(unittest.TestCase):
       self.assertTrue((repo.root / ".slicer/slices/S01.json").exists())
       self.assertFalse((repo.root / ".slicer/slices/done/S01.json").exists())
 
+  def test_Staged_TwoConfigSets_BothLand(self) -> None:
+    with self._repo() as repo:
+      state = store.load(repo.root)
+      with state.staged():
+        ops.config_set(state, "claim_owner", "X")
+        ops.config_set(state, "boundary", "B")
+      reloaded = store.load(repo.root).config
+      self.assertEqual((reloaded.claim_owner, reloaded.boundary), ("X", "B"))
+
+  def test_Staged_ConfigSetException_LeavesConfigUntouched(self) -> None:
+    with self._repo() as repo:
+      before = repo.read(".slicer/config.json")
+      state = store.load(repo.root)
+      with self.assertRaises(RuntimeError):
+        with state.staged():
+          ops.config_set(state, "claim_owner", "X")
+          raise RuntimeError("boom")
+      self.assertEqual(repo.read(".slicer/config.json"), before)
+
   def test_BeginStage_Twice_IsRefused(self) -> None:
     with self._repo() as repo:
       state = store.load(repo.root)

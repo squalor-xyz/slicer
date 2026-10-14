@@ -3,8 +3,9 @@
 Everything project-specific lives in `.slicer/config.json`. Nothing is compiled into the
 tool, which is what lets slicer work on a repository with no review protocol at all.
 
-`slicer init` writes the defaults below. Edit the file directly — unlike `index.json`
-and the slice files, the config is yours to hand-edit.
+`slicer init` writes the defaults below. Set a key with `slicer config KEY VALUE`; see
+[Setting a value](#setting-a-value). Like `index.json` and the slice files, the config
+changes through the CLI, and its keys are read back the same way.
 
 ## The default file
 
@@ -61,12 +62,51 @@ historical dependency default and no issues repo; a config save writes version 5
 Read any value without opening the file: `slicer config KEY` prints it, and
 `slicer config` prints them all.
 
+### Setting a value
+
+`slicer config KEY VALUE` writes one key; `slicer config KEY --unset` removes it, so the
+default applies again. `KEY` is a top-level key, or a dotted path one level into `id`,
+`pointers` or `sync` (`id.width`, `pointers.next_format`, `sync.targets`).
+
+- **The value is read as the key's type.** A string is taken literally. `id.width` takes
+  a whole number, `git_check` and `render_driver_check` take `true` or `false`, and a
+  list or an object takes JSON: `slicer config sections '["Why","Implement","Check"]'`,
+  `slicer config statuses '{"open":"—","done":"done"}'`. `sync.targets` is a JSON list of
+  target objects. `pointers.later` and `statuses` are set whole, not key by key.
+- **Only that key changes.** The file is patched, so keys you never wrote are not filled
+  in, and the others keep their order. A new key goes at the end. It is written in the
+  fixed format every slicer JSON file uses, which re-indents a file laid out differently.
+- **A write that would not load is refused**, and the file is left as it was. A value
+  that does not fit the key's type, and a result `Config.validate` rejects (`done_status`
+  naming a status that is not in `statuses`, `implement_finish` set to `handoff` with an
+  empty `review_status`), both exit 2 with code `bad_config_value`; the message is the
+  one validation gives. An unknown key is `usage` and names the top-level keys.
+- **`id.prefix` and `version` are not set here.** Change the case of the prefix with
+  `slicer id-prefix`, which also updates the index. `version` is the schema number
+  slicer writes.
+- **`--unset`** takes no value. Unsetting a key that is not in the file changes nothing,
+  and unsetting the last key of an object removes the object.
+- **A write is a mutation**: it takes the project lock, is refused during a merge, and
+  logs one `config` history entry named `config.KEY` with the old and new value. A write
+  that leaves the file as it was logs nothing. A key that changes the render (a status
+  label, `boundary`) needs `--render`, as other mutations do; `--strict` rolls the write
+  back if the render fails. Without `--render`, `slicer check` reports the drift until
+  `slicer render`.
+- `--json` returns `{key, value, previous}`: the effective value now and before. A key
+  that was never written has its default as `previous`.
+- **`id.width` is settable only until the first item exists.** Once the index has items,
+  any write that changes the effective width, `id.width` or the whole `id` object, is
+  refused with code `state` (exit 2) and nothing is written, as `init --force` refuses a
+  scheme change on a queue that is not empty. A write that leaves the width as it is
+  still goes through. The same goes for the prefix: any write that would change it,
+  `id` included, is `usage` and names `slicer id-prefix`.
+
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
 | `note_kinds` | `[]` | Optional whitelist of nonempty strings for explicit `note --kind` values. Missing or empty permits any nonempty kind. Omitting `--kind` always creates an untyped note | **Yes** |
 | `handoff_requires_note_kind` | `""` | Nonempty requires an item note of this exact kind, with nonempty text and the current attempt, before started work can be handed off. Must belong to `note_kinds` when that whitelist is nonempty. Missing or empty keeps existing handoff behavior. Does not change `done` | **Yes**, changes handoff eligibility |
-| `id.prefix` | `"S"` | The id scheme | **Until the first item exists**; after that, only its case, with `slicer id-prefix`. See below |
-| `id.width` | `2` → `S01` | As above | **Until the first item exists** |
+| `id.prefix` | `"S"` | The id scheme | **Until the first item exists**, with `slicer init --force --id-prefix`; after that, only its case, with `slicer id-prefix`. `slicer config` does not set it. See below |
+| `id.width` | `2` → `S01` | As above | **Until the first item exists**, with `slicer config id.width`; after that `slicer config` refuses it |
 | `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |
 | `open_status` | `"open"` | Which items `next` considers, what `unpark` returns to, the sync pointers | Only with migration |
 | `done_status` | `"done"` | The `done` target, **which folder a slice lives in**, dependency satisfaction | **No — breaking** |
@@ -106,13 +146,13 @@ it does not infer a prefix or width. To change an initialized empty queue, use
 the existing prefix or width, and the counter stays unchanged unless `--id` is
 supplied. `--force` still resets the other config settings and templates.
 Once items exist, `init --force` retains the scheme and refuses changes to it
-or a starting ID. Editing the config before the first item also remains supported.
+or a starting ID. Setting `id.width` with `slicer config` before the first item also remains supported.
 
 After that the index owns the scheme, because ids are never reused and renumbering would
-break every commit message and review that cites one. Editing the config then does not
-renumber anything, and `slicer verify` and `slicer check` report the disagreement naming
-both schemes rather than letting it pass quietly. Restore the config, or start a new
-project.
+break every commit message and review that cites one. `slicer config` refuses a write
+that changes the width, and `init --force` refuses a scheme change. A config that
+disagrees with the index anyway is reported by `slicer verify` and `slicer check`, naming
+both schemes, rather than passing quietly. Restore the config, or start a new project.
 
 The one change slicer supports later is the case of the prefix: `slicer id-prefix s`
 switches new ids from `S160` to `s160`, updating the index and config together. Existing

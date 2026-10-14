@@ -147,8 +147,8 @@ a worktree; [docs/landing.md](docs/landing.md) has the commands.
 **Read and change tracking state through the slicer CLI.** Never open, search, parse
 or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl` or `.slicer/render/`,
 even when `git status` lists one. Use `slicer show ID --json --lean`,
-`slicer list --json --lean` or `slicer next --json --lean`. `config.json` is the
-exception: read it with `slicer config KEY` and edit it by hand as
+`slicer list --json --lean` or `slicer next --json --lean`. Read `config.json` with
+`slicer config KEY` and set a key with `slicer config KEY VALUE`, as
 [docs/configuration.md](docs/configuration.md) describes. `.slicer/relay-roles.json`
 changes only through `slicer relay-roles`.
 

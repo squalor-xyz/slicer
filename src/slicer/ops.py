@@ -6,6 +6,7 @@ and so each one records the same log entry.
 
 from __future__ import annotations
 
+import json
 import re
 import shlex
 from uuid import uuid4
@@ -746,6 +747,188 @@ def set_id_prefix(state: State, new: str) -> tuple[str, bool]:
   state.save_config_prefix(new)
   _record(state, "*", "id_prefix", frm=old, to=new)
   return old, True
+
+
+# ---- config ----------------------------------------------------------------
+
+CONFIG_ACTION = "config"
+# The fixed-shape objects a dotted key reaches into. A free-form object
+# (`statuses`, `pointers.later`) is set whole, as JSON.
+_CONFIG_OBJECTS = ("id", "pointers", "sync")
+# `sync.targets` holds objects; every other list in the config holds strings.
+_CONFIG_OBJECT_LISTS = ("sync.targets",)
+_UNSET_TEXT = "(unset)"
+
+
+@dataclass
+class ConfigChange:
+  key: str
+  previous: object
+  value: object
+  changed: bool
+
+
+def _config_schema() -> dict:
+  """Every settable key with its default, in config.json's own shape.
+
+  `satisfies_dependencies` is omitted from `to_dict()` while unset, so it is added
+  here as the list it takes.
+  """
+  defaults = Config().to_dict()
+  defaults["satisfies_dependencies"] = []
+  return defaults
+
+
+def _config_default(key: str) -> object:
+  """The default at a dotted key, or a `usage` error naming the keys that exist."""
+  schema = _config_schema()
+  parts = key.split(".")
+  if key == "version":
+    raise StateError(
+      "version is the schema number slicer writes; it is not set through `slicer config`",
+      code="usage",
+    )
+  if key == "id.prefix":
+    raise StateError(
+      "id.prefix is set with `slicer id-prefix`, which also renames the index "
+      "and refuses anything but a change of case",
+      code="usage",
+    )
+  node: object = schema
+  for depth, part in enumerate(parts):
+    nested = depth == 0 or (depth == 1 and parts[0] in _CONFIG_OBJECTS)
+    if not nested or not isinstance(node, dict) or part not in node:
+      raise StateError(
+        f"{key!r} is not a config key that can be set; the top-level keys are "
+        f"{', '.join(schema)}",
+        code="usage",
+      )
+    node = node[part]
+  return node
+
+
+def _bad_config_value(key: str, why: str) -> StateError:
+  return StateError(f"{key}: {why}", code="bad_config_value")
+
+
+def _coerce_config_value(key: str, text: str, default: object) -> object:
+  """The text as the type the key has by default. A string is taken literally."""
+  if isinstance(default, bool):
+    if text not in ("true", "false"):
+      raise _bad_config_value(key, f"{text!r} is not true or false")
+    return text == "true"
+  if isinstance(default, int):
+    if not re.fullmatch(r"[+-]?\d+", text):
+      raise _bad_config_value(key, f"{text!r} is not a whole number")
+    return int(text)
+  if isinstance(default, str):
+    return text
+  try:
+    value = json.loads(text)
+  except ValueError as exc:
+    raise _bad_config_value(key, f"expected JSON ({exc})") from None
+  if isinstance(default, list):
+    element = dict if key in _CONFIG_OBJECT_LISTS else str
+    if not isinstance(value, list) or any(not isinstance(v, element) for v in value):
+      what = "objects" if element is dict else "strings"
+      raise _bad_config_value(key, f"expected a JSON list of {what}")
+    return value
+  if not isinstance(value, dict):
+    raise _bad_config_value(key, "expected a JSON object")
+  if default and all(isinstance(v, str) for v in default.values()) and any(
+    not isinstance(v, str) for v in value.values()
+  ):
+    raise _bad_config_value(key, "expected a JSON object whose values are strings")
+  return value
+
+
+def _config_at(data: object, parts: list[str]) -> object:
+  for part in parts:
+    if not isinstance(data, dict) or part not in data:
+      return None
+    data = data[part]
+  return data
+
+
+def _config_value_text(value: object) -> str:
+  if value is None:
+    return _UNSET_TEXT
+  if isinstance(value, str):
+    return value
+  return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def _guard_id_scheme(state: State, new: Config) -> None:
+  """Refuse a write that changes the id scheme by any route, whole-object ones included.
+
+  `id.prefix` is `slicer id-prefix`'s, which also updates the index. Once the index has
+  items it owns the width too, as `init --force` enforces. Both are checked on the
+  loaded result, so setting or unsetting the whole `id` object cannot get around them.
+  """
+  old = state.config
+  if new.id_prefix != old.id_prefix:
+    raise StateError(
+      "this write would change id.prefix; set it with `slicer id-prefix`, which also "
+      "updates the index and refuses anything but a change of case",
+      code="usage",
+    )
+  if new.id_width != old.id_width and state.index.items:
+    raise StateError(
+      "this write would change id.width, but the index already has items and owns the id "
+      "scheme; ids are never reused or renumbered. Set the width before the first item, "
+      "or start a new queue",
+      code="state",
+    )
+
+
+def config_set(state: State, key: str, value: str | None, *, unset: bool = False) -> ConfigChange:
+  """Set one config key from text, or remove it so the default applies again.
+
+  The file is patched, not rewritten, so only that key changes. The patched
+  copy must load the way `Config.load` would, or nothing is written. A write that
+  leaves the file as it was changes nothing and logs nothing. `previous` and
+  `value` are effective values: what the key meant before, and what it means now.
+  """
+  default = _config_default(key)
+  parts = key.split(".")
+  new_value = None if unset else _coerce_config_value(key, value or "", default)
+  before = state.config_raw()
+  patched = deepcopy(before)
+  parent = patched
+  for part in parts[:-1]:
+    child = parent.get(part)
+    if not isinstance(child, dict):
+      if unset:
+        break
+      child = parent[part] = {}
+    parent = child
+  else:
+    if unset:
+      # Prune an emptied object only when this call emptied it.
+      if parts[-1] in parent:
+        del parent[parts[-1]]
+        if len(parts) > 1 and not parent:
+          patched.pop(parts[0])
+    else:
+      parent[parts[-1]] = new_value
+  try:
+    config = Config.from_dict(patched)
+  except ConfigError as exc:
+    raise _bad_config_value(key, f"the config would no longer be valid: {exc}") from None
+  except (KeyError, TypeError, ValueError, AttributeError) as exc:
+    raise _bad_config_value(key, f"the config would no longer load: {exc!r}") from None
+  _guard_id_scheme(state, config)
+  previous = _config_at(state.config.to_dict(), parts)
+  now = _config_at(config.to_dict(), parts)
+  if patched == before:
+    return ConfigChange(key, previous, now, False)
+  state.save_config_raw(patched)
+  state.config = config
+  _record(
+    state, f"{CONFIG_ACTION}.{key}", CONFIG_ACTION,
+    frm=_config_value_text(previous), to=_config_value_text(now),
+  )
+  return ConfigChange(key, previous, now, True)
 
 
 def _relocate_slice(state: State, item_id: str) -> None:
