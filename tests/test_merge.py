@@ -307,7 +307,7 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertEqual(code, 0)
       commands = json.loads(out)
       self.assertEqual(commands, text.splitlines())
-      self.assertEqual(len(commands), 4)
+      self.assertEqual(len(commands), 6)
       # --lean must not choke on a list of plain strings.
       self.assertEqual(json.loads(repo.run("setup-git", "--json", "--lean")[1]), commands)
 

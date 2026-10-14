@@ -54,6 +54,15 @@ render/RELAY-ROLES.md merge=slicer-generated
 #   git config merge.slicer-index.name "keep the larger next_id when merging the index"
 #   git config merge.slicer-index.driver "slicer merge-index %O %A %B"
 index.json merge=slicer-index
+
+# relay-roles.json is merged by the slicer-relay-roles driver, which matches rows and
+# rules by id: independent edits merge, a row or rule both sides added under one id
+# keeps both with a fresh id for the side merged in, the id counters move past every id
+# issued, and a same-field disagreement is refused with the file left as it was. Also
+# defined once per clone:
+#   git config merge.slicer-relay-roles.name "keep both sides' relay roles rows and rules with fresh ids"
+#   git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"
+relay-roles.json merge=slicer-relay-roles
 """
 
 

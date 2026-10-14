@@ -34,6 +34,7 @@ from slicer import (
   ids,
   jsonio,
   mergeindex,
+  mergeroles,
   migrator,
   model,
   note_pack,
@@ -645,7 +646,8 @@ def _write_skill(targets: list[Path], content: str, *, force: bool) -> list[str]
 
 def _render_driver_commands() -> list[str]:
   """The per-clone `git config` commands that turn on the merge drivers named in
-  `.gitattributes`: the render files (S109) and the index counter (S191). slicer's
+  `.gitattributes`: the render files (S109), the index counter (S191) and the relay
+  roles matrix (s262). slicer's
   git allowlist cannot run them, so `init` and `setup-git` print them for a person
   to run once in each clone."""
   return [
@@ -653,15 +655,18 @@ def _render_driver_commands() -> list[str]:
     "git config merge.slicer-generated.driver true",
     'git config merge.slicer-index.name "keep the larger next_id when merging the index"',
     'git config merge.slicer-index.driver "slicer merge-index %O %A %B"',
+    'git config merge.slicer-relay-roles.name "keep both sides\' relay roles rows and rules with fresh ids"',
+    'git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"',
   ]
 
 
 def _render_driver_setup() -> str:
-  """The `init` hint: why the driver exists, plus the two commands to enable it."""
+  """The `init` hint: why the drivers exist, plus the commands to enable them."""
   indented = "\n".join("  " + command for command in _render_driver_commands())
   return (
-    "render/ and index.json are pointed at merge drivers so parallel branches "
-    "don't leave conflict markers in render/ or on the next_id counter.\n"
+    "render/, index.json and relay-roles.json are pointed at merge drivers so "
+    "parallel branches don't leave conflict markers in render/, on the next_id "
+    "counter, or on relay-roles ids that both branches issued.\n"
     "Enable them once in this clone:\n" + indented
   )
 
@@ -692,6 +697,15 @@ def cmd_merge_index(args: argparse.Namespace) -> int:
     Path.cwd(), Path(args.base), Path(args.ours), Path(args.theirs)
   )
   return DRIFT if conflicts else OK
+
+
+def cmd_merge_relay_roles(args: argparse.Namespace) -> int:
+  """The `slicer-relay-roles` merge driver: Git passes %O %A %B and reads the result
+  from the second path. Needs no project. A clean merge prints nothing and rewrites
+  that file; a disagreement exits 2 with code `merge_conflict` and leaves the file as
+  it was, so Git reports a normal conflict."""
+  mergeroles.merge(Path(args.base), Path(args.ours), Path(args.theirs))
+  return OK
 
 
 def cmd_setup_git(args: argparse.Namespace) -> int:
@@ -3251,6 +3265,11 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("base", help="the common ancestor's index.json (Git's %%O)")
   sp.add_argument("ours", help="this side's index.json, rewritten with the result (%%A)")
   sp.add_argument("theirs", help="the other side's index.json (%%B)")
+
+  sp = add("merge-relay-roles", cmd_merge_relay_roles, argparse.SUPPRESS, json_flag=False)
+  sp.add_argument("base", help="the common ancestor's relay-roles.json (Git's %%O)")
+  sp.add_argument("ours", help="this side's relay-roles.json, rewritten with the result (%%A)")
+  sp.add_argument("theirs", help="the other side's relay-roles.json (%%B)")
 
   sp = _strict_flag(_render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline")))
   sp.add_argument("file", nargs="?", help="the outline file")

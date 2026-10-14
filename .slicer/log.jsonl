@@ -1398,3 +1398,8 @@
 {"when": "2026-10-14T13:38:19Z", "item": "s264", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T13:43:46Z", "item": "s264", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T13:43:51Z", "item": "s264", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer template list|show|set|reset; set/reset validate the text (bad_template: unknown placeholder or wrong row cell count, also on an empty project), stage under the lock with --render/--strict and log template.NAME; unknown_template for bad names; missing-template message points at template reset; docs no longer call templates yours to edit. Full suite 1875 OK (1 skipped) on the final tree; gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-14T12:54:33Z", "item": "s262", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-14T13:56:14Z", "item": "s262", "action": "note", "from": "", "to": "", "note": "Ready for review: new slicer-relay-roles merge driver (slice", "by": "Jon Robbins"}
+{"when": "2026-10-14T13:56:14Z", "item": "s262", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-14T13:59:00Z", "item": "s262", "action": "note", "from": "", "to": "", "note": "Gate fix: docs only. getting-started.md now names the right ", "by": "Jon Robbins"}
+{"when": "2026-10-14T14:17:42Z", "item": "s262", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
