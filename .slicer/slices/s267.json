@@ -1,0 +1,41 @@
+{
+  "id": "s267",
+  "title": "Warn in verify when the relay-roles merge driver is not configured",
+  "lead": [
+    "`slicer verify` warns when this clone has sibling worktrees but has not configured the `slicer-generated` or `slicer-index` merge driver. s262 added a third driver, `slicer-relay-roles`, without the matching warning, so a clone that never ran the new `git config` lines falls back to Git's text merge on `.slicer/relay-roles.json` with no hint. This slice adds the same warning for the new driver."
+  ],
+  "depends_note": null,
+  "findings_note": "s262 implementer and reviewer, 2026-10-14: verify warns for unconfigured slicer-generated and slicer-index drivers but not slicer-relay-roles; owner chose a follow-up",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "Not in this slice: running `git config` from slicer (the allowlist stays read-only), a check for the attribute line in .slicer/.gitattributes, warnings outside the sibling-worktree case, and any change to the merge driver itself.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s262's implementer and reviewer both found the gap (session 2026-10-14), and the owner chose to file it as a follow-up rather than widen s262. An existing clone that upgrades slicer gets the new `relay-roles.json merge=slicer-relay-roles` attribute from `setup-git --attributes` but not the driver definition, because slicer's git allowlist cannot run `git config`. The next parallel merge that touches the matrix then shows text conflict markers in a JSON file the CLI cannot read, while `verify` says nothing. The two existing drivers already warn in exactly this situation, and the fix is a one-line read added to the allowlist."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py`: add `(\"--get\", \"merge.slicer-relay-roles.driver\")` to the `config` entry of `READ_ONLY`, and a `relay_roles_driver_configured(root)` beside `index_driver_configured`.\n- `src/slicer/verify.py`: a third warning in the clone-setup block, gated like the other two and also on the project having a relay roles matrix.\n- `tests/test_merge.py` (the `RenderDriverConfiguredWarningTests` class) and the allowlist tests that pin `READ_ONLY`.\n- `docs/getting-started.md` (the relay-roles driver paragraph currently says verify does not warn for it), `docs/commands.md` (the `verify` row), `docs/agents.md` if it lists the verify warnings, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- New `test_Verify_SiblingWorktreeRelayRolesDriverUnset_WarnsAndPointsAtSetupGit`: with a sibling worktree, `.slicer/relay-roles.json` present and the other two drivers configured, `verify` exits 0 and prints \"relay-roles merge driver not configured\" with `setup-git`.\n- New `test_Verify_RelayRolesDriverConfigured_DoesNotWarn`: the same with `merge.slicer-relay-roles.driver` set prints no such warning.\n- New `test_Verify_NoRelayRolesMatrix_DoesNotWarnAboutItsDriver`: without `.slicer/relay-roles.json`, no relay-roles driver warning even when it is unconfigured.\n- The existing single-worktree and `render_driver_check: false` tests also assert the relay-roles warning is absent.\n- The allowlist test that pins `READ_ONLY` accepts the new exact read and still refuses `git config` with any other arguments."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add the exact read-only form to `vcs.READ_ONLY[\"config\"]` and `relay_roles_driver_configured`, reusing `_driver_configured`.\n2. In `verify`, inside the existing sibling-worktree and `render_driver_check` block, warn when the matrix file exists and the driver is not configured. The message names `slicer setup-git` and says what the driver does (keeps both sides' rows and rules with fresh ids instead of text conflict markers).\n3. Update the getting-started paragraph, the verify docs and the CHANGELOG `[Unreleased]` entry.\n4. Mutation-check each new assertion."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- In a scratch repo with a sibling worktree and a matrix, `slicer verify` warns until the two lines `slicer setup-git` prints are run, then stops warning.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s267`, branch `feature/s267-relay-roles-driver-warning`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

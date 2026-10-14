@@ -1404,3 +1404,15 @@
 {"when": "2026-10-14T13:59:00Z", "item": "s262", "action": "note", "from": "", "to": "", "note": "Gate fix: docs only. getting-started.md now names the right ", "by": "Jon Robbins"}
 {"when": "2026-10-14T14:17:42Z", "item": "s262", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T14:22:35Z", "item": "s262", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer-relay-roles merge driver (slicer merge-relay-roles) merges relay-roles.json rows and rules by id; an id both sides issued (or one ours issued and removed) gets a fresh id on the merged-in side, counters end past every issued id, a disagreement is refused with merge_conflict leaving OURS untouched; setup-git prints its two git config lines and the gitattributes template points at it. Owner: the driver's stderr line records a renumbering. Full suite 1879 OK (1 skipped) on merged main; gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-14T14:22:43Z", "item": "s262", "action": "note", "from": "", "to": "", "note": "Correction to the done note: the full suite on merged main r", "by": "Jon Robbins"}
+{"when": "2026-10-14T14:22:43Z", "item": "s267", "action": "add", "from": "", "to": "open", "note": "Warn in verify when the relay-roles merge driver is not configured"}
+{"when": "2026-10-14T14:22:49Z", "item": "s267", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-14T17:00:27Z", "item": "relay-roles.r1", "action": "relay-roles", "from": "", "to": "split", "note": "set"}
+{"when": "2026-10-14T17:00:27Z", "item": "relay-roles.r2", "action": "relay-roles", "from": "", "to": "split", "note": "set"}
+{"when": "2026-10-14T17:00:27Z", "item": "relay-roles.r3", "action": "relay-roles", "from": "", "to": "split", "note": "set"}
+{"when": "2026-10-14T17:00:27Z", "item": "relay-roles.r7", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
+{"when": "2026-10-14T17:00:27Z", "item": "relay-roles.r7", "action": "relay-roles", "from": "7", "to": "4", "note": "move"}
+{"when": "2026-10-14T17:00:27Z", "item": "relay-roles.u5", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}
+{"when": "2026-10-14T17:02:11Z", "item": "s268", "action": "add", "from": "", "to": "open", "note": "Offer the example relay roles matrix from slicer init"}
+{"when": "2026-10-14T17:02:15Z", "item": "s268", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-14T17:02:21Z", "item": "s268", "action": "edit", "from": "", "to": "", "note": "Check"}
