@@ -8482,7 +8482,7 @@
       "id": "s268",
       "title": "Offer the example relay roles matrix from slicer init",
       "short_title": "Init relay roles",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -8498,10 +8498,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T17:30:17Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
