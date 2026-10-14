@@ -2301,10 +2301,10 @@ def _parse_yes_no_any(flag: str, value: str) -> bool | None:
 
 def parse_yes_no(flag: str, value: str) -> bool:
   """A required yes or no answer, such as `relay-roles recommend --split`."""
-  answer = _parse_yes_no_any(flag, value)
-  if answer is None:
+  choices = {"yes": True, "no": False}
+  if value not in choices:
     raise _bad_role_field(f"{flag} must be yes or no, not {value!r}")
-  return answer
+  return choices[value]
 
 
 def _check_role(role: str) -> str:
