@@ -6,6 +6,12 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `docs/why-slicer.md` explains the workflow problems slicer solves and the feature that
+  answers each one, with links to the docs that cover them. The README links to it from
+  the intro and from the Documentation list.
+
 ## [1.10.0] - 2026-10-14
 
 ### Added

@@ -1,6 +1,7 @@
 """The command tables cover the real parser, so a new command or flag cannot
 ship undocumented (S127). The reference in docs/commands.md names every flag;
-the README's summary table names every command (S142)."""
+the README's summary table names every command (S142). The README links the
+why-slicer page, and that page's relative links resolve (S269)."""
 
 from __future__ import annotations
 
@@ -17,6 +18,9 @@ README = ROOT / "README.md"
 REFERENCE = ROOT / "docs" / "commands.md"
 # Flags every command shares, documented once rather than per row.
 COMMON = {"--help", "--root", "--json", "--lean", "--render", "--strict"}
+WHY = ROOT / "docs" / "why-slicer.md"
+WHY_LINK = "](docs/why-slicer.md)"
+MARKDOWN_LINK = re.compile(r"\]\(([^)\s]+)\)")
 
 
 def _subcommands() -> dict[str, argparse.ArgumentParser]:
@@ -56,6 +60,33 @@ class CommandTableTests(unittest.TestCase):
       if gone:
         missing[name] = gone
     self.assertEqual(missing, {}, "name each flag in its docs/commands.md command-table row")
+
+
+def _section(lines: list[str], heading: str) -> list[str]:
+  """The lines under one `## ` heading, up to the next one."""
+  start = lines.index(heading) + 1
+  end = next((i for i in range(start, len(lines)) if lines[i].startswith("## ")), len(lines))
+  return lines[start:end]
+
+
+class WhySlicerTests(unittest.TestCase):
+  def test_Readme_LinksWhySlicer_InIntroAndDocumentationList(self) -> None:
+    lines = README.read_text(encoding="utf-8").splitlines()
+    intro = lines[: lines.index("## Install")]
+    documented = _section(lines, "## Documentation")
+    self.assertEqual(sum(WHY_LINK in line for line in intro), 1,
+                     "link docs/why-slicer.md once in the README intro, before ## Install")
+    self.assertEqual(sum(WHY_LINK in line for line in documented), 1,
+                     "list docs/why-slicer.md once under ## Documentation")
+
+  def test_WhySlicer_RelativeLinks_Resolve(self) -> None:
+    self.assertTrue(WHY.is_file(), "write docs/why-slicer.md")
+    targets = [m.group(1) for m in MARKDOWN_LINK.finditer(WHY.read_text(encoding="utf-8"))]
+    relative = [t.split("#", 1)[0] for t in targets if not t.startswith(("http://", "https://"))]
+    relative = [path for path in relative if path]
+    self.assertTrue(relative, "docs/why-slicer.md links to the docs it describes")
+    missing = [path for path in relative if not (WHY.parent / path).exists()]
+    self.assertEqual(missing, [], "each relative link in docs/why-slicer.md must exist")
 
 
 if __name__ == "__main__":

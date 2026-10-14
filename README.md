@@ -25,6 +25,8 @@ state directory; canonical state stays inside the checkout. Coordination stays i
 
 Stdlib Python 3.11+, no dependencies.
 
+Why use it? See [Why slicer](docs/why-slicer.md).
+
 ## Install
 
 Into its own virtual environment from PyPI. The distribution is `squalor-slicer`
@@ -143,6 +145,7 @@ a mutation leaves the index untouched; see [Git access](docs/commands.md#git-acc
 
 ## Documentation
 
+- [Why slicer](docs/why-slicer.md) — the workflow problems slicer solves
 - [Getting started](docs/getting-started.md) — install to CI, with worked workflows for a
   new project and for an AI code review
 - [Command reference](docs/commands.md) — every command and flag, `.slicer/`, removal, prose
