@@ -1,0 +1,45 @@
+{
+  "id": "s269",
+  "title": "Explain why to use slicer in docs/why-slicer.md",
+  "lead": [
+    "Neither the README nor `docs/` says why someone would use slicer. The README intro says what slicer is: roadmap and slice management, AI-friendly, JSON state in git, stdlib only. Nothing pairs the workflow problems people hit with the features that fix them. This slice adds `docs/why-slicer.md`, a one-screen page that does that, and links it from the README."
+  ],
+  "depends_note": null,
+  "findings_note": "owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner asked for this on 2026-10-14: something brief that highlights the features and the workflow problems slicer smooths out. A reader deciding whether to adopt slicer currently has to piece that together from the command reference. One short page lets them judge quickly, and the README links send them there."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/why-slicer.md` (new).\n- `README.md`: a one-line pointer at the end of the intro (after the \"Stdlib Python 3.11+, no dependencies.\" line), plus a first entry in `## Documentation`.\n- `tests/test_docs_coverage.py`: the link tests below.\n- `CHANGELOG.md` `[Unreleased]`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Readme_LinksWhySlicer_InIntroAndDocumentationList`: `README.md` links `docs/why-slicer.md` once before `## Install` and once under `## Documentation`.\n- `test_WhySlicer_RelativeLinks_Resolve`: every relative Markdown link in `docs/why-slicer.md` points to a file that exists in the repo. A `#anchor` part is ignored, and `http(s)` links are skipped."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the two tests and watch them go red.\n2. Write `docs/why-slicer.md` with these parts:\n   - an `# Why slicer` title;\n   - a two- or three-sentence opening: planning in loose markdown works until several people or agents share it, and slicer keeps the plan as checked state in the repo;\n   - 6 to 8 bullets, each a bold common problem followed by the slicer feature that fixes it, with a link to the doc that covers that feature. Cover these, and check each one against the code before writing it:\n     - choosing the next task (`next --ready`, scores, dependencies);\n     - two people or agents taking the same task (`start` claims across worktrees);\n     - a roadmap drifting from the code (`check`, and `verify` against git history);\n     - merge conflicts on tracking files from parallel branches (the merge drivers and `setup-git`);\n     - agents needing a contract (`--json`, stable error codes, `ai instructions`);\n     - vague specs (slice sections, and `next` withholding a slice with missing sections);\n     - review (handoff → review → done, and the slice relay with its role matrix);\n     - nothing to host (JSON in the repo, stdlib, no service or API key);\n   - a short \"When slicer is not for you\" paragraph drawn from the non-goals in `slicer goals`, such as real-time collaboration and a hosted service.\n\n   Keep it to about one screen. Match the plain, direct tone of `docs/getting-started.md`, wrapped at about 90 columns.\n3. Add the README links: in the intro, \"Why use it? See [Why slicer](docs/why-slicer.md).\"; in `## Documentation`, first entry: \"[Why slicer](docs/why-slicer.md) — the workflow problems slicer solves\".\n4. Add a CHANGELOG `[Unreleased]` entry under Added.\n5. Mutation-check both tests: remove each README link in turn, then break one link in the page."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- Each claim on the page is checked against the code or the linked doc. The report lists each bullet with the file and line that supports it.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s269`, branch `feature/s269-why-slicer`. Commit only on the branch. Merging and pushing wait for the owner."
+    },
+    {
+      "heading": "Boundary",
+      "body": "- Docs only. No change under `src/`, and no change to command behaviour or output.\n- Every claim on the page must be true of the current code and docs. Name only features that exist, and link each to the doc that covers it. No roadmap promises and no comparisons with named products.\n- The README intro and the Documentation list each gain one link. Nothing else in the README changes."
+    }
+  ],
+  "notes": []
+}

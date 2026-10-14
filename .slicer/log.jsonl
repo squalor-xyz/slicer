@@ -1427,3 +1427,5 @@
 {"when": "2026-10-14T17:30:00Z", "item": "s268", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T17:30:17Z", "item": "s268", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T17:35:32Z", "item": "s268", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: slicer init --relay-roles writes and renders the example relay roles matrix through ops.roles_init under the project lock and keeps an existing one; plain init prints a relay-roles init hint only while no matrix exists; a directory at the matrix path exits io. Full suite on merged main 1919 OK (skipped 1); review fixes applied, gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-14T20:55:54Z", "item": "s269", "action": "add", "from": "", "to": "open", "note": "Explain why to use slicer in docs/why-slicer.md"}
+{"when": "2026-10-14T20:55:54Z", "item": "s269", "action": "promote", "from": "", "to": "", "note": ""}
