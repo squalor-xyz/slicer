@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-253 items · — 5 · done 244 · retired 4
+253 items · — 4 · done 244 · retired 4 · reviewing 1
 
 ## v1.10
 
@@ -42,7 +42,7 @@
 | 7 | [s263](slices/s263.md) | Write config through the CLI | M | 2 | slicer | owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; config.json is the one documented hand-edit exception in AGENTS.md and docs/configuration.md · discovered from s257 | — |
 | 8 | [s264](slices/s264.md) | Edit templates through the CLI | M | 2 | slicer | owner request, session 2026-10-13: every .slicer/ file changes only through the CLI; docs/configuration.md and docs/commands.md call .slicer/templates/*.md yours to edit, and a missing template's fix is init --force, which also rewrites config · discovered from s257 | — |
 | 9 | [s265](slices/s265.md) | Recommend yes/no message | S | 1 | slicer | s259 gate, 2026-10-13: recommend --split maybe fails with 'must be yes, no or any', but recommend accepts only yes or no · discovered from s259 | done |
-| 10 | [s266](slices/s266.md) | ai relay advice before io | S | 1 | slicer | s261 relay, 2026-10-13: with a directory at .slicer/relay-roles.json and a leftover relay-roles.md, ai relay prints the legacy_relay_roles advice on stderr and then fails with io · discovered from s261 | — |
+| 10 | [s266](slices/s266.md) | ai relay advice before io | S | 1 | slicer | s261 relay, 2026-10-13: with a directory at .slicer/relay-roles.json and a leftover relay-roles.md, ai relay prints the legacy_relay_roles advice on stderr and then fails with io · discovered from s261 | reviewing |
 
 ---
 

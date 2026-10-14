@@ -21,6 +21,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - A directory at `.slicer/relay-roles.md` no longer gets the `legacy_relay_roles` warning from `slicer check` or the stderr line from `slicer ai relay`. That warning told the owner to run `slicer relay-roles init --replace-legacy`, which only counts a regular file as the old matrix, so with a matrix present the command refused. The advice now tests for a file the same way that command does.
 
+- `slicer ai relay` reads the role matrix before it prints the `legacy_relay_roles` advice. With a directory at `.slicer/relay-roles.json` and a leftover `.slicer/relay-roles.md`, it used to print that advice on stderr and then fail with `io`, so the owner was sent to a command that could not succeed. An unreadable or invalid matrix now fails with its own error and no advice.
+
 ## [1.9.0] - 2026-10-12
 
 ### Added
