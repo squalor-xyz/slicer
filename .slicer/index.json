@@ -8210,7 +8210,7 @@
       "id": "s262",
       "title": "Merge relay-roles.json changes from parallel branches without an id collision",
       "short_title": "Relay roles merge",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s260"
@@ -8239,10 +8239,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-14T14:17:42Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
