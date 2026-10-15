@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer relay-run` records slice-relay runs in a local ledger so the orchestrator's progress can be watched. `begin ID [ID ...] [--worktree PATH]` prints a run id; `step RUN --role R --agent A [--vendor V] [--model M] [--reasoning E] --phase start|done|fail [--task TEXT] [--parent STEP]` records an agent's step and prints its step id, where `--parent` nests a subagent and `--step STEP` updates a step already recorded instead of adding one; `end RUN --outcome pass|fail|stopped` closes the run; `list [--active]` shows the runs in this checkout and in each sibling worktree, oldest first. A run with no event for more than 30 minutes and no outcome is `stale`, not active. The ledger, `.slicer/relay-runs.jsonl`, is append-only, gitignored (`init` and the first write add it to `.slicer/.gitignore`), never rendered and never read by `check`, so a `relay-run` call changes no tracked file. It is monitor-only: nothing is launched and nothing is written to git. New error codes: `unknown_run`, `run_ended` and `bad_run_field` (exit 2); a damaged ledger line is `corrupt` with the file and line. `list --json` returns `{runs}`, each with its steps, counts and state, and `slicer.relayrun.list_runs` returns the same runs to a caller such as the TUI.
+
 - `docs/why-slicer.md` explains the workflow problems slicer solves and the feature that
   answers each one, with links to the docs that cover them. The README links to it from
   the intro and from the Documentation list.

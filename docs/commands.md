@@ -63,6 +63,10 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `relay-roles rule-add TEXT` | append a rule with the next id (`u6`, ...). Blank text exits 2 with `blank_title`, text with a newline with `newline_in_field` |
 | `relay-roles rule-edit ID TEXT` | replace a rule's text. An unknown ID exits 2 with code `unknown_role_rule` |
 | `relay-roles rule-remove ID` | drop a rule |
+| `relay-run begin ID [ID ...] [--worktree PATH]` | start a slice-relay run on these items and print its id (`run-YYYYMMDD-HHMMSS-xxxx`). `--worktree` is recorded by its directory name; the default is the checkout whose ledger the run goes in. Appends to the local ledger only, under the project lock; no roadmap state, history or render changes. A blank item, or one with whitespace, exits 2 with code `bad_run_field`. See [Relay run ledger](#relay-run-ledger) |
+| `relay-run step RUN --role R --agent A [--vendor V] [--model M] [--reasoning E] --phase start\|done\|fail [--task TEXT] [--parent STEP] [--step STEP]` | record an agent's step in a run and print its step id (`1`, `2`, ...). A new step needs `--role` and `--agent`. `--parent` nests a subagent under the step that spawned it, and counts it as a subagent. `--step STEP` updates a step already in the run instead (for example `--step 1 --phase done`): only the fields given change, and `--parent` is refused there. An unknown `RUN` exits 2 with code `unknown_run`, an ended one with `run_ended`; a phase outside the three, a role or agent missing on a new step, a `--parent` or `--step` not in the run, or a value with a newline is `bad_run_field`. Nothing is appended when it refuses. `relay-run step RUN --step N --phase start` re-records a step that is still running and acts as a heartbeat, so a step that takes longer than 30 minutes does not make its run go stale |
+| `relay-run end RUN --outcome pass\|fail\|stopped` | close a run. The same refusals as `step`: `unknown_run`, `run_ended`, and `bad_run_field` for another outcome |
+| `relay-run list [--active]` | the runs in this checkout's ledger and in each sibling worktree's, oldest first. A run is `active`, `stale` (no event for more than 30 minutes and not ended) or `ended`; `--active` keeps only the first. Reads only: no lock, no write. A damaged ledger here is exit 3 with code `corrupt` naming the file and line; a sibling's is skipped. A last line with no newline yet is an append in progress and is ignored. `--json` returns `{"runs": [...]}`, and `--lean` only compacts it (empty fields stay) |
 | `start ID [ID ...] [--note TEXT] [--owner NAME]` | mark an item in progress and claim it (owner and time). The owner is `--owner`, otherwise `SLICER_CLAIM_OWNER`, otherwise `claim_owner` in config, otherwise the git user name, otherwise the worktree name; a blank value falls through and one with a newline is `usage`. A second start does not refresh the claim. The owner is also recorded as `by` on the history entry |
 | `release ID [ID ...] [--owner NAME]` | clear a claim without changing status; `--owner` names who released it in history (`by`). An item that was in progress stays in progress and lists as `*` |
 | `handoff ID [ID ...] [--note TEXT] [--owner NAME] [--render] [--strict] [--check]` | hand a started slice to review (`--owner` names who handed it off, as `by` in history): status becomes `review_status` and the claim is cleared. `next` skips review items and dependents stay blocked until `done`; a reviewer picks one up with `next --status review --start` (or `start ID`), which moves it to `reviewing_status` (also out of plain `next`). `handoff` refuses a reviewing item. `--check` with `--render` runs `slicer check` after the change lands: stdout stays the item, a failure exits 1 with the findings on stderr, and `--check` without `--render` is `usage` and writes nothing |
@@ -354,6 +358,7 @@ templates/*.md       render templates, changed with `slicer template`
 relay-roles.json     the slice-relay role matrix, when the project keeps one (see Relay roles)
 render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), one file per slice, and RELAY-ROLES.md
 log.jsonl            append-only history of status changes
+relay-runs.jsonl     local ledger of slice-relay runs; gitignored, never rendered or checked (see Relay run ledger)
 .gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
 
@@ -483,6 +488,39 @@ exactly one side reordered it.
 
 Index schema is 8. An index without `catalog` still loads. The next save writes
 the object and the new schema, which an older slicer refuses.
+
+## Relay run ledger
+
+A relay orchestrator records what a slice relay is doing with `slicer relay-run`, so that
+`relay-run list` and the TUI can show which slices are being relayed and which agents are
+running. The records go to `.slicer/relay-runs.jsonl`, an append-only file with one JSON
+event per line. Like `.slicer/feedback.md` it is gitignored (`init` and the first write add
+it to `.slicer/.gitignore`), never rendered, never read by `check`, and not part of the
+roadmap state: deleting it loses only the board. A run is monitor-only. Recording one
+launches nothing and does no git write.
+
+```sh
+RUN=$(slicer relay-run begin s282 --worktree .worktrees/s282)
+STEP=$(slicer relay-run step "$RUN" --role implementer --agent "Claude Code" --vendor Anthropic --model sonnet --reasoning high --phase start --task "write the tests")
+slicer relay-run step "$RUN" --role implementer --agent "Claude Code" --model haiku --phase start --parent "$STEP" --task "one part"
+slicer relay-run step "$RUN" --step "$STEP" --phase done
+slicer relay-run end "$RUN" --outcome pass
+slicer relay-run list --active
+```
+
+A run is its events folded together: its items, the worktree, when it began and last had an
+event, and its steps in the order they were added, each with role, agent, vendor, model,
+reasoning, phase, task, parent and times. The counts are all the steps, those still `start`ed (none once
+the run has ended), the subagents (steps with a parent) and the top-level steps per role (a
+subagent is counted under `subagents`, not under its role). The state is computed when
+read: `ended` once the run has an outcome, `stale` when it has had no event for more than
+30 minutes (an orchestrator that died), else `active`.
+
+A step is added in the checkout whose ledger holds its run; `list` also reads each sibling
+worktree's ledger as a plain file. A ledger line that cannot be read (not JSON, an unknown event, or a field of the wrong
+type) stops `list` and the writes in that checkout with code `corrupt`, naming
+`relay-runs.jsonl` and the line. A writer also refuses a last line that lacks its newline,
+while `list` treats it as an append in progress. Delete the line or the file.
 
 ## Relay roles
 

@@ -40,6 +40,7 @@ never pays for curses.
   log.jsonl                append-only history, one LogEntry per line
   feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
   feedback-reported.json   which entries `feedback-report` filed; gitignored, not roadmap state
+  relay-runs.jsonl         local `relay-run` ledger of slice-relay runs; gitignored, append-only, not roadmap state
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
   slices/retired/<ID>.json retired, with the reason on the index item
@@ -48,6 +49,15 @@ never pays for curses.
   render/ROADMAP.html      GENERATED, standalone browser view
   render/slices/<ID>.md    GENERATED
 ```
+
+**The relay-run ledger is not state, like the feedback log.** `.slicer/relay-runs.jsonl`
+(`relayrun.py`) holds one JSON event per line, appended by `slicer relay-run` through `ops`
+under the project lock and never rewritten. A run, its steps and whether it is `active`,
+`stale` or `ended` exist only as the fold of those events at read time, with the clock
+passed in. Nothing renders it, `check` and `verify` never open it, and it is gitignored, so
+deleting it loses only the board. `relayrun.list_runs` also reads each sibling worktree's
+ledger as a plain file; a damaged sibling ledger is skipped, a damaged local one is
+`corrupt` with its file and line. No git write is involved.
 
 Config schema is `5` (`src/slicer/config.py`), protecting the optional `issues_repo`
 destination for `feedback-report`; schema 4 added `satisfies_dependencies`, schema 3

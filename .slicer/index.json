@@ -8918,10 +8918,22 @@
       "id": "s282",
       "title": "Record relay runs in a local ledger with slicer relay-run",
       "short_title": "Record relay runs in a local ledger with slicer relay-run",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "eecb38d1-ad1c-4f7f-825f-ed36cd29d495",
+          "kind": "",
+          "text": "**2026-10-15** — Verified. Owner decisions: ledger .slicer/relay-runs.jsonl (gitignored, append-only); stale after 30 minutes with no event (module constant relayrun.STALE_AFTER); relay-run end --outcome pass|fail|stopped; -r on relay-run list not implemented, by owner decision. Additions beyond the spec: relay-run step --step STEP updates a recorded step (only fields given change; --parent refused there); new error code run_ended (step or end on an ended run); ledger type validation (wrong-typed line is corrupt with file and line; a sibling's damaged ledger is skipped) and torn-tail handling (unlocked reads ignore a last line with no newline; writers refuse it; lines split on newline only); counts.roles counts top-level steps only; counts.running is 0 once the run has ended; Run.subagents_of(step_id); run-id collision redraw; blank --worktree refused. Deferred: moving ensure_gitignore from feedback to store; making a repeat end idempotent. Counts: full suite 1968 tests OK (1 skipped); tests/test_relay_run.py 47 tests, every new assertion mutation-checked; slicer check passes.",
+          "created_at": "2026-10-15T04:42:53Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "L",
@@ -8940,7 +8952,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

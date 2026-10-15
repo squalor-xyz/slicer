@@ -130,6 +130,7 @@ reproduce is never half-migrated.
 | `goals` | show project goals and non-goals |
 | `catalog` | project-knowledge records, and citations from roadmap items |
 | `relay-roles` | the slice-relay role matrix: rows (role, conditions, agent, vendor, model, reasoning) and rules |
+| `relay-run` | record slice-relay runs and their agent steps in a local, gitignored ledger; `list` shows what is running |
 | `stats` | counts by status, size, tree and pass |
 | `status` | next item, progress, and blockers in one view |
 | `log` | recent history, newest first |

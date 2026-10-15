@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-273 items · — 17 · done 252 · retired 4
+273 items · — 16 · done 252 · retired 4 · review 1
 
 ## v1.11
 
@@ -46,7 +46,7 @@
 | 11 | [s279](slices/s279.md) | TUI overview line shows progress and check drift | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 12 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 13 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 14 | [s282](slices/s282.md) | Record relay runs in a local ledger with slicer relay-run | L | 3 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
+| 14 | [s282](slices/s282.md) | Record relay runs in a local ledger with slicer relay-run | L | 3 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | review |
 | 15 | [s283](slices/s283.md) | TUI relay board animates running relays | M | 2 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 | 16 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 | 17 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |

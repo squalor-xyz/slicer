@@ -18,7 +18,8 @@ from pathlib import Path
 from typing import Callable, Mapping
 
 from slicer import (
-  feedback, graph, ids, jsonio, outline, prose, refs, render, roles, store, templates, vcs,
+  feedback, graph, ids, jsonio, outline, prose, refs, relayrun, render, roles, store, templates,
+  vcs,
 )
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import ConfigError, RenderError, StateError
@@ -148,6 +149,7 @@ def init_project(
   write_gitattributes(root)
   feedback.ensure_gitignore(root)
   feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
+  feedback.ensure_gitignore(root, relayrun.LEDGER_NAME)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   return base
 
@@ -2764,3 +2766,99 @@ def rule_remove(state: State, rule_id: str) -> RoleRule:
   state.save_roles()
   _record_role(state, rule.id, "rule-remove")
   return rule
+
+
+# ---- relay run ledger -----------------------------------------------------
+# `.slicer/relay-runs.jsonl` is a gitignored, append-only log, not roadmap state: nothing
+# here touches the index, history or render. Each call validates before it appends, so a
+# refused call leaves the ledger as it was, and holds the project lock across the append.
+
+def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
+  """The run in this checkout's ledger that a step or end may extend."""
+  run = next((r for r in relayrun.load_runs(root, now) if r.id == run_id), None)
+  if run is None:
+    raise StateError(
+      f"no relay run {run_id!r} in {relayrun.ledger_path(root)}; `relay-run begin` makes one "
+      "and `relay-run list` shows them. A run is extended in the checkout whose ledger holds it",
+      code="unknown_run",
+    )
+  if run.state == "ended":
+    raise StateError(
+      f"relay run {run_id} ended with outcome {run.outcome}; begin a new run instead",
+      code="run_ended",
+    )
+  return run
+
+
+def relay_run_begin(
+  root: Path, items: list[str], worktree: str | None = None, *, now: datetime | None = None,
+) -> relayrun.Run:
+  """Start a run on these items. `worktree` defaults to the checkout it is recorded in."""
+  now = now or relayrun.utcnow()
+  items = [relayrun.one_line("item", item, required=True) for item in items]
+  if not items:
+    raise relayrun.bad_field("a run needs at least one item")
+  if any(re.search(r"\s", item) for item in items):
+    raise relayrun.bad_field("an item id may not contain whitespace")
+  if worktree is not None:
+    relayrun.one_line("worktree", worktree, required=True)
+  name = Path(worktree).resolve().name if worktree is not None else Path(root).resolve().name
+  name = relayrun.one_line("worktree", name, required=True)
+  with store.project_lock(root):
+    # A damaged ledger is refused before anything is added to it.
+    taken = {run.id for run in relayrun.load_runs(root, now)}
+    while True:
+      run_id = f"run-{now.astimezone(timezone.utc):%Y%m%d-%H%M%S}-{uuid4().hex[:4]}"
+      if run_id not in taken:
+        break
+    relayrun.append(root, relayrun.begin_event(run_id, now, items, name))
+    return next(r for r in relayrun.load_runs(root, now) if r.id == run_id)
+
+
+def relay_run_step(
+  root: Path, run_id: str, *, phase: str, step: str | None = None, role: str = "",
+  agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", task: str = "",
+  parent: str = "", now: datetime | None = None,
+) -> tuple[relayrun.Run, relayrun.Step]:
+  """Record an agent's step, or with `step` a later phase of one already recorded.
+
+  A new step needs a role and an agent. `parent` nests a subagent under the step that
+  spawned it. An update names only what changes; the rest stays as recorded.
+  """
+  now = now or relayrun.utcnow()
+  relayrun.choice("phase", phase, relayrun.PHASES)
+  fields = {
+    "role": relayrun.one_line("role", role), "agent": relayrun.one_line("agent", agent),
+    "vendor": relayrun.one_line("vendor", vendor), "model": relayrun.one_line("model", model),
+    "reasoning": relayrun.one_line("reasoning", reasoning), "task": relayrun.one_line("task", task),
+  }
+  parent = relayrun.one_line("parent", parent)
+  with store.project_lock(root):
+    run = _open_run(root, run_id, now)
+    if step is None:
+      for name in ("role", "agent"):
+        if not fields[name]:
+          raise relayrun.bad_field(f"a new step needs --{name}")
+      if parent and run.step(parent) is None:
+        raise relayrun.bad_field(f"parent step {parent!r} is not in run {run_id}")
+      step_id = str(max((int(s.id) for s in run.steps if s.id.isdigit()), default=0) + 1)
+    else:
+      if run.step(step) is None:
+        raise relayrun.bad_field(f"step {step!r} is not in run {run_id}")
+      if parent:
+        raise relayrun.bad_field("a step's parent is set when it is created, not on update")
+      step_id = step
+    relayrun.append(root, relayrun.step_event(run_id, now, step_id, phase, parent, **fields))
+    run = _open_run(root, run_id, now)
+    return run, run.step(step_id)
+
+
+def relay_run_end(
+  root: Path, run_id: str, outcome: str, *, now: datetime | None = None,
+) -> relayrun.Run:
+  now = now or relayrun.utcnow()
+  relayrun.choice("outcome", outcome, relayrun.OUTCOMES)
+  with store.project_lock(root):
+    _open_run(root, run_id, now)
+    relayrun.append(root, relayrun.end_event(run_id, now, outcome))
+    return next(r for r in relayrun.load_runs(root, now) if r.id == run_id)
