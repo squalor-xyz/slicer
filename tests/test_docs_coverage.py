@@ -1,7 +1,9 @@
 """The command tables cover the real parser, so a new command or flag cannot
 ship undocumented (S127). The reference in docs/commands.md names every flag;
 the README's summary table names every command (S142). The README links the
-why-slicer page, and that page's relative links resolve (S269)."""
+why-slicer page, and that page's relative links resolve (S269). Each doc's sentence
+that lists the commands without --json (agents.md, the README, commands.md and
+import.md) names exactly those the parser builds without it (S272)."""
 
 from __future__ import annotations
 
@@ -21,6 +23,11 @@ COMMON = {"--help", "--root", "--json", "--lean", "--render", "--strict"}
 WHY = ROOT / "docs" / "why-slicer.md"
 WHY_LINK = "](docs/why-slicer.md)"
 MARKDOWN_LINK = re.compile(r"\]\(([^)\s]+)\)")
+AGENTS_DOC = ROOT / "docs" / "agents.md"
+IMPORT_DOC = ROOT / "docs" / "import.md"
+# Each doc's sentence that names the commands without --json, in its own wording.
+JSON_DOCS = (AGENTS_DOC, README, REFERENCE, IMPORT_DOC)
+JSON_SENTENCE = re.compile(r"Every (?:sub)?command except (.+?) (?:accepts|takes) `--json`")
 
 
 def _subcommands() -> dict[str, argparse.ArgumentParser]:
@@ -87,6 +94,37 @@ class WhySlicerTests(unittest.TestCase):
     self.assertTrue(relative, "docs/why-slicer.md links to the docs it describes")
     missing = [path for path in relative if not (WHY.parent / path).exists()]
     self.assertEqual(missing, [], "each relative link in docs/why-slicer.md must exist")
+
+
+def _json_less_commands() -> list[str]:
+  """Each leaf command the real parser builds with no --json option, by its words.
+  A group such as `prose` has no run of its own, so its leaves are the ones checked."""
+  found: list[str] = []
+
+  def walk(parser: argparse.ArgumentParser, words: tuple[str, ...]) -> None:
+    groups = [a for a in parser._actions if isinstance(a, argparse._SubParsersAction)]
+    if not groups:
+      if not any("--json" in a.option_strings for a in parser._actions):
+        found.append(" ".join(words))
+      return
+    for name, sub in groups[0].choices.items():
+      walk(sub, (*words, name))
+
+  walk(cli.build_parser(), ())
+  return sorted(found)
+
+
+class AgentsDocTests(unittest.TestCase):
+  def test_AgentsDoc_JsonExceptions_MatchParser(self) -> None:
+    parser_set = _json_less_commands()
+    for doc in JSON_DOCS:
+      with self.subTest(doc=doc.relative_to(ROOT).as_posix()):
+        text = " ".join(doc.read_text(encoding="utf-8").split())
+        matches = JSON_SENTENCE.findall(text)
+        self.assertEqual(len(matches), 1, "keep one 'Every command except ... takes `--json`' sentence")
+        named = sorted(re.findall(r"`([^`]+)`", matches[0]))
+        self.assertEqual(named, parser_set,
+                         "name exactly the commands the parser builds without --json")
 
 
 if __name__ == "__main__":

@@ -166,8 +166,9 @@ publish unless separately authorized.
 
 ## Everything takes `--json`
 
-Every subcommand except the interactive `tui`/`ui` accepts `--json` and writes a single JSON
-document to stdout. Read commands return data; write commands return what they changed.
+Every subcommand except the interactive `tui`/`ui` and the git merge drivers `merge-index`
+and `merge-relay-roles` accepts `--json` and writes a single JSON document to stdout. Read
+commands return data; write commands return what they changed.
 
 ```console
 $ slicer next --json
