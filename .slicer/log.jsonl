@@ -1517,3 +1517,6 @@
 {"when": "2026-10-15T12:53:00Z", "item": "s272", "action": "status", "from": "review", "to": "done", "note": "Landed on main: four docs name the commands without --json, tested against the parser; gate PASS, full suite 2034 OK.", "by": "Jon Robbins"}
 {"when": "2026-10-15T13:34:56Z", "item": "s291", "action": "add", "from": "", "to": "open", "note": "TUI queue columns are configurable"}
 {"when": "2026-10-15T13:34:56Z", "item": "s292", "action": "add", "from": "", "to": "open", "note": "affected.py skips selected test ids that no longer load"}
+{"when": "2026-10-15T12:54:17Z", "item": "s289", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T13:38:55Z", "item": "s289", "action": "note", "from": "", "to": "", "note": "Outline depends: accepts an existing item ID per comma-separ", "by": "Jon Robbins"}
+{"when": "2026-10-15T13:38:57Z", "item": "s289", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

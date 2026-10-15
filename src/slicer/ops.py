@@ -2218,7 +2218,7 @@ class OutlineReport:
   warnings: list[str] = field(default_factory=list)
   problems: list[str] = field(default_factory=list)
   preamble: str | None = None
-  # Resolved dependency titles per new spec (keyed by `id(spec)`), so applying
+  # Resolved dependency titles or existing IDs per new spec (keyed by `id(spec)`), so applying
   # saves exactly the edges the census counted. Not part of the JSON report.
   depends: dict[int, list[str]] = field(default_factory=dict, repr=False)
   # Resolved parent id per new spec (keyed by `id(spec)`), set once ids are allocated.
@@ -2253,6 +2253,12 @@ def _existing_titles(index: Index) -> dict[str, str]:
   return titles
 
 
+def _existing_item_named(index: Index, value: str) -> Item | None:
+  """The existing item named by a `depends:` or `parent:` value: a title first, then an ID."""
+  titles = _existing_titles(index)
+  return index.get(titles[value]) if value in titles else index.get(value)
+
+
 def _outline_parent_problems(
   spec: object, specs: list[object], reused: dict[int, Item | None], index: Index,
 ) -> list[str]:
@@ -2275,29 +2281,36 @@ def _outline_parent_problems(
     existing = reused[id(match)]
     grandparent = existing.parent if existing is not None else match.parent
     return [nested % grandparent] if grandparent else []
-  titles = _existing_titles(index)
-  target = index.get(titles[value]) if value in titles else index.get(value)
+  target = _existing_item_named(index, value)
   if target is None:
     return [f"{spec.title!r}: parent {value!r} is neither a title in this outline or the "
             "roadmap nor an existing item ID"]
   return [nested % target.parent] if target.parent else []
 
 
-def _resolve_outline_depends(raw: list[str], known: set[str]) -> tuple[list[str], list[str]]:
-  """Turn raw `depends:` values into titles, plus the references that match none.
+def _resolve_outline_depends(
+  raw: list[str], known: set[str], index: Index,
+) -> tuple[list[str], list[str]]:
+  """Turn raw `depends:` values into titles or existing IDs, plus the unmatched references.
 
   A whole value that is a known title wins, so a title may contain commas.
   Any other value is split on commas, as it always was, and each piece must be
-  a known title. Order is declared order across lines; nothing is deduplicated.
+  a known title or, as `parent:` allows, the ID of an existing item. An ID is
+  kept as it is: `apply` passes a value through when no title key matches it,
+  and an ID that is not a known title is never such a key. Order is declared
+  order across lines; nothing is deduplicated.
   """
-  titles: list[str] = []
+  resolved: list[str] = []
   unknown: list[str] = []
   for value in raw:
     value = value.strip()
     pieces = [value] if value in known else outline.split_list(value)
     for piece in pieces:
-      (titles if piece in known else unknown).append(piece)
-  return titles, unknown
+      if piece in known or _existing_item_named(index, piece) is not None:
+        resolved.append(piece)
+      else:
+        unknown.append(piece)
+  return resolved, unknown
 
 
 def outline_report(
@@ -2322,7 +2335,8 @@ def outline_report(
   known |= {it.display_title() for it in state.index.items}
   unknown_deps: dict[int, list[str]] = {}
   for spec in new_specs:
-    report.depends[id(spec)], unknown_deps[id(spec)] = _resolve_outline_depends(spec.depends, known)
+    report.depends[id(spec)], unknown_deps[id(spec)] = _resolve_outline_depends(
+      spec.depends, known, state.index)
   for spec in specs:
     item = reused[id(spec)]
     status = item.status if item is not None else spec.status or cfg.open_status
@@ -2378,7 +2392,10 @@ def outline_report(
       )
     problems.extend(_outline_parent_problems(spec, specs, reused, state.index))
     for dep in unknown_deps[id(spec)]:
-      problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
+      problems.append(
+        f"{spec.title!r}: depends on {dep!r}, which is neither a title in the outline or roadmap "
+        "nor an existing item ID"
+      )
     heading = _boundary_in_both(spec.lead, spec.sections, cfg.boundary)
     if heading:
       problems.append(
@@ -2490,7 +2507,7 @@ def apply_outline(
       # would be wrong in exactly the case bulk loading is for.
       pass_key=spec.pass_key,
       group=spec.group,
-      depends_on=[by_title[d] for d in report.depends[id(spec)]],
+      depends_on=[by_title.get(d, d) for d in report.depends[id(spec)]],
       importance=spec.importance,
       urgency=spec.urgency,
       effort=spec.effort,

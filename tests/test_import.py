@@ -235,7 +235,8 @@ class ImportRefusalTests(unittest.TestCase):
       repo.write("r.md", "## A thing\ndepends: Nothing at all\n")
       code, out, _ = repo.run("import", "r.md")
       self.assertEqual(code, 1)
-      self.assertIn("which is not in the outline or the index", out)
+      self.assertIn(
+        "which is neither a title in the outline or roadmap nor an existing item ID", out)
 
   def test_Import_DependsOnAnExistingItem_IsAccepted(self) -> None:
     with self.repo() as repo:
@@ -244,6 +245,52 @@ class ImportRefusalTests(unittest.TestCase):
       code, _, err = repo.run("import", "r.md")
       self.assertEqual(code, 0, err)
       self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Import_DependsOnExistingId_ResolvesToThatItem(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Already here")
+      repo.write("r.md", "## A new thing\ndepends: S01\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Import_DependsOnExistingId_DryRunCountsTheEdge(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Already here")
+      repo.write("r.md", "## A new thing\ndepends: S01\n")
+      code, out, err = repo.run("import", "r.md", "--dry-run")
+      self.assertEqual(code, 0, err)
+      self.assertIn("depends    1 edges", out)
+      self.assertEqual(repo.run("import", "r.md")[0], 0)
+      self.assertEqual(repo.state().index.require("S02").depends_on, ["S01"])
+
+  def test_Import_DependsOnUnknownId_RefusedNamingTitleOrId(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Already here")
+      repo.write("r.md", "## A new thing\ndepends: S09\n")
+      code, out, _ = repo.run("import", "r.md")
+      self.assertEqual(code, 1)
+      self.assertIn(
+        "depends on 'S09', which is neither a title in the outline or roadmap "
+        "nor an existing item ID", out)
+
+  def test_Import_TitleEqualToAnId_TitleWins(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "S02")
+      repo.run("add", "Other thing")
+      repo.write("r.md", "## A new thing\ndepends: S02\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S03").depends_on, ["S01"])
+
+  def test_Import_DependsOnIdInCommaList_ResolvesEachPiece(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "Already here")
+      repo.run("add", "Also here")
+      repo.write("r.md", "## A new thing\ndepends: S01, Also here\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S03").depends_on, ["S01", "S02"])
 
   def test_Import_DependsOnCommaTitle_IsOneEdgeInDryRunAndApply(self) -> None:
     with self.repo() as repo:

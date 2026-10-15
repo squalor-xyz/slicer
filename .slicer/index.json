@@ -9536,10 +9536,22 @@
       "id": "s289",
       "title": "An outline's depends accepts an existing item ID",
       "short_title": "An outline's depends accepts an existing item ID",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "84e25f4a-dc7f-480b-b49f-6c4aa16ad02d",
+          "kind": "",
+          "text": "**2026-10-15** — Outline depends: accepts an existing item ID per comma-separated piece; a known title still wins. The lookup is the shared _existing_item_named, which depends: and parent: both use (title first, then ID), so the two resolve identically. An ID is stored as the ID, not the item's title as the Files line says; the orchestrator accepted this deviation. Reason given (from code reading, not reproduced): a title round-trip through the title map can pick the wrong item when one item's full title equals another item's short title. Unknown values are refused with: depends on 'x', which is neither a title in the outline or roadmap nor an existing item ID. The cli.py skeleton depends help text was also updated; it is outside the Files line and was accepted. Tests: four new tests in tests/test_import.py (DependsOnExistingId, DependsOnUnknownId, TitleEqualToAnId as a guard that passes before product code, DependsOnIdInCommaList) plus the dry-run edge test test_Import_DependsOnExistingId_DryRunCountsTheEdge; the DanglingDepends assertion was reworded. Full suite: 2082 OK, 1 skipped. Targeted -k '*Depends*' -k '*Import*': 120 OK. docs/import.md and CHANGELOG [Unreleased] updated. Not committed.",
+          "created_at": "2026-10-15T13:38:55Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9559,7 +9571,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
