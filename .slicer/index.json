@@ -9108,7 +9108,7 @@
       "id": "s277",
       "title": "TUI shows sibling-worktree claims and sibling-only items",
       "short_title": "TUI shows sibling-worktree claims and sibling-only items",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
