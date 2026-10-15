@@ -9153,7 +9153,7 @@
       "id": "s287",
       "title": "Gitignore the project lock file",
       "short_title": "Gitignore the project lock file",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
