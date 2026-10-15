@@ -9832,6 +9832,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "88c65705-8479-4290-8dc7-1df1be5a80f0",
+          "kind": "",
+          "text": "**2026-10-15** — Later (gate, 2026-10-15): 'role row' in the ai.py Every brief paragraph is loose for a project with no relay-roles matrix; it is the spec's wording, kept. The docs/tui.md Claude Code claims (/tasks shows model and effort; subagentStatusLine) come from the slice's Why citation; no role could fetch the live page to re-verify.",
+          "created_at": "2026-10-15T19:22:06Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
