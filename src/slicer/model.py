@@ -838,3 +838,12 @@ def cross_counts(items: Iterable[Item], row_key: str, col_key: str) -> dict[str,
       bucket = out.setdefault(str(r), {})
       bucket[col] = bucket.get(col, 0) + 1
   return {r: out[r] for r in sorted(out)}
+
+
+def completion(items: Iterable[Item], done_status: str) -> dict[str, int]:
+  """Done and total item counts with the rounded percent `stats`, `status` and the
+  TUI overview line all show. An empty roadmap is 0% rather than a division error."""
+  items = list(items)
+  total = len(items)
+  done = sum(1 for it in items if it.status == done_status)
+  return {"done": done, "total": total, "percent": round(done * 100 / total) if total else 0}

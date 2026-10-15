@@ -1548,3 +1548,7 @@
 {"when": "2026-10-15T16:14:07Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-15T16:14:07Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-10-15T16:17:20Z", "item": "s290", "action": "status", "from": "review", "to": "done", "note": "Landed bbbeccc: docs/landing.md 'Schema bumps' covers the PATH shim for the index and relay-roles merge drivers; test in tests/test_ai.py. Gate VERDICT: PASS (nested-relay trial, run-20261015-155856-8029). Full suite on main OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:00:04Z", "item": "s279", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:10:41Z", "item": "s279", "action": "note", "from": "", "to": "", "note": "Ready for review: status line shows N% done and render stale", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:10:41Z", "item": "s279", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:21:33Z", "item": "s279", "action": "note", "from": "", "to": "", "note": "Ready for re-review: wizard save clears the render-stale fla", "by": "Jon Robbins"}

@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from slicer import graph, ops, outline, prose, relayrun, render, roles, store, tui_style, tui_wizard, vcs
+from slicer import graph, model, ops, outline, prose, relayrun, render, roles, store, tui_style, tui_wizard, vcs
 from slicer.errors import SlicerError
 from slicer.store import State
 
@@ -424,6 +424,15 @@ def panel(
   return out
 
 
+def render_drifted(state: State) -> bool:
+  """Whether `.slicer/render/` differs from what `r` would write. A plan or read that
+  fails counts as drifted: the render cannot be confirmed current."""
+  try:
+    return render.compare(render.plan(state), state.render_dir).stale
+  except (SlicerError, OSError):
+    return True
+
+
 def act(
   state: State, key: str, target: str, *, entry: int | None = None, focus: str = "left"
 ) -> ActResult:
@@ -738,6 +747,11 @@ class View:
   board_loaded: int = 0
   board_at: int = 0
   board_error: str = ""
+  # Whether the generated render is stale, as of the last drift check. The check is a full
+  # render plan and compare, so it runs once on open and after each action that can write
+  # state (`drift_due`), never on navigation.
+  render_stale: bool = False
+  drift_due: bool = True
 
   @classmethod
   def initial(cls, state: State, *, offer_wizard: bool = False) -> View:
@@ -752,6 +766,8 @@ class View:
     return self.selected[1] if self.selected else ""
 
   def refresh(self, state: State) -> None:
+    if self.drift_due:
+      self.render_stale, self.drift_due = render_drifted(state), False
     # One read of the sibling worktrees feeds both the claim cells and the sibling-only block.
     self.elsewhere, self.only_sibling = store.sibling_work(state.root, state.index)
     listing = filtered_rows(
@@ -776,6 +792,9 @@ class View:
     self.message, self.message_severity = message, severity
 
   def accept(self, result: ActResult) -> None:
+    # Set conservatively: results that write nothing (editor requests, no-op messages) also
+    # cost one plan and compare. Navigation keys never reach here, so they never do.
+    self.drift_due = True
     if result.message:
       self.notify(result.message, result.severity)
 
@@ -785,11 +804,14 @@ class View:
 
   def status(self, state: State) -> str:
     count = sum(row.kind == ITEM for row in self.listing)
+    done = model.completion(state.index.items, state.config.done_status)["percent"]
+    stale = "  render stale" if self.render_stale else ""
     direction = "desc" if self.sort_desc else "asc"
     label = dict(SORT_FIELDS)[self.sort_field]
     summary = self.filters.summary()
     view = f"view={self.view_preset}  " if self.view_preset else ""
-    return f"{count}/{len(state.index.items)} items  sort={label} {direction}  {view}{summary}"
+    return (f"{count}/{len(state.index.items)} items  {done}% done{stale}  "
+            f"sort={label} {direction}  {view}{summary}")
 
   def _load_board(self, state: State) -> None:
     """Read the runs; on a damaged ledger keep the last good frame and say why."""
@@ -957,6 +979,9 @@ class View:
         self.refresh(state)
         self.select((ITEM, report.ids[0]))
         outcome = act(state, "r", "")
+        # Flag after the render, success or failure: a refresh before it would compare the
+        # new index against the old render, and nothing else reruns the check here.
+        self.drift_due = True
         if outcome.severity == "error":
           warning = "; ".join(filter(None, (warning, f"render failed: {outcome.message}; press r to retry")))
         self.notify(f"saved {len(report.ids)} item(s) and slices" +
@@ -1017,6 +1042,7 @@ class View:
         try:
           vcs.require_no_merge(state.root)
           landed = ops.move(state, self.target, to=int(text))
+          self.drift_due = True
           self.notify(f"{self.target} moved to {landed}", "success")
         except (SlicerError, OSError) as exc:
           self.notify(str(exc), "error")
@@ -1049,6 +1075,7 @@ class View:
           else:
             ops.reject(state, self.target, note=note)
             self.notify(f"{self.target} rejected", "success")
+          self.drift_due = True
         except (SlicerError, OSError) as exc:
           self.notify(str(exc), "error")
       self.refresh(state)

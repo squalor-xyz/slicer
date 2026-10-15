@@ -3066,14 +3066,12 @@ def _status_tally(cfg: Config, tally: dict[str, int]) -> str:
 
 def _census(state: store.State) -> dict:
   """The item census `stats` and `status` share, so they cannot disagree."""
-  cfg = state.config
   items = state.index.items
-  total = len(items)
-  done = sum(1 for it in items if it.status == cfg.done_status)
   by_tree_status = model.cross_counts(items, "trees", "status")
+  completion = model.completion(items, state.config.done_status)
   return {
-    "total": total,
-    "completion": {"done": done, "total": total, "percent": round(done * 100 / total) if total else 0},
+    "total": completion["total"],
+    "completion": completion,
     "by_status": model.counts(items, "status"),
     "by_size": model.counts(items, "size"),
     "by_tree": model.counts(items, "trees"),
