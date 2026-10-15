@@ -9602,7 +9602,7 @@
       "id": "s290",
       "title": "Landing a schema bump runs the merge driver from the new code",
       "short_title": "Landing a schema bump runs the merge driver from the new code",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
