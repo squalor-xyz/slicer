@@ -1606,3 +1606,6 @@
 {"when": "2026-10-15T19:05:05Z", "item": "s302", "action": "retire", "from": "open", "to": "retired", "note": "Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared."}
 {"when": "2026-10-15T19:05:39Z", "item": "s303", "action": "add", "from": "", "to": "open", "note": "Undeclared pass warns"}
 {"when": "2026-10-15T19:05:39Z", "item": "s303", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T19:10:13Z", "item": "s293", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:18:34Z", "item": "s293", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:21:36Z", "item": "s293", "action": "note", "from": "", "to": "", "note": "Verified: Every brief in the relay text now tells orchestrat", "by": "Jon Robbins"}

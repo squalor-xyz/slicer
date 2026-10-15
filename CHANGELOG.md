@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- The slice relay's `## Every brief` section asks each agent to start with the model and reasoning effort its role row names, set explicitly, and to carry the label `ID role` (also its `relay-run step --task`), so a harness's agent list shows which slice and role each agent serves and which model it runs.
+
 ## [1.11.0] - 2026-10-15
 
 ### Added

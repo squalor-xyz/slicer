@@ -290,6 +290,11 @@ and no two agents share one. Reviewer, architect and gate briefs forbid git
 writes; a needed write stops and goes to the owner. A part brief names the
 part's own files and the files it must not touch.
 
+Start each agent with the model and reasoning effort its role row names, set
+explicitly rather than inherited from the session. Give each agent a short label
+`ID role`, for example `s279 implementer` or `s279 gate`, and pass the same label
+as the `--task` line of `relay-run step`.
+
 """
 
 

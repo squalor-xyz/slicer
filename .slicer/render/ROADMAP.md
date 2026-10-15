@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-290 items · — 14 · done 271 · retired 5
+290 items · — 13 · done 271 · retired 5 · review 1
 
 v1.13.0 release
 
@@ -47,7 +47,7 @@ v1.12.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 8 | [s293](slices/s293.md) | Relay briefs label each agent and set its model and effort | S | 1 | slicer | owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial | — |
+| 8 | [s293](slices/s293.md) | Relay briefs label each agent and set its model and effort | S | 1 | slicer | owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial | review |
 | 9 | [s296](slices/s296.md) | Nested relay contract | M | 2 | slicer | owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03 | — |
 | 10 | [s298](slices/s298.md) | Ledger outlives worktrees | M | 2 | slicer | nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove | — |
 | 11 | [s299](slices/s299.md) | Step task kept | S | 1 | slicer | nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task | — |
