@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 286,
+  "next_id": 287,
   "preamble": "",
   "passes": [
     {
@@ -9031,6 +9031,35 @@
         "group": "",
         "reason": "",
         "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s286",
+      "title": "list marks blocked rows with !",
+      "short_title": "list marks blocked rows with !",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 1,
         "effort": 1,
         "attempts": 0

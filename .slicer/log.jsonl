@@ -1464,3 +1464,4 @@
 {"when": "2026-10-15T03:21:40Z", "item": "s283", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
 {"when": "2026-10-15T03:21:40Z", "item": "s284", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
 {"when": "2026-10-15T03:21:40Z", "item": "s285", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
+{"when": "2026-10-15T03:23:06Z", "item": "s286", "action": "add", "from": "", "to": "open", "note": "list marks blocked rows with !"}
