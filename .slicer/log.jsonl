@@ -1615,3 +1615,7 @@
 {"when": "2026-10-15T19:35:25Z", "item": "s304", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-15T19:35:26Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Trial run 3 (2026-10-15, s293 and s301 under trial prompt v3", "by": "Jon Robbins"}
 {"when": "2026-10-15T19:35:30Z", "item": "s304", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-15T19:10:20Z", "item": "s301", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:28:05Z", "item": "s301", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:43:13Z", "item": "s301", "action": "note", "from": "", "to": "", "note": "add --id refuses an id a sibling worktree filed (id_taken_el", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:43:46Z", "item": "s301", "action": "note", "from": "", "to": "", "note": "Later (relay review, 2026-10-15): (1) perf: an explicit add ", "by": "Jon Robbins"}

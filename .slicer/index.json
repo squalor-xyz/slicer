@@ -10109,10 +10109,33 @@
       "id": "s301",
       "title": "add --id refuses an id a sibling worktree already filed",
       "short_title": "add --id refuses an id a sibling worktree already filed",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "ea9b6d08-52f1-4862-a91d-558448377024",
+          "kind": "",
+          "text": "**2026-10-15** — add --id refuses an id a sibling worktree filed (id_taken_elsewhere, exit 2, nothing written); inherited-id logic lifted to verify.inherited_ids; import and promote need no change because outlines carry no id; full suite 2159 OK; review and gate PASS.",
+          "created_at": "2026-10-15T19:43:13Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "c19fd4e8-ecb8-410a-a2c8-f40ad90eb4b7",
+          "kind": "",
+          "text": "**2026-10-15** — Later (relay review, 2026-10-15): (1) perf: an explicit add --id runs about 6 git subprocess calls even with no siblings; resolve ours_head lazily and drop the redundant is_repo check (ops.py:334-336). (2) case-fold: a sibling's s10 against our S10 is not refused (Index.get is case-sensitive, model.py:659-663); candidate for a new item. (3) migrate --force keeps explicit legacy ids; plausible sibling collision path, unchecked. (4) Spec premise: import and promote take no explicit id (outline.py:41 KEYS has no id; promote files no new id), so neither changed and test_Import_ExplicitIdFiledInSibling_RefusesWholeFile was not written.",
+          "created_at": "2026-10-15T19:43:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -10132,7 +10155,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

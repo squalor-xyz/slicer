@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import ids, store, vcs
+from slicer import ids, ops, store, vcs
 from slicer.cli import main
 
 OUTLINE = """\
@@ -34,6 +34,15 @@ def _run(root: Path, *args: str) -> tuple[int, str, str]:
 
 def _index(prefix: str, next_id: int) -> SimpleNamespace:
   return SimpleNamespace(id_prefix=prefix, next_id=next_id)
+
+
+def _before_refusal():
+  """Let explicit ids collide the way a checkout without the refusal filed them.
+
+  The refusal stops `add --id` from creating a clash, so tests of `check`'s
+  clash warning need one made some other way: an older slicer, or a hand edit.
+  """
+  return patch.object(ops, "_refuse_id_taken_elsewhere")
 
 
 class FloorFromTests(unittest.TestCase):
@@ -117,10 +126,47 @@ class SiblingIdTests(unittest.TestCase):
   def test_Add_ExplicitId_IgnoresTheFloor(self) -> None:
     with self.repo() as repo:
       sibling = self.sibling(repo, "other")
-      _run(sibling, "add", "sibling item")
+      _run(sibling, "add", "sibling item", "--id", "S05")  # its counter is now 6: the floor
       code, out, err = repo.run("add", "here", "--id", "S02", "--json")
       self.assertEqual(code, 0, err)
       self.assertEqual(json.loads(out)["id"], "S02")
+
+  def test_Add_ExplicitIdFiledInSibling_RefusesIdTakenElsewhere(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      _run(sibling, "add", "their item", "--id", "S10")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("add", "our item", "--id", "S10", "--json")
+      self.assertEqual(code, 2, out)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "id_taken_elsewhere")
+      self.assertIn("worktree other", error["message"])
+      self.assertIn("'their item'", error["message"])
+      self.assertIn("slicer next-id", error["message"])
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Add_ExplicitIdInheritedBySibling_Allowed(self) -> None:
+    with self.repo() as repo:
+      self.sibling(repo, "other")  # S01 is in the merge base, so both checkouts inherit it
+      code, out, _ = repo.run("add", "again", "--id", "S01", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "already_exists")
+
+  def test_Add_ExplicitIdFreeEverywhere_Succeeds(self) -> None:
+    with self.repo() as repo:
+      self.sibling(repo, "other")
+      code, out, err = repo.run("add", "here", "--id", "S10", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["id"], "S10")
+
+  def test_Add_ExplicitIdOutsideGit_Succeeds(self) -> None:
+    repo = support.TempRepo()
+    with repo, support.isolated_discovery(repo.root):
+      repo.run("init")
+      repo.run("add", "one")
+      code, out, err = repo.run("add", "two", "--id", "S10", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["id"], "S10")
 
   def test_NextId_SiblingAhead_ReportsTheFlooredId(self) -> None:
     with self.repo() as repo:
@@ -144,7 +190,7 @@ class SiblingIdTests(unittest.TestCase):
       self.assertEqual([i.id for i in repo.state().index.items][-2:], planned)
 
   def test_Check_SiblingFiledOtherTitleUnderSameId_WarnsAndStaysGreen(self) -> None:
-    with self.repo() as repo:
+    with self.repo() as repo, _before_refusal():
       sibling = self.sibling(repo, "other")
       _run(sibling, "add", "their item", "--id", "S02")
       repo.run("add", "our item", "--id", "S02")
@@ -188,7 +234,7 @@ class SiblingIdTests(unittest.TestCase):
       self.assertEqual(self.collisions(repo), [])
 
   def test_Check_SiblingFiledDifferentItemSameNewId_StillWarns(self) -> None:
-    with self.repo() as repo:
+    with self.repo() as repo, _before_refusal():
       sibling = self.sibling(repo, "other")
       _run(sibling, "add", "their item", "--id", "S02")
       self.git(sibling, "add", "-A")
@@ -200,7 +246,7 @@ class SiblingIdTests(unittest.TestCase):
       ])
 
   def test_Check_BothBranchesCommittedDifferentNewId_StillWarns(self) -> None:
-    with self.repo() as repo:
+    with self.repo() as repo, _before_refusal():
       sibling = self.sibling(repo, "other")
       _run(sibling, "add", "their item", "--id", "S02")
       self.git(sibling, "add", "-A")
@@ -234,7 +280,7 @@ class SiblingIdTests(unittest.TestCase):
 
   def test_Check_NoIndexAtMergeBase_KeepsTheWarning(self) -> None:
     repo = support.TempRepo(git=True)
-    with repo:
+    with repo, _before_refusal():
       repo.write("README.md", "base\n")
       repo.commit("base without a project")
       sibling = self.sibling(repo, "other")
@@ -399,7 +445,7 @@ class OnlyInSiblingTests(unittest.TestCase):
       self.assertEqual(store.only_in_sibling(repo.root, repo.state().index), [])
 
   def test_OnlyInSibling_SeveralSiblings_WorktreePathThenNumericId(self) -> None:
-    with self.repo() as repo:
+    with self.repo() as repo, _before_refusal():  # two checkouts each hold S09
       zed = self.sibling(repo, "zed")
       alpha = self.sibling(repo, "alpha")
       _run(zed, "add", "zed nine", "--id", "S09")

@@ -345,6 +345,27 @@ def index_at(state: State, commit: str) -> Index | None:
     ) from exc
 
 
+def inherited_ids(state: State, ours_head: str | None, sibling: Path) -> set[str]:
+  """Ids in the index at the merge base of this checkout (at `ours_head`) and `sibling`.
+
+  Empty when the base cannot be found or read (unrelated histories, no index
+  there, an index that does not parse), so every id counts as new. The callers,
+  `check`'s clash warning and `add --id`'s refusal, decide what a clash means.
+  One merge base and one index read per call.
+  """
+  theirs_head = vcs.resolve(sibling, "HEAD")
+  if ours_head is None or theirs_head is None:
+    return set()
+  base = vcs.merge_base(state.root, ours_head, theirs_head)
+  if base is None:
+    return set()
+  try:
+    index = index_at(state, base)
+  except StateError:
+    return set()
+  return {item.id for item in index.items} if index is not None else set()
+
+
 def _relative(state: State, path: Path) -> str:
   return path.relative_to(state.root).as_posix()
 

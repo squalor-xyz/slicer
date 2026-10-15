@@ -10,6 +10,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - The slice relay's `## Every brief` section asks each agent to start with the model and reasoning effort its role row names, set explicitly, and to carry the label `ID role` (also its `relay-run step --task`), so a harness's agent list shows which slice and role each agent serves and which model it runs.
 
+### Fixed
+
+- `add --id` refuses an id that a sibling git worktree has already filed as an item of its own, instead of writing it and leaving `check` to warn about the merge collision. The refusal exits 2 with the new code `id_taken_elsewhere`, names the worktree and its title, and writes nothing.
+
 ## [1.11.0] - 2026-10-15
 
 ### Added
