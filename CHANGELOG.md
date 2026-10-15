@@ -21,6 +21,13 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - The text rows of `slicer list` and `find` mark an item that waits on an unfinished
   dependency with `!` after its row number, as the TUI queue does, so the readiness
   order explains itself. Column widths and JSON are unchanged.
+- Contributor tooling: `tests/affected.py` also records the non-Python repo files each
+  test opens, so a changed Markdown file or `src/slicer/` template selects the tests that
+  read it and a doc no test reads prints "nothing to run". A map written before this
+  change has no reads and asks for the full suite once. AGENTS.md now lets a diff with
+  nothing under `src/` or `tests/` finish on `affected.py --run`, `slicer check` and
+  `git diff --check`. A discover filtered with `-p` or `--pattern` no longer writes a map,
+  as one filtered with `-k` already did not.
 
 - `slicer ai relay` carries the relay practices from dogfooding: every brief names its role's own temp directory, reviewer, architect and gate briefs forbid git writes, the orchestrator reads the implementer's diff before review, one full suite run per change (the implementer's for a whole slice, the orchestrator's on the combined diff for a split), parallel slices run only with disjoint files and land one at a time, and the orchestrator compacts or starts a fresh session after each slice lands or hands off. `slicer ai instructions`, in full and with `--rest`, tells agents to compact or start a fresh session after a slice's finish step, before claiming the next slice. Text only; no command, flag or JSON key changes.
 

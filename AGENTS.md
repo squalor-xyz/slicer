@@ -38,8 +38,12 @@ TMPDIR="$PWD/.venv/test-tmp" python3 -m unittest discover -s tests -t tests
 
 The full suite takes about one minute alone and longer under load. In an agent
 session, run it in the background or with a timeout over 180 s. While iterating,
-run `python3 tests/affected.py --run` first; run the full discover once before done.
-A successful full discover writes `.venv/affected-map.json` for that HEAD.
+run `python3 tests/affected.py --run` first. In a new worktree, run the full discover
+once first: a successful run writes `.venv/affected-map.json` for that HEAD, with the
+lines each test ran and the non-Python repo files it read, so a changed Markdown file
+or template selects the tests that read it. Run the full discover once before done. The exception is a diff that touches nothing
+under `src/` or `tests/`: `python3 tests/affected.py --run`, `slicer check` and
+`git diff --check` replace it.
 
 The temporary directory does not require creating a virtual environment. Tests
 that need an outside-project fixture use `support.isolated_discovery(root)` to hide
@@ -125,7 +129,7 @@ ignored TMPDIR for test fixtures.
 
 ```sh
 PYTHONPATH=src python3 -m slicer start <ID> --render --strict
-# While editing, run the tests that hit this diff. If that command exits 2, run the full discover.
+# Tests this diff hits; on exit 2, or before done unless docs-only (see Commands), run the full discover.
 python3 tests/affected.py --run
 python3 -m unittest discover -s tests -t tests
 PYTHONPATH=src python3 -m slicer note <ID> --text "Ready for review: ..."

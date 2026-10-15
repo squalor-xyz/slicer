@@ -1485,3 +1485,6 @@
 {"when": "2026-10-15T10:10:51Z", "item": "s288", "action": "add", "from": "", "to": "open", "note": "affected.py finds a map for the same commit in another worktree"}
 {"when": "2026-10-15T10:10:56Z", "item": "s288", "action": "set", "from": "", "to": "", "note": "depends_on -→s270"}
 {"when": "2026-10-15T10:12:11Z", "item": "s289", "action": "add", "from": "", "to": "open", "note": "An outline's depends accepts an existing item ID"}
+{"when": "2026-10-15T04:09:58Z", "item": "s270", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T10:57:04Z", "item": "s270", "action": "note", "from": "", "to": "", "note": "Verified. tests/affected.py now records, per test, the non-P", "by": "Jon Robbins"}
+{"when": "2026-10-15T10:57:05Z", "item": "s270", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
