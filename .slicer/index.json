@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 293,
+  "next_id": 294,
   "preamble": "",
   "passes": [
     {
@@ -9698,6 +9698,36 @@
         "urgency": 1,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s293",
+      "title": "Relay briefs label each agent and set its model and effort",
+      "short_title": "Relay briefs label each agent and set its model and effort",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],
