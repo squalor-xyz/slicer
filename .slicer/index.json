@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 288,
+  "next_id": 289,
   "preamble": "",
   "passes": [
     {
@@ -9130,6 +9130,37 @@
         ],
         "trees_literal": false,
         "findings": "s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s288",
+      "title": "affected.py finds a map for the same commit in another worktree",
+      "short_title": "affected.py finds a map for the same commit in another worktree",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s270"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it",
         "discovered_from": "",
         "cites": [],
         "key": "",

@@ -1482,3 +1482,5 @@
 {"when": "2026-10-15T04:44:46Z", "item": "s271", "action": "note", "from": "", "to": "", "note": "Verified outcome for s271. The slice relay and the instructi", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:44:48Z", "item": "s271", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:45:13Z", "item": "s271", "action": "status", "from": "review", "to": "done", "note": "Landed on main: seven relay lessons in ai relay and ai instructions; gate PASS, full suite 1943 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T10:10:51Z", "item": "s288", "action": "add", "from": "", "to": "open", "note": "affected.py finds a map for the same commit in another worktree"}
+{"when": "2026-10-15T10:10:56Z", "item": "s288", "action": "set", "from": "", "to": "", "note": "depends_on -→s270"}
