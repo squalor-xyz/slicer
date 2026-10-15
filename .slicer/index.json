@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 304,
+  "next_id": 305,
   "preamble": "",
   "passes": [
     {
@@ -9948,7 +9948,19 @@
       "depends_on": [
         "s293"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "4c194e9c-9c4b-4472-903d-e12d1b130547",
+          "kind": "",
+          "text": "**2026-10-15** — Trial run 3 (2026-10-15, s293 and s301 under trial prompt v3): the Waiting bullet's 'run a role in the foreground' was not possible. In Claude Code an orchestrator's Agent tool had no foreground option, so every role ran in the background. Seen: the harness pressed orchestrators to hand back while a role ran ('[handback-send-enforce] Your report has not been delivered', 9 times in one run). Implementers reported while their own background full suite still ran. A resumed role's report went to the outer session instead of the orchestrator. Word the waiting rule as the agents repo's relay-orchestrator role (s73 branch) does: end the turn while a role runs; a nudge for the report is not a reason to report; resume a role that stopped with its own work running; every brief tells roles to run long commands in the foreground with a long timeout. See s304 for the contract version marker, which replaces this slice's '<slicer version>' marker.",
+          "created_at": "2026-10-15T19:35:26Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -10171,6 +10183,38 @@
         "trees_literal": false,
         "findings": "2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12",
         "discovered_from": "s302",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s304",
+      "title": "Relay contract carries a version and names the orchestrator agent",
+      "short_title": "Relay contract version",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s296"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4",
+        "discovered_from": "s296",
         "parent": "",
         "cites": [],
         "key": "",

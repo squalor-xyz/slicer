@@ -1,0 +1,41 @@
+{
+  "id": "s304",
+  "title": "Relay contract carries a version and names the orchestrator agent",
+  "lead": [
+    "`slicer ai relay` and `slicer ai relay-orchestrator` open with one contract marker, `Contract: relay v4`, which `--json` also carries. Setup names the orchestrator's agent type, `relay-orchestrator`, where the harness has one installed. With these, slicer's text and the agents repo's role files and trial prompt can say which contract version they follow, and a mismatch shows."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the agents-repo role files and trial prompt (agents repo S76 and the s73 branch carry \"v4\" there); any check that compares slicer's version with the agents repo's (slicer reads no file outside the project); an `orchestrator` row in the role matrix (s296 leaves it out); the waiting rule's wording (a note on s296).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-15 the owner asked why the nested relay's orchestrators show up as `general-purpose` in the agent list instead of a relay role. The answer: no orchestrator agent definition existed. The trial prompt (v3, agents repo) used a general-purpose subagent and pasted the whole contract into every brief. The agents repo now has a `relay-orchestrator` role (branch `s73-nested-relay-playbook`: `multi-agent-workflows/relay-roles/relay-orchestrator.md`, generated to `claude-agents/`). It keeps the Agent tool, defaults to sonnet/high, and carries the orchestrator contract, marked \"contract v4\".\n\nThe owner asked for slicer's relay text to follow, and for the workflow/prompt version to be tracked so that slicer and the agents repo unify on one number (\"v4\"). Today the versions are informal: the trial prompt counts v1 to v3 in its own changelog; s296 plans a marker `Contract: relay-orchestrator <slicer version>`, which changes on every slicer release whether or not the contract changed; and the role files carry no version."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`:\n  - A constant `RELAY_CONTRACT = 4`, with a comment saying when to bump it: a rule an outer session, orchestrator or role follows changes (order, gate, tracking order, waiting, report shape), not a rewording.\n  - `relay_text`: the first line is `Contract: relay v4`.\n  - `orchestrator_text` (from s296): its first line is `Contract: relay v4`, replacing s296's `Contract: relay-orchestrator <slicer version>`. The report shape's first line is the same marker.\n  - `## Setup`, the orchestrator bullet (from s296): the orchestrator runs as the agent type `relay-orchestrator` where the harness has one installed, otherwise as a general-purpose agent briefed with `slicer ai relay-orchestrator`. Harness-neutral; no Claude Code names.\n- `src/slicer/cli.py`: `ai relay --json` and `ai relay-orchestrator --json` add `\"contract\": \"relay v4\"` beside the text.\n- `docs/agents.md` (the two JSON shapes), `docs/commands.md` (the `ai relay` rows), `CHANGELOG.md`.\n- `tests/test_relay_roles.py`, beside the `test_AiRelay_*` tests."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelay_FirstLine_NamesContractVersion`: `ai relay` starts with `Contract: relay v4`.\n- `test_AiRelayOrchestrator_FirstLine_SameContractVersion`: `ai relay-orchestrator` starts with the same line, and its report shape's first line matches.\n- `test_AiRelay_Json_CarriesContract`: both `--json` payloads carry `\"contract\": \"relay v4\"`, derived from `RELAY_CONTRACT`.\n- `test_AiRelay_Setup_NamesOrchestratorAgentType`: Setup names `relay-orchestrator` and the general-purpose fallback."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the constant, the marker lines, the JSON field and the Setup sentence.\n3. Docs and CHANGELOG; mutation-check (drop the marker, hard-code a different number in one of the two texts)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes.\n- The first lines of `slicer ai relay` and `slicer ai relay-orchestrator` are the same marker."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
