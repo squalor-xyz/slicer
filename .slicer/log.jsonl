@@ -1622,3 +1622,7 @@
 {"when": "2026-10-15T20:30:16Z", "item": "s301", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge f32343d): add --id refuses with id_taken_elsewhere when a sibling worktree filed the id on its own; check and add share verify.inherited_ids. import/promote unchanged (outlines carry no id). Relay pass (Haiku impl, Opus review and gate). Full suite on main: 2161 OK, 1 skipped.", "by": "Jon Robbins"}
 {"when": "2026-10-15T20:30:22Z", "item": "s305", "action": "add", "from": "", "to": "open", "note": "Sibling id refusal ignores case"}
 {"when": "2026-10-15T20:30:22Z", "item": "s305", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T20:33:51Z", "item": "s303", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T20:56:00Z", "item": "s303", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T21:10:49Z", "item": "s303", "action": "note", "from": "", "to": "", "note": "Undeclared pass warns: add, set with --pass, and import prin", "by": "Jon Robbins"}
+{"when": "2026-10-15T21:11:26Z", "item": "s303", "action": "note", "from": "", "to": "", "note": "Later (relay review, 2026-10-15; owner choices, current beha", "by": "Jon Robbins"}

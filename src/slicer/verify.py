@@ -213,7 +213,28 @@ def offline(state: State) -> VerifyReport:
       )
 
   report.findings.extend(_catalog_findings(index))
+  report.findings.extend(_undeclared_pass_findings(state))
   return report
+
+
+def _undeclared_pass_findings(state: State) -> list[Finding]:
+  """A warn per undeclared pass key that holds an item not done or retired.
+
+  Done and retired items no longer rank, so a key that holds only them is
+  history, not a queue the owner must order.
+  """
+  finished = state.config.finished_statuses()
+  live = [it for it in state.index.items if it.status not in finished]
+  findings: list[Finding] = []
+  for pass_key in state.index.undeclared_pass_keys(live):
+    count = sum(1 for it in live if it.pass_key == pass_key)
+    findings.append(Finding(
+      "warn", "",
+      f"pass {pass_key} is not declared, and {count} item(s) not done or retired sit in it; "
+      f"the queue orders its items by score among other undeclared passes; declare it with "
+      f"`slicer prose add-pass {pass_key} --after <pass>`.",
+    ))
+  return findings
 
 
 def _catalog_findings(index) -> list[Finding]:

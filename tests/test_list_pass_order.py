@@ -240,3 +240,127 @@ class ListPassOrderTests(unittest.TestCase):
       ["A", "B", "C", "D", "P"])
     self.assertEqual([it.id for it in graph.ranked_order(index, Config(), index.items, descending=False)],
       ["P", "D", "B", "C", "A"])
+
+
+class UndeclaredPassWarnTests(unittest.TestCase):
+  """`add`, `set` and `import` name an undeclared pass on stderr after the write,
+  and `check` warns while an open item sits in one. Nothing is refused, and the
+  stdout and JSON payloads do not change."""
+
+  SCORES = ("--importance", "3", "--urgency", "3", "--effort", "1")
+
+  def fixture(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    return repo
+
+  def test_Add_UndeclaredPass_WarnsOnStderrAndFiles(self) -> None:
+    with self.fixture() as repo:
+      code, out, err = repo.run("add", "later work", "--pass", "v9", *self.SCORES)
+      self.assertEqual(code, 0, err)
+      self.assertIn("added S01", out)
+      self.assertEqual(repo.state().index.items[0].pass_key, "v9")
+      self.assertEqual(err.count("\n"), 1, err)
+      self.assertIn("pass v9 is not declared", err)
+      self.assertIn("prose add-pass v9", err)
+
+  def test_Add_DeclaredPass_NoWarning(self) -> None:
+    with self.fixture() as repo:
+      code, _, err = repo.run("add", "stray", "--pass", "v8", *self.SCORES)
+      self.assertIn("pass v8 is not declared", err)  # control: undeclared warns
+      self.assertEqual(repo.run("prose", "add-pass", "v9")[0], 0)
+      code, _, err = repo.run("add", "later work", "--pass", "v9", *self.SCORES)
+      self.assertEqual((code, err), (0, ""))
+
+  def test_Add_EmptyPass_NoWarning(self) -> None:
+    with self.fixture() as repo:
+      code, _, err = repo.run("add", "loose", *self.SCORES)
+      self.assertEqual((code, err), (0, ""))
+      code, _, err = repo.run("add", "explicit", "--pass", "", *self.SCORES)
+      self.assertEqual((code, err), (0, ""))
+      code, _, err = repo.run("add", "stray", "--pass", "v8", *self.SCORES)
+      self.assertIn("pass v8 is not declared", err)  # control: undeclared warns
+
+  def test_Add_InheritedUndeclaredPass_WarnsOnStderr(self) -> None:
+    with self.fixture() as repo:
+      repo.run("add", "first", "--pass", "v9", *self.SCORES)
+      code, _, err = repo.run("add", "second", *self.SCORES)
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.items[1].pass_key, "v9")
+      self.assertIn("pass v9 is not declared", err)
+
+  def test_Set_ManyIdsUndeclaredPass_WarnsOnce(self) -> None:
+    with self.fixture() as repo:
+      for title in ("first", "second"):
+        repo.run("add", title, *self.SCORES)
+      code, _, err = repo.run("set", "S01", "S02", "--pass", "v9")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([it.pass_key for it in repo.state().index.items], ["v9", "v9"])
+      self.assertEqual(err.count("pass v9 is not declared"), 1, err)
+
+  def test_Set_EmptyPass_NoWarning(self) -> None:
+    with self.fixture() as repo:
+      repo.run("add", "first", *self.SCORES)
+      code, _, err = repo.run("set", "S01", "--pass", "v9")
+      self.assertIn("pass v9 is not declared", err)  # control: undeclared warns
+      code, _, err = repo.run("set", "S01", "--pass", "")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(repo.state().index.items[0].pass_key, "")
+
+  def test_Set_NoPassFlag_ItemInUndeclaredPass_NoWarning(self) -> None:
+    with self.fixture() as repo:
+      repo.run("add", "first", "--pass", "v9", *self.SCORES)
+      code, _, err = repo.run("set", "S01", "--title", "x")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(repo.state().index.items[0].pass_key, "v9")
+      code, _, err = repo.run("set", "S01", "--pass", "v9")
+      self.assertIn("pass v9 is not declared", err)  # control: a --pass set still warns
+
+  def test_Import_UndeclaredPasses_WarnsPerKey(self) -> None:
+    with self.fixture() as repo:
+      repo.write("outline.md", (
+        "# Roadmap\n\n"
+        "## First\npass: v8\nimportance: 3\nurgency: 3\neffort: 1\n\n"
+        "## Second\npass: v9\nimportance: 3\nurgency: 3\neffort: 1\n\n"
+        "## Third\npass: v8\nimportance: 3\nurgency: 3\neffort: 1\n"
+      ))
+      code, out, err = repo.run("import", "outline.md")
+      self.assertEqual(code, 0, out + err)
+      self.assertEqual(len(repo.state().index.items), 3)
+      lines = err.splitlines()
+      self.assertEqual(len(lines), 2, err)
+      self.assertIn("pass v8 is not declared", lines[0])
+      self.assertIn("pass v9 is not declared", lines[1])
+      # All-or-nothing: a refused outline writes nothing and warns about nothing.
+      repo.write("refused.md", "# Roadmap\n\n## Bad\npass: v10\nstatus: nope\n\n## Worse\npass: v11\n")
+      code, out, err = repo.run("import", "refused.md")
+      self.assertNotEqual(code, 0, out)
+      self.assertEqual(err, "")
+      self.assertEqual(len(repo.state().index.items), 3)
+
+  def test_Check_OpenItemInUndeclaredPass_Warns(self) -> None:
+    with self.fixture() as repo:
+      repo.run("add", "first", "--pass", "v9", *self.SCORES)
+      repo.run("render")
+      code, out, err = repo.run("check", "--json")
+      payload = json.loads(out)
+      self.assertEqual(code, 0, out + err)
+      self.assertTrue(payload["ok"])
+      warnings = [w for w in payload["warnings"] if "pass v9 is not declared" in w]
+      self.assertEqual(len(warnings), 1, payload["warnings"])
+      self.assertIn("1 item(s)", warnings[0])
+      self.assertIn("prose add-pass v9", warnings[0])
+
+  def test_Check_DoneOnlyUndeclaredPass_NoWarning(self) -> None:
+    with self.fixture() as repo:
+      for status in ("done", "retired"):
+        repo.run("add", status, "--pass", f"v8-{status}", "--status", status, *self.SCORES)
+      repo.run("add", "open", "--pass", "v9", *self.SCORES)
+      repo.run("render")
+      code, out, err = repo.run("check", "--json")
+      self.assertEqual(code, 0, out + err)
+      warnings = [w for w in json.loads(out)["warnings"] if "is not declared" in w]
+      self.assertEqual(len(warnings), 1, warnings)  # control: the open v9 item warns
+      self.assertIn("pass v9 is not declared", warnings[0])
+      self.assertNotIn("v8-done", out)
+      self.assertNotIn("v8-retired", out)
