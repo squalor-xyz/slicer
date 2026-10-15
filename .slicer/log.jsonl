@@ -1521,3 +1521,6 @@
 {"when": "2026-10-15T13:38:55Z", "item": "s289", "action": "note", "from": "", "to": "", "note": "Outline depends: accepts an existing item ID per comma-separ", "by": "Jon Robbins"}
 {"when": "2026-10-15T13:38:57Z", "item": "s289", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T13:39:11Z", "item": "s289", "action": "status", "from": "review", "to": "done", "note": "Landed on main: outline depends: accepts an existing item ID, resolving like parent:; gate PASS, full suite 2082 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T13:41:32Z", "item": "s292", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T14:24:00Z", "item": "s292", "action": "note", "from": "", "to": "", "note": "Ready for review: affected.py --run loads each selected id w", "by": "Jon Robbins"}
+{"when": "2026-10-15T14:24:00Z", "item": "s292", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

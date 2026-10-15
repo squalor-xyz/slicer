@@ -7,7 +7,8 @@ template change selects its readers. A worktree without a map of its own borrows
 one that another worktree of the repository recorded at the same HEAD, when that
 worktree has no uncommitted changes under `src/` or `tests/`; it is read, never
 written. The map is a local cache: when it is missing or stale, the caller is told
-to run that suite instead of a list that only looks complete.
+to run that suite instead of a list that only looks complete. A selected id that the
+tree no longer defines is dropped from a run, and that run asks for the full suite too.
 """
 
 from __future__ import annotations
@@ -473,37 +474,67 @@ def _emit(
 
 
 def run_ids(ids: list[str]) -> int:
+  """Run the ids that load. One that does not load is named on stderr and not run.
+
+  A rename or a deletion leaves its old id in the map. The rest still run, and the
+  exit code asks for the full suite whatever the rest reports, since the renamed test
+  may be one that still needs to run.
+  """
   suite = unittest.TestSuite()
+  dropped = 0
   for test_id in ids:
-    suite.addTest(_loader().loadTestsFromName(test_id))
-  return run_suite(suite)
+    loaded, problem = _load_id(test_id)
+    if loaded is None:
+      print(f"affected: {test_id} did not load, so it is not run: {problem}", file=sys.stderr)
+      dropped += 1
+    else:
+      suite.addTest(loaded)
+  status = run_suite(suite)
+  if dropped:
+    reason = f"{dropped} selected test id(s) did not load and were not run"
+    if status:
+      reason += " and the selected tests that ran failed"
+    return _full_suite(reason)
+  return status
+
+
+def _load_id(test_id: str) -> tuple[unittest.TestSuite | None, str | None]:
+  """The tests one id names, or the error that stops it from loading.
+
+  The loader reports a missing name, and a module that fails to import, as a
+  `_FailedTest` rather than raising, so such a leaf counts as a failure. A
+  SyntaxError escapes the loader instead. Both keep their error text.
+  """
+  try:
+    loaded = _loader().loadTestsFromName(test_id)
+  except Exception as exc:
+    return None, f"{type(exc).__name__}: {exc}"
+  for leaf in _leaves(loaded):
+    if leaf.__class__.__name__ == "_FailedTest":
+      cause = getattr(leaf, "_exception", leaf)
+      return None, f"{type(cause).__name__}: {cause}"
+  return loaded, None
+
+
+def _leaves(node: unittest.TestCase | unittest.TestSuite) -> list[unittest.TestCase]:
+  if isinstance(node, unittest.TestSuite):
+    return [leaf for item in node for leaf in _leaves(item)]
+  return [node]
 
 
 def _tests_in_module(path: str) -> list[str]:
-  try:
-    suite = _loader().loadTestsFromName(Path(path).stem)
-  except Exception as exc:
-    raise LoadError(str(exc)) from exc
-  found: list[str] = []
-
-  def walk(node: unittest.TestCase | unittest.TestSuite) -> None:
-    if isinstance(node, unittest.TestSuite):
-      for item in node:
-        walk(item)
-      return
-    if node.__class__.__name__ == "_FailedTest":
-      raise LoadError(str(getattr(node, "_exception", node.id())))
-    found.append(node.id())
-
-  walk(suite)
-  return found
+  loaded, problem = _load_id(Path(path).stem)
+  if loaded is None:
+    raise LoadError(problem)
+  return [test.id() for test in _leaves(loaded)]
 
 
 def _loader() -> unittest.TestLoader:
+  """A fresh loader, so failed loads do not pile up in `defaultTestLoader.errors`."""
   tests_dir = str(ROOT / "tests")
   if tests_dir not in sys.path:
     sys.path.insert(0, tests_dir)
-  return unittest.defaultTestLoader
+  return unittest.TestLoader()
 
 
 def _mapped_paths(tests: dict[str, list[str]]) -> set[str]:
@@ -576,7 +607,10 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
     "mode", nargs="?", choices=("record",),
     help="trace the suite and write .venv/affected-map.json",
   )
-  parser.add_argument("--run", action="store_true", help="run the selected tests and exit with their status")
+  parser.add_argument(
+    "--run", action="store_true",
+    help="run the selected tests and exit with their status; exit 2 when a selected id does not load",
+  )
   parser.add_argument(
     "--lines", action="append", default=[], metavar="PATH:START-END",
     help="use this inclusive range instead of git diff (repeatable)",
