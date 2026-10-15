@@ -295,6 +295,26 @@ class FoldTests(RelayRunCase):
 
 
 class ListTests(RelayRunCase):
+  def test_List_Text_LabelsItemsAndWorktree_AndSingularisesOneStepAndOneSubagent(self) -> None:
+    repo = self.project()
+    one = self.begin(repo, "s283", "--worktree", ".worktrees/s283")
+    first = self.step(repo, one)["step"]["id"]
+    self.ok(repo, "relay-run", "step", one, "--step", first, "--phase", "done")
+    self.ok(repo, "relay-run", "end", one, "--outcome", "pass")
+    two = self.begin(repo, "s284", "--worktree", ".worktrees/s284")
+    lead = self.step(repo, two)["step"]["id"]
+    self.step(repo, two, "--parent", lead)
+    self.begin(repo, "s285", "--worktree", ".worktrees/s285")
+    code, out, err = repo.run("relay-run", "list")
+    self.assertEqual((code, err), (0, ""))
+    headers = [line for line in out.splitlines() if not line.startswith(" ")]
+    # Runs begun within one second tie on time, so their order is by a random id: compare sorted.
+    self.assertEqual(sorted(line.partition("  items ")[2] for line in headers), [
+      "s283  wt s283  1 step, 0 running, 0 subagents",
+      "s284  wt s284  2 steps, 2 running, 1 subagent",
+      "s285  wt s285  0 steps, 0 running, 0 subagents",
+    ], out)
+
   def test_List_Active_ExcludesEndedAndStale(self) -> None:
     repo = self.project()
     fresh = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id

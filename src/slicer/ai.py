@@ -203,6 +203,21 @@ the architect, when the owner chose one, then the gate. Close with
 `slicer note ID --text "Describe the verified outcome"` plus the finish step.
 Commit, merge and push only when the owner authorizes them.
 
+Record the run as it goes. Start it with
+`slicer relay-run begin ID --worktree PATH`, where PATH is the slice worktree.
+It prints the run id; keep that id as RUN. Record each role when it starts with
+`slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --phase start --task TASK`,
+which prints the step id. When the step ends, record it with
+`slicer relay-run step RUN --step STEP --phase done` or `--phase fail`.
+A subagent adds `--parent STEP` for the step that spawned it.
+`slicer relay-run step RUN --step STEP --phase start`
+re-records a long-running step as a heartbeat, so its run does not go stale
+after 30 minutes.
+After the finish step, or when the relay stops, end the run with
+`slicer relay-run end RUN --outcome pass` (or `fail` or `stopped`), after marking
+each step done or failed.
+Recording is advisory: a failed `relay-run` call never stops the relay.
+
 In a split, the parts run in the slice worktree, in parallel only when their
 files are disjoint, otherwise one after another. The orchestrator runs the full
 suite on the combined diff, then one review and one gate cover the whole slice.
