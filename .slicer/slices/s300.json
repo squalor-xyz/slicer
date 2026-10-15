@@ -1,0 +1,41 @@
+{
+  "id": "s300",
+  "title": "Writes in a linked worktree must not edit the tracked .slicer/.gitignore",
+  "lead": [
+    "In a linked worktree, slicer adds a missing ignore line to the repo's `info/exclude` instead of the tracked `.slicer/.gitignore`, and `slicer check` warns when `.slicer/.gitignore` lacks a line `init` writes, naming the command that adds them on main."
+  ],
+  "depends_note": null,
+  "findings_note": "nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**\n- Where the relay-run ledger lives (its own item; once it is in the common dir it needs no ignore line in a git repo).\n- Removing lines from `info/exclude` later.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The idea0 nested-relay trial on 2026-10-15: `relay-run begin` in a fresh slice worktree modified `.slicer/.gitignore`, so that change went into the slice commit. The project was made before `init` listed every line, and `feedback.ensure_gitignore` is called on every write: the project lock (`src/slicer/store.py`, \"a project made before init listed the lock gets the line on its next write\"), the feedback log, and the relay-run ledger. Whichever write comes first in a worktree puts an unrelated tracking change on that slice's branch. The owner chose on 2026-10-15: the exclude file in a linked worktree, plus a check warning."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/feedback.py`, `ensure_gitignore`: when the root is a linked worktree (its git dir differs from the common dir), add the missing entry to `<git common dir>/info/exclude` as `**/.slicer/<name>` and leave `.slicer/.gitignore` alone. In the main worktree and outside git, today's behaviour. Same advisory rule as now: an unwritable file never blocks the write.\n- `src/slicer/vcs.py`: a helper that says whether a root is a linked worktree.\n- `src/slicer/check.py`: a warning when `.slicer/.gitignore` lacks any line `init` writes (`feedback.md`, the sidecar, `relay-runs.jsonl`, `lock`), naming `slicer setup-git --attributes` on main as the fix.\n- `src/slicer/cli.py`, `setup-git --attributes`: also adds the missing `.slicer/.gitignore` lines, and its help says so.\n- `docs/commands.md` (`setup-git`, `check`), `docs/agents.md` if the check JSON gains a warning code, `CHANGELOG.md`.\n- `tests/test_feedback.py`, `tests/test_atomic.py` (the lock line), `tests/test_cli.py` for check and setup-git."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_EnsureGitignore_LinkedWorktree_WritesInfoExclude`: in a linked worktree whose `.slicer/.gitignore` lacks `lock`, a write leaves `.slicer/.gitignore` unchanged and `git status --short` clean, and `info/exclude` holds `**/.slicer/lock`.\n- `test_EnsureGitignore_MainWorktree_EditsSlicerGitignore`: in the main checkout the line goes into `.slicer/.gitignore` as today.\n- `test_Check_WarnsOnMissingGitignoreLine`: `check --json` warns and names `setup-git --attributes`.\n- `test_SetupGitAttributes_AddsMissingGitignoreLines`: after it, the warning is gone."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red, one mutation each.\n2. Add the linked-worktree branch in `ensure_gitignore`, then the check warning and the setup-git write.\n3. Update the docs and the CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s300`, branch `feature/s300-worktree-gitignore`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

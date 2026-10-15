@@ -1,0 +1,41 @@
+{
+  "id": "s299",
+  "title": "relay-run step must refuse a new task on an existing step",
+  "lead": [
+    "`relay-run step RUN --step N` with a `--task` that differs from the step's recorded task exits 2 and tells the caller to record a new step, so a heartbeat or a later round can no longer erase what the step was."
+  ],
+  "depends_note": null,
+  "findings_note": "nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**\n- Other fields on an update (phase, model, reasoning) keep today's rule.\n- `fold` keeps reading ledgers that already hold an overwrite.\n- The ledger location (its own item).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The idea0 nested-relay trial on 2026-10-15 (defect 5): the S16 orchestrator re-recorded step 2 with `--phase start --task \"S16 fix round 1\"` for a fix round. `fold` in `src/slicer/relayrun.py` applies every non-empty field of an update (\"an update names only what changes\"), so the step's task now read \"S16 fix round 1\" and \"S16 implement\" was gone from `relay-run list` and the board. S03, which recorded a new step per round, kept both. The owner chose on 2026-10-15 to refuse the overwrite. Recording stays advisory: the relay text already says a failed `relay-run` call never stops the relay."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`, `relay_run_step`: on an update, a non-empty `task` that differs from the step's task is `bad_run_field` (exit 2), with a message saying to record a new step without `--step`, and nothing is appended. The same task again is allowed, and so is no task.\n- `src/slicer/ai.py`, `## Order`: the heartbeat sentence says a heartbeat passes no `--task`, and each round records its own step.\n- `docs/commands.md`, the `relay-run step` row; `docs/agents.md`, `bad_run_field`; `CHANGELOG.md`.\n- `tests/test_relay_run.py`, and the `test_AiRelay_*` tests in `tests/test_relay_roles.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRunStep_Update_NewTask_Refused`: `--step 1 --phase start --task other` exits 2 with `bad_run_field`, and the ledger has no new line.\n- `test_RelayRunStep_Update_SameTask_Allowed`: the same task again appends a heartbeat.\n- `test_RelayRunStep_Heartbeat_NoTask_KeepsTask`: `--step 1 --phase start` with no task keeps the step's task.\n- `test_AiRelay_Order_HeartbeatPassesNoTask`: `## Order` says a heartbeat passes no `--task`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red, one mutation each.\n2. Add the check in `relay_run_step`, then the relay text sentence.\n3. Update the docs and the CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s299`, branch `feature/s299-step-task`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

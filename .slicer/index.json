@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 296,
+  "next_id": 301,
   "preamble": "",
   "passes": [
     {
@@ -9822,6 +9822,130 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s296",
+      "title": "Print the nested relay: an orchestrator per slice, with its own contract",
+      "short_title": "Nested relay contract",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s293"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s298",
+      "title": "Keep the relay-run ledger in the git common dir so it outlives worktrees",
+      "short_title": "Ledger outlives worktrees",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s299",
+      "title": "relay-run step must refuse a new task on an existing step",
+      "short_title": "Step task kept",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s300",
+      "title": "Writes in a linked worktree must not edit the tracked .slicer/.gitignore",
+      "short_title": "Worktree gitignore",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s298"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 2,
         "attempts": 0
       }
     }

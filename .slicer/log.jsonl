@@ -1555,3 +1555,11 @@
 {"when": "2026-10-15T16:28:39Z", "item": "s279", "action": "status", "from": "review", "to": "done", "note": "Landed b4c6444: status line shows N% done and 'render stale' (drift computed on open and after mutating actions only); completion lifted to model.completion. Gate VERDICT: PASS (nested-relay trial, run-20261015-155856-07d1). Full suite on merged main: 2130 OK. Gate later-note filed as s295.", "by": "Jon Robbins"}
 {"when": "2026-10-15T16:28:39Z", "item": "s295", "action": "add", "from": "", "to": "open", "note": "Tests pin the render-stale flag after a failed wizard render and after a move"}
 {"when": "2026-10-15T16:28:39Z", "item": "s295", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T17:01:15Z", "item": "s296", "action": "add", "from": "", "to": "open", "note": "Print the nested relay: an orchestrator per slice, with its own contract"}
+{"when": "2026-10-15T17:01:19Z", "item": "s296", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T17:04:22Z", "item": "s298", "action": "add", "from": "", "to": "open", "note": "Keep the relay-run ledger in the git common dir so it outlives worktrees"}
+{"when": "2026-10-15T17:04:22Z", "item": "s299", "action": "add", "from": "", "to": "open", "note": "relay-run step must refuse a new task on an existing step"}
+{"when": "2026-10-15T17:04:22Z", "item": "s300", "action": "add", "from": "", "to": "open", "note": "Writes in a linked worktree must not edit the tracked .slicer/.gitignore"}
+{"when": "2026-10-15T17:04:23Z", "item": "s300", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T17:04:29Z", "item": "s298", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T17:04:29Z", "item": "s299", "action": "promote", "from": "", "to": "", "note": ""}
