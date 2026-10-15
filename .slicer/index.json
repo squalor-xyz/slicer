@@ -8930,7 +8930,7 @@
       "id": "s282",
       "title": "Record relay runs in a local ledger with slicer relay-run",
       "short_title": "Record relay runs in a local ledger with slicer relay-run",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
