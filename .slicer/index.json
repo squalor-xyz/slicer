@@ -9536,7 +9536,7 @@
       "id": "s289",
       "title": "An outline's depends accepts an existing item ID",
       "short_title": "An outline's depends accepts an existing item ID",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
