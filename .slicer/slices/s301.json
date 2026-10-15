@@ -1,0 +1,41 @@
+{
+  "id": "s301",
+  "title": "add --id refuses an id a sibling worktree already filed",
+  "lead": [
+    "`slicer add --id X` refuses before writing when a sibling checkout's index already holds X as an item that did not come from the shared merge base, so two checkouts cannot file different items under one id."
+  ],
+  "depends_note": null,
+  "findings_note": "nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "In the nested-relay trial on 2026-10-15, the outer session filed a follow-up as `add --id s296` on the s294 branch. The main checkout had already filed a different s296 there, uncommitted (\"Print the nested relay...\"). `add` wrote it. Only the following `slicer check` warned \"the two will collide on merge\" (`check._sibling_collisions`, `src/slicer/check.py:70`). Undoing it took a revert commit and a re-file as s297.\n\nThe cause: `ids.allocate` (`src/slicer/ids.py:127`) checks an explicit id against this checkout's index only. The sibling floor (`cli._id_floor`, `src/slicer/cli.py:1049`) applies only to ids slicer picks itself. Leaving out `--id` would have avoided it, because `next-id` and the default allocation already respect sibling worktrees."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py` / `src/slicer/ids.py`:\n  - With an explicit id, refuse when a sibling checkout (`store.sibling_checkouts`) has that id and it is not in the index at the merge base. Reuse the inherited-id logic that `check._sibling_collisions` uses, lifted where both can call it.\n  - Nothing is written.\n  - Use a new stable code `id_taken_elsewhere` (exit 2). The message names the sibling worktree and its title for the id, and suggests `slicer next-id` or leaving out `--id`.\n  - An id that both checkouts inherited, and outside a git repo, behave as today.\n- `src/slicer/cli.py`: `add`. Also `import` and `promote` wherever an explicit id is taken from an outline, so all three refuse the same way.\n- `docs/agents.md` (the new error code), `docs/commands.md` (`add --id`), `CHANGELOG.md`.\n- `tests/test_ids.py` or `tests/test_cli.py`, next to the existing sibling-worktree tests (use `support.isolated_discovery` for the fixture)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Add_ExplicitIdFiledInSibling_RefusesIdTakenElsewhere`: a sibling worktree adds s10 without committing; `add --id s10` in this checkout exits 2 with `id_taken_elsewhere`, and the index is unchanged.\n- `test_Add_ExplicitIdInheritedBySibling_Allowed`: an id both checkouts inherited is not refused for that reason (it is `already_exists` here as now).\n- `test_Add_ExplicitIdFreeEverywhere_Succeeds`: an explicit id unused in every checkout still files.\n- `test_Import_ExplicitIdFiledInSibling_RefusesWholeFile`: import stays all-or-nothing."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Lift the inherited-id logic and add the refusal.\n3. Update docs and CHANGELOG; mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s301`, branch `feature/s301-add-id-sibling`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}
