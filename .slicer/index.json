@@ -9038,7 +9038,7 @@
       "id": "s284",
       "title": "ai relay tells the orchestrator to record each step with relay-run",
       "short_title": "ai relay tells the orchestrator to record each step with relay-run",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s282"
