@@ -8904,7 +8904,7 @@
       "id": "s272",
       "title": "Correct the --json coverage claim in docs/agents.md",
       "short_title": "agents.md --json claim",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

@@ -1514,3 +1514,4 @@
 {"when": "2026-10-15T11:45:48Z", "item": "s272", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-15T12:49:33Z", "item": "s272", "action": "note", "from": "", "to": "", "note": "Verified. docs/agents.md, README.md, docs/commands.md and do", "by": "Jon Robbins"}
 {"when": "2026-10-15T12:49:36Z", "item": "s272", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T12:53:00Z", "item": "s272", "action": "status", "from": "review", "to": "done", "note": "Landed on main: four docs name the commands without --json, tested against the parser; gate PASS, full suite 2034 OK.", "by": "Jon Robbins"}
