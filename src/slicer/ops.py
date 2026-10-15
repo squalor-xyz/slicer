@@ -289,6 +289,39 @@ def keyed_item(state: State, key: str) -> Item | None:
   return next((item for item in state.index.items if key and item.key == key), None)
 
 
+def slivers_of(state: State, item_id: str) -> list[Item]:
+  """Items whose `parent` names this one, in index order."""
+  return [i for i in state.index.items if i.parent == item_id]
+
+
+def _check_parent(state: State, item_id: str | None, parent: str) -> None:
+  """Refuse a parent that would break the one-level rule. Empty clears, so it passes.
+
+  `item_id` is None while an item is being filed: it has no id yet and no slivers.
+  """
+  if not parent:
+    return
+  if parent == item_id:
+    raise StateError(
+      f"{item_id} cannot be its own parent; give it the slice it is a sliver of, "
+      f"or clear it with `set {item_id} --parent ''`", code="parent_self",
+    )
+  target = state.index.require(parent)
+  if target.parent:
+    raise StateError(
+      f"{parent} is itself a sliver of {target.parent}, so it cannot be a parent; "
+      f"give {item_id or 'the new item'} {target.parent} as its parent instead, or clear "
+      f"{parent}'s parent with `set {parent} --parent ''`", code="parent_nested",
+    )
+  kids = slivers_of(state, item_id) if item_id else []
+  if kids:
+    raise StateError(
+      f"{item_id} has slivers ({', '.join(k.id for k in kids)}), so it cannot be a sliver "
+      f"itself; clear their parents with `set {' '.join(k.id for k in kids)} --parent ''` "
+      "first, or leave it without a parent", code="parent_nested",
+    )
+
+
 def add(
   state: State, title: str, *, item_id: str | None = None, id_floor: int = 0,
   **fields: object,
@@ -303,6 +336,8 @@ def add(
   discovered_from = fields.get("discovered_from") or ""
   if discovered_from:
     state.index.require(discovered_from)
+  parent = str(fields.get("parent") or "")
+  _check_parent(state, None, parent)
   new_id = ids.allocate(state.index, item_id, floor=id_floor)
   # An omitted pass (None) inherits the previous item's; an explicit empty one
   # files the item with no pass, the same meaning `set --pass ''` has.
@@ -320,6 +355,7 @@ def add(
     trees=_clean(list(fields.get("trees") or [])),
     findings=str(fields.get("findings") or ""),
     discovered_from=discovered_from,
+    parent=parent,
     pass_key=str(pass_key),
     depends_on=_clean(list(fields.get("depends_on") or [])),
     importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
@@ -1064,7 +1100,7 @@ def set_fields_many(
   add_flags = list(_clean(add_flags or []))
   remove_flags = list(_clean(remove_flags or []))
   items = _batch_items(state, item_ids)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "importance", "urgency", "effort", "attempts"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "parent", "importance", "urgency", "effort", "attempts"}
   _reject_bad_text(**fields)
   values = {}
   for key, value in fields.items():
@@ -1081,6 +1117,9 @@ def set_fields_many(
     values[key] = _clean(value)
   if "depends_on" in values:
     _check_depends(state, {item.id: list(values["depends_on"]) for item in items})
+  if "parent" in values:
+    for item in items:
+      _check_parent(state, item.id, values["parent"])
 
   transitions = []
   for item in items:
@@ -2048,6 +2087,9 @@ def _blockers(state: State, item_id: str, *, purge: bool = False) -> list[str]:
   citing = dependents(state, item_id)
   if citing:
     reasons.append(f"{', '.join(citing)} depend(s) on it")
+  kids = [i.id for i in slivers_of(state, item_id)]
+  if kids:
+    reasons.append(f"{', '.join(kids)} {'is a sliver' if len(kids) == 1 else 'are slivers'} of it")
   if purge:
     sources = [i.id for i in state.index.items if i.discovered_from == item_id]
     if sources:
@@ -2091,6 +2133,8 @@ def _reclaim_check(state: State, item_id: str) -> tuple[bool, str]:
   whether the item is still in the index, so a preview and the real purge agree."""
   if any(i.discovered_from == item_id for i in state.index.items):
     return False, f"{item_id} is referenced by discovered_from"
+  if slivers_of(state, item_id):
+    return False, f"{item_id} is referenced by parent"
   number = ids.parse_id(item_id, state.index.id_prefix)
   if number is None:
     return False, f"{item_id} is not an allocated id"
@@ -2176,6 +2220,8 @@ class OutlineReport:
   # Resolved dependency titles per new spec (keyed by `id(spec)`), so applying
   # saves exactly the edges the census counted. Not part of the JSON report.
   depends: dict[int, list[str]] = field(default_factory=dict, repr=False)
+  # Resolved parent id per new spec (keyed by `id(spec)`), set once ids are allocated.
+  parents: dict[int, str] = field(default_factory=dict, repr=False)
 
   def to_dict(self) -> dict[str, object]:
     return {
@@ -2197,6 +2243,43 @@ class OutlineReport:
 def _allocate_outline_ids(index: Index, count: int, floor: int = 0) -> list[str]:
   """Allocate one id per outline entry against the supplied index."""
   return [ids.allocate(index, floor=floor) for _ in range(count)]
+
+
+def _existing_titles(index: Index) -> dict[str, str]:
+  """Item id by title and by short title, the names `depends:` already matches."""
+  titles = {it.title: it.id for it in index.items}
+  titles.update({it.display_title(): it.id for it in index.items})
+  return titles
+
+
+def _outline_parent_problems(
+  spec: object, specs: list[object], reused: dict[int, Item | None], index: Index,
+) -> list[str]:
+  """What is wrong with a spec's `parent:`, or nothing.
+
+  Resolved like `depends:`: a known title wins, whether it names another entry
+  of the outline (filed before or after it) or an existing item; otherwise the
+  value must be an existing item ID. Either way the target must not itself be a
+  sliver, so the outline stays one level deep.
+  """
+  value = spec.parent
+  if not value:
+    return []
+  nested = (f"{spec.title!r}: parent {value!r} is itself a sliver of %s; "
+            "a sliver cannot have slivers, so name the parent of that sliver instead")
+  match = next((s for s in specs if s.title == value), None)
+  if match is not None:
+    if match is spec:
+      return [f"{spec.title!r}: parent cannot be the entry itself; name the slice it is a sliver of"]
+    existing = reused[id(match)]
+    grandparent = existing.parent if existing is not None else match.parent
+    return [nested % grandparent] if grandparent else []
+  titles = _existing_titles(index)
+  target = index.get(titles[value]) if value in titles else index.get(value)
+  if target is None:
+    return [f"{spec.title!r}: parent {value!r} is neither a title in this outline or the "
+            "roadmap nor an existing item ID"]
+  return [nested % target.parent] if target.parent else []
 
 
 def _resolve_outline_depends(raw: list[str], known: set[str]) -> tuple[list[str], list[str]]:
@@ -2292,6 +2375,7 @@ def outline_report(
         f"{spec.title!r}: discovered_from unknown id {spec.discovered_from!r}; "
         "use an existing item ID"
       )
+    problems.extend(_outline_parent_problems(spec, specs, reused, state.index))
     for dep in unknown_deps[id(spec)]:
       problems.append(f"{spec.title!r}: depends on {dep!r}, which is not in the outline or the index")
     heading = _boundary_in_both(spec.lead, spec.sections, cfg.boundary)
@@ -2326,6 +2410,11 @@ def outline_report(
       mapped_id = item.id if item is not None else ids.allocate(draft, floor=id_floor)
       report.ids.append(mapped_id)
       report.entries.append({"title": spec.title, "id": mapped_id, "existing": item is not None})
+    by_title = _existing_titles(state.index)
+    by_title.update({spec.title: mapped for spec, mapped in zip(specs, report.ids)})
+    for spec in new_specs:
+      if spec.parent:
+        report.parents[id(spec)] = by_title.get(spec.parent, spec.parent)
   return report
 
 
@@ -2394,6 +2483,7 @@ def apply_outline(
       trees=list(spec.trees),
       findings=spec.findings,
       discovered_from=spec.discovered_from,
+      parent=report.parents.get(id(spec), ""),
       # Never inherited from the previous item: an outline says where its own
       # entries belong, and silently filing them under the tail item's pass
       # would be wrong in exactly the case bulk loading is for.

@@ -134,6 +134,19 @@ def cite_header(index: Index, item: Item) -> str:
   return "Cites: " + ", ".join(parts) if parts else ""
 
 
+def parent_header(index: Index, item: Item) -> str:
+  """The slice `Parent:` line of a sliver, or nothing for an item with no parent."""
+  if not item.parent:
+    return ""
+  parent = index.get(item.parent)
+  return f"Parent: {item.parent} {parent.display_title()}" if parent is not None else f"Parent: {item.parent}"
+
+
+def header_lines(index: Index, item: Item) -> str:
+  """The extra slice header lines for an item: its parent, then its citations."""
+  return "\n".join(line for line in (parent_header(index, item), cite_header(index, item)) if line)
+
+
 def cite_callouts(index: Index, item: Item) -> list[str]:
   """Roadmap-row notes for a retired assumption or decision. Other kinds stay quiet."""
   notes: list[str] = []
@@ -151,6 +164,8 @@ def _row_findings(item: Item, index: Index | None) -> str:
   parts = [item.findings, item.reason]
   if item.discovered_from:
     parts.append(f"discovered from {item.discovered_from}")
+  if item.parent:
+    parts.append(f"sliver of {item.parent}")
   if index is not None:
     parts.extend(cite_callouts(index, item))
   return f" {MIDDOT} ".join(part for part in parts if part)
@@ -243,6 +258,7 @@ def render_row(
       "trees": cell(", ".join(item.trees)),
       "findings": cell(findings),
       "discovered_from": cell(item.discovered_from),
+      "parent": cell(item.parent),
       "status": cell(cfg.status_label(item.status)),
     },
   ).strip("\n")
@@ -650,7 +666,7 @@ def plan(state) -> dict[str, bytes]:
     # escapes here as surely as it does in the slices directory.
     ids.require_valid(item.id)
     out[f"{SLICES_SUBDIR}/{item.id}.md"] = render_slice(
-      sl, cfg, slice_template, item.rendered_notes, cite_header(state.index, item),
+      sl, cfg, slice_template, item.rendered_notes, header_lines(state.index, item),
     )
   return out
 

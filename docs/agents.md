@@ -190,6 +190,7 @@ $ slicer next --json
     "trees_literal": false,
     "findings": "G1",
     "discovered_from": "",
+    "parent": "",
     "pass": "",
     "group": "Phase 0 — groundwork",
     "reason": "",
@@ -259,7 +260,7 @@ Keys belong to this checkout; no cross-branch or machine synchronization occurs.
 
 Two shapes recur. An **item** is the object above minus `path` and `effective_score`; its soft fields are
 nested under `fields`, the pass key is spelled `pass`, and `importance`/`urgency` (each
-1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts fresh implementation starts from open or a custom queue into the configured started status. Resumes, review claims, rejection, and `set --status` do not increment it. Start → reject → restart records two attempts. Historical values are preserved and may overcount; history is not authoritative enough to reconstruct them. Owners may correct them with `set ID --attempts N` before adopting a cap. The index schema is 5, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
+1–3) are the Eisenhower axes. `effort` is an optional `1`–`3` estimate, or `null` when unset; `--json --lean` omits the null. `attempts` counts fresh implementation starts from open or a custom queue into the configured started status. Resumes, review claims, rejection, and `set --status` do not increment it. Start → reject → restart records two attempts. Historical values are preserved and may overcount; history is not authoritative enough to reconstruct them. Owners may correct them with `set ID --attempts N` before adopting a cap. The index schema is 9, and `--json --lean` omits a 0. The combined score and quadrant are derived, not stored, so
 they are not in the JSON — compute `importance*10 + urgency`, or read the ranking from
 `list --sort score`. `--json` without `--lean` is always this full shape.
 
@@ -295,7 +296,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `merge-index` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged index to `OURS`; exit 1 left conflict markers there |
 | `merge-relay-roles` | no payload and no `--json`; Git runs it as a merge driver with `%O %A %B`. Exit 0 wrote the merged matrix to `OURS`, with a stderr line per renumbered row or rule. A refusal leaves `OURS` untouched and uses the usual error shape: `merge_conflict` (exit 2) for a disagreement, `corrupt` (exit 3) or `schema_too_new` for an unreadable input |
 | `list` | array of items by default; `--envelope` with `--json` returns `{items: [...], only_in_sibling: [...]}`, with both keys always present, including under `--lean`. `items` equals the default array for the same filters, sorts and lean profile. `only_in_sibling` matches the list in `status --json` (or `[]` when absent), independently of item filters and sorts. `--envelope` without `--json` exits 2 with code `usage`. Each item includes `claim`: `{"owner", "at"}` or null, plus derived `in_work_elsewhere`: an array of `{worktree, owner, status}` objects (`status` is the sibling's status key), or `[]`. A sibling counts when the item is claimed or in work, and when it is review or done while this checkout's status differs and is not done. The same status on both sides is omitted, as is an empty `review_status`. Text adds a CLAIM column (local owner, `*` for local in-progress with no claim, `wt:NAME` for sibling work, `wt:NAME+N` for multiple siblings, otherwise `-`), and, when the roadmap declares or names any pass, a PASS column after it (the pass key, or `-`); JSON carries the pass as `fields.pass` either way. Local claim or started state takes precedence in text; JSON still lists all siblings. A done item is never shown as locally claimed. Sibling detection uses only this machine's Git worktrees and their `.slicer/index.json` files, and only when this project is the git worktree root. Text ends with an `Only in a sibling` block when a sibling has an open, unclaimed item whose id this checkout lacks; the default JSON array does not carry it (use `list --json --envelope` or read `only_in_sibling` from `status --json`). Done and retired statuses are omitted unless `--all` is set or `--status` names them; `--all` together with `--status` is `usage`. `--in-work` keeps statuses in `config.in_work()` (started, plus reviewing when set), including a started item whose claim was released. `--review` keeps stored review items and stored-open items whose siblings report the configured review key; reviewing alone does not qualify. `--status` naming the review key includes the same rows. The open filter still includes those open items. Text shows this checkout's review label; JSON status stays open and `in_work_elsewhere` retains the sibling key. Either flag replaces the default omission of done and retired. Combining either with the other, with `--status`, or with `--all` is `usage`, as is an empty role. A role that matches nothing is `[]` in JSON and `no matching items` in text, exit 0, with no hidden-count line. Other filters and sorts still apply. An item that is in work only in a sibling worktree stays out of the in-work view; a sibling handoff adds an open item to the review view. Default order preserves readiness groups (unblocked in-work, unblocked open, other visible rows, then parked). Within each group, declared pass order precedes descending effective score, with stored queue order breaking ties. Empty passes merge by effective score; named undeclared passes follow declared passes. Without declared passes, score ordering is unchanged. `next` uses the same ranking for its eligible pool. Repeatable `--flag` keeps an item that has any named flag and combines with `--status`, `--tree`, and `--pass`. `--sort score` is that same set in flat score order. `--sort effort` orders `fields.effort` from 1 to 3 and puts null last, without writing state. `sort --by effort` persists that order |
-| `show ID` | item, plus `slice` when it has one, plus `citations`: the catalog records named by `fields.cites`, in cite order, each `{id, kind, title, status, reason, successor}`. `--lean` drops an empty `citations` list. With one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
+| `show ID` | item, plus `slice` when it has one, plus `slivers`: the items whose `fields.parent` names this one, in index order, each `{id, status, title}` (`[]` when none; `--lean` drops it). Text lists them under a `Slivers:` line after the slice, and a sliver's slice header carries a `Parent: ID title` line. Also `citations`: the catalog records named by `fields.cites`, in cite order, each `{id, kind, title, status, reason, successor}`. `--lean` drops an empty `citations` list. With one `--section NAME`, `{id, section, body}`; repeat `--section` to return only those sections; add `--context` for `{id, title, depends_on, boundary, sections}` |
 | `sections` | `{sections, required}`. Text is one configured section per line, with `required` on a row whose heading is in `required`. Reads config only: no index, lock, or write. A missing `required_sections` key reports Implement and Check |
 | `config` | with no key, the whole effective config (the same object `config.json` loads to, including `implement_finish`, `done_status` and `review_status`); with `KEY`, exactly `{key, value}`. A dotted key reaches into a nested object. An unknown key is `usage`, and the message names the top-level keys. A read reads config only: no index, lock, or write. An unreadable config or a directory outside any project fails as `sections` does. `--lean` drops an empty `value`. With a `VALUE` or `--unset`, `config` is a write: it patches only that key in `config.json` under the writer lock, reading `VALUE` as the key's type (a string literally, a whole number, `true` or `false`, JSON for a list or an object), and writes nothing unless the patched config loads. It prints `{key, value, previous}`, the effective value now and before (`null` for an optional key that is absent). A value that does not fit the key, or a config that fails validation, is `bad_config_value`; an unknown key, `version`, a write that would change the id prefix (use `id-prefix`; the whole `id` object included), `--unset` with a `VALUE` or without a `KEY`, and `--render`, `--strict` or `--check` on a read are `usage`. A write that would change `id.width` once the index has items is `state` (exit 2) and writes nothing. A write logs one `config` entry named `config.KEY`; one that changes nothing logs nothing. `--render`, `--strict` and `--check` behave as for other mutations |
 | `template list` | array of `{name, customized, missing}`, one per template in the order `slice.md`, `roadmap.md`, `row.md`. `customized` is false when the project's file has the built-in text byte for byte, and true when it differs or is missing; `missing` says the file is not there. Reads the files only: no index, lock, or write |
@@ -424,7 +425,9 @@ when the meaning does. Branch on the code.
 
 | Code | Means |
 |---|---|
-| `no_such_item` | No item with that id, from any command, including a `--depends-on` id |
+| `no_such_item` | No item with that id, from any command, including a `--depends-on`, `--discovered-from` or `--parent` id |
+| `parent_self` | `set --parent` named the item itself |
+| `parent_nested` | `add --parent` or `set --parent` would make a second level: the parent is itself a sliver, or the item being given a parent already has slivers. Exit 2, nothing written |
 | `no_slice` | The item exists but has not been promoted |
 | `no_such_section` | `show --section` named a heading the slice does not have |
 | `bad_promote_source` | A `promote` source is not one item, or names no sections |
@@ -550,8 +553,21 @@ filters by exact source and combines with other filters; an unknown ID is
 writing the batch. Provenance neither blocks pickup nor changes scores.
 Missing historical fields load empty; `--lean` omits empty provenance. Source
 retirement keeps references valid; purge needs `--force` when referenced and
-then integrity validation reports the dangling source. Index saves stamp schema 7 (provenance arrived in 5, filing keys in 6)
+then integrity validation reports the dangling source. Index saves stamp schema 9 (provenance arrived in 5, filing keys in 6)
 so older readers refuse rather than lose provenance.
+
+**Slivers.** A sliver is a small item carved out of a larger slice. `add --parent ID` and
+`set ID --parent ID` store the larger item's ID in `fields.parent` (`set ID --parent ''`
+clears it); `list --parent ID` returns an item's slivers, composing with the other filters,
+and `show ID` lists them under `slivers`. The link is one level deep: a parent cannot have
+a parent (`parent_nested`) and an item cannot be its own parent (`parent_self`); an unknown
+ID is `no_such_item`. The parent may have any status. `parent` is a reference, not a
+dependency: it does not block pickup, change scores or alter `next`, `handoff` or `done`.
+`remove` and `remove --purge` refuse an item that still has slivers unless `--force`, and a
+purged parent's ID is not reclaimed while a sliver names it. In an outline, `parent:` takes
+a title (of another entry in the same file, filed earlier or later, or of an existing
+item) as `depends:` does, else an existing item ID; `check` and `verify` report an unknown parent, a nested parent and a self-parent as
+errors. Index saves stamp schema 9 so older readers refuse rather than lose the link.
 
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)
@@ -685,7 +701,7 @@ verification and log the previous verifier/time. Unknown note IDs fail with
 
 Attestation is a workflow convention, not caller authentication. An agent can
 invoke the owner command; metadata alone does not establish an identity boundary.
-New index saves stamp schema 7 so older readers refuse rather than erase metadata.
+New index saves stamp the current schema (9; note metadata arrived in 7) so older readers refuse rather than erase metadata.
 
 To add to a section:
 

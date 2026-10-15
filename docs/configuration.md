@@ -296,6 +296,9 @@ absent). `{{findings}}` includes the optional `discovered from ID` annotation,
 so existing default row templates show provenance without template changes.
 The browser roadmap shows the same annotation.
 
+Row templates can also use `{{parent}}` for a sliver's raw parent ID (empty when absent).
+`{{findings}}` includes `sliver of ID` in the same way.
+
 ## Concurrency
 
 A mutating command holds an advisory lock on `.slicer/lock` for the length of its run, so

@@ -357,6 +357,7 @@ def panel(
   out.append(PanelLine(_labelled("group", item.group or "-")))
   out.append(PanelLine(_labelled("attempts", item.attempts)))
   out.append(PanelLine(_labelled("discovered from", item.discovered_from or "-")))
+  out.append(PanelLine(_labelled("parent", item.parent or "-")))
   out.append(PanelLine(_labelled("cites", cites or "-")))
   out.append(PanelLine(_labelled("score", f"{item.score} ({item.quadrant})"), role=(
     "priority" if item.importance == 3 or item.urgency == 3 else "normal")))
