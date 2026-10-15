@@ -31,3 +31,22 @@ PYTHONPATH=src python3 -m slicer done <SLIVER> [<SLIVER> ...] <PARENT> --note "D
 
 Commit that, remove the worktree and branch, and leave `main` clean. Pushing and
 publishing wait until the owner asks.
+
+## Schema bumps
+
+A slice bumps the index schema when its CHANGELOG entry names a new index schema or its
+diff changes `SCHEMA_VERSION` in `src/slicer/model.py`. It bumps the relay-roles schema
+when the diff changes `ROLES_VERSION` in `src/slicer/roles.py`. Git runs the `slicer-index`
+driver (`slicer merge-index`, for `.slicer/index.json`) and the `slicer-relay-roles` driver
+(`slicer merge-relay-roles`, for `.slicer/relay-roles.json`) as `slicer` from PATH, as
+`slicer setup-git` configures them. An editable install puts main's code on that PATH, which
+refuses a newer schema, so the merge stops with a conflict in the file. Run the merge from
+the `main` checkout root with a `slicer` shim first on PATH that runs the branch's code:
+
+```sh
+shim=$(mktemp -d) && printf '#!/bin/sh\nPYTHONPATH=%s exec python3 -m slicer "$@"\n' "$PWD/.worktrees/<id>/src" > "$shim/slicer" && chmod +x "$shim/slicer" && PATH="$shim:$PATH" git merge --no-ff feature/<id>-<slug>
+```
+
+The shim changes only which `slicer` Git finds; the driver configuration stays as
+`setup-git` wrote it. Once the bump is on `main`, the editable install runs the new schema,
+so later merges need no shim.

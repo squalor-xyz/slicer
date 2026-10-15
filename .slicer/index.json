@@ -9602,10 +9602,22 @@
       "id": "s290",
       "title": "Landing a schema bump runs the merge driver from the new code",
       "short_title": "Landing a schema bump runs the merge driver from the new code",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "6feaa8ac-65b5-43c0-9c4b-850b58a8f3c9",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: docs/landing.md gains a Schema bumps section (how to tell a bump, the slicer-index and slicer-relay-roles merge drivers run from PATH, and a copy-pasteable PATH shim for git merge). tests/test_ai.py test_LandingDoc_NamesSchemaBumpMerge went red on the missing heading, green after the paragraph, and each named token and the shim line were mutation-checked. Full discover 2125 tests OK (1 skipped), affected --run 104 OK, slicer check passed, git diff --check clean.",
+          "created_at": "2026-10-15T16:08:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9625,7 +9637,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -573,6 +573,19 @@ class AiInstructionsTests(unittest.TestCase):
                     "git merge --no-ff", "slicer done"):
       self.assertIn(command, landing)
 
+  def test_LandingDoc_NamesSchemaBumpMerge(self) -> None:
+    # s290: Git runs `slicer merge-index` from PATH (the editable install of main), which
+    # refuses a newer schema, so a bump is merged with a PATH shim running the branch's code.
+    root = Path(__file__).resolve().parents[1]
+    landing = (root / "docs" / "landing.md").read_text(encoding="utf-8")
+    self.assertIn("\n## Schema bumps\n", landing)
+    section = landing.split("\n## Schema bumps\n", 1)[1].split("\n## ", 1)[0]
+    for name in ("SCHEMA_VERSION", "ROLES_VERSION", "CHANGELOG", "slicer-index",
+                 "slicer-relay-roles", "merge-index", "merge-relay-roles"):
+      self.assertIn(name, section)
+    self.assertIn("PYTHONPATH=%s exec python3 -m slicer", section)
+    self.assertIn('PATH="$shim:$PATH" git merge --no-ff', section)
+
   def test_Instructions_ImplementSection_LeavesTheCommandCatalogueToHelp(self) -> None:
     # S138: the loop keeps the reads it needs; the rest is `--help`'s job.
     section = ai.INSTRUCTIONS.split("## Implement one slice", 1)[1].split("\n## ", 1)[0]
