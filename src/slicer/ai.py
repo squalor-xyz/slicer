@@ -144,6 +144,7 @@ def handoff_policy_text(kind: str) -> str:
 # The slice relay, shared by both finish modes. The close is appended separately
 # so the handoff text can avoid naming the other finish command. It is two constants
 # so the owner's role matrix can sit between Setup and Order (see relay_text).
+# Slivers and Gate follow Order as constants of their own.
 RELAY_HEAD = """\
 # Slice relay
 
@@ -183,7 +184,11 @@ Before the worktree exists, the orchestrator reads the slice's size with
 - which roles run. The architect is optional: the owner decides.
 - whether the implementation splits into parts. The default is one implementer.
   A split needs parts with disjoint files and their own tests; a slice too big
-  for one implementer is two slices.
+  for one implementer is two slices or a slivered slice.
+- whether to sliver the slice. The default is no. Propose slivers only when the
+  slice's effort and the cut allow it (see Slivers) and when that costs less than
+  one implementer. The orchestrator confirms the sliver list and which slivers
+  run in parallel with the owner.
 - the agent, vendor, model and reasoning effort for each role.
 - where the run ends:
   - after the finish step,
@@ -236,6 +241,36 @@ After a slice lands or hands off, and before briefing the next, compact the
 orchestrator session or start a fresh one. Re-read state with
 `slicer show ID --json --lean` rather than relying on memory.
 
+"""
+
+RELAY_SLIVERS = """\
+## Slivers
+
+A sliver is a small item carved from a slice and linked to it by `parent`, so a
+cheaper model can implement it. The orchestrator may sliver a slice at its
+discretion, only when that costs less than one implementer, and only after the
+owner confirms the sliver plan at Setup.
+
+- Eligibility: effort 1 at any size; effort 2 only when every sliver comes out at
+  effort 1; effort 3 never.
+- Filing: on main before the worktree is cut, with `slicer add TITLE --parent ID`
+  or one `slicer import` file. Each sliver gets its own spec, size S, effort 1,
+  with the parent's tree and pass.
+- Order: slivers run in the parent's worktree. Each goes implement, review, gate,
+  handoff; a project that closes slices another way uses that step in place of
+  handoff. Then the parent gets one combined gate on the whole diff and its own
+  handoff.
+- Parallel: slivers with disjoint files and their own tests may run in parallel as
+  the matrix rule allows, each with its own temp directory. Slivers that share
+  files run one after another. The orchestrator runs the full suite on the combined
+  diff before the combined gate.
+- Escalation: follow the matrix rule for a sliver that fails its gate twice or
+  whose diff falls short of the orchestrator's check. Without a matrix, move it
+  to the next model up.
+
+"""
+
+RELAY_GATE = """\
 ## Gate
 
 Name the diff under review. The criteria are: earlier blockers resolved with a
@@ -299,7 +334,7 @@ def relay_text(
       '`slicer done ID --note "Describe the verified outcome" --render --check`.\n'
     )
   return (
-    RELAY_HEAD + matrix + RELAY_ORDER
+    RELAY_HEAD + matrix + RELAY_ORDER + RELAY_SLIVERS + RELAY_GATE
     + TRACKING_RULE + "\n\n"
     + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
     + "`slicer list --json --lean`.\n\n"

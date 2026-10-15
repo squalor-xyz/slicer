@@ -214,6 +214,40 @@ class RowEditTests(MergeRelayRolesCase):
     self.assertEqual(doc["rows"][0]["model"], "sonnet")
     self.assertEqual(doc["rows"][0]["when"]["size"], ["S"])
 
+  def test_MergeRoles_SliverField_Kept(self) -> None:
+    ours = _matrix(
+      [_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules(),
+    )
+    theirs = _matrix(
+      [_row("r1", "implementer", model="haiku", when=RoleWhen(sliver=True)), _base_rows()[1]],
+      _base_rules(),
+    )
+    doc = self.clean(BASE, ours, theirs)
+    self.assertEqual(doc["rows"][0]["model"], "sonnet")
+    self.assertIs(doc["rows"][0]["when"]["sliver"], True)
+    # Both sides changing it differently is a disagreement about that field alone.
+    other = _matrix(
+      [_row("r1", "implementer", model="haiku", when=RoleWhen(sliver=False)), _base_rows()[1]],
+      _base_rules(),
+    )
+    message = self.refused(BASE, other, theirs, "merge_conflict")
+    self.assertIn("rows/r1/when/sliver", message)
+
+  def test_MergeRoles_MatrixWrittenBeforeSlivers_MergesAndGainsTheField(self) -> None:
+    def old(text: str) -> str:
+      doc = json.loads(text)
+      for row in doc["rows"]:
+        del row["when"]["sliver"]
+      return jsonio.dumps(doc)
+
+    theirs = _matrix(
+      [_row("r1", "implementer", model="haiku", when=RoleWhen(sliver=True)), _base_rows()[1]],
+      _base_rules(),
+    )
+    doc = self.clean(old(BASE), old(BASE), theirs)
+    self.assertIs(doc["rows"][0]["when"]["sliver"], True)
+    self.assertIsNone(doc["rows"][1]["when"]["sliver"])
+
   def test_MergeRelayRoles_BothSetTheSameFieldToTheSameValue_KeepsIt(self) -> None:
     edited = _matrix([_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules())
     self.assertEqual(self.clean(BASE, edited, edited)["rows"][0]["model"], "sonnet")
@@ -324,6 +358,36 @@ class UnreadableInputTests(MergeRelayRolesCase):
         self.assertIn(f"the {side} version", message)
         self.assertIn("at or below an id in use", message)
 
+  def test_MergeRelayRoles_VersionOneSideWithVersionTwoSide_MergesIntoVersionTwo(self) -> None:
+    def v1(text: str) -> str:
+      doc = json.loads(text)
+      doc["version"] = 1
+      for row in doc["rows"]:
+        del row["when"]["sliver"]
+      return jsonio.dumps(doc)
+
+    theirs = _matrix(
+      [_row("r1", "implementer", model="haiku", when=RoleWhen(sliver=True)), _base_rows()[1]],
+      _base_rules(),
+    )
+    ours = _matrix([_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules())
+    doc = self.clean(v1(BASE), v1(ours), theirs)
+    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["rows"][0]["model"], "sonnet")
+    self.assertIs(doc["rows"][0]["when"]["sliver"], True)
+    # And the other way round: ours is current, theirs predates the sliver condition.
+    doc = self.clean(v1(BASE), theirs, v1(ours))
+    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["rows"][0]["model"], "sonnet")
+    self.assertIs(doc["rows"][0]["when"]["sliver"], True)
+    # Two version 1 sides merge into a version 2 file: the driver always writes current.
+    only_theirs = _matrix(
+      [_base_rows()[0], _row("r2", "reviewer", model="opus", reasoning="high")], _base_rules(),
+    )
+    doc = self.clean(v1(BASE), v1(ours), v1(only_theirs))
+    self.assertEqual(doc["version"], 2)
+    self.assertEqual((doc["rows"][0]["model"], doc["rows"][1]["reasoning"]), ("sonnet", "high"))
+
   def test_MergeRelayRoles_TheirsIsFromANewerSlicer_IsRefused(self) -> None:
     newer = json.dumps({**json.loads(BASE), "version": 99}) + "\n"
     self.refused(BASE, BASE, newer, "schema_too_new")
@@ -411,16 +475,16 @@ class RelayRolesDriverEndToEndTests(unittest.TestCase):
       matrix = store.load(repo.root).roles
       self.assertEqual(
         [(r.id, r.model) for r in matrix.rows[-2:]],
-        [("r8", "trunk-arch"), ("r9", "feature-gate")],
+        [("r9", "trunk-arch"), ("r10", "feature-gate")],
       )
-      self.assertEqual([r.id for r in matrix.rules[-2:]], ["u6", "u7"])
-      self.assertEqual((matrix.next_row, matrix.next_rule), (10, 8))
+      self.assertEqual([r.id for r in matrix.rules[-2:]], ["u9", "u10"])
+      self.assertEqual((matrix.next_row, matrix.next_rule), (11, 11))
       # History is not rewritten: both branches' original add entries are still there.
       log = [
         json.loads(line) for line in repo.read(".slicer/log.jsonl").splitlines()
         if line.strip()
       ]
-      adds = [e for e in log if e["item"] == "relay-roles.r8" and e["note"] == "add"]
+      adds = [e for e in log if e["item"] == "relay-roles.r9" and e["note"] == "add"]
       self.assertEqual(sorted(e["to"] for e in adds), ["architect", "gate"])
       self.assertEqual(repo.run("render")[0], 0)
       code, out, err = repo.run("check")

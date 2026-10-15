@@ -2769,7 +2769,8 @@ def role_add(
   state: State, role: str, *, size: list[str] | None = None,
   effort: list[str | int] | None = None, importance: list[str | int] | None = None,
   urgency: list[str | int] | None = None, well_specified: str | None = None,
-  split: str | None = None, agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", note: str = "",
+  split: str | None = None, sliver: str | None = None, agent: str = "", vendor: str = "",
+  model: str = "", reasoning: str = "", note: str = "",
 ) -> RoleRow:
   """Append a row with the next id. The counter only moves forward."""
   matrix = _require_roles(state)
@@ -2781,6 +2782,7 @@ def role_add(
     urgency=_parse_scores("urgency", urgency or []),
     well_specified=_parse_yes_no_any("well-specified", well_specified or "any"),
     split=_parse_yes_no_any("split", split or "any"),
+    sliver=_parse_yes_no_any("sliver", sliver or "any"),
   )
   _reject_bad_role_text(agent=agent, vendor=vendor, model=model, reasoning=reasoning, note=note)
   row = RoleRow(
@@ -2799,8 +2801,9 @@ def role_set(
   state: State, row_id: str, *, role: str | None = None, size: list[str] | None = None,
   effort: list[str | int] | None = None, importance: list[str | int] | None = None,
   urgency: list[str | int] | None = None, well_specified: str | None = None,
-  split: str | None = None, agent: str | None = None, vendor: str | None = None, model: str | None = None,
-  reasoning: str | None = None, note: str | None = None,
+  split: str | None = None, sliver: str | None = None, agent: str | None = None,
+  vendor: str | None = None, model: str | None = None, reasoning: str | None = None,
+  note: str | None = None,
 ) -> tuple[RoleRow, list[str]]:
   """Change only the fields given. Returns the row and the names that changed."""
   row = _require_roles(state).row(row_id)
@@ -2819,6 +2822,8 @@ def role_set(
     when.well_specified = _parse_yes_no_any("well-specified", well_specified)
   if split is not None:
     when.split = _parse_yes_no_any("split", split)
+  if sliver is not None:
+    when.sliver = _parse_yes_no_any("sliver", sliver)
   texts = {"agent": agent, "vendor": vendor, "model": model, "reasoning": reasoning, "note": note}
   _reject_bad_role_text(**texts)
   wanted: dict[str, object] = {"role": role, **texts}

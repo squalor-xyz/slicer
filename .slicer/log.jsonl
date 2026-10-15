@@ -1569,3 +1569,11 @@
 {"when": "2026-10-15T17:03:23Z", "item": "s297", "action": "add", "from": "", "to": "open", "note": "Relay board colors each pipeline role by its state"}
 {"when": "2026-10-15T17:03:23Z", "item": "s297", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-15T17:28:59Z", "item": "s294", "action": "status", "from": "review", "to": "done", "note": "Landed dfa8f99: relay board draws nested runs as a tree (roles under an orchestrator fill the lane), title header, rounds and gate-fail lines, last-heard freshness, recently ended runs. Gate VERDICT: PASS (nested trial v3, run-20261015-164333-d4d1). Full suite on merged main OK. Per-cell pipeline colors deferred to s297 (owner).", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:45:14Z", "item": "s275", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:59:27Z", "item": "s275", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T17:11:04Z", "item": "s275", "action": "note", "from": "", "to": "", "note": "Ready for review: slivers guidance in ai relay, RoleWhen.sli", "by": "Jon Robbins"}
+{"when": "2026-10-15T17:22:59Z", "item": "s275", "action": "note", "from": "", "to": "", "note": "Later (orchestrator report): after landing, offer the owner ", "by": "Jon Robbins"}
+{"when": "2026-10-15T17:22:59Z", "item": "s275", "action": "note", "from": "", "to": "", "note": "Later (orchestrator report): CHANGELOG [Unreleased] has the ", "by": "Jon Robbins"}
+{"when": "2026-10-15T17:22:59Z", "item": "s275", "action": "note", "from": "", "to": "", "note": "Later (orchestrator report): relay-roles recommend text outp", "by": "Jon Robbins"}
+{"when": "2026-10-15T17:42:59Z", "item": "s275", "action": "note", "from": "", "to": "", "note": "Ready for review: ROLES_VERSION bumped to 2 (v1 loads, write", "by": "Jon Robbins"}
+{"when": "2026-10-15T17:43:29Z", "item": "s275", "action": "note", "from": "", "to": "", "note": "Later (round 2 report): the committed .slicer/relay-roles.js", "by": "Jon Robbins"}
