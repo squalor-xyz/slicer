@@ -8904,10 +8904,22 @@
       "id": "s272",
       "title": "Correct the --json coverage claim in docs/agents.md",
       "short_title": "agents.md --json claim",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "5346ae88-dad8-492d-a9b8-8d50a70a6931",
+          "kind": "",
+          "text": "**2026-10-15** — Verified. docs/agents.md, README.md, docs/commands.md and docs/import.md now name tui, ui, merge-index and merge-relay-roles as the commands without --json; the orchestrator widened the scope from agents.md alone. AgentsDocTests.test_AgentsDoc_JsonExceptions_MatchParser checks each doc's sentence against the parser's leaf commands. Both merge drivers give code usage (exit 2) for --json, verified directly. docs/why-slicer.md:37 ('every command an agent runs takes --json') is left as is: agents do not run tui, ui or the merge drivers. CHANGELOG [Unreleased] Fixed entry added. Counts: full suite 2034 tests OK (skipped=1); test_docs_coverage 5 tests OK; slicer check passed; git diff --check clean. Not committed.",
+          "created_at": "2026-10-15T12:49:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -8927,7 +8939,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -138,7 +138,7 @@ reproduce is never half-migrated.
 
 Every flag, the `.slicer/` layout, removing items, and roadmap prose are in the
 [command reference](docs/commands.md); keys and screens are in the [TUI manual](docs/tui.md).
-Every command except `tui`/`ui` takes `--json`, failures included; the
+Every command except `tui`/`ui`, `merge-index` and `merge-relay-roles` takes `--json`, failures included; the
 [agent reference](docs/agents.md) has the payloads and exit codes.
 
 **slicer never commits, pushes or tags.** Its `git` access is a read-only allowlist, and

@@ -184,7 +184,7 @@ wall-clock expiry.
 `--root DIR` names the project root; by default it is discovered from the working
 directory.
 
-Every command except the interactive `tui`/`ui` takes `--json`, including the failures — an agent calls `slicer next
+Every command except the interactive `tui`/`ui` and the git merge drivers `merge-index` and `merge-relay-roles` takes `--json`, including the failures — an agent calls `slicer next
 --json` rather than parsing markdown, and reads `{"error": {"code": ...}}` rather than
 prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage, validation, or nothing to do, `3` internal or state (`corrupt`, `locked`, `io`, `config`, `schema_too_new`).
 `--lean`, with `--json`, prints compact JSON on one line and omits empty fields, a repeated short title, and an item path.
