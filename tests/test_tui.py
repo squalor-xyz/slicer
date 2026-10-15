@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import support
 from slicer import model, relayrun, roles, store
-from slicer import tui, tui_style
+from slicer import tui, tui_style, tui_wizard
 from slicer.cli import main
 from slicer.errors import StateError
 from slicer.config import Config
@@ -25,6 +25,10 @@ class MemoryState(State):
   @property
   def dir(self) -> Path:
     raise AssertionError("in-memory TUI fixtures cannot access tracking files; use TempRepo for actions")
+
+  def template(self, name: str) -> str:
+    # The drift check plans the render; with no tracking files there is no render to plan.
+    raise StateError("in-memory TUI fixtures have no render templates")
 
 
 def example() -> State:
@@ -1034,6 +1038,104 @@ class QueueViewTests(unittest.TestCase):
     view.handle(state, "K")
     self.assertIn("reordering disabled", view.message)
     self.assertTrue(any(line.startswith("v ") and "Cycle" in line for line in tui.help_lines()))
+
+
+class TuiStatusLineTests(unittest.TestCase):
+  def rendered_repo(self, repo: support.TempRepo) -> None:
+    repo.run('init')
+    repo.run('add', 'First')
+    repo.run('add', 'Second')
+    repo.run('promote', 'S01')
+    repo.run('render')
+
+  def add_note_in_tui(self, state: State, view: tui.View) -> None:
+    view.select((tui.ITEM, 'S01'))
+    view.handle(state, '\t')
+    view.entry_at = next(i for i, e in enumerate(tui.entries(state, 'S01')) if e.kind == 'note_new')
+    request = view.handle(state, 'e').edit
+    view.accept(tui.apply_edit_result(state, request, 'checked by hand'))
+    view.refresh(state)
+
+  def test_Status_ShowsDonePercent(self) -> None:
+    state = example()  # one of four items is done
+    view = tui.View.initial(state)
+    self.assertIn('25% done', view.status(state))
+
+  def test_Status_AfterNoteEdit_ShowsRenderStale(self) -> None:
+    with support.TempRepo() as repo:
+      self.rendered_repo(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      self.assertNotIn('render stale', view.status(state))
+      self.add_note_in_tui(state, view)
+      self.assertIn('press r to render', view.message)
+      self.assertIn('render stale', view.status(state))
+
+  def test_Status_AfterRenderKey_ClearsStale(self) -> None:
+    with support.TempRepo() as repo:
+      self.rendered_repo(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      self.add_note_in_tui(state, view)
+      self.assertIn('render stale', view.status(state))
+      view.handle(state, 'r')
+      self.assertIn('rendered', view.message)
+      self.assertNotIn('render stale', view.status(state))
+
+  def test_Status_AfterHandoff_ShowsRenderStale(self) -> None:
+    with support.TempRepo() as repo:
+      self.rendered_repo(repo)
+      repo.run('start', 'S01')
+      repo.run('render')
+      state = repo.state()
+      view = tui.View.initial(state)
+      self.assertNotIn('render stale', view.status(state))
+      view.select((tui.ITEM, 'S01'))
+      view.handle(state, 'h')
+      type_keys(view, state, 'ready for review')
+      view.handle(state, '\n')
+      self.assertIn('S01 handed off', view.message)
+      self.assertIn('render stale', view.status(state))
+
+  def test_Status_AfterWizardSave_NotRenderStale(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run('init')
+      repo.run('render')
+      state = repo.state()
+      view = tui.View.initial(state)
+      self.assertNotIn('render stale', view.status(state))
+      # The same key sequence test_tui_wizard.draft sends; that module imports this one.
+      wizard = tui_wizard.Wizard(list(state.config.sections))
+      for value in ('', 'First', 'M', 'core, ui', 'F1', '3', '1', 'Phase one', ''):
+        for _ in wizard.text:
+          wizard.handle('KEY_BACKSPACE')
+        for key in value:
+          wizard.handle(key)
+        wizard.handle('\n')
+      while wizard.mode == 'field':
+        wizard.handle('\n')
+      wizard.handle('n')
+      view.wizard, view.mode = wizard, 'wizard'
+      view.wizard.mode = 'review'
+      view.wizard.review_at = len(view.wizard.review_rows()) - 1
+      view.handle(state, '\n')
+      self.assertIsNone(view.wizard)
+      self.assertIn('rendered roadmap', view.message)
+      view.refresh(state)
+      self.assertNotIn('render stale', view.status(state))
+
+  def test_Refresh_NavigationKey_DoesNotRecomputeDrift(self) -> None:
+    with support.TempRepo() as repo:
+      self.rendered_repo(repo)
+      state = repo.state()
+      with patch.object(tui.render, 'compare', wraps=tui.render.compare) as compare:
+        view = tui.View.initial(state)
+        self.assertEqual(compare.call_count, 1)
+        view.handle(state, 'j')
+        view.handle(state, 'k')
+        view.handle(state, 'KEY_DOWN')
+        view.refresh(state)
+        self.assertEqual(compare.call_count, 1)
 
 
 class ReviewKeyTests(unittest.TestCase):

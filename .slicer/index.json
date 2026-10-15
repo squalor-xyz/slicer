@@ -9180,10 +9180,33 @@
       "id": "s279",
       "title": "TUI overview line shows progress and check drift",
       "short_title": "TUI overview line shows progress and check drift",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "31fa0c6e-5292-4b79-ac71-708b9785af83",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: status line shows N% done and render stale. model.completion lifted from cli._census (stats unchanged); TUI drift check on open and after mutating actions, not navigation. Full suite 2129 OK; slicer check passed; 5 mutations red and restored. Deviation: completion helper lives in model.py, not cli.py (TUI must not import the CLI layer).",
+          "created_at": "2026-10-15T16:10:41Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "16e6eee7-c90c-418f-b555-63b6ee0bf47e",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for re-review: wizard save clears the render-stale flag after its render (fixed: flag was set before the render and never rechecked). New test test_Status_AfterWizardSave_NotRenderStale; mutation (pre-fix placement) red and restored. accept comment reworded. Full suite 2130 OK, affected 151 OK, slicer check passed.",
+          "created_at": "2026-10-15T16:21:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9203,7 +9226,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

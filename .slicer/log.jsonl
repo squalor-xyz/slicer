@@ -1533,3 +1533,7 @@
 {"when": "2026-10-15T14:29:22Z", "item": "s277", "action": "note", "from": "", "to": "", "note": "Ready for review: the TUI queue shows the list claim cell, a", "by": "Jon Robbins"}
 {"when": "2026-10-15T14:29:25Z", "item": "s277", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T14:36:34Z", "item": "s277", "action": "status", "from": "review", "to": "done", "note": "Landed on main: TUI queue claim cell (capped, dropped when narrow) and sibling-only block; gate PASS, full suite on merged main OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:00:04Z", "item": "s279", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:10:41Z", "item": "s279", "action": "note", "from": "", "to": "", "note": "Ready for review: status line shows N% done and render stale", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:10:41Z", "item": "s279", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:21:33Z", "item": "s279", "action": "note", "from": "", "to": "", "note": "Ready for re-review: wizard save clears the render-stale fla", "by": "Jon Robbins"}

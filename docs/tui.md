@@ -83,7 +83,11 @@ choices within a group match any selected value; different groups must all match
 Importance and urgency use the item's assigned values (1–3), not inherited priority.
 Search is case-insensitive literal text and combines with the filters.
 
-The status line shows matching/total item counts and active restrictions. Roadmap
+The status line shows matching/total item counts, the project's done percentage (the
+figure `slicer stats` prints) and active restrictions. It adds `render stale` when
+`.slicer/render/` differs from what `r` would write. The check runs when the TUI opens
+and after each action that can write state, not on navigation; `r` clears the flag. A
+render that cannot be planned or read also shows as stale. Roadmap
 prose stays accessible below the items and is excluded from those counts. Filters
 last only for this session. `J/K` reorder down/up, `T` moves to the top and `M` moves to
 a numbered position; reordering requires clearing all restrictions with `c`. Filtering
