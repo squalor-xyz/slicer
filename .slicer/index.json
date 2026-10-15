@@ -8744,7 +8744,7 @@
       "id": "s276",
       "title": "TUI detail pane shows every item and slice field",
       "short_title": "TUI detail pane shows every item and slice field",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
