@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 296,
+  "next_id": 298,
   "preamble": "",
   "passes": [
     {
@@ -9825,6 +9825,36 @@
         "trees_literal": false,
         "findings": "s279 gate non-blocking note, nested-relay trial 2026-10-15",
         "discovered_from": "s279",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s297",
+      "title": "Relay board colors each pipeline role by its state",
+      "short_title": "Relay board colors each pipeline role by its state",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s294 gate OWNER item, owner chose land + follow-up 2026-10-15",
+        "discovered_from": "s294",
         "parent": "",
         "cites": [],
         "key": "",
