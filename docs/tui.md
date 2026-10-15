@@ -107,38 +107,69 @@ Browsing writes no tracking state; lifecycle actions continue to use stored stat
 sibling worktree's, so an orchestrator in one worktree is visible from another. Starting,
 stopping and steering a run stay outside the TUI.
 
-Each active run is a lane:
+Each active run is a lane, drawn as a tree from the steps the ledger records:
 
 ```
-s283  active  12m04s  s283
-  implementer > [reviewer] > gate
-  [+] implementer  41s  1 subagent  Claude Code  Anthropic/sonnet high
-  [|] reviewer     2m04s  Claude Code  Anthropic/sonnet high
+● s294  Relay board shows nested runs as a tree wi...  active  50m00s
+  last heard 1m00s ago  orchestrator opus/high  wt s294-board
+  implementer > reviewer > [gate]                                  round 2
+  └ orchestrator opus/high  [|]  50m00s
+    ├ [+] implementer  ×2  9m00s  1 subagent  Claude Code  Anthropic/sonnet high
+    │     fix the mutation finding
+    ├ [+] reviewer     ×2  11m00s  Claude Code  Anthropic/opus high
+    │     re-review
+    └ [|] gate         ×2  7m00s  Claude Code  Anthropic/sonnet medium
+          gate again
+          ✗ gate FAIL → implementer round 2: mutation stayed green in tui.py
+
+● s275  Some other slice title  active  25m00s
+  last heard 17m00s ago
+  implementer > [reviewer] > gate                                  round 1
+  [+] implementer  0s  Claude Code  Anthropic/sonnet high
+        implement s275
+  [|] reviewer     17m00s  Claude Code  Anthropic/opus high
         review the diff
   [ ] gate         waiting
-  other:  orchestrator [|] 12m04s
+
+✓ s290  Pass vanished as soon as it ended  pass  50m00s  ended 40m00s ago  impl 1 · review 1 · gate 1
 ```
 
-The header names the items, the run's state and its age, and the worktree. The next line is
-the pipeline; the running role is in brackets, and an `architect` leads it when the run has
-one. Each role then gets a row: `[|]` is a running step and spins (`| / - \`), `[+]` is done,
-`[!]` failed, `[~]` started but not running (the run is stale or ended), and `[ ]` has not
-begun. The row carries elapsed time, the number of subagents the role's step spawned, its
-agent, `vendor/model` and reasoning, and its task underneath. A role with several steps shows
-the latest. Roles outside the pipeline, such as `orchestrator` or a split part's role, share
-one `other:` line after it.
+The header names the items, the first item's title from the roadmap (cut with `...`), the run's
+state and its age. The glyph is `●` for an active run and `~` for a stale one. The next line
+says how long since the run last recorded an event (`last heard`), then the orchestrator's
+`model/effort` and the worktree (`wt NAME`, only when its name differs from the item id). `last
+heard` is dim; it turns to the warning color once the gap passes half the 30-minute stale
+cutoff, and to the error color once the run is stale. The line after is the pipeline; the
+running role is in brackets, an `architect` leads it when the run has one, and `round N` at the
+right edge is the number of implementer steps in the lane.
+
+A step fills a role's row when nothing spawned it or the orchestrator did, which is how a nested
+relay records its roles. When the run has an orchestrator step it is the root of the tree and
+the role rows hang under it with `├` and `└`; without one the rows keep the flat layout above.
+A step spawned by any other role is that role's subagent: it is counted on its parent's row
+(`1 subagent`), not drawn. Each row shows: `[|]` is a running step and spins (`| / - \`), `[+]`
+is done, `[!]` failed, `[~]` started but not running (the run is stale or ended), and `[ ]` has
+not begun. The row carries `×N` when the role has more than one step in the lane (rounds),
+elapsed time, the number of subagents the latest step spawned, its agent, `vendor/model` and
+reasoning, and its task underneath. Each failed gate step adds a `✗ gate FAIL → implementer
+round N` line under the gate, with the gate's task as the reason. Roles outside the pipeline,
+such as a split part's role, share one `other:` line after the rows.
 
 A stale run (no event for 30 minutes) is dimmed, labelled `stale`, does not animate, and stops
-counting time at its last event. An ended run leaves the board. A row that is too narrow drops
-cells from the right, whole, instead of cutting one; a long task ends in `...`. `j`/`k` or the
-arrow keys scroll when the lanes outrun the screen.
+counting time at its last event; only its `last heard` line stands out. A run that ended within
+the last hour stays on the board after the active ones, newest first, as one dimmed summary
+line: `✓` for a pass, `✗` for a fail and `~` for a stopped run, then the outcome, how long it
+ran, `ended N ago` and the number of implementer, reviewer and gate steps. After an hour it
+leaves the board. A line that is too narrow drops cells from the right, whole, instead of
+cutting one (the title is cut with `...`, and `round N` is the first to go); a long task ends in
+`...`. `j`/`k` or the arrow keys scroll when the lanes outrun the screen.
 
 The board redraws four times a second and re-reads the ledgers every two seconds. Only the
 board wakes on a timer: in every other view the TUI still blocks on input. If this checkout's
 ledger is damaged (`corrupt`), the board keeps the last frame and shows one `Error:` line until
 a read succeeds; delete or fix the ledger line it names. Colors follow the display rules
-below. In monochrome (`NO_COLOR=1`) the cues are the markers (`[+]`, `[!]`, `[~]`), the
-`[role]` brackets, the spinner, the `stale` label, and bold and dim.
+below. In monochrome (`NO_COLOR=1`) the cues are the glyphs (`●`, `✓`, `✗`, `~`), the markers
+(`[+]`, `[!]`, `[~]`), the `[role]` brackets, the spinner, the `stale` label, and bold and dim.
 
 ## Display and color
 

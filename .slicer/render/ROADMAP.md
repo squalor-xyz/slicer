@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-282 items · — 9 · done 269 · retired 4
+282 items · — 8 · done 269 · retired 4 · review 1
 
 ## v1.12
 
@@ -65,7 +65,7 @@
 | 23 | [s290](slices/s290.md) | Landing a schema bump runs the merge driver from the new code | S | 1 | docs | v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code | done |
 | 24 | [s292](slices/s292.md) | affected.py skips selected test ids that no longer load | S | 1 | slicer | s277 relay 2026-10-15: `affected.py --run` with a borrowed map selected `test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn`, which the slice had renamed, and the run reported an AttributeError instead of running the renamed test | done |
 | 25 | [s293](slices/s293.md) | Relay briefs label each agent and set its model and effort | S | 1 | slicer | owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial | — |
-| 26 | [s294](slices/s294.md) | Relay board shows nested runs as a tree with rounds, freshness and recent results | M | 2 | slicer | nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step; owner widened it to a board redesign the same day · discovered from s283 | — |
+| 26 | [s294](slices/s294.md) | Relay board shows nested runs as a tree with rounds, freshness and recent results | M | 2 | slicer | nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step; owner widened it to a board redesign the same day · discovered from s283 | review |
 | 27 | [s295](slices/s295.md) | Tests pin the render-stale flag after a failed wizard render and after a move | S | 1 | slicer | s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279 | — |
 
 ---

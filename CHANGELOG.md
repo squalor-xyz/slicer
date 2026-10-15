@@ -28,6 +28,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- The relay board draws each run as a tree. The header carries the first item's title from the roadmap, and a second line the time since the run last recorded an event (`last heard`, in the warning color past half the 30-minute stale cutoff and in the error color once stale), the orchestrator's model and effort, and the worktree when its name differs from the item id. The orchestrator is the root row with the roles under it, `×N` marks a role with several rounds, `round N` ends the pipeline line, and a failed gate adds a `✗ gate FAIL → implementer round N` line with its reason. A run that ended within the last hour (`tui.BOARD_RECENT_ENDED`) stays on the board as one dimmed summary line with its outcome, time, `ended N ago` and step counts. The ledger and `relay-run` are unchanged; `slicer.tui.board_lines` takes an optional `titles` map.
+
 - `slicer ai relay` tells the orchestrator to record the run with `slicer relay-run`: `begin` when the run starts, `step` as each role and subagent starts and ends, and `end` after the finish step or when the relay stops, so `relay-run list` shows the run without extra prompting. A long-running step is re-recorded with `step --step STEP --phase start` as a heartbeat, so its run does not go stale after 30 minutes. Recording is advisory: a failed call never stops the relay. Handoff text still does not name the `done` command; `--phase done` is a relay-run phase. Text only; no command, flag or JSON key changes.
 
 - The text rows of `slicer list` and `find` mark an item that waits on an unfinished
@@ -56,6 +58,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer ai relay` carries the relay practices from dogfooding: every brief names its role's own temp directory, reviewer, architect and gate briefs forbid git writes, the orchestrator reads the implementer's diff before review, one full suite run per change (the implementer's for a whole slice, the orchestrator's on the combined diff for a split), parallel slices run only with disjoint files and land one at a time, and the orchestrator compacts or starts a fresh session after each slice lands or hands off. `slicer ai instructions`, in full and with `--rest`, tells agents to compact or start a fresh session after a slice's finish step, before claiming the next slice. Text only; no command, flag or JSON key changes.
 
 ### Fixed
+
+- The relay board no longer shows every role as `waiting` in a nested relay. A step now fills its role's row when it has no parent or when its parent is an `orchestrator` step; before, every step with a parent was skipped, and in a nested relay every role step is a child of the orchestrator step. A step under any other role is still that role's subagent.
 
 - Contributor tooling: `tests/affected.py --run` no longer fails a run with unittest's
   `AttributeError` when the map selects a test id that the working tree no longer defines,
