@@ -1528,3 +1528,4 @@
 {"when": "2026-10-15T12:47:01Z", "item": "s274", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-15T14:28:02Z", "item": "s274", "action": "note", "from": "", "to": "", "note": "Verified. Open slivers (not handed off, reviewing, done or r", "by": "Jon Robbins"}
 {"when": "2026-10-15T14:28:02Z", "item": "s274", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T14:30:35Z", "item": "s274", "action": "status", "from": "review", "to": "done", "note": "Landed on main: open slivers hold the parent in next and finish steps (slivers_open); gate PASS on second run, full suite 2103 OK.", "by": "Jon Robbins"}
