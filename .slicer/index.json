@@ -10192,7 +10192,7 @@
       "id": "s303",
       "title": "Undeclared pass warns",
       "short_title": "Undeclared pass warns",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

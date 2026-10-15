@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-292 items · — 13 · done 273 · retired 5 · review 1
+292 items · — 13 · done 274 · retired 5
 
 v1.13.0 release
 
@@ -54,7 +54,7 @@ v1.12.0 release
 | 12 | [s300](slices/s300.md) | Worktree gitignore | S | 2 | slicer | nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit | — |
 | 13 | [s301](slices/s301.md) | add --id refuses an id a sibling worktree already filed | S | 1 | slicer | nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294 | done |
 | 14 | [s302](slices/s302.md) | Version-shaped passes queue in version order | S | 1 | slicer | 2026-10-15: after retargeting, list put v1.13 s278 above v1.12 s298; graph.ranked_order ranks only declared passes, and v1.7+ are undeclared · Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared. | retired |
-| 15 | [s303](slices/s303.md) | Undeclared pass warns | S | 1 | slicer | 2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302 | review |
+| 15 | [s303](slices/s303.md) | Undeclared pass warns | S | 1 | slicer | 2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302 | done |
 | 16 | [s304](slices/s304.md) | Relay contract version | S | 1 | slicer | owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · discovered from s296 | — |
 | 17 | [s305](slices/s305.md) | Sibling id refusal ignores case | S | 1 | slicer | s301 relay review, 2026-10-15: a sibling's s10 against our S10 is not refused; Index.get is case-sensitive · discovered from s301 | — |
 
