@@ -1441,3 +1441,12 @@
 {"when": "2026-10-15T02:06:14Z", "item": "s271", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-15T02:06:14Z", "item": "s272", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-15T02:06:15Z", "item": "relay-roles.u6", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}
+{"when": "2026-10-15T02:48:48Z", "item": "s273", "action": "add", "from": "", "to": "open", "note": "Link a sliver to its parent slice with a parent field"}
+{"when": "2026-10-15T02:48:49Z", "item": "s274", "action": "add", "from": "", "to": "open", "note": "Hold a parent slice until its slivers are done"}
+{"when": "2026-10-15T02:48:50Z", "item": "s275", "action": "add", "from": "", "to": "open", "note": "Guide the orchestrator to sliver a slice in the relay"}
+{"when": "2026-10-15T02:48:55Z", "item": "s273", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T02:48:56Z", "item": "s274", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T02:48:57Z", "item": "s275", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T02:49:05Z", "item": "s275", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-15T02:55:44Z", "item": "s275", "action": "edit", "from": "", "to": "", "note": "Boundary"}
+{"when": "2026-10-15T02:55:44Z", "item": "s275", "action": "edit", "from": "", "to": "", "note": "Files"}

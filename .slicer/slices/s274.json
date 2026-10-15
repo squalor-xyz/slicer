@@ -1,0 +1,45 @@
+{
+  "id": "s274",
+  "title": "Hold a parent slice until its slivers are done",
+  "lead": [
+    "A parent slice with open slivers is not ready in `next`, and its finish step refuses until every sliver is finished. The slivers are ready in its place."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-14: slivers (parent:child) for relays",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner chose on 2026-10-14 that slivers run in the parent's worktree and branch, each with its own handoff, and that the parent closes after its slivers with one combined gate and one landing. Without these rules `next` would offer the parent and its slivers side by side, and a parent could be handed off or done with work still open."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/graph.py`: `blocked_by` (line 78) also returns the item's open slivers, so `next_item` and `next_batch` in `src/slicer/ops.py` (lines 1658 and 1712) report them in `blocked` with no new code path.\n- `src/slicer/ops.py`: `handoff` (line 1443), `handoff_many` (line 1381) and `done` (line 1205) check the parent's slivers first.\n- `src/slicer/errors.py` or wherever codes are listed: the new code, for example `slivers_open`.\n- `docs/landing.md`: the landing order for a slivered slice. Merge the parent branch once, then on main `done` each sliver, then `done` the parent, in one \"mark done\" commit.\n- `docs/agents.md` (the new code, the `blocked` shape note), `CHANGELOG.md`.\n- `tests/test_parent.py` (extend) or `tests/test_next.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Next_ParentWithOpenSliver_BlockedAndNamesSliver`: `next --json` returns the sliver and lists the parent in `blocked` with the sliver id.\n- `test_NextBatch_ParentAfterSlivers_Ordered`: `--batch` picks the slivers before the parent, as it does with dependencies.\n- `test_Handoff_ParentWithOpenSliver_RefusedWithCode`, `test_Done_ParentWithSliverInReview_RefusedWithCode`.\n- `test_Handoff_ParentAllSliversHandedOff_Succeeds`, `test_Done_ParentAllSliversDone_Succeeds`.\n- `test_Next_ItemWithoutSlivers_Unchanged`: existing readiness is untouched."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests above and watch them go red.\n2. Extend `graph.blocked_by`, then add the finish checks with the new code.\n3. Update `docs/landing.md`, `docs/agents.md` and CHANGELOG.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- `slicer check` and `git diff --check` pass.\n- In a temp project: a parent with two slivers yields the slivers from `next`, refuses `handoff`, then hands off once both slivers are handed off."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s274`, branch `feature/s274-hold-parent`. Commit only on the branch. Merging and pushing wait for the owner."
+    },
+    {
+      "heading": "Boundary",
+      "body": "- Depends on s273 for the `parent` field.\n- Open slivers act as unmet dependencies of the parent everywhere `next` computes readiness, including `--batch`; they are not written into `depends_on`.\n- The parent's finish refuses with a new stable code while any sliver is short of the status the finish needs: for `handoff`, every sliver is handed off or done; for `done`, every sliver is done. `--force` is not added.\n- No change to how a sliver itself finishes. Slivers keep `handoff` in the worktree and `done` on main."
+    }
+  ],
+  "notes": []
+}
