@@ -9094,6 +9094,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "26f5b298-a67d-4847-89fa-acafc9c1775f",
+          "kind": "",
+          "text": "**2026-10-15** — Later (round 2 report): the committed .slicer/relay-roles.json stays version 1 on disk until a relay-roles command rewrites it as 2. The ROLES_VERSION bump bullet sits under Added in CHANGELOG; it may belong under Changed (owner's call).",
+          "created_at": "2026-10-15T17:43:29Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
