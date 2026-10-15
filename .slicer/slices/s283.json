@@ -1,0 +1,41 @@
+{
+  "id": "s283",
+  "title": "TUI relay board animates running relays",
+  "lead": [
+    "A board in the TUI shows each active relay run as a lane: the slice, the worktree, and the role pipeline `implementer ▸ reviewer ▸ gate` (architect when present). Each role shows its agent, vendor, model, reasoning, task, elapsed time and subagent count, and an ASCII spinner marks the active step. The board refreshes on a timer while it is open."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-14: monitor slice relays from the TUI",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** starting, stopping or steering a run. The board is read-only. Showing slivers under their parent waits for s273's `parent` field; until then, each sliver is its own lane.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner asked for a visual, animated view of the relays in flight. s282 supplies the data. The TUI input loop blocks on `screen.get_wch()` (`src/slicer/tui.py:1157`), so it cannot animate today."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: a `board` mode and binding. A pure `board_lines(runs, tick, now, width)` returns the lanes, with the spinner frame chosen by `tick`, so tests need no terminal. `run()` sets `screen.timeout(ms)` only while the board is open, feeding a `tick` key to `View.handle`, and keeps blocking input otherwise. Stale runs are dimmed and labelled `stale`. Uses `tui_style` roles for colour, with a monochrome fallback.\n- `docs/tui.md` (a Relay board section), `CHANGELOG.md`, `tests/test_tui.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_BoardLines_OneRun_ShowsPipelineWithActiveRoleSpinner`\n- `test_BoardLines_TickAdvancesSpinnerFrame`\n- `test_BoardLines_SubagentsCounted`, `test_BoardLines_StaleRunDimmedAndLabelled`\n- `test_BoardLines_NarrowWidth_ClipsWithoutSplittingCells` at 80 columns\n- `test_BoardLines_NoRuns_SaysNothingRunningAndNamesRelayRun`\n- `test_Handle_TickOutsideBoard_IsIgnored`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add `board_lines`, the mode and the tick handling; then the timed poll in `run()`.\n3. Update the docs and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- The affected tests, then the full suite. `slicer check` passes.\n- By hand: record a fake run with `relay-run begin/step` and watch `slicer tui` animate it, then end it and see the lane leave the active board."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s283`, branch `feature/s283-tui-relay-board`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}

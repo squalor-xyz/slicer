@@ -1,0 +1,41 @@
+{
+  "id": "s282",
+  "title": "Record relay runs in a local ledger with slicer relay-run",
+  "lead": [
+    "A relay orchestrator records each run and each role step (agent, vendor, model, reasoning, phase, task, subagents) with `slicer relay-run`. The records go to a gitignored, disposable ledger inside `.slicer/`, so the TUI board (s283) and `relay-run list` can show what is running."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-14: monitor slice relays from the TUI",
+  "size": "L",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** launching agents, creating worktrees or any git write (the `vcs.py` allowlist stays closed); rendering the ledger; reading it in `check`; the TUI board (s283); the `ai relay` text (s284).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner wants to see which slices are being relayed, how many agents and subagents are running, and each one's agent, model, effort and task. Slicer knows only claims, statuses, attempts, sibling worktrees and history today. None of these records the agent or model, and the history log is git-tracked state that should not fill up with per-step telemetry. The decision on 2026-10-14 was a local ledger, written by the orchestrator, monitor-only. `.slicer/feedback.md` is the precedent for a gitignored file inside the checkout (`feedback.ensure_gitignore`, `src/slicer/feedback.py:43`). That keeps within the non-goals: no home-directory store, and nothing canonical outside git-tracked JSON."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/relayrun.py` (new): dataclasses `Run` and `Step` with fixed-order `to_dict`/`from_dict`; reading the append-only JSONL ledger (proposed name `.slicer/relay-runs.jsonl`); folding events into current runs; and stale detection, where a run with no event for longer than a threshold (proposed: 30 minutes, a constant) is `stale`, not active. A sibling worktree's ledger is read as a plain file under that worktree's root, from the worktree list that `store.sibling_checkouts` (`src/slicer/store.py:600`) already uses.\n- `src/slicer/ops.py`: `relay_run_begin`, `relay_run_step` and `relay_run_end` append under the project lock and call `feedback.ensure_gitignore(root, LEDGER_NAME)`. `init` (around line 149) adds the ledger to `.slicer/.gitignore` with the feedback files.\n- `src/slicer/cli.py`: `relay-run begin ID [ID ...] [--worktree PATH]` prints a run id; `relay-run step RUN --role R --agent A --vendor V --model M --reasoning E --phase start|done|fail [--task TEXT] [--parent STEP]`, where `--parent` nests a subagent; `relay-run end RUN --outcome pass|fail|stopped`; `relay-run list [--active] [-r]`. All take `--json`. Error codes: `unknown_run`, `bad_run_field`.\n- `docs/commands.md`, `docs/agents.md` (JSON shapes), `ARCHITECTURE.md` (the ledger is not state, like feedback), `CHANGELOG.md`.\n- `tests/test_relay_run.py` (new)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Begin_Step_End_FoldsIntoOneRun`, with the steps in order and the counts per role\n- `test_Step_WithParent_CountsAsSubagent`\n- `test_Step_UnknownRun_Refused` (`unknown_run`), `test_Step_BadPhase_Refused` (`bad_run_field`)\n- `test_List_Active_ExcludesEndedAndStale`, with a fixed clock injected\n- `test_List_ReadsSiblingWorktreeLedger`, using `support.isolated_discovery`\n- `test_Ledger_IsGitignored_AndNotInRender`: `render` output and `check` are unchanged after any `relay-run` call.\n- `test_Init_AddsLedgerToGitignore`\n- `test_Ledger_CorruptLine_ReportedWithFileAndLine`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Confirm with the owner the ledger name, the stale threshold, the `--outcome` values and whether `-r` is needed now.\n2. Write the tests and watch them go red.\n3. Add `relayrun.py`, the ops and the CLI.\n4. Update the docs and CHANGELOG. Mutation-check the new tests."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- `slicer check` passes and `git status` shows no tracked change from a `relay-run` call.\n- `relay-run list --json` round-trips a recorded run."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s282`, branch `feature/s282-relay-run-ledger`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,41 @@
+{
+  "id": "s279",
+  "title": "TUI overview line shows progress and check drift",
+  "lead": [
+    "The status line shows the project's done percentage and whether the generated render is stale, so the owner sees from the TUI when `r` is needed."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-14: bring the TUI up to date with recent CLI features",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** sync drift, reference checks, and running the full `check`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`View.status` (`src/slicer/tui.py:693`) shows only counts, sort and filters. After a note edit, the TUI asks \"press r to render\", but nothing shows that the render is still stale. The `r` key already computes the drift with `render.plan` and `render.compare` (`src/slicer/tui.py:404`). `slicer stats` computes completion in `_census` (`src/slicer/cli.py:3008`)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: lift the completion part of `_census` into a function the TUI can call. `stats` output is unchanged.\n- `src/slicer/tui.py`: `View.status` appends `N% done` and `render stale` when `render.compare` reports a difference. That is computed in `refresh` after each mutating action and on open, not on every keystroke.\n- `docs/tui.md`, `CHANGELOG.md`, `tests/test_tui.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Status_ShowsDonePercent`\n- `test_Status_AfterNoteEdit_ShowsRenderStale`, then `test_Status_AfterRenderKey_ClearsStale`\n- `test_Refresh_NavigationKey_DoesNotRecomputeDrift`, using a counting stub on `render.compare`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Lift the census helper and add the drift cache.\n3. Update the docs and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- The affected tests, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s279`, branch `feature/s279-tui-overview`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}

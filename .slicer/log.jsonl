@@ -1450,3 +1450,13 @@
 {"when": "2026-10-15T02:49:05Z", "item": "s275", "action": "edit", "from": "", "to": "", "note": "Files"}
 {"when": "2026-10-15T02:55:44Z", "item": "s275", "action": "edit", "from": "", "to": "", "note": "Boundary"}
 {"when": "2026-10-15T02:55:44Z", "item": "s275", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-15T03:18:17Z", "item": "s276", "action": "add", "from": "", "to": "open", "note": "TUI detail pane shows every item and slice field"}
+{"when": "2026-10-15T03:18:17Z", "item": "s277", "action": "add", "from": "", "to": "open", "note": "TUI shows sibling-worktree claims and sibling-only items"}
+{"when": "2026-10-15T03:18:17Z", "item": "s278", "action": "add", "from": "", "to": "open", "note": "TUI dependency and history panes"}
+{"when": "2026-10-15T03:18:17Z", "item": "s279", "action": "add", "from": "", "to": "open", "note": "TUI overview line shows progress and check drift"}
+{"when": "2026-10-15T03:18:17Z", "item": "s280", "action": "add", "from": "", "to": "open", "note": "TUI relay-roles view and recommend for the selected slice"}
+{"when": "2026-10-15T03:18:17Z", "item": "s281", "action": "add", "from": "", "to": "open", "note": "TUI catalog browse and cite"}
+{"when": "2026-10-15T03:18:17Z", "item": "s282", "action": "add", "from": "", "to": "open", "note": "Record relay runs in a local ledger with slicer relay-run"}
+{"when": "2026-10-15T03:18:17Z", "item": "s283", "action": "add", "from": "", "to": "open", "note": "TUI relay board animates running relays"}
+{"when": "2026-10-15T03:18:17Z", "item": "s284", "action": "add", "from": "", "to": "open", "note": "ai relay tells the orchestrator to record each step with relay-run"}
+{"when": "2026-10-15T03:18:17Z", "item": "s285", "action": "add", "from": "", "to": "open", "note": "TUI shows the relay request for a selected slice or range"}

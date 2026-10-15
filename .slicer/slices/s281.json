@@ -1,0 +1,41 @@
+{
+  "id": "s281",
+  "title": "TUI catalog browse and cite",
+  "lead": [
+    "An overlay lists catalog records by kind (active, then retired), and cites or uncites a record on the selected item through `ops.catalog_cite` and `ops.catalog_uncite`."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, session 2026-10-14: bring the TUI up to date with recent CLI features",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** adding, editing, retiring or moving catalog records from the TUI. Those stay CLI-only for now.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The catalog (index schema 8) holds goals, non-goals, requirements, constraints, decisions and assumptions, and has no TUI surface. Citing a record while reading a slice is the natural moment, and today it needs `slicer catalog cite`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: a `catalog` mode and binding. The list groups records by kind in editorial order, and Space toggles a cite on the selected item through `ops.catalog_cite` / `ops.catalog_uncite` (`src/slicer/ops.py:500`, `:519`), with `vcs.require_no_merge` first, as every other TUI write does.\n- `docs/tui.md`, `CHANGELOG.md`, `tests/test_tui.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Catalog_ListsByKindActiveThenRetired`\n- `test_Catalog_SpaceCites_ThenUncites`, each logging one history entry\n- `test_Catalog_DuringMerge_RefusesWrite`\n- `test_Catalog_ProseRowSelected_SaysNotAnItem`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the mode and the toggling.\n3. Update the docs and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- The affected tests, then the full suite. `slicer check` passes after `r`."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s281`, branch `feature/s281-tui-catalog`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}
