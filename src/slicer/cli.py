@@ -42,6 +42,7 @@ from slicer import (
   outline,
   prose,
   refs,
+  relayrun,
   render,
   roles as role_matrix,
   store,
@@ -576,6 +577,61 @@ def cmd_relay_roles_rule_remove(args: argparse.Namespace) -> int:
   state = _state(args)
   rule = ops.rule_remove(state, args.id)
   _emit(args, rule.to_dict(), f"removed {rule.id}")
+  return OK
+
+
+def _run_root(args: argparse.Namespace) -> Path:
+  return store.discover(Path(args.root).resolve() if args.root else None)
+
+
+def _emit_run(args: argparse.Namespace, payload: dict[str, object], text: str) -> None:
+  """A `relay-run` result. The shape is the contract, so `--lean` only compacts it."""
+  if getattr(args, "json", False):
+    _dump_json(args, payload)
+  elif text:
+    _write_out(args, text)
+
+
+def _step_line(step: relayrun.Step) -> str:
+  cells = [step.role, step.agent, step.model, step.reasoning, step.phase, step.task]
+  return ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
+
+
+def cmd_relay_run_begin(args: argparse.Namespace) -> int:
+  """Not a roadmap write: `ops` takes the project lock and appends to the ledger only."""
+  run = ops.relay_run_begin(_run_root(args), args.items, args.worktree)
+  _emit_run(args, {"run": run.to_dict()}, run.id)
+  return OK
+
+
+def cmd_relay_run_step(args: argparse.Namespace) -> int:
+  run, step = ops.relay_run_step(
+    _run_root(args), args.run, phase=args.phase, step=args.step, role=args.role or "",
+    agent=args.agent or "", vendor=args.vendor or "", model=args.model or "",
+    reasoning=args.reasoning or "", task=args.task or "", parent=args.parent or "",
+  )
+  _emit_run(args, {"run": run.to_dict(), "step": step.to_dict()}, step.id)
+  return OK
+
+
+def cmd_relay_run_end(args: argparse.Namespace) -> int:
+  run = ops.relay_run_end(_run_root(args), args.run, args.outcome)
+  _emit_run(args, {"run": run.to_dict()}, f"ended {run.id} {run.outcome}")
+  return OK
+
+
+def cmd_relay_run_list(args: argparse.Namespace) -> int:
+  runs = relayrun.list_runs(_run_root(args), active=args.active)
+  lines = []
+  for run in runs:
+    counts = run.counts()
+    lines.append(
+      f"{run.id}  {run.state}{'  ' + run.outcome if run.outcome else ''}  "
+      f"{','.join(run.items)}  {run.worktree}  {counts['steps']} steps, "
+      f"{counts['running']} running, {counts['subagents']} subagents"
+    )
+    lines.extend(_step_line(step) for step in run.steps)
+  _emit_run(args, {"runs": [run.to_dict() for run in runs]}, "\n".join(lines) or "no relay runs")
   return OK
 
 
@@ -3779,6 +3835,68 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("text")
 
   radd("rule-remove", cmd_relay_roles_rule_remove, "drop a rule", mutate=True).add_argument("id")
+
+  sp = sub.add_parser(
+    "relay-run", help="the local ledger of slice-relay runs and their agent steps",
+    description=(
+      "A relay orchestrator records each run and each role step here so `relay-run list` "
+      "and the TUI can show what is running. The ledger, .slicer/relay-runs.jsonl, is "
+      "gitignored, append-only and disposable: never rendered, never read by check."
+    ),
+    parents=[common],
+  )
+  usub = sp.add_subparsers(dest="relay_run_command", required=True)
+
+  def uadd(name: str, fn, help_: str) -> argparse.ArgumentParser:
+    inner = usub.add_parser(name, help=help_, parents=[common])
+    inner.set_defaults(func=fn)
+    _json_flags(inner)
+    return inner
+
+  inner = uadd("begin", cmd_relay_run_begin, "start a run on one or more items and print its id")
+  inner.add_argument("items", nargs="+", metavar="ID", help="the roadmap items the run relays")
+  inner.add_argument(
+    "--worktree", metavar="PATH",
+    help="the worktree the work happens in, recorded by its directory name "
+    "(default: this checkout)",
+  )
+
+  inner = uadd(
+    "step", cmd_relay_run_step,
+    "record an agent's step, or with --step a later phase of one; prints the step id",
+  )
+  inner.add_argument("run")
+  inner.add_argument(
+    "--step", metavar="STEP",
+    help="update this step of the run instead of adding one; only the fields given change",
+  )
+  inner.add_argument("--role", help="implementer, reviewer, gate, architect or orchestrator")
+  inner.add_argument("--agent", help="the harness that runs the role, such as Claude Code")
+  inner.add_argument("--vendor", help="the model vendor")
+  inner.add_argument("--model", help="the model")
+  inner.add_argument("--reasoning", help="reasoning effort such as low, medium, high or xhigh")
+  inner.add_argument(
+    "--phase", required=True, metavar="start|done|fail",
+    help="where the step stands",
+  )
+  inner.add_argument("--task", help="one line on what the step is doing")
+  inner.add_argument("--parent", metavar="STEP", help="the step that spawned this subagent")
+
+  inner = uadd("end", cmd_relay_run_end, "close a run with its outcome")
+  inner.add_argument("run")
+  inner.add_argument(
+    "--outcome", required=True, metavar="pass|fail|stopped",
+    help="how the run ended",
+  )
+
+  inner = uadd(
+    "list", cmd_relay_run_list,
+    "runs in this checkout and its sibling worktrees (no lock, no write)",
+  )
+  inner.add_argument(
+    "--active", action="store_true",
+    help="only runs that have not ended and have had an event in the last 30 minutes",
+  )
 
   _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))
 
