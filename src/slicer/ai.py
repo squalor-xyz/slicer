@@ -153,8 +153,9 @@ an architect and a gate. The relay uses slicer's own commands.
 ## Roles
 
 The orchestrator is the session the owner talks to. It briefs every agent,
-reads every report and the lines it cites, reruns the tests, files notes on
-other items, and writes no product code.
+reads every report and the lines it cites, reads the implementer's diff before
+review, reruns the tests only as Order says, files notes on other items, and
+writes no product code.
 
 The implementer owns one slice. It runs `slicer start ID --render --strict`,
 writes the failing tests and watches them go red, implements, mutation-checks
@@ -207,6 +208,19 @@ files are disjoint, otherwise one after another. The orchestrator runs the full
 suite on the combined diff, then one review and one gate cover the whole slice.
 Accepted findings go back to the part that owns the file.
 
+A whole-slice implementer runs the full suite once; in a split, parts run only
+their own tests and the orchestrator's run on the combined diff is the one full
+run. The orchestrator reruns the suite only if the diff changed after that run or
+main moved.
+
+Run slices in parallel only when their files are disjoint. Review and land them
+one at a time, and rerun the suite on the slice branch merged with the new main
+when main moved.
+
+After a slice lands or hands off, and before briefing the next, compact the
+orchestrator session or start a fresh one. Re-read state with
+`slicer show ID --json --lean` rather than relying on memory.
+
 ## Gate
 
 Name the diff under review. The criteria are: earlier blockers resolved with a
@@ -221,8 +235,10 @@ a review needs another gate.
 Include the slice from `slicer show ID --json --lean`, the tracking rule below,
 and the workspace limit: stay inside the workspace the owner named and do not
 read or write outside it. The report is a diff stat, red lines, test counts, a
-mutation table and deviations. A part brief names the part's own files, the
-files it must not touch, and its own temp directory.
+mutation table and deviations. Every brief names the role's own temp directory,
+and no two agents share one. Reviewer, architect and gate briefs forbid git
+writes; a needed write stops and goes to the owner. A part brief names the
+part's own files and the files it must not touch.
 
 """
 
@@ -398,6 +414,12 @@ the slice relay with `slicer ai relay`. Read the project's role matrix with
 
 """
 
+BETWEEN_SLICES = (
+  "## Between slices\n\n"
+  "After the finish step and before claiming the next slice, compact or start a fresh "
+  "session; state lives in slicer.\n\n"
+)
+
 STATE = """\
 ## State and command results
 
@@ -429,7 +451,7 @@ INSTRUCTIONS = (
   f"{TRACKING_RULE}\n\n"
   + INTRO + PLAN + TRACKING + "\n"
   + IMPLEMENT_HEADING + LOOP + SPEC_GAP + "\n" + IMPLEMENT_MORE
-  + HANDOFF_SECTION + STATE + FEEDBACK + EXITS
+  + HANDOFF_SECTION + BETWEEN_SLICES + STATE + FEEDBACK + EXITS
   + "\n" + DONE_CLOSER
 )
 
@@ -443,7 +465,7 @@ def rest_text() -> str:
   """What `INSTRUCTIONS` says beyond the skill, for an agent that loaded the skill."""
   body = (
     REST_LEAD + "\n\n" + INTRO + PLAN + IMPLEMENT_HEADING + IMPLEMENT_MORE
-    + HANDOFF_SECTION + STATE + FEEDBACK
+    + HANDOFF_SECTION + BETWEEN_SLICES + STATE + FEEDBACK
   )
   return body.rstrip("\n") + "\n"
 

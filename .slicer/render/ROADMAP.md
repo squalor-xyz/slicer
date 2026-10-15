@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-274 items · — 16 · done 254 · retired 4
+274 items · — 15 · done 254 · retired 4 · review 1
 
 ## v1.11
 
@@ -35,7 +35,7 @@
 |---|---|---|---|---|---|---|---|
 | 1 | [s269](slices/s269.md) | Why slicer doc | S | 1 | docs | owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README | done |
 | 2 | [s270](slices/s270.md) | Affected by file reads | M | 2 | tests | owner and orchestrator, 2026-10-14: affected.py --run prints nothing to run for a docs-only diff although tests read README and docs; AGENTS.md has no docs-only rule | — |
-| 3 | [s271](slices/s271.md) | Relay lessons in ai text | S | 1 | slicer | owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense | — |
+| 3 | [s271](slices/s271.md) | Relay lessons in ai text | S | 1 | slicer | owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense | review |
 | 4 | [s272](slices/s272.md) | agents.md --json claim | S | 1 | docs | orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not · discovered from s269 | — |
 | 5 | [s273](slices/s273.md) | Sliver parent field | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
 | 6 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |

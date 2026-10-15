@@ -1474,3 +1474,6 @@
 {"when": "2026-10-15T04:11:36Z", "item": "s276", "action": "note", "from": "", "to": "", "note": "Ready for review: the TUI detail pane now shows the slice le", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:11:36Z", "item": "s276", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:11:50Z", "item": "s276", "action": "status", "from": "review", "to": "done", "note": "Landed on main: detail pane shows lead, pass, flags, short title, group, attempts, discovered from and cites; gate PASS, full suite 1932 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:13:33Z", "item": "s271", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:44:46Z", "item": "s271", "action": "note", "from": "", "to": "", "note": "Verified outcome for s271. The slice relay and the instructi", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:44:48Z", "item": "s271", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
