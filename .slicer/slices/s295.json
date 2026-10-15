@@ -1,0 +1,41 @@
+{
+  "id": "s295",
+  "title": "Tests pin the render-stale flag after a failed wizard render and after a move",
+  "lead": [
+    "Two places in s279 that mark the render drift as due get a test that fails when the line is deleted."
+  ],
+  "depends_note": null,
+  "findings_note": "s279 gate non-blocking note, nested-relay trial 2026-10-15",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s279 gate (nested-relay trial, 2026-10-15) passed with a non-blocking note. `test_Status_AfterWizardSave_NotRenderStale` would still pass if the `self.drift_due = True` after the wizard's render (`src/slicer/tui.py:984`) were deleted. The view opens on a fresh render and the earlier `refresh` has already cleared `drift_due`, so on a successful render the stale flag is false either way. Only a failed render needs line 984 to bring `render stale` back. The move prompt's `self.drift_due = True` (`src/slicer/tui.py:1045`) has no test. Note edits and handoff are covered by `test_Status_AfterNoteEdit_ShowsRenderStale` and `test_Status_AfterHandoff_ShowsRenderStale`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/test_tui.py`, next to the `test_Status_*` tests. Tests only; `src/` does not change unless a test shows a real defect, which stops and goes back to the owner."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "These are pinning tests. They pass on the current code, so \"red\" means a mutation check: each test must fail with its line deleted.\n- `test_Status_AfterWizardSave_RenderFails_ShowsRenderStale`: the wizard-save sequence from `test_Status_AfterWizardSave_NotRenderStale`, with the render forced to fail (for example `mock.patch.object(tui, 'act')` returning an error outcome for `r`, or another failure the test can cause without touching the user's files). The message names the render failure, and after `view.refresh(state)` the status shows `render stale`. Deleting `tui.py:984` must turn it red.\n- `test_Status_AfterMove_ShowsRenderStale`: in a rendered repo with two items, the move prompt moves the first item to position 2. After `view.refresh(state)` the status shows `render stale`. Deleting `tui.py:1045` must turn it red."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the two tests and run them green.\n2. Mutation check, with PYTHONDONTWRITEBYTECODE=1: delete each line, confirm its test goes red, then restore the line."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s295`, branch `feature/s295-drift-flag-tests`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}
