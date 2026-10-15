@@ -1568,3 +1568,4 @@
 {"when": "2026-10-15T17:01:34Z", "item": "s294", "action": "note", "from": "", "to": "", "note": "Ready for review: relay board redesign verified. Nested lane", "by": "Jon Robbins"}
 {"when": "2026-10-15T17:03:23Z", "item": "s297", "action": "add", "from": "", "to": "open", "note": "Relay board colors each pipeline role by its state"}
 {"when": "2026-10-15T17:03:23Z", "item": "s297", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T17:28:59Z", "item": "s294", "action": "status", "from": "review", "to": "done", "note": "Landed dfa8f99: relay board draws nested runs as a tree (roles under an orchestrator fill the lane), title header, rounds and gate-fail lines, last-heard freshness, recently ended runs. Gate VERDICT: PASS (nested trial v3, run-20261015-164333-d4d1). Full suite on merged main OK. Per-cell pipeline colors deferred to s297 (owner).", "by": "Jon Robbins"}

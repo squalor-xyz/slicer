@@ -9769,7 +9769,7 @@
       "id": "s294",
       "title": "Relay board shows nested runs as a tree with rounds, freshness and recent results",
       "short_title": "Relay board shows nested runs as a tree with rounds, freshness and recent results",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
