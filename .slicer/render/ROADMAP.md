@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-273 items · — 17 · done 252 · retired 4
+273 items · — 16 · done 252 · retired 4 · review 1
 
 ## v1.11
 
@@ -50,7 +50,7 @@
 | 15 | [s283](slices/s283.md) | TUI relay board animates running relays | M | 2 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 | 16 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 | 17 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
-| 18 | [s286](slices/s286.md) | list marks blocked rows with ! | S | 1 | slicer | owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why | — |
+| 18 | [s286](slices/s286.md) | list marks blocked rows with ! | S | 1 | slicer | owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why | review |
 
 ---
 

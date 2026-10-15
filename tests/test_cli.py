@@ -894,6 +894,57 @@ class ListNextOrderTests(unittest.TestCase):
       self.assertEqual(self.ids(repo, "--sort", "score"), ["S02", "S03", "S01"])
 
 
+class ListBlockedMarkerTests(unittest.TestCase):
+  """A text row whose item waits on an unfinished dependency carries `!` after its
+  number, as the TUI queue does (s286). The JSON rows gain no field for it."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "waiting")
+    repo.run("add", "blocker")
+    repo.run("set", "S01", "--depends-on", "S02")
+    return repo
+
+  def row(self, out: str, item_id: str) -> str:
+    return next(line for line in out.splitlines() if line.split()[1:2] == [item_id])
+
+  def test_List_Text_BlockedRow_MarkedWithBang(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      # S02 has no open dependency, so it ranks first and its marker column is blank.
+      self.assertEqual(self.row(out, "S02")[:9], "  1  S02 ")
+      # S01 waits on S02, so it ranks second. The `!` takes one of the two spaces.
+      self.assertEqual(self.row(out, "S01")[:9], "  2! S01 ")
+      # The marker keeps the ID column where the header puts it.
+      self.assertEqual(self.row(out, "S01").index("S01"), out.splitlines()[0].index("ID"))
+
+  def test_List_Text_DependencyDone_NoBang(self) -> None:
+    with self.repo() as repo:
+      # The marker is there while the dependency is open, so the later absence means something.
+      self.assertEqual(self.row(repo.run("list")[1], "S01")[:9], "  2! S01 ")
+      repo.run("done", "S02", "--render")
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(self.row(out, "S01")[:9], "  1  S01 ")
+
+  def test_Find_Text_BlockedRow_MarkedWithBang(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("find", "waiting")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(out.splitlines()[0][:9], "  1! S01 ")
+      self.assertEqual(repo.run("find", "blocker")[1].splitlines()[0][:9], "  1  S02 ")
+
+  def test_List_Json_Unchanged_ByBlockedMarker(self) -> None:
+    keys = ["id", "title", "short_title", "status", "has_slice", "depends_on", "notes",
+            "note_records", "claim", "fields", "in_work_elsewhere"]
+    with self.repo() as repo:
+      rows = json.loads(repo.run("list", "--json")[1])
+      # Blocked and unblocked rows alike carry these keys, in this order.
+      self.assertEqual([list(row) for row in rows], [keys, keys])
+
+
 class TuiHelpTests(unittest.TestCase):
   """Help and dispatch share bindings rather than drifting independently."""
 

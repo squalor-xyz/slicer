@@ -395,8 +395,10 @@ that is [step 5](#5-turn-an-item-into-a-slice).
 $ slicer list
   #  ID    STATUS  CLAIM SIZE EFFORT SCORE QUADRANT  TITLE
   1  S01   —       -     M    -      22    -         Parse the config file
-  2  S02   —       -     S    -      22    -         Fail loudly on a missing key
+  2! S02   —       -     S    -      22    -         Fail loudly on a missing key
 ```
+
+The `!` after a row number marks an item that waits on an unfinished dependency, so row 2 waits on S01.
 
 The SCORE and QUADRANT columns are the priority score and quadrant (see
 [step 6](#6-the-loop)); a fresh item sits at a neutral 2/2.

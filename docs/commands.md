@@ -235,7 +235,11 @@ dependents. The command returns one item, including rows without slice files;
 an exhausted offset exits 2 (JSON returns `item: null` and blocked details).
 The text form of `slicer list` labels its columns: number, id, status, claim,
 pass (only when the roadmap declares or names a pass), size, effort, score,
-quadrant, and title. `find` and `deps` rows use the same columns without the header. An unset effort appears as `-`. When the
+quadrant, and title. `find` and `deps` rows use the same columns without the header. An unset
+effort appears as `-`. A `!` right after the row number marks an item that waits on a
+dependency not yet met (in `done_status` or `satisfies_dependencies`), as the TUI queue
+does; it takes a space the row already has, so the columns do not move. `deps` lists only
+unblocked items, so its rows never carry it. When the
 default status filter hides done or retired items, a final line counts the
 matching hidden rows and points to `--all`. `--all` and `--status` suppress that
 notice; `--json` remains an array of the visible item records.
