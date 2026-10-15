@@ -1196,6 +1196,28 @@ def _clear_claim(item: Item) -> None:
   item.claim_at = ""
 
 
+def _check_slivers(
+  state: State, items: list[Item], needed: frozenset[str], *, verb: str, remedy: str,
+) -> None:
+  """Refuse a parent's finish while a sliver is short of `needed`.
+
+  A sliver named in the same call counts: the call finishes it too, or fails whole.
+  Nothing is changed. There is no force; finish the slivers first.
+  """
+  in_call = {item.id for item in items}
+  problems = []
+  for item in items:
+    short = [k for k in slivers_of(state, item.id)
+             if k.status not in needed and k.id not in in_call]
+    if short:
+      listed = ", ".join(f"{k.id} ({k.status})" for k in short)
+      problems.append(
+        f"{item.id} cannot be {verb} while its slivers are unfinished: {listed}; "
+        f"{remedy.format(ids=' '.join(k.id for k in short))}")
+  if problems:
+    raise StateError("; ".join(problems) + ". Nothing was changed.", code="slivers_open")
+
+
 def set_status_many(
   state: State, item_ids: list[str], status: str, *, note: str = "", by: str = ""
 ) -> list[Item]:
@@ -1207,6 +1229,11 @@ def set_status_many(
   if status not in state.config.statuses:
     raise StateError(f"unknown status {status!r}; known: {sorted(state.config.statuses)}")
   finishing = status == state.config.done_status
+  if finishing:
+    _check_slivers(
+      state, [item for item in items if item.status != status], state.config.finished_statuses(),
+      verb="marked done", remedy="finish them first with `slicer done {ids}`, or name them in this call",
+    )
   transitions = []
   for item in items:
     previous = item.status
@@ -1461,6 +1488,11 @@ def handoff_many(
       )
   if problems:
     raise StateError("; ".join(problems) + ". Nothing was changed.", code="state")
+  _check_slivers(
+    state, [item for item in items if not (item.status == cfg.review_status and not item.claim_owner)],
+    cfg.handed_off_statuses(), verb="handed off",
+    remedy="hand them off first with `slicer handoff {ids}`, or name them in this call",
+  )
   changed: list[tuple[Item, str, str]] = []
   for item in items:
     if item.status == cfg.review_status and not item.claim_owner:
@@ -1655,7 +1687,7 @@ def _ranked_pool(
       continue
     if no_flags and any(fnmatchcase(flag, pattern) for flag in item.flags for pattern in no_flags):
       continue
-    pending = graph.blocked_by(state.index, item, cfg.satisfying_statuses())
+    pending = graph.pending(state.index, item, cfg)
     if pending:
       blocked.append((item.id, pending))
     missing = _missing_spec(state, item)
@@ -1775,13 +1807,12 @@ def next_batch(
   )
   chosen: list[Item] = []
   chosen_ids: set[str] = set()
-  satisfying = state.config.satisfying_statuses()
   while len(chosen) < count:
     pick: Item | None = None
     for item in pool.items:
       if item.id in chosen_ids:
         continue
-      unmet = [dep for dep in graph.blocked_by(state.index, item, satisfying) if dep not in chosen_ids]
+      unmet = [dep for dep in graph.pending(state.index, item, state.config) if dep not in chosen_ids]
       if not unmet:
         pick = item
         break

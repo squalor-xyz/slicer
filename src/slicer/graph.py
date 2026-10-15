@@ -75,11 +75,21 @@ def path(index: Index, start: str, goal: str) -> list[str] | None:
   return None
 
 
-def blocked_by(index: Index, item: Item, satisfying: str | Collection[str]) -> list[str]:
-  """Dependencies of `item` that are not satisfied yet, in declared order.
+def open_slivers(index: Index, item: Item, settled: Collection[str]) -> list[str]:
+  """Ids of `item`'s slivers still short of a `settled` status, in index order."""
+  return [it.id for it in index.items if it.parent == item.id and it.status not in settled]
+
+
+def blocked_by(
+  index: Index, item: Item, satisfying: str | Collection[str],
+  settled: Collection[str] | None = None,
+) -> list[str]:
+  """What `item` waits on: unsatisfied dependencies in declared order, then open slivers.
 
   `satisfying` is `Config.satisfying_statuses()`; one status key also works.
-  A dependency that is not in the index is never satisfied.
+  A dependency that is not in the index is never satisfied. A sliver is not
+  written into `depends_on`; it holds its parent here, in index order, until it
+  reaches a `settled` status (`Config.settled_statuses()`; default: `satisfying`).
   """
   if isinstance(satisfying, str):
     satisfying = {satisfying}
@@ -88,7 +98,13 @@ def blocked_by(index: Index, item: Item, satisfying: str | Collection[str]) -> l
     other = index.get(dep)
     if other is None or other.status not in satisfying:
       out.append(dep)
+  out.extend(open_slivers(index, item, satisfying if settled is None else settled))
   return out
+
+
+def pending(index: Index, item: Item, cfg: Config) -> list[str]:
+  """`blocked_by` with the project's own satisfying and settled statuses."""
+  return blocked_by(index, item, cfg.satisfying_statuses(), cfg.settled_statuses())
 
 
 def dependents(index: Index) -> dict[str, list[str]]:
@@ -165,7 +181,6 @@ def ranked_order(
   """
   eff = effective_scores(index)
   in_work = cfg.in_work()
-  satisfying = cfg.satisfying_statuses()
   parked = cfg.parked_status
   place = {it.id: n for n, it in enumerate(index.items)}
   passes = {p.key: n for n, p in enumerate(index.passes)} if by_pass else {}
@@ -173,7 +188,7 @@ def ranked_order(
   def tier(item: Item) -> int:
     if parked and item.status == parked:
       return 3
-    if blocked_by(index, item, satisfying):
+    if pending(index, item, cfg):
       return 2
     if item.status in in_work:
       return 0

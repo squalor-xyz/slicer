@@ -8988,12 +8988,24 @@
       "id": "s274",
       "title": "Hold a parent slice until its slivers are done",
       "short_title": "Hold parent for slivers",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s273"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "defbf6d6-001f-4a6b-ae9a-c6f64046ef89",
+          "kind": "",
+          "text": "**2026-10-15** — Verified. Open slivers (not handed off, reviewing, done or retired) hold their parent as unmet dependencies in next, next --batch, list '!', deps and ranking, without being written into depends_on. New stable code slivers_open: a parent's handoff refuses until every sliver is handed off, reviewing, done or retired (Config.handed_off_statuses, whatever implement_finish is); its done refuses until every sliver is done or retired (Config.finished_statuses). Readiness uses Config.settled_statuses, narrowed to finished_statuses when implement_finish=done so next never offers a parent whose done would refuse. Retired slivers never hold the parent, and slivers named in the same call count (both orchestrator-accepted). set --status is the documented escape hatch that skips the check. One gate FAIL occurred, caused by the orchestrator's A2 instruction narrowing the handoff check; fixed by separating handed_off_statuses from settled_statuses. Counts: full suite 2103 OK (1 skipped); SliverHold/Parent filter 71 OK; slicer check and git diff --check clean. Mutations M1-M19 all red.",
+          "created_at": "2026-10-15T14:28:02Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -9013,7 +9025,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

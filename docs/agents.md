@@ -429,6 +429,7 @@ when the meaning does. Branch on the code.
 | `no_such_item` | No item with that id, from any command, including a `--depends-on`, `--discovered-from` or `--parent` id |
 | `parent_self` | `set --parent` named the item itself |
 | `parent_nested` | `add --parent` or `set --parent` would make a second level: the parent is itself a sliver, or the item being given a parent already has slivers. Exit 2, nothing written |
+| `slivers_open` | `handoff` or `done` named a parent while a sliver is short of what that finish needs: for `handoff` every sliver must be handed off, being reviewed, done or retired, whatever `implement_finish` is; for `done`, done or retired. A sliver named in the same call counts. The message lists each short sliver with its status. Exit 2, nothing written; there is no `--force`. A sliver's own finish is unaffected |
 | `no_slice` | The item exists but has not been promoted |
 | `no_such_section` | `show --section` named a heading the slice does not have |
 | `bad_promote_source` | A `promote` source is not one item, or names no sections |
@@ -563,7 +564,22 @@ clears it); `list --parent ID` returns an item's slivers, composing with the oth
 and `show ID` lists them under `slivers`. The link is one level deep: a parent cannot have
 a parent (`parent_nested`) and an item cannot be its own parent (`parent_self`); an unknown
 ID is `no_such_item`. The parent may have any status. `parent` is a reference, not a
-dependency: it does not block pickup, change scores or alter `next`, `handoff` or `done`.
+dependency: it is never written into `depends_on` and does not change scores. It does hold
+the parent while slivers are open. In `next` (including `--batch`, `--ready` and the review
+queue), `list`'s `!` marker, `deps` and ranking, each sliver short of handed off, being
+reviewed, done or retired waits ahead of its parent like an unmet dependency (when
+`implement_finish` is `done`, only a done or retired sliver releases the parent here,
+since that project has no handoff step, so `next` never offers a parent whose `done`
+would refuse): the slivers
+are offered, and the parent appears in `blocked` as `{"id": parent, "waiting_on": [...]}`
+with the sliver ids after any real dependencies (`deps ID` returns them in `blocked_by`
+too, and its text adds a `held by slivers` line; `waits_on` stays `depends_on`). A
+retired sliver does not hold its parent. `handoff` refuses a parent whose slivers are not
+all handed off (or being reviewed, done or retired), whatever `implement_finish` is, and
+`done` one whose slivers are not all done or retired, with `slivers_open` and no
+`--force`; a sliver in the same call counts. A sliver finishes as any item does.
+`set --status` stays an escape hatch that does not run the sliver check, like the other
+finish guards it skips.
 `remove` and `remove --purge` refuse an item that still has slivers unless `--force`, and a
 purged parent's ID is not reclaimed while a sliver names it. In an outline, `parent:` takes
 a title (of another entry in the same file, filed earlier or later, or of an existing

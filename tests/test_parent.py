@@ -516,5 +516,277 @@ class ParentTests(unittest.TestCase):
       self.assertEqual(json.loads(out)["id"], "S02")
 
 
+class SliverHoldTests(unittest.TestCase):
+  """Open slivers hold their parent: not ready in `next`, and its finish refuses (s274)."""
+
+  def repo(
+    self, promote: bool = False, finish: str = "handoff", **parent_fields: str,
+  ) -> support.TempRepo:
+    """S01 is the parent; S02 and S03 are its slivers. Promoted only when a finish is tested."""
+    repo = support.TempRepo()
+    self.assertEqual(repo.run("init")[0], 0)
+    self.assertEqual(repo.run("config", "implement_finish", finish)[0], 0)
+    self.assertEqual(repo.run("add", "Parent", "--effort", "1", *_flags(parent_fields))[0], 0)
+    for title in ("Sliver one", "Sliver two"):
+      self.assertEqual(repo.run("add", title, "--parent", "S01", "--effort", "1")[0], 0)
+    if promote:
+      for item_id in ("S01", "S02", "S03"):
+        self.assertEqual(repo.run("promote", item_id)[0], 0)
+        for heading in ("Implement", "Check"):
+          self.assertEqual(
+            repo.run("edit", item_id, "--section", heading, "--text", "Do it.")[0], 0)
+    return repo
+
+  def marks(self, repo: support.TempRepo) -> dict[str, str]:
+    """The readiness column of `list` text: `!` or a space, by item id."""
+    rows = [line for line in repo.run("list")[1].splitlines() if line[:3].strip().isdigit()]
+    return {line[5:].split()[0]: line[3] for line in rows}
+
+  def status(self, repo: support.TempRepo, item_id: str) -> str:
+    return repo.state().index.require(item_id).status
+
+  def snapshot(self, repo: support.TempRepo) -> dict[str, bytes]:
+    return {str(p.relative_to(repo.root)): p.read_bytes()
+            for p in (repo.root / ".slicer").rglob("*")
+            if p.is_file() and p.name != "lock"}
+
+  def test_Next_ParentWithOpenSliver_BlockedAndNamesSliver(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("next", "--ready", "--json", "--lean")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["item"]["id"], "S02")
+      self.assertEqual(payload["blocked"], [{"id": "S01", "waiting_on": ["S02", "S03"]}])
+      self.assertEqual(repo.state().index.require("S01").depends_on, [])
+
+  def test_Next_ImplementFinishDone_SliverInReview_ParentStillHeld(self) -> None:
+    with self.repo(promote=True, finish="done") as repo:
+      self.assertEqual(repo.run("start", "S01", "S02", "S03")[0], 0)
+      self.assertEqual(repo.run("handoff", "S02", "S03")[0], 0)
+      code, out, _ = repo.run("next", "--ready", "--json", "--lean")
+      self.assertEqual(code, 2)  # nothing offered: the parent waits for done, not review
+      self.assertEqual(json.loads(out)["blocked"], [{"id": "S01", "waiting_on": ["S02", "S03"]}])
+      self.assertEqual(repo.run("done", "S02", "S03")[0], 0)
+      payload = json.loads(repo.run("next", "--ready", "--json", "--lean")[1])
+      self.assertEqual(payload["item"]["id"], "S01")
+
+  def test_Next_ParentWithDependencyAndSlivers_NamesDependencyFirst(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(repo.run("add", "Gate", "--effort", "1")[0], 0)
+      self.assertEqual(repo.run("set", "S01", "--depends-on", "S04")[0], 0)
+      payload = json.loads(repo.run("next", "--ready", "--json", "--lean")[1])
+      self.assertEqual(payload["blocked"], [{"id": "S01", "waiting_on": ["S04", "S02", "S03"]}])
+      self.assertEqual(repo.state().index.require("S01").depends_on, ["S04"])
+
+  def test_Next_SliverStarted_ParentStillBlockedUntilHandedOff(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02", "S03")[0], 0)
+      code, out, _ = repo.run("next", "--json")
+      self.assertEqual(json.loads(out)["id"], "S02")
+      self.assertEqual(repo.run("handoff", "S02", "S03")[0], 0)
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["id"], "S01")
+
+  def test_NextBatch_ParentAfterSlivers_Ordered(self) -> None:
+    with self.repo(importance="3", urgency="3") as repo:
+      code, out, err = repo.run("next", "--batch", "3", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual([i["id"] for i in payload["items"]], ["S02", "S03", "S01"])
+      self.assertEqual(payload["blocked"], [])
+      code, out, _ = repo.run("next", "--batch", "2", "--json")
+      payload = json.loads(out)
+      self.assertEqual([i["id"] for i in payload["items"]], ["S02", "S03"])
+
+  def test_NextBatch_SliverOutsidePool_ParentStillHeld(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(repo.run("promote", "S03")[0], 0)  # empty slice: S03 is unspecified, not offered
+      code, out, err = repo.run("next", "--batch", "3", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual([i["id"] for i in payload["items"]], ["S02"])
+      self.assertEqual(payload["blocked"], [{"id": "S01", "waiting_on": ["S03"]}])
+
+  def test_NextBatch_ParentLeftOutOfBatch_ReportsSliversBlocked(self) -> None:
+    with self.repo(importance="3", urgency="3") as repo:
+      code, out, _ = repo.run("next", "--batch", "1", "--json")
+      payload = json.loads(out)
+      self.assertEqual([i["id"] for i in payload["items"]], ["S02"])
+      self.assertEqual(payload["blocked"], [{"id": "S01", "waiting_on": ["S03"]}])
+
+  def test_Next_ItemWithoutSlivers_Unchanged(self) -> None:
+    with self.repo() as repo:
+      self.assertEqual(repo.run("set", "S02", "S03", "--parent", "")[0], 0)
+      code, out, err = repo.run("next", "--ready", "--json", "--lean")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["item"]["id"], "S01")
+      self.assertNotIn("blocked", payload)  # --lean drops an empty list
+      self.assertEqual(
+        graph.blocked_by(repo.state().index, repo.state().index.require("S01"), "done"), [])
+
+  def test_Next_ReviewQueue_ParentWithSliversInReview_Offered(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02", "S03")[0], 0)
+      self.assertEqual(repo.run("handoff", "S01", "S02", "S03")[0], 0)
+      code, out, err = repo.run("next", "--status", "review", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["id"], "S01")
+
+  def test_List_ParentWithOpenSliver_MarkedBlocked(self) -> None:
+    with self.repo() as repo:
+      marks = self.marks(repo)
+      self.assertEqual(marks, {"S01": "!", "S02": " ", "S03": " "})
+      self.assertEqual(list(marks), ["S02", "S03", "S01"])  # held parent ranks after its slivers
+      self.assertEqual(repo.run("set", "S02", "S03", "--status", "done")[0], 0)
+      self.assertEqual(self.marks(repo)["S01"], " ")
+
+  def test_Tui_ParentWithOpenSliver_RowMarkedBlocked(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      rows = {r.target: r for r in tui.item_rows(state, list(state.index.items))}
+      self.assertIn("!", rows["S01"].text.split()[0])
+      self.assertNotIn("!", rows["S02"].text.split()[0])
+      self.assertEqual(repo.run("set", "S02", "S03", "--status", "done")[0], 0)
+      state = repo.state()
+      rows = {r.target: r for r in tui.item_rows(state, list(state.index.items))}
+      self.assertNotIn("!", rows["S01"].text.split()[0])
+
+  def test_Deps_ParentWithOpenSliver_NamesSliver(self) -> None:
+    with self.repo() as repo:
+      payload = json.loads(repo.run("deps", "S01", "--json")[1])
+      self.assertEqual(payload["waits_on"], [])
+      self.assertEqual(payload["blocked_by"], ["S02", "S03"])
+      text = repo.run("deps", "S01")[1]
+      self.assertIn("held by slivers  S02, S03", text)
+      self.assertEqual([i["id"] for i in json.loads(repo.run("deps", "--json")[1])], ["S02", "S03"])
+
+  def test_Handoff_ParentWithOpenSliver_RefusedWithCode(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02")[0], 0)
+      before = self.snapshot(repo)
+      code, out, _ = repo.run("handoff", "S01", "--json")
+      self.assertEqual(code, 2)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "slivers_open")
+      self.assertIn("S02 (started)", error["message"])
+      self.assertIn("S03 (open)", error["message"])
+      self.assertEqual(self.snapshot(repo), before)
+      with self.assertRaises(StateError) as exc:
+        ops.handoff(repo.state(), "S01")
+      self.assertEqual(exc.exception.code, "slivers_open")
+
+  def test_Handoff_ParentWithOneSliverOpen_NamesOnlyThatSliver(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02")[0], 0)
+      self.assertEqual(repo.run("handoff", "S02")[0], 0)
+      code, out, _ = repo.run("handoff", "S01", "--json")
+      self.assertEqual(code, 2)
+      message = json.loads(out)["error"]["message"]
+      self.assertIn("S03 (open)", message)
+      self.assertNotIn("S02", message)
+
+  def test_Handoff_ParentAllSliversHandedOff_Succeeds(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02", "S03")[0], 0)
+      self.assertEqual(repo.run("handoff", "S02")[0], 0)
+      self.assertEqual(repo.run("set", "S03", "--status", "done")[0], 0)
+      code, _, err = repo.run("handoff", "S01")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(self.status(repo, "S01"), "review")
+
+  def test_Handoff_ParentAndSliversInOneBatch_Succeeds(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02", "S03")[0], 0)
+      code, _, err = repo.run("handoff", "S01", "S02", "S03")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([self.status(repo, i) for i in ("S01", "S02", "S03")], ["review"] * 3)
+
+  def test_Handoff_ImplementFinishDone_SliverInReview_ParentHandedOff(self) -> None:
+    with self.repo(promote=True, finish="done") as repo:
+      self.assertEqual(repo.run("start", "S01", "S02", "S03")[0], 0)
+      self.assertEqual(repo.run("handoff", "S02", "S03")[0], 0)
+      code, _, err = repo.run("handoff", "S01")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(self.status(repo, "S01"), "review")
+
+  def test_Handoff_ParentWithRetiredSliver_NotHeld(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S01", "S02")[0], 0)
+      self.assertEqual(repo.run("remove", "S03", "--reason", "dropped")[0], 0)
+      self.assertEqual(repo.run("handoff", "S02")[0], 0)
+      self.assertEqual(repo.run("handoff", "S01")[0], 0)
+
+  def test_Handoff_SliverWithParentOpen_Unchanged(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S02")[0], 0)
+      code, _, err = repo.run("handoff", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(self.status(repo, "S02"), "review")
+
+  def test_Done_ParentWithSliverInReview_RefusedWithCode(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("start", "S02", "S03")[0], 0)
+      self.assertEqual(repo.run("handoff", "S02", "S03")[0], 0)
+      self.assertEqual(repo.run("done", "S02")[0], 0)
+      before = self.snapshot(repo)
+      code, out, _ = repo.run("done", "S01", "--json")
+      self.assertEqual(code, 2)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "slivers_open")
+      self.assertIn("S03 (review)", error["message"])
+      self.assertNotIn("S02", error["message"])
+      self.assertEqual(self.snapshot(repo), before)
+      with self.assertRaises(StateError) as exc:
+        ops.done(repo.state(), "S01")
+      self.assertEqual(exc.exception.code, "slivers_open")
+
+  def test_Done_RenderedParentWithOpenSliver_RefusedBeforeWriting(self) -> None:
+    with self.repo(promote=True) as repo:
+      before = self.snapshot(repo)
+      code, out, _ = repo.run("done", "S01", "--render", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "slivers_open")
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Done_ParentAllSliversDone_Succeeds(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("done", "S02", "S03")[0], 0)
+      code, _, err = repo.run("done", "S01")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(self.status(repo, "S01"), "done")
+
+  def test_Done_ParentAndSliversInOneBatch_Succeeds(self) -> None:
+    with self.repo(promote=True) as repo:
+      code, _, err = repo.run("done", "S01", "S02", "S03")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([self.status(repo, i) for i in ("S01", "S02", "S03")], ["done"] * 3)
+
+  def test_Done_BatchWithHeldParent_WritesNothing(self) -> None:
+    with self.repo(promote=True) as repo:
+      before = self.snapshot(repo)
+      code, out, _ = repo.run("done", "S01", "S02", "--json")
+      self.assertEqual(code, 2)
+      self.assertIn("S03 (open)", json.loads(out)["error"]["message"])
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Done_ParentWithRetiredSliver_NotHeld(self) -> None:
+    with self.repo(promote=True) as repo:
+      self.assertEqual(repo.run("remove", "S03", "--reason", "dropped")[0], 0)
+      self.assertEqual(repo.run("done", "S02")[0], 0)
+      self.assertEqual(repo.run("done", "S01")[0], 0)
+
+  def test_Done_SliverWithParentOpen_Unchanged(self) -> None:
+    with self.repo(promote=True) as repo:
+      code, _, err = repo.run("done", "S02")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(self.status(repo, "S02"), "done")
+
+
+def _flags(fields: dict[str, str]) -> list[str]:
+  return [part for key, value in fields.items() for part in (f"--{key}", value)]
+
+
 if __name__ == "__main__":
   unittest.main()

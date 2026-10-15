@@ -267,7 +267,7 @@ def item_rows(
   ))) for item in items)])
   out: list[Row] = []
   for n, item in enumerate(items, 1):
-    pending = graph.blocked_by(state.index, item, cfg.satisfying_statuses())
+    pending = graph.pending(state.index, item, cfg)
     marker = "!" if pending else " "
     status = store.displayed_status(cfg, item, elsewhere.get(item.id, []))
     label = cfg.status_label(status)
@@ -347,8 +347,8 @@ def panel(
     PanelLine(f"{item.id}  {item.title}", role="heading"),
     PanelLine(""),
     PanelLine(_labelled("status", state.config.status_label(status)),
-              role=tui_style.status_role(status, bool(graph.blocked_by(
-                state.index, item, state.config.satisfying_statuses())), state.config)),
+              role=tui_style.status_role(status, bool(graph.pending(
+                state.index, item, state.config)), state.config)),
     PanelLine(_labelled("claim", item.claim_owner or "-")),
   ]
   for n, label in enumerate(FIELD_SPEC):
