@@ -1031,6 +1031,47 @@ class AiRelayTests(unittest.TestCase):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, setup)
 
+  def test_AiRelay_HasSliversSectionAndSetupBullet(self) -> None:
+    text = ai.relay_text()
+    setup = " ".join(text.split("## Setup", 1)[1].split("## Order", 1)[0].split())
+    for phrase in (
+      "whether to sliver the slice. The default is no.",
+      "confirms the sliver list and which slivers run in parallel with the owner",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, setup)
+    self.assertLess(text.index("## Order"), text.index("## Slivers"))
+    self.assertLess(text.index("## Slivers"), text.index("## Gate"))
+    self.assertEqual(text.count("## Gate"), 1)
+    self.assertEqual(text.count("Name the diff under review."), 1)
+    slivers = " ".join(text.split("## Slivers", 1)[1].split("\n## ", 1)[0].split())
+    for phrase in (
+      "Eligibility",
+      "effort 1 at any size",
+      "effort 2 only when every sliver comes out at effort 1",
+      "effort 3 never",
+      "Filing",
+      "on main before the worktree is cut",
+      "`slicer add TITLE --parent ID`",
+      "one `slicer import` file",
+      "size S, effort 1",
+      "the parent's tree and pass",
+      "Order",
+      "in the parent's worktree",
+      "implement, review, gate, handoff",
+      "one combined gate on the whole diff",
+      "Parallel",
+      "disjoint files and their own tests",
+      "its own temp directory",
+      "the full suite on the combined diff before the combined gate",
+      "Escalation",
+      "follow the matrix rule",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, slivers)
+    # The section is generic text: the project's matrix is not needed to read it.
+    self.assertIn("## Slivers", ai.relay_text("handoff", "implementation report", in_project=True))
+
   def test_RelayText_Roles_LeadImplementerOwnsTracking(self) -> None:
     text = ai.relay_text()
     roles_section = " ".join(text.split("## Roles", 1)[1].split("## Setup", 1)[0].split())
@@ -1215,10 +1256,10 @@ class AiRelayRolesTests(unittest.TestCase):
     data = json.loads(repo.read(self.ROLES))
     self.assertEqual(
       [(row["role"], row["agent"]) for row in data["rows"]],
-      [("implementer", "Claude Code")] * 4
+      [("implementer", "Claude Code")] * 5
       + [("reviewer", "Claude Code"), ("gate", "Claude Code"), ("architect", "Claude Code")],
     )
-    self.assertEqual(len(data["rules"]), 5)
+    self.assertEqual(len(data["rules"]), 8)
     self.assertEqual(repo.run("check")[0], 0)
 
   def test_RelayInitRoles_FileExists_RefusesWithoutForce(self) -> None:
@@ -1235,7 +1276,7 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(repo.run("relay-roles", "remove", "r1")[0], 0)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--force")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 7)
+    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 8)
 
   def test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError(self) -> None:
     repo = self.project()
@@ -1410,7 +1451,7 @@ class AiRelayRolesTests(unittest.TestCase):
       if line.startswith("| `relay-roles recommend`")
     ]
     self.assertEqual(len(rows), 1)
-    self.assertIn("{id, well_specified, split, roles, unmatched}", rows[0])
+    self.assertIn("{id, well_specified, split, sliver, roles, unmatched}", rows[0])
     self.assertIn("no_relay_roles", rows[0])
 
   def test_Relay_NonUtf8Matrix_IsCorruptExitThree(self) -> None:

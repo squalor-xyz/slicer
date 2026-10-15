@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-282 items · — 9 · done 269 · retired 4
+282 items · — 8 · done 269 · retired 4 · review 1
 
 ## v1.12
 
@@ -47,7 +47,7 @@
 | 5 | [s272](slices/s272.md) | agents.md --json claim | S | 1 | docs | orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not · discovered from s269 | done |
 | 6 | [s273](slices/s273.md) | Sliver parent field | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
 | 7 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
-| 8 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
+| 8 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | review |
 | 9 | [s276](slices/s276.md) | TUI detail pane shows every item and slice field | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
 | 10 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
 | 11 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |

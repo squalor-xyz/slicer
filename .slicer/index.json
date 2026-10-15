@@ -9032,14 +9032,26 @@
       "id": "s275",
       "title": "Guide the orchestrator to sliver a slice in the relay",
       "short_title": "Relay slivers",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s273",
         "s274",
         "s271"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c9c7043f-3b0a-47f1-969f-e4df1b042a9d",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: slivers guidance in ai relay, RoleWhen.sliver, r8 sliver row + u6-u8 rules, relay-roles --sliver, full suite 2143 OK",
+          "created_at": "2026-10-15T17:11:04Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -9059,7 +9071,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

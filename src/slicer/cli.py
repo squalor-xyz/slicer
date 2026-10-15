@@ -479,6 +479,7 @@ def cmd_relay_roles_recommend(args: argparse.Namespace) -> int:
     "id": item.id,
     "well_specified": well_specified,
     "split": split,
+    "sliver": role_matrix.is_sliver(item),
     "roles": [{"role": role, "row": row.to_dict() if row else None} for role, row in picks],
     "unmatched": [role for role, row in picks if row is None],
   }
@@ -512,6 +513,7 @@ def _row_fields(args: argparse.Namespace) -> dict[str, object]:
     "urgency": _csv(args.urgency),
     "well_specified": args.well_specified,
     "split": args.split,
+    "sliver": args.sliver,
     "agent": args.agent,
     "vendor": args.vendor,
     "model": args.model,
@@ -3782,6 +3784,7 @@ def build_parser() -> argparse.ArgumentParser:
     inner.add_argument("--urgency", help="slice urgency scores 1-3, comma-separated; empty for any")
     inner.add_argument("--well-specified", help="yes, no or any")
     inner.add_argument("--split", help="yes for a part of a split slice, no for a whole one, or any")
+    inner.add_argument("--sliver", help="yes for a sliver (an item with a parent), no for any other item, or any")
     inner.add_argument("--agent", help="the harness that runs the role, such as Claude Code")
     inner.add_argument("--vendor", help="the model vendor")
     inner.add_argument("--model", help="the model")

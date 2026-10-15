@@ -68,6 +68,8 @@ class RoleWhen:
   well_specified: bool | None = None
   # True for a part of a split slice, False for a whole one, None for either.
   split: bool | None = None
+  # True for a sliver (an item with a parent), False for any other item, None for either.
+  sliver: bool | None = None
 
   def to_dict(self) -> dict[str, Any]:
     return {
@@ -77,13 +79,15 @@ class RoleWhen:
       "urgency": list(self.urgency),
       "well_specified": self.well_specified,
       "split": self.split,
+      "sliver": self.sliver,
     }
 
   @staticmethod
   def from_dict(d: Mapping[str, Any]) -> "RoleWhen":
     flags = {}
-    for name in ("well_specified", "split"):
-      value = d[name]
+    for name in ("well_specified", "split", "sliver"):
+      # A matrix written before slivers existed has no `sliver`; it means either.
+      value = d.get(name) if name == "sliver" else d[name]
       if value is not None and not isinstance(value, bool):
         raise TypeError(f"{name} must be true, false or null")
       flags[name] = value
@@ -94,6 +98,7 @@ class RoleWhen:
       urgency=_ints("urgency", d["urgency"]),
       well_specified=flags["well_specified"],
       split=flags["split"],
+      sliver=flags["sliver"],
     )
 
   def matches(self, item: Item, well_specified: bool, split: bool) -> bool:
@@ -101,11 +106,14 @@ class RoleWhen:
 
     An empty list matches anything; a nonempty one must contain the slice's value, so
     a slice with no size or effort set matches only rows that do not name one.
-    `well_specified` and `split` are not slice fields: the caller judges them.
+    `well_specified` and `split` are not slice fields: the caller judges them. A sliver
+    is an item with a parent, so `sliver` is read from the slice itself.
     """
     if self.well_specified is not None and self.well_specified != well_specified:
       return False
     if self.split is not None and self.split != split:
+      return False
+    if self.sliver is not None and self.sliver != is_sliver(item):
       return False
     for allowed, value in (
       (self.size, item.size), (self.effort, item.effort),
@@ -122,6 +130,8 @@ class RoleWhen:
       parts.append("well specified" if self.well_specified else "not well specified")
     if self.split is not None:
       parts.append("split part" if self.split else "whole slice")
+    if self.sliver is not None:
+      parts.append("sliver" if self.sliver else "not a sliver")
     for label, values in (
       ("effort", self.effort), ("size", self.size),
       ("importance", self.importance), ("urgency", self.urgency),
@@ -129,6 +139,11 @@ class RoleWhen:
       if values:
         parts.append(f"{label} {_either([str(v) for v in values])}")
     return ", ".join(parts) or "every slice"
+
+
+def is_sliver(item: Item) -> bool:
+  """Whether the item was carved from a larger slice, which is what its `parent` records."""
+  return bool(item.parent)
 
 
 def _either(values: list[str]) -> str:
@@ -284,6 +299,9 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
     )
 
   rows = [
+    # Numbered last so r1-r3 keep their meaning, but listed first: the first matching row
+    # wins, so a sliver reaches this row before the general implementer rows.
+    row(8, "implementer", "haiku", "xhigh", when=RoleWhen(sliver=True), note="per sliver"),
     row(1, "implementer", "haiku", "xhigh",
         when=RoleWhen(size=["S", "M"], effort=[1], well_specified=True, split=False)),
     row(2, "implementer", "haiku", "xhigh",
@@ -304,7 +322,13 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
     "\"well specified\" means the slice names its files, failing tests, implementation "
     "steps and checks, and needs no open owner decision.",
     "Split a slice only into parts with disjoint files and their own tests; a slice too "
-    "big for one implementer is two slices.",
+    "big for one implementer is two slices or a slivered slice.",
+    "Sliver a slice only at effort 1, or at effort 2 when every sliver is effort 1; "
+    "never at effort 3.",
+    "Slivers with disjoint files and their own tests may run in parallel, at most 3 at "
+    "once; the rest run in order.",
+    "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's "
+    "check, moves to the next model up (haiku to sonnet high).",
   ]
   rules = [RoleRule(id=f"u{n}", text=text) for n, text in enumerate(texts, first_rule)]
   return RoleMatrix(
