@@ -1529,3 +1529,6 @@
 {"when": "2026-10-15T14:28:02Z", "item": "s274", "action": "note", "from": "", "to": "", "note": "Verified. Open slivers (not handed off, reviewing, done or r", "by": "Jon Robbins"}
 {"when": "2026-10-15T14:28:02Z", "item": "s274", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T14:30:35Z", "item": "s274", "action": "status", "from": "review", "to": "done", "note": "Landed on main: open slivers hold the parent in next and finish steps (slivers_open); gate PASS on second run, full suite 2103 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T12:35:33Z", "item": "s277", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T14:29:22Z", "item": "s277", "action": "note", "from": "", "to": "", "note": "Ready for review: the TUI queue shows the list claim cell, a", "by": "Jon Robbins"}
+{"when": "2026-10-15T14:29:25Z", "item": "s277", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

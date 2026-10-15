@@ -630,6 +630,25 @@ def displayed_status(config: Config, item: Item, siblings: list[dict[str, str]])
   return item.status
 
 
+def claim_cell(
+  config: Config, item: Item, siblings: list[dict[str, str]] | None = None,
+) -> str:
+  """The CLAIM cell: the owner when claimed, `*` when in progress without one,
+  `wt:NAME` for sibling work (`wt:NAME+N` for N more), otherwise `-`.
+
+  A finished item's local claim is hidden, but sibling work remains visible.
+  `list` and the TUI queue both print this cell, so their columns agree.
+  """
+  if item.status != config.done_status and item.claim_owner:
+    return item.claim_owner
+  if item.status in config.in_work():
+    return "*"
+  if siblings:
+    extra = f"+{len(siblings) - 1}" if len(siblings) > 1 else ""
+    return f"wt:{siblings[0]['worktree']}{extra}"
+  return "-"
+
+
 def in_work_elsewhere(root: Path, index: Index) -> dict[str, list[dict[str, str]]]:
   """Sibling work this checkout has not reached, ordered by worktree path.
 
