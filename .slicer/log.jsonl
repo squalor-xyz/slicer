@@ -1493,3 +1493,6 @@
 {"when": "2026-10-15T11:12:07Z", "item": "s283", "action": "note", "from": "", "to": "", "note": "Relay board on key b in the TUI (read-only; b, q or Esc clos", "by": "Jon Robbins"}
 {"when": "2026-10-15T11:12:07Z", "item": "s283", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T11:14:14Z", "item": "s283", "action": "status", "from": "review", "to": "done", "note": "Landed on main: TUI relay board (b) animates active relay runs from the relay-run ledger; gate PASS, full suite 2006 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:46:50Z", "item": "s284", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T11:12:21Z", "item": "s284", "action": "note", "from": "", "to": "", "note": "Verified and gated PASS. ai relay Order carries the relay-ru", "by": "Jon Robbins"}
+{"when": "2026-10-15T11:12:24Z", "item": "s284", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

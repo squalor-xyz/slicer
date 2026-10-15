@@ -620,6 +620,11 @@ def cmd_relay_run_end(args: argparse.Namespace) -> int:
   return OK
 
 
+def _count_of(n: int, word: str) -> str:
+  """`1 step`, `2 steps`, `0 steps`: the text list says what each number counts."""
+  return f"{n} {word}" if n == 1 else f"{n} {word}s"
+
+
 def cmd_relay_run_list(args: argparse.Namespace) -> int:
   runs = relayrun.list_runs(_run_root(args), active=args.active)
   lines = []
@@ -627,8 +632,9 @@ def cmd_relay_run_list(args: argparse.Namespace) -> int:
     counts = run.counts()
     lines.append(
       f"{run.id}  {run.state}{'  ' + run.outcome if run.outcome else ''}  "
-      f"{','.join(run.items)}  {run.worktree}  {counts['steps']} steps, "
-      f"{counts['running']} running, {counts['subagents']} subagents"
+      f"items {','.join(run.items)}  wt {run.worktree}  "
+      f"{_count_of(counts['steps'], 'step')}, {counts['running']} running, "
+      f"{_count_of(counts['subagents'], 'subagent')}"
     )
     lines.extend(_step_line(step) for step in run.steps)
   _emit_run(args, {"runs": [run.to_dict() for run in runs]}, "\n".join(lines) or "no relay runs")

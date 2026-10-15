@@ -825,7 +825,9 @@ class AiRelayTests(unittest.TestCase):
       )
       self.assertIn("slicer handoff ID --render --check", text)
       self.assertIn(ai.handoff_policy_text("implementation report").strip(), text)
-      self.assertNotIn("done", text)
+      # `--phase done` is a relay-run phase, not the finish command.
+      self.assertNotIn("slicer done", text)
+      self.assertNotIn("run done", text)
 
   def test_Relay_DoneProject_ClosesWithDone(self) -> None:
     close = 'slicer done ID --note "Describe the verified outcome" --render --check'
@@ -916,7 +918,9 @@ class AiRelayTests(unittest.TestCase):
         code, text, err = repo.run("ai", "relay")
       self.assertEqual((code, err), (0, ""))
       self.assertIn("slicer handoff ID --render --check", text)
-      self.assertNotIn("done", text)
+      # `--phase done` is a relay-run phase, not the finish command.
+      self.assertNotIn("slicer done", text)
+      self.assertNotIn("run done", text)
       after = {p.relative_to(repo.root): p.read_bytes()
                for p in repo.root.rglob("*") if p.is_file()}
       self.assertEqual(after, before)
@@ -1053,7 +1057,9 @@ class AiRelayTests(unittest.TestCase):
     text = ai.relay_text("handoff", "implementation report")
     self.assertIn("## Setup", text)
     self.assertIn("slicer handoff ID --render --check", text)
-    self.assertNotIn("done", text.casefold())
+    # `--phase done` is a relay-run phase, not the finish command.
+    self.assertNotIn("slicer done", text.casefold())
+    self.assertNotIn("run done", text.casefold())
 
   def test_RelayText_EveryBrief_NamesTempDirPerRole(self) -> None:
     text = ai.relay_text()
@@ -1117,6 +1123,49 @@ class AiRelayTests(unittest.TestCase):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, order)
         self.assertEqual(flat.count(phrase), 1)
+
+  def test_RelayText_NamesRelayRunBeginStepEnd(self) -> None:
+    repo = support.TempRepo()
+    self.addCleanup(repo.close)
+    self.assertEqual(repo.run("init")[0], 0)
+    self.assertEqual(repo.run("relay-roles", "init", "--render")[0], 0)
+    code, project, err = repo.run("ai", "relay")
+    self.assertEqual((code, err), (0, ""))
+    for label, text in (("generic", ai.relay_text()), ("project", project)):
+      flat = " ".join(text.split())
+      for phrase in (
+        "`slicer relay-run begin ID --worktree PATH`, where PATH is the slice worktree.",
+        "`slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR "
+        "--model MODEL --reasoning REASONING --phase start --task TASK`",
+        "`slicer relay-run step RUN --step STEP --phase done`",
+        "`slicer relay-run end RUN --outcome pass`",
+      ):
+        with self.subTest(label=label, phrase=phrase):
+          self.assertIn(phrase, flat)
+
+  def test_RelayText_RelayRunCommands_PassUnknownFlagCheck(self) -> None:
+    text = ai.relay_text()
+    commands = [
+      span for span in cli._BACKTICK_SPAN.findall(text) if span.startswith("slicer relay-run ")
+    ]
+    self.assertLessEqual({"begin", "step", "end"}, {span.split()[2] for span in commands})
+    parser = cli._cached_parser()
+    for command in commands:
+      with self.subTest(command=command):
+        self.assertEqual(cli._unknown_flags(parser, shlex.split(command)[1:]), [])
+
+  def test_RelayText_RelayRunSentences_EachAppearsOnce(self) -> None:
+    flat = " ".join(ai.relay_text().split())
+    for sentence in (
+      "`slicer relay-run step RUN --step STEP --phase start` re-records a long-running step "
+      "as a heartbeat, so its run does not go stale after 30 minutes.",
+      "After the finish step, or when the relay stops, end the run with "
+      "`slicer relay-run end RUN --outcome pass` (or `fail` or `stopped`), after marking "
+      "each step done or failed.",
+      "Recording is advisory: a failed `relay-run` call never stops the relay.",
+    ):
+      with self.subTest(sentence=sentence):
+        self.assertEqual(flat.count(sentence), 1)
 
 
 class AiRelayRolesTests(unittest.TestCase):
