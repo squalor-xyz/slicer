@@ -150,6 +150,7 @@ def init_project(
   feedback.ensure_gitignore(root)
   feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
   feedback.ensure_gitignore(root, relayrun.LEDGER_NAME)
+  feedback.ensure_gitignore(root, store.LOCK_NAME)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   return base
 

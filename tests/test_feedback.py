@@ -190,16 +190,16 @@ class FeedbackGitignoreTests(FeedbackBase):
 
   def test_Init_WritesTheGitignoreAndAppendIsIdempotent(self) -> None:
     repo = self.repo()
-    self.assertEqual(self.lines(repo), ["feedback.md", "feedback-reported.json", "relay-runs.jsonl"])
+    self.assertEqual(self.lines(repo), ["feedback.md", "feedback-reported.json", "relay-runs.jsonl", "lock"])
     self.add(repo, "--kind", "bug", "--text", "x")
     self.add(repo, "--kind", "bug", "--text", "y")
-    self.assertEqual(self.lines(repo), ["feedback.md", "feedback-reported.json", "relay-runs.jsonl"])
+    self.assertEqual(self.lines(repo), ["feedback.md", "feedback-reported.json", "relay-runs.jsonl", "lock"])
 
   def test_FirstAppendAddsTheLineToAnExistingGitignore(self) -> None:
     repo = self.repo()
     repo.write(".slicer/.gitignore", "scratch")
     self.add(repo, "--kind", "bug", "--text", "x")
-    self.assertEqual(self.lines(repo), ["scratch", "feedback.md"])
+    self.assertEqual(self.lines(repo), ["scratch", "lock", "feedback.md"])
 
   def test_Init_AddsTheLineAndNeverDeletesTheLog(self) -> None:
     repo = self.repo()
@@ -208,7 +208,7 @@ class FeedbackGitignoreTests(FeedbackBase):
     repo.write(".slicer/.gitignore", "other\n")
     self.assertEqual(repo.run("init", "--force")[0], 0)
     self.assertEqual(
-      self.lines(repo), ["other", "feedback.md", "feedback-reported.json", "relay-runs.jsonl"],
+      self.lines(repo), ["other", "feedback.md", "feedback-reported.json", "relay-runs.jsonl", "lock"],
     )
     self.assertEqual(repo.read(LOG), before)
 

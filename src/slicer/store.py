@@ -199,6 +199,16 @@ def project_lock(start: Path | None = None, *, timeout: float | None = None) -> 
           announced = True
         time.sleep(0.05)
     try:
+      # `feedback` imports this module, hence the local import.
+      from slicer import feedback
+
+      # Every writer lists the lock, so a project made before `init` listed the lock gets the
+      # line on its next write. The line is advisory: an unreadable or unwritable
+      # .slicer/.gitignore must not block the write, so the error is ignored here.
+      try:
+        feedback.ensure_gitignore(root, LOCK_NAME)
+      except (OSError, UnicodeDecodeError):
+        pass
       yield
     finally:
       fcntl.flock(fd, fcntl.LOCK_UN)

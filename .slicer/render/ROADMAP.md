@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-276 items · — 15 · done 257 · retired 4
+276 items · — 14 · done 257 · retired 4 · review 1
 
 ## v1.11
 
@@ -51,7 +51,7 @@
 | 16 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 | 17 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 | 18 | [s286](slices/s286.md) | list marks blocked rows with ! | S | 1 | slicer | owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why | done |
-| 19 | [s287](slices/s287.md) | Gitignore the project lock file | S | 1 | slicer | s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write | — |
+| 19 | [s287](slices/s287.md) | Gitignore the project lock file | S | 1 | slicer | s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write | review |
 | 20 | [s288](slices/s288.md) | affected.py finds a map for the same commit in another worktree | S | 1 | slicer | v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it | — |
 | 21 | [s289](slices/s289.md) | An outline's depends accepts an existing item ID | S | 1 | slicer | v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with "depends on 's270', which is not in the outline or the index", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID | — |
 
