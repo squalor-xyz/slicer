@@ -9050,6 +9050,39 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "bf338227-0497-4aa3-adeb-22e919d4c68e",
+          "kind": "",
+          "text": "**2026-10-15** — Later (orchestrator report): after landing, offer the owner relay-roles add --role implementer --sliver yes, move, rule-add (the three new rules) and rule-edit (the split rule) to bring this repo's own matrix up to the skeleton.",
+          "created_at": "2026-10-15T17:22:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "927f3dae-d538-4b59-a034-dc921c121fb6",
+          "kind": "",
+          "text": "**2026-10-15** — Later (orchestrator report): CHANGELOG [Unreleased] has the s273 'Slivers: an optional parent field' bullet twice (already on main); drop one.",
+          "created_at": "2026-10-15T17:22:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "0664d6fe-5a53-4c72-975c-a98560967e21",
+          "kind": "",
+          "text": "**2026-10-15** — Later (orchestrator report): relay-roles recommend text output omits sliver (the JSON has it); add a text line if the owner wants it.",
+          "created_at": "2026-10-15T17:22:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
