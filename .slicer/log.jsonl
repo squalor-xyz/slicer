@@ -1619,3 +1619,4 @@
 {"when": "2026-10-15T19:28:05Z", "item": "s301", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T19:43:13Z", "item": "s301", "action": "note", "from": "", "to": "", "note": "add --id refuses an id a sibling worktree filed (id_taken_el", "by": "Jon Robbins"}
 {"when": "2026-10-15T19:43:46Z", "item": "s301", "action": "note", "from": "", "to": "", "note": "Later (relay review, 2026-10-15): (1) perf: an explicit add ", "by": "Jon Robbins"}
+{"when": "2026-10-15T20:30:16Z", "item": "s301", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge f32343d): add --id refuses with id_taken_elsewhere when a sibling worktree filed the id on its own; check and add share verify.inherited_ids. import/promote unchanged (outlines carry no id). Relay pass (Haiku impl, Opus review and gate). Full suite on main: 2161 OK, 1 skipped.", "by": "Jon Robbins"}

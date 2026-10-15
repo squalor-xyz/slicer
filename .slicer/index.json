@@ -10109,7 +10109,7 @@
       "id": "s301",
       "title": "add --id refuses an id a sibling worktree already filed",
       "short_title": "add --id refuses an id a sibling worktree already filed",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
