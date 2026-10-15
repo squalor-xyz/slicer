@@ -29,11 +29,30 @@
 
 288 items · — 13 · done 271 · retired 4
 
+## v1.13
+
+| # | Slice | Title | Size | Effort | Trees | Findings | Status |
+|---|---|---|---|---|---|---|---|
+| 1 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 2 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 3 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 4 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
+| 5 | [s291](slices/s291.md) | TUI queue columns are configurable | M | 2 | slicer | owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane) | — |
+| 6 | [s295](slices/s295.md) | Tests pin the render-stale flag after a failed wizard render and after a move | S | 1 | slicer | s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279 | — |
+| 7 | [s297](slices/s297.md) | Relay board colors each pipeline role by its state | S | 1 | slicer | s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294 | — |
+
+---
+
 ## v1.12
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s291](slices/s291.md) | TUI queue columns are configurable | M | 2 | slicer | owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane) | — |
+| 8 | [s293](slices/s293.md) | Relay briefs label each agent and set its model and effort | S | 1 | slicer | owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial | — |
+| 9 | [s296](slices/s296.md) | Nested relay contract | M | 2 | slicer | owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03 | — |
+| 10 | [s298](slices/s298.md) | Ledger outlives worktrees | M | 2 | slicer | nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove | — |
+| 11 | [s299](slices/s299.md) | Step task kept | S | 1 | slicer | nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task | — |
+| 12 | [s300](slices/s300.md) | Worktree gitignore | S | 2 | slicer | nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit | — |
+| 13 | [s301](slices/s301.md) | add --id refuses an id a sibling worktree already filed | S | 1 | slicer | nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294 | — |
 
 ---
 
@@ -41,38 +60,26 @@
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 2 | [s269](slices/s269.md) | Why slicer doc | S | 1 | docs | owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README | done |
-| 3 | [s270](slices/s270.md) | Affected by file reads | M | 2 | tests | owner and orchestrator, 2026-10-14: affected.py --run prints nothing to run for a docs-only diff although tests read README and docs; AGENTS.md has no docs-only rule | done |
-| 4 | [s271](slices/s271.md) | Relay lessons in ai text | S | 1 | slicer | owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense | done |
-| 5 | [s272](slices/s272.md) | agents.md --json claim | S | 1 | docs | orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not · discovered from s269 | done |
-| 6 | [s273](slices/s273.md) | Sliver parent field | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
-| 7 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
-| 8 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
-| 9 | [s276](slices/s276.md) | TUI detail pane shows every item and slice field | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
-| 10 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
-| 11 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 12 | [s279](slices/s279.md) | TUI overview line shows progress and check drift | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
-| 13 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 14 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 15 | [s282](slices/s282.md) | Record relay runs in a local ledger with slicer relay-run | L | 3 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
-| 16 | [s283](slices/s283.md) | TUI relay board animates running relays | M | 2 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
-| 17 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
-| 18 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
-| 19 | [s286](slices/s286.md) | list marks blocked rows with ! | S | 1 | slicer | owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why | done |
-| 20 | [s287](slices/s287.md) | Gitignore the project lock file | S | 1 | slicer | s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write | done |
-| 21 | [s288](slices/s288.md) | affected.py finds a map for the same commit in another worktree | S | 1 | slicer | v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it | done |
-| 22 | [s289](slices/s289.md) | An outline's depends accepts an existing item ID | S | 1 | slicer | v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with "depends on 's270', which is not in the outline or the index", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID | done |
-| 23 | [s290](slices/s290.md) | Landing a schema bump runs the merge driver from the new code | S | 1 | docs | v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code | done |
-| 24 | [s292](slices/s292.md) | affected.py skips selected test ids that no longer load | S | 1 | slicer | s277 relay 2026-10-15: `affected.py --run` with a borrowed map selected `test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn`, which the slice had renamed, and the run reported an AttributeError instead of running the renamed test | done |
-| 25 | [s293](slices/s293.md) | Relay briefs label each agent and set its model and effort | S | 1 | slicer | owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial | — |
-| 26 | [s294](slices/s294.md) | Relay board shows nested runs as a tree with rounds, freshness and recent results | M | 2 | slicer | nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step; owner widened it to a board redesign the same day · discovered from s283 | done |
-| 27 | [s295](slices/s295.md) | Tests pin the render-stale flag after a failed wizard render and after a move | S | 1 | slicer | s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279 | — |
-| 28 | [s296](slices/s296.md) | Nested relay contract | M | 2 | slicer | owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03 | — |
-| 29 | [s298](slices/s298.md) | Ledger outlives worktrees | M | 2 | slicer | nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove | — |
-| 30 | [s299](slices/s299.md) | Step task kept | S | 1 | slicer | nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task | — |
-| 31 | [s300](slices/s300.md) | Worktree gitignore | S | 2 | slicer | nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit | — |
-| 32 | [s297](slices/s297.md) | Relay board colors each pipeline role by its state | S | 1 | slicer | s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294 | — |
-| 33 | [s301](slices/s301.md) | add --id refuses an id a sibling worktree already filed | S | 1 | slicer | nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294 | — |
+| 14 | [s269](slices/s269.md) | Why slicer doc | S | 1 | docs | owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README | done |
+| 15 | [s270](slices/s270.md) | Affected by file reads | M | 2 | tests | owner and orchestrator, 2026-10-14: affected.py --run prints nothing to run for a docs-only diff although tests read README and docs; AGENTS.md has no docs-only rule | done |
+| 16 | [s271](slices/s271.md) | Relay lessons in ai text | S | 1 | slicer | owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense | done |
+| 17 | [s272](slices/s272.md) | agents.md --json claim | S | 1 | docs | orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not · discovered from s269 | done |
+| 18 | [s273](slices/s273.md) | Sliver parent field | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
+| 19 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
+| 20 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | done |
+| 21 | [s276](slices/s276.md) | TUI detail pane shows every item and slice field | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
+| 22 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
+| 23 | [s279](slices/s279.md) | TUI overview line shows progress and check drift | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
+| 24 | [s282](slices/s282.md) | Record relay runs in a local ledger with slicer relay-run | L | 3 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
+| 25 | [s283](slices/s283.md) | TUI relay board animates running relays | M | 2 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
+| 26 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
+| 27 | [s286](slices/s286.md) | list marks blocked rows with ! | S | 1 | slicer | owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why | done |
+| 28 | [s287](slices/s287.md) | Gitignore the project lock file | S | 1 | slicer | s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write | done |
+| 29 | [s288](slices/s288.md) | affected.py finds a map for the same commit in another worktree | S | 1 | slicer | v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it | done |
+| 30 | [s289](slices/s289.md) | An outline's depends accepts an existing item ID | S | 1 | slicer | v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with "depends on 's270', which is not in the outline or the index", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID | done |
+| 31 | [s290](slices/s290.md) | Landing a schema bump runs the merge driver from the new code | S | 1 | docs | v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code | done |
+| 32 | [s292](slices/s292.md) | affected.py skips selected test ids that no longer load | S | 1 | slicer | s277 relay 2026-10-15: `affected.py --run` with a borrowed map selected `test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn`, which the slice had renamed, and the run reported an AttributeError instead of running the renamed test | done |
+| 33 | [s294](slices/s294.md) | Relay board shows nested runs as a tree with rounds, freshness and recent results | M | 2 | slicer | nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step; owner widened it to a board redesign the same day · discovered from s283 | done |
 
 ---
 

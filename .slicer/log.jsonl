@@ -1586,3 +1586,16 @@
 {"when": "2026-10-15T18:08:15Z", "item": "relay-roles.u7", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}
 {"when": "2026-10-15T18:08:15Z", "item": "relay-roles.u8", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}
 {"when": "2026-10-15T18:08:15Z", "item": "relay-roles.u9", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}
+{"when": "2026-10-15T18:51:08Z", "item": "s293", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.12"}
+{"when": "2026-10-15T18:51:08Z", "item": "s296", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.12"}
+{"when": "2026-10-15T18:51:08Z", "item": "s298", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.12"}
+{"when": "2026-10-15T18:51:08Z", "item": "s299", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.12"}
+{"when": "2026-10-15T18:51:08Z", "item": "s300", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.12"}
+{"when": "2026-10-15T18:51:08Z", "item": "s301", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.12"}
+{"when": "2026-10-15T18:51:08Z", "item": "s278", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
+{"when": "2026-10-15T18:51:08Z", "item": "s280", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
+{"when": "2026-10-15T18:51:08Z", "item": "s281", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
+{"when": "2026-10-15T18:51:08Z", "item": "s285", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
+{"when": "2026-10-15T18:51:08Z", "item": "s291", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.13"}
+{"when": "2026-10-15T18:51:08Z", "item": "s295", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
+{"when": "2026-10-15T18:51:08Z", "item": "s297", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
