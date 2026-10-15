@@ -9818,7 +9818,7 @@
       "id": "s293",
       "title": "Relay briefs label each agent and set its model and effort",
       "short_title": "Relay briefs label each agent and set its model and effort",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

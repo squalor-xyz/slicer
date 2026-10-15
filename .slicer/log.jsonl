@@ -1610,3 +1610,4 @@
 {"when": "2026-10-15T19:18:34Z", "item": "s293", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T19:21:36Z", "item": "s293", "action": "note", "from": "", "to": "", "note": "Verified: Every brief in the relay text now tells orchestrat", "by": "Jon Robbins"}
 {"when": "2026-10-15T19:22:06Z", "item": "s293", "action": "note", "from": "", "to": "", "note": "Later (gate, 2026-10-15): 'role row' in the ai.py Every brie", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:34:49Z", "item": "s293", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge 36a8db3): ai.py Every brief labels each agent 'ID role' and sets model and effort explicitly; docs/tui.md points at /tasks and subagentStatusLine. Relay pass (Haiku impl, Opus review and gate). Full suite on main: 2157 OK, 1 skipped; check passed.", "by": "Jon Robbins"}
