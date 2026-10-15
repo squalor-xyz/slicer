@@ -1,0 +1,41 @@
+{
+  "id": "s290",
+  "title": "Landing a schema bump runs the merge driver from the new code",
+  "lead": [
+    "`docs/landing.md` tells the person landing a slice that bumps the index or relay-roles schema to run the merge with the branch's slicer on PATH, and gives the one-line shim, so the merge driver can read both sides."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the merge driver itself, and user projects, whose installed slicer is upgraded as a whole rather than per branch.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "In this repo `slicer` on PATH is an editable install of the main checkout (AGENTS.md, Install). Git runs `slicer merge-index %O %A %B` from PATH during `git merge`, before main's `src/` has the branch's code. `mergeindex._load` refuses a side whose schema is newer than the code (`reject_future_schema`), so a schema-bump branch can never merge cleanly with the default driver. s273 hit this on 2026-10-15; s210 (schema 4 to 5) may have too."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/landing.md`: a short \"Schema bumps\" paragraph: how to tell (the slice's CHANGELOG or `SCHEMA_VERSION` in its diff), and the merge command with a PATH shim, for example `PATH=<dir with a slicer script running PYTHONPATH=.worktrees/<id>/src python3 -m slicer> git merge --no-ff ...`.\n- `tests/test_docs_coverage.py` only if landing.md has a pinned shape."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_LandingDoc_NamesSchemaBumpMerge`: docs/landing.md mentions the schema-bump merge and the PATH shim."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test and watch it go red.\n2. Add the paragraph.\n3. Mutation-check the test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `tests/affected.py --run`, `slicer check` and `git diff --check` pass (docs-only rule; the new test is under tests/, so one full discover)."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s290`, branch `feature/s290-schema-bump-landing`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}

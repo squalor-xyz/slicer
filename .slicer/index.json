@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 290,
+  "next_id": 291,
   "preamble": "",
   "passes": [
     {
@@ -9537,6 +9537,36 @@
         ],
         "trees_literal": false,
         "findings": "v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with \"depends on 's270', which is not in the outline or the index\", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s290",
+      "title": "Landing a schema bump runs the merge driver from the new code",
+      "short_title": "Landing a schema bump runs the merge driver from the new code",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code",
         "discovered_from": "",
         "parent": "",
         "cites": [],

@@ -1510,3 +1510,4 @@
 {"when": "2026-10-15T12:44:26Z", "item": "s273", "action": "note", "from": "", "to": "", "note": "Ready for review, gate PASS. Item.parent added at index sche", "by": "Jon Robbins"}
 {"when": "2026-10-15T12:44:26Z", "item": "s273", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T12:44:58Z", "item": "s273", "action": "status", "from": "review", "to": "done", "note": "Landed on main: Item.parent (schema 9) links slivers to their parent slice, one level; gate PASS, full suite 2037 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T12:45:16Z", "item": "s290", "action": "add", "from": "", "to": "open", "note": "Landing a schema bump runs the merge driver from the new code"}
