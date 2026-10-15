@@ -9638,7 +9638,7 @@
       "id": "s292",
       "title": "affected.py skips selected test ids that no longer load",
       "short_title": "affected.py skips selected test ids that no longer load",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
