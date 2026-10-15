@@ -22,6 +22,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
   dependency with `!` after its row number, as the TUI queue does, so the readiness
   order explains itself. Column widths and JSON are unchanged.
 
+- `slicer ai relay` carries the relay practices from dogfooding: every brief names its role's own temp directory, reviewer, architect and gate briefs forbid git writes, the orchestrator reads the implementer's diff before review, one full suite run per change (the implementer's for a whole slice, the orchestrator's on the combined diff for a split), parallel slices run only with disjoint files and land one at a time, and the orchestrator compacts or starts a fresh session after each slice lands or hands off. `slicer ai instructions`, in full and with `--rest`, tells agents to compact or start a fresh session after a slice's finish step, before claiming the next slice. Text only; no command, flag or JSON key changes.
+
 ## [1.10.0] - 2026-10-14
 
 ### Added

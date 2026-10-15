@@ -477,7 +477,7 @@ class AiInstructionsTests(unittest.TestCase):
       f"{ai.TRACKING_RULE}\n\n"
       + ai.INTRO + ai.PLAN + ai.TRACKING + "\n"
       + "## Implement one slice\n\n" + ai.LOOP + ai.SPEC_GAP + "\n" + ai.IMPLEMENT_MORE
-      + ai.HANDOFF_SECTION + ai.STATE + ai.FEEDBACK + ai.EXITS
+      + ai.HANDOFF_SECTION + ai.BETWEEN_SLICES + ai.STATE + ai.FEEDBACK + ai.EXITS
       + "\n" + ai.DONE_CLOSER
     )
     self.assertEqual(ai.INSTRUCTIONS, expected)
@@ -592,6 +592,33 @@ class AiInstructionsTests(unittest.TestCase):
     convert = agents.split("### Convert an agreed roadmap", 1)[1].split("```", 2)[1]
     for field in ("importance", "urgency", "effort"):
       self.assertIn(field, convert)
+
+  def test_Instructions_Compaction_AfterEachSlice(self) -> None:
+    sentence = (
+      "After the finish step and before claiming the next slice, compact or start a fresh "
+      "session; state lives in slicer."
+    )
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertIn(sentence, ai.instructions_text(finish))
+        self.assertEqual(ai.instructions_text(finish).count(sentence), 1)
+    self.assertIn(sentence, ai.INSTRUCTIONS)
+    self.assertEqual(ai.INSTRUCTIONS.count(sentence), 1)
+    section = ai.INSTRUCTIONS.split("## Between slices", 1)[1].split("## ", 1)[0]
+    self.assertIn(sentence, section)
+    self.assertIn(sentence, ai.rest_text())
+    self.assertEqual(ai.rest_text().count(sentence), 1)
+    rest_section = ai.rest_text().split("## Between slices", 1)[1].split("## ", 1)[0]
+    self.assertIn(sentence, rest_section)
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, _err = repo.run("ai", "instructions")
+      self.assertEqual(code, 0)
+      self.assertIn(sentence, text)
+      self.assertEqual(text.count(sentence), 1)
+      code, text, _err = repo.run("ai", "instructions", "--rest")
+      self.assertEqual(code, 0)
+      self.assertIn(sentence, text)
+      self.assertEqual(text.count(sentence), 1)
 
 
 INSTALL_PATHS = (
@@ -1017,8 +1044,7 @@ class AiRelayTests(unittest.TestCase):
     text = ai.relay_text()
     brief = " ".join(text.split("## Every brief", 1)[1].split(ai.TRACKING_RULE, 1)[0].split())
     for phrase in (
-      "A part brief names the part's own files, the files it must not touch, "
-      "and its own temp directory",
+      "A part brief names the part's own files and the files it must not touch.",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, brief)
@@ -1028,6 +1054,69 @@ class AiRelayTests(unittest.TestCase):
     self.assertIn("## Setup", text)
     self.assertIn("slicer handoff ID --render --check", text)
     self.assertNotIn("done", text.casefold())
+
+  def test_RelayText_EveryBrief_NamesTempDirPerRole(self) -> None:
+    text = ai.relay_text()
+    brief = " ".join(text.split("## Every brief", 1)[1].split(ai.TRACKING_RULE, 1)[0].split())
+    sentence = "Every brief names the role's own temp directory, and no two agents share one."
+    self.assertIn(sentence, brief)
+    self.assertEqual(" ".join(text.split()).count(sentence), 1)
+
+  def test_RelayText_Reviewers_MakeNoGitWrites(self) -> None:
+    text = ai.relay_text()
+    brief = " ".join(text.split("## Every brief", 1)[1].split(ai.TRACKING_RULE, 1)[0].split())
+    sentence = (
+      "Reviewer, architect and gate briefs forbid git writes; a needed write stops and "
+      "goes to the owner."
+    )
+    self.assertIn(sentence, brief)
+    self.assertEqual(" ".join(text.split()).count(sentence), 1)
+
+  def test_RelayText_Orchestrator_ReadsDiffBeforeReview(self) -> None:
+    text = ai.relay_text()
+    roles_section = " ".join(text.split("## Roles", 1)[1].split("## Setup", 1)[0].split())
+    phrase = "reads the implementer's diff before review"
+    self.assertIn(phrase, roles_section)
+    self.assertEqual(" ".join(text.split()).count(phrase), 1)
+
+  def test_RelayText_ParallelSlices_LandOneAtATime(self) -> None:
+    text = ai.relay_text()
+    order = " ".join(text.split("## Order", 1)[1].split("## Gate", 1)[0].split())
+    flat = " ".join(text.split())
+    for phrase in (
+      "Run slices in parallel only when their files are disjoint.",
+      "Review and land them one at a time",
+      "rerun the suite on the slice branch merged with the new main when main moved",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+        self.assertEqual(flat.count(phrase), 1)
+
+  def test_RelayText_FullSuite_RunsOncePerChange(self) -> None:
+    text = ai.relay_text()
+    order = " ".join(text.split("## Order", 1)[1].split("## Gate", 1)[0].split())
+    flat = " ".join(text.split())
+    for phrase in (
+      "A whole-slice implementer runs the full suite once; in a split, parts run only "
+      "their own tests and the orchestrator's run on the combined diff is the one full run.",
+      "The orchestrator reruns the suite only if the diff changed after that run or main moved.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+        self.assertEqual(flat.count(phrase), 1)
+
+  def test_RelayText_Compaction_AtSliceBoundaries(self) -> None:
+    text = ai.relay_text()
+    order = " ".join(text.split("## Order", 1)[1].split("## Gate", 1)[0].split())
+    flat = " ".join(text.split())
+    for phrase in (
+      "After a slice lands or hands off, and before briefing the next, compact the "
+      "orchestrator session or start a fresh one.",
+      "Re-read state with `slicer show ID --json --lean` rather than relying on memory.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+        self.assertEqual(flat.count(phrase), 1)
 
 
 class AiRelayRolesTests(unittest.TestCase):

@@ -8593,10 +8593,22 @@
       "id": "s271",
       "title": "Add the process lessons from dogfooding to slicer ai relay and ai instructions",
       "short_title": "Relay lessons in ai text",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "27ebf3fb-bceb-449f-a4d0-bd6b4b87cd3e",
+          "kind": "",
+          "text": "**2026-10-15** — Verified outcome for s271. The slice relay and the instructions carry the seven dogfooding rules, all in src/slicer/ai.py, pinned by tests/test_ai.py:\n(1) Every brief names the role's own temp directory, and no two agents share one. Lives in the Every brief section of RELAY_ORDER.\n(2) Reviewer, architect and gate briefs forbid git writes; a needed write stops and goes to the owner. Every brief section.\n(3) The orchestrator reads the implementer's diff before review, and reruns the tests only as Order says. Roles section (RELAY_HEAD).\n(4) Suite: a whole-slice implementer runs the full suite once; in a split, parts run only their own tests and the orchestrator's run on the combined diff is the one full run; the orchestrator reruns the suite only if the diff changed after that run or main moved. Order section. The existing split sentence (\"The orchestrator runs the full suite on the combined diff\") is unchanged.\n(5) Parallel slices run only with disjoint files, are reviewed and landed one at a time, and rerun the suite on the slice branch merged with the new main when main moved. Order section.\n(6) Compaction in the relay: after a slice lands or hands off, and before briefing the next, compact the orchestrator session or start a fresh one; re-read state with slicer show ID --json --lean. Order section.\n(7) INSTRUCTIONS: after the finish step and before claiming the next slice, compact or start a fresh session; state lives in slicer. It is in a new \"## Between slices\" section (BETWEEN_SLICES) after the hand-off section, in both the full text and --rest. It is not in \"## Implement one slice\" because that section was already 348 words against the test_Instructions_ImplementSection budget of under 350.\nAlso: docs/agents.md is unchanged (it quotes only the unchanged split sentence); CHANGELOG [Unreleased] Changed has one bullet.\nCounts: full suite 1943 tests OK, 1 skipped (SLICER_LEGACY_TREE unset); test_ai 100 OK; slicer check passed (274 items); git diff --check clean. Mutation rows for the new tests were red for the stated reasons: 14 mutations and 2 duplicate-sentence count checks.",
+          "created_at": "2026-10-15T04:44:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -8615,7 +8627,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

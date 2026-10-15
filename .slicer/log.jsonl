@@ -1478,3 +1478,6 @@
 {"when": "2026-10-15T04:42:53Z", "item": "s282", "action": "note", "from": "", "to": "", "note": "Verified. Owner decisions: ledger .slicer/relay-runs.jsonl (", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:42:53Z", "item": "s282", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:43:09Z", "item": "s282", "action": "status", "from": "review", "to": "done", "note": "Landed on main: relay-run ledger (begin/step/end/list), gitignored and never rendered; gate PASS, full suite 1968 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:13:33Z", "item": "s271", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:44:46Z", "item": "s271", "action": "note", "from": "", "to": "", "note": "Verified outcome for s271. The slice relay and the instructi", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:44:48Z", "item": "s271", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
