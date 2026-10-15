@@ -1,0 +1,41 @@
+{
+  "id": "s272",
+  "title": "Correct the --json coverage claim in docs/agents.md",
+  "lead": [
+    "`docs/agents.md` says \"Every subcommand except the interactive `tui`/`ui` accepts `--json`\". The git merge drivers `merge-index` and `merge-relay-roles` do not accept it either (`slicer merge-index --help` lists no `--json`). This slice makes the sentence name them."
+  ],
+  "depends_note": null,
+  "findings_note": "orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not",
+  "size": "S",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "Not in this slice: adding --json to the merge drivers or to tui/ui, and any other docs/agents.md change.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Found by the orchestrator on 2026-10-14 while checking s269's claims. An agent that trusts the sentence and passes `--json` to a merge driver gets a usage error. Git invokes the drivers, so the fix is the doc, not the drivers."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/agents.md` (the \"Everything takes `--json`\" section).\n- `tests/test_docs_coverage.py`.\n- `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AgentsDoc_JsonExceptions_MatchParser`: the commands the parser builds without a `--json` option equal the exceptions the sentence names."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test and watch it go red.\n2. Reword the sentence to name `tui`, `ui` and the git merge drivers `merge-index` and `merge-relay-roles`.\n3. Add a CHANGELOG `[Unreleased]` entry under Fixed.\n4. Mutation-check the test by adding `--json` to one merge driver's parser in a scratch copy."
+    },
+    {
+      "heading": "Check",
+      "body": "- `tests/test_docs_coverage.py` passes, and the full suite passes on Python 3.11+.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s272`, branch `feature/s272-json-claim`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

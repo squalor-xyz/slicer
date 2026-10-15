@@ -1434,3 +1434,10 @@
 {"when": "2026-10-14T21:09:55Z", "item": "s269", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-14T21:10:06Z", "item": "s269", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-14T21:10:11Z", "item": "s269", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: docs/why-slicer.md pairs eight common workflow problems with the slicer feature that fixes each, plus when slicer is not for you; every claim checked against the code, and linked from the README intro and Documentation list. Full suite 1921 OK (skipped 1) before md-only review edits; docs tests re-run after and on main; gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-15T02:06:08Z", "item": "s270", "action": "add", "from": "", "to": "open", "note": "Select tests by the repo files they read in tests/affected.py"}
+{"when": "2026-10-15T02:06:08Z", "item": "s271", "action": "add", "from": "", "to": "open", "note": "Add the process lessons from dogfooding to slicer ai relay and ai instructions"}
+{"when": "2026-10-15T02:06:08Z", "item": "s272", "action": "add", "from": "", "to": "open", "note": "Correct the --json coverage claim in docs/agents.md"}
+{"when": "2026-10-15T02:06:14Z", "item": "s270", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T02:06:14Z", "item": "s271", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T02:06:14Z", "item": "s272", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T02:06:15Z", "item": "relay-roles.u6", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}

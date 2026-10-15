@@ -152,8 +152,12 @@
     {
       "id": "u5",
       "text": "Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices."
+    },
+    {
+      "id": "u6",
+      "text": "The orchestrator reads a Haiku implementer's diff itself before review, and switches that role to Sonnet early when quality falls short."
     }
   ],
   "next_row": 8,
-  "next_rule": 6
+  "next_rule": 7
 }

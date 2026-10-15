@@ -1,0 +1,41 @@
+{
+  "id": "s271",
+  "title": "Add the process lessons from dogfooding to slicer ai relay and ai instructions",
+  "lead": [
+    "Several relay practices that kept runs correct and cheap in this repo live only in one orchestrator's private memory, where other agents, other vendors and the owner cannot see them: a temp directory per role, reviewers that make no git writes, the orchestrator reading the diff itself, landing parallel slices one at a time, running the full suite once, and compacting the session between slices. This slice moves the generic ones into `slicer ai relay` and the compaction rule into `slicer ai instructions`, so every slicer user's agents get them."
+  ],
+  "depends_note": null,
+  "findings_note": "owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "Not in this slice: owner policy that varies by project (it goes in the role matrix), repo commands (AGENTS.md), the agents-repo playbook and relay.conf, and any new command or flag.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner asked on 2026-10-14 where the relay process should be documented, chose the shipped `ai relay` text for generic rules, and asked that slicer's instructions tell agents to compact where it makes the most sense. Project policy stays in the role matrix, and repo commands stay in AGENTS.md. Today's relays ran the full suite three times per slice; the implementer's run alone would have done, plus a rerun when main moved. A long orchestrator session also carries every earlier slice's diffs and reports, which costs tokens and attention, while the state it needs lives in slicer."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: the relay text (`RELAY_HEAD`, `RELAY_ORDER` and the Every brief section) and `INSTRUCTIONS`.\n- `tests/test_ai.py`: the tests below.\n- `docs/agents.md` if it quotes the changed text, and `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayText_EveryBrief_NamesTempDirPerRole`: every brief names its own temp directory, for every role, not only split parts.\n- `test_RelayText_Reviewers_MakeNoGitWrites`: reviewer, architect and gate briefs forbid git writes, and a needed write stops and goes to the owner.\n- `test_RelayText_Orchestrator_ReadsDiffBeforeReview`: the orchestrator reads the implementer's diff before review.\n- `test_RelayText_ParallelSlices_LandOneAtATime`: slices may be implemented in parallel only with disjoint files, then are reviewed and landed one at a time, with the suite rerun on main when main moved before the merge.\n- `test_RelayText_FullSuite_RunsOncePerChange`: the implementer runs the full suite once; the orchestrator reruns it only if the diff changed after that run or main moved.\n- `test_RelayText_Compaction_AtSliceBoundaries`: the orchestrator compacts after a slice lands or hands off and before briefing the next, and re-reads state with `slicer show ID --json --lean` rather than relying on memory.\n- `test_Instructions_Compaction_AfterEachSlice`: `ai instructions` (full and `--rest`) says to compact after a slice's finish step and before claiming the next.\n- Existing tests that pin the relay and instructions text are updated, not deleted."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the rules to the matching relay sections: per-role temp directories and the no-git-writes rule in Every brief; reading the diff and the suite policy in Roles or Order; parallel slices in Order; compaction in Order or Close.\n3. Add the compaction rule to `INSTRUCTIONS` so it also appears in `--rest`. It is vendor-neutral: \"compact or start a fresh session\"; state lives in slicer.\n4. Keep each addition to one or two sentences, in the existing plain style. Check `slicer ai relay` output stays readable as one page.\n5. Update docs that quote the text, and add a CHANGELOG `[Unreleased]` entry.\n6. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+.\n- `slicer ai relay` and `slicer ai instructions --rest` show each new rule once.\n- `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s271`, branch `feature/s271-relay-lessons`. Commit only on the branch. Merging and pushing wait for the owner."
+    }
+  ],
+  "notes": []
+}

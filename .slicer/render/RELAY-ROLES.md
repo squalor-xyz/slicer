@@ -21,3 +21,4 @@
 - u3: Roles on the orchestrator's own agent run as subagents; a role on another agent runs headless in the slice worktree with the same brief.
 - u4: "well specified" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision.
 - u5: Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices.
+- u6: The orchestrator reads a Haiku implementer's diff itself before review, and switches that role to Sonnet early when quality falls short.

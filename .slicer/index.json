@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 270,
+  "next_id": 273,
   "preamble": "",
   "passes": [
     {
@@ -8558,6 +8558,93 @@
         "urgency": 1,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s270",
+      "title": "Select tests by the repo files they read in tests/affected.py",
+      "short_title": "Affected by file reads",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "owner and orchestrator, 2026-10-14: affected.py --run prints nothing to run for a docs-only diff although tests read README and docs; AGENTS.md has no docs-only rule",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s271",
+      "title": "Add the process lessons from dogfooding to slicer ai relay and ai instructions",
+      "short_title": "Relay lessons in ai text",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s272",
+      "title": "Correct the --json coverage claim in docs/agents.md",
+      "short_title": "agents.md --json claim",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not",
+        "discovered_from": "s269",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],
