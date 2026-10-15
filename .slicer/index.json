@@ -9180,7 +9180,7 @@
       "id": "s279",
       "title": "TUI overview line shows progress and check drift",
       "short_title": "TUI overview line shows progress and check drift",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
