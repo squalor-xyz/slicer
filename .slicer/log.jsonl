@@ -1599,3 +1599,5 @@
 {"when": "2026-10-15T18:51:08Z", "item": "s291", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.13"}
 {"when": "2026-10-15T18:51:08Z", "item": "s295", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
 {"when": "2026-10-15T18:51:08Z", "item": "s297", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
+{"when": "2026-10-15T18:58:41Z", "item": "s302", "action": "add", "from": "", "to": "open", "note": "Version-shaped passes queue in version order"}
+{"when": "2026-10-15T18:58:41Z", "item": "s302", "action": "promote", "from": "", "to": "", "note": ""}
