@@ -9153,10 +9153,22 @@
       "id": "s287",
       "title": "Gitignore the project lock file",
       "short_title": "Gitignore the project lock file",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "192aa51d-b8fc-4446-96c7-05a14b96e24b",
+          "kind": "",
+          "text": "**2026-10-15** — Verified: init lists lock in .slicer/.gitignore, after relay-runs.jsonl. Every lock acquisition (store.project_lock) adds the lock line if it is missing, best-effort: an unreadable or unwritable .slicer/.gitignore never blocks a write, while init stays strict. The spec triggered the line only on lock-file creation; the orchestrator changed that to add-on-every-write, so projects whose lock file already exists get the line too. test_relay_run now asserts a fully clean git status, with the lock filter removed. Counts: full suite 2003 OK (skipped=1); test_atomic 9, test_feedback 45 and test_relay_run 47 OK; slicer check passed (276 items); git diff --check clean.",
+          "created_at": "2026-10-15T12:33:44Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9175,7 +9187,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

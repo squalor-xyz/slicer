@@ -303,5 +303,7 @@ concurrent `slicer` processes — a team, or an agent fan-out — serialise inst
 into a duplicated id or a half-applied outline. A second writer waits, then fails cleanly
 after a timeout (default 5s; set the `SLICER_LOCK_TIMEOUT` environment variable, in
 seconds, to change it). Read-only commands never lock. Where `flock` is unavailable the
-lock degrades to a no-op. The lock file is not tracked (it is gitignored) and is safe to
-delete when no slicer is running.
+lock degrades to a no-op. The lock file is not tracked: `init` lists `lock` in
+`.slicer/.gitignore`, and every command that takes the lock adds that line if it is missing,
+so a project made before this change gets it on its next write. It is safe to delete when no slicer
+is running.

@@ -39,6 +39,11 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
   from those files. A map for another commit is still refused, and the tool only reads the
   other worktree's map, never writes to it. A `--map` that is missing still asks for the full
   suite.
+- `init` lists the writer lock, `lock`, in `.slicer/.gitignore`, so a project other than this
+  repo no longer shows an untracked `.slicer/lock` after its first write. A project made
+  before this change gets the line on its next write: each command that takes the lock adds
+  it if it is missing, so a lock file that already exists is covered too. The lock file
+  itself still persists between writes.
 
 - `slicer ai relay` carries the relay practices from dogfooding: every brief names its role's own temp directory, reviewer, architect and gate briefs forbid git writes, the orchestrator reads the implementer's diff before review, one full suite run per change (the implementer's for a whole slice, the orchestrator's on the combined diff for a split), parallel slices run only with disjoint files and land one at a time, and the orchestrator compacts or starts a fresh session after each slice lands or hands off. `slicer ai instructions`, in full and with `--rest`, tells agents to compact or start a fresh session after a slice's finish step, before claiming the next slice. Text only; no command, flag or JSON key changes.
 

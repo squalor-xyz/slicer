@@ -446,8 +446,7 @@ class LedgerTests(RelayRunCase):
     self.assertEqual(snapshot(), before)
     self.assertEqual(repo.run("check")[0], code_before)
     status = repo._git("status", "--porcelain")
-    # The lock file is scratch every slicer write leaves; nothing else may show.
-    self.assertEqual([l for l in status.stdout.splitlines() if not l.endswith("/lock")], [])
+    self.assertEqual(status.stdout.splitlines(), [])
     ignored = repo._git("check-ignore", LEDGER)
     self.assertEqual(ignored.returncode, 0, ignored.stderr)
 
