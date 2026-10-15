@@ -74,6 +74,7 @@ The TUI initially hides the project's configured done status. View controls:
 | `J` / `K` | Reorder the selected item down / up |
 | `T` | Move the selected item to the top |
 | `M` | Move the selected item to a numbered position |
+| `b` | Open the [relay board](#relay-board); `b`, `q` or Esc closes it |
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
 
 In the filter panel, arrows or `j/k` navigate, Space toggles choices, Enter applies,
@@ -94,6 +95,46 @@ preset also keeps it; the in-work preset does not gain it. The queue and detail 
 show this checkout's review label and review styling, and status sorting uses that
 visible label. Sibling data is refreshed with the view, only at the Git worktree root.
 Browsing writes no tracking state; lifecycle actions continue to use stored status.
+
+## Relay board
+
+`b` opens a read-only board of the slice relays in flight. It shows the runs that
+[`slicer relay-run`](commands.md#relay-run-ledger) records in this checkout's ledger and in each
+sibling worktree's, so an orchestrator in one worktree is visible from another. Starting,
+stopping and steering a run stay outside the TUI.
+
+Each active run is a lane:
+
+```
+s283  active  12m04s  s283
+  implementer > [reviewer] > gate
+  [+] implementer  41s  1 subagent  Claude Code  Anthropic/sonnet high
+  [|] reviewer     2m04s  Claude Code  Anthropic/sonnet high
+        review the diff
+  [ ] gate         waiting
+  other:  orchestrator [|] 12m04s
+```
+
+The header names the items, the run's state and its age, and the worktree. The next line is
+the pipeline; the running role is in brackets, and an `architect` leads it when the run has
+one. Each role then gets a row: `[|]` is a running step and spins (`| / - \`), `[+]` is done,
+`[!]` failed, `[~]` started but not running (the run is stale or ended), and `[ ]` has not
+begun. The row carries elapsed time, the number of subagents the role's step spawned, its
+agent, `vendor/model` and reasoning, and its task underneath. A role with several steps shows
+the latest. Roles outside the pipeline, such as `orchestrator` or a split part's role, share
+one `other:` line after it.
+
+A stale run (no event for 30 minutes) is dimmed, labelled `stale`, does not animate, and stops
+counting time at its last event. An ended run leaves the board. A row that is too narrow drops
+cells from the right, whole, instead of cutting one; a long task ends in `...`. `j`/`k` or the
+arrow keys scroll when the lanes outrun the screen.
+
+The board redraws four times a second and re-reads the ledgers every two seconds. Only the
+board wakes on a timer: in every other view the TUI still blocks on input. If this checkout's
+ledger is damaged (`corrupt`), the board keeps the last frame and shows one `Error:` line until
+a read succeeds; delete or fix the ledger line it names. Colors follow the display rules
+below. In monochrome (`NO_COLOR=1`) the cues are the markers (`[+]`, `[!]`, `[~]`), the
+`[role]` brackets, the spinner, the `stale` label, and bold and dim.
 
 ## Display and color
 

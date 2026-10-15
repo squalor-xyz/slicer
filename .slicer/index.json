@@ -8971,12 +8971,24 @@
       "id": "s283",
       "title": "TUI relay board animates running relays",
       "short_title": "TUI relay board animates running relays",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s282"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "67a74bfb-3aad-40b2-9358-ad06e5141d7e",
+          "kind": "",
+          "text": "**2026-10-15** — Relay board on key b in the TUI (read-only; b, q or Esc close, j/k or arrows scroll). board_lines(runs, tick, now, width) is pure: per run a header (items, state, age, worktree), a pipeline line with the running role in brackets, a row per role with marker ([|] spinner, [+] done, [!] fail, [~] started but not running, [ ] waiting), elapsed, subagent count via Run.subagents_of, agent, vendor/model reasoning and task; roles outside the pipeline share one other: line; stale runs are dimmed, labelled stale and do not animate; ended runs leave the board; cells that do not fit are dropped whole, tasks end in .... run() sets screen.timeout(250) only while the board is open (spinner tick) and blocks otherwise; list_runs is re-read every 8 ticks (2 s) and cached. A corrupt or unreadable ledger keeps the last frame and shows one Error line, never exits. RELAY_PIPELINE is derived from roles.ROLE_NAMES minus architect, which leads when present. By hand: pty (TERM=xterm, NO_COLOR=1, 140x45) showed the lane, roles and all four spinner glyphs with elapsed advancing, and the lane gave way to Nothing running after relay-run end. tests/test_tui_wizard.py (outside the slice Files) gained a no-op timeout on its fake screen because run() now calls it. Backlog: stale runs stay on the board until ended. Verified: full suite 2006 tests OK (1 skipped), slicer check passes, 44+ mutants killed except one equivalent.",
+          "created_at": "2026-10-15T11:12:07Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -8995,7 +9007,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

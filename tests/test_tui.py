@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import curses
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 import unittest
 from unittest.mock import patch
 
 import support
-from slicer import model, store
+from slicer import model, relayrun, roles, store
 from slicer import tui, tui_style
+from slicer.errors import StateError
 from slicer.config import Config
 from slicer.model import Index, Item
 from slicer.store import State
@@ -531,7 +534,7 @@ class Screen:
 class TuiDrawingTests(unittest.TestCase):
   def test_Draw_NormalView_CommonShortcutsPersistWithFeedback(self) -> None:
     hints = ['Tab panes', 'e edit', 'a add', 's start', 'd done', 'h handoff',
-             '/ search', 'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit', 'v view']
+             '/ search', 'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit', 'v view', 'b board']
     state = example()
     for height, width, rows in [(10, 80, 2), (24, 160, 1)]:
       for focus in ['left', 'right']:
@@ -622,7 +625,7 @@ class TuiDrawingTests(unittest.TestCase):
   def test_Draw_SmallAndResizedScreens_AllModesStayInBounds(self) -> None:
     state = example()
     for height, width in [(0, 0), (1, 1), (2, 8), (5, 24), (24, 100)]:
-      for mode in ['normal', 'search', 'jump', 'move', 'filter', 'help']:
+      for mode in ['normal', 'search', 'jump', 'move', 'filter', 'help', 'board']:
         for resizing in [False, True]:
           with self.subTest(size=(height, width), mode=mode, resizing=resizing):
             view = tui.View.initial(state)
@@ -1176,3 +1179,381 @@ class DetailFieldsTests(unittest.TestCase):
       self.assertEqual(result.severity, "success")
       item = repo.state().index.require("S01")
       self.assertEqual((item.title, item.short_title), ("A long item title", "Long one"))
+
+
+NOW = datetime(2026, 10, 14, 12, 12, 4, tzinfo=timezone.utc)
+SPIN = "|/-\\"
+
+
+def board_step(step_id: str, role: str, phase: str = "start", *, parent: str = "",
+               begun: str = "2026-10-14T12:10:00Z", agent: str = "Claude Code",
+               vendor: str = "Anthropic", model: str = "sonnet", reasoning: str = "high",
+               task: str = "") -> relayrun.Step:
+  return relayrun.Step(
+    id=step_id, role=role, agent=agent, vendor=vendor, model=model, reasoning=reasoning,
+    phase=phase, task=task, parent=parent, begun_at=begun, updated_at=begun,
+  )
+
+
+def board_run(*steps: relayrun.Step, run_id: str = "run-1", state: str = "active",
+              outcome: str = "") -> relayrun.Run:
+  return relayrun.Run(
+    id=run_id, items=["s283"], worktree="s283", begun_at="2026-10-14T12:00:00Z",
+    updated_at="2026-10-14T12:10:00Z", state=state, outcome=outcome, steps=list(steps),
+  )
+
+
+def pipeline_run() -> relayrun.Run:
+  return board_run(
+    board_step("1", "implementer", "done", begun="2026-10-14T12:00:00Z"),
+    board_step("2", "reviewer", task="review the diff"),
+  )
+
+
+def board_text(lines: list[tui.PanelLine]) -> str:
+  return "\n".join(line.text for line in lines)
+
+
+def row_for_role(lines: list[tui.PanelLine], role: str) -> str:
+  return next(line.text for line in lines if re.match(rf"\s*\[.\] {role}(\s|$)", line.text))
+
+
+class RelayBoardLinesTests(unittest.TestCase):
+  def test_BoardLines_OneRun_ShowsPipelineWithActiveRoleSpinner(self) -> None:
+    lines = tui.board_lines([pipeline_run()], 0, NOW, 100)
+    text = board_text(lines)
+    self.assertIn("s283", lines[0].text)
+    self.assertIn("active", lines[0].text)
+    self.assertIn("implementer > [reviewer] > gate", text)
+    reviewer = row_for_role(lines, "reviewer")
+    self.assertTrue(reviewer.lstrip().startswith("[|]"), reviewer)
+    for cell in ("Claude Code", "Anthropic/sonnet high", "2m04s"):
+      self.assertIn(cell, reviewer)
+    self.assertIn("review the diff", text)
+    implementer = row_for_role(lines, "implementer")
+    self.assertTrue(implementer.lstrip().startswith("[+]"), implementer)
+    self.assertIn("12m04s", lines[0].text)
+    self.assertIn("waiting", row_for_role(lines, "gate"))
+    self.assertNotIn("architect", text)
+
+  def test_BoardLines_ArchitectPresent_LeadsThePipeline(self) -> None:
+    run = board_run(board_step("1", "architect", "done"), board_step("2", "implementer"))
+    text = board_text(tui.board_lines([run], 0, NOW, 100))
+    self.assertIn("architect > [implementer] > reviewer > gate", text)
+
+  def test_BoardLines_TickAdvancesSpinnerFrame(self) -> None:
+    frames = []
+    for tick in range(5):
+      lines = tui.board_lines([pipeline_run()], tick, NOW, 100)
+      frames.append(row_for_role(lines, "reviewer").lstrip()[:3])
+    self.assertEqual(frames, [f"[{c}]" for c in "|/-\\|"])
+    first = tui.board_lines([pipeline_run()], 0, NOW, 100)
+    again = tui.board_lines([pipeline_run()], 4, NOW, 100)
+    self.assertEqual([line.text.replace("[|]", "[x]") for line in first],
+                     [line.text.replace("[|]", "[x]") for line in again])
+
+  def test_BoardLines_SubagentsCounted(self) -> None:
+    run = board_run(
+      board_step("1", "implementer", "done"),
+      board_step("2", "reviewer"),
+      board_step("3", "reviewer", parent="2"),
+      board_step("4", "reviewer", "done", parent="2"),
+      board_step("5", "reviewer", parent="3"),
+      board_step("6", "implementer", "done", parent="1"),
+    )
+    lines = tui.board_lines([run], 0, NOW, 120)
+    self.assertIn("2 subagents", row_for_role(lines, "reviewer"))
+    self.assertIn("1 subagent", row_for_role(lines, "implementer"))
+    self.assertNotIn("subagents", row_for_role(lines, "implementer"))
+    self.assertNotIn("subagent", row_for_role(lines, "gate"))
+
+  def test_BoardLines_StaleRunDimmedAndLabelled(self) -> None:
+    lines = tui.board_lines([pipeline_run()], 0, NOW, 100)
+    self.assertNotEqual({line.role for line in lines}, {"dim"})
+    run = pipeline_run()
+    run.state = "stale"
+    lines = tui.board_lines([run], 3, NOW, 100)
+    self.assertIn("stale", lines[0].text)
+    self.assertEqual({line.role for line in lines}, {"dim"})
+    text = board_text(lines)
+    for frame in SPIN:
+      self.assertNotIn(f"[{frame}]", text)
+    # The clock stops at the last event: a dead run does not keep counting.
+    self.assertIn("0s", row_for_role(lines, "reviewer"))
+
+  def test_BoardLines_EndedRun_LabelsItsOutcome(self) -> None:
+    run = board_run(board_step("1", "implementer", "done"), state="ended", outcome="pass")
+    lines = tui.board_lines([run], 0, NOW, 100)
+    self.assertIn("ended pass", lines[0].text)
+    self.assertEqual({line.role for line in lines}, {"dim"})
+
+  def test_BoardLines_FailedStep_UsesTheErrorRole(self) -> None:
+    run = board_run(board_step("1", "implementer", "fail"))
+    lines = tui.board_lines([run], 0, NOW, 100)
+    row = next(line for line in lines if re.match(r"\s*\[.\] implementer\b", line.text))
+    self.assertTrue(row.text.lstrip().startswith("[!]"), row.text)
+    self.assertEqual(row.role, "error")
+
+  def test_BoardLines_RolesOutsideThePipeline_FollowItInOneOtherLine(self) -> None:
+    run = board_run(
+      board_step("1", "orchestrator", begun="2026-10-14T12:00:00Z"),
+      board_step("2", "implementer", "done"),
+      board_step("3", "implementer-part-2"),
+      board_step("4", "implementer", "done", parent="2"),
+    )
+    lines = tui.board_lines([run], 0, NOW, 100)
+    other = [line.text for line in lines if line.text.lstrip().startswith("other")]
+    self.assertEqual(len(other), 1)
+    self.assertIn("orchestrator", other[0])
+    self.assertIn("implementer-part-2", other[0])
+    self.assertIn("[|]", other[0])
+    texts = [line.text for line in lines]
+    self.assertGreater(texts.index(other_line := other[0]), max(
+      i for i, text in enumerate(texts) if re.match(r"\s*\[.\] (implementer|reviewer|gate)\b", text)))
+
+  def test_BoardLines_OnlyOtherRoles_StillDraws(self) -> None:
+    run = board_run(board_step("1", "orchestrator"))
+    text = board_text(tui.board_lines([run], 0, NOW, 100))
+    self.assertIn("implementer > reviewer > gate", text)
+    self.assertIn("orchestrator", text)
+
+  def test_BoardLines_NarrowWidth_ClipsWithoutSplittingCells(self) -> None:
+    long_model = "claude-sonnet-5-5-with-a-very-long-suffix"
+    run = board_run(
+      board_step("1", "implementer", "done", model=long_model, task="x" * 200,
+                 agent="Claude Code"),
+      board_step("2", "reviewer", model=long_model, task="y" * 200),
+      board_step("3", "reviewer", parent="2"),
+    )
+    run.worktree = "w" * 120
+    lines = tui.board_lines([run], 0, NOW, 80)
+    for line in lines:
+      self.assertLessEqual(tui_style.cell_width(line.text), 80, line.text)
+    reviewer = row_for_role(lines, "reviewer")
+    for cell in ("reviewer", "2m04s", "1 subagent"):
+      self.assertIn(cell, reviewer)
+    # A cell that does not fit is dropped whole, never cut.
+    self.assertNotIn("claude-sonnet", reviewer)
+    self.assertNotIn("Anthropic", reviewer)
+    wide = row_for_role(tui.board_lines([run], 0, NOW, 200), "reviewer")
+    self.assertIn(f"Anthropic/{long_model} high", wide)
+    tasks = [line.text for line in lines if "yyyy" in line.text]
+    self.assertEqual(len(tasks), 1)
+    self.assertTrue(tasks[0].endswith("..."), tasks[0])
+
+  def test_BoardLines_NoRuns_SaysNothingRunningAndNamesRelayRun(self) -> None:
+    lines = tui.board_lines([], 0, NOW, 80)
+    text = board_text(lines)
+    self.assertIn("Nothing running", text)
+    self.assertIn("slicer relay-run begin", text)
+    for line in lines:
+      self.assertLessEqual(tui_style.cell_width(line.text), 80)
+
+
+class RelayBoardElapsedTests(unittest.TestCase):
+  def test_ElapsedText_Spans_UseTheShortestUnitPair(self) -> None:
+    start = "2026-10-14T12:00:00Z"
+    for seconds, text in ((0, "0s"), (59, "59s"), (60, "1m00s"), (3599, "59m59s"),
+                          (3600, "1h00m"), (3720, "1h02m"), (-5, "0s")):
+      at = datetime.fromtimestamp(datetime(2026, 10, 14, 12, tzinfo=timezone.utc).timestamp() + seconds,
+                                  timezone.utc)
+      self.assertEqual(tui.elapsed_text(start, at), text, seconds)
+
+
+class RelayBoardViewTests(unittest.TestCase):
+  def board(self, *results) -> tuple[tui.View, State, list]:
+    state = example()
+    view = tui.View.initial(state)
+    calls: list = []
+    outcomes = list(results)
+
+    def fake(root, now=None, *, siblings=True, active=False):
+      calls.append((root, siblings, active))
+      outcome = outcomes[min(len(calls), len(outcomes)) - 1]
+      if isinstance(outcome, Exception):
+        raise outcome
+      return outcome
+
+    patcher = patch.object(relayrun, "list_runs", fake)
+    patcher.start()
+    self.addCleanup(patcher.stop)
+    return view, state, calls
+
+  def test_Handle_TickOutsideBoard_IsIgnored(self) -> None:
+    view, state, calls = self.board([pipeline_run()])
+    before = (view.mode, view.selected, view.message, view.board_tick)
+    result = view.handle(state, "tick")
+    self.assertEqual((view.mode, view.selected, view.message, view.board_tick), before)
+    self.assertEqual((result.message, result.edit), ("", None))
+    self.assertEqual(calls, [])
+    view.mode = "help"
+    view.handle(state, "tick")
+    self.assertEqual((view.mode, view.board_tick, calls), ("help", 0, []))
+
+  def test_Handle_B_OpensTheBoardAndLoadsRunsOnce(self) -> None:
+    view, state, calls = self.board([pipeline_run()])
+    view.handle(state, "b")
+    self.assertEqual(view.mode, "board")
+    self.assertEqual(len(calls), 1)
+    self.assertEqual([run.id for run in view.board_runs], ["run-1"])
+    self.assertEqual(view.board_error, "")
+    self.assertEqual(tui.key_action("b"), "board")
+    self.assertTrue(any(line.startswith("b ") and "relay" in line.lower() for line in tui.help_lines()))
+
+  def test_Handle_BoardTick_AdvancesSpinnerButRefreshesDataOnASlowerCadence(self) -> None:
+    view, state, calls = self.board([pipeline_run()])
+    view.handle(state, "b")
+    for n in range(1, tui.BOARD_REFRESH_TICKS):
+      view.handle(state, "tick")
+      self.assertEqual((view.board_tick, len(calls)), (n, 1))
+    view.handle(state, "tick")
+    self.assertEqual((view.board_tick, len(calls)), (tui.BOARD_REFRESH_TICKS, 2))
+    for _ in range(tui.BOARD_REFRESH_TICKS - 1):
+      view.handle(state, "tick")
+    self.assertEqual(len(calls), 2)
+    view.handle(state, "tick")
+    self.assertEqual(len(calls), 3)
+    self.assertEqual(calls[0], (state.root, True, False))
+
+  def test_Handle_BoardTick_UsesNoStoreRefresh(self) -> None:
+    view, state, _ = self.board([pipeline_run()])
+    view.handle(state, "b")
+    with patch.object(store, "in_work_elsewhere", side_effect=AssertionError("refreshed")):
+      view.handle(state, "tick")
+      tui.draw(Screen(24, 100), state, view)
+
+  def test_Handle_CorruptLedger_KeepsLastFrameAndShowsOneLine(self) -> None:
+    broken = StateError("/p/.slicer/relay-runs.jsonl:3: not valid JSON (x).\nfix it", code="corrupt")
+    view, state, calls = self.board([pipeline_run()], broken, [])
+    view.handle(state, "b")
+    for _ in range(tui.BOARD_REFRESH_TICKS):
+      view.handle(state, "tick")
+    self.assertEqual(len(calls), 2)
+    self.assertEqual(view.mode, "board")
+    self.assertEqual([run.id for run in view.board_runs], ["run-1"])
+    self.assertIn("relay-runs.jsonl:3", view.board_error)
+    self.assertNotIn("\n", view.board_error)
+    screen = Screen(24, 100)
+    tui.draw(screen, state, view)
+    output = "\n".join(text for _, text in screen.writes)
+    self.assertIn("relay-runs.jsonl:3", output)
+    self.assertIn("s283", output)
+    for _ in range(tui.BOARD_REFRESH_TICKS):
+      view.handle(state, "tick")
+    self.assertEqual((view.board_runs, view.board_error), ([], ""))
+
+  def test_Handle_BoardReopened_NeverShowsTheEarlierFrame(self) -> None:
+    broken = StateError("relay-runs.jsonl:1: bad", code="corrupt")
+    view, state, _ = self.board([pipeline_run()], broken)
+    view.handle(state, "b")
+    self.assertEqual(len(view.board_runs), 1)
+    view.handle(state, "b")
+    view.handle(state, "b")
+    self.assertEqual(view.board_runs, [])
+    self.assertIn("relay-runs.jsonl:1", view.board_error)
+    view, state, _ = self.board([pipeline_run()])
+    view.board_error = "old error"
+    view.handle(state, "b")
+    self.assertEqual(view.board_error, "")
+
+  def test_Pipeline_FollowsTheRelayRoleNames(self) -> None:
+    self.assertEqual(set(tui.RELAY_PIPELINE) | {"architect"}, set(roles.ROLE_NAMES))
+    self.assertEqual(tui.RELAY_PIPELINE, ("implementer", "reviewer", "gate"))
+
+  def test_Handle_BoardOpen_EndedRunsLeaveTheBoard(self) -> None:
+    ended = board_run(board_step("1", "implementer", "done"), run_id="run-0",
+                      state="ended", outcome="pass")
+    stale = board_run(board_step("1", "implementer"), run_id="run-2", state="stale")
+    view, state, _ = self.board([ended, pipeline_run(), stale])
+    view.handle(state, "b")
+    self.assertEqual([run.id for run in view.board_runs], ["run-1", "run-2"])
+
+  def test_Handle_BoardKeys_CloseScrollAndStayReadOnly(self) -> None:
+    for closer in ("b", "\x1b", "q"):
+      view, state, _ = self.board([])
+      view.handle(state, "b")
+      view.handle(state, closer)
+      self.assertEqual((view.mode, view.quit), ("normal", False), closer)
+    view, state, _ = self.board([])
+    view.handle(state, "b")
+    selected, items = view.selected, [dict(i.__dict__) for i in state.index.items]
+    for key in "sdhxlpunrawewJKTMfvo/":
+      view.handle(state, key)
+    self.assertEqual(view.mode, "board")
+    self.assertEqual((view.selected, [dict(i.__dict__) for i in state.index.items]), (selected, items))
+    view.handle(state, "j")
+    view.handle(state, "j")
+    view.handle(state, "k")
+    self.assertEqual(view.board_at, 1)
+    view.handle(state, "k")
+    view.handle(state, "k")
+    self.assertEqual(view.board_at, 0)
+
+  def test_Draw_Board_ShowsLanesScrolledAndClipped(self) -> None:
+    long = board_run(board_step("1", "implementer", task="t" * 200), run_id="run-2")
+    view, state, _ = self.board([pipeline_run(), long])
+    view.handle(state, "b")
+    screen = Screen(24, 80)
+    with patch.object(relayrun, "utcnow", lambda: NOW):
+      tui.draw(screen, state, view)
+    expected = tui.board_lines(view.board_runs, 0, NOW, 79)
+    output = "\n".join(text for _, text in screen.writes)
+    self.assertIn("Relay board", output)
+    self.assertNotIn("Tab panes", output)
+    for n, line in enumerate(expected[:20], 1):
+      if line.text:  # a blank separator draws nothing
+        self.assertIn((n, line.text), screen.writes)
+    self.assertTrue(any(text.endswith("...") for _, text in screen.writes))
+    # A short screen scrolls: j moves the first line shown, and the end of the board stops it.
+    small = Screen(10, 80)
+    with patch.object(relayrun, "utcnow", lambda: NOW):
+      tui.draw(small, state, view)
+      first = [t for y, t in small.writes if y == 1]
+      view.handle(state, "j")
+      tui.draw(small, state, view)
+      self.assertEqual(view.board_at, 1)
+      self.assertEqual([t for y, t in small.writes if y == 1], [expected[1].text])
+      self.assertNotEqual([t for y, t in small.writes if y == 1], first)
+      for _ in range(40):
+        view.handle(state, "j")
+      tui.draw(small, state, view)
+    visible = 10 - 3
+    self.assertEqual(view.board_at, len(expected) - visible)
+    self.assertIn((visible, expected[-1].text), small.writes)
+    self.assertLessEqual(max(y for y, _ in small.writes), 9)
+
+
+class RelayBoardLoopTests(unittest.TestCase):
+  def test_Run_BoardOpen_WakesOnATimerAndOtherViewsBlock(self) -> None:
+    script = iter(["b", curses.error, curses.error, "b", curses.error, "q"])
+    timeouts: list[int] = []
+    frames: list[str] = []
+
+    class Terminal(Screen):
+      def timeout(self, ms):
+        timeouts.append(ms)
+
+      def get_wch(self):
+        text = "\n".join(t for _, t in self.writes)
+        frames.append(next((c for c in SPIN if f"[{c}]" in text), ""))
+        key = next(script)
+        if key is curses.error:
+          raise curses.error("no input")
+        return key
+
+    calls = []
+
+    def fake(root, now=None, *, siblings=True, active=False):
+      calls.append(root)
+      return [pipeline_run()]
+
+    with patch("curses.curs_set"), \
+        patch("curses.wrapper", side_effect=lambda fn: fn(Terminal(24, 100))), \
+        patch("slicer.tui_style.setup_palette", return_value=tui_style.monochrome()), \
+        patch.object(relayrun, "list_runs", fake):
+      self.assertEqual(tui.run(example()), 0)
+    # Blocking, then 250 ms while the board is open (tick, tick, the closing key), then blocking.
+    self.assertEqual(timeouts, [-1, tui.BOARD_TICK_MS, tui.BOARD_TICK_MS, tui.BOARD_TICK_MS, -1, -1])
+    # Each timed-out read advances the spinner one frame; a timed-out read elsewhere does nothing.
+    self.assertEqual(frames, ["", "|", "/", "-", "", ""])
+    self.assertEqual(len(calls), 1)
