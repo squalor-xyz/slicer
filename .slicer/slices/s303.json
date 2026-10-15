@@ -1,0 +1,41 @@
+{
+  "id": "s303",
+  "title": "Undeclared pass warns",
+  "lead": [
+    "`add`, `set` and `import` warn when they file an item under a pass that is not declared, and `check` warns while an open or in-work item sits in one, so a pass that the queue cannot order is noticed when it is made."
+  ],
+  "depends_note": null,
+  "findings_note": "2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing queue order or render order; warning about declared passes out of version order (a deliberate order, such as a major release first, would warn forever with no way to silence it); the TUI pass editor (it has no stderr; a later item can surface it there); refusing an undeclared pass.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-15 the owner moved the open v1.11 items into v1.12 and v1.13 with `set --pass`. Neither pass was declared, and nothing said so. `graph.ranked_order` (`src/slicer/graph.py:170`) gives every undeclared key the same rank, so the two passes merged by score and v1.13 slices queued above v1.12 ones (`list` put s278 above s298).\n\nThe ordering rule is documented and stays (`docs/commands.md`, the `list` row: \"Pass labels are not parsed as versions: declare earlier releases before later releases and put a deferred pass last\"); s302, which would have sorted passes by version instead, was retired. What failed was that nothing said anything: the fix was one `prose add-pass` per pass, and no command pointed to it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`:\n  - `add` and `set`: after the write, when the item's pass key is non-empty and not in `index.passes`, write one stderr line in the style of the unscored warning in `cmd_add`, e.g. `slicer: pass v1.12 is not declared, so the queue orders its items by score among other undeclared passes; declare it with \\`slicer prose add-pass v1.12 --after <pass>\\`.` `set` with several ids warns once per key. An empty pass (`--pass ''`) and an inherited pass do not warn unless the inherited key itself is undeclared.\n  - `import`: one line per undeclared key the file names, after the import is written.\n  - Exit codes and JSON payloads are unchanged; nothing is refused.\n- `src/slicer/verify.py` (the offline findings `check` reports as warnings): a `warn` finding per undeclared pass key that holds an item that is not done or retired, naming the key, how many such items it holds, and the `prose add-pass` command. Keys that hold only done or retired items do not warn (this repo has v1.7 to v1.11).\n- `docs/commands.md` (`add`, `set`, `check`), `docs/agents.md` if it lists check warnings, `CHANGELOG.md` under Added.\n- `tests/test_list_pass_order.py` or the test file holding the `add`/`set` stderr tests, and the check tests."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Add_UndeclaredPass_WarnsOnStderrAndFiles`: `add --pass v9` in a project that does not declare v9 exits 0, files the item, and stderr names `prose add-pass v9`.\n- `test_Add_DeclaredPass_NoWarning`: a declared pass prints no such line.\n- `test_Set_ManyIdsUndeclaredPass_WarnsOnce`.\n- `test_Set_EmptyPass_NoWarning`.\n- `test_Import_UndeclaredPasses_WarnsPerKey`: two undeclared keys give two lines; import stays all-or-nothing.\n- `test_Check_OpenItemInUndeclaredPass_Warns`: `check --json` lists the warning and still exits 0.\n- `test_Check_DoneOnlyUndeclaredPass_NoWarning`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add one helper that returns the undeclared keys among a set of items, used by the CLI warnings and the verify finding.\n3. Docs and CHANGELOG; mutation-check the new tests (drop the declared check, drop the done/retired exclusion)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` in this repo passes with no new warning (v1.12 and v1.13 are declared; v1.7 to v1.11 hold only done items)."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

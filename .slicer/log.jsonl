@@ -1601,3 +1601,8 @@
 {"when": "2026-10-15T18:51:08Z", "item": "s297", "action": "set", "from": "", "to": "", "note": "pass_key v1.11→v1.13"}
 {"when": "2026-10-15T18:58:41Z", "item": "s302", "action": "add", "from": "", "to": "open", "note": "Version-shaped passes queue in version order"}
 {"when": "2026-10-15T18:58:41Z", "item": "s302", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T19:05:05Z", "item": "pass.v1.12", "action": "prose", "from": "", "to": "v1.12", "note": "add-pass"}
+{"when": "2026-10-15T19:05:05Z", "item": "pass.v1.13", "action": "prose", "from": "", "to": "v1.13", "note": "add-pass"}
+{"when": "2026-10-15T19:05:05Z", "item": "s302", "action": "retire", "from": "open", "to": "retired", "note": "Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared."}
+{"when": "2026-10-15T19:05:39Z", "item": "s303", "action": "add", "from": "", "to": "open", "note": "Undeclared pass warns"}
+{"when": "2026-10-15T19:05:39Z", "item": "s303", "action": "promote", "from": "", "to": "", "note": ""}

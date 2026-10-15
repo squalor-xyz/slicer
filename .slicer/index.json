@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 303,
+  "next_id": 304,
   "preamble": "",
   "passes": [
     {
@@ -44,6 +44,18 @@
     {
       "key": "v1.6",
       "heading": "v1.6.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.12",
+      "heading": "v1.12.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.13",
+      "heading": "v1.13.0 release",
       "intro": "",
       "outro": ""
     },
@@ -10092,7 +10104,7 @@
       "id": "s302",
       "title": "Version-shaped passes queue in version order",
       "short_title": "Version-shaped passes queue in version order",
-      "status": "open",
+      "status": "retired",
       "has_slice": true,
       "depends_on": [],
       "note_records": [],
@@ -10111,9 +10123,39 @@
         "key": "",
         "pass": "v1.12",
         "group": "",
-        "reason": "",
+        "reason": "Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared.",
         "importance": 2,
         "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s303",
+      "title": "Undeclared pass warns",
+      "short_title": "Undeclared pass warns",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12",
+        "discovered_from": "s302",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1,
         "attempts": 0
       }
