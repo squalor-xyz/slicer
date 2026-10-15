@@ -1622,12 +1622,15 @@ def _item_rows(
   """The shared queue-listing row format used by `list`, `find` and `deps`.
 
   `^` marks an effective score lifted above the item's own by a dependent, so a
-  blocker of a critical item reads at that item's priority. The claim column
-  names the owner, or `*` when the item is in progress and unclaimed. The pass
-  column appears only when the roadmap uses passes.
+  blocker of a critical item reads at that item's priority. `!` after the row
+  number marks an item that waits on an unfinished dependency, as the TUI queue
+  does; it takes the space the row leaves there, so the columns do not move. The
+  claim column names the owner, or `*` when the item is in progress and unclaimed.
+  The pass column appears only when the roadmap uses passes.
   """
   cfg = state.config
   eff = graph.effective_scores(state.index)
+  satisfying = cfg.satisfying_statuses()
   elsewhere = elsewhere or {}
   if claim_w is None:
     claim_w = _claim_width(cfg, items, elsewhere)
@@ -1641,8 +1644,9 @@ def _item_rows(
     effort = "-" if item.effort is None else str(item.effort)
     pass_cell = "" if pass_w is None else f"{item.pass_key or '-':<{pass_w}} "
     label = cfg.status_label(store.displayed_status(cfg, item, elsewhere.get(item.id, [])))
+    mark = "!" if graph.blocked_by(state.index, item, satisfying) else " "
     rows.append(
-      f"{n:>3}  {item.id:<5} {label:<{status_w}} "
+      f"{n:>3}{mark} {item.id:<5} {label:<{status_w}} "
       f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
       f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
     )

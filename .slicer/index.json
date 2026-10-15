@@ -9040,10 +9040,22 @@
       "id": "s286",
       "title": "list marks blocked rows with !",
       "short_title": "list marks blocked rows with !",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "7889dba9-d6ce-45fa-9e2a-38bb632c090d",
+          "kind": "",
+          "text": "**2026-10-15** — Text rows of `list` and `find` mark an item that waits on an unfinished dependency with `!` after the row number, as the TUI queue does. `_item_rows` in src/slicer/cli.py computes graph.blocked_by with cfg.satisfying_statuses() and writes the `!` into the space the row already had, so column widths are unchanged. `deps` never shows the marker: its no-ID form lists only unblocked items, so no row it prints is blocked, and `deps ID` prints edges, not rows. JSON is unchanged; a test pins the list --json key set and order. Docs: docs/commands.md (column paragraph), docs/getting-started.md (sample row and one sentence), CHANGELOG.md under Unreleased Changed. Tests: four new in tests/test_cli.py (ListBlockedMarkerTests); the three exact-row modules, test_cli, test_scoring, test_worktree_claims, and test_deps were green. Mutation check: six mutations, each turned a new test red, and cli.py was restored byte-identical. Final gates: affected 258 OK; test_cli 161 OK after the last docs and docstring edits; full suite 1925 OK, 1 skipped, run before the getting-started sample fix; slicer check passed, 273 items.",
+          "created_at": "2026-10-15T04:09:13Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9062,7 +9074,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

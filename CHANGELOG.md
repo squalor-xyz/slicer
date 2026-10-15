@@ -12,6 +12,12 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
   answers each one, with links to the docs that cover them. The README links to it from
   the intro and from the Documentation list.
 
+### Changed
+
+- The text rows of `slicer list` and `find` mark an item that waits on an unfinished
+  dependency with `!` after its row number, as the TUI queue does, so the readiness
+  order explains itself. Column widths and JSON are unchanged.
+
 ## [1.10.0] - 2026-10-14
 
 ### Added

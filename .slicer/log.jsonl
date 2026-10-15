@@ -1465,3 +1465,6 @@
 {"when": "2026-10-15T03:21:40Z", "item": "s284", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
 {"when": "2026-10-15T03:21:40Z", "item": "s285", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
 {"when": "2026-10-15T03:23:06Z", "item": "s286", "action": "add", "from": "", "to": "open", "note": "list marks blocked rows with !"}
+{"when": "2026-10-15T03:34:45Z", "item": "s286", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:09:13Z", "item": "s286", "action": "note", "from": "", "to": "", "note": "Text rows of `list` and `find` mark an item that waits on an", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:09:15Z", "item": "s286", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
