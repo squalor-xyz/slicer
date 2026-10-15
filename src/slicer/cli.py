@@ -1692,7 +1692,6 @@ def _item_rows(
   """
   cfg = state.config
   eff = graph.effective_scores(state.index)
-  satisfying = cfg.satisfying_statuses()
   elsewhere = elsewhere or {}
   if claim_w is None:
     claim_w = _claim_width(cfg, items, elsewhere)
@@ -1706,7 +1705,7 @@ def _item_rows(
     effort = "-" if item.effort is None else str(item.effort)
     pass_cell = "" if pass_w is None else f"{item.pass_key or '-':<{pass_w}} "
     label = cfg.status_label(store.displayed_status(cfg, item, elsewhere.get(item.id, [])))
-    mark = "!" if graph.blocked_by(state.index, item, satisfying) else " "
+    mark = "!" if graph.pending(state.index, item, cfg) else " "
     rows.append(
       f"{n:>3}{mark} {item.id:<5} {label:<{status_w}} "
       f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
@@ -1951,7 +1950,7 @@ def cmd_deps(args: argparse.Namespace) -> int:
     return OK
   if args.id is not None:
     item = index.require(args.id)
-    blocked = graph.blocked_by(index, item, cfg.satisfying_statuses())
+    blocked = graph.pending(index, item, cfg)
     dependents = graph.dependents(index)[args.id]
     payload = {
       "id": args.id, "waits_on": item.depends_on,
@@ -1962,12 +1961,14 @@ def cmd_deps(args: argparse.Namespace) -> int:
     lines = [f"{args.id}  {item.display_title()}"]
     lines.append("waits on         " + (", ".join(_mark(d) for d in item.depends_on) or "-"))
     lines.append("depended on by   " + (", ".join(dependents) or "-"))
+    held = graph.open_slivers(index, item, cfg.settled_statuses())
+    if held:
+      lines.append("held by slivers  " + ", ".join(held))
     _emit(args, payload, "\n".join(lines))
     return OK
   eff = graph.effective_scores(index)
-  satisfying = cfg.satisfying_statuses()
   unblocked = [it for it in index.items
-               if it.status == cfg.open_status and not graph.blocked_by(index, it, satisfying)]
+               if it.status == cfg.open_status and not graph.pending(index, it, cfg)]
   unblocked.sort(key=lambda it: eff[it.id], reverse=True)
   elsewhere = store.in_work_elsewhere(state.root, state.index) if not args.json else {}
   _emit(args, [it.to_dict() for it in unblocked],

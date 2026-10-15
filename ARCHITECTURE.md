@@ -105,7 +105,10 @@ writes; the next save stamps 9; older readers refuse) but is a hierarchy, one
 level deep: an item with a parent cannot be a parent and cannot be its own.
 `ops` enforces that on `add` and `set` (`parent_nested`, `parent_self`); `verify`
 and the index merge driver report an unknown, nested or self parent. It is a
-reference, not a dependency, so readiness, scores and `next` never read it.
+reference, not a dependency: it is never written into `depends_on` and scores
+ignore it. Readiness reads it through `graph.blocked_by`, which lists a parent's
+unsettled slivers after its unmet dependencies, and `handoff` and `done` refuse
+a parent with unfinished slivers (`slivers_open`).
 `remove` refuses an item with slivers unless forced, and a purge does not
 reclaim an ID a sliver names.
 

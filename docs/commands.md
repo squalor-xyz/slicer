@@ -342,8 +342,17 @@ Empty provenance leaves row output unchanged.
 parent may have any status. It is one level deep: an item with a parent cannot be a
 parent (`parent_nested`), and an item cannot be its own parent (`parent_self`). An
 unknown ID fails with `no_such_item`. All of these write nothing. A parent is a
-reference, not a dependency: it changes neither readiness nor priority, and `next`,
-`handoff` and `done` ignore it.
+reference, not a dependency: it is never written into `depends_on` and changes no
+score. It does hold the parent while a sliver is open. A sliver short of handed off,
+being reviewed, done or retired counts as an unmet dependency of its parent wherever
+readiness is computed: `next` (including `--batch`) offers the slivers and lists the
+parent in `blocked`, `list` marks it `!`, and `deps S01` names the slivers
+(`held by slivers`). When `implement_finish` is `done`, only a done or retired sliver
+releases its parent in `next`, since that project has no handoff step. `slicer handoff S01`
+refuses, with `slivers_open`, until every sliver is handed off (or being reviewed, done
+or retired), whatever `implement_finish` is, and `slicer done S01` until every sliver is
+done or retired; naming the slivers in the same call counts. There is no `--force`. A
+retired sliver holds nothing. A sliver finishes as any item does.
 
 `slicer list --parent S01` filters by exact parent and composes with the other
 filters, as `--discovered-from` does. `slicer show S01` lists its slivers (id, status,

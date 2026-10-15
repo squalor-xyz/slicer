@@ -170,6 +170,31 @@ class Config:
       return frozenset({self.done_status})
     return frozenset(self.satisfies_dependencies)
 
+  def handed_off_statuses(self) -> frozenset[str]:
+    """Statuses in which a sliver no longer holds its parent's `handoff`.
+
+    Handed off, being reviewed, done or retired: the work is out of the
+    implementer's hands. Whatever `implement_finish` says.
+    """
+    return (self.satisfying_statuses()
+            | {self.review_status, self.reviewing_status, self.done_status, self.retired_status}
+            ) - {""}
+
+  def settled_statuses(self) -> frozenset[str]:
+    """Statuses in which a sliver no longer holds its parent in `next` and readiness.
+
+    The handed-off set, except that a project whose `implement_finish` is `done`
+    has no handoff step in its flow, so only a finished sliver releases the
+    parent there: `next` should not offer a parent whose `done` would refuse.
+    """
+    if self.implement_finish == "done":
+      return self.finished_statuses()
+    return self.handed_off_statuses()
+
+  def finished_statuses(self) -> frozenset[str]:
+    """Statuses in which a sliver no longer holds its parent's `done`."""
+    return frozenset({self.done_status, self.retired_status} - {""})
+
   def status_label(self, status: str) -> str:
     return self.statuses.get(status, status)
 
