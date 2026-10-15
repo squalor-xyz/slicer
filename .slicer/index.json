@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 294,
+  "next_id": 295,
   "preamble": "",
   "passes": [
     {
@@ -9739,6 +9739,36 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s294",
+      "title": "Relay board shows nested runs as a tree with rounds, freshness and recent results",
+      "short_title": "Relay board shows nested runs as a tree with rounds, freshness and recent results",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step; owner widened it to a board redesign the same day",
+        "discovered_from": "s283",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
         "attempts": 0
       }
     }

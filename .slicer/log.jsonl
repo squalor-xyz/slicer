@@ -1538,3 +1538,12 @@
 {"when": "2026-10-15T16:00:02Z", "item": "s290", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-15T16:08:46Z", "item": "s290", "action": "note", "from": "", "to": "", "note": "Ready for review: docs/landing.md gains a Schema bumps secti", "by": "Jon Robbins"}
 {"when": "2026-10-15T16:08:46Z", "item": "s290", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T16:11:53Z", "item": "s294", "action": "add", "from": "", "to": "open", "note": "Relay board fills the lane from an orchestrator's child steps"}
+{"when": "2026-10-15T16:11:53Z", "item": "s294", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T16:14:06Z", "item": "s294", "action": "set", "from": "", "to": "", "note": "title Relay board fills the lane from an orchestrator's child steps→Relay board shows nested runs as a tree with rounds, freshness and recent results; size S→M; findings nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step→nested-relay trial 2026-10-15: board shows roles waiting while relay-run list shows them running under the orchestrator step; owner widened it to a board redesign the same day; effort 1→2; short_title Relay board fills the lane from an orchestrator's child steps→Relay board shows nested runs as a tree with rounds, freshness and recent results"}
+{"when": "2026-10-15T16:14:06Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "lead"}
+{"when": "2026-10-15T16:14:06Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-15T16:14:07Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-15T16:14:07Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-15T16:14:07Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-15T16:14:07Z", "item": "s294", "action": "edit", "from": "", "to": "", "note": "Git"}
