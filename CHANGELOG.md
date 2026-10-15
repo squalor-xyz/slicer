@@ -32,6 +32,13 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
   nothing under `src/` or `tests/` finish on `affected.py --run`, `slicer check` and
   `git diff --check`. A discover filtered with `-p` or `--pattern` no longer writes a map,
   as one filtered with `-k` already did not.
+- Contributor tooling: a worktree with no `.venv/affected-map.json` of its own, and no `--map`
+  given, makes `tests/affected.py` use the first map that another worktree of the repository
+  recorded for the same HEAD, and names that map on stderr. That map is borrowed only when its
+  worktree has no uncommitted changes under `src/` or `tests/`, since its lines were recorded
+  from those files. A map for another commit is still refused, and the tool only reads the
+  other worktree's map, never writes to it. A `--map` that is missing still asks for the full
+  suite.
 
 - `slicer ai relay` carries the relay practices from dogfooding: every brief names its role's own temp directory, reviewer, architect and gate briefs forbid git writes, the orchestrator reads the implementer's diff before review, one full suite run per change (the implementer's for a whole slice, the orchestrator's on the combined diff for a split), parallel slices run only with disjoint files and land one at a time, and the orchestrator compacts or starts a fresh session after each slice lands or hands off. `slicer ai instructions`, in full and with `--rest`, tells agents to compact or start a fresh session after a slice's finish step, before claiming the next slice. Text only; no command, flag or JSON key changes.
 

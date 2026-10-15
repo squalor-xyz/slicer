@@ -14,6 +14,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 import affected
 from support import remove_temp_repo
@@ -50,6 +51,12 @@ def _run(argv: list[str]) -> tuple[int, str, str]:
   with redirect_stdout(out), redirect_stderr(err):
     code = affected.main(argv)
   return code, out.getvalue(), err.getvalue()
+
+
+def _git(cwd: Path, *args: str) -> str:
+  """Run git in `cwd` and return its stdout, stripped."""
+  proc = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True)
+  return proc.stdout.strip()
 
 
 class AffectedTests(unittest.TestCase):
@@ -451,6 +458,154 @@ class AffectedTests(unittest.TestCase):
     subprocess.run(["git", "add", "marker.txt"], cwd=directory, check=True)
     subprocess.run(["git", "commit", "-q", "-m", "base"], cwd=directory, check=True)
     return directory
+
+  def _linked_worktree(self, main: Path) -> Path:
+    """A second checkout of `main`'s repository, detached at the same HEAD."""
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(remove_temp_repo, directory)
+    worktree = directory / "wt"
+    _git(main, "worktree", "add", "-q", "--detach", str(worktree))
+    return worktree
+
+  def _at_checkout(self, worktree: Path) -> None:
+    """Make a bare `affected.py` call see `worktree` as its checkout."""
+    self.enterContext(patch.object(affected, "ROOT", worktree))
+    self.enterContext(
+      patch.object(affected, "DEFAULT_MAP", worktree / ".venv" / "affected-map.json"),
+    )
+
+  def test_Select_NoLocalMap_UsesSiblingMapForSameHead(self) -> None:
+    main = self._git_root()
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    before = sibling.read_bytes()
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_a"])
+    self.assertIn(str(sibling.resolve()), err)
+    self.assertEqual(sibling.read_bytes(), before)
+    self.assertFalse((worktree / ".venv").exists())
+    code, out, err = _run(["--map", str(worktree / "absent.json"), "--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingMapOtherSha_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    _git(main, "commit", "-q", "--allow-empty", "-m", "next")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertIn("no other worktree has a readable, clean map", err)
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_LocalMapPresent_IgnoresSiblings(self) -> None:
+    main = self._git_root()
+    head = _git(main, "rev-parse", "HEAD")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, head, {"mod.T.test_sibling": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    affected.write_map(worktree / ".venv" / "affected-map.json", head, {"mod.T.test_local": ["src/slicer/ops.py:4"]})
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_local"])
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingDirtyUnderSrc_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    source = main / "src" / "slicer" / "ops.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    _git(main, "add", "src/slicer/ops.py")
+    _git(main, "commit", "-q", "-m", "source")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertIn("no other worktree has a readable, clean map", err)
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingDirtyOnlyUnderSlicer_StillBorrowsItsMap(self) -> None:
+    main = self._git_root()
+    state = main / ".slicer" / "index.json"
+    state.parent.mkdir()
+    state.write_text("{}\n", encoding="utf-8")
+    _git(main, "add", ".slicer/index.json")
+    _git(main, "commit", "-q", "-m", "state")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    state.write_text('{"edited": true}\n', encoding="utf-8")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_a"])
+    self.assertIn(str(sibling.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingProbeFails_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    head = _git(main, "rev-parse", "HEAD")
+    broken = self._linked_worktree(main)
+    broken_map = broken / ".venv" / "affected-map.json"
+    affected.write_map(broken_map, head, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    index = broken / _git(broken, "rev-parse", "--git-path", "index")
+    index.write_bytes(b"not an index")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("no other worktree has a readable, clean map", err)
+    self.assertNotIn(str(broken_map.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingProbeCannotRun_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    sibling = self._linked_worktree(main)
+    affected.write_map(sibling / ".venv" / "affected-map.json", _git(main, "rev-parse", "HEAD"),
+                       {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    real_run = subprocess.run
+
+    def without_status(args, **kwargs):
+      if "status" in args:
+        raise OSError("git cannot run")
+      return real_run(args, **kwargs)
+
+    with patch.object(affected.subprocess, "run", side_effect=without_status):
+      code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("no other worktree has a readable, clean map", err)
+
+  def test_Select_NoLocalMap_TwoSiblingMaps_UsesMainCheckoutFirst(self) -> None:
+    main = self._git_root()
+    head = _git(main, "rev-parse", "HEAD")
+    main_map = main / ".venv" / "affected-map.json"
+    affected.write_map(main_map, head, {"mod.T.test_main": ["src/slicer/ops.py:4"]})
+    other = self._linked_worktree(main)
+    other_map = other / ".venv" / "affected-map.json"
+    affected.write_map(other_map, head, {"mod.T.test_other": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_main"])
+    self.assertIn(str(main_map.resolve()), err)
+    self.assertNotIn(str(other_map.resolve()), err)
 
   def test_DiscoverSuccess_WritesMapForHead(self) -> None:
     directory = self._git_root()
