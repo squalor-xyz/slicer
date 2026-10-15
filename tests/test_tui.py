@@ -6,7 +6,7 @@ import curses
 import io
 import re
 from contextlib import redirect_stderr, redirect_stdout
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -1475,7 +1475,16 @@ def board_text(lines: list[tui.PanelLine]) -> str:
 
 
 def row_for_role(lines: list[tui.PanelLine], role: str) -> str:
-  return next(line.text for line in lines if re.match(rf"\s*\[.\] {role}(\s|$)", line.text))
+  return next(line.text for line in lines if re.match(rf"\s*(?:[├└] )?\[.\] {role}(\s|$)", line.text))
+
+
+def nested_run(*steps: relayrun.Step, **kwargs) -> relayrun.Run:
+  """An orchestrator step 1 with the given steps; pass `parent="1"` on those that sit under it."""
+  return board_run(board_step("1", "orchestrator", begun="2026-10-14T12:00:00Z"), *steps, **kwargs)
+
+
+def line_with(lines: list[tui.PanelLine], text: str) -> tui.PanelLine | None:
+  return next((line for line in lines if text in line.text), None)
 
 
 class RelayBoardLinesTests(unittest.TestCase):
@@ -1534,7 +1543,10 @@ class RelayBoardLinesTests(unittest.TestCase):
     run.state = "stale"
     lines = tui.board_lines([run], 3, NOW, 100)
     self.assertIn("stale", lines[0].text)
-    self.assertEqual({line.role for line in lines}, {"dim"})
+    self.assertTrue(lines[0].text.startswith("~ "), lines[0].text)
+    # Only the freshness line stands out: the run has not been heard from for a while.
+    self.assertEqual({line.role for line in lines if "last heard" not in line.text}, {"dim"})
+    self.assertEqual(line_with(lines, "last heard").role, "error")
     text = board_text(lines)
     for frame in SPIN:
       self.assertNotIn(f"[{frame}]", text)
@@ -1544,7 +1556,9 @@ class RelayBoardLinesTests(unittest.TestCase):
   def test_BoardLines_EndedRun_LabelsItsOutcome(self) -> None:
     run = board_run(board_step("1", "implementer", "done"), state="ended", outcome="pass")
     lines = tui.board_lines([run], 0, NOW, 100)
-    self.assertIn("ended pass", lines[0].text)
+    self.assertIn("pass", lines[0].text)
+    self.assertIn("ended 2m04s ago", lines[0].text)
+    self.assertEqual(len(lines), 1)
     self.assertEqual({line.role for line in lines}, {"dim"})
 
   def test_BoardLines_FailedStep_UsesTheErrorRole(self) -> None:
@@ -1564,12 +1578,13 @@ class RelayBoardLinesTests(unittest.TestCase):
     lines = tui.board_lines([run], 0, NOW, 100)
     other = [line.text for line in lines if line.text.lstrip().startswith("other")]
     self.assertEqual(len(other), 1)
-    self.assertIn("orchestrator", other[0])
+    self.assertNotIn("orchestrator", other[0])
     self.assertIn("implementer-part-2", other[0])
+    self.assertEqual(len([line for line in lines if "orchestrator" in line.text and "[|]" in line.text]), 1)
     self.assertIn("[|]", other[0])
     texts = [line.text for line in lines]
     self.assertGreater(texts.index(other_line := other[0]), max(
-      i for i, text in enumerate(texts) if re.match(r"\s*\[.\] (implementer|reviewer|gate)\b", text)))
+      i for i, text in enumerate(texts) if re.match(r"\s*(?:[├└] )?\[.\] (implementer|reviewer|gate)\b", text)))
 
   def test_BoardLines_OnlyOtherRoles_StillDraws(self) -> None:
     run = board_run(board_step("1", "orchestrator"))
@@ -1600,6 +1615,123 @@ class RelayBoardLinesTests(unittest.TestCase):
     tasks = [line.text for line in lines if "yyyy" in line.text]
     self.assertEqual(len(tasks), 1)
     self.assertTrue(tasks[0].endswith("..."), tasks[0])
+
+  def test_BoardLines_RolesUnderOrchestrator_FillTheLane(self) -> None:
+    run = nested_run(board_step("2", "implementer", parent="1"))
+    lines = tui.board_lines([run], 0, NOW, 100)
+    row = row_for_role(lines, "implementer")
+    self.assertNotIn("waiting", row)
+    self.assertTrue(row.lstrip().lstrip("├└ ").startswith("[|]"), row)
+    self.assertIn("[implementer] > reviewer > gate", board_text(lines))
+    texts = [line.text for line in lines]
+    root = next(n for n, text in enumerate(texts) if text.lstrip().startswith("└ orchestrator"))
+    self.assertLess(root, texts.index(row))
+    self.assertTrue(row.lstrip().startswith("├"), row)
+    self.assertTrue(row_for_role(lines, "gate").lstrip().startswith("└"))
+    self.assertFalse([text for text in texts if text.lstrip().startswith("other")])
+
+  def test_BoardLines_HelperUnderImplementer_StaysASubagent(self) -> None:
+    run = nested_run(
+      board_step("2", "implementer", parent="1"),
+      board_step("3", "implementer", "done", parent="2"),
+    )
+    lines = tui.board_lines([run], 0, NOW, 100)
+    rows = [line.text for line in lines if re.match(r"\s*(?:[├└] )?\[.\] implementer(\s|$)", line.text)]
+    self.assertEqual(len(rows), 1, rows)
+    self.assertIn("1 subagent", rows[0])
+    self.assertNotIn("×", rows[0])
+    self.assertNotIn("round 2", board_text(lines))
+
+  def test_BoardLines_Header_ShowsTitleAndOrchestratorModel(self) -> None:
+    run = nested_run(board_step("2", "implementer", parent="1"))
+    titles = {"s283": "Relay board nested lanes"}
+    lines = tui.board_lines([run], 0, NOW, 100, titles=titles)
+    self.assertIn("s283", lines[0].text)
+    self.assertIn("Relay board nested lanes", lines[0].text)
+    self.assertIn("orchestrator sonnet/high", lines[1].text)
+    self.assertNotIn("wt ", lines[1].text)
+    self.assertNotIn("s283  s283", lines[0].text)
+    run.worktree = ".worktrees/s283-board"
+    lines = tui.board_lines([run], 0, NOW, 100, titles=titles)
+    self.assertIn("wt s283-board", lines[1].text)
+    self.assertNotIn("s283-board", lines[0].text)
+    cut = tui.board_lines([run], 0, NOW, 40, titles={"s283": "t" * 80})
+    self.assertIn("t...  active", cut[0].text)
+    self.assertLessEqual(tui_style.cell_width(cut[0].text), 40)
+    self.assertIsNone(line_with(tui.board_lines([run], 0, NOW, 100), "Relay board"))
+
+  def test_BoardLines_GateFail_ShowsRoundAndFailLine(self) -> None:
+    run = board_run(
+      board_step("1", "implementer", "done"),
+      board_step("2", "gate", "fail", task="missing test for the nested lane"),
+      board_step("3", "implementer", "done"),
+      board_step("4", "gate"),
+    )
+    lines = tui.board_lines([run], 0, NOW, 100)
+    pipeline = line_with(lines, "implementer > ")
+    self.assertTrue(pipeline.text.endswith("round 2"), pipeline.text)
+    self.assertLessEqual(tui_style.cell_width(pipeline.text), 100)
+    self.assertIn("×2", row_for_role(lines, "gate"))
+    self.assertIn("×2", row_for_role(lines, "implementer"))
+    self.assertNotIn("×", row_for_role(lines, "reviewer"))
+    fail = line_with(lines, "gate FAIL")
+    self.assertIsNotNone(fail)
+    self.assertEqual(fail.role, "error")
+    self.assertIn("✗ gate FAIL → implementer round 2", fail.text)
+    self.assertIn("missing test for the nested lane", fail.text)
+    texts = [line.text for line in lines]
+    self.assertEqual(texts.index(fail.text), texts.index(row_for_role(lines, "gate")) + 1)
+    # A gate that is still failed says why once, in the FAIL line, not again under its row.
+    last = board_run(board_step("1", "implementer", "done"),
+                     board_step("2", "gate", "fail", task="missing test"))
+    lines = tui.board_lines([last], 0, NOW, 100)
+    self.assertEqual(len([line for line in lines if "missing test" in line.text]), 1)
+    self.assertTrue(row_for_role(lines, "gate").lstrip().startswith("[!]"))
+    self.assertIn("implementer round 2: missing test", line_with(lines, "gate FAIL").text)
+
+  def test_BoardLines_LastHeard_EscalatesNearStale(self) -> None:
+    def role_at(updated: str, state: str = "active") -> str:
+      run = pipeline_run()
+      run.updated_at, run.state = updated, state
+      line = line_with(tui.board_lines([run], 0, NOW, 100), "last heard")
+      self.assertIsNotNone(line)
+      return line.role
+
+    self.assertEqual(role_at("2026-10-14T12:10:00Z"), "dim")
+    half = relayrun.STALE_AFTER / 2
+    just_under = relayrun.stamp(NOW - half + timedelta(seconds=1))
+    just_over = relayrun.stamp(NOW - half - timedelta(seconds=1))
+    self.assertEqual(role_at(just_under), "dim")
+    self.assertEqual(role_at(just_over), "started")
+    self.assertEqual(role_at("2026-10-14T11:30:00Z", "stale"), "error")
+    run = pipeline_run()
+    self.assertIn("last heard 2m04s ago", line_with(tui.board_lines([run], 0, NOW, 100), "last heard").text)
+
+  def test_BoardLines_NarrowWidth_NoLineExceedsWidth(self) -> None:
+    long_model = "claude-sonnet-5-5-with-a-very-long-suffix"
+    nested = nested_run(
+      board_step("2", "implementer", "done", parent="1", model=long_model, task="x" * 200),
+      board_step("3", "gate", "fail", parent="1", model=long_model, task="g" * 200),
+      board_step("4", "implementer", parent="1", model=long_model, task="y" * 200),
+      board_step("5", "reviewer", parent="4"),
+      run_id="run-1",
+    )
+    nested.worktree = "w" * 120
+    flat = board_run(board_step("1", "reviewer", model=long_model, task="z" * 200), run_id="run-2")
+    flat.items = ["s283", "s284", "s285"]
+    ended = board_run(board_step("1", "implementer", "done"), run_id="run-3", state="ended", outcome="pass")
+    ended.items = ["s990"]
+    titles = {"s283": "T" * 150, "s990": "U" * 150}
+    for width in (40, 80):
+      lines = tui.board_lines([nested, flat, ended], 0, NOW, width, titles=titles)
+      for line in lines:
+        self.assertLessEqual(tui_style.cell_width(line.text), width, line.text)
+      for needle in ("gate FAIL", "last heard", "orchestrator", "UUUU...  pass"):
+        self.assertIsNotNone(line_with(lines, needle), (width, needle))
+      # A cell that does not fit is dropped whole: "round 2" needs 41 cells beside the pipeline.
+      self.assertEqual(line_with(lines, "round 2") is not None, width == 80)
+      self.assertEqual(line_with(lines, "ended 2m04s ago") is not None, width == 80)
+      self.assertTrue(any(line.text.endswith("...") for line in lines))
 
   def test_BoardLines_NoRuns_SaysNothingRunningAndNamesRelayRun(self) -> None:
     lines = tui.board_lines([], 0, NOW, 80)
@@ -1720,13 +1852,50 @@ class RelayBoardViewTests(unittest.TestCase):
     self.assertEqual(set(tui.RELAY_PIPELINE) | {"architect"}, set(roles.ROLE_NAMES))
     self.assertEqual(tui.RELAY_PIPELINE, ("implementer", "reviewer", "gate"))
 
-  def test_Handle_BoardOpen_EndedRunsLeaveTheBoard(self) -> None:
+  def test_Handle_BoardOpen_EndedRunsPastTheWindowLeaveTheBoard(self) -> None:
     ended = board_run(board_step("1", "implementer", "done"), run_id="run-0",
                       state="ended", outcome="pass")
     stale = board_run(board_step("1", "implementer"), run_id="run-2", state="stale")
-    view, state, _ = self.board([ended, pipeline_run(), stale])
-    view.handle(state, "b")
-    self.assertEqual([run.id for run in view.board_runs], ["run-1", "run-2"])
+    ended_at = datetime(2026, 10, 14, 12, 10, 0, tzinfo=timezone.utc)  # the run's last event
+    for later, kept in ((tui.BOARD_RECENT_ENDED + timedelta(seconds=1), False),
+                        (tui.BOARD_RECENT_ENDED, True)):
+      view, state, _ = self.board([ended, pipeline_run(), stale])
+      with patch.object(relayrun, "utcnow", lambda: ended_at + later):
+        view.handle(state, "b")
+      ids = ["run-1", "run-2"] + (["run-0"] if kept else [])
+      self.assertEqual([run.id for run in view.board_runs], ids, later)
+
+  def test_LoadBoard_KeepsRecentlyEndedRuns(self) -> None:
+    def ended(run_id: str, updated: str, outcome: str = "pass") -> relayrun.Run:
+      run = board_run(
+        board_step("1", "implementer", "done"), board_step("2", "implementer", "done"),
+        board_step("3", "reviewer", "done"), board_step("4", "gate", "done"),
+        run_id=run_id, state="ended", outcome=outcome,
+      )
+      run.updated_at = updated
+      return run
+
+    recent = ended("run-a", "2026-10-14T12:02:04Z")
+    newer = ended("run-b", "2026-10-14T12:09:04Z", "fail")
+    old = ended("run-c", "2026-10-14T10:12:04Z")
+    active = pipeline_run()
+    view, state, _ = self.board([recent, old, active, newer])
+    with patch.object(relayrun, "utcnow", lambda: NOW):
+      view.handle(state, "b")
+    self.assertEqual([run.id for run in view.board_runs], ["run-1", "run-b", "run-a"])
+    lines = tui.board_lines(view.board_runs, 0, NOW, 100, titles={"s283": "Relay board"})
+    summary = [line for line in lines if "ended 10m00s ago" in line.text]
+    self.assertEqual(len(summary), 1)
+    self.assertIn("pass", summary[0].text)
+    self.assertIn("impl 2 · review 1 · gate 1", summary[0].text)
+    self.assertIn("Relay board", summary[0].text)
+    self.assertEqual(summary[0].role, "dim")
+    self.assertTrue(summary[0].text.startswith("✓ s283"), summary[0].text)
+    failed = line_with(lines, "ended 3m00s ago")
+    self.assertTrue(failed.text.startswith("✗ s283"), failed.text)
+    self.assertLess(lines.index(failed), lines.index(summary[0]))
+    self.assertNotIn("run-c", board_text(lines))
+    self.assertEqual(tui.BOARD_RECENT_ENDED, timedelta(hours=1))
 
   def test_Handle_BoardKeys_CloseScrollAndStayReadOnly(self) -> None:
     for closer in ("b", "\x1b", "q"):
@@ -1781,6 +1950,17 @@ class RelayBoardViewTests(unittest.TestCase):
     self.assertEqual(view.board_at, len(expected) - visible)
     self.assertIn((visible, expected[-1].text), small.writes)
     self.assertLessEqual(max(y for y, _ in small.writes), 9)
+
+  def test_Draw_Board_TitlesComeFromTheRoadmap(self) -> None:
+    run = board_run(board_step("1", "implementer"))
+    run.items = ["S02"]
+    view, state, _ = self.board([run])
+    view.handle(state, "b")
+    screen = Screen(24, 100)
+    with patch.object(relayrun, "utcnow", lambda: NOW):
+      tui.draw(screen, state, view)
+    header = next(text for y, text in screen.writes if y == 1)
+    self.assertIn("S02  Search full title  active", header)
 
 
 class RelayBoardLoopTests(unittest.TestCase):

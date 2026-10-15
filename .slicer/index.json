@@ -9769,10 +9769,22 @@
       "id": "s294",
       "title": "Relay board shows nested runs as a tree with rounds, freshness and recent results",
       "short_title": "Relay board shows nested runs as a tree with rounds, freshness and recent results",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "dbdc9fcc-9eea-4730-87e9-8e8286607fc5",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: relay board redesign verified. Nested lane fixed: a step fills a role row when it has no parent or its parent is an orchestrator step (tui.py _lane), so nested relays no longer show every role waiting. Board now shows the item title, a last-heard freshness line (dim, warning past half of STALE_AFTER, error once stale), orchestrator root row with roles under it, xN rounds, round N, gate FAIL lines, and runs ended within the last hour (BOARD_RECENT_ENDED) as one dimmed summary line. Docs (docs/tui.md) and CHANGELOG updated. Full suite 2139 tests OK (1 skipped); 31 board tests OK after the test-only fix round (stale glyph pinned); slicer check passes; every new assertion mutation-checked. Width-80 nested frame:\n● s294  Relay board shows nested runs as a tree with rounds, ...  active  50m00s\n  last heard 1m00s ago  orchestrator opus/high  wt s294-board\n  implementer > reviewer > [gate]                                        round 2\n  └ orchestrator opus/high  [|]  50m00s\n    ├ [+] implementer  x2  9m00s  1 subagent  Claude Code  Anthropic/sonnet high\n    ├ [+] reviewer     x2  11m00s  Claude Code  Anthropic/opus high\n    └ [|] gate         x2  7m00s  Claude Code  Anthropic/sonnet medium\n          gate again\n          ✗ gate FAIL → implementer round 2: mutation stayed green in tui.py\nWidth-40 nested frame:\n● s294  Relay board s...  active  50m00s\n  last heard 1m00s ago  wt s294-board\n  implementer > reviewer > [gate]\n  └ orchestrator opus/high  [|]  50m00s\n    └ [|] gate         x2  7m00s\n          ✗ gate FAIL → implementer r...",
+          "created_at": "2026-10-15T17:01:34Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -9792,7 +9804,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -9946,6 +9958,36 @@
         "importance": 1,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s297",
+      "title": "Relay board colors each pipeline role by its state",
+      "short_title": "Relay board colors each pipeline role by its state",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s294 gate OWNER item, owner chose land + follow-up 2026-10-15",
+        "discovered_from": "s294",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }

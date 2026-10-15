@@ -12,7 +12,7 @@ Editing follows the same rule: `act` never launches an editor. It returns an
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from slicer import graph, model, ops, outline, prose, relayrun, render, roles, store, tui_style, tui_wizard, vcs
 from slicer.errors import SlicerError
@@ -822,7 +822,14 @@ class View:
       self.board_error = (str(exc).splitlines() or [type(exc).__name__])[0]
       return
     self.board_error = ""
-    self.board_runs = [run for run in runs if run.state != "ended"]
+    now = relayrun.utcnow()
+    live = [run for run in runs if run.state != "ended"]
+    recent = [
+      run for run in runs
+      if run.state == "ended" and now - _parse_stamp(run.updated_at) <= BOARD_RECENT_ENDED
+    ]
+    recent.sort(key=lambda run: (run.updated_at, run.id), reverse=True)
+    self.board_runs = live + recent
 
   def handle(self, state: State, key: str) -> ActResult:
     if key == "tick":  # a timer wake-up: only the open board has anything to do with it
@@ -1166,6 +1173,8 @@ BOARD_TICK_MS = 250
 # Runs are re-read every this many ticks (2 s): `list_runs` shells out to git on every call,
 # and the spinner needs a frame four times a second, not fresh data.
 BOARD_REFRESH_TICKS = 8
+# A run that ended no longer than this ago stays on the board as one summary line.
+BOARD_RECENT_ENDED = timedelta(hours=1)
 SPINNER = "|/-\\"
 # The relay's own roles (`slicer ai relay`). An architect leads the pipeline when a run has one.
 RELAY_PIPELINE = tuple(role for role in roles.ROLE_NAMES if role != "architect")
@@ -1213,13 +1222,21 @@ def _marker(step: relayrun.Step, run: relayrun.Run, tick: int) -> tuple[str, str
   return "~", "dim"  # started, but nothing is running it
 
 
-def _latest_by_role(run: relayrun.Run) -> dict[str, relayrun.Step]:
-  latest: dict[str, relayrun.Step] = {}
+def _lane(run: relayrun.Run) -> dict[str, list[relayrun.Step]]:
+  """Each role's steps in the lane, oldest first; the role that moved last comes last.
+
+  A step is in the lane when nothing spawned it or the orchestrator did. A step that any
+  other role spawned is that role's subagent: it is counted on its parent's row, not drawn.
+  """
+  lane: dict[str, list[relayrun.Step]] = {}
   for step in run.steps:
-    if not step.parent:
-      latest.pop(step.role, None)  # a later step moves its role to the end
-      latest[step.role] = step
-  return latest
+    parent = run.step(step.parent) if step.parent else None
+    if step.parent and (parent is None or parent.role != "orchestrator"):
+      continue
+    steps = lane.pop(step.role, [])  # a later step moves its role to the end
+    steps.append(step)
+    lane[step.role] = steps
+  return lane
 
 
 def _step_elapsed(step: relayrun.Step, run: relayrun.Run, now: datetime) -> str:
@@ -1228,11 +1245,93 @@ def _step_elapsed(step: relayrun.Step, run: relayrun.Run, now: datetime) -> str:
   return elapsed_text(step.begun_at, end)
 
 
-def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int) -> list[PanelLine]:
-  """One lane per run: the slice, its pipeline, a row per role, and any other roles.
+def _model_effort(step: relayrun.Step) -> str:
+  return "/".join(part for part in (step.model, step.reasoning) if part)
 
+
+def _title_cell(head: str, title: str, tail: list[str], width: int) -> str:
+  """The title, cut with `...` to the room left beside `head` and as many `tail` cells as fit.
+
+  The first two tail cells always keep their room; the later ones keep it only when the
+  title can still be at least a few cells wide, and are dropped by `_fit` otherwise.
+  """
+  if not title:
+    return ""
+  for kept in range(len(tail), min(2, len(tail)) - 1, -1):
+    room = width - tui_style.cell_width(head) - 2 - sum(tui_style.cell_width(c) + 2 for c in tail[:kept])
+    if room >= 8:
+      return _ellipsis(title, room)
+  return ""
+
+
+def _lane_header(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles: dict[str, str],
+                 now: datetime, width: int) -> list[PanelLine]:
+  live = run.state == "active"
+  head = f"{'●' if live else '~'} {', '.join(run.items)}"
+  tail = [run.state, elapsed_text(run.begun_at, now if live else _parse_stamp(run.updated_at))]
+  title = _title_cell(head, titles.get(run.items[0], "") if run.items else "", tail, width)
+  lines = [PanelLine(_fit([head, title] + tail, width), role="heading" if live else "dim")]
+  orchestrator = lane.get("orchestrator")
+  worktree = run.worktree.rstrip("/").rsplit("/", 1)[-1]
+  # The freshness comes first: on a narrow screen it is the cell worth keeping.
+  cells = [
+    f"last heard {elapsed_text(run.updated_at, now)} ago",
+    f"orchestrator {_model_effort(orchestrator[-1])}".rstrip() if orchestrator else "",
+    f"wt {worktree}" if worktree and worktree.casefold() != ", ".join(run.items).casefold() else "",
+  ]
+  cells = [cell for cell in cells if cell]
+  cells[0] = "  " + cells[0]
+  if run.state == "stale":
+    role = "error"
+  elif live and now - _parse_stamp(run.updated_at) > relayrun.STALE_AFTER / 2:
+    role = "started"
+  else:
+    role = "dim"
+  lines.append(PanelLine(_fit(cells, width), role=role))
+  return lines
+
+
+def _ended_line(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles: dict[str, str],
+                now: datetime, width: int) -> PanelLine:
+  glyph = {"pass": "✓", "fail": "✗"}.get(run.outcome, "~")
+  head = f"{glyph} {', '.join(run.items)}"
+  tail = [
+    run.outcome, elapsed_text(run.begun_at, _parse_stamp(run.updated_at)),
+    f"ended {elapsed_text(run.updated_at, now)} ago",
+    " · ".join(f"{label} {len(lane.get(role, ()))}"
+               for label, role in (("impl", "implementer"), ("review", "reviewer"), ("gate", "gate"))),
+  ]
+  title = _title_cell(head, titles.get(run.items[0], "") if run.items else "", tail, width)
+  return PanelLine(_fit([head, title] + tail, width), role="dim")
+
+
+def _gate_fail_lines(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], indent: str,
+                     width: int) -> list[PanelLine]:
+  """One line per failed gate step: the round the failure sent the work back to, and why."""
+  in_lane = {id(step) for steps in lane.values() for step in steps}
+  rounds = 0
+  lines = []
+  for step in run.steps:
+    if id(step) not in in_lane:
+      continue
+    if step.role == "implementer":
+      rounds += 1
+    elif step.role == "gate" and step.phase == "fail":
+      why = f": {step.task}" if step.task else ""
+      lines.append(PanelLine(
+        _ellipsis(f"{indent}✗ gate FAIL → implementer round {rounds + 1}{why}", width), role="error"))
+  return lines
+
+
+def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
+                titles: dict[str, str] | None = None) -> list[PanelLine]:
+  """One lane per live run, one summary line per ended run.
+
+  A lane is the slice (its title comes from `titles`, item id to title), a freshness line, the
+  pipeline with its round, and a row per role, under the orchestrator when the run has one.
   `width` is the cells available. A row drops a cell that does not fit rather than cutting it.
-  Only a running step in an active run animates; a stale or ended lane is dimmed throughout.
+  Only a running step in an active run animates; a stale lane is dimmed throughout, bar the
+  freshness line, which turns to the error role.
   """
   if not runs:
     return [
@@ -1240,43 +1339,63 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int) 
       PanelLine(tui_style.clipped("An orchestrator records a relay with `slicer relay-run begin`", width), role="dim"),
       PanelLine(tui_style.clipped("and `relay-run step`; see docs/commands.md#relay-run-ledger.", width), role="dim"),
     ]
+  titles = titles or {}
   lines: list[PanelLine] = []
   for run in runs:
     if lines:
       lines.append(PanelLine(""))
+    lane = _lane(run)
+    if run.state == "ended":
+      lines.append(_ended_line(run, lane, titles, now, width))
+      continue
     live = run.state == "active"
     dim = "normal" if live else "dim"
-    label = run.state if run.state != "ended" else f"ended {run.outcome}".rstrip()
-    run_end = now if live else _parse_stamp(run.updated_at)
-    lines.append(PanelLine(
-      _fit([", ".join(run.items), label, elapsed_text(run.begun_at, run_end), run.worktree], width),
-      role="heading" if live else "dim",
-    ))
-    latest = _latest_by_role(run)
-    names = (("architect",) if "architect" in latest else ()) + RELAY_PIPELINE
+    lines.extend(_lane_header(run, lane, titles, now, width))
+    names = (("architect",) if "architect" in lane else ()) + RELAY_PIPELINE
     parts = [
-      f"[{name}]" if name in latest and latest[name].phase == "start" and live else name
+      f"[{name}]" if name in lane and lane[name][-1].phase == "start" and live else name
       for name in names
     ]
-    lines.append(PanelLine(_fit(["  " + " > ".join(parts)], width), role=dim))
-    for name in names:
-      step = latest.get(name)
-      if step is None:
-        lines.append(PanelLine(_fit([f"  [ ] {name:<{ROLE_WIDTH}}  waiting"], width), role="dim"))
-        continue
+    pipeline = "  " + " > ".join(parts)
+    rounds = f"round {len(lane['implementer'])}" if "implementer" in lane else ""
+    gap = width - tui_style.cell_width(pipeline) - tui_style.cell_width(rounds)
+    lines.append(PanelLine(
+      pipeline + " " * gap + rounds if rounds and gap >= 2 else _fit([pipeline], width), role=dim))
+    orchestrator = lane.get("orchestrator")
+    if orchestrator:
+      step = orchestrator[-1]
       marker, role = _marker(step, run, tick)
+      lines.append(PanelLine(_fit([
+        f"  └ orchestrator {_model_effort(step)}".rstrip(), f"[{marker}]",
+        _step_elapsed(step, run, now),
+      ], width), role=role if live else "dim"))
+    for at, name in enumerate(names):
+      last = at == len(names) - 1
+      # A row under the orchestrator hangs on a tree; a flat run keeps its plain indent.
+      prefix = ("    └ " if last else "    ├ ") if orchestrator else "  "
+      below = ("          " if last else "    │     ") if orchestrator else "        "
+      steps = lane.get(name)
+      if steps is None:
+        lines.append(PanelLine(_fit([f"{prefix}[ ] {name:<{ROLE_WIDTH}}  waiting"], width), role="dim"))
+        continue
+      step = steps[-1]
+      marker, role = _marker(step, run, tick)
+      role = role if live else "dim"
       subagents = len(run.subagents_of(step.id))
       model = "/".join(part for part in (step.vendor, step.model) if part)
       lines.append(PanelLine(_fit([
-        f"  [{marker}] {name:<{ROLE_WIDTH}}",
+        f"{prefix}[{marker}] {name:<{ROLE_WIDTH}}",
+        f"×{len(steps)}" if len(steps) > 1 else "",
         _step_elapsed(step, run, now),
         f"{subagents} subagent{'s' if subagents != 1 else ''}" if subagents else "",
         step.agent,
         f"{model} {step.reasoning}".strip(),
-      ], width), role=role if live else "dim"))
-      if step.task:
-        lines.append(PanelLine(_ellipsis("        " + step.task, width), role=role if live else "dim"))
-    others = [step for name, step in latest.items() if name not in names]
+      ], width), role=role))
+      if step.task and not (name == "gate" and step.phase == "fail"):  # the FAIL line carries it
+        lines.append(PanelLine(_ellipsis(f"{below}{step.task}", width), role=role))
+      if name == "gate":
+        lines.extend(_gate_fail_lines(run, lane, below, width))
+    others = [steps[-1] for name, steps in lane.items() if name not in names and name != "orchestrator"]
     if others:
       cells = ["  other:"]
       for step in others:
@@ -1338,7 +1457,8 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   visible = status_y - 1
   if view.mode == "board":
     put(0, 0, "Relay board: j/k or arrows scroll, b, q or Esc close", palette.attr("heading"))
-    lines = board_lines(view.board_runs, view.board_tick, relayrun.utcnow(), width - 1)
+    titles = {item.id: item.title for item in state.index.items}
+    lines = board_lines(view.board_runs, view.board_tick, relayrun.utcnow(), width - 1, titles)
     view.board_at = max(0, min(view.board_at, len(lines) - visible))
     for n, line in enumerate(lines[view.board_at:view.board_at + visible], 1):
       put(n, 0, line.text, palette.attr(line.role))
