@@ -8934,7 +8934,7 @@
       "id": "s273",
       "title": "Link a sliver to its parent slice with a parent field",
       "short_title": "Sliver parent field",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
