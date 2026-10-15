@@ -1,6 +1,24 @@
 {
-  "version": 1,
+  "version": 2,
   "rows": [
+    {
+      "id": "r8",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": true
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "haiku",
+      "reasoning": "xhigh",
+      "note": "per sliver"
+    },
     {
       "id": "r1",
       "role": "implementer",
@@ -15,7 +33,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": true,
-        "split": false
+        "split": false,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -36,7 +55,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": true,
-        "split": false
+        "split": false,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -53,7 +73,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": false
+        "split": false,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -70,7 +91,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": true
+        "split": true,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -87,7 +109,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": null
+        "split": null,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -104,7 +127,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": null
+        "split": null,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -123,7 +147,8 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": null
+        "split": null,
+        "sliver": null
       },
       "agent": "Claude Code",
       "vendor": "Claude",
@@ -151,13 +176,25 @@
     },
     {
       "id": "u5",
-      "text": "Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices."
+      "text": "Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices or a slivered slice."
     },
     {
       "id": "u6",
       "text": "The orchestrator reads a Haiku implementer's diff itself before review, and switches that role to Sonnet early when quality falls short."
+    },
+    {
+      "id": "u7",
+      "text": "Sliver a slice only at effort 1, or at effort 2 when every sliver is effort 1; never at effort 3."
+    },
+    {
+      "id": "u8",
+      "text": "Slivers with disjoint files and their own tests may run in parallel, at most 3 at once; the rest run in order."
+    },
+    {
+      "id": "u9",
+      "text": "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high)."
     }
   ],
-  "next_row": 8,
-  "next_rule": 7
+  "next_row": 9,
+  "next_rule": 10
 }

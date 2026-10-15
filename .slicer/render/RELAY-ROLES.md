@@ -6,6 +6,7 @@
 
 | ID | Role | When | Agent | Vendor | Model | Reasoning | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| r8 | Implementer | sliver | Claude Code | Claude | haiku | xhigh | per sliver |
 | r1 | Implementer | well specified, whole slice, effort 1, size S or M | Claude Code | Claude | haiku | xhigh | - |
 | r2 | Implementer | well specified, whole slice, effort 2, size S | Claude Code | Claude | haiku | xhigh | - |
 | r3 | Implementer | whole slice | Claude Code | Claude | sonnet | high | anything the rows above do not match |
@@ -20,5 +21,8 @@
 - u2: No cross-vendor reviewer unless the owner asks.
 - u3: Roles on the orchestrator's own agent run as subagents; a role on another agent runs headless in the slice worktree with the same brief.
 - u4: "well specified" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision.
-- u5: Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices.
+- u5: Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices or a slivered slice.
 - u6: The orchestrator reads a Haiku implementer's diff itself before review, and switches that role to Sonnet early when quality falls short.
+- u7: Sliver a slice only at effort 1, or at effort 2 when every sliver is effort 1; never at effort 3.
+- u8: Slivers with disjoint files and their own tests may run in parallel, at most 3 at once; the rest run in order.
+- u9: A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high).
