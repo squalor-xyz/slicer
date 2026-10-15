@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">276 items · — 15 · done 257 · retired 4</p>
+<p class="summary">276 items · — 14 · done 257 · retired 4 · review 1</p>
 <h2>v1.11</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>s269</td><td>Why slicer doc</td><td>S</td><td>1</td><td>docs</td><td>owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README</td><td class="status">done</td></tr>
@@ -66,7 +66,7 @@
 <tr class="open"><td>17</td><td>s285</td><td>TUI shows the relay request for a selected slice or range</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-14: monitor slice relays from the TUI</td><td class="status">—</td></tr>
 <tr class="done"><td>18</td><td>s286</td><td>list marks blocked rows with !</td><td>S</td><td>1</td><td>slicer</td><td>owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why</td><td class="status">done</td></tr>
 <tr class="open"><td>19</td><td>s287</td><td>Gitignore the project lock file</td><td>S</td><td>1</td><td>slicer</td><td>s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write</td><td class="status">—</td></tr>
-<tr class="open"><td>20</td><td>s288</td><td>affected.py finds a map for the same commit in another worktree</td><td>S</td><td>1</td><td>slicer</td><td>v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it</td><td class="status">—</td></tr>
+<tr class="other"><td>20</td><td>s288</td><td>affected.py finds a map for the same commit in another worktree</td><td>S</td><td>1</td><td>slicer</td><td>v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it</td><td class="status">review</td></tr>
 <tr class="open"><td>21</td><td>s289</td><td>An outline&#x27;s depends accepts an existing item ID</td><td>S</td><td>1</td><td>slicer</td><td>v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with &quot;depends on &#x27;s270&#x27;, which is not in the outline or the index&quot;, although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID</td><td class="status">—</td></tr>
 </tbody></table>
 <h2>v1.10</h2>

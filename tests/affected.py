@@ -3,9 +3,11 @@
 The full unittest discover stays the gate before done. When that discover is
 the process entry point and passes, it writes this map for HEAD: the lines each
 test executed, and the non-Python repo files each test opened, so a Markdown or
-template change selects its readers. The map is a local cache: when it is
-missing or stale, the caller is told to run that suite instead of a list that
-only looks complete.
+template change selects its readers. A worktree without a map of its own borrows
+one that another worktree of the repository recorded at the same HEAD, when that
+worktree has no uncommitted changes under `src/` or `tests/`; it is read, never
+written. The map is a local cache: when it is missing or stale, the caller is told
+to run that suite instead of a list that only looks complete.
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
       print("affected: record only accepts --map", file=sys.stderr)
       return 2
     return record(map_path)
-  return select(map_path, args.sha, args.lines, args.run)
+  return select(map_path, args.sha, args.lines, args.run, borrow=args.map is None)
 
 
 def record(map_path: Path) -> int:
@@ -122,16 +124,25 @@ def _string_lists(section: dict, name: str) -> dict[str, list[str]]:
   return loaded
 
 
-def select(map_path: Path, sha: str | None, line_specs: list[str], run: bool) -> int:
-  if not map_path.is_file():
+def select(
+  map_path: Path, sha: str | None, line_specs: list[str], run: bool, *, borrow: bool = False,
+) -> int:
+  """Select from `map_path`. With `borrow`, a missing map is replaced by a sibling's."""
+  if not map_path.is_file() and not borrow:
     return _full_suite(f"{map_path} is missing")
+  current = sha if sha is not None else git_head(ROOT)
+  if current is None:
+    return _full_suite("cannot read HEAD")
+  if not map_path.is_file():
+    found = sibling_map(current)
+    if found is None:
+      return _full_suite(f"{map_path} is missing, and no other worktree has a readable, clean map for {current}")
+    print(f"affected: no map in this worktree; using {found}, recorded at {current}", file=sys.stderr)
+    map_path = found
   try:
     recorded, tests, reads = load_map(map_path)
   except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
     return _full_suite(f"{map_path} cannot be read ({exc})")
-  current = sha if sha is not None else git_head(ROOT)
-  if current is None:
-    return _full_suite("cannot read HEAD")
   if current != recorded:
     return _full_suite(f"map was recorded at {recorded}, HEAD is {current}")
   try:
@@ -142,6 +153,63 @@ def select(map_path: Path, sha: str | None, line_specs: list[str], run: bool) ->
   except GitError as exc:
     return _full_suite(str(exc))
   return _emit(changed, tests, reads, run)
+
+
+def sibling_map(sha: str) -> Path | None:
+  """The first worktree's map, in `git worktree list` order, that records `sha`.
+
+  Read only: each candidate is loaded and never written. A map that does not
+  load, or records another SHA, is passed over, and so is a worktree with
+  uncommitted changes under `src/` or `tests/`, whose map may describe code
+  that is not at `sha`.
+  """
+  for worktree in _worktree_paths(ROOT):
+    candidate = worktree / ".venv" / "affected-map.json"
+    if not candidate.is_file():
+      continue
+    try:
+      recorded, _, _ = load_map(candidate)
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+      continue
+    if recorded == sha and not _has_source_changes(worktree):
+      return candidate
+  return None
+
+
+def _has_source_changes(worktree: Path) -> bool:
+  """True when `worktree` has uncommitted changes under `src/` or `tests/`, or git cannot say.
+
+  Read only: `--no-optional-locks` keeps git from refreshing the index. A failed
+  probe counts as changed, so its map is not trusted. `.slicer/` is out of scope.
+  """
+  try:
+    proc = subprocess.run(
+      ["git", "--no-optional-locks", "status", "--porcelain", "--", "src", "tests"],
+      cwd=worktree, capture_output=True, text=True, check=False,
+    )
+  except OSError:
+    return True
+  if proc.returncode != 0:
+    return True
+  return bool(proc.stdout.strip())
+
+
+def _worktree_paths(root: Path) -> list[Path]:
+  """Every checkout of this repository, main checkout first."""
+  try:
+    proc = subprocess.run(
+      ["git", "worktree", "list", "--porcelain"],
+      cwd=root, capture_output=True, text=True, check=False,
+    )
+  except OSError:
+    return []
+  if proc.returncode != 0:
+    return []
+  return [
+    Path(line.removeprefix("worktree ")).resolve()
+    for line in proc.stdout.splitlines()
+    if line.startswith("worktree ")
+  ]
 
 
 def working_tree_lines(root: Path) -> dict[str, set[int]]:
