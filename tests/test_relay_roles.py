@@ -1304,6 +1304,27 @@ class AiRelayJsonTests(RelayRolesCase):
       self.ok(repo, "ai", "relay-roles")
     self.assertEqual(self.snapshot(repo), before)
 
+  def every_brief(self, out: str) -> str:
+    self.assertIn("## Every brief\n", out)
+    section = out.split("## Every brief", 1)[1].split("\n## ", 1)[0]
+    return " ".join(section.split())
+
+  def test_AiRelay_EveryBrief_NamesLabelAndExplicitModelEffort(self) -> None:
+    repo = self.with_matrix()
+    section = self.every_brief(self.ok(repo, "ai", "relay"))
+    self.assertIn("`ID role`", section)
+    self.assertIn("model and reasoning effort its role row names", section)
+    self.assertIn("set explicitly", section)
+
+  def test_AiRelay_EveryBrief_NamesNoHarness(self) -> None:
+    repo = self.with_matrix()
+    section = self.every_brief(self.ok(repo, "ai", "relay"))
+    # The label paragraph must be present, so the absence checks below are not vacuous.
+    self.assertIn("`ID role`", section)
+    for name in ("Claude Code", "/tasks", "subagentStatusLine"):
+      with self.subTest(name=name):
+        self.assertNotIn(name, section)
+
 
 class AiCompatibilityTests(RelayRolesCase):
   def test_InitRoles_WritesJsonAndRender(self) -> None:

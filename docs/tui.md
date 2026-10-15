@@ -171,6 +171,10 @@ a read succeeds; delete or fix the ledger line it names. Colors follow the displ
 below. In monochrome (`NO_COLOR=1`) the cues are the glyphs (`●`, `✓`, `✗`, `~`), the markers
 (`[+]`, `[!]`, `[~]`), the `[role]` brackets, the spinner, the `stale` label, and bold and dim.
 
+In Claude Code, `/tasks` lists the same agents with their model and effort. The
+`subagentStatusLine` setting can put them in the agent panel row; see the
+[Claude Code statusline docs](https://code.claude.com/docs/en/statusline.md).
+
 ## Display and color
 
 Queue and Details headings mark the focused pane with `>`. Focused selections use
