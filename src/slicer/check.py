@@ -8,10 +8,8 @@ code to read.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from slicer import render, store, sync, vcs, verify
-from slicer.errors import StateError
 from slicer.store import State
 
 
@@ -84,7 +82,7 @@ def _sibling_collisions(state: State) -> list[str]:
       if ours is None or ours.title == theirs.title:
         continue
       if inherited is None:
-        inherited = _inherited_ids(state, ours_head, path)
+        inherited = verify.inherited_ids(state, ours_head, path)
       if theirs.id not in inherited:
         warnings.append(
           f"{theirs.id} is {ours.title!r} here but {theirs.title!r} in worktree "
@@ -92,23 +90,3 @@ def _sibling_collisions(state: State) -> list[str]:
           f"under a new id before merging."
         )
   return warnings
-
-
-def _inherited_ids(state: State, ours_head: str | None, sibling: Path) -> set[str]:
-  """Ids in the index at the merge base of this checkout (at `ours_head`) and `sibling`.
-
-  Empty when the base cannot be found or read (unrelated histories, no index
-  there, an index that does not parse), so every id counts as new and the
-  warning stays. One merge base and one index read per sibling.
-  """
-  theirs_head = vcs.resolve(sibling, "HEAD")
-  if ours_head is None or theirs_head is None:
-    return set()
-  base = vcs.merge_base(state.root, ours_head, theirs_head)
-  if base is None:
-    return set()
-  try:
-    index = verify.index_at(state, base)
-  except StateError:
-    return set()
-  return {item.id for item in index.items} if index is not None else set()

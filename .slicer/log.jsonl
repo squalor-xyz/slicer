@@ -1606,3 +1606,6 @@
 {"when": "2026-10-15T19:05:05Z", "item": "s302", "action": "retire", "from": "open", "to": "retired", "note": "Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared."}
 {"when": "2026-10-15T19:05:39Z", "item": "s303", "action": "add", "from": "", "to": "open", "note": "Undeclared pass warns"}
 {"when": "2026-10-15T19:05:39Z", "item": "s303", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T19:10:20Z", "item": "s301", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:28:05Z", "item": "s301", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T19:43:13Z", "item": "s301", "action": "note", "from": "", "to": "", "note": "add --id refuses an id a sibling worktree filed (id_taken_el", "by": "Jon Robbins"}

@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `add --id` refuses an id that a sibling git worktree has already filed as an item of its own, instead of writing it and leaving `check` to warn about the merge collision. The refusal exits 2 with the new code `id_taken_elsewhere`, names the worktree and its title, and writes nothing.
+
 ## [1.11.0] - 2026-10-15
 
 ### Added

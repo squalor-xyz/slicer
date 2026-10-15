@@ -10074,10 +10074,22 @@
       "id": "s301",
       "title": "add --id refuses an id a sibling worktree already filed",
       "short_title": "add --id refuses an id a sibling worktree already filed",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "ea9b6d08-52f1-4862-a91d-558448377024",
+          "kind": "",
+          "text": "**2026-10-15** — add --id refuses an id a sibling worktree filed (id_taken_elsewhere, exit 2, nothing written); inherited-id logic lifted to verify.inherited_ids; import and promote need no change because outlines carry no id; full suite 2159 OK; review and gate PASS.",
+          "created_at": "2026-10-15T19:43:13Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -10097,7 +10109,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

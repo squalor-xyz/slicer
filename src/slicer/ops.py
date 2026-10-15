@@ -19,7 +19,7 @@ from typing import Callable, Mapping
 
 from slicer import (
   feedback, graph, ids, jsonio, outline, prose, refs, relayrun, render, roles, store, templates,
-  vcs,
+  vcs, verify,
 )
 from slicer.config import CONFIG_NAME, Config
 from slicer.errors import ConfigError, RenderError, StateError
@@ -323,6 +323,29 @@ def _check_parent(state: State, item_id: str | None, parent: str) -> None:
     )
 
 
+def _refuse_id_taken_elsewhere(state: State, item_id: str) -> None:
+  """Refuse an explicit id that a sibling checkout filed itself, not inherited.
+
+  Two checkouts that each file a new item under one id collide on merge, and
+  `check` warns only after the write. Refusing here keeps the write from
+  happening. An id both checkouts inherited from their merge base is one item,
+  not a clash, so it is left to `ids.allocate`, which refuses it as present.
+  """
+  if not vcs.is_repo(state.root):
+    return
+  ours_head = vcs.resolve(state.root, "HEAD")
+  for path, sibling in store.sibling_checkouts(state.root):
+    theirs = sibling.get(item_id)
+    if theirs is None or item_id in verify.inherited_ids(state, ours_head, path):
+      continue
+    raise StateError(
+      f"id {item_id} is already filed in worktree {path.name} as {theirs.title!r}, and this "
+      "checkout did not inherit it from their merge base, so the two would collide on merge. "
+      "Use `slicer next-id` for a free id, or leave out --id",
+      code="id_taken_elsewhere",
+    )
+
+
 def add(
   state: State, title: str, *, item_id: str | None = None, id_floor: int = 0,
   **fields: object,
@@ -339,6 +362,8 @@ def add(
     state.index.require(discovered_from)
   parent = str(fields.get("parent") or "")
   _check_parent(state, None, parent)
+  if item_id is not None:
+    _refuse_id_taken_elsewhere(state, item_id)
   new_id = ids.allocate(state.index, item_id, floor=id_floor)
   # An omitted pass (None) inherits the previous item's; an explicit empty one
   # files the item with no pass, the same meaning `set --pass ''` has.
