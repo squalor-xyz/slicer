@@ -1625,3 +1625,4 @@
 {"when": "2026-10-15T20:33:51Z", "item": "s303", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-15T20:56:00Z", "item": "s303", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T21:10:49Z", "item": "s303", "action": "note", "from": "", "to": "", "note": "Undeclared pass warns: add, set with --pass, and import prin", "by": "Jon Robbins"}
+{"when": "2026-10-15T21:11:26Z", "item": "s303", "action": "note", "from": "", "to": "", "note": "Later (relay review, 2026-10-15; owner choices, current beha", "by": "Jon Robbins"}
