@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- The TUI detail pane shows every item and slice field `slicer show` does: the slice lead (before the scope boundary), the group, attempts, `discovered from`, and the catalog records the item cites (`C01 goal: title`, `(retired)` after a retired decision or assumption). The owner can now edit the lead, the pass, the flags (a comma list) and the short title from the pane, through `ops.edit_lead` and `ops.set_fields`, the same functions the CLI calls. The lead splits on blank lines and an empty body clears it, as `edit --lead` does. `short title`, `pass` and `flags` are appended to the item fields, so the existing field entries keep their positions; a slice gains a `lead` entry before its boundary.
+
 - `docs/why-slicer.md` explains the workflow problems slicer solves and the feature that
   answers each one, with links to the docs that cover them. The README links to it from
   the intro and from the Documentation list.

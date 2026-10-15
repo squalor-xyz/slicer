@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import graph, ops, prose, render, store, tui_style, tui_wizard, vcs
+from slicer import graph, ops, outline, prose, render, store, tui_style, tui_wizard, vcs
 from slicer.errors import SlicerError
 from slicer.store import State
 
@@ -112,6 +112,9 @@ FIELD_SPEC: dict[str, tuple[str, object]] = {
   "importance": ("importance", lambda b: b.strip()),
   "urgency": ("urgency", lambda b: b.strip()),
   "effort": ("effort", _effort_edit),
+  "short title": ("short_title", lambda b: b.strip()),
+  "pass": ("pass_key", lambda b: b.strip()),
+  "flags": ("flags", _csv),
 }
 
 
@@ -120,9 +123,19 @@ def _field_current(item, label: str) -> str:
     return ", ".join(item.trees)
   if label == "depends":
     return ", ".join(item.depends_on)
+  if label == "flags":
+    return ", ".join(item.flags)
   if label in ("importance", "urgency"):
     return str(getattr(item, label))
-  return getattr(item, label) or ""
+  return getattr(item, FIELD_SPEC[label][0]) or ""
+
+# One label column for every detail line, so values align whatever the label.
+LABEL_WIDTH = 16
+
+
+def _labelled(label: str, value: object) -> str:
+  return f"{label:<{LABEL_WIDTH}}{value}"
+
 
 ITEM, PROSE, SEPARATOR = "item", "prose", "separator"
 
@@ -304,6 +317,7 @@ def entries(state: State, target: str) -> list[Entry]:
   ]
   sl = state.slices.get(target)
   if sl is not None:
+    out.append(Entry(kind="lead", target=target, name="lead", body="\n\n".join(sl.lead)))
     out.append(Entry(kind="boundary", target=target, name="boundary", body=sl.boundary))
     out += [Entry(kind="section", target=target, name=s.heading, body=s.body) for s in sl.sections]
   out += [Entry(kind="note", target=target, name=f"note {i + 1}", body=n.text, index=i)
@@ -330,15 +344,21 @@ def panel(
   out = [
     PanelLine(f"{item.id}  {item.title}", role="heading"),
     PanelLine(""),
-    PanelLine(f"status     {state.config.status_label(status)}",
+    PanelLine(_labelled("status", state.config.status_label(status)),
               role=tui_style.status_role(status, bool(graph.blocked_by(
                 state.index, item, state.config.satisfying_statuses())), state.config)),
-    PanelLine(f"{'claim':<11}{item.claim_owner or '-'}"),
+    PanelLine(_labelled("claim", item.claim_owner or "-")),
   ]
   for n, label in enumerate(FIELD_SPEC):
     role = "priority" if label in ("importance", "urgency") and getattr(item, label) == 3 else "field"
-    out.append(PanelLine(f"{label:<11}{_field_current(item, label) or '-'}", n, role))
-  out.append(PanelLine(f"score      {item.score} ({item.quadrant})", role=(
+    out.append(PanelLine(_labelled(label, _field_current(item, label) or "-"), n, role))
+  # Read-only context: recorded by slicer, not edited here.
+  cites = render.cite_header(state.index, item).removeprefix("Cites: ")
+  out.append(PanelLine(_labelled("group", item.group or "-")))
+  out.append(PanelLine(_labelled("attempts", item.attempts)))
+  out.append(PanelLine(_labelled("discovered from", item.discovered_from or "-")))
+  out.append(PanelLine(_labelled("cites", cites or "-")))
+  out.append(PanelLine(_labelled("score", f"{item.score} ({item.quadrant})"), role=(
     "priority" if item.importance == 3 or item.urgency == 3 else "normal")))
   out.append(PanelLine(""))
   sl = state.slices.get(target)
@@ -347,6 +367,13 @@ def panel(
     note_base = len(FIELD_SPEC)
   else:
     base = len(FIELD_SPEC)
+    out.append(PanelLine("Lead", base, "heading"))
+    for paragraph in sl.lead:
+      out.extend(PanelLine(line, base) for line in paragraph.split("\n"))
+      out.append(PanelLine("", base))
+    if not sl.lead:
+      out.append(PanelLine("", base))
+    base += 1
     out.append(PanelLine("Scope boundary", base, "heading"))
     out.extend(PanelLine(line, base) for line in sl.boundary.split("\n"))
     out.append(PanelLine("", base))
@@ -482,6 +509,10 @@ def apply_edit_result(state: State, request: EditRequest, body: str | None) -> A
     if request.kind == PROSE:
       vcs.require_no_merge(state.root)
       ops.edit_prose(state, request.target, body)
+    elif request.kind == "lead":
+      vcs.require_no_merge(state.root)
+      # The blank-line split `edit --lead` uses; an empty body clears the lead.
+      ops.edit_lead(state, request.target, outline.blocks(body.split("\n")))
     elif request.kind == "boundary":
       vcs.require_no_merge(state.root)
       ops.edit_boundary(state, request.target, body)

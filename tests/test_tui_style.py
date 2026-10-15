@@ -156,7 +156,7 @@ class TuiStyleTests(unittest.TestCase):
       self.assertEqual(row.high_priority, item.importance == 3 or item.urgency == 3)
       self.assertNotIn("\x1b", row.text)
     self.assertIn("!", listing[1].text)
-    self.assertTrue(any(line.text == "score      32 (-)" for line in tui.panel(state, "S02")))
+    self.assertTrue(any(line.text == "score           32 (-)" for line in tui.panel(state, "S02")))
 
   def test_Draw_FocusAndPriority_UseRolesAndTextualMarkers(self) -> None:
     state = example()
@@ -190,13 +190,13 @@ class TuiStyleTests(unittest.TestCase):
     while view.target != "S04":
       view.handle(state, "j")
     tui.draw(screen, state, view, palette)
-    self.assertTrue(any("status     review" in text and attr == palette.attr("review")
+    self.assertTrue(any("status          review" in text and attr == palette.attr("review")
                         for _, _, text, attr in screen.styled))
     mono = tui_style.setup_palette(Terminal(), {"NO_COLOR": "1"})
     self.assertEqual(mono.attr("review"), Terminal.A_BOLD)
     screen = StyledScreen()
     tui.draw(screen, state, view, mono)
-    self.assertTrue(any("status     review" in text and attr == Terminal.A_BOLD
+    self.assertTrue(any("status          review" in text and attr == Terminal.A_BOLD
                         for _, _, text, attr in screen.styled))
 
   def test_Draw_Feedback_PrefixAndColorFollowExplicitSeverity(self) -> None:

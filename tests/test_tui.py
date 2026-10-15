@@ -689,7 +689,7 @@ class SiblingReviewDisplayTests(unittest.TestCase):
       discover.reset_mock()
       tui.draw(screen, state, view)
       discover.assert_called_once_with(state.root, state.index)
-      self.assertIn("status     review", "\n".join(text for _, text in screen.writes))
+      self.assertIn("status          review", "\n".join(text for _, text in screen.writes))
       discover.return_value = {}
       view.refresh(state)
       self.assertNotIn("S02", item_ids(view))
@@ -709,7 +709,7 @@ class SiblingReviewDisplayTests(unittest.TestCase):
       self.assertEqual(rows[0].text.index("P:"), rows[1].text.index("P:"))
       self.assertEqual(tui_style.status_role(rows[0].status, rows[0].blocked, state.config), "review")
       line = next(l for l in tui.panel(state, "S02", siblings) if l.text.startswith("status"))
-      self.assertEqual(line.text, "status     ready-for-review")
+      self.assertEqual(line.text, "status          ready-for-review")
       self.assertEqual(line.role, "review")
       state.config.statuses["review"] = "zzz"
       self.assertEqual([i.id for i in tui.sort_items(state, items, "status", False, siblings)],
@@ -745,11 +745,11 @@ class ClaimDisplayTests(unittest.TestCase):
     state.index.require("S02").claim_owner = "Ada Lovelace"
     claimed = tui.panel(state, "S02")
     line = next(l for l in claimed if l.text.startswith("claim"))
-    self.assertEqual(line.text, "claim      Ada Lovelace")
+    self.assertEqual(line.text, "claim           Ada Lovelace")
     self.assertIsNone(line.entry)
     self.assertEqual(line.role, "normal")
     plain = tui.panel(state, "S04")
-    self.assertTrue(any(l.text == "claim      -" and l.entry is None for l in plain))
+    self.assertTrue(any(l.text == "claim           -" and l.entry is None for l in plain))
     self.assertNotIn("claim", [e.name for e in tui.entries(state, "S02")])
 
   def test_Rows_LongestVisibleLabel_KeepsColumnsAligned(self) -> None:
@@ -1005,3 +1005,174 @@ class ReviewKeyTests(unittest.TestCase):
       text = '\n'.join(t for _, t in screen.writes)
       self.assertIn(f'{label} (Enter accepts, Esc cancels): abc', text)
       self.assertNotIn('Tab panes', text)
+
+
+def sliced_example() -> State:
+  """`example()` plus a slice on S02 with a lead, a boundary and one section."""
+  state = example()
+  state.slices["S02"] = model.Slice(
+    "S02", "Search full title", lead=["First lead paragraph.", "Second lead paragraph."],
+    boundary="**Not in this slice:** nothing.",
+    sections=[model.Section("Why", "Because.")],
+  )
+  state.index.require("S02").has_slice = True
+  return state
+
+
+class DetailFieldsTests(unittest.TestCase):
+  def test_Panel_SliceWithLead_ShowsLeadBeforeBoundary(self) -> None:
+    state = sliced_example()
+    panel = tui.panel(state, "S02")
+    texts = [l.text for l in panel]
+    first, second = texts.index("First lead paragraph."), texts.index("Second lead paragraph.")
+    boundary = texts.index("Scope boundary")
+    self.assertLess(first, second)
+    self.assertLess(second, boundary)
+    ents = tui.entries(state, "S02")
+    lead = next(i for i, e in enumerate(ents) if e.name == "lead")
+    self.assertEqual(ents[lead].kind, "lead")
+    self.assertEqual(ents[lead].body, "First lead paragraph.\n\nSecond lead paragraph.")
+    self.assertEqual(ents[lead + 1].kind, "boundary")
+    self.assertEqual(panel[first].entry, lead)
+    self.assertEqual(panel[second].entry, lead)
+
+  def test_Panel_SliceWithoutLead_StillOffersALeadEntry(self) -> None:
+    state = sliced_example()
+    state.slices["S02"].lead = []
+    panel = tui.panel(state, "S02")
+    ents = tui.entries(state, "S02")
+    lead = next(i for i, e in enumerate(ents) if e.name == "lead")
+    self.assertTrue(any(l.entry == lead and l.text == "Lead" for l in panel))
+
+  def test_Panel_ItemWithCites_ResolvesKindAndTitle(self) -> None:
+    state = sliced_example()
+    records = state.index.catalog.records
+    records.append(model.CatalogRecord("C01", "goal", "Ship the thing"))
+    records.append(model.CatalogRecord("C02", "decision", "Use JSON", status="retired"))
+    state.index.require("S02").cites = ["C01", "C02", "C99"]
+    line = next(l for l in tui.panel(state, "S02") if l.text.startswith("cites"))
+    self.assertEqual(
+      line.text, "cites           C01 goal: Ship the thing, C02 decision: Use JSON (retired), C99")
+    self.assertIsNone(line.entry)
+
+  def test_Panel_ShowsPassFlagsGroupAttemptsDiscoveredFrom(self) -> None:
+    def pad(label: str) -> str:
+      return label.ljust(16)
+
+    state = sliced_example()
+    item = state.index.require("S02")
+    item.flags = ["risky", "ui"]
+    item.group = "alpha"
+    item.attempts = 3
+    item.discovered_from = "S01"
+    texts = [l.text for l in tui.panel(state, "S02")]
+    for expected in ("%sone" % pad("pass"), "%srisky, ui" % pad("flags"), "%salpha" % pad("group"),
+                     "%s3" % pad("attempts"), "%sS01" % pad("discovered from"),
+                     "%sFind things" % pad("short title")):
+      self.assertIn(expected, texts)
+    # Every value starts in the same column, whatever the label's length.
+    texts = [l.text for l in tui.panel(state, "S02")]
+    values = {"pass": "one", "discovered from": "S01", "short title": "Find things"}
+
+    def column(label: str) -> int:
+      return next(t for t in texts if t.startswith(label)).index(values[label])
+
+    self.assertEqual(column("discovered from"), column("pass"))
+    self.assertEqual(column("short title"), column("pass"))
+    plain = [l.text for l in tui.panel(state, "S04")]
+    for expected in ("%s-" % pad("flags"), "%s-" % pad("group"), "%s-" % pad("short title"),
+                     "%s-" % pad("cites"), "%s0" % pad("attempts"), "%s-" % pad("discovered from")):
+      self.assertIn(expected, plain)
+
+  def test_Panel_TypedNote_ShowsKindAndTrust(self) -> None:
+    state = sliced_example()
+    item = state.index.require("S02")
+    item.note_records = [
+      model.NoteRecord("n1", "verification", "ran the suite", "", None,
+                       verified_by="human:Ada", verified_at="2026-10-14"),
+      model.NoteRecord("n2", "", "plain note", "", None),
+    ]
+    texts = [l.text for l in tui.panel(state, "S02")]
+    self.assertIn("[verification] ran the suite", texts)
+    self.assertIn("trust: human-reviewed; verified_by: human:Ada; verified_at: 2026-10-14", texts)
+    self.assertIn("plain note", texts)
+
+  def test_Entries_IndexesStayAlignedWithPanel(self) -> None:
+    for sliced in (True, False):
+      state = sliced_example() if sliced else example()
+      state.index.require("S02").note_records = [
+        model.NoteRecord("n1", "", "one", "", None), model.NoteRecord("n2", "", "two", "", None)]
+      ents = tui.entries(state, "S02")
+      panel = tui.panel(state, "S02")
+      tagged = sorted({l.entry for l in panel if l.entry is not None})
+      self.assertEqual(tagged, list(range(len(ents))))
+      expected_first_line = {
+        "field": lambda e: e.name, "lead": lambda e: "Lead", "boundary": lambda e: "Scope boundary",
+        "section": lambda e: f"## {e.name}", "note": lambda e: e.body, "note_new": lambda e: "+ add a note",
+      }
+      for i, entry in enumerate(ents):
+        first = next(l for l in panel if l.entry == i)
+        want = expected_first_line[entry.kind](entry)
+        if entry.kind == "field":
+          self.assertTrue(first.text.startswith(want), (first.text, want))
+        else:
+          self.assertEqual(first.text, want)
+
+  def test_ApplyEdit_Lead_SplitsParagraphsLikeEditLead(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Item")
+      repo.run("promote", "S01")
+      state = repo.state()
+      request = tui.EditRequest(kind="lead", target="S01", name="lead", body="")
+      result = tui.apply_edit_result(state, request, "one\nstill one\n\n\ntwo\n")
+      self.assertEqual(result.severity, "success")
+      self.assertEqual(repo.state().slices["S01"].lead, ["one\nstill one", "two"])
+      request = tui.EditRequest(kind="lead", target="S01", name="lead", body="one\nstill one\n\ntwo")
+      result = tui.apply_edit_result(repo.state(), request, "")
+      self.assertEqual(result.severity, "success")
+      self.assertEqual(repo.state().slices["S01"].lead, [])
+
+  def test_ApplyEdit_Lead_NoSlice_ReportsError(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Item")
+      request = tui.EditRequest(kind="lead", target="S01", name="lead", body="")
+      result = tui.apply_edit_result(repo.state(), request, "text")
+      self.assertEqual(result.severity, "error")
+      self.assertIn("no slice", result.message)
+
+  def test_ApplyEdit_Flags_CommaListReplacesFlags(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Item")
+      state = repo.state()
+      request = tui.EditRequest(kind="field", target="S01", name="flags", body="")
+      result = tui.apply_edit_result(state, request, "a, b ,, c")
+      self.assertEqual(result.severity, "success")
+      self.assertEqual(repo.state().index.require("S01").flags, ["a", "b", "c"])
+      request = tui.EditRequest(kind="field", target="S01", name="flags", body="a, b, c")
+      tui.apply_edit_result(repo.state(), request, "z")
+      self.assertEqual(repo.state().index.require("S01").flags, ["z"])
+      request = tui.EditRequest(kind="field", target="S01", name="flags", body="z")
+      tui.apply_edit_result(repo.state(), request, "")
+      self.assertEqual(repo.state().index.require("S01").flags, [])
+
+  def test_ApplyEdit_Pass_SetsPass(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Item")
+      request = tui.EditRequest(kind="field", target="S01", name="pass", body="")
+      result = tui.apply_edit_result(repo.state(), request, " v2 ")
+      self.assertEqual(result.severity, "success")
+      self.assertEqual(repo.state().index.require("S01").pass_key, "v2")
+
+  def test_ApplyEdit_ShortTitle_Sets(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "A long item title")
+      request = tui.EditRequest(kind="field", target="S01", name="short title", body="A long item title")
+      result = tui.apply_edit_result(repo.state(), request, "Long one")
+      self.assertEqual(result.severity, "success")
+      item = repo.state().index.require("S01")
+      self.assertEqual((item.title, item.short_title), ("A long item title", "Long one"))

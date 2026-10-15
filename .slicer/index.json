@@ -8744,10 +8744,22 @@
       "id": "s276",
       "title": "TUI detail pane shows every item and slice field",
       "short_title": "TUI detail pane shows every item and slice field",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "d827abd8-bffc-4440-adc9-3876605b53c5",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: the TUI detail pane now shows the slice lead (before the scope boundary), group, attempts, discovered from, cites resolved to 'C01 goal: title' with (retired) marks, and the short title, pass and flags fields. The owner can edit lead, pass, flags and short title through ops.edit_lead and ops.set_fields; the lead splits on blank lines like edit --lead and an empty body clears it. Every detail line uses one 16-column label column. Full suite 1932 tests OK (1 skipped), affected 277 OK, slicer check passes. By-hand check of slicer tui was done through a pty-driven session as reported by the orchestrator; the implementer did not run it. The spec's Why was wrong that notes lack kind and trust: the pane already rendered them via rendered_notes, so that test is a regression guard. Four assertions in tests/test_cli.py and three padded-line expectations in other test files were updated for the new lead entry and label column.",
+          "created_at": "2026-10-15T04:11:36Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -8766,7 +8778,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
