@@ -51,6 +51,14 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- Contributor tooling: `tests/affected.py --run` no longer fails a run with unittest's
+  `AttributeError` when the map selects a test id that the working tree no longer defines,
+  as after a rename or a deletion. Before running, each selected id is loaded; one that does
+  not load is named on stderr with its error, and the rest still run. The run then exits 2
+  and names the full discover, since the renamed test may still need to run. A module that
+  fails to import, or has a syntax error, is handled the same way, and its error text is
+  printed. Listing the ids without `--run` is unchanged and does not load the selected ids.
+
 - `docs/agents.md`, the README, `docs/commands.md` and `docs/import.md` said every command except `tui`/`ui` takes `--json` (`docs/import.md` named no exception). The git merge drivers `merge-index` and `merge-relay-roles` take no `--json` either: `slicer merge-index BASE OURS THEIRS --json` and `slicer merge-relay-roles BASE OURS THEIRS --json` both exit 2 with the `usage` code. Each sentence now names the four commands, and `test_AgentsDoc_JsonExceptions_MatchParser` checks each sentence against the parser. Documentation only; no command changes.
 
 ## [1.10.0] - 2026-10-14

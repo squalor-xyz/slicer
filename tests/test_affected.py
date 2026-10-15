@@ -408,6 +408,73 @@ class AffectedTests(unittest.TestCase):
       self.assertEqual(affected.run_suite(loader.loadTestsFromTestCase(_Ok)), 0)
       self.assertEqual(affected.run_suite(loader.loadTestsFromTestCase(_Bad)), 1)
 
+  def test_Run_SelectedIdNoLongerDefined_DroppedAndAsksForFullSuite(self) -> None:
+    module = self.id().rsplit(".", 1)[0]
+    renamed = module + ".test_Run_RenamedAway_NoLongerDefined"
+    live = module + ".test_Diff_Hunks_UseOldNumbersForDeletionsAndNewForAdditions"
+    path = self.map_file({renamed: ["src/slicer/ops.py:4"], live: ["src/slicer/ops.py:4"]})
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--run", "--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2, err)
+    self.assertEqual(out.splitlines(), sorted([renamed, live]))
+    self.assertIn(f"{renamed} did not load", err)
+    self.assertNotIn("ERROR: ", err)
+    self.assertIn("Ran 1 test", err)
+    self.assertIn(DISCOVER, err)
+
+  def test_Run_AllSelectedIdsLoad_Unchanged(self) -> None:
+    module = self.id().rsplit(".", 1)[0]
+    first = module + ".test_Diff_Hunks_UseOldNumbersForDeletionsAndNewForAdditions"
+    second = module + ".test_Affected_Imports_StayInsideTheStandardLibrary"
+    path = self.map_file({first: ["src/slicer/ops.py:4"], second: ["src/slicer/ops.py:4"]})
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--run", "--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), sorted([first, second]))
+    self.assertIn("Ran 2 tests", err)
+    self.assertNotIn("did not load", err)
+    self.assertNotIn(DISCOVER, err)
+
+  def test_Run_SelectedModuleFailsToImport_NamesTheErrorAndRunsTheRest(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    (directory / "affected_probe_syntax.py").write_text("def broken(:\n", encoding="utf-8")
+    (directory / "affected_probe_import.py").write_text("import affected_probe_no_such_module\n", encoding="utf-8")
+    self.enterContext(patch.object(sys, "path", [str(directory), *sys.path]))
+    module = self.id().rsplit(".", 1)[0]
+    live = module + ".test_Diff_Hunks_UseOldNumbersForDeletionsAndNewForAdditions"
+    syntax = "affected_probe_syntax.C.test_a"
+    importing = "affected_probe_import.C.test_a"
+    path = self.map_file({
+      syntax: ["src/slicer/ops.py:4"], importing: ["src/slicer/ops.py:4"], live: ["src/slicer/ops.py:4"],
+    })
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--run", "--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2, err)
+    self.assertIn(f"{syntax} did not load", err)
+    self.assertIn("SyntaxError", err)
+    self.assertIn(f"{importing} did not load", err)
+    self.assertIn("affected_probe_no_such_module", err)
+    self.assertIn("Ran 1 test", err)
+    self.assertIn(DISCOVER, err)
+
+  def test_Run_DroppedIdAndFailingRest_SaysTheRunFailed(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    (directory / "affected_probe_fail.py").write_text(
+      "import unittest\n"
+      "class C(unittest.TestCase):\n"
+      "  def test_a(self):\n"
+      "    self.fail('probe')\n",
+      encoding="utf-8",
+    )
+    self.enterContext(patch.object(sys, "path", [str(directory), *sys.path]))
+    module = self.id().rsplit(".", 1)[0]
+    renamed = module + ".test_Run_RenamedAway_NoLongerDefined"
+    failing = "affected_probe_fail.C.test_a"
+    path = self.map_file({renamed: ["src/slicer/ops.py:4"], failing: ["src/slicer/ops.py:4"]})
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--run", "--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2, err)
+    self.assertIn("FAILED (failures=1)", err)
+    self.assertIn("did not load and were not run and the selected tests that ran failed", err)
+
   def test_Diff_Hunks_UseOldNumbersForDeletionsAndNewForAdditions(self) -> None:
     changed = affected.parse_unified(
       "diff --git a/src/slicer/ops.py b/src/slicer/ops.py\n"

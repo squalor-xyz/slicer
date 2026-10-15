@@ -9638,10 +9638,22 @@
       "id": "s292",
       "title": "affected.py skips selected test ids that no longer load",
       "short_title": "affected.py skips selected test ids that no longer load",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "d12b6a52-626b-46c1-9049-ec866b8db86b",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: affected.py --run loads each selected id with a fresh TestLoader (_loader now returns unittest.TestLoader()). An id that does not load (missing name, module import error, or SyntaxError) is named on stderr with its error text and not run; the rest still run, and the run exits 2 with the full-discover prompt, adding that the selected tests also failed when they did. Listing without --run is unchanged. _tests_in_module shares the same _load_id. CHANGELOG Unreleased Fixed entry added. Verified: full discover 2087 tests OK (1 skipped); test_affected 37 OK; slicer check passed; git diff --check clean. Not committed.",
+          "created_at": "2026-10-15T14:24:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9661,7 +9673,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],
