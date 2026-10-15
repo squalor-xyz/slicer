@@ -8593,7 +8593,7 @@
       "id": "s271",
       "title": "Add the process lessons from dogfooding to slicer ai relay and ai instructions",
       "short_title": "Relay lessons in ai text",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
