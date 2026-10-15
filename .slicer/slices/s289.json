@@ -1,0 +1,41 @@
+{
+  "id": "s289",
+  "title": "An outline's depends accepts an existing item ID",
+  "lead": [
+    "An outline's `depends:` value may name an item already in the roadmap by its ID as well as by its title, so filing a follow-up to existing work does not need the full title copied in."
+  ],
+  "depends_note": null,
+  "findings_note": "v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with \"depends on 's270', which is not in the outline or the index\", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** IDs for items in the same outline (they have none until import), and changing how titles resolve.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`_resolve_outline_depends` (`src/slicer/ops.py:2202`) checks each value only against titles. docs/import.md (line 99) explains why titles are used: IDs do not exist until the outline is applied. That holds for new items in the outline, but not for items already in the index, which `discovered_from` already references by ID (`ops.py:2290`). The refusal message also says the ID is \"not in the index\", which is false and sent the 2026-10-15 orchestrator to `slicer set --depends-on` after the import."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`: in `_resolve_outline_depends`, a value that is not a known title but equals an existing item's ID resolves to that item's title (titles still win). The unknown-reference message names both forms: \"depends on 'x', which is neither a title in the outline or roadmap nor an existing item ID\".\n- `docs/import.md` (the `depends` row and the paragraph at line 99), `CHANGELOG.md`.\n- `tests/test_import.py` or the existing outline-depends tests."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Import_DependsOnExistingId_ResolvesToThatItem`\n- `test_Import_DependsOnUnknownId_RefusedNamingTitleOrId`\n- `test_Import_TitleEqualToAnId_TitleWins`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Resolve existing IDs and reword the message.\n3. Update the docs and CHANGELOG. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes; `slicer check` passes.\n- `slicer import` of a one-item outline with `depends: <existing id>` adds the edge."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s289`, branch `feature/s289-outline-depends-id`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}

@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 289,
+  "next_id": 290,
   "preamble": "",
   "passes": [
     {
@@ -9169,6 +9169,35 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s289",
+      "title": "An outline's depends accepts an existing item ID",
+      "short_title": "An outline's depends accepts an existing item ID",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with \"depends on 's270', which is not in the outline or the index\", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1,
         "attempts": 0
       }

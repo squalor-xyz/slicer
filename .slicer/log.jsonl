@@ -1484,3 +1484,4 @@
 {"when": "2026-10-15T04:45:13Z", "item": "s271", "action": "status", "from": "review", "to": "done", "note": "Landed on main: seven relay lessons in ai relay and ai instructions; gate PASS, full suite 1943 OK.", "by": "Jon Robbins"}
 {"when": "2026-10-15T10:10:51Z", "item": "s288", "action": "add", "from": "", "to": "open", "note": "affected.py finds a map for the same commit in another worktree"}
 {"when": "2026-10-15T10:10:56Z", "item": "s288", "action": "set", "from": "", "to": "", "note": "depends_on -→s270"}
+{"when": "2026-10-15T10:12:11Z", "item": "s289", "action": "add", "from": "", "to": "open", "note": "An outline's depends accepts an existing item ID"}
