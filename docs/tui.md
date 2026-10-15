@@ -19,10 +19,22 @@ search is active.
 
 `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (title, size, trees, findings, depends, importance,
-urgency), a slice section, its scope boundary, a note (edit it, or empty to remove; the
+urgency, effort, short title, pass, flags), a slice's lead, a slice section, its scope boundary, a note (edit it, or empty to remove; the
 `+ add a note` line adds one; an edit that changes the text clears its verification), or a prose block — `s` starts the selected item and `a` adds a
 new one. Press `w` for the guided roadmap wizard; an empty roadmap offers it once
 when the TUI starts.
+
+The lead is a list of paragraphs: separate them with a blank line, as `slicer edit --lead`
+does, and save an empty body to clear it. Flags are a comma list that replaces the item's
+flags; an empty body clears them. Pass and short title take plain text. Every edit calls
+the same `ops` function the CLI does.
+
+The detail pane shows the same fields as `slicer show ID`: the claim, the editable fields
+above, the group, attempts, the item it was discovered from, and the catalog records it
+cites (`C01 goal: title`, with `(retired)` after a retired decision or assumption, as the
+slice header marks them). Those four lines are read-only; change them with the CLI. A slice
+shows its lead before its scope boundary. Each note shows its kind and, once it has an
+author, a verifier or an expiry, a line with its trust tier and that metadata.
 
 ## The wizard
 

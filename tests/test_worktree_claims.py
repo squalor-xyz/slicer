@@ -74,7 +74,7 @@ class WorktreeClaimTests(unittest.TestCase):
       view.handle(state, "v")
       self.assertEqual([r.item_id for r in view.listing if r.kind == tui.ITEM], ["S01"])
       self.assertEqual(next(r.status for r in view.listing if r.item_id == "S01"), "review")
-      self.assertTrue(any(line.text == "status     review" and line.role == "review"
+      self.assertTrue(any(line.text == "status          review" and line.role == "review"
                           for line in tui.panel(state, "S01", view.elsewhere)))
       after = {p.relative_to(repo.root): p.read_bytes()
                for p in (repo.root / ".slicer").rglob("*") if p.is_file()}

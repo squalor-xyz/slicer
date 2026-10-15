@@ -467,8 +467,8 @@ class TuiTests(unittest.TestCase):
       lines = tui.panel(state, "S02")
       tagged = sorted({l.entry for l in lines if l.entry is not None})
       fields = len(tui.FIELD_SPEC)
-      # fields, boundary, each section, then the trailing "add a note" entry
-      self.assertEqual(tagged, list(range(fields + 1 + len(state.slices["S02"].sections) + 1)))
+      # fields, lead, boundary, each section, then the trailing "add a note" entry
+      self.assertEqual(tagged, list(range(fields + 2 + len(state.slices["S02"].sections) + 1)))
       self.assertTrue(any(l.text == "## Why" for l in lines))
       self.assertTrue(any(l.text == "+ add a note" for l in lines))
 
@@ -492,7 +492,7 @@ class TuiTests(unittest.TestCase):
       self.assertEqual([e.name for e in entries[:fields]], list(tui.FIELD_SPEC))
       self.assertEqual(
         [e.name for e in entries[fields:]],
-        ["boundary"] + [s.heading for s in state.slices["S02"].sections] + ["add a note"],
+        ["lead", "boundary"] + [s.heading for s in state.slices["S02"].sections] + ["add a note"],
       )
 
   def test_Act_DoneKey_MarksTheItemDoneThroughTheSameOpsPath(self) -> None:
@@ -531,8 +531,8 @@ class TuiTests(unittest.TestCase):
 
   def test_Act_EditWithTheRightPaneFocused_ReturnsThatSection(self) -> None:
     with self.repo() as repo:
-      # Sections come after fields and the independent boundary.
-      first_section = len(tui.FIELD_SPEC) + 1
+      # Sections come after fields, the lead and the independent boundary.
+      first_section = len(tui.FIELD_SPEC) + 2
       result = tui.act(repo.state(), "e", "S02", entry=first_section + 1, focus="right")
       self.assertIsNotNone(result.edit)
       self.assertEqual(result.edit.kind, "section")
@@ -557,7 +557,7 @@ class TuiTests(unittest.TestCase):
   def test_ApplyEdit_Section_WritesThroughOpsAndAsksForARender(self) -> None:
     with self.repo() as repo:
       state = repo.state()
-      request = tui.act(state, "e", "S02", entry=len(tui.FIELD_SPEC) + 1, focus="right").edit
+      request = tui.act(state, "e", "S02", entry=len(tui.FIELD_SPEC) + 2, focus="right").edit
       message = tui.apply_edit(state, request, "a brand new why")
       self.assertIn("press r to render", message)
       first = state.slices["S02"].sections[0].heading
