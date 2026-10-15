@@ -9182,7 +9182,7 @@
       "id": "s288",
       "title": "affected.py finds a map for the same commit in another worktree",
       "short_title": "affected.py finds a map for the same commit in another worktree",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s270"
