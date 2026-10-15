@@ -10192,10 +10192,22 @@
       "id": "s303",
       "title": "Undeclared pass warns",
       "short_title": "Undeclared pass warns",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "66e0a8d0-18c7-4211-acff-262b1475c5cd",
+          "kind": "",
+          "text": "**2026-10-15** — Undeclared pass warns: add, set with --pass, and import print one stderr line per undeclared pass key; check and verify warn (exit 0) for an undeclared key that holds an item not done or retired. Nothing is refused; JSON and exit codes are unchanged. Full suite 2171 OK, 1 skipped; slicer check passes; new tests mutation-checked. Open for owner: (1) should set warn for an item already in an undeclared pass when --pass is not given; (2) should add, set and import skip done or retired items the way check does.",
+          "created_at": "2026-10-15T21:10:49Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -10215,7 +10227,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

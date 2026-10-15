@@ -698,6 +698,17 @@ class Index:
         keys.append(item.pass_key)
     return keys
 
+  def undeclared_pass_keys(self, items: Iterable[Item]) -> list[str]:
+    """The non-empty pass keys the items name that no declared pass heads.
+
+    First-seen order, each key once. The queue cannot place such a key among
+    the declared passes, so `add`, `set`, `import` and `check` report it.
+    """
+    declared = {p.key for p in self.passes}
+    return list(dict.fromkeys(
+      it.pass_key for it in items if it.pass_key and it.pass_key not in declared
+    ))
+
   def to_dict(self) -> dict[str, Any]:
     return {
       "version": self.version,

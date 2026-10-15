@@ -962,6 +962,9 @@ def cmd_import(args: argparse.Namespace) -> int:
   if _render_hint(args):
     lines.append(f"now {_render_hint(args)}")
   _emit(args, report.to_dict(), "\n".join(lines))
+  filed = [state.index.require(entry["id"]) for entry in report.entries if not entry["existing"]]
+  for pass_key in state.index.undeclared_pass_keys(filed):
+    _write_err(args, _undeclared_pass_line(pass_key))
   return OK
 
 
@@ -2039,6 +2042,14 @@ def cmd_show(args: argparse.Namespace) -> int:
   return OK
 
 
+def _undeclared_pass_line(key: str) -> str:
+  """The stderr line for a pass key no `prose add-pass` declared yet."""
+  return (
+    f"slicer: pass {key} is not declared, so the queue orders its items by score among other "
+    f"undeclared passes; declare it with `slicer prose add-pass {key} --after <pass>`."
+  )
+
+
 def cmd_add(args: argparse.Namespace) -> int:
   state = _state(args)
   key = ops.filing_key(args.key)
@@ -2065,6 +2076,8 @@ def cmd_add(args: argparse.Namespace) -> int:
       f"slicer: {item.id} is unscored (importance 2, urgency 2, no effort), so it ranks on "
       f"nothing; pass --importance, --urgency and --effort, or `slicer set {item.id}` later."
     ))
+  for pass_key in state.index.undeclared_pass_keys([item]):
+    _write_err(args, _undeclared_pass_line(pass_key))
   return OK
 
 
@@ -2123,6 +2136,9 @@ def cmd_set(args: argparse.Namespace) -> int:
     state, item_ids, add_flags=args.add_flag, remove_flags=args.remove_flag, **fields,
   )
   _emit_items(args, items, batch, [f"updated {item.id}" for item in items])
+  if args.pass_key:
+    for pass_key in state.index.undeclared_pass_keys(items):
+      _write_err(args, _undeclared_pass_line(pass_key))
   return OK
 
 

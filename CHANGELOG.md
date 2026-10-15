@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `add`, `set` and `import` warn on stderr when they file an item under a pass that no `prose add-pass` declared, naming the key and the command that declares it, so a pass the queue cannot order is noticed when it is made. `check` warns (exit 0) for each undeclared pass key that holds an item not done or retired, with the count. Nothing is refused, and queue order and JSON payloads do not change.
+
 ### Changed
 
 - The slice relay's `## Every brief` section asks each agent to start with the model and reasoning effort its role row names, set explicitly, and to carry the label `ID role` (also its `relay-run step --task`), so a harness's agent list shows which slice and role each agent serves and which model it runs.
