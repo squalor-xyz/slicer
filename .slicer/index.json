@@ -8995,7 +8995,7 @@
       "id": "s283",
       "title": "TUI relay board animates running relays",
       "short_title": "TUI relay board animates running relays",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s282"
