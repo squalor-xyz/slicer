@@ -1,0 +1,41 @@
+{
+  "id": "s291",
+  "title": "TUI queue columns are configurable",
+  "lead": [
+    "A `tui.columns` config key lists which queue columns the TUI shows and in what order, so an owner can trade the claim, size or score cells for title room."
+  ],
+  "depends_note": null,
+  "findings_note": "owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** columns in `slicer list` text, new column kinds, and per-session toggles in the TUI.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s277 added a claim cell to the queue row (`#  ID  status  size  P:score  title`). At 80 columns the queue pane is 38 cells, so every fixed cell costs title room. The owner asked for user-chosen columns on 2026-10-15 and accepted a fixed rule for v1.11."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py`: `tui.columns`, a list drawn from `claim`, `size`, `score`, validated like other list keys; the default reproduces s277's layout.\n- `src/slicer/tui.py`: `item_rows` builds the prefix from the configured list; the narrow-pane rule still drops `size` first.\n- `docs/configuration.md`, `docs/tui.md`, `CHANGELOG.md`; `tests/test_tui.py`, `tests/test_config.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_ItemRows_ColumnsConfigOmitsClaim_NoClaimCell`\n- `test_ItemRows_ColumnsConfigOrder_Respected`\n- `test_Config_TuiColumnsUnknownName_Refused`\n- `test_ItemRows_DefaultColumns_MatchS277Layout`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the key and build the row prefix from it.\n3. Update the docs and CHANGELOG. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes; `slicer check` passes; `slicer config tui.columns '[\"score\"]'` then `slicer tui` shows rows without claim and size."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s291`, branch `feature/s291-tui-columns`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}

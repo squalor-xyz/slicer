@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 291,
+  "next_id": 293,
   "preamble": "",
   "passes": [
     {
@@ -9579,6 +9579,66 @@
         ],
         "trees_literal": false,
         "findings": "v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s291",
+      "title": "TUI queue columns are configurable",
+      "short_title": "TUI queue columns are configurable",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s292",
+      "title": "affected.py skips selected test ids that no longer load",
+      "short_title": "affected.py skips selected test ids that no longer load",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s277 relay 2026-10-15: `affected.py --run` with a borrowed map selected `test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn`, which the slice had renamed, and the run reported an AttributeError instead of running the renamed test",
         "discovered_from": "",
         "parent": "",
         "cites": [],

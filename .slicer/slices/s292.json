@@ -1,0 +1,41 @@
+{
+  "id": "s292",
+  "title": "affected.py skips selected test ids that no longer load",
+  "lead": [
+    "When the map selects a test id that the working tree no longer defines (renamed or deleted), `tests/affected.py --run` drops it with a stderr note and asks for the full discover, instead of failing the run with a loader error."
+  ],
+  "depends_note": null,
+  "findings_note": "s277 relay 2026-10-15: `affected.py --run` with a borrowed map selected `test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn`, which the slice had renamed, and the run reported an AttributeError instead of running the renamed test",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** recording renames in the map, and changing which tests a diff selects.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A map is recorded at a commit; a slice that renames or deletes a test still has the old id in the map. `--run` passes the ids to unittest, which raises AttributeError for each missing one, so a green slice looks red until someone notices the error is a ghost. s277 hit it on 2026-10-15."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/affected.py`: before running, load each selected id with `unittest.TestLoader().loadTestsFromName`; collect the ones that fail to load, print them on stderr, run the rest, and exit 2 with \"run the full discover\" when any were dropped, since a renamed test may need running.\n- `tests/test_affected.py`, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Run_SelectedIdNoLongerDefined_DroppedAndAsksForFullSuite`\n- `test_Run_AllSelectedIdsLoad_Unchanged`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the load check in `--run`.\n3. Update CHANGELOG. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes; `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s292`, branch `feature/s292-affected-ghost-ids`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}
