@@ -9040,7 +9040,7 @@
       "id": "s286",
       "title": "list marks blocked rows with !",
       "short_title": "list marks blocked rows with !",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
