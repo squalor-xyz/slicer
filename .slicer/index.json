@@ -9083,6 +9083,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "116b08b8-c0fa-4ce4-bf81-8611cf2f1529",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: ROLES_VERSION bumped to 2 (v1 loads, writes 2, v3 refused schema_too_new, merge driver v1+v2 -> 2); full suite 2147 OK",
+          "created_at": "2026-10-15T17:42:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,

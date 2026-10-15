@@ -358,6 +358,36 @@ class UnreadableInputTests(MergeRelayRolesCase):
         self.assertIn(f"the {side} version", message)
         self.assertIn("at or below an id in use", message)
 
+  def test_MergeRelayRoles_VersionOneSideWithVersionTwoSide_MergesIntoVersionTwo(self) -> None:
+    def v1(text: str) -> str:
+      doc = json.loads(text)
+      doc["version"] = 1
+      for row in doc["rows"]:
+        del row["when"]["sliver"]
+      return jsonio.dumps(doc)
+
+    theirs = _matrix(
+      [_row("r1", "implementer", model="haiku", when=RoleWhen(sliver=True)), _base_rows()[1]],
+      _base_rules(),
+    )
+    ours = _matrix([_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules())
+    doc = self.clean(v1(BASE), v1(ours), theirs)
+    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["rows"][0]["model"], "sonnet")
+    self.assertIs(doc["rows"][0]["when"]["sliver"], True)
+    # And the other way round: ours is current, theirs predates the sliver condition.
+    doc = self.clean(v1(BASE), theirs, v1(ours))
+    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["rows"][0]["model"], "sonnet")
+    self.assertIs(doc["rows"][0]["when"]["sliver"], True)
+    # Two version 1 sides merge into a version 2 file: the driver always writes current.
+    only_theirs = _matrix(
+      [_base_rows()[0], _row("r2", "reviewer", model="opus", reasoning="high")], _base_rules(),
+    )
+    doc = self.clean(v1(BASE), v1(ours), v1(only_theirs))
+    self.assertEqual(doc["version"], 2)
+    self.assertEqual((doc["rows"][0]["model"], doc["rows"][1]["reasoning"]), ("sonnet", "high"))
+
   def test_MergeRelayRoles_TheirsIsFromANewerSlicer_IsRefused(self) -> None:
     newer = json.dumps({**json.loads(BASE), "version": 99}) + "\n"
     self.refused(BASE, BASE, newer, "schema_too_new")

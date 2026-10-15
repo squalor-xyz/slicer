@@ -245,10 +245,26 @@ class RoleModelTests(unittest.TestCase):
     self.assertIn("a\\|b", roles.render_markdown(matrix))
 
   def test_FromDict_NewerVersion_IsSchemaTooNew(self) -> None:
-    data = roles.skeleton().to_dict() | {"version": 2}
+    self.assertEqual(roles.ROLES_VERSION, 2)
+    data = roles.skeleton().to_dict() | {"version": 3}
     with self.assertRaises(roles.StateError) as caught:
       roles.RoleMatrix.from_dict(data)
     self.assertEqual(caught.exception.code, "schema_too_new")
+
+  def test_FromDict_VersionTwo_IsCurrentAndLoads(self) -> None:
+    data = roles.skeleton().to_dict()
+    self.assertEqual(data["version"], 2)
+    self.assertEqual(roles.RoleMatrix.from_dict(data).to_dict(), data)
+
+  def test_FromDict_VersionOneMatrix_LoadsWithSliverNoneAndWritesVersionTwo(self) -> None:
+    data = roles.skeleton().to_dict() | {"version": 1}
+    for row in data["rows"]:
+      del row["when"]["sliver"]
+    matrix = roles.RoleMatrix.from_dict(data)
+    self.assertEqual({row.when.sliver for row in matrix.rows}, {None})
+    out = matrix.to_dict()
+    self.assertEqual(out["version"], 2)
+    self.assertEqual({row["when"]["sliver"] for row in out["rows"]}, {None})
 
 
 def _row(row_id: str, role: str, **when: object) -> roles.RoleRow:
@@ -433,7 +449,7 @@ class RelayRolesInitTests(RelayRolesCase):
 
   def test_Init_Force_NewerSchemaFile_IsNotOverwritten(self) -> None:
     repo = self.with_matrix()
-    newer = jsonio.dumps(self.matrix(repo) | {"version": 2})
+    newer = jsonio.dumps(self.matrix(repo) | {"version": 3})
     repo.write(JSON, newer)
     self.refuse(repo, "relay-roles", "init", "--force", code=3, error="schema_too_new")
     self.assertEqual(repo.read(JSON), newer)
@@ -501,8 +517,23 @@ class RelayRolesInitTests(RelayRolesCase):
 
   def test_Load_NewerVersion_IsSchemaTooNewExitThree(self) -> None:
     repo = self.with_matrix()
-    repo.write(JSON, jsonio.dumps(self.matrix(repo) | {"version": 2}))
+    repo.write(JSON, jsonio.dumps(self.matrix(repo) | {"version": 3}))
     self.refuse(repo, "relay-roles", "show", code=3, error="schema_too_new")
+
+  def test_Load_VersionOneFile_ReadsAsIsAndTheNextWriteMakesItVersionTwo(self) -> None:
+    repo = self.with_matrix()
+    data = self.matrix(repo) | {"version": 1}
+    for row in data["rows"]:
+      del row["when"]["sliver"]
+    repo.write(JSON, jsonio.dumps(data))
+    shown = json.loads(self.ok(repo, "relay-roles", "show", "--json"))
+    self.assertEqual({row["when"]["sliver"] for row in shown["rows"]}, {None})
+    self.assertEqual(self.matrix(repo)["version"], 1)  # reading writes nothing
+    self.ok(repo, "relay-roles", "set", "r1", "--model", "opus")
+    after = self.matrix(repo)
+    self.assertEqual(after["version"], 2)
+    self.assertEqual(after["rows"][1]["model"], "opus")
+    self.assertEqual({row["when"]["sliver"] for row in after["rows"]}, {None})
 
   def test_Load_MalformedJson_IsCorrupt(self) -> None:
     repo = self.with_matrix()

@@ -18,7 +18,10 @@ from slicer.errors import StateError, reject_future_schema
 if TYPE_CHECKING:
   from slicer.model import Item
 
-ROLES_VERSION = 1
+# 2 adds `when.sliver`. A version 1 file has no such key; it loads as "either" and the
+# next write makes it version 2. An older slicer refuses a version 2 file instead of
+# ignoring the condition (which would make the sliver row match every item).
+ROLES_VERSION = 2
 # The roles the relay knows. A row for any other role has nothing to run.
 ROLE_NAMES = ("implementer", "reviewer", "gate", "architect")
 # Sizes are free text, but the conventional ones read in size order, not alphabetically.
@@ -243,8 +246,9 @@ class RoleMatrix:
     next_row, next_rule = d["next_row"], d["next_rule"]
     if any(isinstance(n, bool) or not isinstance(n, int) or n < 1 for n in (next_row, next_rule)):
       raise ValueError("next_row and next_rule must be positive numbers")
+    # Older files are lifted to the current version here, so every write is current.
     return RoleMatrix(
-      rows=rows, rules=rules, next_row=next_row, next_rule=next_rule, version=version,
+      rows=rows, rules=rules, next_row=next_row, next_rule=next_rule, version=ROLES_VERSION,
     )
 
   def row(self, row_id: str) -> RoleRow:
