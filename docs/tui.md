@@ -145,7 +145,19 @@ the score without reordering items. The detail pane retains the score and quadra
 The status column is as wide as the longest visible label, and at least seven
 characters, so `reviewing` stays aligned with `started`. Every blocked row shows
 `!`, including review and parked. The detail pane shows the claim owner, or `-`
-when the item has none. The queue row has no claim column.
+when the item has none. The queue row has a CLAIM column after the status, with the
+cell `slicer list` prints: the owner, `*` for work in progress with no claim,
+`wt:NAME` (`wt:NAME+N` for N more worktrees) for work in a sibling worktree, or `-`.
+The queue shows at most eight cells of a claim: a longer one is cut and ends in `…`,
+so `wt:other-long-name` reads `wt:othe…`. The column is as wide as the longest shown
+cell, and at least the five cells of its header. The detail pane is not cut: it shows
+the local owner in full. In a queue pane under 50 cells wide, a terminal narrower than
+104 columns, the claim and size columns are both left out so the title keeps room; a
+sibling claim then shows only as a sibling handoff's `review` status, and the
+sibling-only block still lists unseen items.
+The queue ends with an `Only in a sibling` block of open, unclaimed items that this
+checkout does not have, one `ID  worktree  title` row each. Those rows are read-only:
+`j` and `k` skip them, no key acts on them, and filters do not hide them.
 
 When supported, cyan marks headings/started work, green marks done/success, yellow
 marks parked/blocked work and high priority, magenta marks review, and red marks

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import curses
+import io
 import re
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 import unittest
@@ -12,6 +14,7 @@ from unittest.mock import patch
 import support
 from slicer import model, relayrun, roles, store
 from slicer import tui, tui_style
+from slicer.cli import main
 from slicer.errors import StateError
 from slicer.config import Config
 from slicer.model import Index, Item
@@ -679,7 +682,7 @@ class SiblingReviewDisplayTests(unittest.TestCase):
 
   def test_View_SiblingReview_PresetsFiltersAndRefreshShareOneSnapshot(self) -> None:
     state = example()
-    with patch.object(store, "in_work_elsewhere", return_value=self.siblings()) as discover:
+    with patch.object(store, "sibling_work", return_value=(self.siblings(), [])) as discover:
       view = tui.View.initial(state)
       discover.assert_called_once_with(state.root, state.index)
       self.assertIn("S02", item_ids(view))
@@ -693,7 +696,7 @@ class SiblingReviewDisplayTests(unittest.TestCase):
       tui.draw(screen, state, view)
       discover.assert_called_once_with(state.root, state.index)
       self.assertIn("status          review", "\n".join(text for _, text in screen.writes))
-      discover.return_value = {}
+      discover.return_value = ({}, [])
       view.refresh(state)
       self.assertNotIn("S02", item_ids(view))
       self.assertEqual(state.index.require("S02").status, "open")
@@ -705,7 +708,7 @@ class SiblingReviewDisplayTests(unittest.TestCase):
     state.index.require("S02").depends_on = ["S04"]
     before = state.index.to_dict()
     items = [state.index.require(i) for i in ("S02", "S04")]
-    with patch.object(store, "in_work_elsewhere", side_effect=AssertionError("pure helper did IO")):
+    with patch.object(store, "sibling_work", side_effect=AssertionError("pure helper did IO")):
       rows = tui.item_rows(state, items, siblings)
       self.assertEqual(rows[0].status, "review")
       self.assertIn("ready-for-review", rows[0].text)
@@ -767,7 +770,7 @@ class ClaimDisplayTests(unittest.TestCase):
     short = tui.item_rows(state, [state.index.require("S02")])
     self.assertEqual(wide - short[0].text.index("P:"), len("reviewing") - 7)
 
-  def test_Rows_BlockedReviewAndParked_ShowMarkerWithoutAClaimColumn(self) -> None:
+  def test_Rows_BlockedReviewAndParked_ShowMarkerAndClaimOwner(self) -> None:
     state = example()
     state.index.require("S02").claim_owner = "Ada Lovelace"
     state.index.require("S03").depends_on = ["S02"]
@@ -783,11 +786,166 @@ class ClaimDisplayTests(unittest.TestCase):
     self.assertIn("!", by_id["S05"].text)
     self.assertNotIn("!", by_id["S02"].text)
     self.assertNotIn("!", by_id["S04"].text)
+    self.assertIn("Ada Lov…", by_id["S02"].text)
+    self.assertIn("Ada Lov…", by_id["S05"].text)
+    line = next(l for l in tui.panel(state, "S02") if l.text.startswith("claim"))
+    self.assertEqual(line.text, "claim           Ada Lovelace")
+    self.assertEqual(by_id["S03"].text.split()[3], "-")
     for row in rows:
-      self.assertNotIn("Ada", row.text)
       self.assertNotIn("claim", row.text)
     self.assertEqual(tui.key_action("v"), "view")
     self.assertEqual([b.action for b in tui.BINDINGS if "v" in b.keys], ["view"])
+
+
+def _list_row(text: str, item_id: str) -> str:
+  return next(line for line in text.splitlines() if item_id in line.split())
+
+
+def _cli(root: Path, *args: str) -> int:
+  """Run one command in-process against `root`, as the worktree-claims tests do."""
+  with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+    return main(["--root", str(root), *args])
+
+
+class SiblingClaimQueueTests(unittest.TestCase):
+  def test_ItemRows_SiblingClaim_ShowsWtName(self) -> None:
+    state = example()
+    siblings = {"S02": [{"worktree": "other", "owner": "", "status": "started"}]}
+    row = tui.item_rows(state, [state.index.require("S02")], siblings)[0]
+    self.assertEqual(row.text.split()[3], "wt:other")
+
+  def test_ItemRows_TwoSiblings_ShowsPlusCount(self) -> None:
+    state = example()
+    siblings = {"S02": [{"worktree": "a", "owner": "", "status": "started"},
+                        {"worktree": "b", "owner": "", "status": "started"}]}
+    row = tui.item_rows(state, [state.index.require("S02")], siblings)[0]
+    self.assertEqual(row.text.split()[3], "wt:a+1")
+
+  def test_ItemRows_LocalStartedNoClaim_ShowsStar(self) -> None:
+    state = example()
+    row = tui.item_rows(state, [state.index.require("S04")])[0]
+    self.assertEqual(row.text.split()[3], "*")
+
+  def test_ItemRows_LongSiblingClaim_CappedAtEightCells(self) -> None:
+    state = example()
+    item = state.index.require("S02")
+    siblings = {"S02": [{"worktree": "other-long-name", "owner": "", "status": "started"}]}
+    self.assertEqual(store.claim_cell(state.config, item, siblings["S02"]), "wt:other-long-name")
+    row = tui.item_rows(state, [item], siblings)[0]
+    self.assertEqual(row.text.split()[3], "wt:othe…")
+    # The column is sized to the capped cell, so the score starts where an 8-cell claim ends.
+    self.assertEqual(row.text.index("P:"), 31)
+    aligned = tui.item_rows(state, [item, state.index.require("S04")], siblings)
+    self.assertEqual([r.text.index("P:") for r in aligned], [31, 31])
+
+  def test_ItemRows_NarrowPane_DropsClaimAndSizeColumns(self) -> None:
+    state = example()
+    item = state.index.require("S02")
+    item.size = "M"
+    siblings = {"S02": [{"worktree": "other", "owner": "", "status": "started"}]}
+    narrow = tui.item_rows(state, [item], siblings, pane_width=tui.NARROW_PANE - 1)[0]
+    at_threshold = tui.item_rows(state, [item], siblings, pane_width=tui.NARROW_PANE)[0]
+    self.assertNotIn("M", narrow.text.split())
+    self.assertNotIn("wt:other", narrow.text)
+    self.assertIn("M", at_threshold.text.split())
+    self.assertIn("wt:other", at_threshold.text)
+    self.assertEqual(tui.item_rows(state, [item], siblings)[0].text, at_threshold.text)
+
+  def test_FilteredRows_SiblingOnlyItem_ListedAfterSeparatorAndNotSelectable(self) -> None:
+    state = example()
+    only = [{"id": "S09", "title": "Sibling only", "worktree": "other", "status": "open"}]
+    rows = tui.filtered_rows(state, tui.Filters(), only_sibling=only)
+    self.assertIn("only in a sibling", rows[-2].text)
+    self.assertEqual(rows[-2].kind, tui.SEPARATOR)
+    self.assertIn("S09", rows[-1].text)
+    self.assertIn("other", rows[-1].text)
+    self.assertIn("Sibling only", rows[-1].text)
+    self.assertFalse(rows[-2].selectable)
+    self.assertFalse(rows[-1].selectable)
+    hidden = tui.filtered_rows(state, tui.Filters(query="no such text"), only_sibling=only)
+    self.assertIn("S09", hidden[-1].text)
+    with patch.object(store, "sibling_work", return_value=({}, only)):
+      view = tui.View.initial(state)
+      self.assertIn("S09", view.listing[-1].text)
+      for _ in range(len(view.listing) + 3):
+        view.handle(state, "j")
+      last = next(row for row in reversed(view.listing) if row.selectable)
+      self.assertEqual(view.selected, (last.kind, last.target))
+
+  def test_ClaimCell_SameOutputAsList(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      for title in ("one", "two", "three", "four"):
+        repo.run("add", title)
+      repo.commit("base")
+      sibling = repo.root / "siblings" / "sib"
+      sibling.parent.mkdir()
+      made = repo._git("worktree", "add", "-q", "-b", "sib", str(sibling), "HEAD")
+      self.assertEqual(made.returncode, 0, made.stderr)
+      self.assertEqual(_cli(sibling, "start", "S01"), 0)
+      self.assertEqual(repo.run("set", "S02", "--status", "started")[0], 0)
+      self.assertEqual(repo.run("start", "S03", "--owner", "Ada")[0], 0)
+      code, out, err = repo.run("list")
+      self.assertEqual(code, 0, err)
+      view = tui.View.initial(repo.state())
+      rows = {row.target: row for row in view.listing if row.kind == tui.ITEM}
+      ids = ["S01", "S02", "S03", "S04"]
+      self.assertEqual({i: rows[i].text.split()[3] for i in ids},
+                       {i: _list_row(out, i).split()[3] for i in ids})
+      self.assertEqual({i: rows[i].text.split()[2] for i in ids},
+                       {i: _list_row(out, i).split()[2] for i in ids})
+      self.assertEqual(sorted({rows[i].text.split()[3] for i in ids}),
+                       ["*", "-", "Ada", "wt:sib"])
+      self.assertEqual({rows[i].text.index("P:") for i in ids}, {rows["S01"].text.index("P:")})
+
+  def test_Draw_SiblingClaimAt80Columns_DropsClaimAndSizeKeepsTitle(self) -> None:
+    state = example()
+    state.index.require("S02").size = "M"
+    siblings = {"S02": [{"worktree": "other-long-name", "owner": "", "status": "started"}]}
+    with patch.object(store, "sibling_work", return_value=(siblings, [])):
+      view = tui.View.initial(state)
+      screen = Screen(24, 80)
+      tui.draw(screen, state, view)
+    line = next(text for _, text in screen.writes if "S02" in text.split())
+    self.assertNotIn("wt:", line)  # a queue pane under 50 cells drops the claim column
+    self.assertNotIn("M", line.split())  # and the size column
+    self.assertIn("Find thing", line)  # the title keeps at least 10 cells at 80 columns
+
+  def test_Draw_SiblingClaimAt110Columns_ShowsCappedClaim(self) -> None:
+    state = example()
+    state.index.require("S02").size = "M"
+    siblings = {"S02": [{"worktree": "other-long-name", "owner": "", "status": "started"}]}
+    with patch.object(store, "sibling_work", return_value=(siblings, [])):
+      view = tui.View.initial(state)
+      screen = Screen(24, 110)
+      tui.draw(screen, state, view)
+    line = next(text for _, text in screen.writes if "S02" in text.split())
+    self.assertIn("wt:othe…", line)
+    self.assertIn("M", line.split())
+
+  def test_Draw_SiblingOnlyBlockAt80Columns_StillShows(self) -> None:
+    state = example()
+    only = [{"id": "S09", "title": "Sibling only", "worktree": "other", "status": "open"}]
+    with patch.object(store, "sibling_work", return_value=({}, only)):
+      view = tui.View.initial(state)
+      screen = Screen(24, 80)
+      tui.draw(screen, state, view)
+    text = "\n".join(line for _, line in screen.writes)
+    self.assertIn("only in a sibling", text)
+    self.assertIn("S09", text.split())
+
+  def test_Draw_SiblingOnlyBlock_LongQueue_VisibleAfterLastRow(self) -> None:
+    state = example()
+    only = [{"id": "S09", "title": "Sibling only", "worktree": "other", "status": "open"}]
+    with patch.object(store, "sibling_work", return_value=({}, only)):
+      view = tui.View.initial(state)
+      for _ in range(len(view.listing)):
+        view.handle(state, "j")
+      screen = Screen(12, 110)
+      tui.draw(screen, state, view)
+    text = "\n".join(line for _, line in screen.writes)
+    self.assertIn("only in a sibling", text)
+    self.assertIn("S09", text.split())
 
 
 class QueueViewTests(unittest.TestCase):
@@ -1418,7 +1576,7 @@ class RelayBoardViewTests(unittest.TestCase):
   def test_Handle_BoardTick_UsesNoStoreRefresh(self) -> None:
     view, state, _ = self.board([pipeline_run()])
     view.handle(state, "b")
-    with patch.object(store, "in_work_elsewhere", side_effect=AssertionError("refreshed")):
+    with patch.object(store, "sibling_work", side_effect=AssertionError("refreshed")):
       view.handle(state, "tick")
       tui.draw(Screen(24, 100), state, view)
 

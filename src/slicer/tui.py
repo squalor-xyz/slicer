@@ -140,6 +140,12 @@ def _labelled(label: str, value: object) -> str:
 
 
 ITEM, PROSE, SEPARATOR = "item", "prose", "separator"
+# An item only in a sibling worktree: listed for awareness, never selected or edited.
+SIBLING = "sibling"
+# The queue shows at most this many cells of a claim; the detail pane is not capped.
+CLAIM_CELL_CAP = 8
+# Below this queue-pane width the claim and size columns go, so the title keeps room.
+NARROW_PANE = 50
 
 
 @dataclass
@@ -154,7 +160,7 @@ class Row:
 
   @property
   def selectable(self) -> bool:
-    return self.kind != SEPARATOR
+    return self.kind not in (SEPARATOR, SIBLING)
 
   # Kept so existing callers and tests can read `row.item_id`.
   @property
@@ -254,24 +260,43 @@ def sort_items(
   return sorted(items, key=key)
 
 
+def _queue_claim(cell: str) -> str:
+  """The claim cell as the queue shows it: cut to CLAIM_CELL_CAP cells, the last one `…`."""
+  if tui_style.cell_width(cell) <= CLAIM_CELL_CAP:
+    return cell
+  return tui_style.clipped(cell, CLAIM_CELL_CAP - 1) + "…"
+
+
 def item_rows(
   state: State, items: list,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
+  *, pane_width: int | None = None,
 ) -> list[Row]:
-  """Queue rows in the given order. The number is the position in that view."""
+  """Queue rows in the given order. The number is the position in that view.
+
+  `pane_width` is the queue pane's width when the caller knows it. Below
+  NARROW_PANE the claim and size columns are left out, so the title keeps room
+  (sibling-only rows still list); None keeps both, as a wide pane does.
+  """
   cfg = state.config
   elsewhere = elsewhere or {}
+  narrow = pane_width is not None and pane_width < NARROW_PANE
   # At least the historical 7, wider for the longest visible label (`reviewing`).
   status_w = max([7, *(len(cfg.status_label(store.displayed_status(
     cfg, item, elsewhere.get(item.id, []),
   ))) for item in items)])
+  claims = {} if narrow else {item.id: _queue_claim(store.claim_cell(cfg, item, elsewhere.get(item.id)))
+                              for item in items}
+  # The same CLAIM column `slicer list` prints: at least its header, as wide as the longest cell.
+  claim_w = max([len("CLAIM"), *(len(claim) for claim in claims.values())])
   out: list[Row] = []
   for n, item in enumerate(items, 1):
     pending = graph.blocked_by(state.index, item, cfg.satisfying_statuses())
     marker = "!" if pending else " "
     status = store.displayed_status(cfg, item, elsewhere.get(item.id, []))
     label = cfg.status_label(status)
-    prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} {item.size:<2} "
+    columns = "" if narrow else f"{claims[item.id]:<{claim_w}} {item.size:<2} "
+    prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} {columns}"
     out.append(
       Row(
         kind=ITEM,
@@ -602,22 +627,42 @@ class Filters:
     return "  ".join(parts) or "all items"
 
 
+def sibling_only_rows(only_sibling: list[dict[str, str]]) -> list[Row]:
+  """The `Only in a sibling` block as `slicer list` lists it: a separator, then
+  `ID  worktree  title` rows that cannot be selected. Empty when there are none."""
+  if not only_sibling:
+    return []
+  id_w = max(len(row["id"]) for row in only_sibling)
+  tree_w = max(len(row["worktree"]) for row in only_sibling)
+  out = [Row(kind=SEPARATOR, target="", text="─ only in a sibling " + "─" * 20)]
+  for row in only_sibling:
+    out.append(Row(
+      kind=SIBLING, target=row["id"],
+      text=f"     {row['id']:<{id_w}}  {row['worktree']:<{tree_w}}  {row['title']}",
+    ))
+  return out
+
+
 def filtered_rows(
   state: State, filters: Filters, sort_field: str = "ranked", descending: bool = True,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
+  only_sibling: list[dict[str, str]] | None = None,
+  *, pane_width: int | None = None,
 ) -> list[Row]:
   elsewhere = elsewhere or {}
   visible = [it for it in state.index.items if filters.matches(
     it, store.displayed_status(state.config, it, elsewhere.get(it.id, [])),
   )]
   ordered = sort_items(state, visible, sort_field, descending, elsewhere)
-  out = item_rows(state, ordered, elsewhere)
+  out = item_rows(state, ordered, elsewhere, pane_width=pane_width)
   refs = prose.refs(state.index)
   if refs:
     out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
     for ref in refs:
       lines, preview = prose.summary(state.index, ref, width=30)
       out.append(Row(kind=PROSE, target=ref, text=f"     {ref:<22} {lines:>3}  {preview}"))
+  # Like `list`, the sibling-only block ignores the item filters and comes last.
+  out.extend(sibling_only_rows(only_sibling or []))
   return out
 
 
@@ -665,6 +710,9 @@ class View:
   sort_draft_desc: bool = True
   listing: list[Row] = field(default_factory=list)
   elsewhere: dict[str, list[dict[str, str]]] = field(default_factory=dict)
+  only_sibling: list[dict[str, str]] = field(default_factory=list)
+  # The queue pane's width as the last draw saw it; None until the first draw.
+  pane_width: int | None = None
   selected: tuple[str, str] | None = None
   entry_at: int = 0
   focus: str = "left"
@@ -703,8 +751,12 @@ class View:
     return self.selected[1] if self.selected else ""
 
   def refresh(self, state: State) -> None:
-    self.elsewhere = store.in_work_elsewhere(state.root, state.index)
-    listing = filtered_rows(state, self.filters, self.sort_field, self.sort_desc, self.elsewhere)
+    # One read of the sibling worktrees feeds both the claim cells and the sibling-only block.
+    self.elsewhere, self.only_sibling = store.sibling_work(state.root, state.index)
+    listing = filtered_rows(
+      state, self.filters, self.sort_field, self.sort_desc, self.elsewhere, self.only_sibling,
+      pane_width=self.pane_width,
+    )
     selected = reconcile_selection(self.listing, listing, self.selected)
     if selected != self.selected:
       self.entry_at = 0
@@ -1209,10 +1261,12 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int) 
 def draw(screen, state: State, view: View, palette: tui_style.Palette | None = None) -> None:
   """Render semantic cues through one bounded terminal drawing surface."""
   palette = palette or tui_style.monochrome()
-  if view.mode != "board":  # the board redraws on a timer and shows nothing from the roadmap
-    view.refresh(state)
   canvas = tui_style.Canvas(screen)
   height, width = canvas.height, canvas.width
+  # The queue rows are built for the pane this frame draws, so the size column can drop.
+  view.pane_width = width // 2 - 2
+  if view.mode != "board":  # the board redraws on a timer and shows nothing from the roadmap
+    view.refresh(state)
   canvas.erase()
   put = canvas.put
   if width < tui_style.MIN_WIDTH or height < tui_style.MIN_HEIGHT:
@@ -1307,10 +1361,15 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
       view.scroll = selected_at
     elif selected_at >= view.scroll + capacity:
       view.scroll = max(0, selected_at - capacity + 1)
+    # Scrolling follows selectable rows, so the trailing sibling-only rows need this too.
+    last = max((i for i, row in enumerate(view.listing) if row.selectable), default=-1)
+    if selected_at == last:
+      view.scroll = max(view.scroll, len(view.listing) - capacity)
     view.scroll = min(view.scroll, max(0, len(view.listing) - capacity))
     for n, row in enumerate(view.listing[view.scroll:view.scroll + capacity], offset):
       selected = row_identity(row) == view.selected
-      role = "dim" if row.kind == SEPARATOR else tui_style.status_role(row.status, row.blocked, state.config)
+      role = ("dim" if row.kind in (SEPARATOR, SIBLING)
+              else tui_style.status_role(row.status, row.blocked, state.config))
       attr = palette.attr(role, selected=selected, focused=view.focus == "left")
       marker = "> " if selected else "  "
       put(n, 0, marker + row.text, attr, left_width)

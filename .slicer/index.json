@@ -8809,10 +8809,22 @@
       "id": "s277",
       "title": "TUI shows sibling-worktree claims and sibling-only items",
       "short_title": "TUI shows sibling-worktree claims and sibling-only items",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9e8b287e-33a9-46b4-b9c2-0ffb7c007078",
+          "kind": "",
+          "text": "**2026-10-15** — Ready for review: the TUI queue shows the list claim cell, and sibling-only rows.\n- store.claim_cell (moved from cli._claim_cell, output unchanged) gives the queue's CLAIM cell: owner, *, wt:NAME or wt:NAME+N, or -. The queue caps it at 8 cells with an ellipsis; list and the detail pane are not capped.\n- Narrow rule: under a 50-cell queue pane (a terminal under 104 columns) the claim and size columns are both dropped so the title keeps room. Wider panes keep the capped claim, size and score.\n- The Only in a sibling block follows a separator after the prose rows. Its rows are not selectable, ignore item filters, and scroll into view after the last row.\n- Fact A: on a narrow terminal a sibling start shows no mark. The same was true before this slice, because the queue had no claim column.\n- Backlog: a sibling block taller than the pane can scroll the selected row out of view (gate LOW); the CJK len-versus-cell-width issue, which slicer list shares; configurable columns (s291).\n- Counts: full suite 2049 OK (skipped 1); TUI group 114 OK; slicer check passed; git diff --check clean.",
+          "created_at": "2026-10-15T14:29:22Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -8831,7 +8843,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

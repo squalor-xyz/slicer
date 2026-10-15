@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-276 items · — 11 · done 261 · retired 4
+276 items · — 10 · done 261 · retired 4 · review 1
 
 ## v1.11
 
@@ -41,7 +41,7 @@
 | 6 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
 | 7 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
 | 8 | [s276](slices/s276.md) | TUI detail pane shows every item and slice field | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
-| 9 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 9 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | review |
 | 10 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 11 | [s279](slices/s279.md) | TUI overview line shows progress and check drift | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 12 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |

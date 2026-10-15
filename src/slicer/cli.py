@@ -1627,30 +1627,13 @@ def _cmd_next_batch(
   return OK
 
 
-def _claim_cell(
-  cfg: Config, item: model.Item, elsewhere: list[dict[str, str]] | None = None,
-) -> str:
-  """Owner when claimed, `*` when in progress without one, otherwise `-`.
-
-  A finished item's local claim is hidden, but sibling work remains visible.
-  """
-  if item.status != cfg.done_status and item.claim_owner:
-    return item.claim_owner
-  if item.status in cfg.in_work():
-    return "*"
-  if elsewhere:
-    extra = f"+{len(elsewhere) - 1}" if len(elsewhere) > 1 else ""
-    return f"wt:{elsewhere[0]['worktree']}{extra}"
-  return "-"
-
-
 def _claim_width(
   cfg: Config, items: list[model.Item],
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
 ) -> int:
   width = len("CLAIM")
   for item in items:
-    width = max(width, len(_claim_cell(cfg, item, (elsewhere or {}).get(item.id))))
+    width = max(width, len(store.claim_cell(cfg, item, (elsewhere or {}).get(item.id))))
   return width
 
 
@@ -1709,7 +1692,7 @@ def _item_rows(
     mark = "!" if graph.blocked_by(state.index, item, satisfying) else " "
     rows.append(
       f"{n:>3}{mark} {item.id:<5} {label:<{status_w}} "
-      f"{_claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
+      f"{store.claim_cell(cfg, item, elsewhere.get(item.id)):<{claim_w}} {pass_cell}{item.size:<4} "
       f"{effort:<6} {score:<5} {item.quadrant:<9} {item.display_title()}"
     )
   return rows
