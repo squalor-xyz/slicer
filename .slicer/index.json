@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 305,
+  "next_id": 306,
   "preamble": "",
   "passes": [
     {
@@ -10238,6 +10238,38 @@
         "trees_literal": false,
         "findings": "owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4",
         "discovered_from": "s296",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s305",
+      "title": "Sibling id refusal ignores case",
+      "short_title": "Sibling id refusal ignores case",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s301"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s301 relay review, 2026-10-15: a sibling's s10 against our S10 is not refused; Index.get is case-sensitive",
+        "discovered_from": "s301",
         "parent": "",
         "cites": [],
         "key": "",
