@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 # Project knowledge, the same six kinds in every project. Not items, and not
 # a project's review vocabulary: an agent can rely on these names.
@@ -235,6 +235,8 @@ class Item:
   trees_literal: bool = False
   findings: str = ""
   discovered_from: str = ""
+  # The slice this item is a sliver of. One level: a parent has no parent.
+  parent: str = ""
   key: str = ""
   pass_key: str = ""
   group: str = ""
@@ -324,6 +326,7 @@ class Item:
         "trees_literal": self.trees_literal,
         "findings": self.findings,
         "discovered_from": self.discovered_from,
+        "parent": self.parent,
         "cites": list(self.cites),
         "key": self.key,
         "pass": self.pass_key,
@@ -359,6 +362,7 @@ class Item:
       trees_literal=bool(f.get("trees_literal", False)),
       findings=f.get("findings", ""),
       discovered_from=_discovered_from(f.get("discovered_from", "")),
+      parent=_parent(f.get("parent", "")),
       cites=_string_list(f.get("cites", []), "cites"),
       key=_stored_key(f.get("key", "")),
       pass_key=f.get("pass", ""),
@@ -375,6 +379,13 @@ def _discovered_from(value: object) -> str:
   """Historical items have no source; stored references must be strings."""
   if not isinstance(value, str):
     raise StateError("discovered_from must be a string", code="corrupt")
+  return value
+
+
+def _parent(value: object) -> str:
+  """Historical items have no parent; a stored parent must be a string."""
+  if not isinstance(value, str):
+    raise StateError("parent must be a string", code="corrupt")
   return value
 
 

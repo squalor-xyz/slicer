@@ -36,7 +36,7 @@ never pays for curses.
 ```
 .slicer/
   config.json              everything project-specific; "version": 2
-  index.json               the ordered queue; "version": 5
+  index.json               the ordered queue; "version": 9
   log.jsonl                append-only history, one LogEntry per line
   feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
   feedback-reported.json   which entries `feedback-report` filed; gitignored, not roadmap state
@@ -63,7 +63,7 @@ Config schema is `5` (`src/slicer/config.py`), protecting the optional `issues_r
 destination for `feedback-report`; schema 4 added `satisfies_dependencies`, schema 3
 `handoff_requires_note_kind`, and schema 2 the `note_kinds` whitelist. Older configs still
 load with the historical defaults (no report requirement, `done_status` alone satisfying
-dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `8`
+dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `9`
 (`SCHEMA_VERSION` in `src/slicer/model.py`). Schema 7 gave items structured `note_records`.
 Schema 5 adds optional `fields.discovered_from`, an existing item ID independent
 of dependency and priority edges. Missing fields load empty without writes;
@@ -99,6 +99,15 @@ reference does not block, rescore, or change `next`. `check` fails when a cite
 names nothing. A slice header lists the citations, and a roadmap row names a
 retired assumption or decision the item cites. `done_dir` and
 `retired_dir` are config, not constants.
+Schema 9 adds optional `fields.parent`, the existing item ID a sliver was carved
+from. It follows the `discovered_from` pattern (missing loads empty without
+writes; the next save stamps 9; older readers refuse) but is a hierarchy, one
+level deep: an item with a parent cannot be a parent and cannot be its own.
+`ops` enforces that on `add` and `set` (`parent_nested`, `parent_self`); `verify`
+and the index merge driver report an unknown, nested or self parent. It is a
+reference, not a dependency, so readiness, scores and `next` never read it.
+`remove` refuses an item with slivers unless forced, and a purge does not
+reclaim an ID a sliver names.
 
 ## Invariants
 

@@ -1766,9 +1766,13 @@ def cmd_list(args: argparse.Namespace) -> int:
     )
   if args.discovered_from is not None:
     state.index.require(args.discovered_from)
+  if args.parent is not None:
+    state.index.require(args.parent)
   items = state.index.items
   if args.discovered_from is not None:
     items = [i for i in items if i.discovered_from == args.discovered_from]
+  if args.parent is not None:
+    items = [i for i in items if i.parent == args.parent]
   if args.tree:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
@@ -2027,21 +2031,25 @@ def cmd_show(args: argparse.Namespace) -> int:
       code="usage",
     )
   resolved = render.citations(state.index, item)
-  cite_line = render.cite_header(state.index, item)
+  header = render.header_lines(state.index, item)
+  kids = ops.slivers_of(state, item.id)
+  sliver_rows = [{"id": k.id, "status": k.status, "title": k.title} for k in kids]
+  sliver_lines = ["Slivers:", *(f"  {k.id}  {k.status}  {k.display_title()}" for k in kids)] if kids else []
   if sl is None:
     lines = [f"{item.id}  {item.display_title()}", *item.rendered_notes]
-    if cite_line:
-      lines.append(cite_line)
+    if header:
+      lines.append(header)
     lines.append(f"(no slice yet; run `slicer promote {item.id}`)")
-    _emit(args, item.to_dict() | _note_fields(item, manifest) | {"citations": resolved},
-          "\n".join(lines + _pack_text(item, sl, manifest, notes=False)))
+    _emit(args, item.to_dict() | _note_fields(item, manifest) | {
+            "citations": resolved, "slivers": sliver_rows},
+          "\n".join(lines + sliver_lines + _pack_text(item, sl, manifest, notes=False)))
     return OK
   text = render.render_slice(
-    sl, state.config, state.template("slice.md"), item.rendered_notes, cite_line,
+    sl, state.config, state.template("slice.md"), item.rendered_notes, header,
   ).decode("utf-8")
   _emit(args, item.to_dict() | _note_fields(item, manifest) | {
-    "slice": sl.to_dict(), "citations": resolved,
-  }, "\n".join([text, *_pack_text(item, sl, manifest, notes=False)]))
+    "slice": sl.to_dict(), "citations": resolved, "slivers": sliver_rows,
+  }, "\n".join([text, *sliver_lines, *_pack_text(item, sl, manifest, notes=False)]))
   return OK
 
 
@@ -2060,6 +2068,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
     effort=args.effort, depends_on=args.depends_on, short_title=args.short_title, key=args.key,
     id_floor=_id_floor(state), discovered_from=args.discovered_from,
+    parent=args.parent,
   )
   text = f"added {item.id}  {item.display_title()}"
   if item.pass_key:
@@ -2117,7 +2126,7 @@ def cmd_set(args: argparse.Namespace) -> int:
   fields = dict(
     title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
-    pass_key=args.pass_key, flags=flags, group=args.group,
+    pass_key=args.pass_key, flags=flags, group=args.group, parent=args.parent,
     importance=args.importance, urgency=args.urgency,
     effort=args.effort, attempts=args.attempts,
   )
@@ -3437,6 +3446,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--review", action="store_true",
                   help="only items in the review status")
   sp.add_argument("--discovered-from", help="filter by exact source item ID")
+  sp.add_argument("--parent", help="only slivers of this item ID")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
   sp.add_argument("--pass", dest="pass_key", help="filter by pass")
   sp.add_argument("--flag", action="append",
@@ -3494,6 +3504,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--depends-on", action="append", help="dependency id (repeatable)")
   sp.add_argument("--short-title", help="short title for the roadmap row")
   sp.add_argument("--discovered-from", help="existing item ID that discovered this work")
+  sp.add_argument("--parent", help="existing item ID this item is a sliver of")
   sp.add_argument("--id", help="use this id instead of the next free one")
   sp.add_argument("--key", help="case-sensitive filing identity; retries return the existing item")
   sp.add_argument("--size")
@@ -3539,6 +3550,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--remove-flag", action="append", help="remove a flag without replacing the list (repeatable)")
   sp.add_argument("--no-flags", dest="no_flags", action="store_true", help="clear all flags")
   sp.add_argument("--group", help="the phase-label group; --group '' clears it")
+  sp.add_argument("--parent", help="existing item ID this item is a sliver of; --parent '' clears it")
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate")

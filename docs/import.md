@@ -88,6 +88,7 @@ status: parked
 | `pass` | A pass group key, if the project uses passes |
 | `group` | A phase label rendered above the item |
 | `discovered_from` | One existing item ID, in any status; never a title or a prospective outline item |
+| `parent` | The item this one is a sliver of: a **title** (of an entry in this file or an existing item, as `depends` reads it), else an existing item ID. One level only |
 | `depends` | The **title** of another item, in this file or already in the roadmap |
 | `importance` | `1`–`3`, how important (default 2); drives the priority score |
 | `urgency` | `1`–`3`, how urgent (default 2); drives the priority score |
@@ -158,6 +159,14 @@ source in `Item.fields.discovered_from`. It is a single value, independent of
 `depends`; unknown sources refuse the entire outline before allocating IDs or
 writing anything. Sources cannot refer to items being created in that outline.
 
+**A sliver's parent resolves like a dependency.** `parent: Big slice` names an entry of the
+outline (filed before or after it) or an existing item by title, and resolves to that item's
+id; a known title wins. Any other value must be an existing item ID, so `parent: S01` stores
+that item. The target must not itself have a parent (an existing item, or an entry with its
+own `parent:`), and an entry cannot name itself; an unknown value refuses the entire outline
+before anything is written. Unlike `depends`, `parent` is a single value and adds no
+dependency edge.
+
 **Dependencies resolve to ids.** `depends: Parse the config file` becomes
 `depends_on: ["S01"]`. Each `depends:` line is read whole first: if the entire value is
 the title of an item in the outline or already in the roadmap, it is that one dependency,
@@ -186,7 +195,7 @@ Import is all-or-nothing. Everything is validated before a byte is written.
 
 ```console
 $ slicer import roadmap.md
-slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, discovered_from, importance, urgency, effort
+slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, discovered_from, parent, importance, urgency, effort
 ```
 
 **Anything the outline says that does not fit the project** is collected, reported

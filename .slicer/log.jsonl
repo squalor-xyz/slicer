@@ -1505,3 +1505,7 @@
 {"when": "2026-10-15T12:33:44Z", "item": "s287", "action": "note", "from": "", "to": "", "note": "Verified: init lists lock in .slicer/.gitignore, after relay", "by": "Jon Robbins"}
 {"when": "2026-10-15T12:33:47Z", "item": "s287", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T12:34:07Z", "item": "s287", "action": "status", "from": "review", "to": "done", "note": "Landed on main: init and every lock acquisition gitignore .slicer/lock (best-effort); gate PASS, full suite 2003 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T11:00:02Z", "item": "s273", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T11:25:59Z", "item": "s273", "action": "set", "from": "", "to": "", "note": "effort"}
+{"when": "2026-10-15T12:44:26Z", "item": "s273", "action": "note", "from": "", "to": "", "note": "Ready for review, gate PASS. Item.parent added at index sche", "by": "Jon Robbins"}
+{"when": "2026-10-15T12:44:26Z", "item": "s273", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

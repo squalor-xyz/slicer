@@ -266,6 +266,14 @@ def _problems(doc: dict[str, Any]) -> list[tuple[str, list[str]]]:
   for item in index.items:
     if item.discovered_from and index.get(item.discovered_from) is None:
       found.append((f"{item.id} was discovered from unknown id {item.discovered_from}", [item.id]))
+    if item.parent:
+      parent = index.get(item.parent)
+      if item.parent == item.id:
+        found.append((f"{item.id} is its own parent", [item.id]))
+      elif parent is None:
+        found.append((f"{item.id} was a sliver of unknown id {item.parent}", [item.id]))
+      elif parent.parent:
+        found.append((f"{item.id} is a sliver of {parent.id}, which has a parent", [item.id]))
     for record_id in item.cites:
       if index.catalog.get(record_id) is None:
         found.append((f"{item.id} cites unknown id {record_id}", [item.id]))

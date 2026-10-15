@@ -163,6 +163,17 @@ def offline(state: State) -> VerifyReport:
       report.findings.append(Finding(
         "error", item.id, f"discovered_from unknown id {item.discovered_from}",
       ))
+    if item.parent:
+      parent = index.get(item.parent)
+      if item.parent == item.id:
+        report.findings.append(Finding("error", item.id, "parent is itself"))
+      elif parent is None:
+        report.findings.append(Finding("error", item.id, f"parent unknown id {item.parent}"))
+      elif parent.parent:
+        report.findings.append(Finding(
+          "error", item.id,
+          f"parent {parent.id} has a parent ({parent.parent}); a sliver cannot have slivers",
+        ))
     for record_id in item.cites:
       if index.catalog.get(record_id) is None:
         report.findings.append(Finding(
