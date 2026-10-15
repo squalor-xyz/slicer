@@ -9032,7 +9032,7 @@
       "id": "s275",
       "title": "Guide the orchestrator to sliver a slice in the relay",
       "short_title": "Relay slivers",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s273",
