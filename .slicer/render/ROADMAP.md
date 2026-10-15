@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-277 items · — 10 · done 263 · retired 4
+277 items · — 9 · done 263 · retired 4 · review 1
 
 ## v1.11
 
@@ -53,7 +53,7 @@
 | 18 | [s286](slices/s286.md) | list marks blocked rows with ! | S | 1 | slicer | owner session 2026-10-14: blocked rows in `slicer list` ranked below score-11 rows with nothing showing why | done |
 | 19 | [s287](slices/s287.md) | Gitignore the project lock file | S | 1 | slicer | s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write | done |
 | 20 | [s288](slices/s288.md) | affected.py finds a map for the same commit in another worktree | S | 1 | slicer | v1.11 relay 2026-10-15: every new slice worktree starts with no `.venv/affected-map.json`, so `affected.py --run` exits 2 until a six-minute full discover runs there, even when the main checkout already holds a map for the same HEAD; s276, s282, s286, s271, s283 and s284 implementers all hit it | done |
-| 21 | [s289](slices/s289.md) | An outline's depends accepts an existing item ID | S | 1 | slicer | v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with "depends on 's270', which is not in the outline or the index", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID | — |
+| 21 | [s289](slices/s289.md) | An outline's depends accepts an existing item ID | S | 1 | slicer | v1.11 relay 2026-10-15: filing s288 with `depends: s270` was refused with "depends on 's270', which is not in the outline or the index", although s270 is in the index; `depends` takes only titles, while `discovered_from` in the same outline takes an ID | review |
 | 22 | [s290](slices/s290.md) | Landing a schema bump runs the merge driver from the new code | S | 1 | docs | v1.11 relay 2026-10-15: landing s273 (index schema 8 to 9) on main; the `slicer-index` merge driver is `slicer merge-index` from PATH, which is the editable install of the main checkout and still at schema 8, so it refuses the schema-9 side (`schema_too_new` becomes an unreadable side and a text conflict on `.slicer/index.json`, confirmed by the s273 reviewer in a scratch merge); the orchestrator merged with a PATH shim running the branch's code | — |
 
 ---

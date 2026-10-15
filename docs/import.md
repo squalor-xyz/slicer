@@ -89,7 +89,7 @@ status: parked
 | `group` | A phase label rendered above the item |
 | `discovered_from` | One existing item ID, in any status; never a title or a prospective outline item |
 | `parent` | The item this one is a sliver of: a **title** (of an entry in this file or an existing item, as `depends` reads it), else an existing item ID. One level only |
-| `depends` | The **title** of another item, in this file or already in the roadmap |
+| `depends` | The **title** of another item, in this file or already in the roadmap, else an existing item ID |
 | `importance` | `1`–`3`, how important (default 2); drives the priority score |
 | `urgency` | `1`–`3`, how urgent (default 2); drives the priority score |
 | `effort` | `1`–`3`, optional implementation weight. Omit the key to leave it unset. It does not change `next` |
@@ -97,9 +97,10 @@ status: parked
 An unknown key is an error naming the key and the known set — a silently ignored key is
 a roadmap item that quietly lost its size.
 
-`depends` refers to titles rather than ids because ids do not exist until the outline is
-applied. Both directions work: a title elsewhere in the same file, or the title of an
-item already in the roadmap.
+`depends` names a title, which works both ways: a title elsewhere in the same file, or the
+title of an item already in the roadmap. An item already in the roadmap can also be named by
+its ID, because that ID exists. An entry in the same file has no ID until the outline is
+applied, so name it by title. A title wins over an ID, as it does for `parent`.
 
 ## Apply it
 
@@ -171,7 +172,9 @@ dependency edge.
 `depends_on: ["S01"]`. Each `depends:` line is read whole first: if the entire value is
 the title of an item in the outline or already in the roadmap, it is that one dependency,
 so a title may contain commas. Otherwise the value is split on commas and each piece must
-be a title. When both readings exist, the whole title wins. Repeat the key to add more
+be a title or the ID of an item already in the roadmap. When both readings exist, the whole
+title wins. Likewise a title wins over an ID: `depends: S02` names the item titled `S02` if
+one exists, even when another item has the ID `S02`. Repeat the key to add more
 dependencies, in the order written:
 
 ```markdown
@@ -180,9 +183,9 @@ depends: Load defaults, Reject blank names
 ```
 
 The first line is one dependency if an item has exactly that title; the second names two.
-A reference that matches no title refuses the whole file, and the dry run and the import
-count and save the same edges. `slicer promote` refuses a source that sets `depends:`, as
-it does every item-level key.
+A reference that matches neither a title nor an existing ID refuses the whole file, and the
+dry run and the import count and save the same edges. `slicer promote` refuses a source that
+sets `depends:`, as it does every item-level key.
 
 **Passes are not inherited.** `slicer add` without `--pass` files a new item under the
 previous item's pass (`--pass ''` opts out); import does not, because an outline says where its own entries belong.
