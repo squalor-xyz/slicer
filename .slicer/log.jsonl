@@ -1469,3 +1469,6 @@
 {"when": "2026-10-15T04:09:13Z", "item": "s286", "action": "note", "from": "", "to": "", "note": "Text rows of `list` and `find` mark an item that waits on an", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:09:15Z", "item": "s286", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-15T04:09:27Z", "item": "s286", "action": "status", "from": "review", "to": "done", "note": "Landed on main: list and find text rows mark blocked items with !; gate PASS, full suite 1925 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-15T04:09:58Z", "item": "s270", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T10:57:04Z", "item": "s270", "action": "note", "from": "", "to": "", "note": "Verified. tests/affected.py now records, per test, the non-P", "by": "Jon Robbins"}
+{"when": "2026-10-15T10:57:05Z", "item": "s270", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

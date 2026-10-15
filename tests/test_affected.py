@@ -53,11 +53,24 @@ def _run(argv: list[str]) -> tuple[int, str, str]:
 
 
 class AffectedTests(unittest.TestCase):
-  def map_file(self, tests: dict[str, list[str]], sha: str = SHA) -> Path:
+  def map_file(
+    self,
+    tests: dict[str, list[str]],
+    sha: str = SHA,
+    reads: dict[str, list[str]] | None = None,
+  ) -> Path:
     directory = Path(tempfile.mkdtemp())
     self.addCleanup(shutil.rmtree, directory)
     path = directory / "affected-map.json"
-    affected.write_map(path, sha, tests)
+    affected.write_map(path, sha, tests, reads)
+    return path
+
+  def raw_map(self, document: dict) -> Path:
+    """A map written by hand, so the select tests do not depend on `write_map`."""
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    path = directory / "affected-map.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
     return path
 
   def test_Record_TwoTests_MapsEachTestAndSelectsTheLinesItRan(self) -> None:
@@ -65,17 +78,24 @@ class AffectedTests(unittest.TestCase):
     self.addCleanup(shutil.rmtree, directory)
     module = _load_sample(directory)
 
+    docs = directory / "docs"
+    docs.mkdir()
+    (docs / "alpha.md").write_text("a\n", encoding="utf-8")
+    (docs / "zeta.md").write_text("z\n", encoding="utf-8")
+
     class Pair(unittest.TestCase):
       def test_a(self) -> None:
         module.only_a()
         module.shared()
+        (docs / "zeta.md").read_text(encoding="utf-8")
+        (docs / "alpha.md").read_text(encoding="utf-8")
 
       def test_b(self) -> None:
         module.only_b()
         module.shared()
 
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(Pair)
-    traced = affected.trace_suite(suite, directory)
+    traced, reads = affected.trace(suite, directory)
     # Python 3.14 clears a suite after it runs, so the ids come from the map.
     by_method = {test_id.rsplit(".", 1)[-1]: test_id for test_id in traced}
     only_a = set(traced[by_method["test_a"]]) - set(traced[by_method["test_b"]])
@@ -85,10 +105,15 @@ class AffectedTests(unittest.TestCase):
     self.assertTrue(only_b)
     self.assertTrue(shared)
     self.assertTrue(all(line.startswith("src/slicer/sample.py:") for line in only_a | only_b | shared))
-    path = self.map_file(traced)
+    path = self.map_file(traced, reads=reads)
     text = path.read_text(encoding="utf-8")
     self.assertLess(text.index('"sha"'), text.index('"tests"'))
-    self.assertEqual(json.loads(text)["sha"], SHA)
+    self.assertLess(text.index('"tests"'), text.index('"reads"'))
+    document = json.loads(text)
+    self.assertEqual(document["sha"], SHA)
+    self.assertEqual(document["reads"][by_method["test_a"]], ["docs/alpha.md", "docs/zeta.md"])
+    self.assertEqual(document["reads"][by_method["test_b"]], [])
+    self.assertEqual(list(document["reads"]), sorted(document["reads"]))
 
     def chosen(location: str) -> list[str]:
       file_path, line = location.rsplit(":", 1)
@@ -156,6 +181,137 @@ class AffectedTests(unittest.TestCase):
     selected = out.splitlines()
     self.assertIn(self.id(), selected)
     self.assertNotIn("not.a.Real.test_one", selected)
+
+  def test_TraceSuite_TestReadsRepoFile_RecordsTheRead(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    outside = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, outside)
+    inside = directory / "docs" / "guide.md"
+    ignored = [directory / ".git" / "notes.md", directory / ".venv" / "notes.md"]
+    for file in [inside, *ignored, outside / "other.md"]:
+      file.parent.mkdir(parents=True, exist_ok=True)
+      file.write_text("x\n", encoding="utf-8")
+    opened = [inside, *ignored, outside / "other.md"]
+
+    class Reader(unittest.TestCase):
+      def test_reads(self) -> None:
+        for file in opened:
+          file.read_text(encoding="utf-8")
+        # Opening a directory is not reading a file.
+        os.close(os.open(directory / "docs", os.O_RDONLY))
+
+      def test_reads_nothing(self) -> None:
+        pass
+
+    suite = unittest.defaultTestLoader.loadTestsFromTestCase(Reader)
+    _, reads = affected.trace(suite, directory)
+    by_method = {test_id.rsplit(".", 1)[-1]: test_id for test_id in reads}
+    self.assertEqual(reads[by_method["test_reads"]], ["docs/guide.md"])
+    self.assertEqual(reads[by_method["test_reads_nothing"]], [])
+
+  def test_TraceSuite_ReadOutsideAnyTest_IsNotRecorded(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    inside = directory / "inside.md"
+    outside = directory / "outside.md"
+    for file in (inside, outside):
+      file.write_text("x\n", encoding="utf-8")
+
+    class Reader(unittest.TestCase):
+      @classmethod
+      def setUpClass(cls) -> None:
+        outside.read_text(encoding="utf-8")
+
+      def test_reads(self) -> None:
+        inside.read_text(encoding="utf-8")
+
+    result = affected._TracingResult(directory)
+    unittest.defaultTestLoader.loadTestsFromTestCase(Reader).run(result)
+    outside.read_text(encoding="utf-8")
+    self.assertEqual(next(iter(result.reads().values())), ["inside.md"])
+
+  def test_TraceSuite_FileWrittenBeforeItExists_IsRecordedForALaterReader(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    target = directory / "docs" / "new.md"
+    target.parent.mkdir()
+
+    class Pair(unittest.TestCase):
+      def test_a_writes(self) -> None:
+        target.write_text("x\n", encoding="utf-8")
+
+      def test_b_reads(self) -> None:
+        target.read_text(encoding="utf-8")
+
+    _, reads = affected.trace(unittest.defaultTestLoader.loadTestsFromTestCase(Pair), directory)
+    by_method = {test_id.rsplit(".", 1)[-1]: test_id for test_id in reads}
+    self.assertEqual(reads[by_method["test_b_reads"]], ["docs/new.md"])
+
+  def test_TraceSuite_NestedTraceInATest_KeepsRecordingTheOuterTest(self) -> None:
+    directory = Path(tempfile.mkdtemp())
+    self.addCleanup(shutil.rmtree, directory)
+    for name in ("before.md", "inner.md", "after.md"):
+      (directory / name).write_text("x\n", encoding="utf-8")
+
+    class Inner(unittest.TestCase):
+      def test_inner(self) -> None:
+        (directory / "inner.md").read_text(encoding="utf-8")
+
+    class Outer(unittest.TestCase):
+      def test_wraps(self) -> None:
+        (directory / "before.md").read_text(encoding="utf-8")
+        affected.trace(unittest.defaultTestLoader.loadTestsFromTestCase(Inner), directory)
+        (directory / "after.md").read_text(encoding="utf-8")
+
+    _, reads = affected.trace(unittest.defaultTestLoader.loadTestsFromTestCase(Outer), directory)
+    self.assertEqual(next(iter(reads.values())), ["after.md", "before.md"])
+
+  def test_Select_ChangedMarkdownReadByATest_SelectsThatTest(self) -> None:
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_reader": [], "mod.T.test_other": []},
+      "reads": {"mod.T.test_reader": ["README.md"], "mod.T.test_other": ["docs/other.md"]},
+    })
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--lines", "README.md:1-1"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_reader"])
+
+  def test_Select_ChangedFileNoTestRead_SaysNothingToRun(self) -> None:
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_reader": []},
+      "reads": {"mod.T.test_reader": ["README.md"]},
+    })
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--lines", "docs/unread.md:1-1"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out, "nothing to run\n")
+
+  def test_Select_MapWithoutReads_RunsFullSuite(self) -> None:
+    path = self.raw_map({"sha": SHA, "tests": {"mod.T.test_reader": ["src/slicer/ops.py:4"]}})
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--lines", "README.md:1-1"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("reads", err)
+    self.assertIn(DISCOVER, err)
+
+  def test_Select_ChangedTemplateUnderSrc_SelectsReaders(self) -> None:
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_reader": ["src/slicer/ops.py:4"]},
+      "reads": {"mod.T.test_reader": ["src/slicer/templates/page.html"]},
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/templates/page.html:1-1",
+    ])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_reader"])
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/templates/unread.html:1-1",
+    ])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
 
   def test_Select_MissingMap_ExitsTwoAndNamesDiscover(self) -> None:
     missing = self.map_file({})
@@ -303,19 +459,29 @@ class AffectedTests(unittest.TestCase):
     ).stdout.strip()
     path = directory / "affected-map.json"
     affected.publish_map(
-      path, ok=True, tests={"pkg.T.test_a": ["src/slicer/sample.py:2"]}, root=directory,
+      path, ok=True,
+      tests={"pkg.T.test_b": ["src/slicer/sample.py:5"], "pkg.T.test_a": ["src/slicer/sample.py:2"]},
+      reads={"pkg.T.test_b": [], "pkg.T.test_a": ["docs/a.md", "README.md"]},
+      root=directory,
     )
     text = path.read_text(encoding="utf-8")
     self.assertLess(text.index('"sha"'), text.index('"tests"'))
-    self.assertEqual(json.loads(text), {
+    self.assertLess(text.index('"tests"'), text.index('"reads"'))
+    document = json.loads(text)
+    self.assertEqual(document, {
       "sha": sha,
-      "tests": {"pkg.T.test_a": ["src/slicer/sample.py:2"]},
+      "tests": {"pkg.T.test_a": ["src/slicer/sample.py:2"], "pkg.T.test_b": ["src/slicer/sample.py:5"]},
+      "reads": {"pkg.T.test_a": ["README.md", "docs/a.md"], "pkg.T.test_b": []},
     })
+    self.assertEqual(list(document["reads"]), ["pkg.T.test_a", "pkg.T.test_b"])
     launcher = ["python3.14 -m unittest", "discover", "-s", "tests", "-t", "tests"]
     module = ["/usr/lib/python3.14/unittest/__main__.py", "discover", "-s", "tests", "-t", "tests"]
     self.assertTrue(affected.entrypoint_is_full_discover(launcher))
     self.assertTrue(affected.entrypoint_is_full_discover(module))
     self.assertFalse(affected.entrypoint_is_full_discover(launcher + ["-k", "One"]))
+    for pattern in (["-p", "test_x.py"], ["--pattern", "test_x.py"], ["--pattern=test_x.py"], ["-ptest_x.py"]):
+      with self.subTest(pattern=pattern):
+        self.assertFalse(affected.entrypoint_is_full_discover(launcher + pattern))
     self._hook_writes_for_launcher(directory)
 
 
@@ -332,7 +498,7 @@ class AffectedTests(unittest.TestCase):
       "affected.install_discover_hook(destination, root)\n"
       "class Tiny(unittest.TestCase):\n"
       "  def test_ok(self):\n"
-      "    return None\n"
+      "    (root / 'marker.txt').read_text()\n"
       "runner = unittest.TextTestRunner(stream=open('/dev/null', 'w'), verbosity=0)\n"
       "result = runner.run(unittest.defaultTestLoader.loadTestsFromTestCase(Tiny))\n"
       "if not result.wasSuccessful():\n"
@@ -340,6 +506,8 @@ class AffectedTests(unittest.TestCase):
       "doc = json.loads(destination.read_text())\n"
       "if doc['sha'] != affected.git_head(root):\n"
       "  raise SystemExit(2)\n"
+      "if list(doc['reads'].values()) != [['marker.txt']]:\n"
+      "  raise SystemExit(3)\n"
     )
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).resolve().parent)

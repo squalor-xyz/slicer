@@ -8564,10 +8564,22 @@
       "id": "s270",
       "title": "Select tests by the repo files they read in tests/affected.py",
       "short_title": "Affected by file reads",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "ce493b90-c8be-42e0-a5d0-cee4f4d2b5a4",
+          "kind": "",
+          "text": "**2026-10-15** — Verified. tests/affected.py now records, per test, the non-Python repo files it opens (one audit hook for open, installed once, recording only while a test is current; skips .git/, .venv/, __pycache__, .py/.pyc, non-files) and stores them as a sorted reads key in the map beside tests. A map without reads is stale and asks for the full suite with a reason. A changed file a test read selects that test; a non-Python file under src/slicer/ that some test read no longer forces the full suite, and an unread one still does. Map reads for test_docs_coverage include README.md and docs/commands.md; --lines README.md:1-1 lists the two docs coverage tests and an unread doc prints nothing to run. entrypoint_is_full_discover now rejects -p and --pattern runs (-p X, -pX, --pattern X, --pattern=X) so a partial discover cannot write a map. A file written before it exists is recorded for a later reader; the nested-trace restore of the outer recorder is tested. AGENTS.md Commands states the docs-only rule (affected.py --run, slicer check, git diff --check replace the full discover when nothing changes under src/ or tests/) and that a new worktree needs one full discover first; the claim block comment was rewritten in place, roadmap section 3499/3500 bytes. 'about one minute' was left because test_ai pins that phrase. CHANGELOG updated. Hook timing: full discover with vs without hook averaged +5-6% (run-to-run noise about 10%), reviewer microbenchmark about 3%, under the 10% stop; no performance change. Counts: full suite 1933 OK (1 skipped), test_affected 25 OK. All new tests mutation-checked red. slicer check and git diff --check pass.",
+          "created_at": "2026-10-15T10:57:04Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -8586,7 +8598,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

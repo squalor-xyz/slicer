@@ -1,15 +1,18 @@
-"""Run the tests that executed the lines a working-tree diff touches.
+"""Run the tests that executed the lines, or opened the files, a diff touches.
 
 The full unittest discover stays the gate before done. When that discover is
-the process entry point and passes, it writes this map for HEAD. The map is a
-local cache: when it is missing or stale, the caller is told to run that suite
-instead of a list that only looks complete.
+the process entry point and passes, it writes this map for HEAD: the lines each
+test executed, and the non-Python repo files each test opened, so a Markdown or
+template change selects its readers. The map is a local cache: when it is
+missing or stale, the caller is told to run that suite instead of a list that
+only looks complete.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -53,14 +56,21 @@ def record(map_path: Path) -> int:
   suite = unittest.defaultTestLoader.discover(
     str(ROOT / "tests"), top_level_dir=str(ROOT / "tests"),
   )
-  tests = trace_suite(suite, ROOT)
-  write_map(map_path, sha, tests)
+  tests, reads = trace(suite, ROOT)
+  write_map(map_path, sha, tests, reads)
   print(f"recorded {len(tests)} tests to {map_path}")
   return 0
 
 
 def trace_suite(suite: unittest.TestSuite, root: Path) -> dict[str, list[str]]:
   """Lines each test executed under `src/slicer/` or `tests/`, one test at a time."""
+  return trace(suite, root)[0]
+
+
+def trace(
+  suite: unittest.TestSuite, root: Path,
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+  """Lines each test executed and the repo files it opened, one test at a time."""
   result = _TracingResult(root)
   previous = sys.gettrace()
   try:
@@ -69,15 +79,20 @@ def trace_suite(suite: unittest.TestSuite, root: Path) -> dict[str, list[str]]:
     # An outer discover is tracing too. Clearing the hook here would drop the
     # rest of that test's lines, so put the previous tracer back.
     sys.settrace(previous)
-  return {test_id: sorted(lines) for test_id, lines in result.seen.items()}
+  return result.lines(), result.reads()
 
 
-def write_map(path: Path, sha: str, tests: dict[str, list[str]]) -> None:
-  """Write `{sha, tests}` with sorted ids and line lists."""
+def write_map(
+  path: Path, sha: str, tests: dict[str, list[str]],
+  reads: dict[str, list[str]] | None = None,
+) -> None:
+  """Write `{sha, tests, reads}` with sorted ids and sorted lists."""
   path.parent.mkdir(parents=True, exist_ok=True)
+  opened = {} if reads is None else reads
   payload = {
     "sha": sha,
-    "tests": {test_id: list(tests[test_id]) for test_id in sorted(tests)},
+    "tests": {test_id: sorted(tests[test_id]) for test_id in sorted(tests)},
+    "reads": {test_id: sorted(opened[test_id]) for test_id in sorted(opened)},
   }
   text = json.dumps(payload, indent=2) + "\n"
   temporary = path.with_suffix(".json.tmp")
@@ -85,24 +100,33 @@ def write_map(path: Path, sha: str, tests: dict[str, list[str]]) -> None:
   temporary.replace(path)
 
 
-def load_map(path: Path) -> tuple[str, dict[str, list[str]]]:
+def load_map(path: Path) -> tuple[str, dict[str, list[str]], dict[str, list[str]]]:
   data = json.loads(path.read_text(encoding="utf-8"))
   tests = data["tests"]
   if not isinstance(data.get("sha"), str) or not isinstance(tests, dict):
-    raise TypeError("map must be {sha, tests}")
+    raise TypeError("map must be {sha, tests, reads}")
+  if "reads" not in data:
+    raise ValueError("map has no reads, so it predates file-read selection")
+  opened = data["reads"]
+  if not isinstance(opened, dict):
+    raise TypeError("map reads must be {id: [path, ...]}")
+  return data["sha"], _string_lists(tests, "tests"), _string_lists(opened, "reads")
+
+
+def _string_lists(section: dict, name: str) -> dict[str, list[str]]:
   loaded: dict[str, list[str]] = {}
-  for test_id, lines in tests.items():
-    if not isinstance(test_id, str) or not isinstance(lines, list):
-      raise TypeError("map tests must be {id: [path:line, ...]}")
-    loaded[test_id] = [str(line) for line in lines]
-  return data["sha"], loaded
+  for test_id, items in section.items():
+    if not isinstance(test_id, str) or not isinstance(items, list):
+      raise TypeError(f"map {name} must be {{id: [path, ...]}}")
+    loaded[test_id] = [str(item) for item in items]
+  return loaded
 
 
 def select(map_path: Path, sha: str | None, line_specs: list[str], run: bool) -> int:
   if not map_path.is_file():
     return _full_suite(f"{map_path} is missing")
   try:
-    recorded, tests = load_map(map_path)
+    recorded, tests, reads = load_map(map_path)
   except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
     return _full_suite(f"{map_path} cannot be read ({exc})")
   current = sha if sha is not None else git_head(ROOT)
@@ -117,7 +141,7 @@ def select(map_path: Path, sha: str | None, line_specs: list[str], run: bool) ->
     return 2
   except GitError as exc:
     return _full_suite(str(exc))
-  return _emit(changed, tests, run)
+  return _emit(changed, tests, reads, run)
 
 
 def working_tree_lines(root: Path) -> dict[str, set[int]]:
@@ -230,20 +254,79 @@ class _TracingResult(unittest.TestResult):
     except OSError:
       self.root = root
     self.seen: dict[str, set[str]] = {}
+    self.opened: dict[str, set[str]] = {}
     self._current: set[str] | None = None
+    self._current_reads: set[str] | None = None
+    self._outer: _TracingResult | None = None
     self._files: dict[str, str | None] = {}
+    self._read_paths: dict[str, str | None] = {}
+    self._real_files: set[str] = set()
 
   def startTest(self, test: unittest.TestCase) -> None:
+    global _recording
     self._current = set()
+    self._current_reads = set()
+    _install_audit_hook()
+    # A traced test can run a nested suite; give the outer one its hook back.
+    self._outer = _recording
+    _recording = self
     sys.settrace(self._trace)
     super().startTest(test)
 
   def stopTest(self, test: unittest.TestCase) -> None:
+    global _recording
     sys.settrace(None)
+    _recording = self._outer
+    self._outer = None
     lines = self._current or set()
+    reads = self._current_reads or set()
     self._current = None
+    self._current_reads = None
     super().stopTest(test)
     self.seen[test.id()] = lines
+    self.opened[test.id()] = reads
+
+  def lines(self) -> dict[str, list[str]]:
+    return {test_id: sorted(lines) for test_id, lines in self.seen.items()}
+
+  def reads(self) -> dict[str, list[str]]:
+    return {test_id: sorted(files) for test_id, files in self.opened.items()}
+
+  def record_read(self, raw: object) -> None:
+    """Note an `open` of a repo file by the current test, if it is one we map."""
+    if self._current_reads is None or not isinstance(raw, (str, bytes)):
+      return
+    name = os.fsdecode(raw)
+    path = name if os.path.isabs(name) else os.path.join(os.getcwd(), name)
+    if path in self._read_paths:
+      rel = self._read_paths[path]
+    else:
+      rel = self._read_relative(path)
+      self._read_paths[path] = rel
+    if rel is None:
+      return
+    # A relative name opened through a directory descriptor (rmtree does this)
+    # resolves against the working directory and names nothing real. A file
+    # opened for writing does not exist yet either, so only a hit is cached.
+    if path not in self._real_files:
+      if not os.path.isfile(path):
+        return
+      self._real_files.add(path)
+    self._current_reads.add(rel)
+
+  def _read_relative(self, path: str) -> str | None:
+    try:
+      rel = Path(path).resolve().relative_to(self.root)
+    except (OSError, ValueError, RuntimeError):
+      return None
+    parts = rel.parts
+    if not parts or parts[0] in (".git", ".venv") or "__pycache__" in parts:
+      return None
+    # Python files are mapped by line. An import opens them too, which would
+    # make every first importer of a module a reader of it.
+    if rel.suffix in (".py", ".pyc"):
+      return None
+    return rel.as_posix()
 
   def _trace(self, frame, event, arg):
     # Line events for every other file call resolve() once per line and make
@@ -281,8 +364,13 @@ class _TracingResult(unittest.TestResult):
     return None
 
 
-def _emit(changed: dict[str, set[int]], tests: dict[str, list[str]], run: bool) -> int:
-  known = _mapped_paths(tests)
+def _emit(
+  changed: dict[str, set[int]],
+  tests: dict[str, list[str]],
+  reads: dict[str, list[str]],
+  run: bool,
+) -> int:
+  known = _mapped_paths(tests) | _read_paths(reads)
   for path in changed:
     if path.startswith("src/slicer/") and path not in known:
       return _full_suite(f"{path} is not in the map")
@@ -295,6 +383,9 @@ def _emit(changed: dict[str, set[int]], tests: dict[str, list[str]], run: bool) 
       if number.isdigit() and int(number) in changed.get(file_path, ()):
         selected.add(test_id)
         break
+  for test_id, files in reads.items():
+    if any(path in changed for path in files):
+      selected.add(test_id)
   for path in sorted(changed):
     if not _is_test_module(path):
       continue
@@ -355,6 +446,10 @@ def _mapped_paths(tests: dict[str, list[str]]) -> set[str]:
   return found
 
 
+def _read_paths(reads: dict[str, list[str]]) -> set[str]:
+  return {path for files in reads.values() for path in files}
+
+
 def _is_test_module(path: str) -> bool:
   file = Path(path)
   return file.parent.as_posix() == "tests" and file.name.startswith("test_") and file.suffix == ".py"
@@ -407,7 +502,7 @@ def _full_suite(reason: str) -> int:
 def _parse(argv: list[str] | None) -> argparse.Namespace:
   parser = argparse.ArgumentParser(
     prog="tests/affected.py",
-    description="Run the unittest ids that executed the lines in a working-tree diff.",
+    description="Run the unittest ids that executed the lines, or read the files, in a working-tree diff.",
   )
   parser.add_argument(
     "mode", nargs="?", choices=("record",),
@@ -423,7 +518,10 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
   return parser.parse_args(argv)
 
 
-def publish_map(map_path: Path, *, ok: bool, tests: dict[str, list[str]], root: Path) -> None:
+def publish_map(
+  map_path: Path, *, ok: bool, tests: dict[str, list[str]], root: Path,
+  reads: dict[str, list[str]] | None = None,
+) -> None:
   """Write the discover map for HEAD, and only after a successful run.
 
   A failed run returns without creating or replacing `map_path`.
@@ -433,13 +531,13 @@ def publish_map(map_path: Path, *, ok: bool, tests: dict[str, list[str]], root: 
   sha = git_head(root)
   if sha is None:
     return
-  write_map(map_path, sha, tests)
+  write_map(map_path, sha, tests, reads)
 
 
 def entrypoint_is_full_discover(argv: list[str] | None = None) -> bool:
   """True when this process is an unfiltered discover of the tests directory.
 
-  A `-k` filter is a partial run, so it does not qualify. Importing this
+  A `-k` filter or a `-p` pattern is a partial run, so neither qualifies. Importing this
   module does not look at argv and does not write a map.
   """
   args = list(sys.argv if argv is None else argv)
@@ -448,11 +546,18 @@ def entrypoint_is_full_discover(argv: list[str] | None = None) -> bool:
   if not _is_unittest_program(args[0]):
     return False
   tail = args[args.index("discover") + 1:]
-  if "-k" in tail:
+  if "-k" in tail or any(_is_pattern(token) for token in tail):
     return False
   start = _option(tail, "-s", "--start-directory")
   top = _option(tail, "-t", "--top-level-directory")
   return _is_tests_dir(start) and _is_tests_dir(top)
+
+
+def _is_pattern(token: str) -> bool:
+  """`-p`, `-pX`, `--pattern` or `--pattern=X`."""
+  if token.startswith("--"):
+    return token == "--pattern" or token.startswith("--pattern=")
+  return token.startswith("-p")
 
 
 def _option(args: list[str], short: str, long: str) -> str | None:
@@ -544,8 +649,9 @@ def install_discover_hook(map_path: Path | None = None, root: Path | None = None
       and result.wasSuccessful()
       and entrypoint_is_full_discover()
     ):
-      traced = {test_id: sorted(lines) for test_id, lines in tracer.seen.items()}
-      publish_map(destination, ok=True, tests=traced, root=base)
+      publish_map(
+        destination, ok=True, tests=tracer.lines(), reads=tracer.reads(), root=base,
+      )
     return result
 
   unittest.TextTestRunner.run = run
@@ -564,8 +670,34 @@ def _traced_result(result_class: type, tracer: _TracingResult) -> type:
   return Tracing
 
 
+def _install_audit_hook() -> None:
+  """Add the one `open` listener this process will ever have.
+
+  An audit hook cannot be removed, so it stays and only records while a traced
+  test is current.
+  """
+  global _audit_installed
+  if _audit_installed:
+    return
+  _audit_installed = True
+  sys.addaudithook(_audit)
+
+
+def _audit(event: str, args: tuple) -> None:
+  recorder = _recording
+  if event != "open" or recorder is None or not args:
+    return
+  try:
+    recorder.record_read(args[0])
+  except Exception:
+    # An audit hook that raises would fail the test's own open call.
+    return
+
+
 _discover_depth = 0
 _hook_installed = False
+_audit_installed = False
+_recording: _TracingResult | None = None
 
 
 if __name__ == "__main__":
