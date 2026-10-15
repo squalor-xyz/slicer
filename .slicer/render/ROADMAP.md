@@ -29,34 +29,27 @@
 
 272 items · — 16 · done 252 · retired 4
 
-## v1.12
-
-| # | Slice | Title | Size | Effort | Trees | Findings | Status |
-|---|---|---|---|---|---|---|---|
-| 1 | [s282](slices/s282.md) | Record relay runs in a local ledger with slicer relay-run | L | 3 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
-| 2 | [s283](slices/s283.md) | TUI relay board animates running relays | M | 2 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
-| 3 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
-| 4 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
-
----
-
 ## v1.11
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 5 | [s269](slices/s269.md) | Why slicer doc | S | 1 | docs | owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README | done |
-| 6 | [s270](slices/s270.md) | Affected by file reads | M | 2 | tests | owner and orchestrator, 2026-10-14: affected.py --run prints nothing to run for a docs-only diff although tests read README and docs; AGENTS.md has no docs-only rule | — |
-| 7 | [s271](slices/s271.md) | Relay lessons in ai text | S | 1 | slicer | owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense | — |
-| 8 | [s272](slices/s272.md) | agents.md --json claim | S | 1 | docs | orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not · discovered from s269 | — |
-| 9 | [s273](slices/s273.md) | Sliver parent field | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
-| 10 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
-| 11 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
-| 12 | [s276](slices/s276.md) | TUI detail pane shows every item and slice field | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 13 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 14 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 15 | [s279](slices/s279.md) | TUI overview line shows progress and check drift | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 16 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 17 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 1 | [s269](slices/s269.md) | Why slicer doc | S | 1 | docs | owner, 2026-10-14: README and docs never say why to use slicer; asked for a brief problem-to-feature page under docs, linked from the README | done |
+| 2 | [s270](slices/s270.md) | Affected by file reads | M | 2 | tests | owner and orchestrator, 2026-10-14: affected.py --run prints nothing to run for a docs-only diff although tests read README and docs; AGENTS.md has no docs-only rule | — |
+| 3 | [s271](slices/s271.md) | Relay lessons in ai text | S | 1 | slicer | owner, 2026-10-14: relay practices live only in the orchestrator's private memory; owner chose ai relay for generic rules and asked that instructions say to compact where it makes most sense | — |
+| 4 | [s272](slices/s272.md) | agents.md --json claim | S | 1 | docs | orchestrator, 2026-10-14: docs/agents.md says every subcommand but tui/ui takes --json; merge-index and merge-relay-roles do not · discovered from s269 | — |
+| 5 | [s273](slices/s273.md) | Sliver parent field | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
+| 6 | [s274](slices/s274.md) | Hold parent for slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
+| 7 | [s275](slices/s275.md) | Relay slivers | M | 2 | slicer | owner request, session 2026-10-14: slivers (parent:child) for relays | — |
+| 8 | [s276](slices/s276.md) | TUI detail pane shows every item and slice field | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 9 | [s277](slices/s277.md) | TUI shows sibling-worktree claims and sibling-only items | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 10 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 11 | [s279](slices/s279.md) | TUI overview line shows progress and check drift | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 12 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 13 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 14 | [s282](slices/s282.md) | Record relay runs in a local ledger with slicer relay-run | L | 3 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
+| 15 | [s283](slices/s283.md) | TUI relay board animates running relays | M | 2 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
+| 16 | [s284](slices/s284.md) | ai relay tells the orchestrator to record each step with relay-run | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
+| 17 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
 
 ---
 

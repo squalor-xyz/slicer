@@ -1460,3 +1460,7 @@
 {"when": "2026-10-15T03:18:17Z", "item": "s283", "action": "add", "from": "", "to": "open", "note": "TUI relay board animates running relays"}
 {"when": "2026-10-15T03:18:17Z", "item": "s284", "action": "add", "from": "", "to": "open", "note": "ai relay tells the orchestrator to record each step with relay-run"}
 {"when": "2026-10-15T03:18:17Z", "item": "s285", "action": "add", "from": "", "to": "open", "note": "TUI shows the relay request for a selected slice or range"}
+{"when": "2026-10-15T03:21:40Z", "item": "s282", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
+{"when": "2026-10-15T03:21:40Z", "item": "s283", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
+{"when": "2026-10-15T03:21:40Z", "item": "s284", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
+{"when": "2026-10-15T03:21:40Z", "item": "s285", "action": "set", "from": "", "to": "", "note": "pass_key v1.12→v1.11"}
