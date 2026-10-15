@@ -2,7 +2,7 @@
   "version": 8,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 287,
+  "next_id": 288,
   "preamble": "",
   "passes": [
     {
@@ -9075,6 +9075,35 @@
         "urgency": 1,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s287",
+      "title": "Gitignore the project lock file",
+      "short_title": "Gitignore the project lock file",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write",
+        "discovered_from": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.11",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

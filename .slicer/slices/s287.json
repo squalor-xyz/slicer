@@ -1,0 +1,41 @@
+{
+  "id": "s287",
+  "title": "Gitignore the project lock file",
+  "lead": [
+    "`slicer init` lists `lock` in `.slicer/.gitignore`, and a project made before that gets the line the first time the lock file is created, so no project shows an untracked `.slicer/lock`."
+  ],
+  "depends_note": null,
+  "findings_note": "s282 relay 2026-10-15: every write leaves `.slicer/lock` behind, and only `feedback.md` and `feedback-reported.json` are listed in `.slicer/.gitignore`, so a project other than this repo shows an untracked `.slicer/lock` after its first write",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** removing the lock file after each write (it is an flock target and is meant to persist), and changing this repo's root `.gitignore`, which already ignores `/.slicer/lock` for itself.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`store.project_lock` (`src/slicer/store.py:178`) opens `.slicer/lock` with `O_CREAT` and never removes it. `init_project` (`src/slicer/ops.py:149`) adds only the feedback files to `.slicer/.gitignore` through `feedback.ensure_gitignore`. This repo hides the lock with its own root `.gitignore` (line 26), so the gap only shows in other projects: after the first `slicer add`, `git status` lists `.slicer/lock` as untracked. The s282 implementer hit it in a test repo on 2026-10-15."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`: `init_project` calls `feedback.ensure_gitignore(root, store.LOCK_NAME)` beside the feedback lines.\n- `src/slicer/store.py`: in `project_lock`, when the lock file did not exist before `os.open`, add the line through `feedback.ensure_gitignore` (a function-level import, since `feedback` imports `store`). Plain file IO only; no git call.\n- `tests/test_feedback.py` (the exact `.gitignore` assertions) and a new test class in `tests/test_store.py` or the nearest lock test module.\n- `CHANGELOG.md`, and `docs/configuration.md` or `docs/getting-started.md` wherever the `.slicer/.gitignore` contents are described."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Init_GitignoresLockFile`: after `init`, `.slicer/.gitignore` lists `lock`.\n- `test_ProjectLock_FirstCreate_AddsGitignoreLine`: a project whose `.gitignore` lacks the line gains it on the first write; the line appears once after several writes.\n- `test_ProjectLock_FreshProject_GitStatusClean`: in a git fixture, `init`, commit, `add`, `render`, commit; `git status --porcelain` shows no `.slicer/lock`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the line in `init_project` and on first lock creation.\n3. Update the tests that pin the exact `.gitignore` contents, the docs and CHANGELOG. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes on Python 3.11+, and `slicer check` passes.\n- In a scratch project, `git status --porcelain` after a write shows no `.slicer/lock`."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s287`, branch `feature/s287-gitignore-lock`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}
