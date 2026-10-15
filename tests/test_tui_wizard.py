@@ -393,6 +393,9 @@ class WizardLoopTests(unittest.TestCase):
         def redrawwin(self):
           pass
 
+        def timeout(self, ms):
+          pass
+
       screen = Terminal(24, 80)
       with ExitStack() as patches:
         for name in ("curs_set", "def_prog_mode", "endwin", "reset_prog_mode"):

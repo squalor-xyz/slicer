@@ -12,8 +12,9 @@ Editing follows the same rule: `act` never launches an editor. It returns an
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 
-from slicer import graph, ops, outline, prose, render, store, tui_style, tui_wizard, vcs
+from slicer import graph, ops, outline, prose, relayrun, render, roles, store, tui_style, tui_wizard, vcs
 from slicer.errors import SlicerError
 from slicer.store import State
 
@@ -34,6 +35,7 @@ BINDINGS = (
   Binding(("/",), "/", "search", "Search item IDs and titles; Enter accepts, Esc cancels"),
   Binding(("f",), "f", "filter", "Filter items; Space toggles, Enter applies, Esc cancels"),
   Binding(("v",), "v", "view", "Cycle the unfinished, in-work, and review queues"),
+  Binding(("b",), "b", "board", "Relay board: live slice-relay runs; j/k or arrows scroll, b, q or Esc closes"),
   Binding(("o",), "o", "sort", "Sort the view; j/k choose a field, Space flips direction, Enter applies"),
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
@@ -73,7 +75,7 @@ SHORTCUTS = (
   (("start",), "start"), (("done",), "done"), (("handoff",), "handoff"), (("search",), "search"),
   (("filter",), "filters"), (("sort",), "sort"), (("clear",), "show all"), (("jump",), "jump"),
   (("down", "up"), "move"), (("help",), "help"), (("quit",), "quit"),
-  (("view",), "view"),
+  (("view",), "view"), (("board",), "board"),
 )
 
 
@@ -680,6 +682,13 @@ class View:
   help_at: int = 0
   quit: bool = False
   wizard: tui_wizard.Wizard | None = None
+  # The relay board: runs as of the last load, frames since it opened, the tick of that load,
+  # the first line shown, and the one-line reason the last load failed ("" when it did not).
+  board_runs: list[relayrun.Run] = field(default_factory=list)
+  board_tick: int = 0
+  board_loaded: int = 0
+  board_at: int = 0
+  board_error: str = ""
 
   @classmethod
   def initial(cls, state: State, *, offer_wizard: bool = False) -> View:
@@ -729,7 +738,24 @@ class View:
     view = f"view={self.view_preset}  " if self.view_preset else ""
     return f"{count}/{len(state.index.items)} items  sort={label} {direction}  {view}{summary}"
 
+  def _load_board(self, state: State) -> None:
+    """Read the runs; on a damaged ledger keep the last good frame and say why."""
+    self.board_loaded = self.board_tick
+    try:
+      runs = relayrun.list_runs(state.root)
+    except (SlicerError, OSError) as exc:
+      self.board_error = (str(exc).splitlines() or [type(exc).__name__])[0]
+      return
+    self.board_error = ""
+    self.board_runs = [run for run in runs if run.state != "ended"]
+
   def handle(self, state: State, key: str) -> ActResult:
+    if key == "tick":  # a timer wake-up: only the open board has anything to do with it
+      if self.mode == "board":
+        self.board_tick += 1
+        if self.board_tick - self.board_loaded >= BOARD_REFRESH_TICKS:
+          self._load_board(state)
+      return ActResult()
     self.refresh(state)
     if key == "KEY_RESIZE":
       return ActResult()
@@ -760,6 +786,14 @@ class View:
       return self._filter(state, key)
     if self.mode == "sort":
       return self._sort(state, key)
+    if self.mode == "board":
+      if key in ("b", "q", "\x1b"):
+        self.mode = "normal"
+      elif key in ("j", "KEY_DOWN"):
+        self.board_at += 1
+      elif key in ("k", "KEY_UP"):
+        self.board_at = max(0, self.board_at - 1)
+      return ActResult()
     if self.mode == "help":
       if key in ("?", "\x1b"):
         self.mode = "normal"
@@ -776,6 +810,10 @@ class View:
       self._open_wizard(state)
     elif action == "help":
       self.mode, self.help_at = "help", 0
+    elif action == "board":
+      self.mode, self.board_tick, self.board_at = "board", 0, 0
+      self.board_runs = []  # never show a frame from an earlier opening; the load resets the error
+      self._load_board(state)
     elif action in ("search", "jump"):
       self.mode = action
       self.saved_query, self.saved_selection = self.filters.query, self.selected
@@ -1042,10 +1080,137 @@ class View:
     self.notify("showing unfinished items" if name == "" else f"view={name}")
 
 
+# The relay board. `board_lines` is pure so tests need no terminal: the spinner frame comes
+# from `tick` and the elapsed times from `now`.
+BOARD_TICK_MS = 250
+# Runs are re-read every this many ticks (2 s): `list_runs` shells out to git on every call,
+# and the spinner needs a frame four times a second, not fresh data.
+BOARD_REFRESH_TICKS = 8
+SPINNER = "|/-\\"
+# The relay's own roles (`slicer ai relay`). An architect leads the pipeline when a run has one.
+RELAY_PIPELINE = tuple(role for role in roles.ROLE_NAMES if role != "architect")
+ROLE_WIDTH = 11
+
+
+def _parse_stamp(text: str) -> datetime:
+  return datetime.fromisoformat(text)
+
+
+def elapsed_text(start: str, end: datetime) -> str:
+  seconds = max(0, int((end - _parse_stamp(start)).total_seconds()))
+  if seconds < 60:
+    return f"{seconds}s"
+  if seconds < 3600:
+    return f"{seconds // 60}m{seconds % 60:02d}s"
+  return f"{seconds // 3600}h{seconds % 3600 // 60:02d}m"
+
+
+def _fit(cells: list[str], width: int) -> str:
+  """Join cells with two spaces. The first is clipped to fit; a later one that does not fit is dropped."""
+  if not cells:
+    return ""
+  text = tui_style.clipped(cells[0], width)
+  for cell in cells[1:]:
+    if cell and tui_style.cell_width(text + "  " + cell) <= width:
+      text += "  " + cell
+  return text.rstrip()
+
+
+def _ellipsis(text: str, width: int) -> str:
+  if tui_style.cell_width(text) <= width:
+    return text
+  return tui_style.clipped(text, max(0, width - 3)) + "..."
+
+
+def _marker(step: relayrun.Step, run: relayrun.Run, tick: int) -> tuple[str, str]:
+  """The one-character cue and its style role for a step as of this frame."""
+  if step.phase == "done":
+    return "+", "done"
+  if step.phase == "fail":
+    return "!", "error"
+  if run.state == "active":
+    return SPINNER[tick % len(SPINNER)], "started"
+  return "~", "dim"  # started, but nothing is running it
+
+
+def _latest_by_role(run: relayrun.Run) -> dict[str, relayrun.Step]:
+  latest: dict[str, relayrun.Step] = {}
+  for step in run.steps:
+    if not step.parent:
+      latest.pop(step.role, None)  # a later step moves its role to the end
+      latest[step.role] = step
+  return latest
+
+
+def _step_elapsed(step: relayrun.Step, run: relayrun.Run, now: datetime) -> str:
+  running = step.phase == "start" and run.state == "active"
+  end = now if running else _parse_stamp(step.updated_at)
+  return elapsed_text(step.begun_at, end)
+
+
+def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int) -> list[PanelLine]:
+  """One lane per run: the slice, its pipeline, a row per role, and any other roles.
+
+  `width` is the cells available. A row drops a cell that does not fit rather than cutting it.
+  Only a running step in an active run animates; a stale or ended lane is dimmed throughout.
+  """
+  if not runs:
+    return [
+      PanelLine("Nothing running.", role="info"),
+      PanelLine(tui_style.clipped("An orchestrator records a relay with `slicer relay-run begin`", width), role="dim"),
+      PanelLine(tui_style.clipped("and `relay-run step`; see docs/commands.md#relay-run-ledger.", width), role="dim"),
+    ]
+  lines: list[PanelLine] = []
+  for run in runs:
+    if lines:
+      lines.append(PanelLine(""))
+    live = run.state == "active"
+    dim = "normal" if live else "dim"
+    label = run.state if run.state != "ended" else f"ended {run.outcome}".rstrip()
+    run_end = now if live else _parse_stamp(run.updated_at)
+    lines.append(PanelLine(
+      _fit([", ".join(run.items), label, elapsed_text(run.begun_at, run_end), run.worktree], width),
+      role="heading" if live else "dim",
+    ))
+    latest = _latest_by_role(run)
+    names = (("architect",) if "architect" in latest else ()) + RELAY_PIPELINE
+    parts = [
+      f"[{name}]" if name in latest and latest[name].phase == "start" and live else name
+      for name in names
+    ]
+    lines.append(PanelLine(_fit(["  " + " > ".join(parts)], width), role=dim))
+    for name in names:
+      step = latest.get(name)
+      if step is None:
+        lines.append(PanelLine(_fit([f"  [ ] {name:<{ROLE_WIDTH}}  waiting"], width), role="dim"))
+        continue
+      marker, role = _marker(step, run, tick)
+      subagents = len(run.subagents_of(step.id))
+      model = "/".join(part for part in (step.vendor, step.model) if part)
+      lines.append(PanelLine(_fit([
+        f"  [{marker}] {name:<{ROLE_WIDTH}}",
+        _step_elapsed(step, run, now),
+        f"{subagents} subagent{'s' if subagents != 1 else ''}" if subagents else "",
+        step.agent,
+        f"{model} {step.reasoning}".strip(),
+      ], width), role=role if live else "dim"))
+      if step.task:
+        lines.append(PanelLine(_ellipsis("        " + step.task, width), role=role if live else "dim"))
+    others = [step for name, step in latest.items() if name not in names]
+    if others:
+      cells = ["  other:"]
+      for step in others:
+        marker, _ = _marker(step, run, tick)
+        cells.append(f"{step.role} [{marker}] {_step_elapsed(step, run, now)}")
+      lines.append(PanelLine(_fit(cells, width), role=dim))
+  return lines
+
+
 def draw(screen, state: State, view: View, palette: tui_style.Palette | None = None) -> None:
   """Render semantic cues through one bounded terminal drawing surface."""
   palette = palette or tui_style.monochrome()
-  view.refresh(state)
+  if view.mode != "board":  # the board redraws on a timer and shows nothing from the roadmap
+    view.refresh(state)
   canvas = tui_style.Canvas(screen)
   height, width = canvas.height, canvas.width
   canvas.erase()
@@ -1089,7 +1254,13 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   shortcuts = shortcut_lines(width) if view.mode == "normal" else []
   status_y = height - 2 - len(shortcuts)
   visible = status_y - 1
-  if view.mode in ("filter", "help", "sort"):
+  if view.mode == "board":
+    put(0, 0, "Relay board: j/k or arrows scroll, b, q or Esc close", palette.attr("heading"))
+    lines = board_lines(view.board_runs, view.board_tick, relayrun.utcnow(), width - 1)
+    view.board_at = max(0, min(view.board_at, len(lines) - visible))
+    for n, line in enumerate(lines[view.board_at:view.board_at + visible], 1):
+      put(n, 0, line.text, palette.attr(line.role))
+  elif view.mode in ("filter", "help", "sort"):
     title = {
       "filter": "Filters: j/k move, Space toggle, Enter apply, Esc cancel",
       "sort": "Sort: j/k choose field, Space flips direction, Enter applies, Esc cancels",
@@ -1163,6 +1334,8 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
     }[view.mode]
     prompt = f"{label} (Enter accepts, Esc cancels): {view.text}"
     put(status_y + 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))
+  elif view.mode == "board" and view.board_error:
+    put(status_y + 1, 0, "Error: relay ledger: " + view.board_error, palette.attr("error"))
   else:
     put(status_y + 1, 0, view.feedback(), palette.attr(view.message_severity))
   for y, line in enumerate(shortcuts, status_y + 2):
@@ -1184,12 +1357,16 @@ def run(state: State) -> int:  # pragma: no cover - requires a terminal
     view = View.initial(state, offer_wizard=True)
     while not view.quit:
       draw(screen, state, view, palette)
+      # Only the board animates, so only it wakes on a timer; everything else blocks.
+      screen.timeout(BOARD_TICK_MS if view.mode == "board" else -1)
       try:
         key = screen.get_wch()
         if isinstance(key, int):
           key = curses.keyname(key).decode("ascii")
       except curses.error:
-        continue
+        if view.mode != "board":
+          continue
+        key = "tick"
       height, width = screen.getmaxyx()
       if view.wizard is not None and (width < tui_style.MIN_WIDTH or height < tui_style.MIN_HEIGHT):
         continue
