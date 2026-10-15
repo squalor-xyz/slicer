@@ -1488,3 +1488,4 @@
 {"when": "2026-10-15T04:09:58Z", "item": "s270", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-15T10:57:04Z", "item": "s270", "action": "note", "from": "", "to": "", "note": "Verified. tests/affected.py now records, per test, the non-P", "by": "Jon Robbins"}
 {"when": "2026-10-15T10:57:05Z", "item": "s270", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-15T10:57:23Z", "item": "s270", "action": "status", "from": "review", "to": "done", "note": "Landed on main: affected.py selects tests by the repo files they read; docs-only rule in AGENTS.md; gate PASS, full suite 1933 OK.", "by": "Jon Robbins"}

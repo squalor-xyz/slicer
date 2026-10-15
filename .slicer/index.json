@@ -8564,7 +8564,7 @@
       "id": "s270",
       "title": "Select tests by the repo files they read in tests/affected.py",
       "short_title": "Affected by file reads",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
