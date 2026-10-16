@@ -1622,3 +1622,6 @@
 {"when": "2026-10-15T20:30:16Z", "item": "s301", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge f32343d): add --id refuses with id_taken_elsewhere when a sibling worktree filed the id on its own; check and add share verify.inherited_ids. import/promote unchanged (outlines carry no id). Relay pass (Haiku impl, Opus review and gate). Full suite on main: 2161 OK, 1 skipped.", "by": "Jon Robbins"}
 {"when": "2026-10-15T20:30:22Z", "item": "s305", "action": "add", "from": "", "to": "open", "note": "Sibling id refusal ignores case"}
 {"when": "2026-10-15T20:30:22Z", "item": "s305", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-15T20:33:50Z", "item": "s299", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-15T20:46:15Z", "item": "s299", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T01:57:43Z", "item": "s299", "action": "note", "from": "", "to": "", "note": "relay-run step refuses a differing --task on an update; a ta", "by": "Jon Robbins"}

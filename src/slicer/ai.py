@@ -217,7 +217,8 @@ which prints the step id. When the step ends, record it with
 A subagent adds `--parent STEP` for the step that spawned it.
 `slicer relay-run step RUN --step STEP --phase start`
 re-records a long-running step as a heartbeat, so its run does not go stale
-after 30 minutes.
+after 30 minutes. A heartbeat passes no `--task`, so the step keeps the task it
+was recorded with; each round records its own step, without `--step`.
 After the finish step, or when the relay stops, end the run with
 `slicer relay-run end RUN --outcome pass` (or `fail` or `stopped`), after marking
 each step done or failed.

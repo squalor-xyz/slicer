@@ -1325,6 +1325,14 @@ class AiRelayJsonTests(RelayRolesCase):
       with self.subTest(name=name):
         self.assertNotIn(name, section)
 
+  def test_AiRelay_Order_HeartbeatPassesNoTask(self) -> None:
+    repo = self.with_matrix()
+    out = self.ok(repo, "ai", "relay")
+    order = " ".join(out.split("## Order", 1)[1].split("\n## ", 1)[0].split())
+    for phrase in ("A heartbeat passes no `--task`", "each round records its own step"):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+
 
 class AiCompatibilityTests(RelayRolesCase):
   def test_InitRoles_WritesJsonAndRender(self) -> None:

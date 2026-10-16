@@ -2992,7 +2992,9 @@ def relay_run_step(
   """Record an agent's step, or with `step` a later phase of one already recorded.
 
   A new step needs a role and an agent. `parent` nests a subagent under the step that
-  spawned it. An update names only what changes; the rest stays as recorded.
+  spawned it. An update names only what changes; the rest stays as recorded. A task that
+  differs from the one the step was recorded with is refused, though a step recorded
+  without one may take its first: a new task is a new step.
   """
   now = now or relayrun.utcnow()
   relayrun.choice("phase", phase, relayrun.PHASES)
@@ -3012,10 +3014,16 @@ def relay_run_step(
         raise relayrun.bad_field(f"parent step {parent!r} is not in run {run_id}")
       step_id = str(max((int(s.id) for s in run.steps if s.id.isdigit()), default=0) + 1)
     else:
-      if run.step(step) is None:
+      recorded = run.step(step)
+      if recorded is None:
         raise relayrun.bad_field(f"step {step!r} is not in run {run_id}")
       if parent:
         raise relayrun.bad_field("a step's parent is set when it is created, not on update")
+      if fields["task"] and recorded.task and fields["task"] != recorded.task:
+        raise relayrun.bad_field(
+          f"step {step} is recorded with task {recorded.task!r}, not {fields['task']!r}. "
+          "Record a new step without --step for another task, or leave out --task to keep this one"
+        )
       step_id = step
     relayrun.append(root, relayrun.step_event(run_id, now, step_id, phase, parent, **fields))
     run = _open_run(root, run_id, now)
