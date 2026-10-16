@@ -1759,3 +1759,7 @@
 {"when": "2026-10-16T14:08:12Z", "item": "s326", "action": "note", "from": "", "to": "", "note": "s332 relay 2026-10-16, later note: with the s332 fallback, w", "by": "Jon Robbins"}
 {"when": "2026-10-16T14:08:16Z", "item": "s332", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-16T14:12:39Z", "item": "s332", "action": "status", "from": "reviewing", "to": "done", "note": "Landed via relay run-20261016-133230-9cd9 (sonnet implementer, opus reviewer+gate; review FAIL, fix, gate PASS): a relay-run write refused on the shared ledger falls back to the checkout's .slicer/relay-runs.jsonl with a stderr line, list folds every ledger, and end absorbs local events into the shared ledger. Merged main suite 2270 OK (1 skipped), no guard trips. Later notes filed as s337, s338 and an s326 note.", "by": "Jon Robbins"}
+{"when": "2026-10-16T13:37:02Z", "item": "s333", "action": "add", "from": "", "to": "open", "note": "Explain how slicer works with concepts and Mermaid diagrams"}
+{"when": "2026-10-16T13:37:02Z", "item": "s334", "action": "add", "from": "", "to": "open", "note": "Make getting started a short human-first walkthrough"}
+{"when": "2026-10-16T13:37:02Z", "item": "s335", "action": "add", "from": "", "to": "open", "note": "Explain the human role when working with agents"}
+{"when": "2026-10-16T13:37:02Z", "item": "s336", "action": "add", "from": "", "to": "open", "note": "Give human contributors a practical development walkthrough"}

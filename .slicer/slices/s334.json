@@ -1,0 +1,41 @@
+{
+  "id": "s334",
+  "title": "Make getting started a short human-first walkthrough",
+  "lead": [
+    "Make the existing getting-started page a coherent first-use path a human can follow without an AI agent. Preserve the useful detailed documentation by moving reference material to its existing topic home and keeping old link targets usable."
+  ],
+  "depends_note": null,
+  "findings_note": "Owner documentation review 2026-10-16; docs/getting-started.md opens with agent instructions and its worked workflows assume agent-assisted planning; its reference detail spans installation, configuration, imports, priority, relay roles, batching, passes, CI, and recovery. Owner chose refocusing this existing guide instead of adding another quickstart.",
+  "size": "M",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** another quickstart page, a new onboarding command or wizard, runtime behavior changes, removing documented capabilities, or duplicating full reference topics.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The current guide mixes first-use steps, AI-assisted planning examples, and extensive reference material. A beginner needs a short sequence with visible results and explanations, while experienced readers still need the existing detailed information and links."
+    },
+    {
+      "heading": "Files",
+      "body": "- Refocus docs/getting-started.md and update its entry links in README.md.\n- Move reference detail to the existing docs/commands.md, docs/configuration.md, docs/import.md, docs/migrate-format.md, docs/tui.md, or docs/agents.md topic home as appropriate; do not create parallel reference pages.\n- Update inbound links and existing documentation tests only where restructuring requires it."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "Use a fresh isolated fictional project as the acceptance exercise. Existing tests/test_ai.py checks both getting-started finish examples and assumes the old loop heading; update those assertions if the structure changes, retaining meaningful coverage of both finish policies and rendered lifecycle examples rather than preserving obsolete prose."
+    },
+    {
+      "heading": "Implement",
+      "body": "Lead with the human user's goal and link to the concepts guide. Use one fictional project throughout: install or select the contributor invocation, initialize, add a task, supply its required specification sections, inspect readiness, start, perform the fictional work and its check, finish, and verify/render the roadmap. State what each step does, why it is needed, and what the user should observe. Do not imply that slicer implements or tests the fictional application itself.\n\nShow the default done finish and a clearly marked handoff alternative, including how to read implement_finish and the project's own instructions. Show how to discover configured sections rather than treating this repository's headings as universal. Briefly point to the existing TUI for interactive work and to the agent reference for optional AI assistance; neither is a prerequisite to completing the tutorial.\n\nMove lengthy option lists, advanced import/migration examples, merge-driver internals, and other reference detail into the existing authoritative topic pages, reconciling duplicates. Preserve old section link targets with short anchored signposts when their content moves; update in-repository inbound links to the authoritative destination. Keep the README a short front page with an obvious human starting point and separate links for concepts and agents."
+    },
+    {
+      "heading": "Check",
+      "body": "- Execute the walkthrough's local project commands in an isolated fixture inside the worktree; verify the documented observations and a passing slicer check. Exercise both default done and handoff configurations.\n- A first-time human can follow the main path without an AI agent or opening the detailed JSON reference.\n- Verify changed relative links, new anchors, and all preserved old anchors; confirm moved reference information has one full home.\n- Render the refocused getting-started guide with quire --config squalor to the ignored .venv/docs-preview/ directory and inspect its examples, tables, and page breaks. Record any blocked rendering check.\n- Run affected tests, slicer check, and git diff --check. Run the full suite when test/source changes require it under AGENTS.md."
+    },
+    {
+      "heading": "Git",
+      "body": "Implement in a fresh slice worktree and review docs, tracking, and generated output together. Finish with the required note and handoff after acceptance passes. Commit only when authorized; integration and publication remain owner decisions."
+    }
+  ],
+  "notes": []
+}
