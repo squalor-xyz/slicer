@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">319 items · — 30 · done 281 · retired 7 · review 1</p>
+<p class="summary">319 items · — 30 · done 281 · retired 7 · reviewing 1</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -86,7 +86,7 @@
 <tr class="done"><td>31</td><td>s309</td><td>Fewer git calls per command</td><td>M</td><td>2</td><td>slicer</td><td>research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15</td><td class="status">done</td></tr>
 <tr class="open"><td>32</td><td>s310</td><td>Measure startup and load rare modules on use</td><td>S</td><td>1</td><td>slicer</td><td>research/go-rewrite-evaluation.md, alternatives 2, 2026-10-15</td><td class="status">—</td></tr>
 <tr class="done"><td>33</td><td>s314</td><td>List one relay run</td><td>S</td><td>1</td><td>slicer</td><td>s296 relay run 2026-10-16: orchestrator brief&#x27;s relay-run list RUN errors · discovered from s296</td><td class="status">done</td></tr>
-<tr class="other"><td>34</td><td>s315</td><td>Pin relay v4 wiring</td><td>S</td><td>1</td><td>slicer</td><td>s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296</td><td class="status">review</td></tr>
+<tr class="started"><td>34</td><td>s315</td><td>Pin relay v4 wiring</td><td>S</td><td>1</td><td>slicer</td><td>s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296</td><td class="status">reviewing</td></tr>
 <tr class="retired"><td>35</td><td>s316</td><td>Extend legacy runs</td><td>S</td><td>1</td><td>slicer</td><td>s298 relay 2026-10-16: legacy-ledger run lists but step/end give unknown_run · Owner chose 2026-10-16 to keep s298&#x27;s documented workaround (begin a new run) instead of writing legacy ledgers; no run in this repo is affected. · discovered from s298</td><td class="status">retired</td></tr>
 <tr class="open"><td>36</td><td>s317</td><td>Shared file lock</td><td>S</td><td>1</td><td>slicer</td><td>s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298</td><td class="status">—</td></tr>
 <tr class="open"><td>37</td><td>s318</td><td>No git-dir writes from tests</td><td>S</td><td>2</td><td>slicer</td><td>s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298</td><td class="status">—</td></tr>
