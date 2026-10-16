@@ -1663,3 +1663,4 @@
 {"when": "2026-10-16T03:49:19Z", "item": "s307", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T04:00:34Z", "item": "s307", "action": "note", "from": "", "to": "", "note": "Docs now match what check does and what vcs.ALLOWED holds: c", "by": "Jon Robbins"}
 {"when": "2026-10-16T11:14:09Z", "item": "s307", "action": "note", "from": "", "to": "", "note": "Spec correction found in review: check is not the only git c", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:20:28Z", "item": "s307", "action": "status", "from": "review", "to": "done", "note": "Landed: merge 3a0e339. ARCHITECTURE.md, getting-started and the CI comment now say which git calls check and the code-location hint make, and the allowlist sentence matches vcs.ALLOWED (pinned by test_Architecture_AllowlistSentence_MatchesVcsAllowed). Full suite on main 2198 OK.", "by": "Jon Robbins"}

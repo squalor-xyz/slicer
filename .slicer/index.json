@@ -10406,7 +10406,7 @@
       "id": "s307",
       "title": "Docs match what check and the git allowlist do",
       "short_title": "Docs match what check and the git allowlist do",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
