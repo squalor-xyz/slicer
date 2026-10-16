@@ -10031,7 +10031,7 @@
       "id": "s298",
       "title": "Keep the relay-run ledger in the git common dir so it outlives worktrees",
       "short_title": "Ledger outlives worktrees",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
