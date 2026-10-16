@@ -910,8 +910,10 @@ One command, one exit code:
 
 This is the same no-clone install as [section 1](#1-install), run in a throwaway CI
 environment where a shared venv is unnecessary. `check` composes render staleness, sync
-drift and the offline integrity checks. It never shells out to git, so a shallow checkout
-is fine.
+drift and the offline integrity checks. In a CI clone its git reads need no history: the
+clone has one worktree, so the sibling-worktree warning finds nothing to read, and the
+code-location hint runs a `git rev-parse` in the installed package's directory. So a
+shallow checkout is fine.
 
 `slicer verify` is the other one — it additionally compares the index against
 `git log --all`, warning when an item is recorded done but no commit subject mentions

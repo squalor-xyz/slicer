@@ -10406,10 +10406,22 @@
       "id": "s307",
       "title": "Docs match what check and the git allowlist do",
       "short_title": "Docs match what check and the git allowlist do",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "249f8da0-6983-4247-bcb8-55adb3f85ad3",
+          "kind": "",
+          "text": "**2026-10-16** — Docs now match what check does and what vcs.ALLOWED holds: check makes read-only git calls for the sibling-worktree warning and the code-location hint, and the allowlist sentence names exactly the vcs.ALLOWED entries, pinned by a new test. Full suite 2198 OK (1 skipped), reviewer gate PASS.",
+          "created_at": "2026-10-16T04:00:34Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -10429,7 +10441,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -192,8 +192,8 @@ untouched, and re-raises. The default `--render` still saves first and renders a
 and templates and may create `.slicer/`, so the CLI snapshots that exact directory
 and restores it if rendering fails.
 
-**slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`, `mv`,
-`ls-files`, `worktree`, `branch`, `config`, `merge-file`, `show`, and `merge-base`. `worktree`, `branch`, and
+**slicer never writes git history.** `vcs.ALLOWED` is `rev-parse`, `status`, `log`,
+`worktree`, `branch`, `config`, `merge-file`, `show`, and `merge-base`. `worktree`, `branch`, and
 `config` are only the read-only forms `worktree list --porcelain`,
 `branch --all --format=%(refname)`, and `config --get` of `user.name` and the three merge
 drivers; `merge-file` is only the `-p` form, which prints the merge to stdout and writes
@@ -263,9 +263,20 @@ The default offset is zero; exhausted offsets return the existing empty result.
 
 ## What `check` is
 
-`check.run` composes render staleness, sync drift and `verify.offline`. It never shells
-out to git, so it is safe to run anywhere — that is why it, and not `verify`, is the CI
-gate. `slicer verify` additionally reads `git log --all` to compare the index against
+`check.run` composes render staleness, sync drift and `verify.offline`; none of those runs
+git. Read-only git calls sit beside them, and none writes to git. The sibling-worktree
+collision warning (`_sibling_collisions` in `src/slicer/check.py`) probes with
+`rev-parse --is-inside-work-tree` on every run. Inside a repository it also resolves HEAD
+and asks git for the worktree root (`rev-parse --show-toplevel`) to test whether this
+checkout is that root. Only at the worktree root does it list the sibling checkouts
+(`git worktree list --porcelain`) and read their indexes, and it reads the merge base's
+index only for a sibling whose title for a shared id differs. `main` also runs a
+code-location hint before each command, except `--about` and `--recursive` runs, and not
+when `SLICER_NO_CODE_WARNING` is set (`vcs.foreign_worktree`, called from
+`cli._warn_code_mismatch`); it asks git only when slicer's own code is not under the
+project. A checkout with no sibling worktree gives `check` no history to read, which is why
+it, and not `verify`, is the CI gate.
+`slicer verify` additionally reads `git log --all` to compare the index against
 what was actually committed — warning when an item is marked done but no commit mentions
 it — unless `git_check` is off in config; it reports and never rewrites, and it treats a
 repo with no history as a pass.

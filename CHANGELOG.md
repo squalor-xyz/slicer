@@ -20,6 +20,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - `add --id` refuses an id that a sibling git worktree has already filed as an item of its own, instead of writing it and leaving `check` to warn about the merge collision. The refusal exits 2 with the new code `id_taken_elsewhere`, names the worktree and its title, and writes nothing.
 - `relay-run step RUN --step N` refuses a `--task` that differs from the task the step was recorded with, though a step recorded without one may take its first. It exits 2 with `bad_run_field`, says to record a new step without `--step`, and appends nothing, so a heartbeat or a later round no longer overwrites what a step was. A heartbeat passes no `--task`, and the same task again is allowed. The relay text's `## Order` says so. A ledger that already holds an overwrite still folds as before.
+- Documentation: `ARCHITECTURE.md`, `docs/getting-started.md` and the CI comment said `check` never shells out to git, and the allowlist sentence in `ARCHITECTURE.md` named `mv` and `ls-files`, which `vcs.ALLOWED` does not hold. The docs now say that `check` makes read-only git calls (the sibling-worktree collision warning and the code-location hint), and name exactly the `vcs.ALLOWED` entries; a test pins that sentence to `vcs.ALLOWED`. No code changed.
 
 ## [1.11.0] - 2026-10-15
 
