@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 332,
+  "next_id": 333,
   "preamble": "",
   "passes": [
     {
@@ -11318,6 +11318,39 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s332",
+      "title": "A sandboxed agent in a worktree can record relay-run steps",
+      "short_title": "A sandboxed agent in a worktree can record relay-run steps",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s298",
+        "s300"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s314 Codex relay 2026-10-16: review and gate ledger entries omitted after sandbox blocks",
+        "discovered_from": "s314",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
+        "effort": 2,
         "attempts": 0
       }
     }
