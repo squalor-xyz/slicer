@@ -9970,6 +9970,39 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "c161dc84-df46-4772-8c10-8df3d324b14b",
+          "kind": "",
+          "text": "**2026-10-16** — Owner decision, not a blocker: inline Gate, Every brief and Stop into the orchestrator text so it never needs to read slicer ai relay (the Lead says 'on its own'; the Files bullet says follow the one-slice parts of slicer ai relay; the implementer followed the Files bullet).",
+          "created_at": "2026-10-16T03:22:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "2204bf64-ec58-436a-bf7a-102bc6da23c1",
+          "kind": "",
+          "text": "**2026-10-16** — docs/commands.md:19 and CHANGELOG.md:11 still say 'never the outer session's steps'; accurate for which steps it follows, not which it reads. Wording option: 'follows only the one-slice parts'.",
+          "created_at": "2026-10-16T03:22:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "d62d3553-8413-474b-938e-2aa43c6498e5",
+          "kind": "",
+          "text": "**2026-10-16** — Test gaps (Low): a literal 'relay v4' in cli.py JSON instead of ai.contract_line() passes every test; no test pins the orchestrator's --parent, disputes or gate-resume bullets.",
+          "created_at": "2026-10-16T03:22:58Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
