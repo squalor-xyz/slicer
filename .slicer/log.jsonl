@@ -1654,3 +1654,4 @@
 {"when": "2026-10-16T03:22:57Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Owner decision, not a blocker: inline Gate, Every brief and ", "by": "Jon Robbins"}
 {"when": "2026-10-16T03:22:57Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "docs/commands.md:19 and CHANGELOG.md:11 still say 'never the", "by": "Jon Robbins"}
 {"when": "2026-10-16T03:22:58Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Test gaps (Low): a literal 'relay v4' in cli.py JSON instead", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:30:08Z", "item": "s296", "action": "status", "from": "review", "to": "done", "note": "Landed: merge ac1cd95; relay contract v4 (RELAY_CONTRACT=4, Contract: relay v4 on both texts and in --json), the orchestrator text and Setup naming relay-orchestrator. Full suite on main 2197 OK, check passes.", "by": "Jon Robbins"}

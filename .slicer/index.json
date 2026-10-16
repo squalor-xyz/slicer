@@ -9943,7 +9943,7 @@
       "id": "s296",
       "title": "Print the nested relay: an orchestrator per slice, with its own contract",
       "short_title": "Nested relay contract",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s293"
