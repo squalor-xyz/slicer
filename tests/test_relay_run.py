@@ -10,10 +10,13 @@ the fixture file directly, because production code never produces one.
 
 from __future__ import annotations
 
+import io
 import json
+import os
 import threading
 import time
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -21,6 +24,7 @@ from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
 from slicer import ops, relayrun
+from slicer.cli import main
 
 LEDGER = ".slicer/relay-runs.jsonl"
 T0 = datetime(2026, 10, 14, 12, 0, 0, tzinfo=timezone.utc)
@@ -554,8 +558,8 @@ def legacy_begin(run: str, item: str = "s1", worktree: str = "old") -> str:
   return json.dumps(event, ensure_ascii=False) + "\n"
 
 
-class CommonLedgerTests(RelayRunCase):
-  """In a git repo the ledger lives in the common dir, so every worktree shares it."""
+class GitLedgerCase(RelayRunCase):
+  """A fixture that is its own git repo, so it has a real common dir of its own."""
 
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo(git=True)
@@ -574,6 +578,10 @@ class CommonLedgerTests(RelayRunCase):
 
   def common(self, repo: support.TempRepo) -> Path:
     return repo.root / ".git" / "slicer" / relayrun.LEDGER_NAME
+
+
+class CommonLedgerTests(GitLedgerCase):
+  """In a git repo the ledger lives in the common dir, so every worktree shares it."""
 
   def test_RelayRun_Begin_InLinkedWorktree_WritesCommonLedger(self) -> None:
     repo = self.repo()
@@ -687,6 +695,309 @@ class CommonLedgerTests(RelayRunCase):
     events = relayrun.read_events(self.common(repo))
     self.assertEqual(len(events), 12)
     self.assertEqual(len({event["run"] for _, event in events}), 12)
+
+
+class SandboxTests(GitLedgerCase):
+  """A role that may write only inside its slice worktree still records its steps (s332).
+
+  The sandbox is simulated on the fixture's own `<common>/slicer`: the directory and the
+  files in it lose their write bits, which is what a workspace-write sandbox does to the
+  main checkout's `.git/`. Never the real repository: the suite refuses writes there.
+  """
+
+  def sandbox(self, repo: support.TempRepo):
+    """Make the shared ledger unwritable. Returns the function that lifts it again."""
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+      self.skipTest("root ignores file modes, so the sandbox cannot be simulated")
+    shared = self.common(repo).parent
+    paths = sorted(shared.iterdir())
+    modes = {path: path.stat().st_mode for path in [shared, *paths]}
+    for path in paths:
+      path.chmod(0o444)
+    shared.chmod(0o555)
+
+    def lift() -> None:
+      for path, mode in modes.items():  # the directory first, so its files can be reached
+        path.chmod(mode)
+
+    self.addCleanup(lift)
+    # A simulation that refuses nothing would make every test below pass for no reason.
+    with self.assertRaises(PermissionError):
+      self.common(repo).open("ab").close()
+    return lift
+
+  def cli(self, tree: Path, *argv: str) -> tuple[int, str, str]:
+    out, err = io.StringIO(), io.StringIO()
+    with redirect_stdout(out), redirect_stderr(err):
+      code = main(["--root", str(tree), *argv])
+    return code, out.getvalue(), err.getvalue()
+
+  def local(self, tree: Path) -> list[dict]:
+    return [event for _, event in relayrun.read_events(tree / LEDGER)]
+
+  def listed(self, tree: Path) -> list[dict]:
+    code, out, err = self.cli(tree, "relay-run", "list", "--json")
+    self.assertEqual((code, err), (0, ""), out)
+    return json.loads(out)["runs"]
+
+  def worktree_with_run(self, repo: support.TempRepo) -> tuple[Path, str]:
+    wt = self.linked(repo, "wt")
+    return wt, ops.relay_run_begin(wt, ["s1"], now=minutes(0)).id
+
+  def test_RelayRunStep_SharedLedgerReadOnly_FallsBackToLocalAndWarns(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    shared = self.common(repo).read_bytes()
+    self.sandbox(repo)
+    code, out, err = self.cli(
+      wt, "relay-run", "step", run, "--role", "reviewer", "--agent", "Codex CLI",
+      "--phase", "start", "--json",
+    )
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(json.loads(out)["step"]["id"], "1")
+    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertIn(str(self.common(repo)), err)
+    self.assertIn(str(wt / LEDGER), err)
+    local = self.local(wt)
+    self.assertEqual([(e["event"], e["run"], e["role"]) for e in local], [("step", run, "reviewer")])
+    self.assertEqual(self.common(repo).read_bytes(), shared)
+
+  def test_RelayRunBegin_SharedDirUncreatable_BeginsLocally(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    git_dir = repo.root / ".git"
+    mode = git_dir.stat().st_mode
+    git_dir.chmod(0o555)  # no `.git/slicer` yet, and none can be made
+    self.addCleanup(git_dir.chmod, mode)
+    code, out, err = self.cli(wt, "relay-run", "begin", "s1")
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual([(e["event"], e["run"]) for e in self.local(wt)], [("begin", out.strip())])
+    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertFalse((git_dir / "slicer").exists())
+
+  def test_RelayRunStep_Fallback_DoesNotEditGitignore(self) -> None:
+    for where in ("main checkout", "linked worktree"):
+      with self.subTest(where=where):
+        repo = self.repo()
+        tree = self.linked(repo, "wt") if where == "linked worktree" else repo.root
+        run = ops.relay_run_begin(tree, ["s1"], now=minutes(0)).id
+        # A project made before the ledger was listed: an ignore edit would add the line.
+        ignore = tree / ".slicer" / ".gitignore"
+        ignore.write_text("feedback.md\nlock\n", encoding="utf-8")
+        exclude = repo.root / ".git" / "info" / "exclude"
+        before = (ignore.read_bytes(), exclude.read_bytes() if exclude.exists() else None)
+        self.sandbox(repo)
+        code, out, err = self.cli(
+          tree, "relay-run", "step", run, "--role", "gate", "--agent", "A", "--phase", "start",
+        )
+        self.assertEqual(code, 0, out + err)
+        self.assertEqual(len(self.local(tree)), 1)  # the fallback did write
+        after = (ignore.read_bytes(), exclude.read_bytes() if exclude.exists() else None)
+        self.assertEqual(after, before)
+
+  def test_RelayRunList_RunSpansSharedAndLocal_OneRunAllSteps(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    self.sandbox(repo)
+    for task in ("write tests", "review"):
+      ops.relay_run_step(
+        wt, run, phase="start", role="implementer", agent="Codex CLI", task=task,
+        now=minutes(1),
+      )
+    for tree in (wt, repo.root):
+      with self.subTest(tree=tree.name):
+        got = self.listed(tree)
+        self.assertEqual([r["id"] for r in got], [run])
+        self.assertEqual([s["task"] for s in got[0]["steps"]], ["write tests", "review"])
+        self.assertEqual(got[0]["items"], ["s1"])
+
+  def test_RelayRunList_EventsAcrossFiles_OrderedByTimeNoDuplicates(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    fields = {"role": "implementer", "agent": "Codex CLI"}
+    ops.relay_run_step(wt, run, phase="start", now=minutes(1), **fields)
+    ops.relay_run_step(wt, run, phase="done", step="1", now=minutes(5))
+    self.sandbox(repo)
+    ops.relay_run_step(wt, run, phase="start", now=minutes(3), **fields)
+    ops.relay_run_step(wt, run, phase="fail", step="1", now=minutes(4))
+    with (wt / LEDGER).open("a", encoding="utf-8") as fh:  # the shared step, copied again
+      fh.write(self.common(repo).read_text(encoding="utf-8").splitlines()[1] + "\n")
+    got = relayrun.list_runs(repo.root, now=minutes(6))
+    self.assertEqual([r.id for r in got], [run])
+    self.assertEqual([(s.id, s.phase) for s in got[0].steps], [("1", "done"), ("2", "start")])
+    self.assertEqual(got[0].updated_at, relayrun.stamp(minutes(5)))
+
+  def test_RelayRunList_LocalLedgerStepForUnknownRun_IsSkippedNotFatal(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    step = relayrun.step_event("run-ghost", minutes(1), "1", "start", role="a", agent="A")
+    (wt / LEDGER).write_text(json.dumps(step) + "\n", encoding="utf-8")
+    self.assertEqual([r["id"] for r in self.listed(repo.root)], [run])
+
+  def test_RelayRunStep_Fallback_LocalLedgerDamaged_RefusedAndLeftAsItWas(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    self.sandbox(repo)
+    (wt / LEDGER).write_text('{"v":1,"event":"ste', encoding="utf-8")
+    code, out, err = self.cli(
+      wt, "relay-run", "step", run, "--role", "gate", "--agent", "A", "--phase", "start",
+      "--json",
+    )
+    self.assertEqual(code, 3, out + err)
+    self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+    self.assertEqual((wt / LEDGER).read_text(encoding="utf-8"), '{"v":1,"event":"ste')
+
+  def test_RelayRunStep_BeginOnlyInLocalLedger_SharedStepAbsorbsRunFirst(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    ops.relay_run_begin(repo.root, ["s9"], now=minutes(0))  # the shared ledger exists
+    lift = self.sandbox(repo)
+    run = ops.relay_run_begin(wt, ["s1"], now=minutes(1)).id  # its begin can only go local
+    lift()
+    ops.relay_run_step(repo.root, run, phase="start", role="gate", agent="A", now=minutes(2))
+    shared = [(e["event"], e["run"]) for _, e in relayrun.read_events(self.common(repo))]
+    self.assertIn(("begin", run), shared)
+    gone = repo._git("worktree", "remove", "--force", str(wt))
+    self.assertEqual(gone.returncode, 0, gone.stderr)
+    got = {r["id"]: r for r in self.listed(repo.root)}
+    self.assertEqual([s["role"] for s in got[run]["steps"]], ["gate"])
+
+  def test_RelayRunStep_SharedLedgerFileReadOnlyLockWritable_FallsBackToLocal(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    ledger = self.common(repo)
+    mode = ledger.stat().st_mode
+    ledger.chmod(0o444)  # the lock and the directory stay writable
+    self.addCleanup(ledger.chmod, mode)
+    before = ledger.read_bytes()
+    code, out, err = self.cli(
+      wt, "relay-run", "step", run, "--role", "gate", "--agent", "A", "--phase", "start",
+    )
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertEqual([e["event"] for e in self.local(wt)], ["step"])
+    self.assertEqual(ledger.read_bytes(), before)
+
+  def test_RelayRunStep_RunBegunInSiblingLocalLedger_ExtendsIt(self) -> None:
+    for sandboxed in (False, True):
+      with self.subTest(sandboxed=sandboxed):
+        repo = self.repo()
+        one, two = self.linked(repo, "one"), self.linked(repo, "two")
+        ops.relay_run_begin(repo.root, ["s9"], now=minutes(0))  # the shared ledger exists
+        (one / LEDGER).write_text(legacy_begin("run-old-one", "s7"), encoding="utf-8")
+        if sandboxed:
+          self.sandbox(repo)
+        ops.relay_run_step(two, "run-old-one", phase="start", role="gate", agent="A")
+        got = {r["id"]: r for r in self.listed(repo.root)}
+        self.assertEqual([s["role"] for s in got["run-old-one"]["steps"]], ["gate"])
+
+  def test_Fold_CreatingEventAndLaterPhaseAtTheSameSecond_CreationFirst(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    done = relayrun.step_event("r", minutes(1), "1", "done")  # an update names no role
+    start = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    shared, local = Path("shared"), Path("local")
+    got = relayrun.fold(
+      [(shared, [(1, begin), (2, done)]), (local, [(1, start)])], minutes(2), strict=2,
+    )
+    self.assertEqual([(s.id, s.phase, s.role) for s in got[0].steps], [("1", "done", "a")])
+
+  def test_RelayRunEnd_LocalEventNotValid_NotAbsorbed(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    lift = self.sandbox(repo)
+    ops.relay_run_step(wt, run, phase="start", role="gate", agent="A")
+    lift()
+    good = relayrun.step_event(run, minutes(1), "2", "start", role="gate", agent="A")
+    with (wt / LEDGER).open("a", encoding="utf-8") as fh:
+      fh.write(json.dumps({**good, "phase": "bogus"}) + "\n")
+      fh.write(json.dumps({**good, "step": "3", "at": "2026-13-99T00:00:00Z"}) + "\n")
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual(code, 0, out + err)
+    self.assertIn("absorbed 1 event ", out)
+    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertIn("2 invalid", err)
+    self.assertEqual([len(r["steps"]) for r in self.listed(repo.root)], [1])
+
+  def test_RelayRunEnd_DamagedLocalLedger_SaysItWasSkipped(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    other = self.linked(repo, "other")
+    (other / LEDGER).write_text("not json\n", encoding="utf-8")
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertIn(str(other / LEDGER), err)
+
+  def test_Fold_EventsAtTheSameSecond_FileOrderThenLine(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    first = relayrun.step_event("r", minutes(1), "1", "start", role="first", agent="A")
+    second = relayrun.step_event("r", minutes(1), "1", "start", role="second", agent="A")
+    third = relayrun.step_event("r", minutes(1), "1", "start", role="third", agent="A")
+    base, extra = Path("base.jsonl"), Path("extra.jsonl")
+    cases = {
+      "later file wins": ([(base, [(1, begin), (2, first)]), (extra, [(1, second)])], "second"),
+      "earlier file loses": ([(extra, [(1, second)]), (base, [(1, begin), (2, first)])], "first"),
+      "later line wins": ([(base, [(1, begin), (2, first), (3, third)])], "third"),
+    }
+    for name, (sources, role) in cases.items():
+      with self.subTest(name):
+        got = relayrun.fold(sources, minutes(2), strict=len(sources))
+        self.assertEqual([s.role for s in got[0].steps], [role])
+
+  def test_Fold_StepAtTheSecondOfItsBeginInAnEarlierFile_StillBelongsToTheRun(self) -> None:
+    begin = relayrun.begin_event("r", minutes(1), ["s1"], "wt")
+    step = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    sources = [(Path("one"), [(1, step)]), (Path("two"), [(1, begin)])]
+    got = relayrun.fold(sources, minutes(2), strict=2)
+    self.assertEqual([(r.id, [s.id for s in r.steps]) for r in got], [("r", ["1"])])
+
+  def test_Fold_StepStampedBeforeItsBegin_StillBelongsToTheRun(self) -> None:
+    begin = relayrun.begin_event("r", minutes(5), ["s1"], "wt")
+    step = relayrun.step_event("r", minutes(3), "1", "start", role="a", agent="A")  # clock stepped back
+    got = relayrun.fold([(Path("one"), [(1, begin), (2, step)])], minutes(6))
+    self.assertEqual([(r.id, [s.id for s in r.steps]) for r in got], [("r", ["1"])])
+
+  def test_Fold_IdenticalEventInTwoFiles_FoldedOnce(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    step = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    sources = [(Path("one"), [(1, begin), (2, step)]), (Path("two"), [(1, begin), (2, step)])]
+    got = relayrun.fold(sources, minutes(2), strict=2)
+    self.assertEqual([(r.id, len(r.steps)) for r in got], [("r", 1)])
+
+  def test_RelayRunEnd_AbsorbsLocalStepsIntoShared(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    lift = self.sandbox(repo)
+    for task in ("write tests", "review"):
+      ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", task=task)
+    with (wt / LEDGER).open("a", encoding="utf-8") as fh:  # an event the shared ledger has
+      fh.write(self.common(repo).read_text(encoding="utf-8").splitlines()[0] + "\n")
+    lift()
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual((code, err), (0, ""), out)
+    self.assertEqual(out.strip(), f"ended {run} pass; absorbed 2 events from local ledgers")
+    shared = [e["event"] for _, e in relayrun.read_events(self.common(repo))]
+    self.assertEqual(shared, ["begin", "step", "step", "end"])
+    gone = repo._git("worktree", "remove", "--force", str(wt))
+    self.assertEqual(gone.returncode, 0, gone.stderr)
+    got = self.listed(repo.root)
+    self.assertEqual([(r["id"], r["outcome"]) for r in got], [(run, "pass")])
+    self.assertEqual([s["task"] for s in got[0]["steps"]], ["write tests", "review"])
+
+  def test_RelayRunEnd_SharedStillReadOnly_EndsLocallyWithoutAbsorbing(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    self.sandbox(repo)
+    ops.relay_run_step(wt, run, phase="start", role="gate", agent="A")
+    shared = self.common(repo).read_bytes()
+    code, out, err = self.cli(wt, "relay-run", "end", run, "--outcome", "fail")
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(out.strip(), f"ended {run} fail")
+    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertEqual([e["event"] for e in self.local(wt)], ["step", "end"])
+    self.assertEqual(self.common(repo).read_bytes(), shared)
+    got = self.listed(wt)
+    self.assertEqual([(r["id"], r["outcome"], len(r["steps"])) for r in got], [(run, "fail", 1)])
 
 
 class LedgerTests(RelayRunCase):

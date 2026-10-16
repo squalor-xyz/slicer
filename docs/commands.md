@@ -66,8 +66,8 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `relay-roles rule-remove ID` | drop a rule |
 | `relay-run begin ID [ID ...] [--worktree PATH]` | start a slice-relay run on these items and print its id (`run-YYYYMMDD-HHMMSS-xxxx`). `--worktree` is recorded by its directory name; the default is the checkout whose ledger the run goes in. Appends to the local ledger only, under the project lock; no roadmap state, history or render changes. A blank item, or one with whitespace, exits 2 with code `bad_run_field`. See [Relay run ledger](#relay-run-ledger) |
 | `relay-run step RUN --role R --agent A [--vendor V] [--model M] [--reasoning E] --phase start\|done\|fail [--task TEXT] [--parent STEP] [--step STEP]` | record an agent's step in a run and print its step id (`1`, `2`, ...). A new step needs `--role` and `--agent`. `--parent` nests a subagent under the step that spawned it, and counts it as a subagent. `--step STEP` updates a step already in the run instead (for example `--step 1 --phase done`): only the fields given change, and `--parent` is refused there. A `--task` on an update must match the task the step was recorded with, except that a step recorded without one can be given its first; a different one is refused, and a new task needs a new step without `--step`. An unknown `RUN` exits 2 with code `unknown_run`, an ended one with `run_ended`; a phase outside the three, a role or agent missing on a new step, a `--parent` or `--step` not in the run, a `--task` on an update that differs from the task its step was recorded with, or a value with a newline is `bad_run_field`. Nothing is appended when it refuses. `relay-run step RUN --step N --phase start` re-records a step that is still running and acts as a heartbeat, so a step that takes longer than 30 minutes does not make its run go stale. A heartbeat passes no `--task`, so the step keeps the task it was recorded with |
-| `relay-run end RUN --outcome pass\|fail\|stopped` | close a run. The same refusals as `step`: `unknown_run`, `run_ended`, and `bad_run_field` for another outcome |
-| `relay-run list [RUN] [--active]` | the runs in this checkout's ledger and in each sibling worktree's, oldest first. `RUN` keeps only that run; an unknown id exits 2 with code `unknown_run`, naming the ledger paths searched. A run is `active`, `stale` (no event for more than 30 minutes and not ended) or `ended`; `--active` keeps only the first; with `RUN`, a known ended or stale run gives an empty list and exit 0. Reads only: no lock, no write. A damaged ledger here is exit 3 with code `corrupt` naming the file and line; a sibling's is skipped. A last line with no newline yet is an append in progress and is ignored. `--json` returns `{"runs": [...]}`, and `--lean` only compacts it (empty fields stay) |
+| `relay-run end RUN --outcome pass\|fail\|stopped` | close a run. The same refusals as `step`: `unknown_run`, `run_ended`, and `bad_run_field` for another outcome. When the shared ledger is writable it first copies the run's events from the local ledgers into it and its text then reads `ended RUN OUTCOME; absorbed N events from local ledgers` (see [Sandboxes](#sandboxes)); a write the sandbox refuses goes to this checkout's `.slicer/relay-runs.jsonl` with one stderr line |
+| `relay-run list [RUN] [--active]` | the runs in the shared ledger and in this checkout's and each sibling worktree's own `.slicer/relay-runs.jsonl`, folded together, oldest first. `RUN` keeps only that run; an unknown id exits 2 with code `unknown_run`, naming the ledger paths searched. A run is `active`, `stale` (no event for more than 30 minutes and not ended) or `ended`; `--active` keeps only the first; with `RUN`, a known ended or stale run gives an empty list and exit 0. Reads only: no lock, no write. A damaged shared ledger here is exit 3 with code `corrupt` naming the file and line; a damaged local `.slicer/relay-runs.jsonl`, this checkout's or a sibling's, is skipped. A last line with no newline yet is an append in progress and is ignored. `--json` returns `{"runs": [...]}`, and `--lean` only compacts it (empty fields stay) |
 | `start ID [ID ...] [--note TEXT] [--owner NAME]` | mark an item in progress and claim it (owner and time). The owner is `--owner`, otherwise `SLICER_CLAIM_OWNER`, otherwise `claim_owner` in config, otherwise the git user name, otherwise the worktree name; a blank value falls through and one with a newline is `usage`. A second start does not refresh the claim. The owner is also recorded as `by` on the history entry |
 | `release ID [ID ...] [--owner NAME]` | clear a claim without changing status; `--owner` names who released it in history (`by`). An item that was in progress stays in progress and lists as `*` |
 | `handoff ID [ID ...] [--note TEXT] [--owner NAME] [--render] [--strict] [--check]` | hand a started slice to review (`--owner` names who handed it off, as `by` in history): status becomes `review_status` and the claim is cleared. `next` skips review items and dependents stay blocked until `done`; a reviewer picks one up with `next --status review --start` (or `start ID`), which moves it to `reviewing_status` (also out of plain `next`). `handoff` refuses a reviewing item. `--check` with `--render` runs `slicer check` after the change lands: stdout stays the item, a failure exits 1 with the findings on stderr, and `--check` without `--render` is `usage` and writes nothing |
@@ -387,7 +387,7 @@ templates/*.md       render templates, changed with `slicer template`
 relay-roles.json     the slice-relay role matrix, when the project keeps one (see Relay roles)
 render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), one file per slice, and RELAY-ROLES.md
 log.jsonl            append-only history of status changes
-relay-runs.jsonl     legacy ledger of slice-relay runs, read but no longer written in a git repo; gitignored (see Relay run ledger)
+relay-runs.jsonl     slice-relay ledger outside git; in a git repo only the fallback a sandboxed role writes, and older slicers' ledger; gitignored (see Relay run ledger)
 .gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
 
@@ -555,15 +555,49 @@ subagent is counted under `subagents`, not under its role). The state is compute
 read: `ended` once the run has an outcome, `stale` when it has had no event for more than
 30 minutes (an orchestrator that died), else `active`.
 
-A step is added to a run in the ledger the checkout writes to, so in a git repo from any of
-its worktrees. `list` also reads the legacy `.slicer/relay-runs.jsonl` of this checkout and of
-each sibling worktree as plain files, so runs recorded before the ledger moved still show; a
-run found in more than one file is listed once, and a legacy file that cannot be read is
-skipped. A step cannot yet be added to a run that exists only in a legacy file: begin a new
-run. A ledger line that cannot be read (not JSON, an unknown event, or a field of the wrong
+A step is added to a run in the shared ledger, so in a git repo from any of its worktrees.
+`list` also reads the `.slicer/relay-runs.jsonl` of this checkout and of each sibling
+worktree as plain files, for runs recorded before the ledger moved and for the fallback
+below, and folds every file it reads into one set of runs: events are ordered by time (at the
+same second, the shared ledger first, then this checkout's file, then the siblings', then
+line order), an event identical to one already folded is dropped, and a run found in more
+than one file is one run. A local file that cannot be read is skipped. A step or `end` can be
+added to a run that exists only in such a file. A ledger line that cannot be read (not JSON, an unknown event, or a field of the wrong
 type) stops `list` and the writes with code `corrupt`, naming `relay-runs.jsonl` and the
 line. A writer also refuses a last line that lacks its newline, while `list` treats it as an
 append in progress. Delete the line or the file.
+
+### Sandboxes
+
+A relay role whose sandbox may write only inside its slice worktree (Codex's default
+workspace-write sandbox) cannot write the shared ledger: for a linked worktree the git common
+dir is the main checkout's `.git/`. Each `relay-run` write that is refused there, opening the
+ledger or its lock lacking permission, goes to this checkout's own `.slicer/relay-runs.jsonl`
+instead, under the project lock, and prints one line on stderr naming both paths. It is per
+write, so a role that can write the shared ledger again goes back to it. The fallback never
+edits `.slicer/.gitignore` or `info/exclude`: the file relies on the ignore rule `init` and
+the first unsandboxed write set, so a sandboxed write cannot put a tracked change into the
+slice's commit. When the folded files hold events for the same second, an event that creates
+a step (it names a role and an agent) is placed before a phase update of that step.
+Known limit: two writers that cannot see each other (one sandboxed, one not) may give the
+same new step id to two steps of a run; the later event updates the earlier step. If the local file is damaged the write is refused as `corrupt`, as for the
+shared ledger.
+
+`relay-run end` run where the shared ledger is writable (the outer session's) first copies
+the run's events from every local file it reads, this checkout's and its siblings', that the
+shared ledger does not hold yet, then appends the end event; its text names the count
+(`ended RUN pass; absorbed 2 events from local ledgers`). An event that would not fold (a
+timestamp or phase that does not exist) is not copied, and a local file that cannot be read
+is skipped; one stderr line names both, so the shared ledger stays sound. A `step` that goes
+to the shared ledger for a run whose begin is only in a local file copies the run's local
+events first, for the same reason. Because the copies are in the
+shared ledger, `git worktree remove` loses no step. The local files are left as they are.
+If `end` itself runs sandboxed it ends the run in the local file and absorbs nothing;
+a later `end` cannot repeat, so end runs from the session that owns the run.
+
+To avoid the fallback, make the shared ledger's directory writable for the vendor, for
+Codex by adding `<main>/.git/slicer` (create it first) to
+`sandbox_workspace_write.writable_roots`.
 
 ## Relay roles
 

@@ -40,7 +40,7 @@ never pays for curses.
   log.jsonl                append-only history, one LogEntry per line
   feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
   feedback-reported.json   which entries `feedback-report` filed; gitignored, not roadmap state
-  relay-runs.jsonl         `relay-run` ledger outside git or below the worktree root, and older slicers' per-worktree ledger; gitignored, append-only
+  relay-runs.jsonl         `relay-run` ledger outside git or below the worktree root, the fallback a sandboxed role writes when the common dir is read-only, and older slicers' per-worktree ledger; gitignored, append-only
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
   slices/retired/<ID>.json retired, with the reason on the index item
@@ -63,10 +63,14 @@ project below the worktree root, the ledger is `.slicer/relay-runs.jsonl` under 
 lock, as before. A run, its steps and whether it is `active`, `stale` or `ended` exist only
 as the fold of those events at read time, with the clock passed in. Nothing renders it,
 `check` and `verify` never open it, and in a git repo it is not under the work tree, so
-deleting it loses only the board. `relayrun.list_runs` also reads the legacy `.slicer/relay-runs.jsonl` of
-this checkout and of each sibling worktree as plain files, for runs an older slicer
-recorded there, and lists a run found in more than one file once; a damaged legacy file
-is skipped, a damaged common ledger is `corrupt` with its file and line. Only read-only git
+deleting it loses only the board. A role whose sandbox cannot write the common dir falls back, write by write
+(`ops.Ledger`), to the checkout's own `.slicer/relay-runs.jsonl` under the project lock, with
+no ignore edit. `relayrun.list_runs` and `ops._open_run` fold the common ledger and the
+`.slicer/relay-runs.jsonl` of this checkout and of each sibling worktree into one set of runs
+(`relayrun.fold`: ordered by time, identical events dropped), for those fallback events and
+for runs an older slicer recorded there; a damaged local file is skipped, a damaged common
+ledger is `corrupt` with its file and line. `ops.relay_run_end` copies the run's local
+events into the common ledger first, so removing a worktree loses none. Only read-only git
 calls are made (`rev-parse` for the toplevel and common dir, `worktree list`); no git write
 is involved.
 

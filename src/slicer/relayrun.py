@@ -10,6 +10,13 @@ one and removing a slice worktree does not delete its runs. Outside git, or for 
 below the worktree root, it is `.slicer/relay-runs.jsonl` as before; that file is also what
 older slicers wrote in every worktree, so the readers still look there.
 
+A role whose sandbox may write only inside its slice worktree cannot write the common dir.
+Its events go to the checkout's own `.slicer/relay-runs.jsonl` instead (a fallback `ops`
+decides on, per write), and every reader folds the shared ledger and those local files into
+one set of runs: events are ordered by time and an event seen twice counts once. When a run
+ends, `ops` copies its local events into the shared ledger, so removing the worktree loses
+nothing.
+
 Like `.slicer/feedback.md` the ledger is untracked and disposable: it is never rendered,
 never read by `check`, and never part of roadmap state. Deleting it loses only the board.
 Events are appended and never rewritten; a run, its steps and their states exist only as
@@ -266,56 +273,130 @@ def read_events(path: Path, *, tolerate_torn_tail: bool = False) -> list[tuple[i
   return events
 
 
-def fold(path: Path, events: list[tuple[int, dict]], now: datetime) -> list[Run]:
-  """The runs those events describe, in ledger order, with `state` as of `now`."""
-  runs: dict[str, Run] = {}
-  for number, event in events:
-    try:
-      _parse_stamp(str(event["at"]))
-    except ValueError:
-      raise _corrupt(path, number, f"bad timestamp {event['at']!r}") from None
-    kind, at = event["event"], event["at"]
-    if kind == "begin":
-      if event["run"] in runs:
-        raise _corrupt(path, number, f"run {event['run']} begins twice")
-      runs[event["run"]] = Run(
-        id=event["run"], items=[str(item) for item in event["items"]],
-        worktree=str(event["worktree"]), begun_at=at, updated_at=at,
-      )
-      continue
-    run = runs.get(event["run"])
-    if run is None:
-      raise _corrupt(path, number, f"{kind} event for run {event['run']}, which never began")
-    run.updated_at = at
-    if kind == "end":
+def event_key(event: dict) -> str:
+  """What makes two events the same event: every field, whichever file holds it."""
+  return json.dumps(event, sort_keys=True, ensure_ascii=False)
+
+
+def _rank(event: dict) -> int:
+  """Among events at the same second: a begin, then an event that creates a step (it names
+  a role and an agent), then the rest. A phase update of a step cannot be overwritten by the
+  creation it follows when the two sit in different files."""
+  if event["event"] == "begin":
+    return 0
+  return 1 if event["event"] == "step" and event["role"] and event["agent"] else 2
+
+
+def valid_event(event: dict) -> bool:
+  """Whether the event would fold: a real timestamp and a phase or outcome that exists. Only
+  what one event shows; whether its parent step exists is the fold's to say."""
+  try:
+    _parse_stamp(str(event["at"]))
+  except ValueError:
+    return False
+  if event["event"] == "step":
+    return event["phase"] in PHASES
+  if event["event"] == "end":
+    return event["outcome"] in OUTCOMES
+  return True
+
+
+def fold(
+  sources: list[tuple[Path, list[tuple[int, dict]]]], now: datetime, *, strict: int = 1,
+) -> list[Run]:
+  """The runs the events of these files describe, with `state` as of `now`.
+
+  Events are ordered by time. At the same second the file given first and then the line
+  decide; a begin goes before the run's other events, and no event is placed before its own
+  run's begin, so a clock that stepped back cannot orphan a step. An event identical to one
+  already folded is dropped: a copy of a run's events in a second file changes nothing.
+
+  The first `strict` files must be sound: a bad event in one is `corrupt`, naming file and
+  line. A bad event in a later file is skipped, so a sibling's damaged local ledger cannot
+  blank the board; that includes events of a run no file begins.
+  """
+  items: list[tuple[int, Path, int, dict, bool]] = []
+  for index, (path, events) in enumerate(sources):
+    for number, event in events:
       try:
-        choice("outcome", event["outcome"], OUTCOMES)
-      except StateError as exc:
-        raise _corrupt(path, number, str(exc)) from None
-      run.outcome = event["outcome"]
+        _parse_stamp(str(event["at"]))
+      except ValueError:
+        if index < strict:
+          raise _corrupt(path, number, f"bad timestamp {event['at']!r}") from None
+        continue
+      items.append((index, path, number, event, index < strict))
+  began: dict[str, str] = {}
+  for _, _, _, event, _ in items:
+    if event["event"] == "begin":
+      began[event["run"]] = min(event["at"], began.get(event["run"], event["at"]))
+
+  def order(item: tuple[int, Path, int, dict, bool]) -> tuple[str, int, int, int]:
+    index, _, number, event, _ = item
+    at = event["at"]
+    if event["event"] != "begin":
+      at = max(at, began.get(event["run"], at))
+    return (at, _rank(event), index, number)
+
+  runs: dict[str, Run] = {}
+  seen: set[str] = set()
+  for _, path, number, event, sound in sorted(items, key=order):
+    key = event_key(event)
+    if key in seen:
       continue
     try:
-      choice("phase", event["phase"], PHASES)
-    except StateError as exc:
-      raise _corrupt(path, number, str(exc)) from None
-    step = run.step(str(event["step"]))
-    if step is None:
-      parent = str(event["parent"])
-      if parent and run.step(parent) is None:
-        raise _corrupt(path, number, f"step {event['step']} names parent {parent}, not in the run")
-      step = Step(
-        id=str(event["step"]), role="", agent="", vendor="", model="", reasoning="",
-        phase=event["phase"], task="", parent=parent, begun_at=at, updated_at=at,
-      )
-      run.steps.append(step)
-    step.updated_at = at
-    step.phase = event["phase"]
-    for name in _FIELDS:
-      if event[name]:  # an update names only what changes
-        setattr(step, name, str(event[name]))
+      _apply(runs, path, number, event)
+    except StateError:
+      if sound:
+        raise
+      continue
+    seen.add(key)
   for run in runs.values():
     run.state = state_of(run, now)
   return list(runs.values())
+
+
+def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
+  """Fold one event into `runs`; `corrupt` when it cannot be part of them."""
+  kind, at = event["event"], event["at"]
+  if kind == "begin":
+    if event["run"] in runs:
+      raise _corrupt(path, number, f"run {event['run']} begins twice")
+    runs[event["run"]] = Run(
+      id=event["run"], items=[str(item) for item in event["items"]],
+      worktree=str(event["worktree"]), begun_at=at, updated_at=at,
+    )
+    return
+  run = runs.get(event["run"])
+  if run is None:
+    raise _corrupt(path, number, f"{kind} event for run {event['run']}, which never began")
+  if kind == "end":
+    try:
+      choice("outcome", event["outcome"], OUTCOMES)
+    except StateError as exc:
+      raise _corrupt(path, number, str(exc)) from None
+    run.updated_at = at
+    run.outcome = event["outcome"]
+    return
+  try:
+    choice("phase", event["phase"], PHASES)
+  except StateError as exc:
+    raise _corrupt(path, number, str(exc)) from None
+  step = run.step(str(event["step"]))
+  if step is None:
+    parent = str(event["parent"])
+    if parent and run.step(parent) is None:
+      raise _corrupt(path, number, f"step {event['step']} names parent {parent}, not in the run")
+    step = Step(
+      id=str(event["step"]), role="", agent="", vendor="", model="", reasoning="",
+      phase=event["phase"], task="", parent=parent, begun_at=at, updated_at=at,
+    )
+    run.steps.append(step)
+  run.updated_at = at
+  step.updated_at = at
+  step.phase = event["phase"]
+  for name in _FIELDS:
+    if event[name]:  # an update names only what changes
+      setattr(step, name, str(event[name]))
 
 
 def state_of(run: Run, now: datetime) -> str:
@@ -326,19 +407,60 @@ def state_of(run: Run, now: datetime) -> str:
   return "active"
 
 
-def _load_file(path: Path, now: datetime, *, tolerate_torn_tail: bool = False) -> list[Run]:
-  return fold(path, read_events(path, tolerate_torn_tail=tolerate_torn_tail), now)
+def local_ledger_paths(root: Path, *, siblings: bool = True) -> list[Path]:
+  """The checkout-local ledgers to read besides the shared one: this checkout's, then each
+  sibling worktree's. Empty outside the shared-ledger layout, where the local file is the
+  ledger."""
+  if common_ledger_path(root) is None:
+    return []
+  checkouts = [root, *(vcs.sibling_worktrees(root) if siblings else [])]
+  return [legacy_ledger_path(checkout) for checkout in checkouts]
 
 
-def load_runs(
-  root: Path, now: datetime | None = None, *, tolerate_torn_tail: bool = False,
+def _read_local(path: Path, damaged: list[Path] | None = None) -> list[tuple[int, dict]]:
+  """A local ledger's events, or none when it cannot be read: another checkout's damaged
+  or unreadable file is skipped, not fatal. A skipped file is added to `damaged`."""
+  try:
+    return read_events(path, tolerate_torn_tail=True)
+  except (OSError, SlicerError):
+    if damaged is not None:
+      damaged.append(path)
+    return []
+
+
+def load_all(
+  root: Path, now: datetime | None = None, *, siblings: bool = True,
+  tolerate_torn_tail: bool = False,
 ) -> list[Run]:
-  """The runs in the ledger `root` writes to. A damaged ledger is `corrupt`, with file and line.
+  """The runs in every ledger `root` reads, folded together.
 
-  Writers read it strictly, so a torn last line stops them. A reader that holds no lock
-  passes `tolerate_torn_tail`, because it may poll while an event is being appended.
+  The ledger `root` writes to must be sound (`corrupt` otherwise, with file and line), and
+  writers read it strictly, so a torn last line stops them. A reader that holds no lock
+  passes `tolerate_torn_tail`, because it may poll while an event is being appended. In a
+  git repo the checkout-local ledgers join it: events a sandboxed role wrote there, and those
+  an older slicer wrote in every worktree.
   """
-  return _load_file(ledger_path(root), now or utcnow(), tolerate_torn_tail=tolerate_torn_tail)
+  shared = ledger_path(root)
+  sources = [(shared, read_events(shared, tolerate_torn_tail=tolerate_torn_tail))]
+  sources.extend(
+    (path, _read_local(path)) for path in local_ledger_paths(root, siblings=siblings)
+  )
+  return fold(sources, now or utcnow())
+
+
+def local_run_events(root: Path, run_id: str) -> tuple[list[dict], list[Path], int]:
+  """One run's events from the checkout-local ledgers, this checkout's file first, with its
+  begin ahead of the rest; the local files that could not be read; and how many of the run's
+  events were left out as not valid (`valid_event`), which the strict shared ledger must
+  not be given."""
+  damaged: list[Path] = []
+  found = [
+    event for path in local_ledger_paths(root) for _, event in _read_local(path, damaged)
+    if event["run"] == run_id
+  ]
+  events = [event for event in found if valid_event(event)]
+  events.sort(key=lambda event: event["event"] != "begin")
+  return events, damaged, len(found) - len(events)
 
 
 def list_runs(
@@ -348,39 +470,31 @@ def list_runs(
 
   The TUI board and `relay-run list` both call this. It reads the ledger `root` writes to,
   which must be readable (`corrupt` otherwise). In a git repo that is the shared one, so the
-  runs of every worktree, removed ones included, are already in it; the legacy
+  runs of every worktree, removed ones included, are already in it. The checkout-local
   `.slicer/relay-runs.jsonl` of this checkout and, with `siblings`, of each sibling worktree
-  is read as well, for runs an older slicer recorded there. A legacy file that is not
-  readable is skipped, so another worktree's damaged file cannot blank the board. A run that
-  is in more than one file is listed once, from the first. `active` keeps only runs that are
-  neither ended nor stale.
+  is folded in as well, for the steps a sandboxed role could only write there and for runs
+  an older slicer recorded there. A local file that is not readable is skipped, so another
+  worktree's damaged file cannot blank the board. A run in more than one file is one run.
+  `active` keeps only runs that are neither ended nor stale.
   """
-  now = now or utcnow()
-  found = load_runs(root, now, tolerate_torn_tail=True)
-  if common_ledger_path(root) is not None:
-    checkouts = [root]
-    if siblings:
-      checkouts.extend(vcs.sibling_worktrees(root))
-    for checkout in checkouts:
-      try:
-        found.extend(_load_file(legacy_ledger_path(checkout), now, tolerate_torn_tail=True))
-      except (OSError, SlicerError):
-        continue
-  unique: dict[str, Run] = {}
-  for run in found:
-    unique.setdefault(run.id, run)
-  runs = list(unique.values())
+  runs = load_all(root, now, siblings=siblings, tolerate_torn_tail=True)
   if active:
     runs = [run for run in runs if run.state == "active"]
   return sorted(runs, key=lambda run: (run.begun_at, run.id))
 
 
-def append(root: Path, event: dict[str, object]) -> None:
-  """Append one event line. The caller holds the ledger lock (`ops.ledger_lock`)."""
-  path = common_ledger_path(root)
+def append(root: Path, event: dict[str, object], *, path: Path | None = None) -> None:
+  """Append one event line. The caller holds the ledger lock (`ops.ledger_lock`).
+
+  Without `path` the event goes to the ledger `root` writes to. A `path` is a fallback
+  target, the checkout's own file: it never touches the ignore rules, because a write a
+  sandbox forced must not put a tracked change into the slice's commit.
+  """
   if path is None:
-    feedback.ensure_gitignore(root, LEDGER_NAME)  # the ledger sits in the checkout
-    path = legacy_ledger_path(root)
+    path = common_ledger_path(root)
+    if path is None:
+      feedback.ensure_gitignore(root, LEDGER_NAME)  # the ledger sits in the checkout
+      path = legacy_ledger_path(root)
   if path.is_file():
     data = path.read_bytes()
     if data and not data.endswith(b"\n"):

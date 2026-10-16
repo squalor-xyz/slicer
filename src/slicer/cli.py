@@ -608,26 +608,60 @@ def _step_line(step: relayrun.Step) -> str:
   return ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
 
 
+def _say_fallback(report: ops.LedgerReport) -> None:
+  """One stderr line when a write went to the checkout's own file: the caller's sandbox
+  refused the shared ledger, and the line says where the events are and how they get there."""
+  if report.fell_back_from is not None:
+    print(
+      f"slicer: cannot write the shared relay-run ledger {report.fell_back_from} "
+      f"(permission denied); recorded in {report.wrote_to} instead. "
+      "`relay-run end`, run where the shared ledger is writable, copies it there",
+      file=sys.stderr,
+    )
+
+
+def _say_skipped(report: ops.LedgerReport) -> None:
+  """What a copy into the shared ledger left out, so a quiet `end` does not hide it."""
+  parts = [f"unreadable local ledger {path}" for path in report.unreadable]
+  if report.invalid:
+    parts.append(_count_of(report.invalid, "invalid event") + " in the local ledgers")
+  if parts:
+    print(f"slicer: not copied to the shared relay-run ledger: {'; '.join(parts)}", file=sys.stderr)
+
+
 def cmd_relay_run_begin(args: argparse.Namespace) -> int:
   """Not a roadmap write: `ops` takes the project lock and appends to the ledger only."""
-  run = ops.relay_run_begin(_run_root(args), args.items, args.worktree)
+  report = ops.LedgerReport()
+  run = ops.relay_run_begin(_run_root(args), args.items, args.worktree, report=report)
+  _say_fallback(report)
+  _say_skipped(report)
   _emit_run(args, {"run": run.to_dict()}, run.id)
   return OK
 
 
 def cmd_relay_run_step(args: argparse.Namespace) -> int:
+  report = ops.LedgerReport()
   run, step = ops.relay_run_step(
     _run_root(args), args.run, phase=args.phase, step=args.step, role=args.role or "",
     agent=args.agent or "", vendor=args.vendor or "", model=args.model or "",
     reasoning=args.reasoning or "", task=args.task or "", parent=args.parent or "",
+    report=report,
   )
+  _say_fallback(report)
+  _say_skipped(report)
   _emit_run(args, {"run": run.to_dict(), "step": step.to_dict()}, step.id)
   return OK
 
 
 def cmd_relay_run_end(args: argparse.Namespace) -> int:
-  run = ops.relay_run_end(_run_root(args), args.run, args.outcome)
-  _emit_run(args, {"run": run.to_dict()}, f"ended {run.id} {run.outcome}")
+  report = ops.LedgerReport()
+  run = ops.relay_run_end(_run_root(args), args.run, args.outcome, report=report)
+  _say_fallback(report)
+  _say_skipped(report)
+  text = f"ended {run.id} {run.outcome}"
+  if report.absorbed:
+    text += f"; absorbed {_count_of(report.absorbed, 'event')} from local ledgers"
+  _emit_run(args, {"run": run.to_dict()}, text)
   return OK
 
 

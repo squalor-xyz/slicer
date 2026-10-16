@@ -275,6 +275,11 @@ After the finish step, or when the relay stops, end the run with
 `slicer relay-run end RUN --outcome pass` (or `fail` or `stopped`), after marking
 each step done or failed.
 Recording is advisory: a failed `relay-run` call never stops the relay.
+A role whose sandbox may write only inside its worktree still records: when the
+shared ledger is unwritable, `relay-run` writes the worktree's own
+`.slicer/relay-runs.jsonl` and says so on stderr, and `relay-run end` from a
+session that can write the shared ledger copies those events into it. Making
+`<main>/.git/slicer` a writable root for that vendor avoids the fallback.
 
 In a split, the parts run in the slice worktree, in parallel only when their
 files are disjoint, otherwise one after another. The orchestrator runs the full

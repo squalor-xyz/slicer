@@ -1,0 +1,41 @@
+{
+  "id": "s338",
+  "title": "relay-run end absorbs a step whose parent is in a damaged local file without failing",
+  "lead": [
+    "When `relay-run end` absorbs local events and a step's parent was in a local file it skipped as damaged, the step is still absorbed and the run still ends, with the orphan named on stderr."
+  ],
+  "depends_note": null,
+  "findings_note": "s332 relay 2026-10-16, later note 3: an absorbed step whose parent sits in a skipped damaged local file fails in the shared ledger",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** repairing a damaged local file.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s332's absorb-on-end (`ops._absorb`) skips a local file that cannot be read and reports it as unreadable. A step from another readable local file whose `--parent` was recorded in the skipped one is still copied into the shared ledger, where its parent does not exist; the s332 orchestrator found the shared ledger then fails to fold that run, and recovering needs a hand edit of the ledger."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`, `_absorb`; `src/slicer/relayrun.py` (`local_run_events`, `fold`).\n- `src/slicer/cli.py`: the stderr line naming the orphaned step.\n- `CHANGELOG.md` under Fixed. `tests/test_relay_run.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRunEnd_ParentInDamagedLocalFile_EndsAndNamesOrphan`: two sibling local files, the parent's damaged; `end` exits 0, `relay-run list` shows the run, and stderr names the orphaned step."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Reproduce with the test and watch it go red.\n2. Either hold back an orphaned step from the absorb or fold it without its parent; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

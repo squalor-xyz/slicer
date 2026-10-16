@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 333,
+  "next_id": 339,
   "preamble": "",
   "passes": [
     {
@@ -11196,7 +11196,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "8f4b32a9-a783-4331-a2d9-1c9bb4c71803",
+          "kind": "",
+          "text": "**2026-10-16** — s332 relay 2026-10-16, later note: with the s332 fallback, write the closing events after _absorb and through Ledger.append, so closes of steps recorded in a local fallback file land in the shared ledger.",
+          "created_at": "2026-10-16T14:08:12Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11373,14 +11385,29 @@
       "id": "s332",
       "title": "A sandboxed agent in a worktree can record relay-run steps",
       "short_title": "A sandboxed agent in a worktree can record relay-run steps",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s298",
         "s300"
       ],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "48ee3c07-8825-4743-a0de-158d913e0ddb",
+          "kind": "",
+          "text": "**2026-10-16** — Ready for review, verified: VERDICT: PASS after 2 rounds. Sandboxed relay-run writes fall back per write to the checkout's local ledger with a stderr line and no .gitignore edit; list and _open_run fold all ledgers; end absorbs local events into the shared ledger. Full suite 2270 OK (1 skip). Known limit: same new step id from two writers that cannot see each other (documented in docs/commands.md).",
+          "created_at": "2026-10-16T14:07:02Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-16T14:08:16Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -11399,6 +11426,70 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
+        "attempts": 1
+      }
+    },
+    {
+      "id": "s337",
+      "title": "Steps recorded through the fallback and the shared ledger never share an id",
+      "short_title": "Steps recorded through the fallback and the shared ledger never share an id",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s332"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s332 relay 2026-10-16, later note 1: concurrent fallback and shared writers can issue one step id twice",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s338",
+      "title": "relay-run end absorbs a step whose parent is in a damaged local file without failing",
+      "short_title": "relay-run end absorbs a step whose parent is in a damaged local file without failing",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s332"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s332 relay 2026-10-16, later note 3: an absorbed step whose parent sits in a skipped damaged local file fails in the shared ledger",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }
