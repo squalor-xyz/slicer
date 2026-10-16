@@ -265,6 +265,56 @@ class FoldTests(RelayRunCase):
       ("fail", "opus", "original", "Claude Code", "high"),
     )
 
+  def test_RelayRunStep_Update_NewTask_Refused(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    first = self.step(repo, run, "--task", "S16 implement")["step"]["id"]
+    before = repo.read(LEDGER)
+    payload = self.refuse(
+      repo, "relay-run", "step", run, "--step", first, "--phase", "start", "--task", "other",
+      code=2, error="bad_run_field",
+    )
+    self.assertIn("a new step without --step", payload["message"])
+    self.assertEqual(repo.read(LEDGER), before)
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["task"], "S16 implement")
+
+  def test_RelayRunStep_Update_SameTask_Allowed(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    first = self.step(repo, run, "--task", "S16 implement")["step"]["id"]
+    before = repo.read(LEDGER)
+    self.ok(
+      repo, "relay-run", "step", run, "--step", first, "--phase", "start",
+      "--task", "S16 implement",
+    )
+    after = repo.read(LEDGER)
+    self.assertTrue(after.startswith(before))
+    self.assertEqual(len(after.splitlines()), len(before.splitlines()) + 1)
+    step = self.runs(repo)[0]["steps"][0]
+    self.assertEqual((step["phase"], step["task"]), ("start", "S16 implement"))
+
+  def test_RelayRunStep_Heartbeat_NoTask_KeepsTask(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    first = self.step(repo, run, "--task", "S16 implement")["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", first, "--phase", "start")
+    step = self.runs(repo)[0]["steps"][0]
+    self.assertEqual((step["phase"], step["task"]), ("start", "S16 implement"))
+
+  def test_RelayRunStep_Update_TaskOnTasklessStep_Filled(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    first = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", first, "--phase", "start", "--task", "x")
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["task"], "x")
+    before = repo.read(LEDGER)
+    self.refuse(
+      repo, "relay-run", "step", run, "--step", first, "--phase", "start", "--task", "y",
+      code=2, error="bad_run_field",
+    )
+    self.assertEqual(repo.read(LEDGER), before)
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["task"], "x")
+
   def test_Run_RoundTrip_IsIdentityWithFixedKeyOrder(self) -> None:
     repo = self.project()
     run = self.begin(repo, "s1")
