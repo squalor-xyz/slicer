@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `relay-run list [RUN]` accepts an optional run id, keeping only that run in the existing text and `{runs}` JSON format. An unknown id exits 2 with `unknown_run` and the ledger paths searched. With `--active`, a known ended or stale run gives an empty list and exit 0.
+
 - `slicer ai relay-orchestrator` prints the orchestrator's own contract for one slice and its run report. Its text carries the orchestrator's rules and report shape, and it reads only the one-slice parts of `slicer ai relay` (Order, Gate, Every brief, Stop), never the outer session's steps (`relay-run begin` and `end`, landing, push). It opens with the same `Contract: relay v4` line as `ai relay` (one `RELAY_CONTRACT` in `ai.py`, shared with the agents repo's `relay-orchestrator` role so a mismatch shows), follows the project's `implement_finish` and `handoff_requires_note_kind`, and `--json` returns `{"contract": "relay v4", "orchestrator": TEXT}`. Its waiting rule assumes an orchestrator's spawns can only run in the background: end the turn while a role runs, a nudge to report is not a reason to report, resume a role that stopped with its own work running, and send the final report once. Read-only.
 - `add`, `set` and `import` warn on stderr when they file an item under a pass that no `prose add-pass` declared, naming the key and the command that declares it, so a pass the queue cannot order is noticed when it is made. `check` warns (exit 0) for each undeclared pass key that holds an item not done or retired, with the count. Nothing is refused, and queue order and JSON payloads do not change.
 

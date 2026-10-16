@@ -353,6 +353,69 @@ class FoldTests(RelayRunCase):
 
 
 class ListTests(RelayRunCase):
+  def test_RelayRun_List_WithRunId_OnlyThatRun(self) -> None:
+    repo = self.project()
+    self.begin(repo, "s1")
+    second = self.begin(repo, "s2")
+    expected = next(run for run in self.runs(repo) if run["id"] == second)
+    self.assertEqual(self.ok(repo, "relay-run", "list", second), {"runs": [expected]})
+
+  def test_RelayRun_List_WithRunId_TextOnlyThatRun(self) -> None:
+    repo = self.project()
+    first = self.begin(repo, "s1")
+    self.step(repo, first, "--task", "first-only-task")
+    second = self.begin(repo, "s2")
+    self.step(repo, second, "--task", "second-only-task")
+    code, out, err = repo.run("relay-run", "list", second)
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(out.splitlines(), [
+      f"{second}  active  items s2  wt {repo.root.name}  1 step, 1 running, 0 subagents",
+      "  1  implementer  Claude Code  sonnet  high  start  second-only-task",
+    ])
+    self.assertNotIn(first, out)
+    self.assertNotIn("first-only-task", out)
+
+  def test_RelayRun_List_UnknownRunId_UnknownRun(self) -> None:
+    repo = self.project(git=True)
+    repo.commit("base")
+    sibling = repo.root / "siblings" / "other"
+    sibling.parent.mkdir()
+    made = repo._git("worktree", "add", "-q", "-b", "other", str(sibling), "HEAD")
+    self.assertEqual(made.returncode, 0, made.stderr)
+    for extra in ([], ["--active"]):
+      with self.subTest(extra=extra):
+        error = self.refuse(repo, "relay-run", "list", "run-nope", *extra,
+                            code=2, error="unknown_run")
+        self.assertIn("run-nope", error["message"])
+        for path in (relayrun.ledger_path(repo.root), repo.root / LEDGER, sibling / LEDGER):
+          self.assertIn(str(path), error["message"])
+
+  def test_RelayRun_List_RunIdFromSiblingWorktree_Found(self) -> None:
+    repo = self.project(git=True)
+    repo.commit("base")
+    sibling = repo.root / "siblings" / "other"
+    sibling.parent.mkdir()
+    made = repo._git("worktree", "add", "-q", "-b", "other", str(sibling), "HEAD")
+    self.assertEqual(made.returncode, 0, made.stderr)
+    self.begin(repo, "s1")
+    remote = "run-old-other"
+    (sibling / LEDGER).write_text(legacy_begin(remote, "s2", "other"), encoding="utf-8")
+    runs = self.runs(repo, remote)
+    self.assertEqual([run["id"] for run in runs], [remote])
+    self.assertEqual((runs[0]["items"], runs[0]["worktree"]), (["s2"], "other"))
+
+  def test_RelayRun_List_WithRunId_ActiveFiltersKnownRuns(self) -> None:
+    repo = self.project()
+    fresh = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    stale = ops.relay_run_begin(repo.root, ["s2"], now=minutes(-90)).id
+    ended = ops.relay_run_begin(repo.root, ["s3"], now=minutes(-5)).id
+    ops.relay_run_end(repo.root, ended, "pass", now=minutes(-4))
+    with patch.object(relayrun, "utcnow", return_value=minutes(1)):
+      self.assertEqual([run["id"] for run in self.runs(repo, fresh, "--active")], [fresh])
+      for run in (stale, ended):
+        with self.subTest(run=run):
+          self.assertEqual(self.ok(repo, "relay-run", "list", run, "--active"), {"runs": []})
+
   def test_List_Text_LabelsItemsAndWorktree_AndSingularisesOneStepAndOneSubagent(self) -> None:
     repo = self.project()
     one = self.begin(repo, "s283", "--worktree", ".worktrees/s283")
