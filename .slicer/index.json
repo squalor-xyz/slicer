@@ -9919,7 +9919,7 @@
       "id": "s295",
       "title": "Tests pin the render-stale flag after a failed wizard render and after a move",
       "short_title": "Tests pin the render-stale flag after a failed wizard render and after a move",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -9935,10 +9935,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-16T13:14:27Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

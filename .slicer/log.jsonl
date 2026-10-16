@@ -1745,3 +1745,4 @@
 {"when": "2026-10-16T13:07:52Z", "item": "s295", "action": "note", "from": "", "to": "", "note": "Ready for review: added failed-wizard-render and move render", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:07:53Z", "item": "s295", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:14:27Z", "item": "s295", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T13:14:42Z", "item": "s295", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: two regression tests in tests/test_tui.py pin the render-stale flag after a failed wizard render and after a move; Codex relay gate PASS, both mutations caught. On merged main: test_tui + guard tests 166 OK, slicer check passes.", "by": "Jon Robbins"}
