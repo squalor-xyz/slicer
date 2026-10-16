@@ -1880,7 +1880,7 @@ def _missing_spec(state: State, item: Item) -> list[str]:
 def edit_section(state: State, item_id: str, heading: str, body: str, *, append: bool = False) -> Slice:
   sl = state.slices.get(item_id)
   if sl is None:
-    raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first")
+    raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first", code="no_slice")
   section = sl.section(heading)
   if append:
     body = body.lstrip("\n")

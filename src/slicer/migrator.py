@@ -22,6 +22,7 @@ from pathlib import Path
 
 from slicer import ids, jsonio, legacy, templates
 from slicer.config import CONFIG_NAME, Config
+from slicer.errors import SlicerError
 from slicer.model import Index, Item, PassInfo, Section, Slice, extract_boundary
 from slicer.store import DIR_NAME, INDEX_NAME, SLICES_DIR, TEMPLATES_DIR
 
@@ -251,7 +252,7 @@ def build(
       trees, literal = _trees_cell(row.cells[3])
       try:
         status = cfg.status_for_label(row.cells[5])
-      except Exception as exc:
+      except SlicerError as exc:
         report.problems.append(str(exc))
         continue
       sl = legacy_slices.get(item_id)
