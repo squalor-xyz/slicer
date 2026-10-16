@@ -1,0 +1,41 @@
+{
+  "id": "s333",
+  "title": "Explain how slicer works with concepts and Mermaid diagrams",
+  "lead": [
+    "Give a newcomer a plain-language model of slicer before asking them to learn its commands. The existing why-slicer page explains problems and benefits; this guide explains the concepts, their relationships, and the lifecycle."
+  ],
+  "depends_note": null,
+  "findings_note": "Owner documentation review 2026-10-16; README.md:7 introduces AI-first use; docs/getting-started.md:5 opens with agent onboarding; no embedded Mermaid diagrams found in README.md, CONTRIBUTING.md, ARCHITECTURE.md or docs/*.md. Existing deps --format mermaid illustrates backlog dependencies rather than how slicer works.",
+  "size": "M",
+  "flags": [],
+  "trees_note": "docs",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** rewriting the quickstart, duplicating the why-slicer pitch or command reference, changing runtime behavior or schemas, adding dependencies, or creating a PDF build system.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The owner wants humans to understand what is happening, what to do next, and why. The current documentation has command instructions and an architecture reference but no illustrated conceptual introduction. Keep docs/why-slicer.md as the authoritative problem-to-benefit page rather than recreating it."
+    },
+    {
+      "heading": "Files",
+      "body": "- Create docs/how-it-works.md.\n- Link it from README.md's documentation index and docs/why-slicer.md.\n- Consult ARCHITECTURE.md, the command/configuration references, and the relevant existing source when verifying claims."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "No automated prose test is required. The acceptance gap is a missing conceptual guide and diagrams. Validate behavioral claims against existing implementation and command help rather than adding tests that assert prose wording."
+    },
+    {
+      "heading": "Implement",
+      "body": "Explain roadmap items versus specified slices; project goals versus queued tasks; dependencies and readiness; importance, urgency, effort, and effective priority; claims and branch-local state; configured statuses and finish policies; and generated output versus canonical JSON. Give each distinction a concrete consequence for the user.\n\nAdd a Mermaid flowchart showing a human or agent using CLI/TUI, shared operations, canonical JSON, generated Markdown/HTML, and validation. Show generated output as a projection, never as input to canonical state. Add a Mermaid lifecycle diagram showing the normal start/finish path, optional handoff/review/rejection, parking and resuming, and retirement. Clearly distinguish default done from projects configured for handoff, and distinguish status labels from readiness and claims. Follow the shipped implementation rather than assuming all projects use slicer's own settings.\n\nAccompany each diagram with a short prose explanation so the page works without a Mermaid renderer. Explain git-based coordination and local versus shared information without implying real-time collaboration or automatic AI execution. Link to authoritative detail instead of reproducing reference tables. Keep Markdown and fenced Mermaid as the maintained sources."
+    },
+    {
+      "heading": "Check",
+      "body": "- A reader can explain what slicer stores, which commands change it, why a row may not be ready, what to edit, and what finished means under either finish policy.\n- Review diagram edges and labels against shipped behavior, including review rejection and the distinction between claims and statuses.\n- All changed relative links and anchors resolve.\n- Render the guide with quire --config squalor to an explicit PDF path under the worktree's ignored .venv/docs-preview/ directory. Inspect every diagram and affected page for readable labels, clipping, and page breaks. PDFs remain local review artifacts. Record rendering failures rather than silently waiving this acceptance check; do not install dependencies or access additional paths without the authorization required by project guidance.\n- Run the project's documentation-only checks: affected tests, slicer check, and git diff --check. Follow AGENTS.md's full-suite requirement if source or tests change."
+    },
+    {
+      "heading": "Git",
+      "body": "Implement in a fresh worktree for this slice. Review documentation, tracking, and generated roadmap together. Finish with the project's required note and handoff after acceptance passes. Commit only when authorized; merging, pushing, and publication remain owner decisions."
+    }
+  ],
+  "notes": []
+}

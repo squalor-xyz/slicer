@@ -1751,3 +1751,7 @@
 {"when": "2026-10-16T13:10:40Z", "item": "s300", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:28:06Z", "item": "s300", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:32:24Z", "item": "s300", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: in a linked worktree a missing ignore line goes to <common>/info/exclude as **/.slicer/NAME and the tracked .slicer/.gitignore is left alone; check warns on missing init lines and setup-git --attributes adds them. Review PASS; follow-up made an unwritable info/exclude advisory on the feedback path too. Merged main suite 2251 OK (1 skipped), no guard trips, real info/exclude unchanged.", "by": "Jon Robbins"}
+{"when": "2026-10-16T13:37:02Z", "item": "s333", "action": "add", "from": "", "to": "open", "note": "Explain how slicer works with concepts and Mermaid diagrams"}
+{"when": "2026-10-16T13:37:02Z", "item": "s334", "action": "add", "from": "", "to": "open", "note": "Make getting started a short human-first walkthrough"}
+{"when": "2026-10-16T13:37:02Z", "item": "s335", "action": "add", "from": "", "to": "open", "note": "Explain the human role when working with agents"}
+{"when": "2026-10-16T13:37:02Z", "item": "s336", "action": "add", "from": "", "to": "open", "note": "Give human contributors a practical development walkthrough"}
