@@ -10903,7 +10903,7 @@
       "id": "s318",
       "title": "Tests cannot write into the real repo's git dir",
       "short_title": "No git-dir writes from tests",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -10919,7 +10919,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-16T13:09:28Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],

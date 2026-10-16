@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-319 items · — 30 · done 281 · retired 7 · review 1
+319 items · — 30 · done 281 · retired 7 · reviewing 1
 
 v1.14.0 release
 
@@ -83,7 +83,7 @@ v1.12.0 release
 | 34 | [s315](slices/s315.md) | Pin relay v4 wiring | S | 1 | slicer | s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296 | — |
 | 35 | [s316](slices/s316.md) | Extend legacy runs | S | 1 | slicer | s298 relay 2026-10-16: legacy-ledger run lists but step/end give unknown_run · Owner chose 2026-10-16 to keep s298's documented workaround (begin a new run) instead of writing legacy ledgers; no run in this repo is affected. · discovered from s298 | retired |
 | 36 | [s317](slices/s317.md) | Shared file lock | S | 1 | slicer | s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298 | — |
-| 37 | [s318](slices/s318.md) | No git-dir writes from tests | S | 2 | slicer | s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298 | review |
+| 37 | [s318](slices/s318.md) | No git-dir writes from tests | S | 2 | slicer | s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298 | reviewing |
 | 38 | [s319](slices/s319.md) | Self-contained orchestrator text | S | 2 | slicer | s296 review 2026-10-16: spec Lead vs Files; owner chose inline · discovered from s296 | — |
 | 39 | [s321](slices/s321.md) | add-pass counts items | S | 1 | slicer | dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14 | — |
 | 40 | [s320](slices/s320.md) | Select relay role alternatives across vendors | M | 2 | slicer | Owner request, 2026-10-16: Codex implementer and orchestrator alternatives, automatic selection with overrides, and future bidirectional harness launching. | — |
