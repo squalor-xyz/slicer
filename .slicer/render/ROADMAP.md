@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-300 items · — 20 · done 275 · retired 5
+300 items · — 19 · done 275 · retired 6
 
 v1.13.0 release
 
@@ -55,7 +55,7 @@ v1.12.0 release
 | 13 | [s301](slices/s301.md) | add --id refuses an id a sibling worktree already filed | S | 1 | slicer | nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294 | done |
 | 14 | [s302](slices/s302.md) | Version-shaped passes queue in version order | S | 1 | slicer | 2026-10-15: after retargeting, list put v1.13 s278 above v1.12 s298; graph.ranked_order ranks only declared passes, and v1.7+ are undeclared · Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared. | retired |
 | 15 | [s303](slices/s303.md) | Undeclared pass warns | S | 1 | slicer | 2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302 | done |
-| 16 | [s304](slices/s304.md) | Relay contract version | S | 1 | slicer | owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · discovered from s296 | — |
+| 16 | [s304](slices/s304.md) | Relay contract version | S | 1 | slicer | owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296's spec. · discovered from s296 | retired |
 | 17 | [s305](slices/s305.md) | Sibling id refusal ignores case | S | 1 | slicer | s301 relay review, 2026-10-15: a sibling's s10 against our S10 is not refused; Index.get is case-sensitive · discovered from s301 | — |
 | 18 | [s306](slices/s306.md) | Add prints id | S | 1 | slicer | owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON | — |
 | 19 | [s307](slices/s307.md) | Docs match what check and the git allowlist do | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15 | — |

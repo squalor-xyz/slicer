@@ -10268,7 +10268,7 @@
       "id": "s304",
       "title": "Relay contract carries a version and names the orchestrator agent",
       "short_title": "Relay contract version",
-      "status": "open",
+      "status": "retired",
       "has_slice": true,
       "depends_on": [
         "s296"
@@ -10289,7 +10289,7 @@
         "key": "",
         "pass": "v1.12",
         "group": "",
-        "reason": "",
+        "reason": "Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296's spec.",
         "importance": 2,
         "urgency": 1,
         "effort": 1,

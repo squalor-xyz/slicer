@@ -1642,3 +1642,9 @@
 {"when": "2026-10-16T02:48:34Z", "item": "s311", "action": "add", "from": "", "to": "open", "note": "Split cli.py and ops.py"}
 {"when": "2026-10-16T02:48:34Z", "item": "s312", "action": "add", "from": "", "to": "open", "note": "Load done slices only when needed"}
 {"when": "2026-10-16T02:48:34Z", "item": "s313", "action": "add", "from": "", "to": "open", "note": "State writes survive a crash"}
+{"when": "2026-10-16T02:52:34Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-16T02:52:35Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-16T02:52:35Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-16T02:52:36Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-16T02:52:41Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "lead"}
+{"when": "2026-10-16T02:52:45Z", "item": "s304", "action": "retire", "from": "open", "to": "retired", "note": "Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296's spec."}

@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">300 items · — 20 · done 275 · retired 5</p>
+<p class="summary">300 items · — 19 · done 275 · retired 6</p>
 <h2>v1.13.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s278</td><td>TUI dependency and history panes</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-14: bring the TUI up to date with recent CLI features</td><td class="status">—</td></tr>
@@ -65,7 +65,7 @@
 <tr class="done"><td>13</td><td>s301</td><td>add --id refuses an id a sibling worktree already filed</td><td>S</td><td>1</td><td>slicer</td><td>nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294</td><td class="status">done</td></tr>
 <tr class="retired"><td>14</td><td>s302</td><td>Version-shaped passes queue in version order</td><td>S</td><td>1</td><td>slicer</td><td>2026-10-15: after retargeting, list put v1.13 s278 above v1.12 s298; graph.ranked_order ranks only declared passes, and v1.7+ are undeclared · Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303&#x27;s warnings, and v1.12/v1.13 are now declared.</td><td class="status">retired</td></tr>
 <tr class="done"><td>15</td><td>s303</td><td>Undeclared pass warns</td><td>S</td><td>1</td><td>slicer</td><td>2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302</td><td class="status">done</td></tr>
-<tr class="open"><td>16</td><td>s304</td><td>Relay contract version</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · discovered from s296</td><td class="status">—</td></tr>
+<tr class="retired"><td>16</td><td>s304</td><td>Relay contract version</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296&#x27;s spec. · discovered from s296</td><td class="status">retired</td></tr>
 <tr class="open"><td>17</td><td>s305</td><td>Sibling id refusal ignores case</td><td>S</td><td>1</td><td>slicer</td><td>s301 relay review, 2026-10-15: a sibling&#x27;s s10 against our S10 is not refused; Index.get is case-sensitive · discovered from s301</td><td class="status">—</td></tr>
 <tr class="open"><td>18</td><td>s306</td><td>Add prints id</td><td>S</td><td>1</td><td>slicer</td><td>owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON</td><td class="status">—</td></tr>
 <tr class="open"><td>19</td><td>s307</td><td>Docs match what check and the git allowlist do</td><td>S</td><td>1</td><td>slicer</td><td>research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15</td><td class="status">—</td></tr>
