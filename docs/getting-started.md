@@ -777,7 +777,7 @@ Notes are optional on both commands, as on `done` and `start`.
 
 A project can keep its slice-relay role matrix in `.slicer/relay-roles.json`: which agent
 (Claude Code, Codex CLI, Grok Build), vendor, model and reasoning effort each role
-(implementer, reviewer, gate, architect) gets for which kind of slice, plus the rules that
+(implementer, reviewer, gate, architect, orchestrator) gets for which kind of slice, plus the rules that
 go with it. Only `slicer relay-roles` changes it, so never open the file. `relay-roles init`
 writes an example to start from (add `--render` to render it). `init --relay-roles` writes the
 same example during `init`, unless a matrix already exists, and renders it, so with the flag
@@ -785,7 +785,7 @@ same example during `init`, unless a matrix already exists, and renders it, so w
 `rule-add`, `rule-edit` and `rule-remove` edit rules. `slicer ai relay` then embeds the matrix so
 the outer session proposes each role from it, and `slicer relay-roles show` prints it alone. That
 outer session spawns one orchestrator per slice, and `slicer ai relay-orchestrator` prints the
-orchestrator's contract and run report; both texts open with the same `Contract: relay v4` line.
+orchestrator's contract and run report; both texts open with the same `Contract: relay v5` line.
 slicer renders it to `.slicer/render/RELAY-ROLES.md`, and `slicer check` fails if that render is
 stale. A project that still has the hand-edited `.slicer/relay-roles.md` from slicer 1.9 runs
 `slicer relay-roles init --replace-legacy`, which writes the example matrix and removes the old

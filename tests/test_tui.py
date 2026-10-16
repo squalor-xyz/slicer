@@ -1894,8 +1894,19 @@ class RelayBoardViewTests(unittest.TestCase):
     self.assertEqual(view.board_error, "")
 
   def test_Pipeline_FollowsTheRelayRoleNames(self) -> None:
-    self.assertEqual(set(tui.RELAY_PIPELINE) | {"architect"}, set(roles.ROLE_NAMES))
+    self.assertEqual(set(tui.RELAY_PIPELINE) | {"architect", "orchestrator"}, set(roles.ROLE_NAMES))
     self.assertEqual(tui.RELAY_PIPELINE, ("implementer", "reviewer", "gate"))
+
+  def test_BoardLines_Orchestrator_IsTheParentNotAWorkerStage(self) -> None:
+    run = nested_run(board_step("2", "implementer", parent="1"))
+    lines = tui.board_lines([run], 0, NOW, 100)
+    texts = [line.text for line in lines]
+    pipeline = next(text for text in texts if " > " in text)
+    self.assertNotIn("orchestrator", pipeline)
+    self.assertFalse([t for t in texts if re.match(r"\s*(?:[├└] )?\[.\] orchestrator", t)])
+    self.assertFalse([t for t in texts if "orchestrator" in t and "waiting" in t])
+    self.assertEqual(len([t for t in texts if t.lstrip().startswith("└ orchestrator")]), 1)
+    self.assertEqual(len([t for t in texts if re.match(r"\s*[├└] .*waiting", t)]), 2)
 
   def test_Handle_BoardOpen_EndedRunsPastTheWindowLeaveTheBoard(self) -> None:
     ended = board_run(board_step("1", "implementer", "done"), run_id="run-0",

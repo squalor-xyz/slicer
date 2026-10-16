@@ -9321,7 +9321,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "7553b5e4-18c9-45ed-ad48-f0b0a3d5e684",
+          "kind": "",
+          "text": "**2026-10-16** — From the s320 relay (2026-10-16): relay-roles recommend now returns five roles (orchestrator appended) with alternatives and selected_by; show both in the overlay.",
+          "created_at": "2026-10-16T20:06:25Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11055,10 +11067,22 @@
       "id": "s320",
       "title": "Select relay role alternatives across vendors",
       "short_title": "Select relay role alternatives across vendors",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "3a7eef53-b3cb-476a-9c56-c6a0316e3e0f",
+          "kind": "",
+          "text": "**2026-10-16** — relay-roles recommend now resolves five roles (orchestrator included) with alternatives and selected_by, supports --prefer-agent and repeatable --select overrides, and keeps existing picks by default; role schema 3 loads old matrices without writes and merges across the bump; this project has Claude opus high (r10) as default orchestrator, Codex gpt-6.1-sol high (r11) as alternate, a generic Codex medium implementer (r9), and a cross-vendor u2 rule; relay contract is v5. Full suite 2309 OK, review and gate PASS.",
+          "created_at": "2026-10-16T19:59:16Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11078,7 +11102,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -11088,7 +11112,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "dbf0e4ff-d1da-424a-8df0-5fcb7cae7f21",
+          "kind": "",
+          "text": "**2026-10-16** — From the s320 relay (2026-10-16): build the brief's roles from roles.resolve and pass the accepted --prefer-agent/--select through, so the brief carries the accepted lineup, orchestrator included.",
+          "created_at": "2026-10-16T20:06:23Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",

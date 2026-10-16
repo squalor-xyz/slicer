@@ -470,34 +470,45 @@ def cmd_relay_roles_show(args: argparse.Namespace) -> int:
   return OK
 
 
-def _recommend_line(role: str, row: role_matrix.RoleRow | None) -> str:
-  if row is None:
-    return f"{role}  (no matching row)"
+def _row_cells(row: role_matrix.RoleRow) -> str:
   cells = [row.id, row.agent, row.vendor, row.model, row.reasoning]
-  return f"{role}  " + "  ".join(cell or role_matrix.EMPTY_CELL for cell in cells)
+  return "  ".join(cell or role_matrix.EMPTY_CELL for cell in cells)
+
+
+def _recommend_lines(pick: role_matrix.RolePick) -> list[str]:
+  """A role's selected row and why, then its alternatives indented below it."""
+  if pick.row is None:
+    return [f"{pick.role}  (no matching row)"]
+  return [
+    f"{pick.role}  {_row_cells(pick.row)}  [{pick.selected_by}]",
+    *(f"  alternative  {_row_cells(row)}" for row in pick.alternatives),
+  ]
 
 
 def cmd_relay_roles_recommend(args: argparse.Namespace) -> int:
   """Match a slice against the matrix. Reads only: no lock, no write, nothing stored."""
   well_specified = ops.parse_yes_no("well-specified", args.well_specified)
   split = ops.parse_yes_no("split", args.split)
+  select = role_matrix.parse_selectors(args.select or [])
   matrix = _read_matrix(args)
   item = _state(args).index.require(args.id)
-  picks = role_matrix.recommend(matrix, item, well_specified, split)
+  picks = role_matrix.resolve(
+    matrix, item, well_specified, split, prefer_agent=args.prefer_agent, select=select,
+  )
   payload = {
     "id": item.id,
     "well_specified": well_specified,
     "split": split,
     "sliver": role_matrix.is_sliver(item),
-    "roles": [{"role": role, "row": row.to_dict() if row else None} for role, row in picks],
-    "unmatched": [role for role, row in picks if row is None],
+    "roles": [pick.to_dict() for pick in picks],
+    "unmatched": [pick.role for pick in picks if pick.row is None],
   }
   if args.json:
     # The shape is the contract, so --lean must not drop a null row or an empty list;
     # it only makes the output compact.
     _dump_json(args, payload)
   else:
-    _emit(args, payload, "\n".join(_recommend_line(role, row) for role, row in picks))
+    _emit(args, payload, "\n".join(line for pick in picks for line in _recommend_lines(pick)))
   return OK
 
 
@@ -3891,8 +3902,8 @@ def build_parser() -> argparse.ArgumentParser:
 
   inner = radd(
     "recommend", cmd_relay_roles_recommend,
-    "propose each role's row for a slice from its size, effort, importance and urgency "
-    "(no lock, no write)",
+    "propose each role's row, and the other rows that match, for a slice from its size, "
+    "effort, importance and urgency (no lock, no write)",
   )
   inner.add_argument("id")
   inner.add_argument(
@@ -3903,6 +3914,16 @@ def build_parser() -> argparse.ArgumentParser:
     "--split", required=True, metavar="yes|no",
     help="yes for a part of a split slice, no for a whole one; rows with split null match either",
   )
+  inner.add_argument(
+    "--prefer-agent", metavar="AGENT",
+    help="choose each role's first matching row on this agent (compared trimmed, ignoring case) "
+    "when the role has one; a role without one keeps its first matching row",
+  )
+  inner.add_argument(
+    "--select", action="append", metavar="ROLE=ROW_ID",
+    help="use this row for the role, over the preference and the matrix order; repeat for "
+    "other roles. The row must be a row of that role that matches the slice",
+  )
 
   inner = radd("init", cmd_relay_roles_init, "write the example matrix", mutate=True)
   inner.add_argument("--force", action="store_true", help="replace an existing relay-roles.json")
@@ -3912,12 +3933,12 @@ def build_parser() -> argparse.ArgumentParser:
   )
 
   inner = radd("add", cmd_relay_roles_add, "add a row", mutate=True)
-  inner.add_argument("--role", required=True, help="implementer, reviewer, gate or architect")
+  inner.add_argument("--role", required=True, help="implementer, reviewer, gate, architect or orchestrator")
   row_flags(inner)
 
   inner = radd("set", cmd_relay_roles_set, "change only the fields given on a row", mutate=True)
   inner.add_argument("id")
-  inner.add_argument("--role", help="implementer, reviewer, gate or architect")
+  inner.add_argument("--role", help="implementer, reviewer, gate, architect or orchestrator")
   row_flags(inner)
 
   radd("remove", cmd_relay_roles_remove, "drop a row", mutate=True).add_argument("id")

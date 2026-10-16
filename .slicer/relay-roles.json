@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "rows": [
     {
       "id": "r8",
@@ -101,6 +101,24 @@
       "note": "per part of a split slice"
     },
     {
+      "id": "r9",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
+      "reasoning": "medium",
+      "note": "alternate implementer for any slice, split part or sliver"
+    },
+    {
       "id": "r4",
       "role": "reviewer",
       "when": {
@@ -155,6 +173,42 @@
       "model": "opus",
       "reasoning": "high",
       "note": ""
+    },
+    {
+      "id": "r10",
+      "role": "orchestrator",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "opus",
+      "reasoning": "high",
+      "note": "default orchestrator"
+    },
+    {
+      "id": "r11",
+      "role": "orchestrator",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
+      "reasoning": "high",
+      "note": "alternate orchestrator"
     }
   ],
   "rules": [
@@ -164,7 +218,7 @@
     },
     {
       "id": "u2",
-      "text": "No cross-vendor reviewer unless the owner asks."
+      "text": "Rows for any role may be selected across vendors, automatically or by the owner; u1 still holds, so nobody who wrote code in a slice reviews or gates it."
     },
     {
       "id": "u3",
@@ -195,6 +249,6 @@
       "text": "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high)."
     }
   ],
-  "next_row": 9,
+  "next_row": 12,
   "next_rule": 10
 }

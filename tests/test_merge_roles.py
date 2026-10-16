@@ -358,7 +358,7 @@ class UnreadableInputTests(MergeRelayRolesCase):
         self.assertIn(f"the {side} version", message)
         self.assertIn("at or below an id in use", message)
 
-  def test_MergeRelayRoles_VersionOneSideWithVersionTwoSide_MergesIntoVersionTwo(self) -> None:
+  def test_MergeRelayRoles_VersionOneSideWithCurrentSide_MergesIntoCurrentVersion(self) -> None:
     def v1(text: str) -> str:
       doc = json.loads(text)
       doc["version"] = 1
@@ -372,20 +372,62 @@ class UnreadableInputTests(MergeRelayRolesCase):
     )
     ours = _matrix([_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules())
     doc = self.clean(v1(BASE), v1(ours), theirs)
-    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["version"], roles.ROLES_VERSION)
     self.assertEqual(doc["rows"][0]["model"], "sonnet")
     self.assertIs(doc["rows"][0]["when"]["sliver"], True)
     # And the other way round: ours is current, theirs predates the sliver condition.
     doc = self.clean(v1(BASE), theirs, v1(ours))
-    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["version"], roles.ROLES_VERSION)
     self.assertEqual(doc["rows"][0]["model"], "sonnet")
     self.assertIs(doc["rows"][0]["when"]["sliver"], True)
-    # Two version 1 sides merge into a version 2 file: the driver always writes current.
+    # Two version 1 sides merge into a current-version file: the driver always writes current.
     only_theirs = _matrix(
       [_base_rows()[0], _row("r2", "reviewer", model="opus", reasoning="high")], _base_rules(),
     )
     doc = self.clean(v1(BASE), v1(ours), v1(only_theirs))
-    self.assertEqual(doc["version"], 2)
+    self.assertEqual(doc["version"], roles.ROLES_VERSION)
+    self.assertEqual((doc["rows"][0]["model"], doc["rows"][1]["reasoning"]), ("sonnet", "high"))
+
+  def test_MergeRelayRoles_OrchestratorRows_SurviveTheMerge(self) -> None:
+    ours = _matrix([*_base_rows(), _row("r3", "orchestrator", model="opus", reasoning="high")], _base_rules())
+    theirs = _matrix([*_base_rows(), _row("r3", "orchestrator", model="sol", reasoning="high")], _base_rules())
+    code, out, err, merged = self.merge(BASE, ours, theirs)
+    self.assertEqual((code, out), (0, ""))
+    doc = json.loads(merged)
+    self.assertEqual(
+      [(r["id"], r["role"], r["model"]) for r in doc["rows"][2:]],
+      [("r3", "orchestrator", "opus"), ("r4", "orchestrator", "sol")],
+    )
+    self.assertIn("row r3 was issued on both sides", err)
+
+  def test_MergeRelayRoles_PreviousVersionOnOneSide_MergesWithAnOrchestratorRowFromTheOther(self) -> None:
+    def previous(text: str) -> str:
+      return jsonio.dumps({**json.loads(text), "version": roles.ROLES_VERSION - 1})
+
+    orchestrator = _row("r3", "orchestrator", model="opus", reasoning="high")
+    new = _matrix([*_base_rows(), orchestrator], _base_rules())
+    edited = _matrix([_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules())
+    # ours predates the role, theirs adds a row of it; and the reverse; and only the base is old.
+    for base, ours, theirs in (
+      (previous(BASE), previous(edited), new),
+      (previous(BASE), new, previous(edited)),
+      (previous(BASE), edited, new),
+    ):
+      with self.subTest(base=json.loads(base)["version"], ours=json.loads(ours)["version"]):
+        doc = self.clean(base, ours, theirs)
+        self.assertEqual(doc["version"], roles.ROLES_VERSION)
+        self.assertEqual(doc["rows"][0]["model"], "sonnet")
+        self.assertEqual([r["role"] for r in doc["rows"]][2:], ["orchestrator"])
+        self.assertEqual(doc["next_row"], 4)
+
+  def test_MergeRelayRoles_AllSidesOnThePreviousVersion_WritesTheCurrentVersion(self) -> None:
+    def previous(text: str) -> str:
+      return jsonio.dumps({**json.loads(text), "version": roles.ROLES_VERSION - 1})
+
+    ours = _matrix([_row("r1", "implementer", model="sonnet"), _base_rows()[1]], _base_rules())
+    theirs = _matrix([_base_rows()[0], _row("r2", "reviewer", model="opus", reasoning="high")], _base_rules())
+    doc = self.clean(previous(BASE), previous(ours), previous(theirs))
+    self.assertEqual(doc["version"], roles.ROLES_VERSION)
     self.assertEqual((doc["rows"][0]["model"], doc["rows"][1]["reasoning"]), ("sonnet", "high"))
 
   def test_MergeRelayRoles_TheirsIsFromANewerSlicer_IsRefused(self) -> None:
