@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 319,
+  "next_id": 320,
   "preamble": "",
   "passes": [
     {
@@ -10757,7 +10757,7 @@
       "id": "s316",
       "title": "relay-run step and end extend a run in a legacy ledger",
       "short_title": "Extend legacy runs",
-      "status": "open",
+      "status": "retired",
       "has_slice": true,
       "depends_on": [],
       "note_records": [],
@@ -10776,7 +10776,7 @@
         "key": "",
         "pass": "v1.12",
         "group": "",
-        "reason": "",
+        "reason": "Owner chose 2026-10-16 to keep s298's documented workaround (begin a new run) instead of writing legacy ledgers; no run in this repo is affected.",
         "importance": 1,
         "urgency": 1,
         "effort": 1,
@@ -10831,6 +10831,38 @@
         "trees_literal": false,
         "findings": "s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer",
         "discovered_from": "s298",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s319",
+      "title": "The orchestrator text carries its own one-slice rules",
+      "short_title": "Self-contained orchestrator text",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s315"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s296 review 2026-10-16: spec Lead vs Files; owner chose inline",
+        "discovered_from": "s296",
         "parent": "",
         "cites": [],
         "key": "",

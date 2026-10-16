@@ -14,19 +14,19 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "During the s298 relay (2026-10-16), mutation runs with TMPDIR in `<worktree>/.venv/tmp/` wrote 150 lines of fixture runs into the real `.git/slicer/relay-runs.jsonl`. A fixture that is not its own git repo sits inside this repo, so git discovery reached the real common dir once the mutated code dropped its `at_worktree_root` check. AGENTS.md recommends an in-checkout TMPDIR, and every relay brief sets one. The fix round wrapped those fixtures in `support.isolated_discovery`, but nothing stops the next slice that writes to a git-dir path from doing the same, and the real ledger is now shared by every worktree.\n\n**Owner decision (open):**\n- (a) **Recommended.** `tests/support.py` takes a fingerprint of the real git common dir's `slicer/` at import, and a final test module (or `tests/affected.py` and the discover wrapper) checks it is unchanged, failing with the paths that changed.\n- (b) Test fixture helpers set `GIT_CEILING_DIRECTORIES` to the fixture's parent for every fixture. That is suite-wide, which AGENTS.md currently advises against for `isolated_discovery`.\n- (c) Docs only: AGENTS.md and the relay brief say to run mutations of git-dir code with a TMPDIR fixture that is its own git repo."
+      "body": "During the s298 relay (2026-10-16), mutation runs with TMPDIR in `<worktree>/.venv/tmp/` wrote 150 lines of fixture runs into the real `.git/slicer/relay-runs.jsonl`. A fixture that is not its own git repo sits inside this repo, so git discovery reached the real common dir once the mutated code dropped its `at_worktree_root` check. AGENTS.md recommends an in-checkout TMPDIR, and every relay brief sets one. The fix round wrapped those fixtures in `support.isolated_discovery`, but nothing stops the next slice that writes to a git-dir path from doing the same, and the real ledger is now shared by every worktree.\n\n**Decision (owner, 2026-10-16): an in-process write guard.** `tests/support.py`, which every test module imports, wraps `builtins.open`, `io.open`, `os.open`, `os.replace`, `os.rename`, `os.mkdir` and `os.makedirs` for the test process. Any write-mode open, rename or replace target, or new directory under the real repository's git common dir (resolved once at import from the checkout the tests run from) fails at once with an `AssertionError` that names the path. Only the test process's own writes count. The shared ledger is written by orchestrators and the outer session while suites run, so a before/after fingerprint of `.git/slicer/` would fail spuriously; the owner chose this over a fingerprint for that reason. The relay briefs keep their `grep -c slicer-test-` leak check as well."
     },
     {
       "heading": "Files",
-      "body": "- Under (a): `tests/support.py`, a new `tests/test_zz_no_git_dir_writes.py` (or the equivalent hook), `AGENTS.md` (Commands).\n- `CHANGELOG.md` is not needed (tests only)."
+      "body": "- `tests/support.py`: the guard, installed at import, with a context manager `support.allow_git_dir_writes()` for the guard's own tests and a module-level `GUARDED_ROOT` the tests can point at a scratch directory. reads stay allowed.\n- `tests/test_support_guard.py`: the guard's tests.\n- `AGENTS.md` (Commands): one sentence saying the suite refuses writes into the repository's own git dir, and that a test needing a real common dir builds a fixture that is its own git repo."
     },
     {
       "heading": "Failing tests",
-      "body": "- Under (a): a test that writes a line into a scratch stand-in for the common dir makes the guard fail, and an untouched one passes."
+      "body": "- `test_SupportGuard_OpenForWriteUnderGuardedRoot_Raises`: with `GUARDED_ROOT` pointed at a scratch dir, `open(path, \"a\")` under it raises and names the path.\n- `test_SupportGuard_ReadUnderGuardedRoot_Allowed`.\n- `test_SupportGuard_ReplaceIntoGuardedRoot_Raises`: an atomic write (`os.replace` into the root) raises.\n- `test_SupportGuard_MkdirUnderGuardedRoot_Raises`.\n- `test_SupportGuard_WriteOutsideGuardedRoot_Allowed`."
     },
     {
       "heading": "Implement",
-      "body": "1. Settle the owner decision.\n2. Build the guard; prove it red by re-introducing the s298 leak in a mutant on a scratch copy."
+      "body": "1. Write the guard tests and watch them go red.\n2. Add the guard; run the full suite and confirm no test trips it.\n3. Prove it end to end on a scratch copy: re-introduce the s298 leak (drop `at_worktree_root` from `relayrun.common_ledger_path`), run `tests/test_relay_run.py`, and see the guard's `AssertionError` instead of a write. Never run that mutant without the guard against the real repository."
     },
     {
       "heading": "Check",

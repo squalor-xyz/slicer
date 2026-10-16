@@ -1,0 +1,41 @@
+{
+  "id": "s319",
+  "title": "The orchestrator text carries its own one-slice rules",
+  "lead": [
+    "`slicer ai relay-orchestrator` holds the orchestrator's steps from Order and the Gate, Every brief and Stop sections itself, so an orchestrator reads one text and never runs `slicer ai relay`."
+  ],
+  "depends_note": null,
+  "findings_note": "s296 review 2026-10-16: spec Lead vs Files; owner chose inline",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing any rule's wording or meaning; the agents repo's `relay-orchestrator.md` contract file (the owner updates it from the new text); s315's tests, which this item builds on.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Since s296 (landed 2026-10-16) the orchestrator text, about 70 lines, tells the orchestrator to run `slicer ai relay` (218 lines) and follow only its one-slice parts: the orchestrator's steps in Order, Gate (9 lines), Every brief (20) and Stop (4). It has to skip Roles, Setup, the role matrix, Slivers and the outer session's steps, which share the Order section with its own. s296's spec contradicted itself (its Lead said the text stands \"on its own\"; its Files said to follow `slicer ai relay`), and the reviewer marked the choice as the owner's. On 2026-10-16 the owner chose to inline the rules: one read, no filtering, fewer tokens per orchestrator. The s307 orchestrator's question on whether a first review that already says PASS needs a gate round shows the cost of piecing Gate together from scattered text."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`:\n  - Factor the Gate, Every brief and Stop bodies into module-level strings (or small functions taking `finish` and `required_note_kind`) that both `relay_text` and `orchestrator_text` use, so the two texts cannot drift.\n  - `orchestrator_text` gets an \"Order\" section listing only the orchestrator's steps (implement, review, fix rounds, gate, closing note and finish step, commit if the brief allows), plus the shared Gate, Every brief and Stop sections. Drop the \"Run `slicer ai relay` and follow its one-slice parts\" bullet and the \"(Order, Gate, Every brief, Stop)\" clause in the intro; the intro says this text is the whole contract for one slice.\n  - `relay_text` keeps every section it has; its Order still marks which steps the orchestrator runs.\n  - `RELAY_CONTRACT` stays 4: the rules are unchanged, only where the orchestrator reads them.\n- `docs/agents.md` (the `ai relay-orchestrator` row), `docs/commands.md:19` (says the orchestrator text is self-contained), `CHANGELOG.md` under Changed.\n- `tests/test_ai.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_OrchestratorText_DoesNotSendToAiRelay`: the text does not contain `slicer ai relay` followed by \"follow\" or \"one-slice parts\".\n- `test_OrchestratorText_GateEveryBriefStop_SameAsRelayText`: each of the three section bodies appears verbatim in both texts, for `finish` done and handoff.\n- `test_OrchestratorText_Order_HasNoOuterSteps`: the orchestrator's Order names no `relay-run begin`, `relay-run end`, merge or landing step."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Factor the shared sections; build both texts from them; check `relay_text`'s output is byte-identical before and after for both finish values (save it before the change).\n3. Docs and CHANGELOG; mutation-check (edit a shared string in one text only; reintroduce the \"run `slicer ai relay`\" bullet)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
