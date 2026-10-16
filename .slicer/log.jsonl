@@ -1735,3 +1735,4 @@
 {"when": "2026-10-16T12:57:01Z", "item": "s318", "action": "note", "from": "", "to": "", "note": "Ready for review: tests/support.py installs an in-process gu", "by": "Jon Robbins"}
 {"when": "2026-10-16T12:57:02Z", "item": "s318", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:09:28Z", "item": "s318", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T13:09:34Z", "item": "s318", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: tests/support.py refuses any test-process write into the repo's git common dir; 8 guard tests (3 added after review to kill surviving mutants); suite 2229 OK; s298 leak re-introduced on a scratch copy tripped the guard 43 times with .git/slicer unchanged; reviewer VERDICT: PASS.", "by": "Jon Robbins"}
