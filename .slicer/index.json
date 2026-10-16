@@ -11373,13 +11373,25 @@
       "id": "s332",
       "title": "A sandboxed agent in a worktree can record relay-run steps",
       "short_title": "A sandboxed agent in a worktree can record relay-run steps",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s298",
         "s300"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "48ee3c07-8825-4743-a0de-158d913e0ddb",
+          "kind": "",
+          "text": "**2026-10-16** — Ready for review, verified: VERDICT: PASS after 2 rounds. Sandboxed relay-run writes fall back per write to the checkout's local ledger with a stderr line and no .gitignore edit; list and _open_run fold all ledgers; end absorbs local events into the shared ledger. Full suite 2270 OK (1 skip). Known limit: same new step id from two writers that cannot see each other (documented in docs/commands.md).",
+          "created_at": "2026-10-16T14:07:02Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11399,7 +11411,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

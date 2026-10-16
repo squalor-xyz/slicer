@@ -1751,3 +1751,6 @@
 {"when": "2026-10-16T13:10:40Z", "item": "s300", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:28:06Z", "item": "s300", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:32:24Z", "item": "s300", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: in a linked worktree a missing ignore line goes to <common>/info/exclude as **/.slicer/NAME and the tracked .slicer/.gitignore is left alone; check warns on missing init lines and setup-git --attributes adds them. Review PASS; follow-up made an unwritable info/exclude advisory on the feedback path too. Merged main suite 2251 OK (1 skipped), no guard trips, real info/exclude unchanged.", "by": "Jon Robbins"}
+{"when": "2026-10-16T13:33:41Z", "item": "s332", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T14:07:02Z", "item": "s332", "action": "note", "from": "", "to": "", "note": "Ready for review, verified: VERDICT: PASS after 2 rounds. Sa", "by": "Jon Robbins"}
+{"when": "2026-10-16T14:07:02Z", "item": "s332", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -6,12 +6,13 @@ and so each one records the same log entry.
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import re
 import shlex
 import time
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from uuid import uuid4
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
@@ -2948,24 +2949,81 @@ def rule_remove(state: State, rule_id: str) -> RoleRule:
 # outside git) is an untracked, append-only log, not roadmap state: nothing here touches
 # the index, history or render. Each call validates before it appends, so a refused call
 # leaves the ledger as it was, and holds the ledger lock across the append.
+#
+# A role whose sandbox may write only inside its slice worktree cannot write the common
+# dir. A write the shared ledger or its lock refuses goes to the checkout's own
+# `.slicer/relay-runs.jsonl` under the project lock instead, one write at a time; the
+# readers fold both, and `relay_run_end` copies a run's local events into the shared ledger.
+
+@dataclass
+class LedgerReport:
+  """What a relay-run write did beyond the write, for the CLI to tell the caller."""
+
+  fell_back_from: Path | None = None  # the shared ledger it could not write
+  wrote_to: Path | None = None  # the checkout's own file that took the events instead
+  absorbed: int = 0  # local events copied into the shared ledger
+  unreadable: list[Path] = field(default_factory=list)  # local ledgers skipped as damaged
+  invalid: int = 0  # local events not copied because they would not fold
+
+
+def _denied(exc: OSError) -> bool:
+  """A sandbox or a read-only mount said no, as opposed to a ledger that is broken."""
+  return isinstance(exc, PermissionError) or exc.errno in (errno.EPERM, errno.EACCES, errno.EROFS)
+
+
+class Ledger:
+  """Where this call's events go: the shared ledger, or after a refusal the local file."""
+
+  def __init__(self, root: Path, report: LedgerReport, stack: ExitStack, shared: bool) -> None:
+    self.root = root
+    self.report = report
+    self.stack = stack
+    self.can_fall_back = shared
+    self.fallback = False
+
+  def fall_back(self) -> None:
+    """Switch to the checkout's own file, serialised by the project lock."""
+    if self.fallback:
+      return
+    self.stack.enter_context(store.project_lock(self.root))
+    self.fallback = True
+    self.report.fell_back_from = relayrun.ledger_path(self.root)
+    self.report.wrote_to = relayrun.legacy_ledger_path(self.root)
+
+  def append_shared(self, event: dict[str, object], *, absorbing: bool = False) -> bool:
+    """Append to the shared ledger. False once it is refused and the call is local.
+
+    The shared ledger is read strictly, so an event for a run it holds no begin of would make
+    it `corrupt` once the file that does is gone. The run's local events are copied first.
+    """
+    if self.fallback:
+      return False
+    if self.can_fall_back and not absorbing and event["event"] != "begin":
+      shared = relayrun.ledger_path(self.root)
+      run_id = str(event["run"])
+      if not any(e["event"] == "begin" and e["run"] == run_id for _, e in relayrun.read_events(shared)):
+        _absorb(self.root, self, run_id)
+        if self.fallback:
+          return False
+    try:
+      relayrun.append(self.root, event)
+      return True
+    except OSError as exc:
+      if not (self.can_fall_back and _denied(exc)):
+        raise
+    self.fall_back()
+    return False
+
+  def append(self, event: dict[str, object]) -> None:
+    if self.append_shared(event):
+      return
+    local = relayrun.legacy_ledger_path(self.root)
+    relayrun.read_events(local)  # a damaged file is refused before anything is added to it
+    relayrun.append(self.root, event, path=local)
+
 
 @contextmanager
-def ledger_lock(root: Path) -> Iterator[None]:
-  """Serialise appenders to the ledger `root` writes to.
-
-  The shared ledger is written from every worktree, and worktrees do not share
-  `.slicer/lock`, so it has a lock file beside it, taken like `store.project_lock`. A ledger
-  inside the checkout is guarded by the project lock as before.
-  """
-  common = relayrun.common_ledger_path(root)
-  if common is None:
-    with store.project_lock(root):
-      yield
-    return
-  if store.fcntl is None:
-    yield
-    return
-  lock_path = common.with_name(relayrun.COMMON_LOCK_NAME)
+def _shared_flock(lock_path: Path) -> Iterator[None]:
   lock_path.parent.mkdir(parents=True, exist_ok=True)
   timeout = store._lock_timeout()
   fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
@@ -2992,13 +3050,39 @@ def ledger_lock(root: Path) -> Iterator[None]:
     os.close(fd)
 
 
+@contextmanager
+def ledger_lock(root: Path, report: LedgerReport | None = None) -> Iterator[Ledger]:
+  """Serialise appenders to the ledger `root` writes to, and say where an event goes.
+
+  The shared ledger is written from every worktree, and worktrees do not share
+  `.slicer/lock`, so it has a lock file beside it, taken like `store.project_lock`. A ledger
+  inside the checkout is guarded by the project lock as before. When the lock file cannot be
+  opened because the sandbox refuses writes there, the yielded `Ledger` is already on the
+  checkout's own file under the project lock.
+  """
+  common = relayrun.common_ledger_path(root)
+  with ExitStack() as stack:
+    ledger = Ledger(root, report if report is not None else LedgerReport(), stack, common is not None)
+    if common is None:
+      stack.enter_context(store.project_lock(root))
+    elif store.fcntl is not None:
+      try:
+        stack.enter_context(_shared_flock(common.with_name(relayrun.COMMON_LOCK_NAME)))
+      except OSError as exc:
+        if not _denied(exc):
+          raise
+        ledger.fall_back()
+    yield ledger
+
+
 def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
-  """The run in the ledger `root` writes to that a step or end may extend."""
-  run = next((r for r in relayrun.load_runs(root, now) if r.id == run_id), None)
+  """The run, in any ledger `root` reads, that a step or end may extend."""
+  run = next((r for r in relayrun.load_all(root, now) if r.id == run_id), None)
   if run is None:
     raise StateError(
-      f"no relay run {run_id!r} in {relayrun.ledger_path(root)}; `relay-run begin` makes one "
-      "and `relay-run list` shows them. In a git repo every worktree shares that ledger",
+      f"no relay run {run_id!r} in {relayrun.ledger_path(root)} or the checkouts' own "
+      f"{relayrun.LEDGER_NAME}; `relay-run begin` makes one and `relay-run list` shows them. "
+      "In a git repo every worktree shares that ledger",
       code="unknown_run",
     )
   if run.state == "ended":
@@ -3009,8 +3093,25 @@ def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
   return run
 
 
+def _absorb(root: Path, ledger: Ledger, run_id: str) -> None:
+  """Copy the run's events from the local ledgers into the shared one, those not yet there."""
+  have = {relayrun.event_key(event) for _, event in relayrun.read_events(relayrun.ledger_path(root))}
+  events, damaged, invalid = relayrun.local_run_events(root, run_id)
+  ledger.report.unreadable = damaged
+  ledger.report.invalid = invalid
+  for event in events:
+    key = relayrun.event_key(event)
+    if key in have:
+      continue
+    if not ledger.append_shared(event, absorbing=True):
+      return
+    have.add(key)
+    ledger.report.absorbed += 1
+
+
 def relay_run_begin(
   root: Path, items: list[str], worktree: str | None = None, *, now: datetime | None = None,
+  report: LedgerReport | None = None,
 ) -> relayrun.Run:
   """Start a run on these items. `worktree` defaults to the checkout it is recorded in."""
   now = now or relayrun.utcnow()
@@ -3023,21 +3124,21 @@ def relay_run_begin(
     relayrun.one_line("worktree", worktree, required=True)
   name = Path(worktree).resolve().name if worktree is not None else Path(root).resolve().name
   name = relayrun.one_line("worktree", name, required=True)
-  with ledger_lock(root):
+  with ledger_lock(root, report) as ledger:
     # A damaged ledger is refused before anything is added to it.
-    taken = {run.id for run in relayrun.load_runs(root, now)}
+    taken = {run.id for run in relayrun.load_all(root, now)}
     while True:
       run_id = f"run-{now.astimezone(timezone.utc):%Y%m%d-%H%M%S}-{uuid4().hex[:4]}"
       if run_id not in taken:
         break
-    relayrun.append(root, relayrun.begin_event(run_id, now, items, name))
-    return next(r for r in relayrun.load_runs(root, now) if r.id == run_id)
+    ledger.append(relayrun.begin_event(run_id, now, items, name))
+    return next(r for r in relayrun.load_all(root, now) if r.id == run_id)
 
 
 def relay_run_step(
   root: Path, run_id: str, *, phase: str, step: str | None = None, role: str = "",
   agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", task: str = "",
-  parent: str = "", now: datetime | None = None,
+  parent: str = "", now: datetime | None = None, report: LedgerReport | None = None,
 ) -> tuple[relayrun.Run, relayrun.Step]:
   """Record an agent's step, or with `step` a later phase of one already recorded.
 
@@ -3054,7 +3155,7 @@ def relay_run_step(
     "reasoning": relayrun.one_line("reasoning", reasoning), "task": relayrun.one_line("task", task),
   }
   parent = relayrun.one_line("parent", parent)
-  with ledger_lock(root):
+  with ledger_lock(root, report) as ledger:
     run = _open_run(root, run_id, now)
     if step is None:
       for name in ("role", "agent"):
@@ -3075,17 +3176,22 @@ def relay_run_step(
           "Record a new step without --step for another task, or leave out --task to keep this one"
         )
       step_id = step
-    relayrun.append(root, relayrun.step_event(run_id, now, step_id, phase, parent, **fields))
+    ledger.append(relayrun.step_event(run_id, now, step_id, phase, parent, **fields))
     run = _open_run(root, run_id, now)
     return run, run.step(step_id)
 
 
 def relay_run_end(
   root: Path, run_id: str, outcome: str, *, now: datetime | None = None,
+  report: LedgerReport | None = None,
 ) -> relayrun.Run:
+  """Close the run. When the shared ledger can be written, the run's events from the local
+  ledgers are copied into it first, so removing a worktree afterwards loses none of them."""
   now = now or relayrun.utcnow()
   relayrun.choice("outcome", outcome, relayrun.OUTCOMES)
-  with ledger_lock(root):
+  with ledger_lock(root, report) as ledger:
     _open_run(root, run_id, now)
-    relayrun.append(root, relayrun.end_event(run_id, now, outcome))
-    return next(r for r in relayrun.load_runs(root, now) if r.id == run_id)
+    if ledger.can_fall_back and not ledger.fallback:
+      _absorb(root, ledger, run_id)
+    ledger.append(relayrun.end_event(run_id, now, outcome))
+    return next(r for r in relayrun.load_all(root, now) if r.id == run_id)

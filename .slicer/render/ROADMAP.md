@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-319 items · — 27 · done 285 · retired 7
+319 items · — 26 · done 285 · retired 7 · review 1
 
 v1.14.0 release
 
@@ -88,7 +88,7 @@ v1.12.0 release
 | 39 | [s321](slices/s321.md) | add-pass counts items | S | 1 | slicer | dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14 | — |
 | 40 | [s320](slices/s320.md) | Select relay role alternatives across vendors | M | 2 | slicer | Owner request, 2026-10-16: Codex implementer and orchestrator alternatives, automatic selection with overrides, and future bidirectional harness launching. | — |
 | 41 | [s330](slices/s330.md) | The git allowlist drops the unused merge-base --is-ancestor form | S | 1 | slicer | s309 report 2026-10-16: nothing calls merge-base --is-ancestor after tips_outside; owner chose to remove the shape · discovered from s309 | — |
-| 42 | [s332](slices/s332.md) | A sandboxed agent in a worktree can record relay-run steps | M | 2 | slicer | s314 Codex relay 2026-10-16: review and gate ledger entries omitted after sandbox blocks · discovered from s314 | — |
+| 42 | [s332](slices/s332.md) | A sandboxed agent in a worktree can record relay-run steps | M | 2 | slicer | s314 Codex relay 2026-10-16: review and gate ledger entries omitted after sandbox blocks · discovered from s314 | review |
 
 ---
 
