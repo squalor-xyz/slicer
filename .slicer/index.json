@@ -10529,6 +10529,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "f5496681-cff9-4e82-8568-b333f2a26851",
+          "kind": "",
+          "text": "**2026-10-16** — Test gap (Low, not filed): no test pins that an unknown status label is still reported as a migrate problem after the catch was narrowed to SlicerError (ConfigError is a SlicerError; the reviewer checked it by hand). Review and gate ran as one pass, since there were no blockers.",
+          "created_at": "2026-10-16T11:41:24Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
