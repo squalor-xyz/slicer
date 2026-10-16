@@ -1648,3 +1648,9 @@
 {"when": "2026-10-16T02:52:36Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-10-16T02:52:41Z", "item": "s296", "action": "edit", "from": "", "to": "", "note": "lead"}
 {"when": "2026-10-16T02:52:45Z", "item": "s304", "action": "retire", "from": "open", "to": "retired", "note": "Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296's spec."}
+{"when": "2026-10-16T02:53:50Z", "item": "s296", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:09:46Z", "item": "s296", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:22:29Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Verified: Contract: relay v4 opens both ai relay and ai rela", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:22:57Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Owner decision, not a blocker: inline Gate, Every brief and ", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:22:57Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "docs/commands.md:19 and CHANGELOG.md:11 still say 'never the", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:22:58Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Test gaps (Low): a literal 'relay v4' in cli.py JSON instead", "by": "Jon Robbins"}

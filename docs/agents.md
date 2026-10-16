@@ -32,10 +32,19 @@ with the owner before the worktree is created. It says to read the role matrix w
 `slicer relay-roles show` and change it with the other `relay-roles` commands, never from
 `.slicer/relay-roles.json`.
 
-`slicer ai relay` prints the slice relay: one orchestrating session runs one slice
-through an implementer, a reviewer, an architect and a gate. Its Setup section, before Order,
+`slicer ai relay` prints the slice relay. It starts with the line `Contract: relay v4`, the
+contract version shared with the agents repo's `relay-orchestrator` role (`ai.RELAY_CONTRACT`,
+bumped when a rule an outer session, orchestrator or role follows changes), and describes an
+outer session, the one the owner talks to, that spawns one orchestrator per slice; the
+orchestrator runs the slice through an implementer, a reviewer, an architect and a gate. The
+orchestrator's own contract and run report come from `slicer ai relay-orchestrator`, which
+opens with the same marker line; the outer session starts the orchestrator's brief with "First
+run `slicer ai relay-orchestrator` and follow it." and checks the report's first line and its
+last line, `nothing left running: yes`. Its Setup section, before Order,
 asks the owner which roles run (the architect is optional), the agent, vendor, model and
-reasoning effort per role, whether the implementation splits into parts, whether to sliver
+reasoning effort per role, the orchestrator's agent, model and reasoning effort (agent type
+`relay-orchestrator` where the harness has one, otherwise a general-purpose agent briefed with
+`slicer ai relay-orchestrator`), the environment lines every brief carries, whether the implementation splits into parts, whether to sliver
 the slice (the default is no), and where the run ends (after the finish step, after a commit
 on the slice branch, or landed). A split needs
 parts with disjoint files and their own tests. One lead implementer runs `start`, the note
@@ -52,8 +61,8 @@ gate and handoff, then one combined gate and the parent's own handoff), parallel
 combined diff before the combined gate) and escalation (the matrix rule). The owner confirms
 the sliver plan at Setup. It uses
 the same finish choice and the same fallback as `slicer ai instructions`. Handoff finish
-closes with handoff, and that text does not name done. `--json` returns `{"relay": "..."}` with
-the same Markdown as the text output. It does not lock or write, except `--init-roles`, which
+closes with handoff, and that text does not name done. `--json` returns
+`{"contract": "relay v4", "relay": "..."}` with the same Markdown as the text output. It does not lock or write, except `--init-roles`, which
 is `relay-roles init --render` under the project lock.
 
 The role matrix is `.slicer/relay-roles.json`, versioned state that only `slicer relay-roles`
@@ -292,7 +301,8 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command. With `--output` or `--install` it is `{skill, written}`, `written` being the absolute paths written, in order |
-| `ai relay` | `{relay}` with the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. A project with `.slicer/relay-roles.json` gets a `## Roles matrix` section after Setup holding the matrix as Markdown, and Setup gets the propose line and the `relay-roles recommend` command; a project without it gets the `relay-roles init` line in Setup. A leftover `.slicer/relay-roles.md` is ignored with a stderr warning. A corrupt matrix is `corrupt` and a newer one `schema_too_new` (exit 3). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write, except `--init-roles` (below) |
+| `ai relay` | `{contract, relay}`: `contract` is `"relay v4"`, the version on the text's first line (`Contract: relay v4`), and `relay` is the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. A project with `.slicer/relay-roles.json` gets a `## Roles matrix` section after Setup holding the matrix as Markdown, and Setup gets the propose line and the `relay-roles recommend` command; a project without it gets the `relay-roles init` line in Setup. A leftover `.slicer/relay-roles.md` is ignored with a stderr warning. A corrupt matrix is `corrupt` and a newer one `schema_too_new` (exit 3). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write, except `--init-roles` (below) |
+| `ai relay-orchestrator` | `{contract, orchestrator}`: `contract` is `"relay v4"` as in `ai relay`, and `orchestrator` is the orchestrator's contract and run report as Markdown, with the same marker as its first line. The finish step and report kind come from the project the way `ai relay` reads them (`handoff` or `done`, and `handoff_requires_note_kind`). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write; `--lean` changes nothing |
 | `ai relay --init-roles` | `{written}`, a one-element list `[PATH]` holding the absolute path of `.slicer/relay-roles.json`, when it writes the example matrix and renders it. Needs a project; an existing file is `state` (exit 2) unless `--force` is given, and `--force` without `--init-roles` is `usage` |
 | `ai relay-roles` / `relay-roles show` | `{relay_roles, rows, rules}`: the Markdown render without its banner, then each row as `{id, role, when: {size, effort, importance, urgency, well_specified, split, sliver}, agent, vendor, model, reasoning, note}` and each rule as `{id, text}`. `--lean` keeps `rows` and `rules` even when empty. Needs a project, and reads without a lock or a write. A missing file is exit 2 with code `no_relay_roles` |
 | `relay-roles recommend` | `{id, well_specified, split, sliver, roles, unmatched}`: the two answers as booleans, `sliver`, the boolean slicer infers (true when the item has a `parent`, so it is a sliver), `roles` always four `{role, row}` entries in the order implementer, reviewer, gate, architect (`row` is the first matching row as in `show`, or `null`), and `unmatched`, the roles with no matching row (`[]` when none). `--lean` keeps the full shape (a `null` row and an empty `unmatched` stay) and only makes the output compact. Both `--well-specified` and `--split` are required (yes or no; anything else is `bad_role_field`, a missing flag is `usage`). An unknown item is `no_such_item` and a project without the file is `no_relay_roles` (both exit 2). Reads without a lock or a write, and stores nothing |

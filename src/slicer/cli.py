@@ -406,7 +406,16 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       # The section sits under `## Roles matrix`, so its headings start one level down.
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
-  _emit(args, {"relay": text}, text.rstrip("\n"))
+  _emit(args, {"contract": ai.contract_line(), "relay": text}, text.rstrip("\n"))
+  return OK
+
+
+def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
+  """Print the orchestrator's contract. Read-only, with the project's finish step and
+  report kind the way `ai relay` reads them; outside a project it is the generic text."""
+  finish, required = _ai_policy(args)
+  text = ai.orchestrator_text(finish, required)
+  _emit(args, {"contract": ai.contract_line(), "orchestrator": text}, text.rstrip("\n"))
   return OK
 
 
@@ -3318,8 +3327,10 @@ def build_parser() -> argparse.ArgumentParser:
   inner = aisub.add_parser(
     "relay", help="print the slice relay, or write the example role matrix with --init-roles",
     description=(
-      "Print the slice relay: one session runs one slice through an implementer, "
-      "a reviewer, an architect and a gate. A project with implement_finish handoff "
+      "Print the slice relay: an outer session spawns one orchestrator per slice, which "
+      "runs the slice through an implementer, a reviewer, an architect and a gate. The text "
+      "opens with the `Contract: relay vN` line; `ai relay-orchestrator` prints the "
+      "orchestrator's part. A project with implement_finish handoff "
       "closes with handoff. A project whose .slicer/relay-roles.json exists gets a "
       "## Roles matrix section after Setup holding the matrix as Markdown, and Setup "
       "proposes roles from it; without the file, Setup names `slicer relay-roles init`. "
@@ -3350,6 +3361,21 @@ def build_parser() -> argparse.ArgumentParser:
     parents=[common],
   )
   inner.set_defaults(func=cmd_ai_relay_roles)
+  _json_flags(inner, suppress=True)
+  inner = aisub.add_parser(
+    "relay-orchestrator", help="print the contract of the orchestrator the slice relay spawns",
+    description=(
+      "Print the orchestrator's own contract for one slice and its run report shape, "
+      "which `slicer ai relay` tells the outer session to put first in the orchestrator's "
+      "brief. Both texts open with the same `Contract: relay vN` line. The finish step and "
+      "the report kind follow the project's implement_finish and "
+      "handoff_requires_note_kind, as for `ai relay`. No project, or a config or index that "
+      "cannot be read, prints the generic text and warns on stderr. Does not lock or write. "
+      "`--json` returns {contract, orchestrator}."
+    ),
+    parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_relay_orchestrator)
   _json_flags(inner, suppress=True)
 
   sp = add("init", cmd_init, "create .slicer/ in a project")

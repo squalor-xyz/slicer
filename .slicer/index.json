@@ -9943,7 +9943,7 @@
       "id": "s296",
       "title": "Print the nested relay: an orchestrator per slice, with its own contract",
       "short_title": "Nested relay contract",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s293"
@@ -9955,6 +9955,50 @@
           "text": "**2026-10-15** — Trial run 3 (2026-10-15, s293 and s301 under trial prompt v3): the Waiting bullet's 'run a role in the foreground' was not possible. In Claude Code an orchestrator's Agent tool had no foreground option, so every role ran in the background. Seen: the harness pressed orchestrators to hand back while a role ran ('[handback-send-enforce] Your report has not been delivered', 9 times in one run). Implementers reported while their own background full suite still ran. A resumed role's report went to the outer session instead of the orchestrator. Word the waiting rule as the agents repo's relay-orchestrator role (s73 branch) does: end the turn while a role runs; a nudge for the report is not a reason to report; resume a role that stopped with its own work running; every brief tells roles to run long commands in the foreground with a long timeout. See s304 for the contract version marker, which replaces this slice's '<slicer version>' marker.",
           "created_at": "2026-10-15T19:35:26Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "8c2fd0bf-26ef-40ce-bef8-95ec143e8add",
+          "kind": "",
+          "text": "**2026-10-16** — Verified: Contract: relay v4 opens both ai relay and ai relay-orchestrator (built from ai.RELAY_CONTRACT) and both --json payloads carry contract 'relay v4'; new ai relay-orchestrator command prints the orchestrator's contract and run report, following the project's finish step and note kind; ai relay Roles, Setup and Order describe the outer session and one orchestrator per slice. Full suite 2197 tests OK (1 skipped) at 00df494 plus the diff; slicer check passes; gate VERDICT: PASS after fix round 1.",
+          "created_at": "2026-10-16T03:22:29Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "c161dc84-df46-4772-8c10-8df3d324b14b",
+          "kind": "",
+          "text": "**2026-10-16** — Owner decision, not a blocker: inline Gate, Every brief and Stop into the orchestrator text so it never needs to read slicer ai relay (the Lead says 'on its own'; the Files bullet says follow the one-slice parts of slicer ai relay; the implementer followed the Files bullet).",
+          "created_at": "2026-10-16T03:22:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "2204bf64-ec58-436a-bf7a-102bc6da23c1",
+          "kind": "",
+          "text": "**2026-10-16** — docs/commands.md:19 and CHANGELOG.md:11 still say 'never the outer session's steps'; accurate for which steps it follows, not which it reads. Wording option: 'follows only the one-slice parts'.",
+          "created_at": "2026-10-16T03:22:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "d62d3553-8413-474b-938e-2aa43c6498e5",
+          "kind": "",
+          "text": "**2026-10-16** — Test gaps (Low): a literal 'relay v4' in cli.py JSON instead of ai.contract_line() passes every test; no test pins the orchestrator's --parent, disputes or gate-resume bullets.",
+          "created_at": "2026-10-16T03:22:58Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -9980,7 +10024,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

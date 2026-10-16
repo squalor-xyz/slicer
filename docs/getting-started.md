@@ -783,7 +783,9 @@ writes an example to start from (add `--render` to render it). `init --relay-rol
 same example during `init`, unless a matrix already exists, and renders it, so with the flag
 `init` also creates `.slicer/render/`. `add`, `set`, `remove` and `move` edit rows, and
 `rule-add`, `rule-edit` and `rule-remove` edit rules. `slicer ai relay` then embeds the matrix so
-the orchestrating agent proposes each role from it, and `slicer relay-roles show` prints it alone.
+the outer session proposes each role from it, and `slicer relay-roles show` prints it alone. That
+outer session spawns one orchestrator per slice, and `slicer ai relay-orchestrator` prints the
+orchestrator's contract and run report; both texts open with the same `Contract: relay v4` line.
 slicer renders it to `.slicer/render/RELAY-ROLES.md`, and `slicer check` fails if that render is
 stale. A project that still has the hand-edited `.slicer/relay-roles.md` from slicer 1.9 runs
 `slicer relay-roles init --replace-legacy`, which writes the example matrix and removes the old

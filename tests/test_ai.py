@@ -815,7 +815,7 @@ class AiRelayTests(unittest.TestCase):
       code, out, err = repo.run("ai", "relay", "--json")
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
-      self.assertEqual(json.loads(out), {"relay": text})
+      self.assertEqual(json.loads(out), {"contract": "relay v4", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -1132,10 +1132,10 @@ class AiRelayTests(unittest.TestCase):
     self.assertIn(sentence, brief)
     self.assertEqual(" ".join(text.split()).count(sentence), 1)
 
-  def test_RelayText_Orchestrator_ReadsDiffBeforeReview(self) -> None:
+  def test_RelayText_Orchestrator_ReadsDiffsAsItsContractSays(self) -> None:
     text = ai.relay_text()
     roles_section = " ".join(text.split("## Roles", 1)[1].split("## Setup", 1)[0].split())
-    phrase = "reads the implementer's diff before review"
+    phrase = "reads diffs as `slicer ai relay-orchestrator` says"
     self.assertIn(phrase, roles_section)
     self.assertEqual(" ".join(text.split()).count(phrase), 1)
 
@@ -1165,14 +1165,13 @@ class AiRelayTests(unittest.TestCase):
         self.assertIn(phrase, order)
         self.assertEqual(flat.count(phrase), 1)
 
-  def test_RelayText_Compaction_AtSliceBoundaries(self) -> None:
+  def test_RelayText_FreshOrchestrator_PerSlice(self) -> None:
     text = ai.relay_text()
     order = " ".join(text.split("## Order", 1)[1].split("## Gate", 1)[0].split())
     flat = " ".join(text.split())
     for phrase in (
-      "After a slice lands or hands off, and before briefing the next, compact the "
-      "orchestrator session or start a fresh one.",
-      "Re-read state with `slicer show ID --json --lean` rather than relying on memory.",
+      "Each slice gets a fresh orchestrator, so no orchestrator carries one slice's "
+      "context into the next.",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, order)
