@@ -10574,7 +10574,7 @@
       "id": "s309",
       "title": "Fewer git calls per command",
       "short_title": "Fewer git calls per command",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
