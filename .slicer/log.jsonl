@@ -1789,3 +1789,4 @@
 {"when": "2026-10-16T19:59:16Z", "item": "s320", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T20:06:23Z", "item": "s322", "action": "note", "from": "", "to": "", "note": "From the s320 relay (2026-10-16): build the brief's roles fr", "by": "Jon Robbins"}
 {"when": "2026-10-16T20:06:25Z", "item": "s280", "action": "note", "from": "", "to": "", "note": "From the s320 relay (2026-10-16): relay-roles recommend now ", "by": "Jon Robbins"}
+{"when": "2026-10-16T20:55:57Z", "item": "s320", "action": "status", "from": "review", "to": "done", "note": "Landed on main (44c9585, schema-bump shim) after relay gate VERDICT: PASS; doc conflicts with s319 resolved to s319 wording at relay v5. Full suite on merged tree: 2318 OK, 1 failure only from the in-progress merge, rerun OK after commit.", "by": "Jon Robbins"}

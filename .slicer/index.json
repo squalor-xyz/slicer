@@ -11067,7 +11067,7 @@
       "id": "s320",
       "title": "Select relay role alternatives across vendors",
       "short_title": "Select relay role alternatives across vendors",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
