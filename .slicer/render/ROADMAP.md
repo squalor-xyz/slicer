@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-326 items · — 33 · done 286 · retired 7
+326 items · — 32 · done 286 · retired 7 · review 1
 
 v1.14.0 release
 
@@ -95,7 +95,7 @@ v1.12.0 release
 | 46 | [s320](slices/s320.md) | Select relay role alternatives across vendors | M | 2 | slicer | Owner request, 2026-10-16: Codex implementer and orchestrator alternatives, automatic selection with overrides, and future bidirectional harness launching. | — |
 | 47 | [s330](slices/s330.md) | The git allowlist drops the unused merge-base --is-ancestor form | S | 1 | slicer | s309 report 2026-10-16: nothing calls merge-base --is-ancestor after tips_outside; owner chose to remove the shape · discovered from s309 | — |
 | 48 | [s332](slices/s332.md) | A sandboxed agent in a worktree can record relay-run steps | M | 2 | slicer | s314 Codex relay 2026-10-16: review and gate ledger entries omitted after sandbox blocks · discovered from s314 | done |
-| 49 | [s337](slices/s337.md) | Steps recorded through the fallback and the shared ledger never share an id | S | 2 | slicer | s332 relay 2026-10-16, later note 1: concurrent fallback and shared writers can issue one step id twice | — |
+| 49 | [s337](slices/s337.md) | Steps recorded through the fallback and the shared ledger never share an id | S | 2 | slicer | s332 relay 2026-10-16, later note 1: concurrent fallback and shared writers can issue one step id twice | review |
 
 ---
 

@@ -3015,11 +3015,25 @@ class Ledger:
     return False
 
   def append(self, event: dict[str, object]) -> None:
-    if self.append_shared(event):
-      return
+    self.append_planned(lambda prefix: event)
+
+  def append_planned(self, plan: Callable[[str], dict[str, object]]) -> dict[str, object]:
+    """Append the event `plan` builds for whichever ledger this call writes to, and return it.
+
+    `plan` takes the step-id prefix of that ledger (`""` for the shared one). It runs under the
+    lock of the ledger it is for: the shared lock, or the project lock once the write has fallen
+    back. After a refused shared write it runs again, so a step is numbered from what the
+    checkout's own file holds when the step is written.
+    """
+    if not self.fallback:
+      event = plan("")
+      if self.append_shared(event):
+        return event
+    event = plan(relayrun.fallback_step_prefix(self.root))
     local = relayrun.legacy_ledger_path(self.root)
     relayrun.read_events(local)  # a damaged file is refused before anything is added to it
     relayrun.append(self.root, event, path=local)
+    return event
 
 
 @contextmanager
@@ -3145,7 +3159,9 @@ def relay_run_step(
   A new step needs a role and an agent. `parent` nests a subagent under the step that
   spawned it. An update names only what changes; the rest stays as recorded. A task that
   differs from the one the step was recorded with is refused, though a step recorded
-  without one may take its first: a new task is a new step.
+  without one may take its first: a new task is a new step. A new step's id is a plain
+  number in the shared ledger and carries `relayrun.fallback_step_prefix` in the checkout's
+  own file, so the two writers never issue the same id.
   """
   now = now or relayrun.utcnow()
   relayrun.choice("phase", phase, relayrun.PHASES)
@@ -3155,7 +3171,9 @@ def relay_run_step(
     "reasoning": relayrun.one_line("reasoning", reasoning), "task": relayrun.one_line("task", task),
   }
   parent = relayrun.one_line("parent", parent)
-  with ledger_lock(root, report) as ledger:
+
+  def plan(prefix: str) -> dict[str, object]:
+    """The event for this call, numbered with `prefix` and checked against the run as it is."""
     run = _open_run(root, run_id, now)
     if step is None:
       for name in ("role", "agent"):
@@ -3163,7 +3181,7 @@ def relay_run_step(
           raise relayrun.bad_field(f"a new step needs --{name}")
       if parent and run.step(parent) is None:
         raise relayrun.bad_field(f"parent step {parent!r} is not in run {run_id}")
-      step_id = str(max((int(s.id) for s in run.steps if s.id.isdigit()), default=0) + 1)
+      step_id = relayrun.next_step_id(run, prefix)
     else:
       recorded = run.step(step)
       if recorded is None:
@@ -3176,9 +3194,12 @@ def relay_run_step(
           "Record a new step without --step for another task, or leave out --task to keep this one"
         )
       step_id = step
-    ledger.append(relayrun.step_event(run_id, now, step_id, phase, parent, **fields))
+    return relayrun.step_event(run_id, now, step_id, phase, parent, **fields)
+
+  with ledger_lock(root, report) as ledger:
+    written = ledger.append_planned(plan)
     run = _open_run(root, run_id, now)
-    return run, run.step(step_id)
+    return run, run.step(str(written["step"]))
 
 
 def relay_run_end(

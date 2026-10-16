@@ -29,7 +29,9 @@ append live in `ops`, which is where every mutation goes.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -73,6 +75,41 @@ def legacy_ledger_path(root: Path) -> Path:
   """The ledger inside a checkout's own `.slicer/`: the pre-s298 location, still the one
   outside git."""
   return root / store.DIR_NAME / LEDGER_NAME
+
+
+# A step id is a plain number, which the shared ledger issues, or a checkout's prefix and a
+# number, which its own file issues (`fallback_step_prefix`).
+_STEP_ID = re.compile(r"c[0-9a-f]{8}-[0-9]+|[0-9]+")
+
+
+def fallback_step_prefix(root: Path) -> str:
+  """The prefix a checkout's own ledger file puts on the step ids it issues: `c`, eight hex
+  digits and `-`.
+
+  The hex digits start SHA-256 over the checkout's resolved path, so one checkout gets the same
+  prefix on every call. Two checkouts differ with the odds of a 32-bit hash collision. The
+  letter keeps an id from being all digits, so no fallback id is a shared-ledger number.
+  """
+  digest = hashlib.sha256(str(root.resolve()).encode("utf-8")).hexdigest()
+  return f"c{digest[:8]}-"
+
+
+def valid_step_id(text: str) -> bool:
+  """Whether a step id may appear in a ledger: a plain number, or a checkout prefix and one."""
+  return _STEP_ID.fullmatch(text) is not None
+
+
+def next_step_id(run: Run, prefix: str = "") -> str:
+  """The id for a new step of `run`: one past the largest number among the run's steps whose id
+  carries `prefix`. The shared ledger takes no prefix, so its numbering counts only plain numbers
+  and skips the prefixed ids a checkout's own file holds.
+  """
+  taken = []
+  for step in run.steps:
+    rest = step.id[len(prefix):] if step.id.startswith(prefix) else ""
+    if rest.isascii() and rest.isdigit():
+      taken.append(int(rest))
+  return f"{prefix}{max(taken, default=0) + 1}"
 
 
 def common_ledger_path(root: Path) -> Path | None:
@@ -267,8 +304,11 @@ def read_events(path: Path, *, tolerate_torn_tail: bool = False) -> list[tuple[i
           raise _corrupt(path, number, "begin event items is not a list of strings")
       elif not isinstance(event[key], str):
         raise _corrupt(path, number, f"{kind} event {key} is not a string")
-    if kind == "step" and not (event["step"].isascii() and event["step"].isdigit()):
-      raise _corrupt(path, number, f"step id {event['step']!r} is not a number")
+    if kind == "step" and not valid_step_id(event["step"]):
+      raise _corrupt(
+        path, number,
+        f"step id {event['step']!r} is neither a number nor a checkout prefix and a number",
+      )
     events.append((number, event))
   return events
 
