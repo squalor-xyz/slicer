@@ -1,0 +1,41 @@
+{
+  "id": "s326",
+  "title": "relay-run end closes the steps still running",
+  "lead": [
+    "`slicer relay-run end RUN --outcome pass --close-steps done|fail` marks every step still running with that phase before it ends the run, and a plain `end` on a run with running steps names them on stderr."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 5: every landing marked the orchestrator step done, then ended the run",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** closing steps in other runs; changing `step`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "At every landing on 2026-10-15 and 2026-10-16 the outer session ran `relay-run step RUN --step 1 --phase done` and then `relay-run end RUN --outcome pass`, because the orchestrator's own step is the outer session's to close. Ending a run with a step still running is allowed and silent (`ops.relay_run_end`, `src/slicer/ops.py:3080-3088`), so a forgotten step leaves the run reading \"1 running\" on the board after it has ended."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`, `relay_run_end`: an optional `close_steps` phase, `done` or `fail`. Under the same ledger lock, it appends one step event per running step, with no new task, and then the end event. It returns the closed step ids with the run.\n- `src/slicer/cli.py`:\n  - `--close-steps {done,fail}` on `relay-run end`;\n  - without it, a stderr line `ended RUN with running steps: 1, 4` when any remain;\n  - the text output names the steps it closed.\n- `docs/commands.md`, `docs/agents.md` (the `end` payload gains `closed_steps`), the relay text's outer-session Close step in `src/slicer/ai.py` (use `--close-steps done`), `CHANGELOG.md` under Added.\n- `tests/test_relay_run.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRunEnd_CloseStepsDone_MarksRunningStepsDone`\n- `test_RelayRunEnd_CloseStepsFail_MarksThemFailed`\n- `test_RelayRunEnd_RunningStepsWithoutFlag_WarnsOnStderr`\n- `test_RelayRunEnd_CloseSteps_AllOrNothingUnderLock`: a failure while appending leaves no end event."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the option in `ops`, then the CLI and the warning.\n3. Update the relay text's Close step; docs and CHANGELOG; mutation-check (skip the step events; drop the warning)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

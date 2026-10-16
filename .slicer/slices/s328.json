@@ -1,0 +1,41 @@
+{
+  "id": "s328",
+  "title": "File one item with its spec in one import, short title included",
+  "lead": [
+    "A one-item outline passed to `slicer import` takes a `short_title` key, the import skeleton lists every key the parser accepts, and the filing guidance names one-item import as the way to file an item with its fields and spec in one command."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 7: each filing was add with eight flags, then promote",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `add --file`; changing `promote`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-16 the outer session filed every item as `slicer add` with eight flags, then `slicer promote ID --file spec.md`. `import` already does both in one step from an outline whose key lines carry size, tree, findings, pass, scores, depends, `discovered_from` and `parent` (`src/slicer/outline.py:41`). Three gaps hid that path:\n- the outline has no `short_title` key, which `add --short-title` sets;\n- the skeleton's key list (`slicer import --skeleton`) leaves out `key`, `discovered_from` and `parent`;\n- AGENTS.md and `slicer ai instructions` describe `add` then `promote` for one item and `import` only for several."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/outline.py`: `short_title` in `KEYS`, carried through `to_dict` and into the item.\n- `src/slicer/ops.py`, the import path: set the item's short title from it, with the same validation as `add --short-title`.\n- `src/slicer/cli.py` or wherever the skeleton text lives: list `short_title`, `key`, `discovered_from` and `parent` with one line each.\n- `slicer ai instructions` (filing) and `AGENTS.md` (Working on the roadmap): \"To file one item with its fields and spec, pass `import` a one-item outline; `--dry-run` first.\"\n- `docs/commands.md` (the `import` row), `CHANGELOG.md` under Added.\n- `tests/test_outline.py`, `tests/test_import.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Outline_ShortTitleKey_Parsed`\n- `test_Import_ShortTitle_SetsItemShortTitle`\n- `test_ImportSkeleton_ListsEveryOutlineKey`: every name in `outline.KEYS` appears in the skeleton comment."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the key, the import wiring and the skeleton lines.\n3. Instructions, AGENTS.md, docs and CHANGELOG; mutation-check (drop the key from `KEYS`; drop one skeleton line)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,41 @@
+{
+  "id": "s324",
+  "title": "next --batch picks slices whose files do not overlap",
+  "lead": [
+    "With a configured `files_section`, `next --batch K --disjoint` returns up to K ready items whose named repo paths do not overlap, and `deps --overlap A B` shows the paths two items share."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a declared `files` field on items; checking the paths exist; the relay-brief generator, which may use the overlap later.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Running two slice relays at once needs slices whose files are disjoint, apart from the CHANGELOG. On 2026-10-16 the outer session chose s298+s307 and s308+s309 by pulling backticked paths out of each spec's Files section with a regex, then comparing them by eye. The section name is this project's own (\"Files\"), so slicer cannot hardcode it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py`:\n  - `files_section`, the name of the section whose backticked repo paths count. It defaults to `\"\"`, which turns the feature off.\n  - `overlap_ignore`, a list of paths that never count as overlap, for example `[\"CHANGELOG.md\"]`.\n- A new module `src/slicer/paths.py` (pure, no I/O): extract the backticked paths from a section body. A path is a token with a `/` or a file extension. Drop any `:line` suffix.\n- `src/slicer/ops.py` or the `next` selection code:\n  - `--disjoint` takes the batch greedily in queue order, skipping any item whose paths meet an already-chosen item's.\n  - An item with no paths is skipped under `--disjoint` and reported under `unknown_files`.\n- `src/slicer/cli.py`:\n  - `--disjoint` on `next`; it requires `--batch` and a configured `files_section`, else `usage`.\n  - `deps --overlap A B [C…]` prints the shared paths per pair.\n- `docs/configuration.md`, `docs/commands.md`, `docs/agents.md`, `CHANGELOG.md` under Added.\n- `tests/test_paths.py`, `tests/test_next.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Paths_ExtractsBacktickedRepoPaths_DropsLineSuffix`\n- `test_NextBatchDisjoint_SkipsOverlappingItem`\n- `test_NextBatchDisjoint_IgnoresOverlapIgnorePaths`\n- `test_NextBatchDisjoint_NoFilesSection_Usage`\n- `test_DepsOverlap_PrintsSharedPaths`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. `paths.py`, then the config keys, `next --disjoint` and `deps --overlap`.\n3. Set `files_section` to `Files` and `overlap_ignore` to `[\"CHANGELOG.md\"]` for this repo with `slicer config`. Run `next --batch 2 --disjoint` and paste the output into the note.\n4. Docs and CHANGELOG; mutation-check (ignore the overlap; ignore `overlap_ignore`)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

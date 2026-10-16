@@ -1707,3 +1707,11 @@
 {"when": "2026-10-16T11:35:43Z", "item": "s320", "action": "add", "from": "", "to": "open", "note": "Select relay role alternatives across vendors"}
 {"when": "2026-10-16T11:36:33Z", "item": "s320", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-16T11:49:20Z", "item": "s308", "action": "status", "from": "review", "to": "done", "note": "Landed: merge ed378f0. ops.edit_section refuses an item with no slice with code no_slice like its siblings, and the migrator catches only SlicerError when mapping a status label. Full suite on main 2211 OK; check passes.", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:49:22Z", "item": "s322", "action": "add", "from": "", "to": "open", "note": "Print a slice's orchestrator brief with ai relay-brief"}
+{"when": "2026-10-16T11:49:22Z", "item": "s323", "action": "add", "from": "", "to": "open", "note": "Items waiting on an owner decision are held out of next"}
+{"when": "2026-10-16T11:49:22Z", "item": "s324", "action": "add", "from": "", "to": "open", "note": "next --batch picks slices whose files do not overlap"}
+{"when": "2026-10-16T11:49:22Z", "item": "s325", "action": "add", "from": "", "to": "open", "note": "check says when only the roadmap render is stale, as after a merge"}
+{"when": "2026-10-16T11:49:22Z", "item": "s326", "action": "add", "from": "", "to": "open", "note": "relay-run end closes the steps still running"}
+{"when": "2026-10-16T11:49:22Z", "item": "s327", "action": "add", "from": "", "to": "open", "note": "slicer land checks a merged branch and marks its slice done"}
+{"when": "2026-10-16T11:49:22Z", "item": "s328", "action": "add", "from": "", "to": "open", "note": "File one item with its spec in one import, short title included"}
+{"when": "2026-10-16T11:49:22Z", "item": "s329", "action": "add", "from": "", "to": "open", "note": "retire is a command"}

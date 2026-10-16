@@ -1,0 +1,41 @@
+{
+  "id": "s323",
+  "title": "Items waiting on an owner decision are held out of next",
+  "lead": [
+    "An item flagged `needs-owner` is held out of `next` and listed by `status`, and `slicer decide ID --text \"…\"` records the owner's answer as a `decision` note and clears the flag."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 2: open decisions lived in prose, so next showed s312 as ready",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** turning the existing prose decisions into flags (the owner does that with `set --add-flag`); a TUI view.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-16 s312, s316 and s318 each carried an open owner decision as prose (\"**Owner decision (open):**\") inside their Why section. `next --ready` treated them as ready, and the outer session found its blockers only by remembering them or searching the text. AGENTS.md treats design decisions as the owner's, so a relay that picks such an item has to stop mid-run. The project already has flags (`set --add-flag`), but flags affect only the sync pointers (`exclude_flags`, docs/configuration.md:119), and the documented way to hold an item back is a custom status, which would hide its real status (open or started)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py`: a `hold_flags` key, a list that defaults to `[\"needs-owner\"]`; `[]` turns holding off. Documented in `docs/configuration.md`.\n- `src/slicer/ops.py` and `src/slicer/cli.py`:\n  - `next` and `next --batch` skip items carrying any hold flag and return them under `held` (id, title, flags), as they do with `blocked`.\n  - `status` lists held items in their own block.\n  - `list` gains `--held`.\n- `src/slicer/cli.py`: `decide ID --text TEXT` (or `--file`/`--stdin`) appends a note of kind `decision` and removes every hold flag from the item.\n  - `decide` on an item with no hold flag is `usage`, with a message naming the flags.\n  - `decision` joins the built-in note kinds; if a project restricts `note_kinds`, `decide` still writes its own kind.\n- `src/slicer/render.py` / the row template: a held item's row shows the flag (it already shows flags, so this may need no change; confirm).\n- `docs/commands.md`, `docs/agents.md` (`next` payload `held`, the `decide` command), `slicer ai instructions` (filing: flag an open decision with `needs-owner` instead of only writing prose), `CHANGELOG.md` under Added.\n- `tests/test_next.py`, `tests/test_decide.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Next_HeldItem_SkippedAndListedUnderHeld`\n- `test_NextBatch_HeldItem_Skipped`\n- `test_Status_ListsHeldItems`\n- `test_Decide_AddsDecisionNoteAndClearsFlag`\n- `test_Decide_NoHoldFlag_Usage`\n- `test_HoldFlags_EmptyConfig_NothingHeld`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Config key, then `next`/`status`/`list`, then `decide`.\n3. Docs, the instructions text, CHANGELOG; mutation-check (ignore `hold_flags`; leave the flag after `decide`)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

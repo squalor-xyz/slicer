@@ -1,0 +1,41 @@
+{
+  "id": "s329",
+  "title": "retire is a command",
+  "lead": [
+    "`slicer retire ID --reason TEXT` retires an item exactly as `slicer remove ID --reason TEXT` does."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 8: reached for slicer retire, which does not exist",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing `remove`; an `unretire`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-16 the outer session ran `slicer retire` to retire s316 and got `invalid choice`. Retiring is `remove --reason` (`src/slicer/cli.py:3724`), whose name suggests deletion, while `retired` is the status it sets and the word the docs and render use. `remove --purge` is the deleting form."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: a `retire` subcommand sharing `cmd_remove`'s retire path, with `--reason` required, plus `--render`, `--strict`, `--force`, `--dry-run` and `--json`. It has no `--purge`. Its JSON payload and error codes are those of `remove --reason`, with `command` set to `retire`.\n- `docs/commands.md`, `docs/agents.md` (the `retire` row points at `remove`'s payload), `CHANGELOG.md` under Added.\n- `tests/test_remove.py` (or wherever `remove` is tested)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Retire_Reason_SameStateAsRemoveReason`: the index and history after `retire` match `remove --reason` on a twin fixture.\n- `test_Retire_NoReason_Usage`\n- `test_Retire_Purge_NotAccepted`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the subcommand; docs and CHANGELOG; mutation-check (accept a missing reason)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

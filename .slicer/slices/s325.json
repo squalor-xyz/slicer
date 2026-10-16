@@ -1,0 +1,41 @@
+{
+  "id": "s325",
+  "title": "check says when only the roadmap render is stale, as after a merge",
+  "lead": [
+    "When the only stale render files are the whole-roadmap ones and every slice render is current, `check` says that this is what a merge leaves and that `slicer render` (or the landing's `done --render`) regenerates them."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 4: every landing left check failing on a stale ROADMAP render",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the merge driver; rendering during a merge; git hooks.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Every landing from s296 to s308 on 2026-10-15 and 2026-10-16 ended its main-branch suite run with `check` failing on `stale render: ROADMAP.html` and `ROADMAP.md`. The cause is by design: the `slicer-generated` merge driver keeps the current branch's generated files (S109, `cli.py:727-728`), so a merge leaves the roadmap render behind the merged index until the next render. The generic line `check failed; run slicer render and slicer sync, then re-run` (`cli.py:3084`) does not say that this is expected, so each landing needed a careful read to tell this case from real drift."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`, `_check_report` and the failure line at `cli.py:3084`: when every stale path is a whole-roadmap render (`render.ROADMAP_FILES` or the equivalent list the renderer owns), with no stale slice render, no orphan, no stale sync and no problems, add the line `only the roadmap render is stale, as a merge leaves it (the slicer-generated driver keeps one side); run slicer render, or done --render when landing`. The exit code stays 1.\n- `--json`: `check` adds `\"stale_render_kind\": \"roadmap_only\"` in that case and `\"mixed\"` or absent otherwise. This is additive.\n- `docs/landing.md`: one sentence after the merge step saying `check` fails this way until `done --render` runs.\n- `docs/agents.md` (the `check` payload), `CHANGELOG.md` under Changed.\n- `tests/test_check.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Check_OnlyRoadmapStale_SaysMergeLeftIt`\n- `test_Check_SliceRenderAlsoStale_NoMergeHint`\n- `test_CheckJson_OnlyRoadmapStale_KindRoadmapOnly`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Classify the stale paths; add the line and the JSON key.\n3. Docs and CHANGELOG; mutation-check (always print the hint; never print it)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

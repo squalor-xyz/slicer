@@ -1,0 +1,41 @@
+{
+  "id": "s322",
+  "title": "Print a slice's orchestrator brief with ai relay-brief",
+  "lead": [
+    "`slicer ai relay-brief ID --worktree PATH --branch NAME --run RUN --step N` prints the slice-specific orchestrator brief, filled from the item, the role matrix, the finish step and a project template, so the outer session stops assembling briefs by hand."
+  ],
+  "depends_note": null,
+  "findings_note": "outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** spawning agents; recording the run (the outer session still runs `relay-run begin`/`step`); briefs for implementer, reviewer and gate roles (the orchestrator writes those); this repo's own environment lines, which the owner sets with `template set` after it lands.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "In the v1.12 relays on 2026-10-15 and 2026-10-16 the outer session built every orchestrator brief by editing the previous one with Python and `sed`. Three errors reached the briefs:\n- the s296 commit title stayed in the s298 and s307 briefs until a grep caught it;\n- the s308 and s309 briefs named s298 as the slice running in parallel;\n- a `RUN=` prefix was dropped.\n\nEvery slice-specific value is already known to slicer: id, title, size and effort, the role rows `relay-roles recommend` picks, `implement_finish` and `handoff_requires_note_kind`, the run and step ids. The project-specific environment lines (interpreter, TMPDIR rule, the `S()` helper) differ per project, so they belong in a template the project owns, like the render templates."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: `relay_brief(state, item_id, *, worktree, branch, run, step, parallel, well_specified, split)` builds the brief from a template. The values:\n  - id, title, size and effort;\n  - the roles from the same code `relay-roles recommend` runs, with agent type, vendor, model and effort per role, and \"no architect\" unless the matrix picks one;\n  - the finish override text: for `handoff`, `start` then `handoff` before review, `note` after PASS, never `done` in the worktree;\n  - the end point, a commit titled `ID: TITLE`;\n  - RUN and the orchestrator's step id;\n  - the parallel slices from repeatable `--parallel ID`, with the files both touch (with the shared paths once \"next --batch picks slices whose files do not overlap\" has landed; until then just the ids).\n- A new template `relay-brief.md` beside `slice.md`, `roadmap.md` and `row.md`, editable with `slicer template set relay-brief.md --stdin` and reset with `template reset`.\n  - The built-in text has the contract pointer (`slicer ai relay-orchestrator`), the Rules the orchestrator needs (waiting, stop and report, single handback) and an empty ENVIRONMENT block.\n  - Placeholders follow the existing template syntax.\n- `src/slicer/cli.py`: the `ai relay-brief` subcommand. `--json` returns `{\"brief\": text, \"roles\": [...], \"contract\": \"relay v4\"}`. An unknown id is `no_such_item`. An item with no slice, or with a required section empty, is `unspecified`.\n- `docs/agents.md`, `docs/commands.md`, `docs/templates.md` (or wherever templates are documented), `CHANGELOG.md` under Added.\n- `tests/test_ai.py`, `tests/test_templates.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelayBrief_FillsIdTitleRunStepAndCommitTitle`\n- `test_AiRelayBrief_RolesComeFromRecommend`: a matrix row change shows in the brief.\n- `test_AiRelayBrief_HandoffProject_HasFinishOverride` and `test_AiRelayBrief_DoneProject_NoOverride`\n- `test_AiRelayBrief_Parallel_NamesTheOtherSlice`: `--parallel s2` names s2 and not the item itself.\n- `test_AiRelayBrief_ProjectTemplate_Used`: after `template set relay-brief.md`, the custom ENVIRONMENT text appears.\n- `test_AiRelayBrief_NoSlice_Unspecified`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the template and `relay_brief`, then the CLI.\n3. Generate the s308 brief from this session's inputs and diff it against the hand-built one, which is saved in the outer scratchpad; paste the differences into the note.\n4. Docs and CHANGELOG; mutation-check (drop `--parallel`; ignore the template override)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
