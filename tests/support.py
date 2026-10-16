@@ -64,6 +64,27 @@ def isolated_discovery(root: Path) -> Iterator[None]:
     yield
 
 
+@contextmanager
+def count_git_calls() -> Iterator[list[tuple[str, ...]]]:
+  """Record every git command `vcs._run` is asked to start, as its argument tuple.
+
+  The probe memo is cleared first, so a test counts a command from a cold start. Only
+  `vcs._run` is seen; fixture setup goes through `TempRepo._git` and is not counted.
+  """
+  from slicer import vcs
+
+  calls: list[tuple[str, ...]] = []
+  original = vcs._run
+
+  def counting(root: Path, *args: str):
+    calls.append(args)
+    return original(root, *args)
+
+  vcs.clear_cache()
+  with patch.object(vcs, "_run", counting):
+    yield calls
+
+
 class TempRepo:
   """A temporary directory, optionally a git repo, with a CLI runner.
 
@@ -72,6 +93,10 @@ class TempRepo:
   """
 
   def __init__(self, git: bool = False) -> None:
+    # The probe memo is keyed by path; a fixture is a new tree that may reuse one.
+    from slicer import vcs
+
+    vcs.clear_cache()
     self._tmp = tempfile.TemporaryDirectory(prefix="slicer-test-")
     self.root = Path(self._tmp.name).resolve()
     if git:
@@ -142,6 +167,9 @@ class TempRepo:
     return store.load(self.root)
 
   def close(self) -> None:
+    from slicer import vcs
+
+    vcs.clear_cache()
     remove_temp_repo(self.root)
     # Release TemporaryDirectory's finalizer after the tree is safely gone.
     self._tmp.cleanup()

@@ -211,7 +211,7 @@ drivers; `merge-file` is only the `-p` form, which prints the merge to stdout an
 nothing. `start` uses the first two to notice another checkout, and the
 last to name a claim when `claim_owner` is empty. `show` is only the one-argument
 `COMMIT:./PATH` form and `merge-base` only `--is-ancestor COMMIT COMMIT` or `COMMIT COMMIT`
-(no option), all taking full commit names. `verify --landed` uses `show` and `--is-ancestor`;
+(no option), all taking full commit names. `verify --landed` uses `log` and `show`;
 `check` uses the two-commit `merge-base` and `show` to read the index at the merge base of
 this checkout and a sibling, so a retitle is not reported as a collision. Each checkout's
 commit comes from `rev-parse --verify` run in that checkout, the sibling's included, an

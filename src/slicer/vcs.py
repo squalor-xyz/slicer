@@ -79,12 +79,45 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
   )
 
 
+# Probes whose answer cannot change while a command runs, keyed by resolved root and
+# by the environment variables that steer git's repository discovery (a different
+# GIT_CEILING_DIRECTORIES is a different question). Only a positive answer is kept: a
+# directory that is not (yet) a repository is asked again, so a `git init` is seen at
+# once. MERGE_HEAD and HEAD change under a command and are never kept. A process that
+# outlives its commands (the TUI, the test suite) calls `clear_cache` where it reloads
+# state, so a repository that went away or a path that is reused is not remembered.
+_DISCOVERY_ENV = ("GIT_CEILING_DIRECTORIES", "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
+_Key = tuple[Path, tuple[str | None, ...]]
+_IS_REPO: set[_Key] = set()
+_WORKTREE: dict[_Key, Path] = {}
+
+
+def clear_cache() -> None:
+  """Forget every memoised probe."""
+  _IS_REPO.clear()
+  _WORKTREE.clear()
+
+
+def _key(root: Path) -> _Key:
+  try:
+    resolved = Path(root).resolve()
+  except OSError:
+    resolved = Path(root)
+  return resolved, tuple(os.environ.get(name) for name in _DISCOVERY_ENV)
+
+
 def is_repo(root: Path) -> bool:
+  key = _key(root)
+  if key in _IS_REPO:
+    return True
   try:
     done = _run(root, "rev-parse", "--is-inside-work-tree")
   except FileNotFoundError:
     return False
-  return done.returncode == 0 and done.stdout.strip() == "true"
+  found = done.returncode == 0 and done.stdout.strip() == "true"
+  if found:
+    _IS_REPO.add(key)
+  return found
 
 
 def merge_in_progress(root: Path) -> bool:
@@ -174,9 +207,30 @@ def ref_tips(root: Path, limit: int = 1000) -> list[str]:
   return list(dict.fromkeys(done.stdout.split()))[:limit]
 
 
-def is_ancestor(root: Path, commit: str, descendant: str) -> bool:
-  """Whether `commit` is reachable from `descendant` (a commit is its own ancestor)."""
-  return _run(root, "merge-base", "--is-ancestor", commit, descendant).returncode == 0
+def tips_outside(root: Path, commit: str, limit: int = 1000) -> list[str]:
+  """The `ref_tips` that `commit`'s history does not contain, in `ref_tips` order.
+
+  Two `log` calls however many tips there are. The second lists the decorated commits
+  (tips) reachable from the refs but not from `commit`; a tip that is `commit` or one
+  of its ancestors is missing from it. Stashes are not among the starting points, so a
+  stash never counts. If that listing fails every tip is returned, since a tip that
+  cannot be ruled out is read for itself.
+  """
+  if not _COMMIT_ONLY.fullmatch(commit):
+    raise StateError(f"{commit!r} is not a full commit name", code="usage")
+  tips = ref_tips(root, limit)
+  if not tips:
+    return []
+  done = _run(
+    root, "log", "--branches", "--remotes", "--tags", "--simplify-by-decoration",
+    # Naming the refs overrides a user's `log.excludeDecoration`, which would hide tips.
+    "--decorate-refs=refs/heads/", "--decorate-refs=refs/remotes/", "--decorate-refs=refs/tags/",
+    "--format=%H", "--not", commit,
+  )
+  if done.returncode != 0:
+    return tips
+  outside = set(done.stdout.split())
+  return [tip for tip in tips if tip in outside]
 
 
 def merge_base(root: Path, commit: str, other: str) -> str | None:
@@ -304,6 +358,9 @@ def elsewhere(root: Path, item_id: str) -> list[str]:
 
 def _current_worktree(root: Path) -> Path | None:
   """The git worktree that contains `root`, which may sit below the toplevel."""
+  key = _key(root)
+  if key in _WORKTREE:
+    return _WORKTREE[key]
   done = _run(root, "rev-parse", "--show-toplevel")
   if done.returncode != 0:
     return None
@@ -311,9 +368,11 @@ def _current_worktree(root: Path) -> Path | None:
   if not text:
     return None
   try:
-    return Path(text).resolve()
+    found = Path(text).resolve()
   except OSError:
     return None
+  _WORKTREE[key] = found
+  return found
 
 
 def _current_branch(root: Path) -> str | None:
