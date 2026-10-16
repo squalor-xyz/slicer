@@ -1655,3 +1655,7 @@
 {"when": "2026-10-16T03:22:57Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "docs/commands.md:19 and CHANGELOG.md:11 still say 'never the", "by": "Jon Robbins"}
 {"when": "2026-10-16T03:22:58Z", "item": "s296", "action": "note", "from": "", "to": "", "note": "Test gaps (Low): a literal 'relay v4' in cli.py JSON instead", "by": "Jon Robbins"}
 {"when": "2026-10-16T03:30:08Z", "item": "s296", "action": "status", "from": "review", "to": "done", "note": "Landed: merge ac1cd95; relay contract v4 (RELAY_CONTRACT=4, Contract: relay v4 on both texts and in --json), the orchestrator text and Setup naming relay-orchestrator. Full suite on main 2197 OK, check passes.", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:32:13Z", "item": "s314", "action": "add", "from": "", "to": "open", "note": "relay-run list takes a run id"}
+{"when": "2026-10-16T03:32:14Z", "item": "s315", "action": "add", "from": "", "to": "open", "note": "Tests pin the relay v4 contract wiring"}
+{"when": "2026-10-16T03:32:14Z", "item": "s314", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T03:32:14Z", "item": "s315", "action": "promote", "from": "", "to": "", "note": ""}

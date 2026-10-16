@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 314,
+  "next_id": 316,
   "preamble": "",
   "passes": [
     {
@@ -10607,6 +10607,68 @@
         "group": "",
         "reason": "",
         "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s314",
+      "title": "relay-run list takes a run id",
+      "short_title": "List one relay run",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s298"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s296 relay run 2026-10-16: orchestrator brief's relay-run list RUN errors",
+        "discovered_from": "s296",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s315",
+      "title": "Tests pin the relay v4 contract wiring",
+      "short_title": "Pin relay v4 wiring",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets",
+        "discovered_from": "s296",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 1,
         "effort": 1,
         "attempts": 0

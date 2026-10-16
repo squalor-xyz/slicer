@@ -1,0 +1,41 @@
+{
+  "id": "s314",
+  "title": "relay-run list takes a run id",
+  "lead": [
+    "`slicer relay-run list [RUN]` shows only that run, so an orchestrator or outer session can read one run's steps without scanning every run."
+  ],
+  "depends_note": null,
+  "findings_note": "s296 relay run 2026-10-16: orchestrator brief's relay-run list RUN errors",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a `relay-run show` command; changing the text line format; where the ledger lives (s298).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-16 the s296 orchestrator was briefed to paste `relay-run list RUN`, and that form errors: `list` takes only `--json`, `--lean` and `--active` (`src/slicer/cli.py:3938`). It printed every run on every sibling worktree and tailed the output. The outer session's brief for s298 and s307 had to say \"takes no RUN argument and lists every run\". With two slices in parallel, plus older runs, the one run's lines are hard to find, and `--json` readers filter by hand."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: `relay-run list` takes an optional positional `run`. With it, the text and the JSON hold only that run (`{\"runs\": [ ... ]}`, same shape, one entry). An id that no listed ledger holds is `unknown_run` (exit 3, like `step` and `end`), naming the ledgers read. `--active` with a run id still filters: an ended or stale run gives `{\"runs\": []}` and exit 0.\n- `docs/commands.md` (the `relay-run list` row), `docs/agents.md` (`relay-run list` payload), `CHANGELOG.md` under Added.\n- `tests/test_relay_run.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRun_List_WithRunId_OnlyThatRun`: two runs; `list RUN2 --json` has one entry, RUN2.\n- `test_RelayRun_List_WithRunId_TextOnlyThatRun`: the text output has RUN2's header and step lines, none of RUN1's.\n- `test_RelayRun_List_UnknownRunId_UnknownRun`: exit 3, `unknown_run`.\n- `test_RelayRun_List_RunIdFromSiblingWorktree_Found`: a run in a sibling worktree's ledger is found by id."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the positional and filter after `relayrun.list_runs`, before `--active`'s result is emitted.\n3. Docs and CHANGELOG; mutation-check (ignore the id; drop the unknown check)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

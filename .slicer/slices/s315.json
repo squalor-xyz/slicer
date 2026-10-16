@@ -1,0 +1,41 @@
+{
+  "id": "s315",
+  "title": "Tests pin the relay v4 contract wiring",
+  "lead": [
+    "Tests fail if `relay-run`'s `--json` contract string stops coming from `ai.contract_line()`, or if the orchestrator text drops its `--parent`, disputes or gate-resume rules; two docs lines say the orchestrator follows only the one-slice parts of `slicer ai relay`."
+  ],
+  "depends_note": null,
+  "findings_note": "s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the contract text itself, or inlining Gate, Every brief and Stop into the orchestrator text (an open owner question from s296).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s296 review (2026-10-16, a Low finding the gate let through) found two gaps: a literal `\"relay v4\"` in the `cli.py` JSON instead of `ai.contract_line()` passes every test, and no test pins the orchestrator text's bullets for recording steps with `relay-run step --parent`, for disputes, or for resuming the reviewer as the gate. The next contract bump could leave the JSON behind, or a later edit could drop a rule, silently. The reviewer also noted that `docs/commands.md:19` and `CHANGELOG.md:11` say the orchestrator follows \"never the outer session's steps\". That is accurate for what it follows but not for what it reads, since it reads `slicer ai relay` for its one-slice parts."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/test_ai.py`:\n  - patch `ai.RELAY_CONTRACT` (or `contract_line`) and assert the `ai relay --json` and `ai relay-orchestrator --json` `contract` values follow it;\n  - assert the orchestrator text names `--parent`, a disputes rule, and resuming the reviewer as the gate.\n- `docs/commands.md:19` and the v1.12 CHANGELOG line: \"follows only the one-slice parts of `slicer ai relay`\".\n- `src/slicer/cli.py` only if the JSON does not already call `ai.contract_line()`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelay_Json_ContractFollowsContractLine`\n- `test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; mutation-check each (a literal contract string in cli.py; delete each bullet in turn).\n2. Fix the two docs lines."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
