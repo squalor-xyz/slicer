@@ -10188,7 +10188,7 @@
       "id": "s300",
       "title": "Writes in a linked worktree must not edit the tracked .slicer/.gitignore",
       "short_title": "Worktree gitignore",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s298"
@@ -10206,10 +10206,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-16T13:28:06Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
