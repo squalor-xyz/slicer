@@ -1659,3 +1659,7 @@
 {"when": "2026-10-16T03:32:14Z", "item": "s315", "action": "add", "from": "", "to": "open", "note": "Tests pin the relay v4 contract wiring"}
 {"when": "2026-10-16T03:32:14Z", "item": "s314", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-16T03:32:14Z", "item": "s315", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T03:32:00Z", "item": "s307", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T03:49:19Z", "item": "s307", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T04:00:34Z", "item": "s307", "action": "note", "from": "", "to": "", "note": "Docs now match what check does and what vcs.ALLOWED holds: c", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:14:09Z", "item": "s307", "action": "note", "from": "", "to": "", "note": "Spec correction found in review: check is not the only git c", "by": "Jon Robbins"}

@@ -3,7 +3,8 @@ ship undocumented (S127). The reference in docs/commands.md names every flag;
 the README's summary table names every command (S142). The README links the
 why-slicer page, and that page's relative links resolve (S269). Each doc's sentence
 that lists the commands without --json (agents.md, the README, commands.md and
-import.md) names exactly those the parser builds without it (S272)."""
+import.md) names exactly those the parser builds without it (S272). The allowlist
+sentence in ARCHITECTURE.md names exactly the entries of vcs.ALLOWED (s307)."""
 
 from __future__ import annotations
 
@@ -13,7 +14,7 @@ import unittest
 from pathlib import Path
 
 import support  # noqa: F401 -- puts src/ on sys.path
-from slicer import cli
+from slicer import cli, vcs
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
@@ -125,6 +126,19 @@ class AgentsDocTests(unittest.TestCase):
         named = sorted(re.findall(r"`([^`]+)`", matches[0]))
         self.assertEqual(named, parser_set,
                          "name exactly the commands the parser builds without --json")
+
+
+ARCHITECTURE = ROOT / "ARCHITECTURE.md"
+ALLOWLIST_SENTENCE = re.compile(r"`vcs\.ALLOWED` is (.+?)\. ")
+
+
+class ArchitectureDocTests(unittest.TestCase):
+  def test_Architecture_AllowlistSentence_MatchesVcsAllowed(self) -> None:
+    text = " ".join(ARCHITECTURE.read_text(encoding="utf-8").split())
+    matches = ALLOWLIST_SENTENCE.findall(text)
+    self.assertEqual(len(matches), 1, "keep one '`vcs.ALLOWED` is ...' sentence")
+    named = sorted(re.findall(r"`([^`]+)`", matches[0]))
+    self.assertEqual(named, sorted(vcs.ALLOWED), "name exactly the entries in vcs.ALLOWED")
 
 
 if __name__ == "__main__":

@@ -31,7 +31,8 @@ jobs:
       # projects also guards this one: stale render, sync drift or a broken
       # dependency edge fails the build.
       #
-      # `check` never shells out to git, so the default shallow checkout is
-      # fine. `slicer verify` would need fetch-depth: 0 — it reads git log.
+      # `check` reads history only for a sibling worktree, and a CI clone has
+      # none, so the default shallow checkout is fine. `slicer verify` would
+      # need fetch-depth: 0 — it reads git log.
       - name: slicer check
         run: PYTHONPATH=src python -m slicer check
