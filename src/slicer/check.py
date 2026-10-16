@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import render, store, sync, vcs, verify
+from slicer import feedback, ops, render, store, sync, vcs, verify
 from slicer.store import State
 
 
@@ -62,7 +62,26 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
   legacy = store.legacy_roles_advice(state.root)
   if legacy is not None:
     report.warnings.append(legacy)
+  report.warnings.extend(_gitignore_lines(state))
   return report, expected, diff
+
+
+def _gitignore_lines(state: State) -> list[str]:
+  """Lines `init` writes that `.slicer/.gitignore` lacks, as one warning.
+
+  A write in a linked worktree puts a missing line in the repo's `info/exclude` instead
+  (the file is tracked), so only main can fix the file everyone shares.
+  """
+  try:
+    missing = feedback.missing_gitignore_lines(state.root, ops.GITIGNORE_LINES)
+  except (OSError, UnicodeDecodeError):
+    return []  # advisory, like the lines themselves
+  if not missing:
+    return []
+  return [
+    f"{store.DIR_NAME}/{feedback.GITIGNORE_NAME} lacks {', '.join(missing)}; "
+    "run `slicer setup-git --attributes` on main to add them"
+  ]
 
 
 def _sibling_collisions(state: State) -> list[str]:

@@ -1845,3 +1845,80 @@ class ColorRobustnessTests(unittest.TestCase):
     self.assertEqual(caught.exception.code, 0)
     self.assertNotIn(self.ESC, buf.getvalue())
     self.assertTrue(buf.getvalue().startswith("usage: slicer"))
+
+
+class GitignoreLinesTests(unittest.TestCase):
+  """`check` warns when `.slicer/.gitignore` lacks a line `init` writes, and
+  `setup-git --attributes` adds them (s300)."""
+
+  OLD = "feedback.md\n"
+  FULL = ["feedback.md", "feedback-reported.json", "relay-runs.jsonl", "lock"]
+
+  def _old_project(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    self.addCleanup(repo.close)
+    self.assertEqual(repo.run("init")[0], 0)
+    self.assertEqual(repo.run("render")[0], 0)  # `check` fails on a render that was never made
+    repo.write(".slicer/.gitignore", self.OLD)
+    return repo
+
+  def _warnings(self, repo: support.TempRepo) -> list[str]:
+    code, out, err = repo.run("check", "--json")
+    self.assertEqual(code, 0, err)  # a warning never fails the gate
+    return json.loads(out)["warnings"]
+
+  def test_Check_WarnsOnMissingGitignoreLine(self) -> None:
+    repo = self._old_project()
+    warnings = [w for w in self._warnings(repo) if ".gitignore" in w]
+    self.assertEqual(len(warnings), 1, warnings)
+    for missing in ("feedback-reported.json", "relay-runs.jsonl", "lock"):
+      self.assertIn(missing, warnings[0])
+    self.assertNotIn("feedback.md", warnings[0].replace("feedback-reported.json", ""))
+    self.assertIn("slicer setup-git --attributes", warnings[0])
+
+  def test_Check_FreshProject_NoGitignoreWarning(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      self.assertEqual(repo.run("render")[0], 0)
+      self.assertEqual([w for w in self._warnings(repo) if ".gitignore" in w], [])
+
+  def test_Check_GitignoreAbsent_WarnsForEveryLine(self) -> None:
+    repo = self._old_project()
+    (repo.root / ".slicer" / ".gitignore").unlink()
+    warnings = [w for w in self._warnings(repo) if ".gitignore" in w]
+    self.assertEqual(len(warnings), 1, warnings)
+    for name in self.FULL:
+      self.assertIn(name, warnings[0])
+
+  def test_SetupGitAttributes_AddsMissingGitignoreLines(self) -> None:
+    repo = self._old_project()
+    code, out, err = repo.run("setup-git", "--attributes")
+    self.assertEqual(code, 0, err)
+    # The project lock lists itself first, as on any write, then the rest in `init` order.
+    self.assertEqual(
+      repo.read(".slicer/.gitignore").splitlines(),
+      ["feedback.md", "lock", "feedback-reported.json", "relay-runs.jsonl"],
+    )
+    self.assertIn("feedback-reported.json", err)
+    self.assertEqual(out, repo.run("setup-git")[1])  # stdout stays the git config lines
+    self.assertEqual([w for w in self._warnings(repo) if ".gitignore" in w], [])
+
+  def test_SetupGitAttributes_GitignoreComplete_LeavesItAlone(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      path = repo.root / ".slicer" / ".gitignore"
+      os.utime(path, ns=(10**18, 10**18))
+      before = path.read_bytes()
+      code, _, err = repo.run("setup-git", "--attributes")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(path.read_bytes(), before)
+      self.assertEqual(path.stat().st_mtime_ns, 10**18)
+
+  def test_SetupGitAttributes_KeepsOtherGitignoreLinesAndOrder(self) -> None:
+    repo = self._old_project()
+    repo.write(".slicer/.gitignore", "scratch\nlock")  # no final newline
+    self.assertEqual(repo.run("setup-git", "--attributes")[0], 0)
+    self.assertEqual(
+      repo.read(".slicer/.gitignore").splitlines(),
+      ["scratch", "lock", "feedback.md", "feedback-reported.json", "relay-runs.jsonl"],
+    )
