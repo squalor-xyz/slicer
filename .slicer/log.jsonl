@@ -1775,3 +1775,5 @@
 {"when": "2026-10-16T18:52:47Z", "item": "relay-roles.u2", "action": "relay-roles", "from": "", "to": "", "note": "rule-edit"}
 {"when": "2026-10-16T19:59:16Z", "item": "s320", "action": "note", "from": "", "to": "", "note": "relay-roles recommend now resolves five roles (orchestrator ", "by": "Jon Robbins"}
 {"when": "2026-10-16T19:59:16Z", "item": "s320", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T20:06:23Z", "item": "s322", "action": "note", "from": "", "to": "", "note": "From the s320 relay (2026-10-16): build the brief's roles fr", "by": "Jon Robbins"}
+{"when": "2026-10-16T20:06:25Z", "item": "s280", "action": "note", "from": "", "to": "", "note": "From the s320 relay (2026-10-16): relay-roles recommend now ", "by": "Jon Robbins"}

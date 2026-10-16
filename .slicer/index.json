@@ -9321,7 +9321,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "7553b5e4-18c9-45ed-ad48-f0b0a3d5e684",
+          "kind": "",
+          "text": "**2026-10-16** — From the s320 relay (2026-10-16): relay-roles recommend now returns five roles (orchestrator appended) with alternatives and selected_by; show both in the overlay.",
+          "created_at": "2026-10-16T20:06:25Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11088,7 +11100,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "dbf0e4ff-d1da-424a-8df0-5fcb7cae7f21",
+          "kind": "",
+          "text": "**2026-10-16** — From the s320 relay (2026-10-16): build the brief's roles from roles.resolve and pass the accepted --prefer-agent/--select through, so the brief carries the accepted lineup, orchestrator included.",
+          "created_at": "2026-10-16T20:06:23Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
