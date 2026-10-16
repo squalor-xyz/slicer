@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 330,
+  "next_id": 332,
   "preamble": "",
   "passes": [
     {
@@ -11245,6 +11245,66 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s330",
+      "title": "The git allowlist drops the unused merge-base --is-ancestor form",
+      "short_title": "The git allowlist drops the unused merge-base --is-ancestor form",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s309 report 2026-10-16: nothing calls merge-base --is-ancestor after tips_outside; owner chose to remove the shape",
+        "discovered_from": "s309",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s331",
+      "title": "Relay board shows the slice's status beside a finished run",
+      "short_title": "Relay board shows the slice's status beside a finished run",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner 2026-10-16: the board's check mark on s309 read as \"done\" while the slice was merged but not yet done",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 1,
         "attempts": 0
       }

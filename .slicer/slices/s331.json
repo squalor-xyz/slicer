@@ -1,0 +1,41 @@
+{
+  "id": "s331",
+  "title": "Relay board shows the slice's status beside a finished run",
+  "lead": [
+    "An ended run's summary line on the relay board shows the slice's own status next to the run's outcome, and the check mark appears only when the run passed and the slice is done."
+  ],
+  "depends_note": null,
+  "findings_note": "owner 2026-10-16: the board's check mark on s309 read as \"done\" while the slice was merged but not yet done",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** live lanes; git-aware states such as \"merged\" (slicer reads no branch state for the board); s297's role colors.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-16 the board showed `✓ s309 Fewer git calls per command pass … ended 2m53s ago` while s309 was merged into main but not yet `done`. Its suite was still running on main. The owner read the check mark as \"done\". The mark comes from the run's outcome alone (`_ended_line`, `src/slicer/tui.py:1295-1306`), and `board_lines` gets only the titles from the index (`tui.py:1462`), so a run that passed can sit beside a slice that is merged, in review, or never landed, and look finished."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`:\n  - `board_lines` takes `statuses` (item id to status label), built beside `titles` from `state.index.items` at `tui.py:1462`, using the configured status labels.\n  - `_ended_line` adds the status cell after the outcome, for example `pass · open`.\n  - The glyph is `✓` only when the outcome is pass and every item in the run is done. A pass with an item not done gets `○`, and fail and stopped keep `✗` and `~`.\n  - The status cell is kept ahead of the elapsed cells when the width drops cells.\n- `docs/tui.md` (the board's ended line), `CHANGELOG.md` under Changed.\n- `tests/test_tui.py`, beside `test_BoardLines_EndedRun_LabelsItsOutcome` (`tests/test_tui.py:1556`)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_BoardLines_EndedPassItemNotDone_ShowsStatusAndOpenGlyph`\n- `test_BoardLines_EndedPassItemDone_ShowsCheck`\n- `test_BoardLines_EndedNarrow_KeepsStatusCell`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Pass the statuses through and change `_ended_line`; mutation-check (glyph from the outcome alone; drop the status cell).\n3. docs/tui.md and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
