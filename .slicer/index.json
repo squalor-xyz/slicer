@@ -10559,6 +10559,39 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "5bc069ff-9d17-4c83-89a8-f9ce490f0a79",
+          "kind": "",
+          "text": "**2026-10-16** — Owner 2026-10-16: accepted the read-only log --simplify-by-decoration --decorate-refs --not COMMIT form in vcs.tips_outside under the existing log entry (allowlist unchanged). The now-unused merge-base --is-ancestor shape in vcs.SHAPED gets its own removal item.",
+          "created_at": "2026-10-16T12:30:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "06a04d19-8867-4a87-b0b5-5966fe481781",
+          "kind": "",
+          "text": "**2026-10-16** — Reviewer L2 (plausible, not reproduced): vcs.merge_in_progress with a remembered is_repo and a root deleted between TUI reloads raises FileNotFoundError from _run; catch OSError there.",
+          "created_at": "2026-10-16T12:30:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "f14c9771-2ead-4708-9f67-20a08da7be9b",
+          "kind": "",
+          "text": "**2026-10-16** — Suite timing: under load the full suite took 12-15 min and overran the 600 s foreground tool cap twice (reviewer, implementer); both were waited out.",
+          "created_at": "2026-10-16T12:30:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
