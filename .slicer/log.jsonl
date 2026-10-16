@@ -1658,3 +1658,7 @@
 {"when": "2026-10-16T03:31:59Z", "item": "s298", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-16T03:44:45Z", "item": "s298", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T04:10:30Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "Verified outcome. In a git repo relay-run now keeps one ledg", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:14:10Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "Upgrade edge: a run that exists only in an old per-worktree ", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:14:10Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "docs/commands.md .slicer/ listing (~line 390) says the old l", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:14:10Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "ops.ledger_lock duplicates store.project_lock's flock loop a", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:14:10Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "Mutation runs with TMPDIR inside the worktree leaked fixture", "by": "Jon Robbins"}
