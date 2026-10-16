@@ -465,6 +465,27 @@ def git_common_dir(path: Path) -> Path | None:
     return None
 
 
+def linked_worktree_common_dir(root: Path) -> Path | None:
+  """The repo's shared git directory when `root` is itself a linked worktree, else None.
+
+  A linked worktree is a checkout whose own git directory differs from the common one.
+  Only a project at the worktree root counts: one below it (or in an unrelated
+  directory that happens to sit inside a worktree, such as a test fixture) is left to
+  the caller's ordinary behaviour. Read-only; any failure yields None.
+  """
+  try:
+    if not at_worktree_root(root):
+      return None
+    done = _run(root, "rev-parse", "--git-dir", "--git-common-dir")
+    lines = done.stdout.splitlines()
+    if done.returncode != 0 or len(lines) != 2:
+      return None
+    git_dir, common = ((Path(root) / line).resolve() for line in lines)
+  except (FileNotFoundError, OSError):
+    return None
+  return common if git_dir != common else None
+
+
 def foreign_worktree(root: Path, code_dir: Path) -> str | None:
   """A hint when slicer's own code lives in a *different worktree of the same
   repo* as the project it is acting on -- the editable-install-in-a-worktree

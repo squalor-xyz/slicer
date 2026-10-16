@@ -8,10 +8,12 @@ staged writes close.
 from __future__ import annotations
 
 import os
+import subprocess
 import unittest
 from pathlib import Path
 
 import support
+from test_feedback import OLD_GITIGNORE, exclude_lines, linked_project, run_at
 
 from slicer import store
 
@@ -145,6 +147,17 @@ class LockGitignoreTests(unittest.TestCase):
       status = repo._git("status", "--porcelain")
       self.assertEqual(status.returncode, 0, status.stderr)
       self.assertNotIn(".slicer/lock", status.stdout)
+
+  def test_ProjectLock_LinkedWorktree_FirstWriteExcludesLockAndLeavesGitignore(self) -> None:
+    repo, wt = linked_project(self)
+    code, _, err = run_at(wt, "add", "first")
+    self.assertEqual(code, 0, err)
+    self.assertTrue((wt / ".slicer" / store.LOCK_NAME).is_file())
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
+    self.assertIn("**/.slicer/lock", exclude_lines(repo))
+    status = subprocess.run(["git", "status", "--short"], cwd=wt, capture_output=True, text=True)
+    self.assertNotIn(".slicer/lock", status.stdout)
+    self.assertNotIn(".slicer/.gitignore", status.stdout)
 
   def test_ProjectLock_GitignoreUnreadable_WriteStillSucceeds(self) -> None:
     def not_utf8(path: Path) -> None:

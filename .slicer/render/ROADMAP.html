@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">319 items · — 31 · done 281 · retired 7</p>
+<p class="summary">319 items · — 30 · done 281 · retired 7 · review 1</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -74,7 +74,7 @@
 <tr class="done"><td>19</td><td>s296</td><td>Nested relay contract</td><td>M</td><td>2</td><td>slicer</td><td>owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03</td><td class="status">done</td></tr>
 <tr class="done"><td>20</td><td>s298</td><td>Ledger outlives worktrees</td><td>M</td><td>2</td><td>slicer</td><td>nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove</td><td class="status">done</td></tr>
 <tr class="done"><td>21</td><td>s299</td><td>Step task kept</td><td>S</td><td>1</td><td>slicer</td><td>nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task</td><td class="status">done</td></tr>
-<tr class="open"><td>22</td><td>s300</td><td>Worktree gitignore</td><td>S</td><td>2</td><td>slicer</td><td>nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit</td><td class="status">—</td></tr>
+<tr class="other"><td>22</td><td>s300</td><td>Worktree gitignore</td><td>S</td><td>2</td><td>slicer</td><td>nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit</td><td class="status">review</td></tr>
 <tr class="done"><td>23</td><td>s301</td><td>add --id refuses an id a sibling worktree already filed</td><td>S</td><td>1</td><td>slicer</td><td>nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294</td><td class="status">done</td></tr>
 <tr class="retired"><td>24</td><td>s302</td><td>Version-shaped passes queue in version order</td><td>S</td><td>1</td><td>slicer</td><td>2026-10-15: after retargeting, list put v1.13 s278 above v1.12 s298; graph.ranked_order ranks only declared passes, and v1.7+ are undeclared · Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303&#x27;s warnings, and v1.12/v1.13 are now declared.</td><td class="status">retired</td></tr>
 <tr class="done"><td>25</td><td>s303</td><td>Undeclared pass warns</td><td>S</td><td>1</td><td>slicer</td><td>2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302</td><td class="status">done</td></tr>

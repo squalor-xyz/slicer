@@ -833,9 +833,11 @@ def cmd_setup_git(args: argparse.Namespace) -> int:
   as a list.
 
   `--attributes` is the one write: it refreshes `.slicer/.gitattributes` from the
-  template under the project lock, so an existing project picks up new lines. It
-  needs a project. Stdout stays the same, and the report goes to stderr, or to the
-  `attributes` object under `--json`.
+  template under the project lock, so an existing project picks up new lines, and adds
+  any line `init` writes that `.slicer/.gitignore` lacks (`check` warns about those).
+  It needs a project. Stdout stays the same, and the report goes to stderr, or to the
+  `attributes` object under `--json`; the lines added to `.slicer/.gitignore` are named
+  on stderr only.
   """
   commands = _render_driver_commands()
   if not getattr(args, "attributes", False):
@@ -845,12 +847,15 @@ def cmd_setup_git(args: argparse.Namespace) -> int:
   with store.project_lock(root):
     vcs.require_no_merge(root)
     path, changed = ops.write_gitattributes(root)
+    added = feedback.add_gitignore_lines(root, ops.GITIGNORE_LINES)
   if getattr(args, "json", False):
     attributes = {"path": str(path), "changed": changed}
     _emit(args, {"commands": commands, "attributes": attributes}, "")
     return OK
   _emit(args, commands, "\n".join(commands))
   _write_err(args, f"{'wrote' if changed else 'unchanged'} {path}")
+  if added:
+    _write_err(args, f"added {', '.join(added)} to {feedback.gitignore_path(root)}")
   return OK
 
 
@@ -3405,7 +3410,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("setup-git", cmd_setup_git,
       "print the git config that turns on the merge drivers (run once per clone)")
   sp.add_argument("--attributes", action="store_true",
-      help="also refresh .slicer/.gitattributes from the current template")
+      help="also refresh .slicer/.gitattributes from the current template and add any "
+           "missing .slicer/.gitignore lines")
 
   # Git calls this, not a person, so it stays out of the command list.
   sp = add("merge-index", cmd_merge_index, argparse.SUPPRESS, json_flag=False)

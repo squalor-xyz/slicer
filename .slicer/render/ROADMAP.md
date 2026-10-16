@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-319 items · — 31 · done 281 · retired 7
+319 items · — 30 · done 281 · retired 7 · review 1
 
 v1.14.0 release
 
@@ -68,7 +68,7 @@ v1.12.0 release
 | 19 | [s296](slices/s296.md) | Nested relay contract | M | 2 | slicer | owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03 | done |
 | 20 | [s298](slices/s298.md) | Ledger outlives worktrees | M | 2 | slicer | nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove | done |
 | 21 | [s299](slices/s299.md) | Step task kept | S | 1 | slicer | nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task | done |
-| 22 | [s300](slices/s300.md) | Worktree gitignore | S | 2 | slicer | nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit | — |
+| 22 | [s300](slices/s300.md) | Worktree gitignore | S | 2 | slicer | nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit | review |
 | 23 | [s301](slices/s301.md) | add --id refuses an id a sibling worktree already filed | S | 1 | slicer | nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294 | done |
 | 24 | [s302](slices/s302.md) | Version-shaped passes queue in version order | S | 1 | slicer | 2026-10-15: after retargeting, list put v1.13 s278 above v1.12 s298; graph.ranked_order ranks only declared passes, and v1.7+ are undeclared · Dropped by owner 2026-10-15: keep the documented rule (pass order is declaration order, labels are not parsed as versions); the silent fallback is fixed by s303's warnings, and v1.12/v1.13 are now declared. | retired |
 | 25 | [s303](slices/s303.md) | Undeclared pass warns | S | 1 | slicer | 2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302 | done |

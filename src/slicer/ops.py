@@ -70,6 +70,12 @@ relay-roles.json merge=slicer-relay-roles
 """
 
 
+# The lines `init` writes to `.slicer/.gitignore`: files slicer makes that git must not track.
+GITIGNORE_LINES = (
+  feedback.LOG_NAME, feedback.SIDECAR_NAME, relayrun.LEDGER_NAME, store.LOCK_NAME,
+)
+
+
 def write_gitattributes(root: Path) -> tuple[Path, bool]:
   """Write `.slicer/.gitattributes` from the template, and only when its bytes differ.
 
@@ -150,10 +156,7 @@ def init_project(
   for name, content in templates.defaults().items():
     jsonio.write_text(base / store.TEMPLATES_DIR / name, content)
   write_gitattributes(root)
-  feedback.ensure_gitignore(root)
-  feedback.ensure_gitignore(root, feedback.SIDECAR_NAME)
-  feedback.ensure_gitignore(root, relayrun.LEDGER_NAME)
-  feedback.ensure_gitignore(root, store.LOCK_NAME)
+  feedback.add_gitignore_lines(root, GITIGNORE_LINES)
   (base / store.SLICES_DIR / cfg.done_dir).mkdir(parents=True, exist_ok=True)
   return base
 

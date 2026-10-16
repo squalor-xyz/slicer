@@ -7,14 +7,50 @@ import json
 import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import feedback
+from slicer import cli, feedback
 
 LOG = ".slicer/feedback.md"
 STAMP = "2026-10-06T18:07:07Z"
+
+
+OLD_GITIGNORE = "feedback.md\n"  # a project made before `init` listed the sidecar, ledger and lock
+
+
+def linked_project(case: unittest.TestCase) -> tuple[support.TempRepo, Path]:
+  """A git project whose `.slicer/.gitignore` is old, committed, and a linked worktree of it.
+
+  Both are inside one throwaway repo: the exclude file a test reads is that repo's own.
+  """
+  repo = support.TempRepo(git=True)
+  case.addCleanup(repo.close)
+  case.enterContext(support.isolated_discovery(repo.root))
+  case.assertEqual(repo.run("init")[0], 0)
+  repo.write(".slicer/.gitignore", OLD_GITIGNORE)
+  (repo.root / ".slicer" / "lock").unlink(missing_ok=True)  # `commit` stages everything
+  repo.commit("base")
+  wt = repo.root / "siblings" / "wt"
+  wt.parent.mkdir()
+  made = repo._git("worktree", "add", "-q", "-b", "wt", str(wt), "HEAD")
+  case.assertEqual(made.returncode, 0, made.stderr)
+  return repo, wt
+
+
+def run_at(root: Path, *argv: str) -> tuple[int, str, str]:
+  """Run the CLI against `root`, which may be a linked worktree."""
+  out, err = io.StringIO(), io.StringIO()
+  with redirect_stdout(out), redirect_stderr(err):
+    code = cli.main(["--root", str(root), *argv])
+  return code, out.getvalue(), err.getvalue()
+
+
+def exclude_lines(repo: support.TempRepo) -> list[str]:
+  path = repo.root / ".git" / "info" / "exclude"
+  return path.read_text(encoding="utf-8").splitlines() if path.is_file() else []
 
 
 class FeedbackBase(unittest.TestCase):
@@ -220,6 +256,72 @@ class FeedbackGitignoreTests(FeedbackBase):
   def test_RootGitignore_ListsTheLog(self) -> None:
     root = Path(__file__).resolve().parents[1]
     self.assertIn("/.slicer/feedback.md", (root / ".gitignore").read_text().splitlines())
+
+
+class LinkedWorktreeGitignoreTests(unittest.TestCase):
+  def test_EnsureGitignore_LinkedWorktree_WritesInfoExclude(self) -> None:
+    repo, wt = linked_project(self)
+    code, _, err = run_at(wt, "feedback", "--kind", "bug", "--text", "x")
+    self.assertEqual(code, 0, err)
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
+    self.assertEqual(
+      subprocess.run(["git", "status", "--short"], cwd=wt, capture_output=True, text=True).stdout, "",
+    )
+    self.assertIn("**/.slicer/lock", exclude_lines(repo))
+    run_at(wt, "feedback", "--kind", "bug", "--text", "y")
+    self.assertEqual(exclude_lines(repo).count("**/.slicer/lock"), 1)
+
+  def test_EnsureGitignore_LinkedWorktree_NamesTheLineItWasAskedFor(self) -> None:
+    repo, wt = linked_project(self)
+    feedback.ensure_gitignore(wt, feedback.SIDECAR_NAME)
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
+    self.assertIn("**/.slicer/feedback-reported.json", exclude_lines(repo))
+
+  def test_EnsureGitignore_MainWorktree_EditsSlicerGitignore(self) -> None:
+    repo, _ = linked_project(self)  # a linked worktree exists; the main checkout is not one
+    feedback.ensure_gitignore(repo.root, "lock")
+    self.assertEqual(repo.read(".slicer/.gitignore").splitlines(), ["feedback.md", "lock"])
+    self.assertNotIn("**/.slicer/lock", exclude_lines(repo))
+
+  def test_EnsureGitignore_ProjectBelowLinkedWorktreeRoot_EditsSlicerGitignore(self) -> None:
+    repo, wt = linked_project(self)
+    nested = wt / "sub"
+    nested.mkdir()
+    self.assertEqual(run_at(nested, "init")[0], 0)
+    (nested / ".slicer" / ".gitignore").write_text(OLD_GITIGNORE, encoding="utf-8")
+    feedback.ensure_gitignore(nested, "lock")
+    self.assertEqual(
+      (nested / ".slicer" / ".gitignore").read_text(encoding="utf-8").splitlines(),
+      ["feedback.md", "lock"],
+    )
+    self.assertNotIn("**/.slicer/lock", exclude_lines(repo))
+
+  def test_EnsureGitignore_LinkedWorktreeExcludeAlreadyHasLine_LeavesBothFiles(self) -> None:
+    repo, wt = linked_project(self)
+    exclude = repo.root / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    exclude.write_text("**/.slicer/lock\n", encoding="utf-8")
+    feedback.ensure_gitignore(wt, "lock")
+    self.assertEqual(exclude.read_text(encoding="utf-8"), "**/.slicer/lock\n")
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
+
+  def test_EnsureGitignore_ExcludeWithoutFinalNewline_KeepsEarlierLine(self) -> None:
+    repo, wt = linked_project(self)
+    exclude = repo.root / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    exclude.write_text("scratch", encoding="utf-8")
+    feedback.ensure_gitignore(wt, "lock")
+    self.assertEqual(exclude.read_text(encoding="utf-8"), "scratch\n**/.slicer/lock\n")
+
+  def test_EnsureGitignore_ExcludeUnwritable_WriteStillSucceeds(self) -> None:
+    repo, wt = linked_project(self)
+    exclude = repo.root / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    exclude.unlink(missing_ok=True)
+    exclude.mkdir()  # a directory: reading and replacing it both fail
+    code, _, err = run_at(wt, "add", "first")
+    self.assertEqual(code, 0, err)
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
 
 
 class FeedbackIsolationTests(FeedbackBase):

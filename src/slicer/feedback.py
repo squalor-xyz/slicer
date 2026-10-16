@@ -16,7 +16,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
-from slicer import jsonio, store
+from slicer import jsonio, store, vcs
 from slicer.errors import StateError, reject_future_schema
 
 LOG_NAME = "feedback.md"
@@ -40,15 +40,56 @@ def sidecar_path(root: Path) -> Path:
   return root / store.DIR_NAME / SIDECAR_NAME
 
 
+def _read_text(path: Path) -> str:
+  return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
+def _add_lines(path: Path, lines: list[str]) -> list[str]:
+  """Append each of `lines` that `path` does not hold, in one write; return those added."""
+  existing = _read_text(path)
+  have = existing.splitlines()
+  added = [line for line in lines if line not in have]
+  if added:
+    if existing and not existing.endswith("\n"):
+      existing += "\n"
+    jsonio.write_text(path, existing + "".join(f"{line}\n" for line in added))
+  return added
+
+
+def gitignore_path(root: Path) -> Path:
+  return root / store.DIR_NAME / GITIGNORE_NAME
+
+
+def missing_gitignore_lines(root: Path, names: tuple[str, ...]) -> list[str]:
+  """The `names` that `.slicer/.gitignore` does not list, in the order given."""
+  have = _read_text(gitignore_path(root)).splitlines()
+  return [name for name in names if name not in have]
+
+
+def add_gitignore_lines(root: Path, names: tuple[str, ...]) -> list[str]:
+  """Add each missing `name` to the tracked `.slicer/.gitignore` and return those added.
+
+  `init` and `setup-git --attributes` call it on purpose, so it never looks at linked
+  worktrees the way `ensure_gitignore` does.
+  """
+  return _add_lines(gitignore_path(root), list(names))
+
+
 def ensure_gitignore(root: Path, name: str = LOG_NAME) -> None:
-  """Make `.slicer/.gitignore` list `name`. Plain file IO: no git, no staging."""
-  path = root / store.DIR_NAME / GITIGNORE_NAME
-  existing = path.read_text(encoding="utf-8") if path.is_file() else ""
-  if name in existing.splitlines():
+  """Make git ignore `.slicer/<name>`. Plain file IO: no git writes, no staging.
+
+  Normally that is a line in `.slicer/.gitignore`. In a linked worktree that file is
+  tracked and shared with the branch, so a write there would put an unrelated change
+  on the slice's commit; the line goes into the repo's `info/exclude` instead. The
+  common write path takes the first branch without asking git anything.
+  """
+  if not missing_gitignore_lines(root, (name,)):
     return
-  if existing and not existing.endswith("\n"):
-    existing += "\n"
-  jsonio.write_text(path, existing + name + "\n")
+  common = vcs.linked_worktree_common_dir(root)
+  if common is None:
+    _add_lines(gitignore_path(root), [name])
+  else:
+    _add_lines(common / "info" / "exclude", [f"**/{store.DIR_NAME}/{name}"])
 
 
 def append(root: Path, kind: str, text: str, item: str | None) -> dict[str, str]:
