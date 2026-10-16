@@ -1,11 +1,16 @@
-"""The relay run ledger, `.slicer/relay-runs.jsonl`.
+"""The relay run ledger, `<git common dir>/slicer/relay-runs.jsonl`.
 
 A slice relay is an orchestrator driving agents. Nothing in the roadmap state records
 which agent or model is working, and per-step telemetry does not belong in the git-tracked
 history log. So the orchestrator appends events here, one JSON object per line, and
 `relay-run list` (and the TUI board) fold them into the current runs.
 
-Like `.slicer/feedback.md` the ledger is gitignored and disposable: it is never rendered,
+In a git repo the ledger lives in the git common dir, so every worktree of the repo shares
+one and removing a slice worktree does not delete its runs. Outside git, or for a project
+below the worktree root, it is `.slicer/relay-runs.jsonl` as before; that file is also what
+older slicers wrote in every worktree, so the readers still look there.
+
+Like `.slicer/feedback.md` the ledger is untracked and disposable: it is never rendered,
 never read by `check`, and never part of roadmap state. Deleting it loses only the board.
 Events are appended and never rewritten; a run, its steps and their states exist only as
 the fold of those events. Whether a run is `active`, `stale` or `ended` is computed at
@@ -26,6 +31,9 @@ from slicer import feedback, jsonio, store, vcs
 from slicer.errors import SlicerError, StateError, reject_future_schema
 
 LEDGER_NAME = "relay-runs.jsonl"
+# Under the git common dir, which holds git's own files: a directory of ours keeps them apart.
+COMMON_DIR = "slicer"
+COMMON_LOCK_NAME = "relay-runs.lock"
 VERSION = 1
 # A run with no event for longer than this is stale: the orchestrator probably died.
 STALE_AFTER = timedelta(minutes=30)
@@ -54,8 +62,27 @@ def _parse_stamp(text: str) -> datetime:
   return datetime.strptime(text, _STAMP).replace(tzinfo=timezone.utc)
 
 
-def ledger_path(root: Path) -> Path:
+def legacy_ledger_path(root: Path) -> Path:
+  """The ledger inside a checkout's own `.slicer/`: the pre-s298 location, still the one
+  outside git."""
   return root / store.DIR_NAME / LEDGER_NAME
+
+
+def common_ledger_path(root: Path) -> Path | None:
+  """The repo-wide ledger when `root` is a git worktree root, else None.
+
+  A project below the worktree root keeps its own ledger: the other worktrees' ledgers are
+  of another project there, and so would a shared one be.
+  """
+  if not vcs.at_worktree_root(root):
+    return None
+  common = vcs.git_common_dir(root)
+  return None if common is None else common / COMMON_DIR / LEDGER_NAME
+
+
+def ledger_path(root: Path) -> Path:
+  """Where `root` appends and reads its runs."""
+  return common_ledger_path(root) or legacy_ledger_path(root)
 
 
 def bad_field(message: str) -> StateError:
@@ -299,16 +326,19 @@ def state_of(run: Run, now: datetime) -> str:
   return "active"
 
 
+def _load_file(path: Path, now: datetime, *, tolerate_torn_tail: bool = False) -> list[Run]:
+  return fold(path, read_events(path, tolerate_torn_tail=tolerate_torn_tail), now)
+
+
 def load_runs(
   root: Path, now: datetime | None = None, *, tolerate_torn_tail: bool = False,
 ) -> list[Run]:
-  """The runs in this checkout's own ledger. A damaged ledger is `corrupt`, with file and line.
+  """The runs in the ledger `root` writes to. A damaged ledger is `corrupt`, with file and line.
 
   Writers read it strictly, so a torn last line stops them. A reader that holds no lock
   passes `tolerate_torn_tail`, because it may poll while an event is being appended.
   """
-  path = ledger_path(root)
-  return fold(path, read_events(path, tolerate_torn_tail=tolerate_torn_tail), now or utcnow())
+  return _load_file(ledger_path(root), now or utcnow(), tolerate_torn_tail=tolerate_torn_tail)
 
 
 def list_runs(
@@ -316,29 +346,41 @@ def list_runs(
 ) -> list[Run]:
   """Every run on this machine's checkouts of the project, oldest first.
 
-  The TUI board and `relay-run list` both call this. It reads this checkout's ledger and,
-  with `siblings`, each sibling worktree's ledger as a plain file under that worktree's
-  root. This checkout's ledger must be readable (`corrupt` otherwise); a sibling's that is
-  not is skipped, so another worktree's damaged file cannot blank the board. `active`
-  keeps only runs that are neither ended nor stale.
+  The TUI board and `relay-run list` both call this. It reads the ledger `root` writes to,
+  which must be readable (`corrupt` otherwise). In a git repo that is the shared one, so the
+  runs of every worktree, removed ones included, are already in it; the legacy
+  `.slicer/relay-runs.jsonl` of this checkout and, with `siblings`, of each sibling worktree
+  is read as well, for runs an older slicer recorded there. A legacy file that is not
+  readable is skipped, so another worktree's damaged file cannot blank the board. A run that
+  is in more than one file is listed once, from the first. `active` keeps only runs that are
+  neither ended nor stale.
   """
   now = now or utcnow()
   found = load_runs(root, now, tolerate_torn_tail=True)
-  if siblings and vcs.at_worktree_root(root):
-    for sibling in vcs.sibling_worktrees(root):
+  if common_ledger_path(root) is not None:
+    checkouts = [root]
+    if siblings:
+      checkouts.extend(vcs.sibling_worktrees(root))
+    for checkout in checkouts:
       try:
-        found.extend(load_runs(sibling, now, tolerate_torn_tail=True))
+        found.extend(_load_file(legacy_ledger_path(checkout), now, tolerate_torn_tail=True))
       except (OSError, SlicerError):
         continue
+  unique: dict[str, Run] = {}
+  for run in found:
+    unique.setdefault(run.id, run)
+  runs = list(unique.values())
   if active:
-    found = [run for run in found if run.state == "active"]
-  return sorted(found, key=lambda run: (run.begun_at, run.id))
+    runs = [run for run in runs if run.state == "active"]
+  return sorted(runs, key=lambda run: (run.begun_at, run.id))
 
 
 def append(root: Path, event: dict[str, object]) -> None:
-  """Append one event line. The caller holds the project lock."""
-  feedback.ensure_gitignore(root, LEDGER_NAME)
-  path = ledger_path(root)
+  """Append one event line. The caller holds the ledger lock (`ops.ledger_lock`)."""
+  path = common_ledger_path(root)
+  if path is None:
+    feedback.ensure_gitignore(root, LEDGER_NAME)  # the ledger sits in the checkout
+    path = legacy_ledger_path(root)
   if path.is_file():
     data = path.read_bytes()
     if data and not data.endswith(b"\n"):

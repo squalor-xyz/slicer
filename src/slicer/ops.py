@@ -7,15 +7,18 @@ and so each one records the same log entry.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shlex
+import time
+from contextlib import contextmanager
 from uuid import uuid4
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Callable, Mapping
+from typing import Callable, Iterator, Mapping
 
 from slicer import (
   feedback, graph, ids, jsonio, outline, prose, refs, relayrun, render, roles, store, templates,
@@ -2938,17 +2941,61 @@ def rule_remove(state: State, rule_id: str) -> RoleRule:
 
 
 # ---- relay run ledger -----------------------------------------------------
-# `.slicer/relay-runs.jsonl` is a gitignored, append-only log, not roadmap state: nothing
-# here touches the index, history or render. Each call validates before it appends, so a
-# refused call leaves the ledger as it was, and holds the project lock across the append.
+# The ledger (`<git common dir>/slicer/relay-runs.jsonl`, or `.slicer/relay-runs.jsonl`
+# outside git) is an untracked, append-only log, not roadmap state: nothing here touches
+# the index, history or render. Each call validates before it appends, so a refused call
+# leaves the ledger as it was, and holds the ledger lock across the append.
+
+@contextmanager
+def ledger_lock(root: Path) -> Iterator[None]:
+  """Serialise appenders to the ledger `root` writes to.
+
+  The shared ledger is written from every worktree, and worktrees do not share
+  `.slicer/lock`, so it has a lock file beside it, taken like `store.project_lock`. A ledger
+  inside the checkout is guarded by the project lock as before.
+  """
+  common = relayrun.common_ledger_path(root)
+  if common is None:
+    with store.project_lock(root):
+      yield
+    return
+  if store.fcntl is None:
+    yield
+    return
+  lock_path = common.with_name(relayrun.COMMON_LOCK_NAME)
+  lock_path.parent.mkdir(parents=True, exist_ok=True)
+  timeout = store._lock_timeout()
+  fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
+  try:
+    deadline = time.monotonic() + timeout
+    while True:
+      try:
+        store.fcntl.flock(fd, store.fcntl.LOCK_EX | store.fcntl.LOCK_NB)
+        break
+      except OSError:
+        if time.monotonic() >= deadline:
+          raise StateError(
+            f"another slicer is writing the relay-run ledger; the lock timed out after "
+            f"{timeout:g}s. Wait for it to finish, or remove {lock_path} if no slicer is "
+            "running.",
+            code="locked",
+          ) from None
+        time.sleep(0.05)
+    try:
+      yield
+    finally:
+      store.fcntl.flock(fd, store.fcntl.LOCK_UN)
+  finally:
+    os.close(fd)
+
 
 def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
-  """The run in this checkout's ledger that a step or end may extend."""
+  """The run in the ledger `root` writes to that a step or end may extend."""
   run = next((r for r in relayrun.load_runs(root, now) if r.id == run_id), None)
   if run is None:
     raise StateError(
       f"no relay run {run_id!r} in {relayrun.ledger_path(root)}; `relay-run begin` makes one "
-      "and `relay-run list` shows them. A run is extended in the checkout whose ledger holds it",
+      "and `relay-run list` shows them. In a git repo every worktree shares that ledger",
       code="unknown_run",
     )
   if run.state == "ended":
@@ -2973,7 +3020,7 @@ def relay_run_begin(
     relayrun.one_line("worktree", worktree, required=True)
   name = Path(worktree).resolve().name if worktree is not None else Path(root).resolve().name
   name = relayrun.one_line("worktree", name, required=True)
-  with store.project_lock(root):
+  with ledger_lock(root):
     # A damaged ledger is refused before anything is added to it.
     taken = {run.id for run in relayrun.load_runs(root, now)}
     while True:
@@ -3004,7 +3051,7 @@ def relay_run_step(
     "reasoning": relayrun.one_line("reasoning", reasoning), "task": relayrun.one_line("task", task),
   }
   parent = relayrun.one_line("parent", parent)
-  with store.project_lock(root):
+  with ledger_lock(root):
     run = _open_run(root, run_id, now)
     if step is None:
       for name in ("role", "agent"):
@@ -3035,7 +3082,7 @@ def relay_run_end(
 ) -> relayrun.Run:
   now = now or relayrun.utcnow()
   relayrun.choice("outcome", outcome, relayrun.OUTCOMES)
-  with store.project_lock(root):
+  with ledger_lock(root):
     _open_run(root, run_id, now)
     relayrun.append(root, relayrun.end_event(run_id, now, outcome))
     return next(r for r in relayrun.load_runs(root, now) if r.id == run_id)

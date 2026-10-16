@@ -40,7 +40,7 @@ never pays for curses.
   log.jsonl                append-only history, one LogEntry per line
   feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
   feedback-reported.json   which entries `feedback-report` filed; gitignored, not roadmap state
-  relay-runs.jsonl         local `relay-run` ledger of slice-relay runs; gitignored, append-only, not roadmap state
+  relay-runs.jsonl         `relay-run` ledger outside git or below the worktree root, and older slicers' per-worktree ledger; gitignored, append-only
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
   slices/retired/<ID>.json retired, with the reason on the index item
@@ -48,16 +48,27 @@ never pays for curses.
   render/ROADMAP.md        GENERATED
   render/ROADMAP.html      GENERATED, standalone browser view
   render/slices/<ID>.md    GENERATED
+
+<git common dir>/slicer/
+  relay-runs.jsonl         the `relay-run` ledger of slice-relay runs, shared by every worktree; append-only, not roadmap state
+  relay-runs.lock          the flock that serialises appenders across worktrees
 ```
 
-**The relay-run ledger is not state, like the feedback log.** `.slicer/relay-runs.jsonl`
-(`relayrun.py`) holds one JSON event per line, appended by `slicer relay-run` through `ops`
-under the project lock and never rewritten. A run, its steps and whether it is `active`,
-`stale` or `ended` exist only as the fold of those events at read time, with the clock
-passed in. Nothing renders it, `check` and `verify` never open it, and it is gitignored, so
-deleting it loses only the board. `relayrun.list_runs` also reads each sibling worktree's
-ledger as a plain file; a damaged sibling ledger is skipped, a damaged local one is
-`corrupt` with its file and line. No git write is involved.
+**The relay-run ledger is not state, like the feedback log.** In a git repo,
+`<git common dir>/slicer/relay-runs.jsonl` (`relayrun.py`) holds one JSON event per line,
+appended by `slicer relay-run` through `ops` under a lock file beside it (worktrees do not
+share `.slicer/lock`) and never rewritten. The common dir is shared by every worktree and
+outlives them, so `git worktree remove` no longer loses a run. Outside git, and for a
+project below the worktree root, the ledger is `.slicer/relay-runs.jsonl` under the project
+lock, as before. A run, its steps and whether it is `active`, `stale` or `ended` exist only
+as the fold of those events at read time, with the clock passed in. Nothing renders it,
+`check` and `verify` never open it, and in a git repo it is not under the work tree, so
+deleting it loses only the board. `relayrun.list_runs` also reads the legacy `.slicer/relay-runs.jsonl` of
+this checkout and of each sibling worktree as plain files, for runs an older slicer
+recorded there, and lists a run found in more than one file once; a damaged legacy file
+is skipped, a damaged common ledger is `corrupt` with its file and line. Only read-only git
+calls are made (`rev-parse` for the toplevel and common dir, `worktree list`); no git write
+is involved.
 
 Config schema is `5` (`src/slicer/config.py`), protecting the optional `issues_repo`
 destination for `feedback-report`; schema 4 added `satisfies_dependencies`, schema 3

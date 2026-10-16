@@ -385,7 +385,7 @@ def _other_ref(ref: str, current: str | None) -> str | None:
   return None
 
 
-def _git_common_dir(path: Path) -> Path | None:
+def git_common_dir(path: Path) -> Path | None:
   """The repo's shared git directory as seen from `path`, or None when `path`
   is not in a git repo. Two worktrees of one repo report the same common dir,
   which is how `foreign_worktree` tells same-repo siblings from an unrelated
@@ -424,8 +424,8 @@ def foreign_worktree(root: Path, code_dir: Path) -> str | None:
     return None
   if code_dir == root or code_dir.is_relative_to(root):
     return None
-  code_common = _git_common_dir(code_dir)
-  if code_common is None or code_common != _git_common_dir(root):
+  code_common = git_common_dir(code_dir)
+  if code_common is None or code_common != git_common_dir(root):
     return None
   # Same repo is not enough: a project nested in the code's own worktree (a
   # subproject, or a test fixture under an ignored scratch dir) runs this

@@ -103,8 +103,10 @@ Browsing writes no tracking state; lifecycle actions continue to use stored stat
 ## Relay board
 
 `b` opens a read-only board of the slice relays in flight. It shows the runs that
-[`slicer relay-run`](commands.md#relay-run-ledger) records in this checkout's ledger and in each
-sibling worktree's, so an orchestrator in one worktree is visible from another. Starting,
+[`slicer relay-run`](commands.md#relay-run-ledger) records in the repo's shared ledger (under the
+git common dir, so an orchestrator in one worktree is visible from another and a removed
+worktree's runs stay), plus the older per-worktree `.slicer/relay-runs.jsonl` files of this checkout
+and its sibling worktrees. Starting,
 stopping and steering a run stay outside the TUI.
 
 Each active run is a lane, drawn as a tree from the steps the ledger records:
@@ -165,8 +167,8 @@ cutting one (the title is cut with `...`, and `round N` is the first to go); a l
 `...`. `j`/`k` or the arrow keys scroll when the lanes outrun the screen.
 
 The board redraws four times a second and re-reads the ledgers every two seconds. Only the
-board wakes on a timer: in every other view the TUI still blocks on input. If this checkout's
-ledger is damaged (`corrupt`), the board keeps the last frame and shows one `Error:` line until
+board wakes on a timer: in every other view the TUI still blocks on input. If the ledger this
+checkout writes to is damaged (`corrupt`), the board keeps the last frame and shows one `Error:` line until
 a read succeeds; delete or fix the ledger line it names. Colors follow the display rules
 below. In monochrome (`NO_COLOR=1`) the cues are the glyphs (`●`, `✓`, `✗`, `~`), the markers
 (`[+]`, `[!]`, `[~]`), the `[role]` brackets, the spinner, the `stale` label, and bold and dim.

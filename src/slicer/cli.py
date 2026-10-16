@@ -3885,8 +3885,10 @@ def build_parser() -> argparse.ArgumentParser:
     "relay-run", help="the local ledger of slice-relay runs and their agent steps",
     description=(
       "A relay orchestrator records each run and each role step here so `relay-run list` "
-      "and the TUI can show what is running. The ledger, .slicer/relay-runs.jsonl, is "
-      "gitignored, append-only and disposable: never rendered, never read by check."
+      "and the TUI can show what is running. In a git repo the ledger is "
+      "<git common dir>/slicer/relay-runs.jsonl, shared by every worktree and kept when one "
+      "is removed; elsewhere it is .slicer/relay-runs.jsonl. Append-only and disposable: "
+      "never rendered, never read by check."
     ),
     parents=[common],
   )

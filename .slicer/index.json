@@ -10031,10 +10031,66 @@
       "id": "s298",
       "title": "Keep the relay-run ledger in the git common dir so it outlives worktrees",
       "short_title": "Ledger outlives worktrees",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "42d4fb43-fbbb-4d6d-b972-bf281fbdca7c",
+          "kind": "",
+          "text": "**2026-10-16** — Verified outcome. In a git repo relay-run now keeps one ledger per repo at <git common dir>/slicer/relay-runs.jsonl with relay-runs.lock beside it (flock in ops.ledger_lock), shared by every worktree; begin/step/end work from any worktree and unknown_run names the ledger path. Outside git, or for a project below the worktree root, the ledger stays .slicer/relay-runs.jsonl. list_runs reads the common ledger plus the legacy .slicer/relay-runs.jsonl of this checkout and each sibling worktree (damaged legacy skipped, damaged common = corrupt, a run in two files listed once). vcs.git_common_dir is now public. Docs, CLI description and CHANGELOG updated.\n\nTests: 63 in test_relay_run, full suite 2208 OK (1 skipped); slicer check passes. No-git fixtures now use support.isolated_discovery.\n\nMutations (each red for the right reason): common path always legacy; no legacy read; no dedup; no common lock (ConcurrentAppends); no at_worktree_root (ProjectBelowWorktreeRoot); no-git path moved (NoGit); _open_run legacy-only (Step_FromAnotherWorktree); gitignore always edited (Begin_InLinkedWorktree); damaged common skipped (CommonLedgerDamaged); unknown_run message path (Step_UnknownRun_NamesCommonLedger). The at_worktree_root mutation was re-proved on a scratch copy: the real .git/slicer/relay-runs.jsonl stayed 150 lines, sha256 9f206c39...7ffa1, before and after.\n\nHand test (scratch repo, worktrees wa and wb): begin in wa -> run-20261016-033728-7c01; step from wb -> 1; list from main -> \"run-20261016-033728-7c01  active  items s1  wt wa  1 step, 1 running, 0 subagents\" with step \"1  implementer  Claude Code  sonnet  high  start  from wb\"; end from main -> \"ended run-20261016-033728-7c01 pass\"; after git worktree remove wa, list from wb still shows the run as ended pass. Ledger files lived in main/.git/slicer; wb/.slicer had no ledger; git status in wb clean.\n\nUpgrade edge, not fixed: a run that exists only in an old per-worktree .slicer/relay-runs.jsonl lists but cannot take step or end (unknown_run naming the common ledger path, exit 2). Documented in docs/commands.md and CHANGELOG; begin a new run.",
+          "created_at": "2026-10-16T04:10:30Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "f95bfdc4-a4d2-4a94-a5aa-c15d00c21109",
+          "kind": "",
+          "text": "**2026-10-16** — Upgrade edge: a run that exists only in an old per-worktree .slicer/relay-runs.jsonl still lists, but relay-run step/end on it fail with unknown_run. Documented (begin a new run); follow-up item filed.",
+          "created_at": "2026-10-16T11:14:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "15020710-91a3-4a72-a15c-29fb46e1bb1c",
+          "kind": "",
+          "text": "**2026-10-16** — docs/commands.md .slicer/ listing (~line 390) says the old ledger is no longer written in a git repo; it still is for a project below the worktree root (gate-noted, left unfixed).",
+          "created_at": "2026-10-16T11:14:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "a13ca5f0-1b90-4ece-8ad2-5da17839a914",
+          "kind": "",
+          "text": "**2026-10-16** — ops.ledger_lock duplicates store.project_lock's flock loop and calls store._lock_timeout(); a shared store.file_lock helper would remove that (follow-up).",
+          "created_at": "2026-10-16T11:14:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "0ebcc3d4-30c6-4608-9a54-24af19b4b2cf",
+          "kind": "",
+          "text": "**2026-10-16** — Mutation runs with TMPDIR inside the worktree leaked fixture runs into the real .git/slicer/ (150 lines) when the at_worktree_root check was mutated away; the fix round wrapped non-git fixtures in support.isolated_discovery. Owner approved deleting .git/slicer before landing.",
+          "created_at": "2026-10-16T11:14:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -10054,7 +10110,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
