@@ -1,0 +1,41 @@
+{
+  "id": "s318",
+  "title": "Tests cannot write into the real repo's git dir",
+  "lead": [
+    "A test fixture under a TMPDIR inside the checkout can never write into the real repository's git common dir, and the suite fails if any test does."
+  ],
+  "depends_note": null,
+  "findings_note": "s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing production git discovery.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "During the s298 relay (2026-10-16), mutation runs with TMPDIR in `<worktree>/.venv/tmp/` wrote 150 lines of fixture runs into the real `.git/slicer/relay-runs.jsonl`. A fixture that is not its own git repo sits inside this repo, so git discovery reached the real common dir once the mutated code dropped its `at_worktree_root` check. AGENTS.md recommends an in-checkout TMPDIR, and every relay brief sets one. The fix round wrapped those fixtures in `support.isolated_discovery`, but nothing stops the next slice that writes to a git-dir path from doing the same, and the real ledger is now shared by every worktree.\n\n**Owner decision (open):**\n- (a) **Recommended.** `tests/support.py` takes a fingerprint of the real git common dir's `slicer/` at import, and a final test module (or `tests/affected.py` and the discover wrapper) checks it is unchanged, failing with the paths that changed.\n- (b) Test fixture helpers set `GIT_CEILING_DIRECTORIES` to the fixture's parent for every fixture. That is suite-wide, which AGENTS.md currently advises against for `isolated_discovery`.\n- (c) Docs only: AGENTS.md and the relay brief say to run mutations of git-dir code with a TMPDIR fixture that is its own git repo."
+    },
+    {
+      "heading": "Files",
+      "body": "- Under (a): `tests/support.py`, a new `tests/test_zz_no_git_dir_writes.py` (or the equivalent hook), `AGENTS.md` (Commands).\n- `CHANGELOG.md` is not needed (tests only)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Under (a): a test that writes a line into a scratch stand-in for the common dir makes the guard fail, and an untouched one passes."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Settle the owner decision.\n2. Build the guard; prove it red by re-introducing the s298 leak in a mutant on a scratch copy."
+    },
+    {
+      "heading": "Check",
+      "body": "- The full suite passes, and the real `.git/slicer/` fingerprint is the same before and after."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

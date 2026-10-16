@@ -1,0 +1,41 @@
+{
+  "id": "s317",
+  "title": "The ledger lock shares the project lock's code",
+  "lead": [
+    "`store.project_lock` and `ops.ledger_lock` take their flock through one `store.file_lock(path)` helper, and the `.slicer/` listing in docs/commands.md describes the legacy ledger correctly."
+  ],
+  "depends_note": null,
+  "findings_note": "s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** any change to lock timeouts, error codes or where the lock files live.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s298 review (2026-10-16) accepted two small debts. `ops.ledger_lock` copies the flock-and-deadline loop of `store.project_lock`, calls the private `store._lock_timeout()`, and words its timeout message differently, so the two locks can drift. And the `.slicer/` listing in `docs/commands.md` (about line 390) says the legacy ledger is \"no longer written in a git repo\", but a project below the worktree root still writes it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py`: `file_lock(path)`, a context manager with the flock loop, timeout and `locked` error that `project_lock` has now; `project_lock` calls it.\n- `src/slicer/ops.py`: `ledger_lock` calls `store.file_lock` and no longer uses `store._lock_timeout`.\n- `docs/commands.md`, the `relay-runs.jsonl` line: \"read in a git repo; still written for a project below the worktree root and outside git\".\n- `tests/test_relay_run.py` or the existing lock tests."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_LedgerLock_Held_TimesOutWithLockedCode`: a held shared-ledger lock gives `locked` with the same message shape as the project lock."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; extract the helper; keep every existing lock test green.\n2. Fix the docs line. Mutation-check (break the timeout in `file_lock`: both lock tests fail)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

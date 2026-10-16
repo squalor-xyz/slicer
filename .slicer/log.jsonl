@@ -1672,3 +1672,9 @@
 {"when": "2026-10-16T11:14:10Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "ops.ledger_lock duplicates store.project_lock's flock loop a", "by": "Jon Robbins"}
 {"when": "2026-10-16T11:14:10Z", "item": "s298", "action": "note", "from": "", "to": "", "note": "Mutation runs with TMPDIR inside the worktree leaked fixture", "by": "Jon Robbins"}
 {"when": "2026-10-16T11:27:01Z", "item": "s298", "action": "status", "from": "review", "to": "done", "note": "Landed: merge b96104a. relay-run keeps one ledger per repo at <git common dir>/slicer/relay-runs.jsonl with its own lock; legacy .slicer ledgers are still read. Leaked fixture ledger removed from .git/slicer before the merge (owner approved). Full suite on main 2209 OK; the run left .git/slicer absent.", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:27:02Z", "item": "s316", "action": "add", "from": "", "to": "open", "note": "relay-run step and end extend a run in a legacy ledger"}
+{"when": "2026-10-16T11:27:02Z", "item": "s317", "action": "add", "from": "", "to": "open", "note": "The ledger lock shares the project lock's code"}
+{"when": "2026-10-16T11:27:02Z", "item": "s318", "action": "add", "from": "", "to": "open", "note": "Tests cannot write into the real repo's git dir"}
+{"when": "2026-10-16T11:27:02Z", "item": "s316", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T11:27:02Z", "item": "s317", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T11:27:02Z", "item": "s318", "action": "promote", "from": "", "to": "", "note": ""}
