@@ -54,6 +54,10 @@ ancestor slicer configs and stop Git discovery above the fixture. Discovery with
 the fixture stays real; the helper restores its patches on exit. Keep it scoped to
 those tests rather than changing production discovery or using it suite-wide.
 
+The suite refuses any write the test process makes into this repository's own git
+common dir: `tests/support.py` raises an `AssertionError` naming the path. A test that
+needs a real common dir builds a fixture that is its own git repo.
+
 `PYTHONPATH=src python3 -m slicer` still works and is what CI runs — see
 `.github/workflows/ci.yml`. That step is the only place `src/slicer/__main__.py` is
 exercised, so leave it uninstalled.

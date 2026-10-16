@@ -23,6 +23,103 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures"
 LEGACY = FIXTURES / "legacy"
 
 
+def _checkout_common_dir() -> Path | None:
+  """The git common dir of the checkout these tests run from, or None outside git."""
+  try:
+    proc = subprocess.run(
+      ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+      cwd=str(Path(__file__).resolve().parent),
+      capture_output=True,
+      text=True,
+      check=False,
+    )
+  except OSError:
+    return None
+  out = proc.stdout.strip()
+  if proc.returncode != 0 or not out:
+    return None
+  return Path(out).resolve()
+
+
+# A fixture under an in-checkout TMPDIR that is not its own repo resolves to this
+# repository, so a discovery regression can write into the shared ledger. Every
+# write this process makes under the common dir fails at once; tests point this at
+# a scratch dir to exercise the guard.
+GUARDED_ROOT: Path | None = _checkout_common_dir()
+_allow_depth = 0
+_WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_TRUNC
+
+
+def _refuse_if_guarded(path: object, action: str) -> None:
+  root = GUARDED_ROOT
+  if root is None or _allow_depth or isinstance(path, int):
+    return
+  try:
+    resolved = os.path.realpath(os.fsdecode(os.fspath(path)))
+  except TypeError:
+    return
+  if resolved == str(root) or resolved.startswith(str(root) + os.sep):
+    raise AssertionError(
+      f"test wrote into the repository's git dir: {action} {resolved}. "
+      "Build a fixture that is its own git repo, or use support.isolated_discovery."
+    )
+
+
+@contextmanager
+def allow_git_dir_writes() -> Iterator[None]:
+  """Lift the git-dir write guard; for the guard's own tests."""
+  global _allow_depth
+  _allow_depth += 1
+  try:
+    yield
+  finally:
+    _allow_depth -= 1
+
+
+def _install_git_dir_guard() -> None:
+  import builtins
+
+  if getattr(builtins.open, "_slicer_git_dir_guard", False):
+    return
+  real_open, real_os_open = io.open, os.open
+  real_replace, real_rename = os.replace, os.rename
+  real_mkdir, real_makedirs = os.mkdir, os.makedirs
+
+  def guarded_open(file, mode="r", *args, **kwargs):
+    if any(ch in mode for ch in "wax+"):
+      _refuse_if_guarded(file, f"open({mode!r})")
+    return real_open(file, mode, *args, **kwargs)
+
+  def guarded_os_open(path, flags, *args, **kwargs):
+    if flags & _WRITE_FLAGS:
+      _refuse_if_guarded(path, "os.open")
+    return real_os_open(path, flags, *args, **kwargs)
+
+  def guarded_replace(src, dst, *args, **kwargs):
+    _refuse_if_guarded(dst, "os.replace")
+    return real_replace(src, dst, *args, **kwargs)
+
+  def guarded_rename(src, dst, *args, **kwargs):
+    _refuse_if_guarded(dst, "os.rename")
+    return real_rename(src, dst, *args, **kwargs)
+
+  def guarded_mkdir(path, *args, **kwargs):
+    _refuse_if_guarded(path, "os.mkdir")
+    return real_mkdir(path, *args, **kwargs)
+
+  def guarded_makedirs(name, *args, **kwargs):
+    _refuse_if_guarded(name, "os.makedirs")
+    return real_makedirs(name, *args, **kwargs)
+
+  guarded_open._slicer_git_dir_guard = True
+  builtins.open = io.open = guarded_open
+  os.open, os.replace, os.rename = guarded_os_open, guarded_replace, guarded_rename
+  os.mkdir, os.makedirs = guarded_mkdir, guarded_makedirs
+
+
+_install_git_dir_guard()
+
+
 def remove_temp_repo(directory: Path) -> None:
   """Bound retries for locks that Git creates or removes during teardown."""
   for attempt in range(3):
