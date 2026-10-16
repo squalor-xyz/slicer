@@ -10981,7 +10981,7 @@
       "id": "s319",
       "title": "The orchestrator text carries its own one-slice rules",
       "short_title": "Self-contained orchestrator text",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s315"
