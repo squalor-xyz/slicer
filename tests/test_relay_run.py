@@ -1,16 +1,21 @@
-"""`slicer relay-run` records slice-relay runs in a local ledger (s282).
+"""`slicer relay-run` records slice-relay runs in a local ledger (s282, s298).
 
-The ledger, `.slicer/relay-runs.jsonl`, is gitignored, append-only and never rendered or
-read by `check`. The tests drive the CLI in-process and read what `relay-run list --json`
-returns; stale detection takes an injected clock. Tests that need a damaged ledger write
+The ledger is `<git common dir>/slicer/relay-runs.jsonl` in a git repo, shared by every
+worktree, and `.slicer/relay-runs.jsonl` otherwise (and for a project below the worktree
+root). It is append-only, never rendered and never read by `check`. The tests drive the CLI
+in-process and read what `relay-run list --json` returns; stale detection takes an injected
+clock. Tests that need a damaged ledger write
 the fixture file directly, because production code never produces one.
 """
 
 from __future__ import annotations
 
 import json
+import threading
+import time
 import unittest
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -32,6 +37,9 @@ class RelayRunCase(unittest.TestCase):
   def project(self, git: bool = False) -> support.TempRepo:
     repo = support.TempRepo(git=git)
     self.addCleanup(repo.close)
+    # The fixture sits under TMPDIR, which may be inside a real worktree. Hide that repo, so
+    # a ledger path that regressed to the git common dir could not write into the real one.
+    self.enterContext(support.isolated_discovery(repo.root))
     self.assertEqual(repo.run("init")[0], 0)
     return repo
 
@@ -413,7 +421,7 @@ class ListTests(RelayRunCase):
     self.assertEqual((code, err), (0, ""))
     self.assertEqual(out.strip(), "no relay runs")
 
-  def test_List_ReadsSiblingWorktreeLedger(self) -> None:
+  def test_List_ReadsSiblingWorktreeLegacyLedger(self) -> None:
     repo = support.TempRepo(git=True)
     self.addCleanup(repo.close)
     with support.isolated_discovery(repo.root):
@@ -424,7 +432,8 @@ class ListTests(RelayRunCase):
       made = repo._git("worktree", "add", "-q", "-b", "other", str(sibling), "HEAD")
       self.assertEqual(made.returncode, 0, made.stderr)
       local = self.begin(repo, "s1")
-      remote = ops.relay_run_begin(sibling, ["s2"]).id
+      remote = "run-old-other"
+      (sibling / LEDGER).write_text(legacy_begin(remote, "s2", "other"), encoding="utf-8")
       got = {r["id"]: r for r in self.runs(repo)}
       self.assertEqual(set(got), {local, remote})
       self.assertEqual(got[remote]["worktree"], "other")
@@ -471,14 +480,154 @@ class ListTests(RelayRunCase):
       sibling.parent.mkdir()
       made = repo._git("worktree", "add", "-q", "-b", "busy", str(sibling), "HEAD")
       self.assertEqual(made.returncode, 0, made.stderr)
-      remote = ops.relay_run_begin(sibling, ["s2"]).id
-      path = sibling / LEDGER
-      path.write_text(path.read_text(encoding="utf-8") + '{"v":1,"eve', encoding="utf-8")
+      remote = "run-old-busy"
+      (sibling / LEDGER).write_text(legacy_begin(remote, "s2", "busy") + '{"v":1,"eve', encoding="utf-8")
       self.assertEqual([r["id"] for r in self.runs(repo)], [remote])
 
 
+def legacy_begin(run: str, item: str = "s1", worktree: str = "old") -> str:
+  """One begin line as an older slicer wrote it into a worktree's own `.slicer/` ledger."""
+  event = relayrun.begin_event(run, T0, [item], worktree)
+  return json.dumps(event, ensure_ascii=False) + "\n"
+
+
+class CommonLedgerTests(RelayRunCase):
+  """In a git repo the ledger lives in the common dir, so every worktree shares it."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo(git=True)
+    self.addCleanup(repo.close)
+    self.enterContext(support.isolated_discovery(repo.root))
+    self.assertEqual(repo.run("init")[0], 0)
+    repo.commit("base")
+    return repo
+
+  def linked(self, repo: support.TempRepo, name: str) -> Path:
+    path = repo.root / "siblings" / name
+    path.parent.mkdir(exist_ok=True)
+    made = repo._git("worktree", "add", "-q", "-b", name, str(path), "HEAD")
+    self.assertEqual(made.returncode, 0, made.stderr)
+    return path
+
+  def common(self, repo: support.TempRepo) -> Path:
+    return repo.root / ".git" / "slicer" / relayrun.LEDGER_NAME
+
+  def test_RelayRun_Begin_InLinkedWorktree_WritesCommonLedger(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    # A project made before the ledger was listed: a legacy append would add the line.
+    (wt / ".slicer" / ".gitignore").write_text("feedback.md\n", encoding="utf-8")
+    ignore = (wt / ".slicer" / ".gitignore").read_text(encoding="utf-8")
+    run = ops.relay_run_begin(wt, ["s1"]).id
+    lines = self.common(repo).read_text(encoding="utf-8").splitlines()
+    self.assertEqual([json.loads(line)["run"] for line in lines], [run])
+    self.assertFalse((wt / LEDGER).exists())
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), ignore)
+
+  def test_RelayRun_List_SurvivesWorktreeRemove(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    run = ops.relay_run_begin(wt, ["s1"]).id
+    gone = repo._git("worktree", "remove", "--force", str(wt))
+    self.assertEqual(gone.returncode, 0, gone.stderr)
+    self.assertEqual([r["id"] for r in self.runs(repo)], [run])
+
+  def test_RelayRun_Step_FromAnotherWorktree_ExtendsRun(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    run = ops.relay_run_begin(wt, ["s1"]).id
+    self.step(repo, run, "--task", "from main")
+    ops.relay_run_end(repo.root, run, "pass")
+    got = self.runs(repo)
+    self.assertEqual([(r["id"], r["outcome"]) for r in got], [(run, "pass")])
+    self.assertEqual([s["task"] for s in got[0]["steps"]], ["from main"])
+
+  def test_RelayRun_Step_UnknownRun_NamesCommonLedger(self) -> None:
+    repo = self.repo()
+    payload = self.refuse(
+      repo, "relay-run", "step", "run-nope", "--role", "gate", "--agent", "A",
+      "--phase", "start", code=2, error="unknown_run",
+    )
+    self.assertIn(str(self.common(repo)), payload["message"])
+
+  def test_RelayRun_List_ReadsLegacyWorktreeLedger(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    (wt / LEDGER).write_text(legacy_begin("run-old-wt", "s7"), encoding="utf-8")
+    (repo.root / LEDGER).write_text(legacy_begin("run-old-here", "s8"), encoding="utf-8")
+    got = self.runs(repo)
+    self.assertEqual(sorted(r["id"] for r in got), ["run-old-here", "run-old-wt"])
+    self.assertEqual({r["id"]: r["items"] for r in got}["run-old-wt"], ["s7"])
+
+  def test_RelayRun_List_RunInCommonAndLegacyLedger_ListsOnce(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    run = ops.relay_run_begin(wt, ["s1"]).id
+    (wt / LEDGER).write_text(self.common(repo).read_text(encoding="utf-8"), encoding="utf-8")
+    self.assertEqual([r["id"] for r in self.runs(repo)], [run])
+
+  def test_RelayRun_List_CommonLedgerDamaged_IsCorrupt(self) -> None:
+    repo = self.repo()
+    ops.relay_run_begin(repo.root, ["s1"])
+    with self.common(repo).open("a", encoding="utf-8") as fh:
+      fh.write("{not json\n")
+    payload = self.refuse(repo, "relay-run", "list", code=3, error="corrupt")
+    self.assertIn("relay-runs.jsonl:2", payload["message"])
+
+  def test_RelayRun_NoGit_KeepsSlicerLedger(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    self.assertEqual(json.loads(repo.read(LEDGER).splitlines()[0])["run"], run)
+    self.assertEqual([r["id"] for r in self.runs(repo)], [run])
+
+  def test_RelayRun_ProjectBelowWorktreeRoot_KeepsSlicerLedger(self) -> None:
+    repo = support.TempRepo(git=True)
+    self.addCleanup(repo.close)
+    sub = repo.root / "sub"
+    sub.mkdir()
+    with support.isolated_discovery(repo.root):
+      self.assertEqual(repo.run("--root", str(sub), "init")[0], 0)
+      run = ops.relay_run_begin(sub, ["s1"]).id
+      self.assertEqual(json.loads((sub / LEDGER).read_text(encoding="utf-8"))["run"], run)
+      self.assertFalse((repo.root / ".git" / "slicer").exists())
+
+  def test_RelayRun_ConcurrentAppends_FromTwoWorktrees_KeepEveryLine(self) -> None:
+    repo = self.repo()
+    trees = [self.linked(repo, "one"), self.linked(repo, "two")]
+    inside, overlaps, errors = [0], [0], []
+    real = relayrun.append
+
+    def slow_append(root: Path, event: dict) -> None:
+      inside[0] += 1
+      overlaps[0] = max(overlaps[0], inside[0])
+      time.sleep(0.01)  # long enough that an unlocked second writer lands inside
+      try:
+        real(root, event)
+      finally:
+        inside[0] -= 1
+
+    def work(tree: Path) -> None:
+      try:
+        for _ in range(6):
+          ops.relay_run_begin(tree, ["s1"])
+      except Exception as exc:  # noqa: BLE001 -- reported by the assertion below
+        errors.append(exc)
+
+    with patch.object(relayrun, "append", slow_append):
+      threads = [threading.Thread(target=work, args=(tree,)) for tree in trees]
+      for thread in threads:
+        thread.start()
+      for thread in threads:
+        thread.join()
+    self.assertEqual(errors, [])
+    self.assertEqual(overlaps[0], 1)
+    events = relayrun.read_events(self.common(repo))
+    self.assertEqual(len(events), 12)
+    self.assertEqual(len({event["run"] for _, event in events}), 12)
+
+
 class LedgerTests(RelayRunCase):
-  def test_Ledger_IsGitignored_AndNotInRender(self) -> None:
+  def test_Ledger_InGitRepo_IsUntrackedAndNotInRender(self) -> None:
     repo = self.project(git=True)
     self.ok(repo, "render")
     repo.commit("base")
@@ -492,11 +641,19 @@ class LedgerTests(RelayRunCase):
     run = self.begin(repo, "s1")
     self.step(repo, run)
     self.ok(repo, "relay-run", "end", run, "--outcome", "pass")
-    self.assertTrue((repo.root / LEDGER).is_file())
+    self.assertTrue((repo.root / ".git" / "slicer" / relayrun.LEDGER_NAME).is_file())
+    self.assertFalse((repo.root / LEDGER).exists())
     self.assertEqual(snapshot(), before)
     self.assertEqual(repo.run("check")[0], code_before)
     status = repo._git("status", "--porcelain")
     self.assertEqual(status.stdout.splitlines(), [])
+
+  def test_Ledger_InCheckout_IsGitignored(self) -> None:
+    repo = self.project(git=True)
+    repo.commit("base")
+    legacy = repo.root / LEDGER
+    legacy.write_text(legacy_begin("run-old"), encoding="utf-8")
+    self.assertEqual(repo._git("status", "--porcelain").stdout.splitlines(), [])
     ignored = repo._git("check-ignore", LEDGER)
     self.assertEqual(ignored.returncode, 0, ignored.stderr)
 

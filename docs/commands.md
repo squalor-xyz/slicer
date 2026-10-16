@@ -387,7 +387,7 @@ templates/*.md       render templates, changed with `slicer template`
 relay-roles.json     the slice-relay role matrix, when the project keeps one (see Relay roles)
 render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), one file per slice, and RELAY-ROLES.md
 log.jsonl            append-only history of status changes
-relay-runs.jsonl     local ledger of slice-relay runs; gitignored, never rendered or checked (see Relay run ledger)
+relay-runs.jsonl     legacy ledger of slice-relay runs, read but no longer written in a git repo; gitignored (see Relay run ledger)
 .gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
 
@@ -527,11 +527,16 @@ new schema, which an older slicer refuses.
 
 A relay orchestrator records what a slice relay is doing with `slicer relay-run`, so that
 `relay-run list` and the TUI can show which slices are being relayed and which agents are
-running. The records go to `.slicer/relay-runs.jsonl`, an append-only file with one JSON
-event per line. Like `.slicer/feedback.md` it is gitignored (`init` and the first write add
-it to `.slicer/.gitignore`), never rendered, never read by `check`, and not part of the
-roadmap state: deleting it loses only the board. A run is monitor-only. Recording one
-launches nothing and does no git write.
+running. In a git repo the records go to `<git common dir>/slicer/relay-runs.jsonl`
+(`.git/slicer/relay-runs.jsonl` in a plain checkout), an append-only file with one JSON event
+per line, with a lock file `relay-runs.lock` beside it. Every worktree of the repo shares
+that one ledger, so `begin` in a slice worktree, `step` from another and `list` from main
+all see the same runs, and `git worktree remove` does not delete them. Outside git, or for a
+project below the worktree root, the ledger is `.slicer/relay-runs.jsonl` in the checkout,
+as it was for every checkout before. Like `.slicer/feedback.md` it is untracked (the
+checkout's file is gitignored: `init` and the first write add it to `.slicer/.gitignore`),
+never rendered, never read by `check`, and not part of the roadmap state: deleting it loses
+only the board. A run is monitor-only. Recording one launches nothing and does no git write.
 
 ```sh
 RUN=$(slicer relay-run begin s282 --worktree .worktrees/s282)
@@ -550,11 +555,15 @@ subagent is counted under `subagents`, not under its role). The state is compute
 read: `ended` once the run has an outcome, `stale` when it has had no event for more than
 30 minutes (an orchestrator that died), else `active`.
 
-A step is added in the checkout whose ledger holds its run; `list` also reads each sibling
-worktree's ledger as a plain file. A ledger line that cannot be read (not JSON, an unknown event, or a field of the wrong
-type) stops `list` and the writes in that checkout with code `corrupt`, naming
-`relay-runs.jsonl` and the line. A writer also refuses a last line that lacks its newline,
-while `list` treats it as an append in progress. Delete the line or the file.
+A step is added to a run in the ledger the checkout writes to, so in a git repo from any of
+its worktrees. `list` also reads the legacy `.slicer/relay-runs.jsonl` of this checkout and of
+each sibling worktree as plain files, so runs recorded before the ledger moved still show; a
+run found in more than one file is listed once, and a legacy file that cannot be read is
+skipped. A step cannot yet be added to a run that exists only in a legacy file: begin a new
+run. A ledger line that cannot be read (not JSON, an unknown event, or a field of the wrong
+type) stops `list` and the writes with code `corrupt`, naming `relay-runs.jsonl` and the
+line. A writer also refuses a last line that lacks its newline, while `list` treats it as an
+append in progress. Delete the line or the file.
 
 ## Relay roles
 

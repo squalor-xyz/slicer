@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-300 items · — 18 · done 276 · retired 6
+300 items · — 17 · done 276 · retired 6 · review 1
 
 v1.13.0 release
 
@@ -49,7 +49,7 @@ v1.12.0 release
 |---|---|---|---|---|---|---|---|
 | 8 | [s293](slices/s293.md) | Relay briefs label each agent and set its model and effort | S | 1 | slicer | owner request, session 2026-10-15: show each subagent's model and effort while watching the nested-relay trial | done |
 | 9 | [s296](slices/s296.md) | Nested relay contract | M | 2 | slicer | owner decision, session 2026-10-15: slicer ai relay is the main relay contract; nested-relay trials s290, s279 and idea0 S16, S03 | done |
-| 10 | [s298](slices/s298.md) | Ledger outlives worktrees | M | 2 | slicer | nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove | — |
+| 10 | [s298](slices/s298.md) | Ledger outlives worktrees | M | 2 | slicer | nested-relay trial idea0, 2026-10-15, defect 4: S16 ledger lost with worktree remove | review |
 | 11 | [s299](slices/s299.md) | Step task kept | S | 1 | slicer | nested-relay trial idea0, 2026-10-15, defect 5: heartbeat overwrote S16 step 2 task | done |
 | 12 | [s300](slices/s300.md) | Worktree gitignore | S | 2 | slicer | nested-relay trial idea0, 2026-10-15: relay-run begin changed .slicer/.gitignore in the slice commit | — |
 | 13 | [s301](slices/s301.md) | add --id refuses an id a sibling worktree already filed | S | 1 | slicer | nested-relay trial 2026-10-15: add --id s296 on the s294 branch collided with an uncommitted s296 on main; check warned only after the write · discovered from s294 | done |
