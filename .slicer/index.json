@@ -9919,10 +9919,22 @@
       "id": "s295",
       "title": "Tests pin the render-stale flag after a failed wizard render and after a move",
       "short_title": "Tests pin the render-stale flag after a failed wizard render and after a move",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "fcb4def6-1472-45b9-8bd6-f5944d868e56",
+          "kind": "",
+          "text": "**2026-10-16** — Ready for review: added failed-wizard-render and move render-stale regression tests. Both pass current code and fail when their respective drift_due assignment is removed; source restored byte-identically. Status tests: 16 passed; affected tests: 119 passed; full suite: 2226 tests, OK with 1 skip. slicer check and git diff --check passed. Reviewer and final gate: VERDICT: PASS, no findings.",
+          "created_at": "2026-10-16T13:07:52Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9942,7 +9954,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
