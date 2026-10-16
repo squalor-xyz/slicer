@@ -1,0 +1,41 @@
+{
+  "id": "s339",
+  "title": "Agent instructions explain the blocked marker in list rows",
+  "lead": [
+    "Tell agents, in the text that `slicer ai instructions` and the slicer skill print, that a `!` after the row number in a text `list` or `find` row marks an item that waits on an unmet dependency."
+  ],
+  "depends_note": null,
+  "findings_note": "owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the marker, the list or find output, the JSON shape, the TUI, or docs/commands.md.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s286 added the `!` marker to the text rows of `list` and `find` (`_item_rows`, `src/slicer/cli.py:1758`). `docs/commands.md:244` documents it, but the onboarding text agents read does not. The Inventory line in `TRACKING` (`src/slicer/ai.py:76`) names only `slicer list --json --lean`. On 2026-10-16 the owner ran `slicer list` in a session; s334, s335, s336 and s285 showed `!`. The agent loaded the instructions and still could not say what the marker meant. An agent often reads text output the owner ran, not only JSON. It should be able to read the marker without opening docs/commands.md, which AGENTS.md says to open only for a JSON contract."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: one sentence in `TRACKING`, next to the Inventory line, so that `ai instructions` and the skill both carry it. Say that the text form of `list` and `find` marks an item that waits on a dependency not yet met with `!` after the row number, and that `slicer show ID --json --lean` names its `depends_on`.\n- `skills/slicer/SKILL.md`, `.claude/skills/slicer/SKILL.md`, `.agents/skills/slicer/SKILL.md`: the committed skill copies, regenerated so that `test_CommittedSkill_MatchesSkillText` (`tests/test_ai.py:321`) still passes.\n- `tests/test_ai.py`, `CHANGELOG.md` under Unreleased."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Instructions_ExplainBlockedMarker_InListRows`: the `ai instructions` text and `ai.skill_text()` both name the `!` marker for an item that waits on an unmet dependency."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test and watch it fail.\n2. Add the sentence to `TRACKING`.\n3. Regenerate the three committed skill copies from `ai.skill_text()` the way slicer writes them, then run `tests/test_ai.py`.\n4. Add the CHANGELOG entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes.\n- The output of `slicer ai instructions` and `slicer ai skill` contains the new sentence."
+    },
+    {
+      "heading": "Git",
+      "body": "Worktree `.worktrees/s339`, branch `feature/s339-instructions-blocked-marker`. Commit only on the branch."
+    }
+  ],
+  "notes": []
+}

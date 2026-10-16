@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 339,
+  "next_id": 340,
   "preamble": "",
   "passes": [
     {
@@ -11604,6 +11604,36 @@
         ],
         "trees_literal": false,
         "findings": "Owner documentation review 2026-10-16; CONTRIBUTING.md:6 only points to AGENTS.md and ARCHITECTURE.md; ARCHITECTURE.md:19 describes layers as a plain text list. Existing project guidance already defines worktrees, tests, tracking and handoff, but lacks a short human-oriented walkthrough connecting these steps.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s339",
+      "title": "Agent instructions explain the blocked marker in list rows",
+      "short_title": "Agent instructions explain the blocked marker in list rows",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not",
         "discovered_from": "",
         "parent": "",
         "cites": [],

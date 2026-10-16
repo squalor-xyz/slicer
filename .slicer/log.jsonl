@@ -1763,3 +1763,7 @@
 {"when": "2026-10-16T13:37:02Z", "item": "s334", "action": "add", "from": "", "to": "open", "note": "Make getting started a short human-first walkthrough"}
 {"when": "2026-10-16T13:37:02Z", "item": "s335", "action": "add", "from": "", "to": "open", "note": "Explain the human role when working with agents"}
 {"when": "2026-10-16T13:37:02Z", "item": "s336", "action": "add", "from": "", "to": "open", "note": "Give human contributors a practical development walkthrough"}
+{"when": "2026-10-16T18:35:09Z", "item": "s339", "action": "add", "from": "", "to": "open", "note": "Agent instructions explain the blocked marker in list rows"}
+{"when": "2026-10-16T18:35:27Z", "item": "s339", "action": "set", "from": "", "to": "", "note": "size -→S; trees -→slicer; findings -→owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not"}
+{"when": "2026-10-16T18:35:27Z", "item": "s339", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T18:35:32Z", "item": "s339", "action": "edit", "from": "", "to": "", "note": "Check"}
