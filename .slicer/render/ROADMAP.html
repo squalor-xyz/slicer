@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">319 items · — 31 · done 281 · retired 7</p>
+<p class="summary">319 items · — 30 · done 281 · retired 7 · reviewing 1</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -89,7 +89,7 @@
 <tr class="open"><td>34</td><td>s315</td><td>Pin relay v4 wiring</td><td>S</td><td>1</td><td>slicer</td><td>s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296</td><td class="status">—</td></tr>
 <tr class="retired"><td>35</td><td>s316</td><td>Extend legacy runs</td><td>S</td><td>1</td><td>slicer</td><td>s298 relay 2026-10-16: legacy-ledger run lists but step/end give unknown_run · Owner chose 2026-10-16 to keep s298&#x27;s documented workaround (begin a new run) instead of writing legacy ledgers; no run in this repo is affected. · discovered from s298</td><td class="status">retired</td></tr>
 <tr class="open"><td>36</td><td>s317</td><td>Shared file lock</td><td>S</td><td>1</td><td>slicer</td><td>s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298</td><td class="status">—</td></tr>
-<tr class="open"><td>37</td><td>s318</td><td>No git-dir writes from tests</td><td>S</td><td>2</td><td>slicer</td><td>s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298</td><td class="status">—</td></tr>
+<tr class="started"><td>37</td><td>s318</td><td>No git-dir writes from tests</td><td>S</td><td>2</td><td>slicer</td><td>s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298</td><td class="status">reviewing</td></tr>
 <tr class="open"><td>38</td><td>s319</td><td>Self-contained orchestrator text</td><td>S</td><td>2</td><td>slicer</td><td>s296 review 2026-10-16: spec Lead vs Files; owner chose inline · discovered from s296</td><td class="status">—</td></tr>
 <tr class="open"><td>39</td><td>s321</td><td>add-pass counts items</td><td>S</td><td>1</td><td>slicer</td><td>dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14</td><td class="status">—</td></tr>
 <tr class="open"><td>40</td><td>s320</td><td>Select relay role alternatives across vendors</td><td>M</td><td>2</td><td>slicer</td><td>Owner request, 2026-10-16: Codex implementer and orchestrator alternatives, automatic selection with overrides, and future bidirectional harness launching.</td><td class="status">—</td></tr>
