@@ -70,6 +70,30 @@ class SupportGuardTests(unittest.TestCase):
       os.makedirs(target / "deep", exist_ok=True)
     self.assertFalse(target.exists())
 
+  def test_SupportGuard_ReadWriteOpenOfExistingFile_Raises(self) -> None:
+    target = self.root / "config"
+    with support.allow_git_dir_writes():
+      target.write_text("[core]\n", encoding="utf-8")
+    with self.assertRaises(AssertionError):
+      open(target, "r+")
+    self.assertEqual(target.read_text(encoding="utf-8"), "[core]\n")
+
+  def test_SupportGuard_OsOpenWriteOnlyWithoutCreate_Raises(self) -> None:
+    target = self.root / "config"
+    with support.allow_git_dir_writes():
+      target.write_text("[core]\n", encoding="utf-8")
+    with self.assertRaises(AssertionError):
+      os.open(target, os.O_WRONLY)
+
+  def test_SupportGuard_WriteThroughSymlinkIntoRoot_Raises(self) -> None:
+    link = self.outside / "link"
+    link.symlink_to(self.root, target_is_directory=True)
+    target = self.root / "ledger.jsonl"
+    with self.assertRaises(AssertionError) as caught:
+      open(link / "ledger.jsonl", "a")
+    self.assertIn(str(target), str(caught.exception))
+    self.assertFalse(target.exists())
+
   def test_SupportGuard_WriteOutsideGuardedRoot_Allowed(self) -> None:
     sibling = self.outside / "common-sibling"
     sibling.mkdir()
