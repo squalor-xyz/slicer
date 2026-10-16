@@ -637,7 +637,21 @@ def _count_of(n: int, word: str) -> str:
 
 
 def cmd_relay_run_list(args: argparse.Namespace) -> int:
-  runs = relayrun.list_runs(_run_root(args), active=args.active)
+  root = _run_root(args)
+  runs = relayrun.list_runs(root)
+  if args.run is not None:
+    runs = [run for run in runs if run.id == args.run]
+    if not runs:
+      paths = [relayrun.ledger_path(root)]
+      if relayrun.common_ledger_path(root) is not None:
+        paths.extend(relayrun.legacy_ledger_path(checkout)
+                     for checkout in [root, *vcs.sibling_worktrees(root)])
+      raise StateError(
+        f"unknown run {args.run!r}; searched ledgers: {', '.join(str(path) for path in paths)}. "
+        "Use relay-run list to see the known runs.", code="unknown_run",
+      )
+  if args.active:
+    runs = [run for run in runs if run.state == "active"]
   lines = []
   for run in runs:
     counts = run.counts()
@@ -3940,6 +3954,7 @@ def build_parser() -> argparse.ArgumentParser:
     "list", cmd_relay_run_list,
     "runs in this checkout and its sibling worktrees (no lock, no write)",
   )
+  inner.add_argument("run", nargs="?", metavar="RUN", help="show only this run")
   inner.add_argument(
     "--active", action="store_true",
     help="only runs that have not ended and have had an event in the last 30 minutes",

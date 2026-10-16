@@ -18,11 +18,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/cli.py`: `relay-run list` takes an optional positional `run`. With it, the text and the JSON hold only that run (`{\"runs\": [ ... ]}`, same shape, one entry). An id that no listed ledger holds is `unknown_run` (exit 3, like `step` and `end`), naming the ledgers read. `--active` with a run id still filters: an ended or stale run gives `{\"runs\": []}` and exit 0.\n- `docs/commands.md` (the `relay-run list` row), `docs/agents.md` (`relay-run list` payload), `CHANGELOG.md` under Added.\n- `tests/test_relay_run.py`."
+      "body": "- `src/slicer/cli.py`: `relay-run list` takes an optional positional `run`. With it, the text and the JSON hold only that run (`{\"runs\": [ ... ]}`, same shape, one entry). An id that no listed ledger holds is `unknown_run` (exit 2, like `step` and `end`), naming the ledgers read. `--active` with a run id still filters: an ended or stale run gives `{\"runs\": []}` and exit 0.\n- `docs/commands.md` (the `relay-run list` row), `docs/agents.md` (`relay-run list` payload), `CHANGELOG.md` under Added.\n- `tests/test_relay_run.py`."
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_RelayRun_List_WithRunId_OnlyThatRun`: two runs; `list RUN2 --json` has one entry, RUN2.\n- `test_RelayRun_List_WithRunId_TextOnlyThatRun`: the text output has RUN2's header and step lines, none of RUN1's.\n- `test_RelayRun_List_UnknownRunId_UnknownRun`: exit 3, `unknown_run`.\n- `test_RelayRun_List_RunIdFromSiblingWorktree_Found`: a run in a sibling worktree's ledger is found by id."
+      "body": "- `test_RelayRun_List_WithRunId_OnlyThatRun`: two runs; `list RUN2 --json` has one entry, RUN2.\n- `test_RelayRun_List_WithRunId_TextOnlyThatRun`: the text output has RUN2's header and step lines, none of RUN1's.\n- `test_RelayRun_List_UnknownRunId_UnknownRun`: exit 2, `unknown_run`.\n- `test_RelayRun_List_RunIdFromSiblingWorktree_Found`: a run in a sibling worktree's ledger is found by id."
     },
     {
       "heading": "Implement",
