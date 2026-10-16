@@ -807,6 +807,38 @@ class AiSkillWriteTests(unittest.TestCase):
 class AiRelayTests(unittest.TestCase):
   """`ai relay` prints the slice relay and writes nothing."""
 
+  def test_OrchestratorText_DoesNotSendToAiRelay(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = " ".join(ai.orchestrator_text(finish).split())
+        self.assertNotRegex(text, r"slicer ai relay`[^.]*follow")
+        self.assertNotIn("one-slice parts", text)
+        self.assertIn("This text is your whole contract for one slice", text)
+
+  def test_OrchestratorText_GateEveryBriefStop_SameAsRelayText(self) -> None:
+    for finish in ("done", "handoff"):
+      for kind in ("", "implementation report"):
+        relay = ai.relay_text(finish, kind)
+        orchestrator = ai.orchestrator_text(finish, kind)
+        for heading in ("Gate", "Every brief", "Stop"):
+          with self.subTest(finish=finish, kind=kind, heading=heading):
+            marker = f"## {heading}\n\n"
+            self.assertEqual(orchestrator.count(marker), 1)
+            body = relay.split(marker, 1)[1].split("\n## ", 1)[0]
+            self.assertEqual(orchestrator.split(marker, 1)[1].split("\n## ", 1)[0], body)
+
+  def test_OrchestratorText_Order_HasNoOuterSteps(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = ai.orchestrator_text(finish)
+        self.assertEqual(text.count("## Order\n\n"), 1)
+        order = text.split("## Order\n\n", 1)[1].split("\n## ", 1)[0]
+        self.assertNotRegex(order.lower(), r"relay-run (?:begin|end)|merge|land")
+        for step in ("implementer", "review", "gate", "VERDICT: PASS", "closing note", "commit"):
+          self.assertIn(step, order)
+        self.assertIn(f"slicer {finish} ID", order)
+        self.assertIn("Recording is advisory: a failed `relay-run` call never stops the relay.", text)
+
   def test_AiRelay_Json_ContractFollowsContractLine(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       with patch.object(ai, "contract_line", return_value="relay v999-test"):

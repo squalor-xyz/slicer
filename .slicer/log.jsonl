@@ -1763,3 +1763,6 @@
 {"when": "2026-10-16T13:37:02Z", "item": "s334", "action": "add", "from": "", "to": "open", "note": "Make getting started a short human-first walkthrough"}
 {"when": "2026-10-16T13:37:02Z", "item": "s335", "action": "add", "from": "", "to": "open", "note": "Explain the human role when working with agents"}
 {"when": "2026-10-16T13:37:02Z", "item": "s336", "action": "add", "from": "", "to": "open", "note": "Give human contributors a practical development walkthrough"}
+{"when": "2026-10-16T18:36:46Z", "item": "s319", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T19:38:34Z", "item": "s319", "action": "note", "from": "", "to": "", "note": "Verified after final VERDICT: PASS: relay-orchestrator is se", "by": "Jon Robbins"}
+{"when": "2026-10-16T19:38:34Z", "item": "s319", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
