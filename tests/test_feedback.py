@@ -323,6 +323,16 @@ class LinkedWorktreeGitignoreTests(unittest.TestCase):
     self.assertEqual(code, 0, err)
     self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
 
+  def test_FeedbackRecord_LinkedWorktreeExcludeUnwritable_StillRecords(self) -> None:
+    repo, wt = linked_project(self)
+    exclude = repo.root / ".git" / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    exclude.unlink(missing_ok=True)
+    exclude.mkdir()  # a directory: reading and replacing it both fail
+    feedback.record(wt, "abc", "owner/repo", 7, "https://example.invalid/7")
+    self.assertEqual(feedback.reported_hashes(wt, "owner/repo"), {"abc"})
+    self.assertEqual((wt / ".slicer" / ".gitignore").read_text(encoding="utf-8"), OLD_GITIGNORE)
+
 
 class FeedbackIsolationTests(FeedbackBase):
   def test_Append_LeavesRoadmapStateAndRenderAlone(self) -> None:

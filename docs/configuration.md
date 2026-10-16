@@ -311,7 +311,7 @@ lock degrades to a no-op. The lock file is not tracked: `init` lists `lock` in
 so a project made before this change gets it on its next write. In a linked git worktree the
 line goes into the repo's `info/exclude` (as `**/.slicer/lock`) instead, because `.slicer/.gitignore`
 is tracked and an edit there would land in the slice's commit; the same holds for the
-feedback log, its sidecar and the legacy relay ledger. `slicer check` warns while the tracked file
+feedback log and its sidecar. `slicer check` warns while the tracked file
 lacks a line, and `slicer setup-git --attributes` on main adds them. A project below the
 worktree root keeps the tracked-file behaviour. It is safe to delete when no slicer
 is running.

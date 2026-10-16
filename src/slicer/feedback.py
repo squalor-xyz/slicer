@@ -89,7 +89,12 @@ def ensure_gitignore(root: Path, name: str = LOG_NAME) -> None:
   if common is None:
     _add_lines(gitignore_path(root), [name])
   else:
-    _add_lines(common / "info" / "exclude", [f"**/{store.DIR_NAME}/{name}"])
+    # The exclude file is outside the worktree, where a sandbox may refuse writes; the
+    # line is advisory there, so it never blocks the write it guards.
+    try:
+      _add_lines(common / "info" / "exclude", [f"**/{store.DIR_NAME}/{name}"])
+    except (OSError, UnicodeDecodeError):
+      pass
 
 
 def append(root: Path, kind: str, text: str, item: str | None) -> dict[str, str]:
