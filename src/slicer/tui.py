@@ -1179,7 +1179,8 @@ BOARD_REFRESH_TICKS = 8
 BOARD_RECENT_ENDED = timedelta(hours=1)
 SPINNER = "|/-\\"
 # The relay's own roles (`slicer ai relay`). An architect leads the pipeline when a run has one.
-RELAY_PIPELINE = tuple(role for role in roles.ROLE_NAMES if role != "architect")
+# The orchestrator is the parent of the worker stages, drawn above them, never a stage of its own.
+RELAY_PIPELINE = tuple(role for role in roles.ROLE_NAMES if role not in ("architect", "orchestrator"))
 ROLE_WIDTH = 11
 
 

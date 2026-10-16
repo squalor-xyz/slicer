@@ -146,8 +146,10 @@ def handoff_policy_text(kind: str) -> str:
 # `relay-orchestrator` role says the same number, so a mismatch between slicer and
 # the role files shows. Bump it when a rule an outer session, orchestrator or role
 # follows changes (order, gate, tracking order, waiting, report shape), not for a
-# rewording.
-RELAY_CONTRACT = 4
+# rewording. 5: Setup resolves the role lineup, orchestrator included, with
+# `relay-roles recommend` and the owner accepts it as a whole or overrides rows; a role
+# runs as a native subagent on the orchestrator's harness and as a headless session on another.
+RELAY_CONTRACT = 5
 
 
 def contract_line() -> str:
@@ -214,7 +216,9 @@ Before the worktree exists, the outer session reads the slice's size with
   slice's effort and the cut allow it (see Slivers) and when that costs less than
   one implementer. The outer session confirms the sliver list and which slivers
   run in parallel with the owner.
-- the agent, vendor, model and reasoning effort for each role.
+- the agent, vendor, model and reasoning effort for each role. A role on the
+  orchestrator's own harness runs as a native subagent; a role on another harness
+  runs as a headless session in the slice worktree with the same brief.
 - the orchestrator's agent, model and reasoning effort, set explicitly on every
   spawn. It runs as the agent type `relay-orchestrator` where the harness has one
   installed, otherwise as a general-purpose agent briefed with
@@ -347,7 +351,9 @@ goes to the owner. A part brief names the part's own files and the files it must
 not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
-explicitly rather than inherited from the session. Give each agent a short label
+explicitly rather than inherited from the session. Launch it by its row's agent: on
+the orchestrator's own harness as a native subagent, on another harness as a headless
+session in the slice worktree with the same brief. Give each agent a short label
 `ID role`, for example `s279 implementer` or `s279 gate`, and pass the same label
 as the `--task` line of `relay-run step`.
 
@@ -358,12 +364,21 @@ as the `--task` line of `relay-run step`.
 # `slicer relay-roles`. Its render is added to the relay only for a project that has it,
 # so the generic text never names a vendor.
 ROLES_PROPOSE = (
-  "Propose each role's agent, vendor, model and reasoning effort from the matrix below, "
-  "and let the owner confirm or override each one. "
+  "Propose the lineup (agent, vendor, model and reasoning effort for each role) from the matrix below. "
   "`slicer relay-roles recommend ID --well-specified yes|no --split yes|no` matches the "
-  "slice against the matrix and returns the first row for each role; you judge whether the "
-  "slice is well specified and whether it is a part of a split slice. "
-  "Pass `--split yes` for a part of a split slice and `--split no` for a whole one.\n\n"
+  "slice against the matrix and resolves every role, the orchestrator included, to one row; "
+  "it also lists each role's other matching rows as alternatives and says why it chose each "
+  "row. You judge whether the slice is well specified and whether it is a part of a split "
+  "slice. Pass `--split yes` for a part of a split slice and `--split no` for a whole one. "
+  "The matrix order decides which row a role gets, unless the owner names a preferred agent "
+  "(`--prefer-agent AGENT`, which a role without a matching row on that agent ignores) or a "
+  "row for a role (`--select ROLE=ROW_ID`, once per role); the harness the owner launched "
+  "the relay from changes nothing by itself. "
+  "Show the resolved lineup once, and let the owner accept it as a whole or override "
+  "individual rows, then run `recommend` again with those overrides. Accepting the lineup "
+  "settles only the agent, vendor, model and reasoning effort of each role: it does not by "
+  "itself authorize starting paid sessions, committing or landing, and the other Setup "
+  "decisions stay the owner's.\n\n"
 )
 
 ROLES_MISSING = (

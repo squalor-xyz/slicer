@@ -11,14 +11,17 @@
 | r2 | Implementer | well specified, whole slice, effort 2, size S | Claude Code | Claude | haiku | xhigh | - |
 | r3 | Implementer | whole slice | Claude Code | Claude | sonnet | high | anything the rows above do not match |
 | r7 | Implementer | split part | Claude Code | Claude | haiku | xhigh | per part of a split slice |
+| r9 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | medium | alternate implementer for any slice, split part or sliver |
 | r4 | Reviewer | every slice | Claude Code | Claude | opus | medium | - |
 | r5 | Gate | every slice | Claude Code | Claude | opus | medium | - |
 | r6 | Architect | size L | Claude Code | Claude | opus | high | - |
+| r10 | Orchestrator | every slice | Claude Code | Claude | opus | high | default orchestrator |
+| r11 | Orchestrator | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate orchestrator |
 
 ## Rules
 
 - u1: A reviewer never wrote code in the slice it reviews.
-- u2: No cross-vendor reviewer unless the owner asks.
+- u2: Rows for any role may be selected across vendors, automatically or by the owner; u1 still holds, so nobody who wrote code in a slice reviews or gates it.
 - u3: Roles on the orchestrator's own agent run as subagents; a role on another agent runs headless in the slice worktree with the same brief.
 - u4: "well specified" means the slice names its files, failing tests, implementation steps and checks, and needs no open owner decision.
 - u5: Split a slice only into parts with disjoint files and their own tests; a slice too big for one implementer is two slices or a slivered slice.

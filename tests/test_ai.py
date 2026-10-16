@@ -842,7 +842,7 @@ class AiRelayTests(unittest.TestCase):
       code, out, err = repo.run("ai", "relay", "--json")
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
-      self.assertEqual(json.loads(out), {"contract": "relay v4", "relay": text})
+      self.assertEqual(json.loads(out), {"contract": "relay v5", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -1327,7 +1327,7 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertNotIn("# Relay roles", out)
     setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
     self.assertIn(
-      "Propose each role's agent, vendor, model and reasoning effort from the matrix below",
+      "Propose the lineup (agent, vendor, model and reasoning effort for each role) from the matrix below.",
       setup,
     )
     self.assertNotIn("relay-roles init", out)

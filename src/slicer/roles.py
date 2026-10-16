@@ -21,9 +21,16 @@ if TYPE_CHECKING:
 # 2 adds `when.sliver`. A version 1 file has no such key; it loads as "either" and the
 # next write makes it version 2. An older slicer refuses a version 2 file instead of
 # ignoring the condition (which would make the sliver row match every item).
-ROLES_VERSION = 2
-# The roles the relay knows. A row for any other role has nothing to run.
-ROLE_NAMES = ("implementer", "reviewer", "gate", "architect")
+# 3 adds the `orchestrator` role. A version 1 or 2 file has no such row, so it loads
+# unchanged and the next write makes it version 3; an older slicer refuses a version 3
+# file instead of dropping or rejecting the row it cannot name.
+ROLES_VERSION = 3
+# The roles the relay knows. A row for any other role has nothing to run. The order is
+# the order of `relay-roles recommend`: new roles go last so earlier positions keep their
+# meaning.
+ROLE_NAMES = ("implementer", "reviewer", "gate", "architect", "orchestrator")
+# Why a row was selected for a role, in the order the choice is tried.
+SELECTED_BY = ("override", "preferred_agent", "matrix_order", "unmatched")
 # Sizes are free text, but the conventional ones read in size order, not alphabetically.
 _SIZE_ORDER = ("S", "M", "L")
 SCORES = (1, 2, 3)
@@ -270,6 +277,122 @@ class RoleMatrix:
     )
 
 
+@dataclass
+class RolePick:
+  """One role's resolved row, why it was chosen, and the other rows that could have been."""
+
+  role: str
+  row: RoleRow | None
+  # Every other row that matches the slice, in matrix order.
+  alternatives: list[RoleRow] = field(default_factory=list)
+  selected_by: str = "unmatched"
+
+  def to_dict(self) -> dict[str, Any]:
+    return {
+      "role": self.role,
+      "row": self.row.to_dict() if self.row else None,
+      "alternatives": [row.to_dict() for row in self.alternatives],
+      "selected_by": self.selected_by,
+    }
+
+
+def _bad_field(message: str) -> StateError:
+  return StateError(message, code="bad_role_field")
+
+
+def _ids(rows: list[RoleRow]) -> str:
+  return ", ".join(row.id for row in rows)
+
+
+def parse_selectors(values: list[str]) -> dict[str, str]:
+  """`ROLE=ROW_ID` selectors as a role-to-row-id mapping, at most one per role."""
+  out: dict[str, str] = {}
+  for value in values:
+    role, sep, row_id = value.partition("=")
+    role, row_id = role.strip(), row_id.strip()
+    if not sep or not role or not row_id:
+      raise _bad_field(
+        f"selector {value!r} is not ROLE=ROW_ID, such as implementer=r9; "
+        "`slicer relay-roles show` lists the row ids"
+      )
+    if role not in ROLE_NAMES:
+      raise _bad_field(
+        f"selector {value!r} names role {role!r}, which is not one of {', '.join(ROLE_NAMES)}"
+      )
+    if role in out:
+      raise _bad_field(
+        f"role {role} is selected twice ({out[role]} and {row_id}); give one --select per role"
+      )
+    out[role] = row_id
+  return out
+
+
+def _check_selection(
+  matrix: RoleMatrix, role: str, row_id: str, eligible: list[RoleRow],
+) -> RoleRow:
+  """The row an override names, once it is known to be a row of this role that matches."""
+  row = matrix.row(row_id)
+  if row.role != role:
+    raise _bad_field(
+      f"row {row.id} has role {row.role}, not {role}; "
+      + (f"the {role} rows that match this slice are {_ids(eligible)}" if eligible
+         else f"no {role} row matches this slice")
+    )
+  if row not in eligible:
+    raise _bad_field(
+      f"{role} row {row.id} does not match this slice (it applies to {row.when.describe()}); "
+      + (f"the {role} rows that match are {_ids(eligible)}" if eligible
+         else f"no {role} row matches this slice")
+    )
+  return row
+
+
+def resolve(
+  matrix: RoleMatrix, item: Item, well_specified: bool, split: bool, *,
+  prefer_agent: str | None = None, select: Mapping[str, str] | None = None,
+) -> list[RolePick]:
+  """For each role, in `ROLE_NAMES` order, the row to use and the rows that could have been.
+
+  A row is eligible when its conditions match the slice. An explicit selection for a
+  role wins and must be an eligible row of that role; otherwise the first eligible row on
+  `prefer_agent` (compared trimmed and casefolded) wins; otherwise the first eligible
+  row in matrix order. Every other eligible row is an alternative, in matrix order. A
+  role with no eligible row has no row and no alternatives. Nothing here reads the
+  environment: the harness the relay was launched from has no effect. Only reads.
+  """
+  preferred = None
+  if prefer_agent is not None:
+    preferred = prefer_agent.strip().casefold()
+    if not preferred:
+      raise _bad_field("--prefer-agent is blank; name an agent such as one in `relay-roles show`")
+  select = dict(select or {})
+  for role in select:
+    if role not in ROLE_NAMES:
+      raise _bad_field(f"role {role!r} is not one of {', '.join(ROLE_NAMES)}")
+  picks: list[RolePick] = []
+  for role in ROLE_NAMES:
+    eligible = [
+      row for row in matrix.rows if row.role == role and row.when.matches(item, well_specified, split)
+    ]
+    chosen: RoleRow | None = None
+    by = "unmatched"
+    if role in select:
+      chosen, by = _check_selection(matrix, role, select[role], eligible), "override"
+    else:
+      if preferred is not None:
+        chosen = next((row for row in eligible if row.agent.strip().casefold() == preferred), None)
+        by = "preferred_agent"
+      if chosen is None and eligible:
+        chosen, by = eligible[0], "matrix_order"
+    if chosen is None:
+      by = "unmatched"
+    picks.append(RolePick(
+      role=role, row=chosen,
+      alternatives=[row for row in eligible if row is not chosen], selected_by=by,
+    ))
+  return picks
+
+
 def recommend(
   matrix: RoleMatrix, item: Item, well_specified: bool, split: bool,
 ) -> list[tuple[str, RoleRow | None]]:
@@ -278,13 +401,7 @@ def recommend(
   Row order in the matrix decides between two matching rows. A role with no
   matching row maps to None. This only reads; it proposes and stores nothing.
   """
-  return [
-    (role, next(
-      (row for row in matrix.rows if row.role == role and row.when.matches(item, well_specified, split)),
-      None,
-    ))
-    for role in ROLE_NAMES
-  ]
+  return [(pick.role, pick.row) for pick in resolve(matrix, item, well_specified, split)]
 
 
 def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:

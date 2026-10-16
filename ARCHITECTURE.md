@@ -40,6 +40,7 @@ never pays for curses.
   log.jsonl                append-only history, one LogEntry per line
   feedback.md              local `slicer feedback` use-log; gitignored, never parsed back
   feedback-reported.json   which entries `feedback-report` filed; gitignored, not roadmap state
+  relay-roles.json         the slice-relay role matrix; "version": 3
   relay-runs.jsonl         `relay-run` ledger outside git or below the worktree root, the fallback a sandboxed role writes when the common dir is read-only, and older slicers' per-worktree ledger; gitignored, append-only
   slices/<ID>.json         open slices
   slices/done/<ID>.json    finished
@@ -126,6 +127,19 @@ unsettled slivers after its unmet dependencies, and `handoff` and `done` refuse
 a parent with unfinished slivers (`slivers_open`).
 `remove` refuses an item with slivers unless forced, and a purge does not
 reclaim an ID a sliver names.
+
+The relay-roles schema is `3` (`ROLES_VERSION` in `src/slicer/roles.py`). Schema 2 added
+`when.sliver`; schema 3 adds the `orchestrator` role, so the matrix can hold the
+orchestrator's rows beside the four worker roles. A schema 1 or 2 file loads unchanged and
+without a write (it has no orchestrator row, and `recommend` reports that role as
+unmatched); the next `relay-roles` mutation stamps 3, and an older slicer refuses a 3
+(`schema_too_new`) rather than rejecting a role it cannot name. `mergeroles.py` lifts all three
+sides of a merge to the current version before it walks them, so a branch still on an older
+schema merges cleanly with one on the new one. `recommend` is read-only: `roles.resolve` turns
+the matrix, a slice and two optional run-local inputs (a preferred agent, explicit row
+selections) into one `RolePick` per role and reads nothing from the environment, so the
+harness a relay was launched from never changes the lineup. The orchestrator is a role of the
+matrix but not a stage of the worker pipeline (`tui.RELAY_PIPELINE` leaves it out).
 
 ## Invariants
 
