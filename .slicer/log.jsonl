@@ -1706,3 +1706,4 @@
 {"when": "2026-10-16T11:41:24Z", "item": "s308", "action": "note", "from": "", "to": "", "note": "Test gap (Low, not filed): no test pins that an unknown stat", "by": "Jon Robbins"}
 {"when": "2026-10-16T11:35:43Z", "item": "s320", "action": "add", "from": "", "to": "open", "note": "Select relay role alternatives across vendors"}
 {"when": "2026-10-16T11:36:33Z", "item": "s320", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T11:49:20Z", "item": "s308", "action": "status", "from": "review", "to": "done", "note": "Landed: merge ed378f0. ops.edit_section refuses an item with no slice with code no_slice like its siblings, and the migrator catches only SlicerError when mapping a status label. Full suite on main 2211 OK; check passes.", "by": "Jon Robbins"}

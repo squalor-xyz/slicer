@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-308 items · — 22 · done 278 · retired 7 · review 1
+308 items · — 22 · done 279 · retired 7
 
 v1.14.0 release
 
@@ -67,7 +67,7 @@ v1.12.0 release
 | 18 | [s305](slices/s305.md) | Sibling id refusal ignores case | S | 1 | slicer | s301 relay review, 2026-10-15: a sibling's s10 against our S10 is not refused; Index.get is case-sensitive · discovered from s301 | — |
 | 19 | [s306](slices/s306.md) | Add prints id | S | 1 | slicer | owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON | — |
 | 20 | [s307](slices/s307.md) | Docs match what check and the git allowlist do | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15 | done |
-| 21 | [s308](slices/s308.md) | Error codes agree for a missing slice | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 4-5, 2026-10-15 | review |
+| 21 | [s308](slices/s308.md) | Error codes agree for a missing slice | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 4-5, 2026-10-15 | done |
 | 22 | [s309](slices/s309.md) | Fewer git calls per command | M | 2 | slicer | research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15 | — |
 | 23 | [s310](slices/s310.md) | Measure startup and load rare modules on use | S | 1 | slicer | research/go-rewrite-evaluation.md, alternatives 2, 2026-10-15 | — |
 | 24 | [s314](slices/s314.md) | List one relay run | S | 1 | slicer | s296 relay run 2026-10-16: orchestrator brief's relay-run list RUN errors · discovered from s296 | — |
