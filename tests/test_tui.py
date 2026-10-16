@@ -1124,6 +1124,51 @@ class TuiStatusLineTests(unittest.TestCase):
       view.refresh(state)
       self.assertNotIn('render stale', view.status(state))
 
+  def test_Status_AfterWizardSave_RenderFails_ShowsRenderStale(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run('init')
+      repo.run('render')
+      state = repo.state()
+      view = tui.View.initial(state)
+      self.assertNotIn('render stale', view.status(state))
+      # The same key sequence test_tui_wizard.draft sends; that module imports this one.
+      wizard = tui_wizard.Wizard(list(state.config.sections))
+      for value in ('', 'First', 'M', 'core, ui', 'F1', '3', '1', 'Phase one', ''):
+        for _ in wizard.text:
+          wizard.handle('KEY_BACKSPACE')
+        for key in value:
+          wizard.handle(key)
+        wizard.handle('\n')
+      while wizard.mode == 'field':
+        wizard.handle('\n')
+      wizard.handle('n')
+      view.wizard, view.mode = wizard, 'wizard'
+      view.wizard.mode = 'review'
+      view.wizard.review_at = len(view.wizard.review_rows()) - 1
+      with patch.object(tui, 'act', return_value=tui.ActResult('render unavailable', severity='error')) as act:
+        view.handle(state, '\n')
+      act.assert_called_once_with(state, 'r', '')
+      self.assertIsNone(view.wizard)
+      self.assertIn('render failed: render unavailable', view.message)
+      view.refresh(state)
+      self.assertIn('render stale', view.status(state))
+
+  def test_Status_AfterMove_ShowsRenderStale(self) -> None:
+    with support.TempRepo() as repo:
+      self.rendered_repo(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      self.assertNotIn('render stale', view.status(state))
+      view.handle(state, 'c')
+      view.select((tui.ITEM, 'S01'))
+      view.handle(state, 'M')
+      type_keys(view, state, '2')
+      view.handle(state, '\n')
+      self.assertEqual([item.id for item in state.index.items], ['S02', 'S01'])
+      self.assertIn('S01 moved to 2', view.message)
+      view.refresh(state)
+      self.assertIn('render stale', view.status(state))
+
   def test_Refresh_NavigationKey_DoesNotRecomputeDrift(self) -> None:
     with support.TempRepo() as repo:
       self.rendered_repo(repo)
