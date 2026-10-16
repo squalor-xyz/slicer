@@ -14,7 +14,7 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "s332 (2026-10-16) lets a sandboxed role record steps in its checkout's `.slicer/relay-runs.jsonl` when the shared ledger refuses the write. `ops.relay_run_step` picks a new step id as one past the largest it folds from every ledger, but a fallback write holds only the project lock and a shared write holds only the ledger's flock. Two writers in that window read the same largest id, and the later event updates the earlier step instead of recording a new one. `docs/commands.md` (Sandboxes) records this as a known limit. The s332 orchestrator named two fixes: a per-checkout id prefix, or one lock both writers take. **Owner decision needed** before implementing: which of the two."
+      "body": "s332 (2026-10-16) lets a sandboxed role record steps in its checkout's `.slicer/relay-runs.jsonl` when the shared ledger refuses the write. `ops.relay_run_step` picks a new step id as one past the largest it folds from every ledger, but a fallback write holds only the project lock and a shared write holds only the ledger's flock. Two writers in that window read the same largest id, and the later event updates the earlier step instead of recording a new one. `docs/commands.md` (Sandboxes) records this as a known limit. The s332 orchestrator named two fixes: a per-checkout id prefix, or one lock both writers take. The owner chose a per-checkout id prefix for fallback-recorded steps (2026-10-16), because the sandbox that forces the fallback cannot take the shared lock either."
     },
     {
       "heading": "Files",
@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Get the owner's choice of fix.\n2. Write the test and watch it go red; then the fix; mutation-check it."
+      "body": "1. Owner's choice (2026-10-16): a per-checkout id prefix on fallback-recorded step ids, not one shared lock, because the sandbox that forces the fallback refuses the shared lock file too.\n2. Write the test and watch it go red; then the fix; mutation-check it."
     },
     {
       "heading": "Check",

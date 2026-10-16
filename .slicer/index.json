@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 340,
+  "next_id": 341,
   "preamble": "",
   "passes": [
     {
@@ -11442,12 +11442,24 @@
       "id": "s337",
       "title": "Steps recorded through the fallback and the shared ledger never share an id",
       "short_title": "Steps recorded through the fallback and the shared ledger never share an id",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s332"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c414dd87-364f-4d69-ac68-ce1260294cfd",
+          "kind": "",
+          "text": "**2026-10-16** — Ready for review: fallback-recorded step ids carry the per-checkout prefix c<8 hex>-N (the hex is SHA-256 of the checkout root), shared-ledger ids stay plain numbers, legacy numeric ledgers still fold, and --step and --parent take prefixed ids. Gate VERDICT PASS; full suite 2277 OK with 1 skipped; slicer check passed.",
+          "created_at": "2026-10-16T19:54:38Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11467,7 +11479,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -11655,6 +11667,38 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s340",
+      "title": "A shared step whose parent is only in a local fallback file keeps the shared ledger readable",
+      "short_title": "Shared step keeps its local-only parent",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s337"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed",
+        "discovered_from": "s337",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1,
         "attempts": 0
       }

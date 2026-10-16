@@ -10,6 +10,7 @@ the fixture file directly, because production code never produces one.
 
 from __future__ import annotations
 
+import errno
 import io
 import json
 import os
@@ -754,7 +755,7 @@ class SandboxTests(GitLedgerCase):
       "--phase", "start", "--json",
     )
     self.assertEqual(code, 0, out + err)
-    self.assertEqual(json.loads(out)["step"]["id"], "1")
+    self.assertRegex(json.loads(out)["step"]["id"], r"^c[0-9a-f]{8}-1$")
     self.assertEqual(len(err.splitlines()), 1, err)
     self.assertIn(str(self.common(repo)), err)
     self.assertIn(str(wt / LEDGER), err)
@@ -824,7 +825,10 @@ class SandboxTests(GitLedgerCase):
       fh.write(self.common(repo).read_text(encoding="utf-8").splitlines()[1] + "\n")
     got = relayrun.list_runs(repo.root, now=minutes(6))
     self.assertEqual([r.id for r in got], [run])
-    self.assertEqual([(s.id, s.phase) for s in got[0].steps], [("1", "done"), ("2", "start")])
+    steps = [(s.id, s.phase) for s in got[0].steps]
+    self.assertEqual(steps[0], ("1", "done"))
+    self.assertRegex(steps[1][0], r"^c[0-9a-f]{8}-1$")
+    self.assertEqual(steps[1][1], "start")
     self.assertEqual(got[0].updated_at, relayrun.stamp(minutes(5)))
 
   def test_RelayRunList_LocalLedgerStepForUnknownRun_IsSkippedNotFatal(self) -> None:
@@ -998,6 +1002,140 @@ class SandboxTests(GitLedgerCase):
     self.assertEqual(self.common(repo).read_bytes(), shared)
     got = self.listed(wt)
     self.assertEqual([(r["id"], r["outcome"], len(r["steps"])) for r in got], [(run, "fail", 1)])
+
+  def test_RelayRunStep_FallbackAndSharedConcurrent_DistinctIds(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    real_open, real_flock = ops._open_run, ops._shared_flock
+    refused, paused = [], []
+
+    def refuse_first_lock(lock_path: Path):
+      """The fallback writer's shared lock is refused; the shared writer's is not."""
+      if not refused:
+        refused.append(lock_path)
+        raise PermissionError(errno.EACCES, "sandbox refuses the lock", str(lock_path))
+      return real_flock(lock_path)
+
+    def read_then_shared_write(root, run_id, now):
+      """The fallback writer has read the run; the shared writer completes before it writes."""
+      found = real_open(root, run_id, now)
+      if not paused:
+        paused.append(run_id)
+        ops.relay_run_step(
+          repo.root, run_id, phase="start", role="reviewer", agent="B", now=minutes(2),
+        )
+      return found
+
+    with patch.object(ops, "_shared_flock", refuse_first_lock), \
+        patch.object(ops, "_open_run", read_then_shared_write):
+      ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))
+    self.assertEqual((len(refused), len(paused)), (1, 1))
+    shared = [e["step"] for _, e in relayrun.read_events(self.common(repo)) if e["event"] == "step"]
+    self.assertEqual(shared, ["1"])
+    steps = self.listed(repo.root)[0]["steps"]
+    self.assertEqual(sorted(s["role"] for s in steps), ["gate", "reviewer"], steps)
+    self.assertEqual(len({s["id"] for s in steps}), 2, steps)
+
+  def test_RelayRunStep_FallbackFromTwoCheckouts_DistinctIds(self) -> None:
+    repo = self.repo()
+    one, two = self.linked(repo, "one"), self.linked(repo, "two")
+    run = ops.relay_run_begin(one, ["s1"], now=minutes(0)).id
+    self.sandbox(repo)
+    real_open = ops._open_run
+    paused = []
+
+    def read_then_other_checkout_writes(root, run_id, now):
+      """The first sandboxed writer has read the run; the other checkout's completes first."""
+      found = real_open(root, run_id, now)
+      if not paused:
+        paused.append(run_id)
+        ops.relay_run_step(two, run_id, phase="start", role="reviewer", agent="B", now=minutes(2))
+      return found
+
+    with patch.object(ops, "_open_run", read_then_other_checkout_writes):
+      ops.relay_run_step(one, run, phase="start", role="gate", agent="A", now=minutes(1))
+    self.assertEqual(len(paused), 1)
+    steps = self.listed(repo.root)[0]["steps"]
+    self.assertEqual(sorted(s["role"] for s in steps), ["gate", "reviewer"], steps)
+    self.assertEqual(len({s["id"] for s in steps}), 2, steps)
+
+  def test_RelayRunStep_SharedWriteRefusedAfterRead_NumbersFromLocalFileAgain(self) -> None:
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+      self.skipTest("root ignores file modes, so the ledger cannot be made read-only")
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    ledger = self.common(repo)
+    mode = ledger.stat().st_mode
+    ledger.chmod(0o444)  # the lock stays writable, so the shared write is refused after the read
+    self.addCleanup(ledger.chmod, mode)
+    _, first = ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))
+    self.assertRegex(first.id, r"^c[0-9a-f]{8}-1$")
+    prefix = first.id[:-1]
+    real_open = ops._open_run
+    concurrent = []
+
+    def read_then_other_fallback_lands(root, run_id, now):
+      """Before this writer falls back, another sandboxed writer in this checkout lands a step."""
+      found = real_open(root, run_id, now)
+      if not concurrent:
+        concurrent.append(run_id)
+        other = relayrun.step_event(
+          run_id, minutes(2), prefix + "2", "start", role="reviewer", agent="B",
+        )
+        relayrun.append(wt, other, path=relayrun.legacy_ledger_path(wt))
+      return found
+
+    with patch.object(ops, "_open_run", read_then_other_fallback_lands):
+      ops.relay_run_step(wt, run, phase="start", role="implementer", agent="C", now=minutes(3))
+    self.assertEqual(len(concurrent), 1)
+    steps = [(e["step"], e["role"]) for e in self.local(wt) if e["event"] == "step"]
+    self.assertEqual(
+      steps, [(prefix + "1", "gate"), (prefix + "2", "reviewer"), (prefix + "3", "implementer")],
+    )
+
+  def test_RelayRunStep_PrefixedFallbackId_AcceptedByStepAndParent(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    self.sandbox(repo)
+    code, out, err = self.cli(
+      wt, "relay-run", "step", run, "--role", "gate", "--agent", "A", "--phase", "start", "--json",
+    )
+    self.assertEqual(code, 0, out + err)
+    lead = json.loads(out)["step"]["id"]
+    self.assertRegex(lead, r"^c[0-9a-f]{8}-1$")
+    prefix = lead[:-1]
+    code, out, err = self.cli(
+      wt, "relay-run", "step", run, "--step", lead, "--phase", "done", "--json",
+    )
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(json.loads(out)["step"]["phase"], "done")
+    code, out, err = self.cli(
+      wt, "relay-run", "step", run, "--role", "reviewer", "--agent", "B", "--phase", "start",
+      "--parent", lead, "--json",
+    )
+    self.assertEqual(code, 0, out + err)
+    child = json.loads(out)["step"]
+    self.assertEqual((child["id"], child["parent"]), (prefix + "2", lead))
+    got = self.listed(repo.root)[0]
+    by_id = {s["id"]: s for s in got["steps"]}
+    self.assertEqual((by_id[lead]["phase"], by_id[child["id"]]["parent"]), ("done", lead))
+    self.assertEqual(got["counts"]["subagents"], 1)
+
+  def test_RelayRunStep_SharedWriteAfterFallback_NumbersOnlyPlainIds(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))
+    lift = self.sandbox(repo)
+    _, fallback = ops.relay_run_step(
+      wt, run, phase="start", role="reviewer", agent="B", now=minutes(2),
+    )
+    self.assertRegex(fallback.id, r"^c[0-9a-f]{8}-1$")
+    lift()
+    ops.relay_run_step(wt, run, phase="start", role="implementer", agent="C", now=minutes(3))
+    shared = [e["step"] for _, e in relayrun.read_events(self.common(repo)) if e["event"] == "step"]
+    self.assertEqual(shared, ["1", "2"])
+    local = [e["step"] for e in self.local(wt) if e["event"] == "step"]
+    self.assertEqual(local, [fallback.id])
 
 
 class LedgerTests(RelayRunCase):
@@ -1176,6 +1314,43 @@ class LedgerTests(RelayRunCase):
     run = self.begin(repo, "s1")
     (repo.root / ".slicer" / "index.json").write_text("{broken", encoding="utf-8")
     self.assertEqual(self.runs(repo)[0]["id"], run)
+
+  def test_Ledger_MalformedStepId_ReportedAsCorrupt(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    good = relayrun.step_event(run, minutes(1), "1", "start", role="gate", agent="A")
+    bad_ids = (
+      "c1a2b3c4-1", "C1A2B3C4D-1", "c1a2b3c4d-", "c1a2b3c4d-1x", "c1a2b3c4d1", "-1", "1-1",
+      " 1", "c1a2b3c4d-1 ",
+    )
+    for bad in bad_ids:
+      with self.subTest(step=bad):
+        path = repo.root / LEDGER
+        before = path.read_text(encoding="utf-8")
+        path.write_text(before + json.dumps({**good, "step": bad}) + "\n", encoding="utf-8")
+        try:
+          payload = self.refuse(repo, "relay-run", "list", code=3, error="corrupt")
+          self.assertIn("relay-runs.jsonl:2", payload["message"])
+        finally:
+          path.write_text(before, encoding="utf-8")
+
+  def test_Ledger_NumericIdsOnly_StillFoldAndNumberOn(self) -> None:
+    repo = self.project()
+    run = "run-legacy"
+    events = [
+      relayrun.begin_event(run, minutes(0), ["s1"], "old"),
+      relayrun.step_event(run, minutes(1), "1", "start", role="gate", agent="A"),
+      relayrun.step_event(run, minutes(2), "2", "start", role="reviewer", agent="B", parent="1"),
+    ]
+    (repo.root / LEDGER).write_text(
+      "".join(json.dumps(event, ensure_ascii=False) + "\n" for event in events), encoding="utf-8",
+    )
+    self.ok(repo, "relay-run", "step", run, "--step", "2", "--phase", "done")
+    steps = self.runs(repo)[0]["steps"]
+    self.assertEqual(
+      [(s["id"], s["phase"], s["parent"]) for s in steps], [("1", "start", ""), ("2", "done", "1")],
+    )
+    self.assertEqual(self.step(repo, run)["step"]["id"], "3")
 
 
 if __name__ == "__main__":
