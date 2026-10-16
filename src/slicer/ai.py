@@ -141,22 +141,47 @@ def handoff_policy_text(kind: str) -> str:
   )
 
 
+# The version of the relay contract, printed as the first line of `ai relay` and
+# `ai relay-orchestrator` and carried in their `--json`. The agents repo's
+# `relay-orchestrator` role says the same number, so a mismatch between slicer and
+# the role files shows. Bump it when a rule an outer session, orchestrator or role
+# follows changes (order, gate, tracking order, waiting, report shape), not for a
+# rewording.
+RELAY_CONTRACT = 4
+
+
+def contract_line() -> str:
+  """The marker both relay texts start with, built from `RELAY_CONTRACT`."""
+  return f"relay v{RELAY_CONTRACT}"
+
+
 # The slice relay, shared by both finish modes. The close is appended separately
 # so the handoff text can avoid naming the other finish command. It is two constants
 # so the owner's role matrix can sit between Setup and Order (see relay_text).
-# Slivers and Gate follow Order as constants of their own.
+# Slivers and Gate follow Order as constants of their own. The marker line that opens
+# the text is added by relay_text.
 RELAY_HEAD = """\
 # Slice relay
 
-One orchestrating session runs one slice through an implementer, a reviewer,
-an architect and a gate. The relay uses slicer's own commands.
+An outer session runs the relay. For each slice it spawns one orchestrator, which
+runs the slice through an implementer, a reviewer, an architect and a gate. The
+relay uses slicer's own commands.
 
 ## Roles
 
-The orchestrator is the session the owner talks to. It briefs every agent,
-reads every report and the lines it cites, reads the implementer's diff before
-review, reruns the tests only as Order says, files notes on other items, and
-writes no product code.
+The outer session is the session the owner talks to. It runs Setup with the
+owner, owns the relay run, spawns one orchestrator per slice, reads only that
+orchestrator's run report, lands branches one at a time when the owner
+authorizes it, files the report's later notes, and writes no product code.
+
+The orchestrator runs one slice under the contract that
+`slicer ai relay-orchestrator` prints. It briefs every agent, reads the reports
+and reads diffs as `slicer ai relay-orchestrator` says, reruns the tests only as
+Order says, and writes no product code.
+
+Where the agent cannot nest subagents, the outer session is also the
+orchestrator: it follows that contract itself and compacts or starts a fresh
+session between slices.
 
 The implementer owns one slice. It runs `slicer start ID --render --strict`,
 writes the failing tests and watches them go red, implements, mutation-checks
@@ -178,7 +203,7 @@ The owner chooses the models.
 
 ## Setup
 
-Before the worktree exists, the orchestrator reads the slice's size with
+Before the worktree exists, the outer session reads the slice's size with
 `slicer show ID --json --lean` and confirms these with the owner:
 
 - which roles run. The architect is optional: the owner decides.
@@ -187,9 +212,15 @@ Before the worktree exists, the orchestrator reads the slice's size with
   for one implementer is two slices or a slivered slice.
 - whether to sliver the slice. The default is no. Propose slivers only when the
   slice's effort and the cut allow it (see Slivers) and when that costs less than
-  one implementer. The orchestrator confirms the sliver list and which slivers
+  one implementer. The outer session confirms the sliver list and which slivers
   run in parallel with the owner.
 - the agent, vendor, model and reasoning effort for each role.
+- the orchestrator's agent, model and reasoning effort, set explicitly on every
+  spawn. It runs as the agent type `relay-orchestrator` where the harness has one
+  installed, otherwise as a general-purpose agent briefed with
+  `slicer ai relay-orchestrator`.
+- the environment lines every brief carries: the interpreter, the shell limits
+  and the scratch directory, taken from the project's own instructions.
 - where the run ends:
   - after the finish step,
   - after a commit on the slice branch, or
@@ -202,13 +233,34 @@ Wait for the owner's answers before creating the worktree.
 RELAY_ORDER = """\
 ## Order
 
-Create a worktree, then `slicer start ID --render --strict`, red tests,
-implementation, review, accepted findings back to the implementer, then
+The outer session, for each slice:
+
+1. Create the worktree, then start the run and record the orchestrator's step,
+   with the role `orchestrator` (see Record the run below).
+2. Spawn the orchestrator with a brief that starts "First run
+   `slicer ai relay-orchestrator` and follow it.", then the environment lines, the
+   slice, the worktree and branch, the roles with agent, vendor, model and
+   reasoning effort, the end point, a temp directory per role, RUN and the
+   orchestrator's step id.
+3. Wait for its run report. One slice runs in the foreground.
+4. Check the report's first line, the contract marker, and its last line,
+   `nothing left running: yes`. Without that last line, stop the orchestrator
+   first.
+5. Mark the orchestrator step, end the run, file the report's later notes as one
+   more commit on the slice branch, then land when the owner authorizes it.
+
+Each slice gets a fresh orchestrator, so no orchestrator carries one slice's
+context into the next.
+
+The orchestrator runs its one slice in the worktree it was given:
+`slicer start ID --render --strict`, red tests, implementation, review,
+accepted findings back to the implementer, then
 the architect, when the owner chose one, then the gate. Close with
 `slicer note ID --text "Describe the verified outcome"` plus the finish step.
-Commit, merge and push only when the owner authorizes them.
+The orchestrator commits on the slice branch only when its brief allows it; merge
+and push are the outer session's, when the owner authorizes them.
 
-Record the run as it goes. Start it with
+Record the run as it goes. The outer session starts it with
 `slicer relay-run begin ID --worktree PATH`, where PATH is the slice worktree.
 It prints the run id; keep that id as RUN. Record each role when it starts with
 `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --phase start --task TASK`,
@@ -234,13 +286,10 @@ their own tests and the orchestrator's run on the combined diff is the one full
 run. The orchestrator reruns the suite only if the diff changed after that run or
 main moved.
 
-Run slices in parallel only when their files are disjoint. Review and land them
-one at a time, and rerun the suite on the slice branch merged with the new main
-when main moved.
-
-After a slice lands or hands off, and before briefing the next, compact the
-orchestrator session or start a fresh one. Re-read state with
-`slicer show ID --json --lean` rather than relying on memory.
+Run slices in parallel only when their files are disjoint. The outer session
+starts their orchestrators together and waits for the reports without polling.
+Review and land them one at a time, and rerun the suite on the slice branch merged
+with the new main when main moved.
 
 """
 
@@ -287,9 +336,10 @@ Include the slice from `slicer show ID --json --lean`, the tracking rule below,
 and the workspace limit: stay inside the workspace the owner named and do not
 read or write outside it. The report is a diff stat, red lines, test counts, a
 mutation table and deviations. Every brief names the role's own temp directory,
-and no two agents share one. Reviewer, architect and gate briefs forbid git
-writes; a needed write stops and goes to the owner. A part brief names the
-part's own files and the files it must not touch.
+and no two agents share one. Every brief carries the environment lines verbatim.
+Reviewer, architect and gate briefs forbid git writes; a needed write stops and
+goes to the owner. A part brief names the part's own files and the files it must
+not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Give each agent a short label
@@ -340,7 +390,8 @@ def relay_text(
       '`slicer done ID --note "Describe the verified outcome" --render --check`.\n'
     )
   return (
-    RELAY_HEAD + matrix + RELAY_ORDER + RELAY_SLIVERS + RELAY_GATE
+    f"Contract: {contract_line()}\n\n"
+    + RELAY_HEAD + matrix + RELAY_ORDER + RELAY_SLIVERS + RELAY_GATE
     + TRACKING_RULE + "\n\n"
     + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
     + "`slicer list --json --lean`.\n\n"
@@ -351,6 +402,115 @@ def relay_text(
     + "## Close\n\n"
     + close
   )
+
+
+# The orchestrator's own contract: these rules and the run report, plus the one-slice parts
+# of `ai relay` (Order, Gate, Every brief, Stop) that it points to. It names the outer
+# session's steps only to forbid them.
+ORCHESTRATOR_RULES = """\
+# Slice relay orchestrator
+
+You run one slice for the outer session that spawned you. This text and the one-slice
+parts of `slicer ai relay` (Order, Gate, Every brief, Stop) are your contract; the
+outer session's steps, Roles and Setup are not yours. Your brief names the slice, the
+worktree and branch, your roles with their agent, vendor, model and reasoning effort,
+where the run ends, RUN and your own step id. When the slice is done or stopped,
+return one run report.
+
+## Rules
+
+- Work only in the worktree your brief names. Use absolute paths and never change
+  directory. Write no product code. Read and change tracking state only through
+  slicer commands.
+- Never run `relay-run begin` or `relay-run end`, mark your own step done, land, merge,
+  rebase onto main or push. The outer session owns those.
+- Run `slicer ai relay` and follow its one-slice parts for this slice: the steps
+  the orchestrator runs in Order, Gate, Every brief and Stop, with the roles your
+  brief lists. Its Roles, Setup and the outer session's steps are not yours. Label
+  each agent `ID role`, as Every brief says.
+- Relay run: record a new step for every round (implement, each fix round, review,
+  gate) with
+  `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`,
+  where STEP is your own step id, and mark it done or failed when the round ends. A
+  heartbeat, `slicer relay-run step RUN --step STEP --phase start`, passes no new
+  `--task`.
+{tracking}\
+- Waiting: a spawn may run in the background with no foreground option. When a
+  role's result is needed, end the turn and let its report wake you. A nudge to
+  report while a role you started still runs is not a reason to report. A role
+  that reports while a command of its own still runs, or that stops waiting on its
+  own background work, has not finished its round: resume it and tell it to
+  finish. Send the final report once, never an interim one; before ending a turn
+  without it, send the outer session one line saying what you wait on. Run no
+  sleep loop, no monitor keepalive and no background shell job; nothing you
+  started still runs when you report. Every role brief says to run long commands
+  such as the full suite in the foreground with a long timeout.
+- Read thin: read the implementer's report and the diff stat. Read the full diff or
+  the cited lines only for a finding the reviewer and the architect disagree on, a
+  finding the implementer disputes, a deviation, or a diff from a role the role
+  matrix marks for your own read. That read is a scope-and-honesty check before
+  review, not a correctness review.
+- Disputes: a reproduction the reviewer ran beats the implementer's "does not
+  reproduce". A dispute inside the slice goes back to the implementer; one outside
+  it goes in the report as a later note.
+- Gate: after FAIL, resume the agent that raised the blockers. Start a fresh
+  reviewer only when that agent is gone or the fixes rewrote much of the diff.
+- After `VERDICT: PASS` and the finish step, commit on the slice branch if your
+  brief allows it.
+- Stop and return without asking the owner when the same slice fails its gate three
+  times, the spec is ambiguous or wrong, or an owner decision is needed. A design
+  choice the reviewer marks as the owner's goes under "Owner needed" in the report.
+
+## Run report
+
+At most 30 lines, in this order, and nothing else:
+
+```
+Contract: {contract}
+SLICE ID OUTCOME pass|fail|stopped BRANCH NAME @ SHA
+worktree: PATH
+rounds: N, last verdict: VERDICT LINE
+tests: COUNTS
+diff stat: STAT
+deviations accepted: LIST OR none
+later notes: LIST OR none
+owner needed: LIST OR none
+role steps: STEP IDS
+nothing left running: yes
+```
+
+Write the last line only after you check that nothing you started still runs.
+"""
+
+
+def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str:
+  """The orchestrator's contract, which `slicer ai relay-orchestrator` prints.
+
+  It follows the project's finish step and report kind the way `relay_text` does, and
+  opens with the same marker line.
+  """
+  if finish == "handoff":
+    step = (
+      "`slicer note ID --text \"Describe the verified outcome\"`\n"
+      "  and then the finish step, `slicer handoff ID --render --check`."
+    )
+  else:
+    step = (
+      "the finish step,\n"
+      "  `slicer done ID --note \"Describe the verified outcome\" --render --check`."
+    )
+  tracking = (
+    "- Tracking order: the closing note and the finish step run only after\n"
+    f"  `VERDICT: PASS`. They are {step}\n"
+    "  Every implementer brief says so; before review the implementer runs neither.\n"
+  )
+  report_kind = handoff_policy_text(required_note_kind)
+  body = ORCHESTRATOR_RULES.format(tracking=tracking, contract=contract_line())
+  # The report-kind paragraph sits between the rules and the report.
+  if report_kind:
+    head, tail = body.split("## Run report", 1)
+    body = head + report_kind + "## Run report" + tail
+  return f"Contract: {contract_line()}\n\n" + body
 
 
 def skill_text(finish: str = "done", required_note_kind: str = "") -> str:

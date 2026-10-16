@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shlex
 import unittest
 from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
-from slicer import ai, jsonio, model, render, roles, store
+from slicer import ai, cli, jsonio, model, render, roles, store
 
 JSON = ".slicer/relay-roles.json"
 RENDER = ".slicer/render/RELAY-ROLES.md"
@@ -1332,6 +1334,213 @@ class AiRelayJsonTests(RelayRolesCase):
     for phrase in ("A heartbeat passes no `--task`", "each round records its own step"):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, order)
+
+
+class AiRelayContractTests(RelayRolesCase):
+  """The nested relay: `ai relay` is the outer session's contract and
+  `ai relay-orchestrator` the orchestrator's, both carrying one version marker."""
+
+  MARKER = "Contract: relay v4"
+
+  def flat(self, text: str) -> str:
+    return " ".join(text.split())
+
+  def section(self, text: str, start: str, end: str) -> str:
+    return self.flat(text.split(start, 1)[1].split(end, 1)[0])
+
+  def orchestrator(self, repo: support.TempRepo) -> str:
+    return self.ok(repo, "ai", "relay-orchestrator")
+
+  def test_AiRelay_Roles_OuterSessionSpawnsOrchestratorPerSlice(self) -> None:
+    roles_section = self.section(ai.relay_text(), "## Roles", "## Setup")
+    self.assertIn("The outer session is the session the owner talks to", roles_section)
+    self.assertIn("spawns one orchestrator per slice", roles_section)
+    self.assertIn("`slicer ai relay-orchestrator`", roles_section)
+    self.assertIn("writes no product code", roles_section)
+
+  def test_AiRelay_Order_FreshOrchestratorPerSlice(self) -> None:
+    order = self.section(ai.relay_text(), "## Order", "## Slivers")
+    self.assertNotIn("compact", order)
+    self.assertIn("Each slice gets a fresh orchestrator", order)
+    self.assertIn('a brief that starts "First run `slicer ai relay-orchestrator` and follow it."', order)
+
+  def test_AiRelay_Order_OuterSessionChecksTheReport(self) -> None:
+    order = self.section(ai.relay_text(), "## Order", "## Slivers")
+    for phrase in (
+      "Check the report's first line, the contract marker, and its last line, "
+      "`nothing left running: yes`. Without that last line, stop the orchestrator first.",
+      "file the report's later notes as one more commit on the slice branch",
+      "waits for the reports without polling",
+      "with the role `orchestrator`",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+
+  def test_AiRelay_Roles_OrchestratorReadsAsItsContractSays(self) -> None:
+    roles_section = self.section(ai.relay_text(), "## Roles", "## Setup")
+    self.assertIn("reads the reports and reads diffs as `slicer ai relay-orchestrator` says",
+                  roles_section)
+    self.assertNotIn("reads every report", roles_section)
+
+  def test_AiRelay_Order_OrchestratorCommitsOnlyWhenBriefAllows(self) -> None:
+    order = self.section(ai.relay_text(), "## Order", "## Slivers")
+    self.assertIn("commits on the slice branch only when its brief allows it", order)
+    self.assertIn("merge and push are the outer session's, when the owner authorizes them", order)
+    self.assertNotIn("Commit, merge and push only when", order)
+
+  def test_AiRelayOrchestrator_Intro_NamesItsOwnTextAndTheOneSliceParts(self) -> None:
+    intro = self.section(ai.orchestrator_text(), "# Slice relay orchestrator", "## Rules")
+    self.assertIn("This text and the one-slice parts of `slicer ai relay` "
+                  "(Order, Gate, Every brief, Stop) are your contract", intro)
+    self.assertIn("the outer session's steps, Roles and Setup are not yours", intro)
+    self.assertNotIn("whole contract", ai.orchestrator_text())
+
+  def test_AiRelayOrchestrator_TrackingBullet_IsWrapped(self) -> None:
+    for finish in ("done", "handoff"):
+      bullet = next(b for b in re.split(r"\n(?=- )", ai.orchestrator_text(finish))
+                    if b.startswith("- Tracking order"))
+      with self.subTest(finish=finish):
+        self.assertGreater(len(bullet.splitlines()), 2)
+        for line in bullet.splitlines():
+          self.assertLessEqual(len(line), 88, line)
+
+  def test_AiRelay_FirstLine_NamesContractVersion(self) -> None:
+    self.assertEqual(ai.relay_text().splitlines()[0], self.MARKER)
+    repo = self.project()
+    self.assertEqual(self.ok(repo, "ai", "relay").splitlines()[0], self.MARKER)
+
+  def test_AiRelayOrchestrator_FirstLine_SameContractVersion(self) -> None:
+    repo = self.project()
+    first = self.orchestrator(repo).splitlines()[0]
+    self.assertEqual(first, self.MARKER)
+    self.assertEqual(first, self.ok(repo, "ai", "relay").splitlines()[0])
+    # Both texts build the line from the one constant: a bumped number shows in both.
+    with patch.object(ai, "RELAY_CONTRACT", 9):
+      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v9")
+      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v9")
+
+  def test_AiRelay_Json_CarriesContract(self) -> None:
+    repo = self.project()
+    relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
+    self.assertEqual(relay["contract"], "relay v4")
+    self.assertEqual(relay["relay"].rstrip("\n"), self.ok(repo, "ai", "relay").rstrip("\n"))
+    orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
+    self.assertEqual(orchestrator["contract"], "relay v4")
+
+  def test_AiRelay_Setup_NamesOrchestratorAgentType(self) -> None:
+    setup = self.section(ai.relay_text(), "## Setup", "## Order")
+    self.assertIn("agent type `relay-orchestrator`", setup)
+    self.assertIn("general-purpose agent briefed with `slicer ai relay-orchestrator`", setup)
+    self.assertIn("set explicitly on every spawn", setup)
+    self.assertIn("environment lines", setup)
+    self.assertIn("environment lines verbatim", self.section(ai.relay_text(), "## Every brief", "\n## "))
+
+  def test_AiRelayOrchestrator_Waiting_NoForegroundAssumed(self) -> None:
+    repo = self.project()
+    text = self.orchestrator(repo)
+    waiting = next(b for b in text.split("\n- ") if b.startswith("Waiting"))
+    waiting = self.flat(waiting)
+    for phrase in (
+      "end the turn", "let its report wake you",
+      "A nudge to report while a role you started still runs is not a reason to report",
+      "Send the final report once, never an interim one",
+      "resume it and tell it to finish",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, waiting)
+    self.assertNotIn("run a role in the foreground", self.flat(text))
+    self.assertNotIn("a role in the foreground", waiting)
+    # The foreground is for a role's own long commands, which the brief asks for.
+    self.assertIn(
+      "Every role brief says to run long commands such as the full suite in the foreground "
+      "with a long timeout", waiting)
+
+  def test_AiRelayOrchestrator_FinishOnlyAfterPass(self) -> None:
+    done = self.flat(ai.orchestrator_text("done"))
+    self.assertIn("only after `VERDICT: PASS`", done)
+    self.assertIn('slicer done ID --note "Describe the verified outcome" --render --check', done)
+    self.assertNotIn("slicer handoff", done)
+    handoff = self.flat(ai.orchestrator_text("handoff", "implementation report"))
+    self.assertIn("only after `VERDICT: PASS`", handoff)
+    self.assertIn("slicer handoff ID --render --check", handoff)
+    self.assertNotIn("slicer done", handoff.casefold())
+    self.assertNotIn("run done", handoff.casefold())
+    self.assertIn(ai.handoff_policy_text("implementation report").strip().split("\n")[0][:60], handoff)
+    self.assertIn("Every implementer brief says so", handoff)
+
+  def test_AiRelayOrchestrator_ReadsTheProjectsFinish(self) -> None:
+    repo = self.project()
+    self.ok(repo, "config", "implement_finish", "handoff")
+    self.ok(repo, "config", "handoff_requires_note_kind", "implementation report")
+    text = self.orchestrator(repo)
+    self.assertEqual(text, ai.orchestrator_text("handoff", "implementation report"))
+    self.assertIn("slicer handoff ID --render --check", text)
+    self.assertIn("implementation report", text)
+
+  def test_AiRelayOrchestrator_Report_StartsWithMarkerEndsWithNothingRunning(self) -> None:
+    text = ai.orchestrator_text()
+    report = text.split("## Run report", 1)[1]
+    block = report.split("```\n")[1].splitlines()
+    self.assertEqual(block[0], self.MARKER)
+    self.assertTrue(block[1].startswith("SLICE ID OUTCOME pass|fail|stopped BRANCH "))
+    self.assertEqual(block[-1], "nothing left running: yes")
+    self.assertLessEqual(len(block), 30)
+    self.assertIn("At most 30 lines", self.flat(report))
+
+  def test_AiRelayOrchestrator_LeavesOutOuterSteps(self) -> None:
+    text = ai.orchestrator_text()
+    bullets = re.split(r"\n(?=- )", text)
+    hits = [b for b in bullets
+            if any(token in b for token in ("relay-run begin", "relay-run end", "push"))]
+    self.assertEqual(len(hits), 1)
+    self.assertTrue(hits[0].startswith("- Never run "), hits[0])
+    self.assertNotIn("slicer relay-run begin", text)
+    self.assertNotIn("slicer relay-run end", text)
+
+  def test_AiRelayOrchestrator_NamesNoHarnessOrOutsideFile(self) -> None:
+    blob = ai.orchestrator_text("done") + ai.orchestrator_text("handoff", "implementation report")
+    for token in ("Claude Code", "SendMessage", "ToolSearch", "playbook", "relay.conf",
+                  "http", "/Users", "\\"):
+      with self.subTest(token=token):
+        self.assertNotIn(token, blob)
+    for token in ("claude", "codex", "grok", "openai", "anthropic", "gemini"):
+      with self.subTest(token=token):
+        self.assertNotIn(token, blob.casefold())
+
+  def test_AiRelayOrchestrator_CommandExamples_AreAcceptedByTheParser(self) -> None:
+    blob = ai.orchestrator_text("done") + ai.orchestrator_text("handoff", "implementation report")
+    commands = re.findall(r"`(slicer [^`]+)`", blob)
+    self.assertTrue(commands)
+    parser = cli.build_parser()
+    for command in commands:
+      with self.subTest(command=command):
+        parser.parse_args(shlex.split(command)[1:])
+
+  def test_AiRelayOrchestrator_Json_HasOrchestratorKey(self) -> None:
+    repo = self.project()
+    text = self.orchestrator(repo)
+    payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
+    self.assertEqual(list(payload), ["contract", "orchestrator"])
+    self.assertEqual(payload["contract"], "relay v4")
+    self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
+    lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))
+    self.assertEqual(lean, payload)
+
+  def test_AiRelayOrchestrator_OutsideProject_PrintsGenericWithWarning(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, err = repo.run("ai", "relay-orchestrator")
+      self.assertEqual(code, 0)
+      self.assertIn("printing the generic guide", err)
+      self.assertEqual(out.rstrip("\n"), ai.orchestrator_text().rstrip("\n"))
+      self.assertEqual(list(repo.root.iterdir()), [])
+
+  def test_AiRelayOrchestrator_ReadsWithoutLockingOrLoadingState(self) -> None:
+    repo = self.project()
+    before = self.snapshot(repo)
+    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+         patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+      self.ok(repo, "ai", "relay-orchestrator")
+    self.assertEqual(self.snapshot(repo), before)
 
 
 class AiCompatibilityTests(RelayRolesCase):
