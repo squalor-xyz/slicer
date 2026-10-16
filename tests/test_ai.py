@@ -807,6 +807,33 @@ class AiSkillWriteTests(unittest.TestCase):
 class AiRelayTests(unittest.TestCase):
   """`ai relay` prints the slice relay and writes nothing."""
 
+  def test_AiRelay_Json_ContractFollowsContractLine(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      with patch.object(ai, "contract_line", return_value="relay v999-test"):
+        for command in ("relay", "relay-orchestrator"):
+          with self.subTest(command=command):
+            code, out, _ = repo.run("ai", command, "--json")
+            self.assertEqual(code, 0)
+            self.assertEqual(json.loads(out)["contract"], "relay v999-test")
+
+  def test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, text, _ = repo.run("ai", "relay-orchestrator")
+    self.assertEqual(code, 0)
+    flat = " ".join(text.split())
+    for phrase in (
+      "`slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR "
+      "--model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`",
+      "where STEP is your own step id",
+      '- Disputes: a reproduction the reviewer ran beats the implementer\'s "does not reproduce".',
+      "A dispute inside the slice goes back to the implementer; one outside "
+      "it goes in the report as a later note.",
+      "- Gate: after FAIL, resume the agent that raised the blockers.",
+      "Start a fresh reviewer only when that agent is gone or the fixes rewrote much of the diff.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, flat)
+
   def test_Relay_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, err = repo.run("ai", "relay")

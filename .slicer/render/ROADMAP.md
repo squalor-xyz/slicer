@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-319 items · — 31 · done 281 · retired 7
+319 items · — 30 · done 281 · retired 7 · review 1
 
 v1.14.0 release
 
@@ -80,7 +80,7 @@ v1.12.0 release
 | 31 | [s309](slices/s309.md) | Fewer git calls per command | M | 2 | slicer | research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15 | done |
 | 32 | [s310](slices/s310.md) | Measure startup and load rare modules on use | S | 1 | slicer | research/go-rewrite-evaluation.md, alternatives 2, 2026-10-15 | — |
 | 33 | [s314](slices/s314.md) | List one relay run | S | 1 | slicer | s296 relay run 2026-10-16: orchestrator brief's relay-run list RUN errors · discovered from s296 | done |
-| 34 | [s315](slices/s315.md) | Pin relay v4 wiring | S | 1 | slicer | s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296 | — |
+| 34 | [s315](slices/s315.md) | Pin relay v4 wiring | S | 1 | slicer | s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296 | review |
 | 35 | [s316](slices/s316.md) | Extend legacy runs | S | 1 | slicer | s298 relay 2026-10-16: legacy-ledger run lists but step/end give unknown_run · Owner chose 2026-10-16 to keep s298's documented workaround (begin a new run) instead of writing legacy ledgers; no run in this repo is affected. · discovered from s298 | retired |
 | 36 | [s317](slices/s317.md) | Shared file lock | S | 1 | slicer | s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298 | — |
 | 37 | [s318](slices/s318.md) | No git-dir writes from tests | S | 2 | slicer | s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298 | — |
