@@ -11385,7 +11385,7 @@
       "id": "s332",
       "title": "A sandboxed agent in a worktree can record relay-run steps",
       "short_title": "A sandboxed agent in a worktree can record relay-run steps",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s298",
@@ -11404,7 +11404,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-16T14:08:16Z"
+      },
       "fields": {
         "size": "M",
         "flags": [],

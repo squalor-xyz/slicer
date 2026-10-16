@@ -1757,3 +1757,4 @@
 {"when": "2026-10-16T14:08:12Z", "item": "s337", "action": "add", "from": "", "to": "open", "note": "Steps recorded through the fallback and the shared ledger never share an id"}
 {"when": "2026-10-16T14:08:12Z", "item": "s338", "action": "add", "from": "", "to": "open", "note": "relay-run end absorbs a step whose parent is in a damaged local file without failing"}
 {"when": "2026-10-16T14:08:12Z", "item": "s326", "action": "note", "from": "", "to": "", "note": "s332 relay 2026-10-16, later note: with the s332 fallback, w", "by": "Jon Robbins"}
+{"when": "2026-10-16T14:08:16Z", "item": "s332", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
