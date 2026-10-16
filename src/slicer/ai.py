@@ -335,6 +335,9 @@ FAIL goes back to the implementer and then the gate again. A failed review is
 `slicer reject ID --note "VERDICT: FAIL - reason"`. Any implementer change after
 a review needs another gate.
 
+"""
+
+RELAY_BRIEF = """\
 ## Every brief
 
 Include the slice from `slicer show ID --json --lean`, the tracking rule below,
@@ -352,6 +355,19 @@ explicitly rather than inherited from the session. Give each agent a short label
 as the `--task` line of `relay-run step`.
 
 """
+
+
+def relay_shared_sections(required_note_kind: str = "") -> str:
+  """Keep the gate, briefs and stop rules identical in both relay contracts."""
+  return (
+    RELAY_GATE + RELAY_BRIEF + TRACKING_RULE + "\n\n"
+    + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
+    + "`slicer list --json --lean`.\n\n"
+    + "## Stop\n\n"
+    + "Stop when the same slice fails its gate three times, the spec turns out "
+    + "ambiguous or wrong, or an owner decision is needed.\n\n"
+    + handoff_policy_text(required_note_kind)
+  )
 
 
 # The role matrix lives in `.slicer/relay-roles.json` and changes only through
@@ -396,28 +412,20 @@ def relay_text(
     )
   return (
     f"Contract: {contract_line()}\n\n"
-    + RELAY_HEAD + matrix + RELAY_ORDER + RELAY_SLIVERS + RELAY_GATE
-    + TRACKING_RULE + "\n\n"
-    + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
-    + "`slicer list --json --lean`.\n\n"
-    + "## Stop\n\n"
-    + "Stop when the same slice fails its gate three times, the spec turns out "
-    + "ambiguous or wrong, or an owner decision is needed.\n\n"
-    + handoff_policy_text(required_note_kind)
+    + RELAY_HEAD + matrix + RELAY_ORDER + RELAY_SLIVERS
+    + relay_shared_sections(required_note_kind)
     + "## Close\n\n"
     + close
   )
 
 
-# The orchestrator's own contract: these rules and the run report, plus the one-slice parts
-# of `ai relay` (Order, Gate, Every brief, Stop) that it points to. It names the outer
-# session's steps only to forbid them.
+# The orchestrator's whole one-slice contract and run report. It names the outer
+# session's steps only to forbid them; the shared sections stay identical to relay.
 ORCHESTRATOR_RULES = """\
 # Slice relay orchestrator
 
-You run one slice for the outer session that spawned you. This text and the one-slice
-parts of `slicer ai relay` (Order, Gate, Every brief, Stop) are your contract; the
-outer session's steps, Roles and Setup are not yours. Your brief names the slice, the
+You run one slice for the outer session that spawned you. This text is your whole
+contract for one slice. Your brief names the slice, the
 worktree and branch, your roles with their agent, vendor, model and reasoning effort,
 where the run ends, RUN and your own step id. When the slice is done or stopped,
 return one run report.
@@ -429,10 +437,6 @@ return one run report.
   slicer commands.
 - Never run `relay-run begin` or `relay-run end`, mark your own step done, land, merge,
   rebase onto main or push. The outer session owns those.
-- Run `slicer ai relay` and follow its one-slice parts for this slice: the steps
-  the orchestrator runs in Order, Gate, Every brief and Stop, with the roles your
-  brief lists. Its Roles, Setup and the outer session's steps are not yours. Label
-  each agent `ID role`, as Every brief says.
 - Relay run: record a new step for every round (implement, each fix round, review,
   gate) with
   `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`,
@@ -466,6 +470,30 @@ return one run report.
   times, the spec is ambiguous or wrong, or an owner decision is needed. A design
   choice the reviewer marks as the owner's goes under "Owner needed" in the report.
 
+## Order
+
+Run your one slice in the worktree you were given, with the roles your brief lists:
+
+1. The implementer runs `slicer start ID --render --strict`, red tests and implementation.
+2. Review, then accepted findings back to the implementer for each fix round,
+   then the architect, when the owner chose one, then the gate.
+3. Only after `VERDICT: PASS`, the implementer runs the closing note and finish step:
+   {finish_step}
+4. After the finish step, commit on the slice branch only when your brief allows it.
+
+Recording is advisory: a failed `relay-run` call never stops the relay.
+
+In a split, the parts run in the slice worktree, in parallel only when their
+files are disjoint, otherwise one after another. The orchestrator runs the full
+suite on the combined diff, then one review and one gate cover the whole slice.
+Accepted findings go back to the part that owns the file.
+
+A whole-slice implementer runs the full suite once; in a split, parts run only
+their own tests and the orchestrator's run on the combined diff is the one full
+run. The orchestrator reruns the suite only if the diff changed after that run or
+main moved.
+
+{shared_sections}\
 ## Run report
 
 At most 30 lines, in this order, and nothing else:
@@ -509,12 +537,10 @@ def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str
     f"  `VERDICT: PASS`. They are {step}\n"
     "  Every implementer brief says so; before review the implementer runs neither.\n"
   )
-  report_kind = handoff_policy_text(required_note_kind)
-  body = ORCHESTRATOR_RULES.format(tracking=tracking, contract=contract_line())
-  # The report-kind paragraph sits between the rules and the report.
-  if report_kind:
-    head, tail = body.split("## Run report", 1)
-    body = head + report_kind + "## Run report" + tail
+  body = ORCHESTRATOR_RULES.format(
+    tracking=tracking, contract=contract_line(), finish_step=step,
+    shared_sections=relay_shared_sections(required_note_kind),
+  )
   return f"Contract: {contract_line()}\n\n" + body
 
 

@@ -10981,12 +10981,24 @@
       "id": "s319",
       "title": "The orchestrator text carries its own one-slice rules",
       "short_title": "Self-contained orchestrator text",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s315"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "8b3a6c7d-94d3-4c37-810e-e55a81789a7d",
+          "kind": "",
+          "text": "**2026-10-16** — Verified after final VERDICT: PASS: relay-orchestrator is self-contained, with orchestrator-only Order and shared Gate, Every brief and Stop sections; restored the exact advisory relay-run recording rule. Full discovery ran all 2273 tests in 1119.980s, OK with 1 skip; authorized -k wildcard selected identical ordered test IDs to default discovery. All 26 focused orchestrator tests passed; seven mutation probes killed. relay_text remains byte-identical for done (9875 bytes) and handoff (9839 bytes), RELAY_CONTRACT stays 4, and s315 tests are unchanged. slicer check passed (325 items, render/sync current) and git diff --check passed. Approved scope extension updated one obsolete pre-s315 intro test. Affected selection exited 2 without a map; wildcard full run produces no map. Superseded slow runs were stopped cleanly with exit 130. Review reject was refused with code state because the slice remained started; nothing changed. No commands remain running.",
+          "created_at": "2026-10-16T19:38:34Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11006,7 +11018,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

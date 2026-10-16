@@ -1388,12 +1388,11 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertIn("merge and push are the outer session's, when the owner authorizes them", order)
     self.assertNotIn("Commit, merge and push only when", order)
 
-  def test_AiRelayOrchestrator_Intro_NamesItsOwnTextAndTheOneSliceParts(self) -> None:
+  def test_AiRelayOrchestrator_Intro_NamesItsWholeContract(self) -> None:
     intro = self.section(ai.orchestrator_text(), "# Slice relay orchestrator", "## Rules")
-    self.assertIn("This text and the one-slice parts of `slicer ai relay` "
-                  "(Order, Gate, Every brief, Stop) are your contract", intro)
-    self.assertIn("the outer session's steps, Roles and Setup are not yours", intro)
-    self.assertNotIn("whole contract", ai.orchestrator_text())
+    self.assertIn("This text is your whole contract for one slice", intro)
+    self.assertNotIn("one-slice parts", intro)
+    self.assertNotIn("(Order, Gate, Every brief, Stop)", intro)
 
   def test_AiRelayOrchestrator_TrackingBullet_IsWrapped(self) -> None:
     for finish in ("done", "handoff"):
