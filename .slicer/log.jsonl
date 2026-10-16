@@ -1740,3 +1740,4 @@
 {"when": "2026-10-16T12:51:20Z", "item": "s315", "action": "note", "from": "", "to": "", "note": "Verified relay and orchestrator JSON contract values follow ", "by": "Jon Robbins"}
 {"when": "2026-10-16T12:51:20Z", "item": "s315", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T13:09:41Z", "item": "s315", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T13:14:22Z", "item": "s315", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: tests pin ai relay/relay-orchestrator --json contract to ai.contract_line() and the orchestrator's --parent, disputes and gate-resume rules; docs lines corrected. Codex gate PASS plus independent Claude review PASS (5 mutations re-run, all caught). Merged main suite 2234 OK (1 skipped).", "by": "Jon Robbins"}

@@ -10813,7 +10813,7 @@
       "id": "s315",
       "title": "Tests pin the relay v4 contract wiring",
       "short_title": "Pin relay v4 wiring",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -10829,10 +10829,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-16T13:09:41Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
