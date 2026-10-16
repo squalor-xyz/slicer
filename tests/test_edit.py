@@ -10,6 +10,19 @@ from unittest.mock import patch
 
 import support
 
+from slicer import ops
+from slicer.errors import StateError
+
+
+class EditSectionTests(unittest.TestCase):
+  def test_EditSection_NoSlice_CodeIsNoSlice(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "A thing")
+      with self.assertRaises(StateError) as caught:
+        ops.edit_section(repo.state(), "S01", "Why", "Body")
+      self.assertEqual(caught.exception.code, "no_slice")
+
 
 class EditInputTests(unittest.TestCase):
   commands = (("edit", "S01", "--section", "Why"), ("prose", "edit", "preamble"),

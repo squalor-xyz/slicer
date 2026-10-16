@@ -154,6 +154,11 @@ class MigrateTests(unittest.TestCase):
       self.assertIn("Findings", err)
       self.assertFalse((repo.root / ".slicer/slices/S01.json").exists())
 
+  def test_Migrate_StatusLabelBug_NotSwallowed(self) -> None:
+    with patch.object(Config, "status_for_label", side_effect=RuntimeError("boom")):
+      with self.assertRaises(RuntimeError):
+        migrator.build(support.LEGACY, Config())
+
   def test_Migrate_FixtureTree_RoundTripsEveryFileByteIdentical(self) -> None:
     index, slices, located = legacy.read_tree(support.LEGACY)
     for path in sorted(list(support.LEGACY.glob("*.md")) + list((support.LEGACY / "done").glob("*.md"))):

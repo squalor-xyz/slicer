@@ -444,7 +444,7 @@ valid. Tokens after `--` are literal arguments. Help stays human-readable and ex
 successfully, including with `--json`; successful command syntax is unchanged.
 
 **`code` is the contract; `message` is not.** Messages get reworded; codes change only
-when the meaning does. Branch on the code.
+when the meaning does. Branch on the code. A refusal takes its specific code when this table names one for its condition, such as `no_slice` for an item with no slice, whichever caller reaches it; the plain `state` code is for the rest.
 
 | Code | Means |
 |---|---|

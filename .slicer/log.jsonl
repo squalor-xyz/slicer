@@ -1700,3 +1700,7 @@
 {"when": "2026-10-16T11:40:32Z", "item": "pass.v1.14", "action": "prose", "from": "", "to": "v1.14", "note": "add-pass"}
 {"when": "2026-10-16T11:40:55Z", "item": "s321", "action": "add", "from": "", "to": "open", "note": "add-pass counts the items already in the pass"}
 {"when": "2026-10-16T11:40:55Z", "item": "s321", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T11:28:46Z", "item": "s308", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:38:13Z", "item": "s308", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:40:40Z", "item": "s308", "action": "note", "from": "", "to": "", "note": "edit_section refuses an item with no slice with code no_slic", "by": "Jon Robbins"}
+{"when": "2026-10-16T11:41:24Z", "item": "s308", "action": "note", "from": "", "to": "", "note": "Test gap (Low, not filed): no test pins that an unknown stat", "by": "Jon Robbins"}
