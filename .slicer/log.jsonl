@@ -1698,3 +1698,5 @@
 {"when": "2026-10-16T11:39:02Z", "item": "s312", "action": "set", "from": "", "to": "", "note": "findings research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15→Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16"}
 {"when": "2026-10-16T11:40:23Z", "item": "s312", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.14"}
 {"when": "2026-10-16T11:40:32Z", "item": "pass.v1.14", "action": "prose", "from": "", "to": "v1.14", "note": "add-pass"}
+{"when": "2026-10-16T11:40:55Z", "item": "s321", "action": "add", "from": "", "to": "open", "note": "add-pass counts the items already in the pass"}
+{"when": "2026-10-16T11:40:55Z", "item": "s321", "action": "promote", "from": "", "to": "", "note": ""}

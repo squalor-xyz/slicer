@@ -1,0 +1,41 @@
+{
+  "id": "s321",
+  "title": "add-pass counts the items already in the pass",
+  "lead": [
+    "`slicer prose add-pass KEY` says how many items already sit in the pass it declares, instead of always saying \"no items yet\"."
+  ],
+  "depends_note": null,
+  "findings_note": "dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** declaring a pass automatically from `set --pass` or `add --pass`; the warning text of `set`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-16 `slicer set s312 --pass v1.14` warned that v1.14 was not declared and suggested `slicer prose add-pass v1.14 --after <pass>`. Following that hint printed `created pass v1.14 (no items yet); file items with slicer add --pass v1.14`, but s312 was already in it. The text is a fixed string (`cmd_prose_add_pass`, `src/slicer/cli.py:2784`), so it is wrong exactly on the path slicer's own warning recommends."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`, `cmd_prose_add_pass`: count `state.index.items` whose `pass_key` is the new key. With none, keep today's line. With some, print `created pass KEY for N existing item(s)`, without the \"file items with\" hint. The JSON payload is unchanged.\n- `CHANGELOG.md` under Fixed.\n- `tests/test_prose.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AddPass_ItemsAlreadyInPass_TextCountsThem`: after `set S1 --pass vX`, `prose add-pass vX` prints `for 1 existing item(s)` and not `no items yet`.\n- `test_AddPass_NoItems_TextUnchanged`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch the first go red.\n2. Count and branch the text; mutation-check (always print the old line)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
