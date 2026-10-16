@@ -1627,3 +1627,6 @@
 {"when": "2026-10-15T21:10:49Z", "item": "s303", "action": "note", "from": "", "to": "", "note": "Undeclared pass warns: add, set with --pass, and import prin", "by": "Jon Robbins"}
 {"when": "2026-10-15T21:11:26Z", "item": "s303", "action": "note", "from": "", "to": "", "note": "Later (relay review, 2026-10-15; owner choices, current beha", "by": "Jon Robbins"}
 {"when": "2026-10-15T21:17:21Z", "item": "s303", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge 557e522): add, set and import warn on stderr for an undeclared pass; check warns while an open item sits in one. Relay pass (Haiku impl, Opus review and gate). Full suite on main: 2171 OK, 1 skipped; check passed with no new warning.", "by": "Jon Robbins"}
+{"when": "2026-10-16T01:52:35Z", "item": "s306", "action": "add", "from": "", "to": "open", "note": "Add prints the bare id"}
+{"when": "2026-10-16T01:52:35Z", "item": "s306", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T01:52:41Z", "item": "s306", "action": "edit", "from": "", "to": "", "note": "Why"}

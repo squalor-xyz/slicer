@@ -1,0 +1,41 @@
+{
+  "id": "s306",
+  "title": "Add prints the bare id",
+  "lead": [
+    "`slicer add TITLE --print-id` writes only the item's id and a newline to stdout, so a script can capture it with `id=$(slicer add \"…\" --print-id)` without `--json` and a JSON parser."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a `--print-id` on `import` (it files several ids; `import --json` gives `ids`); a separate `new` command (the owner's question was answered by `add`); changing the default text line.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-15 the owner asked for a command that files a new item and returns its id. `add` already allocates the next free id and reports it, but only inside a line meant for people (`added S01  Probe one`, `cmd_add`, `src/slicer/cli.py:2070`) or inside the JSON payload. A shell script has to parse one or the other: piping `--json` output through jq needs jq, and cutting the text line depends on wording that is free to change. `--render` adds a second stdout line (`rendered 2 file(s)`), so even taking the first line is fragile. `next-id` prints a bare id but does not allocate, so using it before `add --id` races with other filings."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`:\n  - `add` gets `--print-id`: stdout is exactly `<id>\\n`, for a new item and for a `--key` retry that returns an existing one alike.\n  - Under `--print-id`, the render summary that `--render` prints goes to stderr instead of stdout. The stderr hints (unscored, undeclared pass) are unchanged, and so are exit codes and errors.\n  - `--print-id` with `--json` is `usage` (exit 2), and nothing is written.\n- `docs/commands.md` (the `add` row), `docs/agents.md` (the `add` row: `--print-id` is the text form; the JSON payload is unchanged), `CHANGELOG.md` under Added.\n- `tests/test_add_options.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Add_PrintId_StdoutIsBareId`: `add T --print-id` writes exactly `<id>\\n` to stdout and files the item.\n- `test_Add_PrintIdWithKeyRetry_PrintsExistingId`: a second `add T --key K --print-id` prints the first item's id and files nothing new.\n- `test_Add_PrintIdWithRender_RenderLineOnStderr`: with `--render`, stdout is still only the id.\n- `test_Add_PrintIdWithJson_Usage`: exit 2, `usage`, index bytes unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the flag in the `add` parser and branch on it in `cmd_add` before `_emit`; route the render summary to stderr under the flag.\n3. Docs and CHANGELOG; mutation-check (print the text line instead; drop the render redirect; drop the `--json` refusal)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

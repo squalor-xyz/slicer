@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 306,
+  "next_id": 307,
   "preamble": "",
   "passes": [
     {
@@ -10293,6 +10293,36 @@
         "trees_literal": false,
         "findings": "s301 relay review, 2026-10-15: a sibling's s10 against our S10 is not refused; Index.get is case-sensitive",
         "discovered_from": "s301",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s306",
+      "title": "Add prints the bare id",
+      "short_title": "Add prints id",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON",
+        "discovered_from": "",
         "parent": "",
         "cites": [],
         "key": "",
