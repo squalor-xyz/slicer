@@ -10647,7 +10647,7 @@
           "slicer"
         ],
         "trees_literal": false,
-        "findings": "research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15",
+        "findings": "Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16",
         "discovered_from": "",
         "parent": "",
         "cites": [],

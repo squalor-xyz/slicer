@@ -1690,3 +1690,9 @@
 {"when": "2026-10-16T11:33:16Z", "item": "s318", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-10-16T11:33:16Z", "item": "s318", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-16T11:33:22Z", "item": "s318", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-16T11:39:00Z", "item": "s312", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-16T11:39:01Z", "item": "s312", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-16T11:39:01Z", "item": "s312", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-16T11:39:01Z", "item": "s312", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-16T11:39:02Z", "item": "s312", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-16T11:39:02Z", "item": "s312", "action": "set", "from": "", "to": "", "note": "findings research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15→Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16"}

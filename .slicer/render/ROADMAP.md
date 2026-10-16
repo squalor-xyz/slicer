@@ -329,7 +329,7 @@ Later (revisit after orchestrator use)
 | 196 | [s221](slices/s221.md) | Add explicit note verification and freshness metadata | M | 2 | slicer | agents feedback 2026-10-05 U12a; docs/feedback/agents-2026-10-05.md | done |
 | 197 | [s222](slices/s222.md) | Pack current trusted notes for the selected item | M | 2 | slicer | agents feedback 2026-10-05 U12b; docs/feedback/agents-2026-10-05.md | done |
 | 198 | [s311](slices/s311.md) | Split cli.py and ops.py | L | 3 | slicer | research/go-rewrite-evaluation.md, code review 3, 2026-10-15 | — |
-| 199 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15 | — |
+| 199 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | — |
 | 200 | [s313](slices/s313.md) | State writes survive a crash | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 6, 2026-10-15 | — |
 
 ---

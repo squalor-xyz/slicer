@@ -5,7 +5,7 @@
     "Commands that need only open work stop reading every done and retired slice file at load, so their cost stays flat as the roadmap grows."
   ],
   "depends_note": null,
-  "findings_note": "research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15",
+  "findings_note": "Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16",
   "size": "M",
   "flags": [],
   "trees_note": "slicer",
@@ -14,23 +14,23 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "`store.load` reads every slice file into `State.slices` (`src/slicer/store.py:712-761`) for every command. With 293 items today the Go rewrite evaluation measured reads at 70-80 ms, so there is no measured problem yet, but most of those slices are done, and the cost grows with every slice that lands. `render`, `check`, `show` and `find` need all slices; `next`, `list`, `start`, `note` and most writes need the index and open slices.\n\n**Open owner decision:** this changes the `State` contract (`State.slices` is a plain dict every module reads). Options: (a) a lazy mapping that loads a slice file on first access, keeping the interface; (b) an explicit `load(..., slices=\"open\"|\"all\")` that each command chooses; (c) leave it until a measured roadmap size makes it worth it. Recommendation: (c) until a benchmark shows load time above an agreed budget, then (a)."
+      "body": "`store.load` reads every slice file into `State.slices` (`src/slicer/store.py:712-761`) for every command. With about 300 items the Go rewrite evaluation measured reads at 70-80 ms. Most of those slices are done, and the cost grows with every slice that lands. `render`, `check` and `verify` need every slice. `next`, `list`, `show ID`, `start`, `note` and most writes look up one or a few slices by id (`state.slices.get(item.id)` at `cli.py:1423`, `ops.py:1869` and the like) or test membership (`item.id in state.slices`, `cli.py:2889`).\n\n**Decision (owner, 2026-10-16): option (a).** `State.slices` becomes a lazy mapping that reads a slice file on first access, keeping the dict interface every module uses. The rejected options were (b), an explicit `load(..., slices=\"open\"|\"all\")` that each command chooses, and (c), waiting for a measured budget to be exceeded."
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/store.py` (`load`, `State`), and the commands that choose a mode under option (b).\n- A benchmark fixture with, for example, 2,000 done slices, and a test that times `next --json --lean` against it.\n- `ARCHITECTURE.md` (the `State` contract), `CHANGELOG.md`."
+      "body": "- `src/slicer/store.py`:\n  - `load` lists the slice folders (live, done, retired) into a map from filename stem to path, without reading any file.\n  - A `LazySlices` class (a `MutableMapping[str, Slice]`) holds that map and a cache:\n    - `get`, `[]` and `in` for one id read only that file, through the same `_from_dict` and `Slice.from_dict(boundary_marker=…)` path as today.\n    - Iteration, `len`, `keys`, `values`, `items`, `dict(...)` and `copy` first load every file, then behave exactly as today's dict, keyed by each file's *contained* id.\n    - If a file read on demand holds an id other than its filename stem, the mapping loads everything and rekeys by contained id, so `verify`'s \"id disagrees with filename\" report (`verify.py:206-209`) is unchanged.\n    - Writes (`__setitem__`, `__delitem__`) go to the cache.\n  - `State.slice_files` gets the same treatment, a lazy view over the same stem map, so `verify.py:209` still sees every path after a full load.\n  - `store.py:391-393` (put a slice, with staging) and the staged save at `store.py:487` work on the mapping unchanged.\n- `src/slicer/ops.py:2530-2531` and `:2595`: the import/promote draft copies `dict(state.slices)`. Make that a mapping copy that does not force a full load (a `LazySlices.copy()` sharing the stem map with its own cache), or record in the note why a full load there is acceptable.\n- `src/slicer/tui.py:983`: the TUI reload assigns fresh mappings; check it keeps working with lazy ones.\n- `ARCHITECTURE.md`: the `State` contract and \"what a change must not break\", on when slice files are read and what that means for errors.\n- `CHANGELOG.md` under Changed.\n- `tests/test_store_lazy.py` (new) and a benchmark fixture builder in `tests/support.py`."
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_Load_ManyDoneSlices_NextDoesNotReadThem`: with 2,000 done slices, `next` opens none of their files (counted by patching the reader).\n- `test_Load_ShowDoneSlice_StillLoads`: `show` on a done slice returns it in full."
+      "body": "- `test_Load_ManyDoneSlices_NextReadsNone`: with 2,000 done slices and 3 open ones, `next --json --lean` reads none of the done files (count calls to the slice reader).\n- `test_Load_ShowDoneSlice_ReadsOnlyThatFile`: `show <done id>` returns it in full and reads exactly one slice file.\n- `test_Load_Render_ByteIdenticalToEagerLoad`: `render` output on the legacy fixture and on this repo's own tree is byte-identical to the eager load (keep the eager path as a test-only reference, or compare against committed render output).\n- `test_Load_FileIdDisagreesWithName_VerifyStillReports`: a file `s5.json` holding id `s6` is still reported by `verify` exactly as today.\n- `test_Load_CorruptDoneSlice_CheckStillFails`: a damaged done slice still fails `check` and `verify` with `corrupt`, naming the file.\n- `test_Load_CorruptDoneSlice_NextUnaffected`: the same damaged file does not stop `next`. This is a deliberate behaviour change: today every command fails at load. Record it in the CHANGELOG.\n- `test_LazySlices_SetThenIterate_SeesNewSlice`: a slice added by `put` shows in a later full iteration, and so does a slice moved to done."
     },
     {
       "heading": "Implement",
-      "body": "1. The owner picks an option.\n2. Write the benchmark and the tests; watch them go red.\n3. Implement the chosen option; mutation-check (load everything again)."
+      "body": "1. Write the tests and the 2,000-slice fixture; watch them go red, and record `next --json --lean` timings on the fixture before the change.\n2. Add `LazySlices` and the lazy `slice_files`, wire `load` to them, and fix the copy sites in `ops.py`.\n3. Run every command's tests; then the full suite. Compare `render` on this repo before and after (`slicer check` must pass, with render byte-identical).\n4. Mutation-check: make `get` load everything (the \"reads none\" test fails); drop the rekey on an id mismatch (the verify test fails).\n5. ARCHITECTURE.md and CHANGELOG; put the before and after timings in the handoff note."
     },
     {
       "heading": "Check",
-      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes; `render` output is byte-identical."
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite.\n- `slicer check` passes; `render` output is byte-identical before and after.\n- The handoff note has `next --json --lean` timings on the 2,000-slice fixture and on this repo, before and after."
     },
     {
       "heading": "Git",
