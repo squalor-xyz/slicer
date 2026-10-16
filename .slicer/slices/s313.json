@@ -1,0 +1,41 @@
+{
+  "id": "s313",
+  "title": "State writes survive a crash",
+  "lead": [
+    "`jsonio.write_bytes` flushes the temporary file to disk before renaming it over the target and then flushes the directory, so a power loss cannot leave a state file empty."
+  ],
+  "depends_note": null,
+  "findings_note": "research/go-rewrite-evaluation.md, code review 6, 2026-10-15",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** rendered output; the log file's append path (decide separately if it needs the same); a measurable slowdown, which the handoff note checks against the full-suite time.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`jsonio.write_bytes` (`src/slicer/jsonio.py:43-53`) writes a temporary file and renames it with `os.replace`, which makes a write atomic against errors but not durable against a crash: without `fsync` on the file before the rename and on the directory after it, some filesystems can, after a power loss, keep the rename but not the data, leaving an empty `index.json`. `render.write` writes each rendered file in place (`src/slicer/render.py:713`); rendered output can be regenerated, so it is out of scope. Found by the Go rewrite evaluation (`research/go-rewrite-evaluation.md`)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/jsonio.py`, `write_bytes`: `fh.flush()` and `os.fsync(fh.fileno())` before the rename; after it, open the directory and `os.fsync` it where the platform allows (skip on Windows, where opening a directory fails).\n- `CHANGELOG.md` under Fixed.\n- `tests/test_jsonio.py` (or the existing jsonio tests)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_WriteBytes_FsyncsFileBeforeReplace`: with `os.fsync` and `os.replace` patched to record calls, the file's fsync comes before the replace.\n- `test_WriteBytes_FsyncsDirectoryAfterReplace`: a directory fsync follows the replace on POSIX."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the flushes.\n3. CHANGELOG; mutation-check (drop each fsync); compare the full-suite time with main."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

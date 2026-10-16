@@ -1,0 +1,41 @@
+{
+  "id": "s309",
+  "title": "Fewer git calls per command",
+  "lead": [
+    "A test counts the git subprocesses a command starts; repo and worktree probes are answered once per process, and `verify --landed` stops making one git call per ref tip."
+  ],
+  "depends_note": null,
+  "findings_note": "research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** removing the sibling-collision scan from `check`; lazy imports (its own item); any new entry in `vcs.ALLOWED`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The Go rewrite evaluation measured reads at 70-80 ms, `render` at 120 ms and `check` at 170 ms, and found that the variable cost is git subprocesses, not Python. Within one command the same read-only probes run again and again: `vcs.is_repo` (`src/slicer/vcs.py:82`) runs inside `merge_in_progress`, `resolve` and `subjects` as well as on its own, and `_current_worktree` (`src/slicer/vcs.py:305`) runs `rev-parse --show-toplevel` twice per sibling scan. `verify --landed`'s `_done_on_another_tip` (`src/slicer/verify.py:471-489`) runs `is_ancestor`, and possibly `show`, for every ref tip, up to 1000 tips. Nothing tests the count, so it can grow unnoticed.\n\nThe two `require_no_merge` calls in `main` (`src/slicer/cli.py:4099` and `src/slicer/cli.py:4111`) look deliberate: the first fails fast before waiting on the lock, the second rechecks while holding it. Keep both; the memoised `is_repo` makes the second cheaper."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/vcs.py`: memoise `is_repo` and `_current_worktree` per resolved root for the life of the process (a module-level dict, with a function the tests call to clear it). Answers that can change within one command (`MERGE_HEAD`, HEAD) are not cached.\n- `src/slicer/verify.py`, `_done_on_another_tip`: fewer calls per tip within the closed allowlist, for example one `log`/`rev-list`-style listing of the tips not in `commit`'s history instead of one `merge-base --is-ancestor` per tip, if an allowed form does it; otherwise a documented bound. No new git command or form without the owner's approval.\n- `tests/support.py`: a helper that counts calls to `vcs._run` and clears the memo between tests.\n- A new `tests/test_git_calls.py` pinning counts for `check`, one mutating command (`note`) and `verify --landed` on a small fixture.\n- `CHANGELOG.md` under Changed (performance)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Check_InRepoWithSibling_GitCallsBounded`: `check` in a fixture with one sibling worktree starts at most N git calls (N set from the memoised implementation and recorded in the test).\n- `test_Note_InRepo_IsRepoProbedOnce`: a `note` runs `rev-parse --is-inside-work-tree` once.\n- `test_VerifyLanded_ManyTips_CallsDoNotScalePerTip`: with 20 extra branches, `verify --landed` starts fewer than 20 `merge-base` calls, or the slice records the bound it chose."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add the counter helper; write the tests and record today's counts (red against the targets).\n2. Memoise the probes; reduce the per-tip calls.\n3. CHANGELOG; mutation-check (drop the memo; restore the per-tip loop)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes.\n- Before and after timings of `check` and `list --json --lean` on this repo are in the handoff note."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

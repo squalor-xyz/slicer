@@ -1,0 +1,41 @@
+{
+  "id": "s312",
+  "title": "Load done slices only when needed",
+  "lead": [
+    "Commands that need only open work stop reading every done and retired slice file at load, so their cost stays flat as the roadmap grows."
+  ],
+  "depends_note": null,
+  "findings_note": "research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** caching across processes; changes to the on-disk layout.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`store.load` reads every slice file into `State.slices` (`src/slicer/store.py:712-761`) for every command. With 293 items today the Go rewrite evaluation measured reads at 70-80 ms, so there is no measured problem yet, but most of those slices are done, and the cost grows with every slice that lands. `render`, `check`, `show` and `find` need all slices; `next`, `list`, `start`, `note` and most writes need the index and open slices.\n\n**Open owner decision:** this changes the `State` contract (`State.slices` is a plain dict every module reads). Options: (a) a lazy mapping that loads a slice file on first access, keeping the interface; (b) an explicit `load(..., slices=\"open\"|\"all\")` that each command chooses; (c) leave it until a measured roadmap size makes it worth it. Recommendation: (c) until a benchmark shows load time above an agreed budget, then (a)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py` (`load`, `State`), and the commands that choose a mode under option (b).\n- A benchmark fixture with, for example, 2,000 done slices, and a test that times `next --json --lean` against it.\n- `ARCHITECTURE.md` (the `State` contract), `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Load_ManyDoneSlices_NextDoesNotReadThem`: with 2,000 done slices, `next` opens none of their files (counted by patching the reader).\n- `test_Load_ShowDoneSlice_StillLoads`: `show` on a done slice returns it in full."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. The owner picks an option.\n2. Write the benchmark and the tests; watch them go red.\n3. Implement the chosen option; mutation-check (load everything again)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes; `render` output is byte-identical."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

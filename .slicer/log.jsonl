@@ -1635,3 +1635,10 @@
 {"when": "2026-10-16T01:57:43Z", "item": "s299", "action": "note", "from": "", "to": "", "note": "relay-run step refuses a differing --task on an update; a ta", "by": "Jon Robbins"}
 {"when": "2026-10-16T01:58:14Z", "item": "s299", "action": "note", "from": "", "to": "", "note": "Later (relay review): docs/commands.md relay-run step row's ", "by": "Jon Robbins"}
 {"when": "2026-10-16T02:04:25Z", "item": "s299", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge, 2176 tests OK): a step recorded without a task can take its first task via --step N --task x; a differing non-empty task stays refused.", "by": "Jon Robbins"}
+{"when": "2026-10-16T02:48:34Z", "item": "s307", "action": "add", "from": "", "to": "open", "note": "Docs match what check and the git allowlist do"}
+{"when": "2026-10-16T02:48:34Z", "item": "s308", "action": "add", "from": "", "to": "open", "note": "Error codes agree for a missing slice"}
+{"when": "2026-10-16T02:48:34Z", "item": "s309", "action": "add", "from": "", "to": "open", "note": "Fewer git calls per command"}
+{"when": "2026-10-16T02:48:34Z", "item": "s310", "action": "add", "from": "", "to": "open", "note": "Measure startup and load rare modules on use"}
+{"when": "2026-10-16T02:48:34Z", "item": "s311", "action": "add", "from": "", "to": "open", "note": "Split cli.py and ops.py"}
+{"when": "2026-10-16T02:48:34Z", "item": "s312", "action": "add", "from": "", "to": "open", "note": "Load done slices only when needed"}
+{"when": "2026-10-16T02:48:34Z", "item": "s313", "action": "add", "from": "", "to": "open", "note": "State writes survive a crash"}

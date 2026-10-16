@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 307,
+  "next_id": 314,
   "preamble": "",
   "passes": [
     {
@@ -10353,6 +10353,216 @@
         "group": "",
         "reason": "",
         "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s307",
+      "title": "Docs match what check and the git allowlist do",
+      "short_title": "Docs match what check and the git allowlist do",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s308",
+      "title": "Error codes agree for a missing slice",
+      "short_title": "Error codes agree for a missing slice",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, code review 4-5, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s309",
+      "title": "Fewer git calls per command",
+      "short_title": "Fewer git calls per command",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s310",
+      "title": "Measure startup and load rare modules on use",
+      "short_title": "Measure startup and load rare modules on use",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, alternatives 2, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s311",
+      "title": "Split cli.py and ops.py",
+      "short_title": "Split cli.py and ops.py",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "L",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, code review 3, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 3,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s312",
+      "title": "Load done slices only when needed",
+      "short_title": "Load done slices only when needed",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, alternatives 3, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s313",
+      "title": "State writes survive a crash",
+      "short_title": "State writes survive a crash",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "research/go-rewrite-evaluation.md, code review 6, 2026-10-15",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
         "urgency": 1,
         "effort": 1,
         "attempts": 0

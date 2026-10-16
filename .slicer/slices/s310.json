@@ -1,0 +1,41 @@
+{
+  "id": "s310",
+  "title": "Measure startup and load rare modules on use",
+  "lead": [
+    "Measure what importing slicer costs at startup; if loading rarely used modules on first use saves at least 10 ms on a plain read, do it and pin a coarse startup budget in a test, otherwise record the numbers and close."
+  ],
+  "depends_note": null,
+  "findings_note": "research/go-rewrite-evaluation.md, alternatives 2, 2026-10-15",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** lazy subparsers; caching; a release artifact.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`cli.py` imports every module at startup (`src/slicer/cli.py:28-54`), including `migrator`, `legacy`, `mergeindex`, `mergeroles`, `github`, `refs`, `relayrun` and `roles`, which most commands never use. The Go rewrite evaluation measured about 60 ms of slicer's own fixed cost per command (about 70 ms total minus about 10 ms for Python itself) but could not run `-X importtime`, so how much of that is imports is unmeasured. Agents run slicer many times per turn, so a fixed cost multiplies."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: move the rarely used imports into the handlers that use them, if the measurement justifies it. Parser construction stays as it is (building only the chosen subparser is a separate, larger change).\n- A test beside the CLI tests: a subprocess `python3 -X importtime -c \"import slicer.cli\"` check that the moved modules are not imported, and a coarse wall-clock budget only if it is stable on CI.\n- `CHANGELOG.md` under Changed, if anything changes."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_CliImport_RareModules_NotLoaded`: importing `slicer.cli` does not load `slicer.migrator`, `slicer.mergeindex` or `slicer.github` (checked through `sys.modules` in a subprocess)."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Measure: `python3.12 -X importtime -c \"import slicer.cli\"` and five timed runs of `list --json --lean`, before.\n2. If the moved modules account for at least 10 ms, write the test, move the imports, and measure after. If not, put the numbers in a note, and the owner retires the item."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 -m unittest discover -s tests -t tests` passes.\n- `slicer check` passes.\n- The before and after numbers are in the handoff note."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
