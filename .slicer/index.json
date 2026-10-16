@@ -10545,10 +10545,22 @@
       "id": "s309",
       "title": "Fewer git calls per command",
       "short_title": "Fewer git calls per command",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "fdebe5ef-3dfb-4f34-a104-5ecf17552da6",
+          "kind": "",
+          "text": "**2026-10-16** — Verified: full suite 2217 OK (1 skipped) on the final diff; slicer check passes; mutation checks red for the right reason. vcs.is_repo and the worktree lookup are memoised per resolved root plus discovery env (positive answers only; cleared by TempRepo and tui.View.refresh); verify --landed uses vcs.tips_outside (two log calls, with --decorate-refs so log.excludeDecoration cannot hide tips) instead of one merge-base per tip. Git calls: note is-inside-work-tree 3 -> 1; check with a sibling 8 -> 6; verify --landed with 20 tips: 21 merge-base -> 0, 2 log, show <= 21 (documented bound; the closed allowlist has no multi-blob read). Timings on this worktree, interleaved medians: check 188 -> 179-180 ms, list --json --lean 125-126 -> 120-121 ms; reviewer's independent medians under suite load: check 178 -> 173 ms, list 118 -> 115 ms.",
+          "created_at": "2026-10-16T12:19:42Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -10568,7 +10580,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-305 items · — 21 · done 278 · retired 6
+305 items · — 20 · done 278 · retired 6 · review 1
 
 v1.13.0 release
 
@@ -60,7 +60,7 @@ v1.12.0 release
 | 18 | [s306](slices/s306.md) | Add prints id | S | 1 | slicer | owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON | — |
 | 19 | [s307](slices/s307.md) | Docs match what check and the git allowlist do | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15 | done |
 | 20 | [s308](slices/s308.md) | Error codes agree for a missing slice | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 4-5, 2026-10-15 | — |
-| 21 | [s309](slices/s309.md) | Fewer git calls per command | M | 2 | slicer | research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15 | — |
+| 21 | [s309](slices/s309.md) | Fewer git calls per command | M | 2 | slicer | research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15 | review |
 | 22 | [s310](slices/s310.md) | Measure startup and load rare modules on use | S | 1 | slicer | research/go-rewrite-evaluation.md, alternatives 2, 2026-10-15 | — |
 | 23 | [s314](slices/s314.md) | List one relay run | S | 1 | slicer | s296 relay run 2026-10-16: orchestrator brief's relay-run list RUN errors · discovered from s296 | — |
 | 24 | [s315](slices/s315.md) | Pin relay v4 wiring | S | 1 | slicer | s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296 | — |

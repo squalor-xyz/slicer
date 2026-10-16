@@ -473,11 +473,14 @@ def _done_on_another_tip(state: State, item_id: str, slice_path: str, commit: st
 
   Each such tip's own index decides, and for an item with a slice its done slice file
   too. A tip whose index cannot be read is skipped: it is no evidence either way.
+
+  Git calls: two `log` listings tell which tips are outside `commit`'s history, then
+  one `show` per such tip for its index and one more for its slice file when its index
+  says done. The closed allowlist has no form that reads many blobs at once, so that
+  `show` per tip stays, bounded by the 1000 tips `vcs.ref_tips` returns.
   """
   root = state.root
-  for tip in vcs.ref_tips(root):
-    if vcs.is_ancestor(root, tip, commit):
-      continue
+  for tip in vcs.tips_outside(root, commit):
     try:
       seen = index_at(state, tip)
     except StateError:

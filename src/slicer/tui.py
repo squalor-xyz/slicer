@@ -766,6 +766,8 @@ class View:
     return self.selected[1] if self.selected else ""
 
   def refresh(self, state: State) -> None:
+    # The session outlives every command; re-ask git about this checkout once per reload.
+    vcs.clear_cache()
     if self.drift_due:
       self.render_stale, self.drift_due = render_drifted(state), False
     # One read of the sibling worktrees feeds both the claim cells and the sibling-only block.
