@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `tests/support.py`: the guard, installed at import, with a context manager `support.allow_git_dir_writes()` for the guard's own tests and a module-level `GUARDED_ROOT` the tests can point at a scratch directory. reads stay allowed.\n- `tests/test_support_guard.py`: the guard's tests.\n- `AGENTS.md` (Commands): one sentence saying the suite refuses writes into the repository's own git dir, and that a test needing a real common dir builds a fixture that is its own git repo."
+      "body": "- `tests/support.py`: the guard, installed at import, with a context manager `support.allow_git_dir_writes()` for the guard's own tests and a module-level `GUARDED_ROOT` the tests can point at a scratch directory. Reads stay allowed.\n- `tests/test_support_guard.py`: the guard's tests.\n- `AGENTS.md` (Commands): one sentence saying the suite refuses writes into the repository's own git dir, and that a test needing a real common dir builds a fixture that is its own git repo."
     },
     {
       "heading": "Failing tests",
