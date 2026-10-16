@@ -1772,3 +1772,5 @@
 {"when": "2026-10-16T18:47:47Z", "item": "s337", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-10-16T19:54:38Z", "item": "s337", "action": "note", "from": "", "to": "", "note": "Ready for review: fallback-recorded step ids carry the per-c", "by": "Jon Robbins"}
 {"when": "2026-10-16T19:54:41Z", "item": "s337", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T19:55:38Z", "item": "s340", "action": "add", "from": "", "to": "open", "note": "A shared step whose parent is only in a local fallback file keeps the shared ledger readable"}
+{"when": "2026-10-16T19:55:51Z", "item": "s340", "action": "promote", "from": "", "to": "", "note": ""}

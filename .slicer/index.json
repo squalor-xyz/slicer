@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 340,
+  "next_id": 341,
   "preamble": "",
   "passes": [
     {
@@ -11655,6 +11655,38 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s340",
+      "title": "A shared step whose parent is only in a local fallback file keeps the shared ledger readable",
+      "short_title": "Shared step keeps its local-only parent",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s337"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed",
+        "discovered_from": "s337",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 1,
         "attempts": 0
       }
