@@ -1,0 +1,41 @@
+{
+  "id": "s337",
+  "title": "Steps recorded through the fallback and the shared ledger never share an id",
+  "lead": [
+    "Two `relay-run step` writes to one run, one through the local fallback and one to the shared ledger, at the same moment, never give two steps the same id."
+  ],
+  "depends_note": null,
+  "findings_note": "s332 relay 2026-10-16, later note 1: concurrent fallback and shared writers can issue one step id twice",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing where either writer appends; the fallback rule itself.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s332 (2026-10-16) lets a sandboxed role record steps in its checkout's `.slicer/relay-runs.jsonl` when the shared ledger refuses the write. `ops.relay_run_step` picks a new step id as one past the largest it folds from every ledger, but a fallback write holds only the project lock and a shared write holds only the ledger's flock. Two writers in that window read the same largest id, and the later event updates the earlier step instead of recording a new one. `docs/commands.md` (Sandboxes) records this as a known limit. The s332 orchestrator named two fixes: a per-checkout id prefix, or one lock both writers take. **Owner decision needed** before implementing: which of the two."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`, `relay_run_step` (step id allocation) and `ledger_lock`.\n- `src/slicer/relayrun.py` if ids gain a prefix (`fold`, `Run.step`).\n- `docs/commands.md` (Sandboxes): drop the known-limit sentence. `CHANGELOG.md` under Fixed.\n- `tests/test_relay_run.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRunStep_FallbackAndSharedConcurrent_DistinctIds`: one write held at the point after it read the run (patched), the other completes; both steps are listed with different ids."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Get the owner's choice of fix.\n2. Write the test and watch it go red; then the fix; mutation-check it."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

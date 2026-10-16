@@ -1754,3 +1754,6 @@
 {"when": "2026-10-16T13:33:41Z", "item": "s332", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-16T14:07:02Z", "item": "s332", "action": "note", "from": "", "to": "", "note": "Ready for review, verified: VERDICT: PASS after 2 rounds. Sa", "by": "Jon Robbins"}
 {"when": "2026-10-16T14:07:02Z", "item": "s332", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-16T14:08:12Z", "item": "s337", "action": "add", "from": "", "to": "open", "note": "Steps recorded through the fallback and the shared ledger never share an id"}
+{"when": "2026-10-16T14:08:12Z", "item": "s338", "action": "add", "from": "", "to": "open", "note": "relay-run end absorbs a step whose parent is in a damaged local file without failing"}
+{"when": "2026-10-16T14:08:12Z", "item": "s326", "action": "note", "from": "", "to": "", "note": "s332 relay 2026-10-16, later note: with the s332 fallback, w", "by": "Jon Robbins"}
