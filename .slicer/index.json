@@ -10017,7 +10017,7 @@
       "id": "s299",
       "title": "relay-run step must refuse a new task on an existing step",
       "short_title": "Step task kept",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
