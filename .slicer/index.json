@@ -10933,6 +10933,36 @@
         "effort": 1,
         "attempts": 0
       }
+    },
+    {
+      "id": "s320",
+      "title": "Select relay role alternatives across vendors",
+      "short_title": "Select relay role alternatives across vendors",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "Owner request, 2026-10-16: Codex implementer and orchestrator alternatives, automatic selection with overrides, and future bidirectional harness launching.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "relay-role-alternatives",
+        "pass": "v1.12",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
     }
   ],
   "epilogue": "",
