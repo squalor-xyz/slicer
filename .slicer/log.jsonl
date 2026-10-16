@@ -1778,3 +1778,4 @@
 {"when": "2026-10-16T19:54:41Z", "item": "s337", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-16T19:55:38Z", "item": "s340", "action": "add", "from": "", "to": "open", "note": "A shared step whose parent is only in a local fallback file keeps the shared ledger readable"}
 {"when": "2026-10-16T19:55:51Z", "item": "s340", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T20:11:06Z", "item": "s337", "action": "status", "from": "review", "to": "done", "note": "Landed on main after relay gate VERDICT: PASS; fallback step ids carry a per-checkout prefix (owner decision 2026-10-16). Full suite on merged main: 2280 tests OK (1 skip).", "by": "Jon Robbins"}
