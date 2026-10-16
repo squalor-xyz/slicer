@@ -10031,6 +10031,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "66ad652c-7e14-4859-b861-db59264c3a02",
+          "kind": "",
+          "text": "**2026-10-16** — Later (relay review): docs/commands.md relay-run step row's error-code list repeats 'a --task on an update that differs from the recorded task' without the taskless exception stated a sentence earlier; nit. Also --task '  ' is stripped to empty by relayrun.one_line (relayrun.py:67) and counts as no task; harmless.",
+          "created_at": "2026-10-16T01:58:14Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
