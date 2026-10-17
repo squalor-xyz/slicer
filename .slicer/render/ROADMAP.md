@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-335 items · — 23 · done 304 · retired 8
+335 items · — 22 · done 304 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -67,7 +67,7 @@ v1.13.0 release
 | 25 | [s341](slices/s341.md) | Example matrix gains orchestrator rows | S | 1 | slicer | s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320 | done |
 | 26 | [s342](slices/s342.md) | affected.py borrows an ancestor map | S | 1 | slicer | s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337 | done |
 | 27 | [s343](slices/s343.md) | The relay Setup says recommend can leave a role unmatched | S | 1 | slicer | s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example's architect row matches size L only, so a smaller slice leaves the architect unmatched | — |
-| 28 | [s344](slices/s344.md) | affected.py does not borrow a map recorded from a dirty tree | S | 1 | slicer | s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps | — |
+| 28 | [s344](slices/s344.md) | affected.py does not borrow a map recorded from a dirty tree | S | 1 | slicer | s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps | review |
 | 29 | [s345](slices/s345.md) | show names catalog show for a catalog record id | S | 1 | slicer | Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only | — |
 | 30 | [s346](slices/s346.md) | TUI detail pane docs match what i does | S | 1 | slicer | s278 gate later notes, 2026-10-17 · discovered from s278 | — |
 | 31 | [s347](slices/s347.md) | TUI history pane scrolls through the item's whole history | S | 1 | slicer | s278 gate later notes, 2026-10-17 · discovered from s278 | — |

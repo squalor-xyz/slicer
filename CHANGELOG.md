@@ -16,6 +16,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - Agent instructions and the slicer skill explain that `!` after a text `list` or `find` row number marks an unmet dependency, and point to `slicer show ID --json --lean` for `depends_on`.
 - The relay board's ended summaries show the items' configured status labels beside the run outcome, keeping that cell ahead of elapsed times on narrow screens. A passed run gets `✓` only when every item has the configured done status; otherwise it gets `○`. Failed and stopped runs keep `✗` and `~`.
+- Contributor tooling: `tests/affected.py` records in each `.venv/affected-map.json` whether its tree had no uncommitted changes under `src/` or `tests/` when the full discover started (`"clean"`, written after `"sha"`), and `record` does the same. A worktree no longer borrows a map that is not clean, so a map recorded from uncommitted `src/` or `tests/` changes is not used once those changes are committed. A map written before the field existed is not borrowed until a full discover on a clean checkout writes one. A worktree's own map ignores the field.
 
 ## [1.12.0] - 2026-10-17
 

@@ -3,12 +3,15 @@
 The full unittest discover stays the gate before done. When that discover is
 the process entry point and passes, it writes this map for HEAD: the lines each
 test executed, and the non-Python repo files each test opened, so a Markdown or
-template change selects its readers. A worktree without a map of its own borrows
-one that another worktree of the repository recorded at HEAD or at an ancestor of
-HEAD, the nearest one when several qualify, when that worktree has no uncommitted
-changes under `src/` or `tests/`; it is read, never written. A borrowed map still
-describes every line unchanged since its commit, so the working tree is diffed against
-that commit, not HEAD. A worktree's own map is used only at the same HEAD. The map is
+template change selects its readers. The map also records whether its tree was clean:
+no uncommitted changes under `src/` or `tests/` when the discover started. A dirty tree,
+or one whose probe fails, is recorded as not clean. A worktree without a map of its own
+borrows one that another worktree of the repository recorded at HEAD or at an ancestor
+of HEAD, the nearest one when several qualify, when that map is clean and that worktree
+has no uncommitted changes under `src/` or `tests/`; it is read, never written. A
+borrowed map still describes every line unchanged since its commit, so the working tree
+is diffed against that commit, not HEAD. A worktree's own map is used only at the same
+HEAD, whatever its clean field says. The map is
 a local cache: when it is missing or stale, the caller is told to run that suite
 instead of a list that only looks complete. A selected id that the tree no longer
 defines is dropped from a run, and that run asks for the full suite too.
@@ -61,11 +64,12 @@ def record(map_path: Path) -> int:
   sha = git_head(ROOT)
   if sha is None:
     return _full_suite("cannot read HEAD")
+  clean = tree_is_clean(ROOT)
   suite = unittest.defaultTestLoader.discover(
     str(ROOT / "tests"), top_level_dir=str(ROOT / "tests"),
   )
   tests, reads = trace(suite, ROOT)
-  write_map(map_path, sha, tests, reads)
+  write_map(map_path, sha, tests, reads, clean=clean)
   print(f"recorded {len(tests)} tests to {map_path}")
   return 0
 
@@ -92,13 +96,18 @@ def trace(
 
 def write_map(
   path: Path, sha: str, tests: dict[str, list[str]],
-  reads: dict[str, list[str]] | None = None,
+  reads: dict[str, list[str]] | None = None, *, clean: bool,
 ) -> None:
-  """Write `{sha, tests, reads}` with sorted ids and sorted lists."""
+  """Write `{sha, clean, tests, reads}` with sorted ids and sorted lists.
+
+  `clean` is what `tree_is_clean` said when the discover started, not the tree as it
+  is after the run, so the caller passes the answer it took before the tests ran.
+  """
   path.parent.mkdir(parents=True, exist_ok=True)
   opened = {} if reads is None else reads
   payload = {
     "sha": sha,
+    "clean": clean,
     "tests": {test_id: sorted(tests[test_id]) for test_id in sorted(tests)},
     "reads": {test_id: sorted(opened[test_id]) for test_id in sorted(opened)},
   }
@@ -108,7 +117,7 @@ def write_map(
   temporary.replace(path)
 
 
-def load_map(path: Path) -> tuple[str, dict[str, list[str]], dict[str, list[str]]]:
+def load_map(path: Path) -> tuple[str, dict[str, list[str]], dict[str, list[str]], bool]:
   data = json.loads(path.read_text(encoding="utf-8"))
   tests = data["tests"]
   if not isinstance(data.get("sha"), str) or not isinstance(tests, dict):
@@ -118,7 +127,11 @@ def load_map(path: Path) -> tuple[str, dict[str, list[str]], dict[str, list[str]
   opened = data["reads"]
   if not isinstance(opened, dict):
     raise TypeError("map reads must be {id: [path, ...]}")
-  return data["sha"], _string_lists(tests, "tests"), _string_lists(opened, "reads")
+  # A map written before the field existed was never probed, so it is not clean.
+  clean = data.get("clean", False)
+  if not isinstance(clean, bool):
+    raise TypeError("map clean must be true or false")
+  return data["sha"], _string_lists(tests, "tests"), _string_lists(opened, "reads"), clean
 
 
 def _string_lists(section: dict, name: str) -> dict[str, list[str]]:
@@ -154,13 +167,16 @@ def select(
       )
     map_path, expected = found
   try:
-    recorded, tests, reads = load_map(map_path)
+    recorded, tests, reads, clean = load_map(map_path)
   except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
     return _full_suite(f"{map_path} cannot be read ({exc})")
   if recorded != expected:
     if borrowed:
       return _full_suite(f"{map_path} changed after it was chosen, and is now recorded at {recorded}")
     return _full_suite(f"map was recorded at {recorded}, HEAD is {current}")
+  # The choice in sibling_map read `clean`; a re-recording since then can have cleared it.
+  if borrowed and not clean:
+    return _full_suite(f"{map_path} changed after it was chosen, and is now not recorded from a clean tree")
   if borrowed:
     print(
       f"affected: no map in this worktree; using {map_path}, recorded at {recorded}; "
@@ -183,11 +199,12 @@ def sibling_map(sha: str) -> tuple[Path, str] | None:
   Read only: each candidate is loaded and never written. A map recorded at `sha`
   itself wins at once. Otherwise the candidate with the fewest commits between
   its recorded commit and `sha` wins, the first in `git worktree list` order on a
-  tie. A map that does not load, or records a commit that is neither `sha` nor
-  one of its ancestors, is passed over, and so is a worktree with uncommitted
-  changes under `src/` or `tests/`, whose map may describe code that is not at
-  its recorded commit. A recorded value that is not a full 40-character SHA is
-  passed over before git sees it, so a hand-made `HEAD~1` cannot resolve here.
+  tie. A map that does not load, or was not recorded from a clean tree (its `clean`
+  field is false or missing), or records a commit that is neither `sha` nor one of
+  its ancestors, is passed over, and so is a worktree with uncommitted changes under
+  `src/` or `tests/`, whose map may describe code that is not at its recorded commit.
+  A recorded value that is not a full 40-character SHA is passed over before git sees
+  it, so a hand-made `HEAD~1` cannot resolve here.
   """
   nearest: tuple[int, Path, str] | None = None
   for worktree in _worktree_paths(ROOT):
@@ -195,8 +212,10 @@ def sibling_map(sha: str) -> tuple[Path, str] | None:
     if not candidate.is_file():
       continue
     try:
-      recorded, _, _ = load_map(candidate)
+      recorded, _, _, clean = load_map(candidate)
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+      continue
+    if not clean:
       continue
     if _FULL_SHA.fullmatch(recorded) is None:
       continue
@@ -253,6 +272,15 @@ def _has_source_changes(worktree: Path) -> bool:
   if proc.returncode != 0:
     return True
   return bool(proc.stdout.strip())
+
+
+def tree_is_clean(root: Path) -> bool:
+  """True when `root` has no uncommitted changes under `src/` or `tests/`.
+
+  A discover calls this before it runs the suite and records the answer in its map,
+  so the map says what the tree was when the tests started. A failed probe is not clean.
+  """
+  return not _has_source_changes(root)
 
 
 def _worktree_paths(root: Path) -> list[Path]:
@@ -682,18 +710,19 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
 
 def publish_map(
   map_path: Path, *, ok: bool, tests: dict[str, list[str]], root: Path,
-  reads: dict[str, list[str]] | None = None,
+  reads: dict[str, list[str]] | None = None, clean: bool,
 ) -> None:
   """Write the discover map for HEAD, and only after a successful run.
 
-  A failed run returns without creating or replacing `map_path`.
+  A failed run returns without creating or replacing `map_path`. `clean` is the
+  `tree_is_clean` answer taken before the run started.
   """
   if not ok:
     return
   sha = git_head(root)
   if sha is None:
     return
-  write_map(map_path, sha, tests, reads)
+  write_map(map_path, sha, tests, reads, clean=clean)
 
 
 def entrypoint_is_full_discover(argv: list[str] | None = None) -> bool:
@@ -797,9 +826,12 @@ def install_discover_hook(map_path: Path | None = None, root: Path | None = None
     _discover_depth += 1
     nested = _discover_depth > 1
     tracer: _TracingResult | None = None
+    clean = False
     previous = self.resultclass
     try:
       if not nested:
+        # Probed before the suite runs, so the map says what the tests started from.
+        clean = tree_is_clean(base)
         tracer = _TracingResult(base)
         self.resultclass = _traced_result(previous, tracer)
       result = original(self, test)
@@ -813,6 +845,7 @@ def install_discover_hook(map_path: Path | None = None, root: Path | None = None
     ):
       publish_map(
         destination, ok=True, tests=tracer.lines(), reads=tracer.reads(), root=base,
+        clean=clean,
       )
     return result
 

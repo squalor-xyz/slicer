@@ -69,7 +69,7 @@ class AffectedTests(unittest.TestCase):
     directory = Path(tempfile.mkdtemp())
     self.addCleanup(shutil.rmtree, directory)
     path = directory / "affected-map.json"
-    affected.write_map(path, sha, tests, reads)
+    affected.write_map(path, sha, tests, reads, clean=True)
     return path
 
   def raw_map(self, document: dict) -> Path:
@@ -549,7 +549,7 @@ class AffectedTests(unittest.TestCase):
   def test_Select_NoLocalMap_UsesSiblingMapForSameHead(self) -> None:
     main = self._git_root()
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     before = sibling.read_bytes()
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
@@ -571,7 +571,7 @@ class AffectedTests(unittest.TestCase):
     worktree = self._linked_worktree(main)
     _git(main, "commit", "-q", "--allow-empty", "-m", "next")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     self._at_checkout(worktree)
     code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
     self.assertEqual(code, 2)
@@ -584,14 +584,26 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     head = _git(main, "rev-parse", "HEAD")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, head, {"mod.T.test_sibling": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, head, {"mod.T.test_sibling": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
-    affected.write_map(worktree / ".venv" / "affected-map.json", head, {"mod.T.test_local": ["src/slicer/ops.py:4"]})
+    affected.write_map(worktree / ".venv" / "affected-map.json", head, {"mod.T.test_local": ["src/slicer/ops.py:4"]}, clean=True)
     self._at_checkout(worktree)
     code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
     self.assertEqual(code, 0, err)
     self.assertEqual(out.splitlines(), ["mod.T.test_local"])
     self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_LocalMapRecordedDirty_StillUsedAtHead(self) -> None:
+    # A worktree's own map ignores `clean`: it is used at its own HEAD either way.
+    main = self._git_root()
+    head = _git(main, "rev-parse", "HEAD")
+    worktree = self._linked_worktree(main)
+    affected.write_map(worktree / ".venv" / "affected-map.json", head,
+                       {"mod.T.test_local": ["src/slicer/ops.py:4"]}, clean=False)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_local"])
 
   def test_Select_NoLocalMap_SiblingDirtyUnderSrc_AsksForFullSuite(self) -> None:
     main = self._git_root()
@@ -601,7 +613,7 @@ class AffectedTests(unittest.TestCase):
     _git(main, "add", "src/slicer/ops.py")
     _git(main, "commit", "-q", "-m", "source")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
@@ -620,7 +632,7 @@ class AffectedTests(unittest.TestCase):
     _git(main, "add", ".slicer/index.json")
     _git(main, "commit", "-q", "-m", "state")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     state.write_text('{"edited": true}\n', encoding="utf-8")
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
@@ -634,7 +646,7 @@ class AffectedTests(unittest.TestCase):
     head = _git(main, "rev-parse", "HEAD")
     broken = self._linked_worktree(main)
     broken_map = broken / ".venv" / "affected-map.json"
-    affected.write_map(broken_map, head, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(broken_map, head, {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     index = broken / _git(broken, "rev-parse", "--git-path", "index")
     index.write_bytes(b"not an index")
     worktree = self._linked_worktree(main)
@@ -649,7 +661,7 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     sibling = self._linked_worktree(main)
     affected.write_map(sibling / ".venv" / "affected-map.json", _git(main, "rev-parse", "HEAD"),
-                       {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+                       {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
     real_run = subprocess.run
@@ -669,10 +681,10 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     head = _git(main, "rev-parse", "HEAD")
     main_map = main / ".venv" / "affected-map.json"
-    affected.write_map(main_map, head, {"mod.T.test_main": ["src/slicer/ops.py:4"]})
+    affected.write_map(main_map, head, {"mod.T.test_main": ["src/slicer/ops.py:4"]}, clean=True)
     other = self._linked_worktree(main)
     other_map = other / ".venv" / "affected-map.json"
-    affected.write_map(other_map, head, {"mod.T.test_other": ["src/slicer/ops.py:4"]})
+    affected.write_map(other_map, head, {"mod.T.test_other": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
     code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
@@ -685,7 +697,7 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     ancestor = _git(main, "rev-parse", "HEAD")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, ancestor, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, ancestor, {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     descendant = self._commit(main, "next")
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
@@ -703,7 +715,7 @@ class AffectedTests(unittest.TestCase):
     affected.write_map(sibling, ancestor, {
       "mod.T.test_four": ["src/slicer/ops.py:4"],
       "mod.T.test_one": ["src/slicer/ops.py:1"],
-    })
+    }, clean=True)
     source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
     _git(main, "commit", "-q", "-am", "edit four")
     worktree = self._linked_worktree(main)
@@ -723,7 +735,7 @@ class AffectedTests(unittest.TestCase):
     # A child of `base` on another branch: HEAD does not descend from it.
     other_branch = _git(main, "commit-tree", tree, "-p", base, "-m", "other branch")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, other_branch, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, other_branch, {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     head = self._commit(main, "next")
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
@@ -737,11 +749,11 @@ class AffectedTests(unittest.TestCase):
   def test_SiblingMap_SameHead_StillPreferred(self) -> None:
     main = self._git_root()
     ancestor_map = main / ".venv" / "affected-map.json"
-    affected.write_map(ancestor_map, _git(main, "rev-parse", "HEAD"), {"mod.T.test_old": ["src/slicer/ops.py:4"]})
+    affected.write_map(ancestor_map, _git(main, "rev-parse", "HEAD"), {"mod.T.test_old": ["src/slicer/ops.py:4"]}, clean=True)
     head = self._commit(main, "next")
     holder = self._linked_worktree(main)
     head_map = holder / ".venv" / "affected-map.json"
-    affected.write_map(head_map, head, {"mod.T.test_head": ["src/slicer/ops.py:4"]})
+    affected.write_map(head_map, head, {"mod.T.test_head": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
     self.assertEqual(affected.sibling_map(head), (head_map.resolve(), head))
@@ -755,11 +767,11 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     far = _git(main, "rev-parse", "HEAD")
     far_map = main / ".venv" / "affected-map.json"
-    affected.write_map(far_map, far, {"mod.T.test_far": ["src/slicer/ops.py:4"]})
+    affected.write_map(far_map, far, {"mod.T.test_far": ["src/slicer/ops.py:4"]}, clean=True)
     near = self._commit(main, "middle")
     holder = self._linked_worktree(main)
     near_map = holder / ".venv" / "affected-map.json"
-    affected.write_map(near_map, near, {"mod.T.test_near": ["src/slicer/ops.py:4"]})
+    affected.write_map(near_map, near, {"mod.T.test_near": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     head = self._commit(worktree, "head")
     self._at_checkout(worktree)
@@ -773,7 +785,7 @@ class AffectedTests(unittest.TestCase):
     _git(main, "add", "src/slicer/ops.py")
     _git(main, "commit", "-q", "-m", "source")
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     self._commit(main, "next")
     source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
     worktree = self._linked_worktree(main)
@@ -789,7 +801,7 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     worktree = self._linked_worktree(main)
     ancestor = _git(worktree, "rev-parse", "HEAD")
-    affected.write_map(worktree / ".venv" / "affected-map.json", ancestor, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(worktree / ".venv" / "affected-map.json", ancestor, {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     self._commit(worktree, "next")
     self.assertNotEqual(_git(worktree, "rev-parse", "HEAD"), ancestor)
     self._at_checkout(worktree)
@@ -803,10 +815,10 @@ class AffectedTests(unittest.TestCase):
     main = self._git_root()
     ancestor = _git(main, "rev-parse", "HEAD")
     main_map = main / ".venv" / "affected-map.json"
-    affected.write_map(main_map, ancestor, {"mod.T.test_main": ["src/slicer/ops.py:4"]})
+    affected.write_map(main_map, ancestor, {"mod.T.test_main": ["src/slicer/ops.py:4"]}, clean=True)
     holder = self._linked_worktree(main)
     affected.write_map(holder / ".venv" / "affected-map.json", ancestor,
-                       {"mod.T.test_holder": ["src/slicer/ops.py:4"]})
+                       {"mod.T.test_holder": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     head = self._commit(worktree, "head")
     self._at_checkout(worktree)
@@ -819,7 +831,7 @@ class AffectedTests(unittest.TestCase):
   def test_Select_BorrowedMapChangedAfterChosen_AsksForFullSuite(self) -> None:
     main = self._git_root()
     sibling = main / ".venv" / "affected-map.json"
-    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
     # sibling_map chose a commit that the map no longer records: a re-recording between the two reads.
@@ -836,7 +848,7 @@ class AffectedTests(unittest.TestCase):
     head = _git(main, "rev-parse", "HEAD")
     sibling = main / ".venv" / "affected-map.json"
     # "HEAD~1" would resolve in the borrowing checkout, so the value is refused before git sees it.
-    affected.write_map(sibling, "HEAD~1", {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    affected.write_map(sibling, "HEAD~1", {"mod.T.test_a": ["src/slicer/ops.py:4"]}, clean=True)
     worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
     self.assertIsNone(affected.sibling_map(head))
@@ -845,6 +857,125 @@ class AffectedTests(unittest.TestCase):
     self.assertEqual(out, "")
     self.assertIn(DISCOVER, err)
     self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingMapRecordedDirtyThenCommitted_AsksForFullSuite(self) -> None:
+    # The sibling's discover ran with src/ dirty, so its map says so. Committing that
+    # change makes the sibling clean again, but the map still describes uncommitted code.
+    main = self._git_root()
+    source = main / "src" / "slicer" / "ops.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    _git(main, "add", "src/slicer/ops.py")
+    _git(main, "commit", "-q", "-m", "source")
+    recorded = _git(main, "rev-parse", "HEAD")
+    source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
+    sibling = main / ".venv" / "affected-map.json"
+    sibling.parent.mkdir(parents=True, exist_ok=True)
+    sibling.write_text(json.dumps({
+      "sha": recorded, "clean": False,
+      "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]}, "reads": {},
+    }), encoding="utf-8")
+    _git(main, "commit", "-q", "-am", "edit four")
+    descendant = _git(main, "rev-parse", "HEAD")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertIsNone(affected.sibling_map(descendant))
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertIn("no other worktree has a readable, clean map", err)
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_NoLocalMap_SiblingMapWithoutCleanField_AsksForFullSuite(self) -> None:
+    # A map written before the field existed never says that its tree was clean.
+    main = self._git_root()
+    head = _git(main, "rev-parse", "HEAD")
+    sibling = main / ".venv" / "affected-map.json"
+    sibling.parent.mkdir(parents=True, exist_ok=True)
+    sibling.write_text(json.dumps({
+      "sha": head, "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]}, "reads": {},
+    }), encoding="utf-8")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertIsNone(affected.sibling_map(head))
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertIn("no other worktree has a readable, clean map", err)
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_BorrowedMapRecordedDirtyAfterChosen_AsksForFullSuite(self) -> None:
+    # A re-recording between the choice and the read can put a dirty map at the same commit.
+    main = self._git_root()
+    head = _git(main, "rev-parse", "HEAD")
+    sibling = main / ".venv" / "affected-map.json"
+    sibling.parent.mkdir(parents=True, exist_ok=True)
+    sibling.write_text(json.dumps({
+      "sha": head, "clean": False,
+      "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]}, "reads": {},
+    }), encoding="utf-8")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    with patch.object(affected, "sibling_map", return_value=(sibling, head)):
+      code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("changed after it was chosen", err)
+    self.assertIn(DISCOVER, err)
+
+  def test_WriteMap_DirtyTree_RecordsNotClean(self) -> None:
+    repo = self._git_root()
+    source = repo / "src" / "slicer" / "ops.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("one\n", encoding="utf-8")
+    path = repo / "affected-map.json"
+    affected.write_map(path, _git(repo, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:1"]},
+                       clean=affected.tree_is_clean(repo))
+    self.assertIs(json.loads(path.read_text(encoding="utf-8"))["clean"], False)
+    self.assertFalse(affected.load_map(path)[3])
+
+  def test_WriteMap_CleanTree_RecordsClean(self) -> None:
+    repo = self._git_root()
+    head = _git(repo, "rev-parse", "HEAD")
+    path = repo / "affected-map.json"
+    affected.write_map(path, head, {"mod.T.test_a": ["src/slicer/ops.py:1"]},
+                       clean=affected.tree_is_clean(repo))
+    text = path.read_text(encoding="utf-8")
+    self.assertLess(text.index('"sha"'), text.index('"clean"'))
+    self.assertLess(text.index('"clean"'), text.index('"tests"'))
+    self.assertIs(json.loads(text)["clean"], True)
+    sha, tests, reads, clean = affected.load_map(path)
+    self.assertEqual((sha, clean), (head, True))
+    self.assertEqual(tests, {"mod.T.test_a": ["src/slicer/ops.py:1"]})
+    self.assertEqual(reads, {})
+
+  def test_TreeIsClean_ProbeCannotRun_IsNotClean(self) -> None:
+    repo = self._git_root()
+    with patch.object(affected.subprocess, "run", side_effect=OSError("git cannot run")):
+      self.assertFalse(affected.tree_is_clean(repo))
+    self.assertTrue(affected.tree_is_clean(repo))
+
+  def test_Record_CleanThenDirtyTree_RecordsCleanThenNotClean(self) -> None:
+    # `record` probes the tree before its suite runs; the suite here is a stub.
+    repo = self._git_root()
+    class Tiny(unittest.TestCase):
+      def test_ok(self) -> None:
+        return None
+    path = repo / "affected-map.json"
+    def fresh_suite(*args, **kwargs):
+      # A suite runs once and is emptied, so each record call gets its own.
+      return unittest.TestLoader().loadTestsFromTestCase(Tiny)
+    with patch.object(affected, "ROOT", repo), \
+         patch.object(unittest.defaultTestLoader, "discover", side_effect=fresh_suite):
+      self.assertEqual(_run(["record", "--map", str(path)])[0], 0)
+      self.assertIs(json.loads(path.read_text(encoding="utf-8"))["clean"], True)
+      source = repo / "src" / "slicer" / "ops.py"
+      source.parent.mkdir(parents=True)
+      source.write_text("one\n", encoding="utf-8")
+      self.assertEqual(_run(["record", "--map", str(path)])[0], 0)
+    self.assertIs(json.loads(path.read_text(encoding="utf-8"))["clean"], False)
 
   def test_DiscoverSuccess_WritesMapForHead(self) -> None:
     directory = self._git_root()
@@ -856,14 +987,16 @@ class AffectedTests(unittest.TestCase):
       path, ok=True,
       tests={"pkg.T.test_b": ["src/slicer/sample.py:5"], "pkg.T.test_a": ["src/slicer/sample.py:2"]},
       reads={"pkg.T.test_b": [], "pkg.T.test_a": ["docs/a.md", "README.md"]},
-      root=directory,
+      root=directory, clean=True,
     )
     text = path.read_text(encoding="utf-8")
-    self.assertLess(text.index('"sha"'), text.index('"tests"'))
+    self.assertLess(text.index('"sha"'), text.index('"clean"'))
+    self.assertLess(text.index('"clean"'), text.index('"tests"'))
     self.assertLess(text.index('"tests"'), text.index('"reads"'))
     document = json.loads(text)
     self.assertEqual(document, {
       "sha": sha,
+      "clean": True,
       "tests": {"pkg.T.test_a": ["src/slicer/sample.py:2"], "pkg.T.test_b": ["src/slicer/sample.py:5"]},
       "reads": {"pkg.T.test_a": ["README.md", "docs/a.md"], "pkg.T.test_b": []},
     })
@@ -876,11 +1009,14 @@ class AffectedTests(unittest.TestCase):
     for pattern in (["-p", "test_x.py"], ["--pattern", "test_x.py"], ["--pattern=test_x.py"], ["-ptest_x.py"]):
       with self.subTest(pattern=pattern):
         self.assertFalse(affected.entrypoint_is_full_discover(launcher + pattern))
-    self._hook_writes_for_launcher(directory)
+    self.assertIs(self._hook_writes_for_launcher(directory)["clean"], True)
 
 
-  def _hook_writes_for_launcher(self, directory: Path) -> None:
-    """A fresh process with the launcher's argv writes that checkout's map."""
+  def _hook_writes_for_launcher(self, directory: Path, dirty: bool = False) -> dict:
+    """A fresh process with the launcher's argv writes that checkout's map.
+
+    With `dirty`, an uncommitted src/ file exists before the discover starts.
+    """
     path = directory / "hook-map.json"
     script = (
       "import json, sys, unittest\n"
@@ -888,6 +1024,10 @@ class AffectedTests(unittest.TestCase):
       "import affected\n"
       "root = Path(sys.argv[1])\n"
       "destination = Path(sys.argv[2])\n"
+      "if sys.argv[3] == 'dirty':\n"
+      "  source = root / 'src' / 'slicer' / 'ops.py'\n"
+      "  source.parent.mkdir(parents=True, exist_ok=True)\n"
+      "  source.write_text('x = 1\\n', encoding='utf-8')\n"
       "sys.argv = ['python3.14 -m unittest', 'discover', '-s', 'tests', '-t', 'tests']\n"
       "affected.install_discover_hook(destination, root)\n"
       "class Tiny(unittest.TestCase):\n"
@@ -906,11 +1046,17 @@ class AffectedTests(unittest.TestCase):
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).resolve().parent)
     proc = subprocess.run(
-      [sys.executable, "-c", script, str(directory), str(path)],
+      [sys.executable, "-c", script, str(directory), str(path), "dirty" if dirty else "clean"],
       cwd=directory, env=env, capture_output=True, text=True,
     )
     self.assertEqual(proc.returncode, 0, proc.stderr)
     self.assertTrue(path.is_file())
+    return json.loads(path.read_text(encoding="utf-8"))
+
+  def test_DiscoverSuccess_DirtyAtStart_RecordsNotClean(self) -> None:
+    directory = self._git_root()
+    document = self._hook_writes_for_launcher(directory, dirty=True)
+    self.assertIs(document["clean"], False)
 
   def test_DiscoverFailure_LeavesAnExistingMap(self) -> None:
     directory = self._git_root()
@@ -918,11 +1064,11 @@ class AffectedTests(unittest.TestCase):
     path.write_text("sentinel\n", encoding="utf-8")
     before = path.read_bytes()
     affected.publish_map(
-      path, ok=False, tests={"pkg.T.test_a": ["src/slicer/sample.py:2"]}, root=directory,
+      path, ok=False, tests={"pkg.T.test_a": ["src/slicer/sample.py:2"]}, root=directory, clean=True,
     )
     self.assertEqual(path.read_bytes(), before)
     missing = directory / "missing.json"
-    affected.publish_map(missing, ok=False, tests={}, root=directory)
+    affected.publish_map(missing, ok=False, tests={}, root=directory, clean=True)
     self.assertFalse(missing.exists())
 
   def test_NestedDiscover_DoesNotTouchTheCheckoutMap(self) -> None:
