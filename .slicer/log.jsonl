@@ -1932,3 +1932,6 @@
 {"when": "2026-10-17T20:25:58Z", "item": "s291", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:40:06Z", "item": "s291", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:53:15Z", "item": "s291", "action": "note", "from": "", "to": "", "note": "Ready for review: tui.columns (claim, size, score; default s", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:34:22Z", "item": "s281", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:42:53Z", "item": "s281", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:54:18Z", "item": "s281", "action": "note", "from": "", "to": "", "note": "Ready for review: TUI catalog overlay on C lists records by ", "by": "Jon Robbins"}

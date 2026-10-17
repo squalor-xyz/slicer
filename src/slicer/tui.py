@@ -39,6 +39,7 @@ BINDINGS = (
   Binding(("b",), "b", "board", "Relay board: live slice-relay runs; j/k or arrows scroll, b, q or Esc closes"),
   Binding(("m",), "m", "mark", "Toggle a session-only mark on the queue item"),
   Binding(("Q",), "Q", "request", "Compose a relay request for marked items or the selected slice"),
+  Binding(("C",), "C", "catalog", "Catalog: j/k choose a record, Space cites or uncites; C, q or Esc closes"),
   Binding(("R",), "R", "roles", "Relay role matrix; Enter recommends roles for the selected slice"),
   Binding(("o",), "o", "sort", "Sort the view; j/k choose a field, Space flips direction, Enter applies"),
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
@@ -857,6 +858,7 @@ class View:
   choice_at: int = 0
   help_at: int = 0
   roles_lines: list[str] = field(default_factory=list)
+  catalog_at: int = 0
   roles_at: int = 0
   roles_prompt: RolesPrompt | None = None
   marks: set[str] = field(default_factory=set)
@@ -1002,6 +1004,8 @@ class View:
       return self._request(state, key)
     if self.mode in ("roles", "roles_prompt"):
       return self._roles(state, key)
+    if self.mode == "catalog":
+      return self._catalog(state, key)
     if self.mode == "note":
       return self._note(state, key)
     if self.mode == "filter":
@@ -1043,6 +1047,9 @@ class View:
         self.marks.add(self.target)
     elif action == "request":
       self._open_request(state)
+    elif action == "catalog":
+      self.mode, self.catalog_at = "catalog", 0
+      self.notify("")
     elif action == "roles":
       self._open_roles(state)
     elif action == "board":
@@ -1167,6 +1174,39 @@ class View:
       self.roles_at += 1
     elif key in ("k", "KEY_UP"):
       self.roles_at = max(0, self.roles_at - 1)
+    return ActResult()
+
+  def _catalog(self, state: State, key: str) -> ActResult:
+    records = catalog_records(state)
+    self.catalog_at = max(0, min(self.catalog_at, len(records) - 1))
+    if key in ("C", "q", "\x1b"):
+      self.mode = "normal"
+      self.notify("")
+    elif key in ("j", "KEY_DOWN"):
+      self.catalog_at = min(self.catalog_at + 1, max(0, len(records) - 1))
+    elif key in ("k", "KEY_UP"):
+      self.catalog_at = max(0, self.catalog_at - 1)
+    elif key == " ":
+      if not self.selected:
+        self.notify("no item selected")
+      elif self.selected[0] != ITEM:
+        self.notify("selected row is not an item")
+      elif not records:
+        self.notify("no catalog records")
+      else:
+        try:
+          vcs.require_no_merge(state.root)
+          record = records[self.catalog_at]
+          item = state.index.require(self.target)
+          if record.id in item.cites:
+            ops.catalog_uncite(state, item.id, [record.id])
+            self.notify(f"{item.id} uncited {record.id}", "success")
+          else:
+            ops.catalog_cite(state, item.id, [record.id])
+            self.notify(f"{item.id} cited {record.id}", "success")
+          self.drift_due = True
+        except (SlicerError, OSError) as exc:
+          self.notify(str(exc), "error")
     return ActResult()
 
   def _open_roles(self, state: State) -> None:
@@ -1420,6 +1460,32 @@ class View:
     name = stops[(at + 1) % len(stops)]
     self._apply_view(state, name)
     self.notify("showing unfinished items" if name == "" else f"view={name}")
+
+
+def catalog_records(state: State) -> list[model.CatalogRecord]:
+  """Use the CLI's editorial kind order, active records before retired ones."""
+  return [record for kind in model.CATALOG_KINDS
+          for record in state.index.catalog.of_kind(kind, retired=True)]
+
+
+def catalog_lines(state: State, target: str, selected: int) -> tuple[list[PanelLine], int]:
+  """Keep group headings out of the selection while scrolling to the chosen record."""
+  item = state.index.get(target)
+  cites = item.cites if item else []
+  headings = dict(model.CATALOG_HEADINGS)
+  lines: list[PanelLine] = []
+  kind, selected_line = "", 0
+  for n, record in enumerate(catalog_records(state)):
+    if record.kind != kind:
+      kind = record.kind
+      lines.append(PanelLine(headings[kind], role="heading"))
+    if n == selected:
+      selected_line = len(lines)
+    cursor = ">" if n == selected else " "
+    check = "x" if record.id in cites else " "
+    retired = "  retired" if record.status == model.CATALOG_RETIRED else ""
+    lines.append(PanelLine(f"{cursor} [{check}] {record.id}  {record.title}{retired}"))
+  return lines or [PanelLine("no catalog records")], selected_line
 
 
 # The relay board. `board_lines` is pure so tests need no terminal: the spinner frame comes
@@ -1750,6 +1816,14 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
     view.roles_at = max(0, min(view.roles_at, len(view.roles_lines) - visible))
     for n, line in enumerate(view.roles_lines[view.roles_at:view.roles_at + visible], 1):
       put(n, 0, line)
+  elif view.mode == "catalog":
+    put(0, 0, "Catalog: j/k or arrows choose, Space cite/uncite, C, q or Esc close",
+        palette.attr("heading"))
+    lines, selected_at = catalog_lines(state, view.target, view.catalog_at)
+    top = max(0, selected_at - visible + 1)
+    for n, line in enumerate(lines[top:top + visible], 1):
+      put(n, 0, line.text, palette.attr(line.role, selected=top + n - 1 == selected_at,
+                                      focused=True))
   elif view.mode == "board":
     put(0, 0, "Relay board: j/k or arrows scroll, b, q or Esc close", palette.attr("heading"))
     titles = {item.id: item.title for item in state.index.items}

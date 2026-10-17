@@ -100,6 +100,7 @@ The TUI initially hides the project's configured done status. View controls:
 | `i` | Cycle the detail pane: details, [dependencies and history](#dependencies-and-history) |
 | `m` | Toggle a session-only mark on the selected queue item (`[x]`) |
 | `Q` | Compose a [relay request](#relay-requests) for marked items, or the selected slice |
+| `C` | Open the [catalog](#catalog); Space cites or uncites a record on the selected item |
 | `R` | Open the [relay role matrix](#relay-roles); Enter recommends roles for the selected slice |
 | `b` | Open the [relay board](#relay-board); `b`, `q` or Esc closes it |
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
@@ -296,3 +297,17 @@ remain visible without color. Feedback uses `OK:`, `Error:`, and `Info:` prefixe
 unchanged actions and cancellations are informational. Set `NO_COLOR=1` for
 monochrome; unsupported terminals also fall back automatically.
 Below 80 columns or 10 rows, the TUI shows a resize prompt and preserves the session.
+
+## Catalog
+
+`C` opens the catalog for browsing. Records are grouped in the same editorial kind
+order as `slicer catalog list`, with active records before retired ones within each
+kind. Retired records are labelled `retired`. `j`/`k` or the arrows select a record;
+the list scrolls to keep the selection visible. `C`, `q` or Esc closes the overlay.
+
+Space cites the selected record on the queue's selected item, or uncites it if it
+is already cited. `[x]` marks a citation and `[ ]` an uncited record. Each toggle
+saves immediately and records one history entry. Writes are refused during a Git
+merge or when the queue selection is a prose row. Press `r` after closing the
+overlay to refresh generated output. Adding, editing, retiring and moving catalog
+records remain CLI-only.

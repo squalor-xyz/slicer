@@ -2828,3 +2828,104 @@ class QueueColumnsConfigTests(unittest.TestCase):
     state, item = self.sized(["size", "claim"])
     row = tui.item_rows(state, [item], pane_width=tui.NARROW_PANE - 1)[0]
     self.assertEqual(row.text, "  1  S02   —       Find things")
+
+
+class CatalogTests(unittest.TestCase):
+  def setup_catalog(self, repo):
+    repo.run("init")
+    repo.run("add", "Catalog consumer", "--effort", "1")
+    repo.run("catalog", "add", "--kind", "goal", "Keep it simple")
+    state = repo.state()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S01"))
+    return state, view
+
+  def snapshot(self, repo):
+    return {p.relative_to(repo.root): p.read_bytes()
+            for p in repo.root.rglob("*") if p.is_file()}
+
+  def frame(self, state, view, height=80):
+    screen = Screen(height, 160)
+    tui.draw(screen, state, view)
+    return [text for y, text in screen.writes if 0 < y < height - 5]
+
+  def test_Catalog_ListsByKindActiveThenRetired(self):
+    state = example()
+    state.index.catalog.records = [
+      model.CatalogRecord("C03", "constraint", "Bounded"),
+      model.CatalogRecord("C01", "goal", "Old goal", status="retired"),
+      model.CatalogRecord("C02", "goal", "Current goal"),
+    ]
+    view = tui.View.initial(state)
+    view.handle(state, "C")
+    self.assertEqual(self.frame(state, view), [
+      "Goals", "> [ ] C02  Current goal", "  [ ] C01  Old goal  retired",
+      "Constraints", "  [ ] C03  Bounded",
+    ])
+    view.handle(state, "j")
+    self.assertIn("> [ ] C01  Old goal  retired", self.frame(state, view))
+    view.handle(state, "KEY_UP")
+    self.assertIn("> [ ] C02  Current goal", self.frame(state, view))
+    for key in ("C", "q", "\x1b"):
+      view.handle(state, key)
+      self.assertEqual((view.mode, view.quit), ("normal", False))
+      view.handle(state, "C")
+
+  def test_Catalog_LongList_ScrollsToKeepSelectionVisible(self):
+    state = example()
+    state.index.catalog.records = [
+      model.CatalogRecord(f"C{n:02}", "goal", f"Goal {n}")
+      for n in range(1, 16)
+    ]
+    view = tui.View.initial(state)
+    view.handle(state, "C")
+    for key, selected in (("j", 15), ("k", 1)):
+      with self.subTest(direction=key):
+        for _ in range(14):
+          view.handle(state, key)
+        screen = Screen(12, 160)
+        tui.draw(screen, state, view)
+        lines = [text for y, text in screen.writes if 0 < y < screen.height - 2]
+        self.assertIn(f"> [ ] C{selected:02}  Goal {selected}", lines)
+
+  def test_Catalog_SpaceCites_ThenUncites(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_catalog(repo)
+      before = len(state.history())
+      view.handle(state, "C")
+      view.handle(state, " ")
+      fresh = repo.state()
+      self.assertEqual((fresh.index.require("S01").cites,
+                        [(e.item, e.action) for e in fresh.history()[before:]]),
+                       (["C01"], [("S01", "cite")]))
+      self.assertIn("> [x] C01  Keep it simple", self.frame(state, view))
+      view.handle(state, " ")
+      fresh = repo.state()
+      self.assertEqual((fresh.index.require("S01").cites,
+                        [(e.item, e.action) for e in fresh.history()[before:]]),
+                       ([], [("S01", "cite"), ("S01", "uncite")]))
+      view.handle(state, "q")
+      view.handle(state, "r")
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Catalog_DuringMerge_RefusesWrite(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_catalog(repo)
+      before = self.snapshot(repo)
+      view.handle(state, "C")
+      with patch.object(tui.vcs, "merge_in_progress", return_value=True):
+        view.handle(state, " ")
+      self.assertIn("merge", view.message)
+      self.assertEqual((view.message_severity, self.snapshot(repo)), ("error", before))
+
+  def test_Catalog_ProseRowSelected_SaysNotAnItem(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_catalog(repo)
+      repo.run("prose", "set", "preamble", "--text", "Context")
+      state = repo.state()
+      view.select((tui.PROSE, "preamble"))
+      before = self.snapshot(repo)
+      view.handle(state, "C")
+      view.handle(state, " ")
+      self.assertIn("not an item", view.message)
+      self.assertEqual(self.snapshot(repo), before)

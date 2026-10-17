@@ -9383,10 +9383,22 @@
       "id": "s281",
       "title": "TUI catalog browse and cite",
       "short_title": "TUI catalog browse and cite",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "0859a60a-fa97-4ca9-a761-914af1c171d0",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: TUI catalog overlay on C lists records by kind in CATALOG_KINDS order, active then retired; Space cites/uncites on the selected item via ops.catalog_cite/catalog_uncite (one history entry each), merge guard first, prose rows refused. 5 catalog tests, affected 188 OK, full suite 2,416 OK (1 skipped), slicer check passed. Gate VERDICT: PASS (reviewer opus).",
+          "created_at": "2026-10-17T20:54:18Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -9406,7 +9418,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
