@@ -9,6 +9,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Added
 
 - `slicer import` outlines take a `short_title:` key, which sets the item's short title as `add --short-title` does and defaults to the heading. `slicer import --skeleton` now lists every key the parser accepts (`key`, `short_title`, `discovered_from` and `parent` were missing). `slicer ai instructions` and AGENTS.md name a one-item `import` (with `--dry-run` first) as the way to file an item with its fields and spec in one command. See [import.md](docs/import.md).
+- `slicer retire ID --reason TEXT` retires an item exactly as `slicer remove ID --reason TEXT` does: the same status, slice move, history entry, JSON payload, `--dry-run` preview and error codes, with `command` set to `retire` in an error envelope. It takes `--force`, `--render`, `--strict` and `--json` as `remove` does, and has no `--purge`: `remove ID --purge` still deletes an item. See [commands.md](docs/commands.md).
 
 ### Changed
 

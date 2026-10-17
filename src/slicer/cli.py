@@ -3837,6 +3837,15 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--force", action="store_true", help="override the dependents and done guards")
   sp.add_argument("--dry-run", action="store_true", help="preview the removal and its fallout; write nothing")
 
+  # `retire` is `remove --reason` under the name of the status it sets. Its parser has no
+  # --purge, and the flag's default keeps cmd_remove on the retire path.
+  sp = _strict_flag(_render_flag(add("retire", _mutating(cmd_remove), "retire an obsolete item, as `remove --reason` does")))
+  sp.add_argument("id")
+  sp.add_argument("--reason", required=True, help="retire it, recording why; the id stays claimed")
+  sp.add_argument("--force", action="store_true", help="override the dependents and done guards")
+  sp.add_argument("--dry-run", action="store_true", help="preview the retirement and its fallout; write nothing")
+  sp.set_defaults(purge=False)
+
   add("render", cmd_render, "regenerate .slicer/render/")
 
   sp = add("sync", cmd_sync, "rewrite derived lines in other documents")
@@ -4211,7 +4220,7 @@ def _changes_state(args: argparse.Namespace) -> bool:
     return True
   if not getattr(args.func, "mutates", False):
     return False
-  if args.command in ("import", "migrate", "remove") and args.dry_run:
+  if args.command in ("import", "migrate", "remove", "retire") and args.dry_run:
     return False
   if args.command == "id-prefix" and (args.prefix is None or args.dry_run):
     return False

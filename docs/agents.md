@@ -369,6 +369,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `import` | `{items, created, reused, entries, promoted, by_status, ids, depends_edges, off_schema_sections, warnings, problems, preamble}`. `entries` contains `{title, id, existing}` for each requested title in input order; `ids` covers all entries and `items` is the input count. `created` and `reused` count new and reused records; `promoted` counts new slice files, `by_status` counts mapped records at their actual status, and `depends_edges` counts new edges only. An all-existing import writes nothing and bypasses optional rendering. `warnings` names new open or started items left unscored (importance 2, urgency 2, no effort). `preamble` is the leading prose, or null when the outline has none. Ids start above any sibling git worktree's `next_id`, in `--dry-run` and in the real run alike |
 | `migrate` | a similar report, plus round-trip and reconciliation counts |
 | `remove` | retire: the item plus `mode: "retire"`; purge: `{id, mode, id_freed, reason, file_removed}`; `--dry-run`: `{id, mode, dry_run, blockers, file, id_freed, reason}` and nothing is written |
+| `retire` | the same as `remove ID --reason`: the item plus `mode: "retire"`, the `--dry-run` payload and the error codes of `remove`; in an error envelope `command` is `retire`. No purge payload, since `retire` has no `--purge` |
 | `move` | `{id, position}` |
 | `sort` | `{by, moved}` |
 | `edit` | `{id, section}`; boundary edits return `{id, boundary}`; lead edits return `{id, lead}`, a list of paragraphs |
