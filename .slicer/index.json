@@ -11767,7 +11767,7 @@
       "id": "s341",
       "title": "The example role matrix has orchestrator rows and a Codex implementer alternative",
       "short_title": "Example matrix gains orchestrator rows",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -11794,7 +11794,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-17T04:50:07Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],

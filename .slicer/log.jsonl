@@ -1814,3 +1814,4 @@
 {"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "note", "from": "", "to": "", "note": "Spec corrected 2026-10-17 after the relay implementer found ", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:49:03Z", "item": "s341", "action": "note", "from": "", "to": "", "note": "Three example rows added to the relay-roles init matrix: r9 ", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:49:07Z", "item": "s341", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:50:07Z", "item": "s341", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

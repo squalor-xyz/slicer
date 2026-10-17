@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">329 items · — 30 · done 291 · retired 7 · review 1</p>
+<p class="summary">329 items · — 30 · done 291 · retired 7 · reviewing 1</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -74,7 +74,7 @@
 <tr class="open"><td>22</td><td>s336</td><td>Give human contributors a practical development walkthrough</td><td>S</td><td>1</td><td>docs</td><td>Owner documentation review 2026-10-16; CONTRIBUTING.md:6 only points to AGENTS.md and ARCHITECTURE.md; ARCHITECTURE.md:19 describes layers as a plain text list. Existing project guidance already defines worktrees, tests, tracking and handoff, but lacks a short human-oriented walkthrough connecting these steps.</td><td class="status">—</td></tr>
 <tr class="open"><td>23</td><td>s339</td><td>Agent instructions explain the blocked marker in list rows</td><td>S</td><td>1</td><td>slicer</td><td>owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not</td><td class="status">—</td></tr>
 <tr class="open"><td>24</td><td>s340</td><td>Shared step keeps its local-only parent</td><td>S</td><td>1</td><td>slicer</td><td>s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed · discovered from s337</td><td class="status">—</td></tr>
-<tr class="other"><td>25</td><td>s341</td><td>Example matrix gains orchestrator rows</td><td>S</td><td>1</td><td>slicer</td><td>s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320</td><td class="status">review</td></tr>
+<tr class="started"><td>25</td><td>s341</td><td>Example matrix gains orchestrator rows</td><td>S</td><td>1</td><td>slicer</td><td>s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320</td><td class="status">reviewing</td></tr>
 <tr class="open"><td>26</td><td>s342</td><td>affected.py borrows an ancestor map</td><td>S</td><td>1</td><td>slicer</td><td>s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337</td><td class="status">—</td></tr>
 </tbody></table>
 <h2>v1.12.0 release</h2>
