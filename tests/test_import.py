@@ -66,6 +66,36 @@ class ImportTests(unittest.TestCase):
       self.assertEqual(item.findings, "G1")
       self.assertEqual(item.group, "Phase 0")
 
+  def test_Import_ShortTitle_SetsItemShortTitle(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## A long descriptive title for the row\nshort_title: Short row\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      item = repo.state().index.require("S01")
+      self.assertEqual(item.title, "A long descriptive title for the row")
+      self.assertEqual(item.short_title, "Short row")
+
+  def test_Import_NoShortTitle_ShortTitleFollowsTitle(self) -> None:
+    with self.repo() as repo:
+      repo.write("r.md", "## Plain title\n")
+      code, _, err = repo.run("import", "r.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S01").short_title, "Plain title")
+
+  def test_Import_ShortTitleWithNewline_IsRefusedAndWritesNothing(self) -> None:
+    from slicer import ops, outline
+    with self.repo() as repo:
+      state = repo.state()
+      good = outline.ItemSpec(title="Good one")
+      bad = outline.ItemSpec(title="Bad one", short_title="two\nlines")
+      report = ops.outline_report(state, [good, bad])
+      self.assertEqual(len(report.problems), 1)
+      self.assertIn("short_title cannot contain a newline", report.problems[0])
+      self.assertIn("Bad one", report.problems[0])
+      applied = ops.apply_outline(state, [good, bad])
+      self.assertTrue(applied.problems)
+      self.assertEqual(repo.state().index.items, [])
+
   def test_Import_DependsByTitle_ResolvesToAnId(self) -> None:
     with self.repo() as repo:
       repo.write("roadmap.md", OUTLINE)
@@ -481,6 +511,15 @@ class SkeletonTests(unittest.TestCase):
       _, skeleton, _ = repo.run("import", "--skeleton")
       self.assertIn("importance: 1, 2 or 3; how important (default 2)", skeleton)
       self.assertIn("urgency:    1, 2 or 3; how urgent (default 2)", skeleton)
+
+  def test_ImportSkeleton_ListsEveryOutlineKey(self) -> None:
+    from slicer import outline
+    with support.TempRepo() as repo:
+      repo.run("init")
+      _, skeleton, _ = repo.run("import", "--skeleton")
+      comment = skeleton.split("-->", 1)[0]
+      for key in outline.KEYS:
+        self.assertRegex(comment, rf"\b{key}:", key)
 
   def test_Skeleton_RoundTrips_BackThroughImport(self) -> None:
     with support.TempRepo() as repo:

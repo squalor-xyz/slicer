@@ -744,6 +744,7 @@ def _slice_from_source(source: str, item: Item, cfg: object, path: str) -> Slice
 # is set is a mistake worth naming rather than dropping.
 _SOURCE_FIELD_DEFAULTS = {
   "key": "",
+  "short_title": "",
   "size": "",
   "trees": [],
   "findings": "",
@@ -2448,8 +2449,8 @@ def outline_report(
 
   for spec in new_specs:
     try:
-      _reject_bad_text(title=spec.title, size=spec.size, findings=spec.findings,
-                       pass_key=spec.pass_key, group=spec.group, trees=spec.trees)
+      _reject_bad_text(title=spec.title, short_title=spec.short_title, size=spec.size,
+                       findings=spec.findings, pass_key=spec.pass_key, group=spec.group, trees=spec.trees)
       _valid_score("importance", spec.importance)
       _valid_score("urgency", spec.urgency)
     except StateError as exc:
@@ -2568,7 +2569,7 @@ def apply_outline(
       id=new_id,
       key=spec.key,
       title=spec.title,
-      short_title=spec.title,
+      short_title=spec.short_title or spec.title,
       status=status,
       size=spec.size,
       trees=list(spec.trees),

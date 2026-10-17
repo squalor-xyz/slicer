@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer import` outlines take a `short_title:` key, which sets the item's short title as `add --short-title` does and defaults to the heading. `slicer import --skeleton` now lists every key the parser accepts (`key`, `short_title`, `discovered_from` and `parent` were missing). `slicer ai instructions` and AGENTS.md name a one-item `import` (with `--dry-run` first) as the way to file an item with its fields and spec in one command. See [import.md](docs/import.md).
+
 ### Fixed
 
 - `edit`, `set`, `start` and `note` with a catalog record's id (for example `C01`, copied from `catalog list`) still exit 2 with `no_such_item`, and now say the id is a catalog record of its kind and name `slicer catalog show ID`, as `show` does. In a batch, the first id that is not a roadmap item decides: a catalog record gets the hint, anything else keeps the plain `no such item` message.

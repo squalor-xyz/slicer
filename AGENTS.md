@@ -168,17 +168,16 @@ even when `git status` lists one. Use `slicer show ID --json --lean`,
 [docs/configuration.md](docs/configuration.md) describes. `.slicer/relay-roles.json`
 changes only through `slicer relay-roles`.
 
-To file a specification, pass `promote` a one-item outline (`##` item / `### section`)
-via `--file` or `--stdin`. It keeps the item's fields; supply sections and lead only:
+To file one item with its fields and spec, pass `import` a one-item outline;
+`--dry-run` first. `import --skeleton` lists every key. `promote` gives an existing
+row a spec and keeps its fields; several items go in one outline:
 
 ```sh
-slicer add "Some title"
+slicer import draft.md --dry-run
+slicer import draft.md --render
 slicer promote S07 --file draft.md --render
 slicer edit S07 --section Why --file note.md --render --strict
 ```
-
-For several items, run `slicer import --skeleton`, then `import FILE --dry-run`, then
-`import FILE`.
 
 `.slicer/render/` is committed. A change to state without a re-render fails CI.
 

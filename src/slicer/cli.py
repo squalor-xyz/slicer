@@ -908,12 +908,18 @@ SKELETON_HEAD = """\
   A slicer outline. Each `## ` heading is one roadmap item.
 
   Optional key lines go directly under the heading:
+    key:      case-sensitive filing identity; a retry returns the existing item
+    short_title: the roadmap row's short title (default: the heading)
     size:     {sizes}
     tree:     which part of the codebase; comma-separated for several
+              (`trees:` is the same key)
     findings: a reference back to whatever raised this
     status:   {statuses}
     pass:     a group key, if the project uses passes
     group:    a phase label rendered above the item
+    discovered_from: the ID of the existing item whose work raised this one
+    parent:   the ID of an existing item, or the title of another entry here, that
+              this one is a child of
     depends:  the title of another item, here or already in the roadmap, or the ID of
               one already there; a title containing commas is matched whole, otherwise
               commas separate several, and repeated lines add more
