@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).
+
 ## [1.13.0] - 2026-10-17
 
 ### Added
