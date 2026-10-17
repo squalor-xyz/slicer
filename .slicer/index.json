@@ -11797,7 +11797,7 @@
       "id": "s342",
       "title": "affected.py selects from a map recorded at an ancestor commit",
       "short_title": "affected.py borrows an ancestor map",
-      "status": "review",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -11813,7 +11813,10 @@
           "stale_after": ""
         }
       ],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-17T12:28:08Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
