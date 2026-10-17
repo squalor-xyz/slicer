@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-335 items · — 20 · done 307 · retired 8
+335 items · — 19 · done 308 · retired 8
 
 v1.14.0 release
 
@@ -69,7 +69,7 @@ v1.13.0 release
 | 27 | [s343](slices/s343.md) | The relay Setup says recommend can leave a role unmatched | S | 1 | slicer | s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example's architect row matches size L only, so a smaller slice leaves the architect unmatched | done |
 | 28 | [s344](slices/s344.md) | affected.py does not borrow a map recorded from a dirty tree | S | 1 | slicer | s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps | — |
 | 29 | [s345](slices/s345.md) | show names catalog show for a catalog record id | S | 1 | slicer | Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only | — |
-| 30 | [s346](slices/s346.md) | TUI detail pane docs match what i does | S | 1 | slicer | s278 gate later notes, 2026-10-17 · discovered from s278 | — |
+| 30 | [s346](slices/s346.md) | TUI detail pane docs match what i does | S | 1 | slicer | s278 gate later notes, 2026-10-17 · discovered from s278 | done |
 | 31 | [s347](slices/s347.md) | TUI history pane scrolls through the item's whole history | S | 1 | slicer | s278 gate later notes, 2026-10-17 · discovered from s278 | — |
 | 32 | [s348](slices/s348.md) | TUI history pane reads the log only when it changed | S | 1 | slicer | s278 gate later notes, 2026-10-17 · discovered from s278 | — |
 
