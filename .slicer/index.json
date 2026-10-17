@@ -10279,7 +10279,7 @@
       "id": "s297",
       "title": "Relay board colors each pipeline role by its state",
       "short_title": "Relay board colors each pipeline role by its state",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

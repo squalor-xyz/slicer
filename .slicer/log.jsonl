@@ -1928,3 +1928,4 @@
 {"when": "2026-10-17T20:23:31Z", "item": "s297", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:37:51Z", "item": "s297", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:49:05Z", "item": "s297", "action": "note", "from": "", "to": "", "note": "Ready for review: the relay board colors each live pipeline ", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:55:39Z", "item": "s297", "action": "status", "from": "review", "to": "done", "note": "Landed: relay board paints pipeline roles and the ended outcome with state colors via PanelLine spans; gate PASS, full suite green on main.", "by": "Jon Robbins"}

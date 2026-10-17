@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">335 items · — 14 · done 313 · retired 8</p>
+<p class="summary">335 items · — 13 · done 314 · retired 8</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -65,7 +65,7 @@
 <tr class="done"><td>13</td><td>s285</td><td>TUI shows the relay request for a selected slice or range</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-14: monitor slice relays from the TUI</td><td class="status">done</td></tr>
 <tr class="open"><td>14</td><td>s291</td><td>TUI queue columns are configurable</td><td>M</td><td>2</td><td>slicer</td><td>owner, 2026-10-15, s277 relay: asked whether the queue&#x27;s columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane)</td><td class="status">—</td></tr>
 <tr class="done"><td>15</td><td>s295</td><td>Tests pin the render-stale flag after a failed wizard render and after a move</td><td>S</td><td>1</td><td>slicer</td><td>s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279</td><td class="status">done</td></tr>
-<tr class="open"><td>16</td><td>s297</td><td>Relay board colors each pipeline role by its state</td><td>S</td><td>1</td><td>slicer</td><td>s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294</td><td class="status">—</td></tr>
+<tr class="done"><td>16</td><td>s297</td><td>Relay board colors each pipeline role by its state</td><td>S</td><td>1</td><td>slicer</td><td>s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294</td><td class="status">done</td></tr>
 <tr class="done"><td>17</td><td>s331</td><td>Relay board shows the slice&#x27;s status beside a finished run</td><td>S</td><td>1</td><td>slicer</td><td>owner 2026-10-16: the board&#x27;s check mark on s309 read as &quot;done&quot; while the slice was merged but not yet done</td><td class="status">done</td></tr>
 <tr class="done"><td>18</td><td>s338</td><td>relay-run end absorbs a step whose parent is in a damaged local file without failing</td><td>S</td><td>1</td><td>slicer</td><td>s332 relay 2026-10-16, later note 3: an absorbed step whose parent sits in a skipped damaged local file fails in the shared ledger</td><td class="status">done</td></tr>
 <tr class="done"><td>19</td><td>s333</td><td>Explain how slicer works with concepts and Mermaid diagrams</td><td>M</td><td>2</td><td>docs</td><td>Owner documentation review 2026-10-16; README.md:7 introduces AI-first use; docs/getting-started.md:5 opens with agent onboarding; no embedded Mermaid diagrams found in README.md, CONTRIBUTING.md, ARCHITECTURE.md or docs/*.md. Existing deps --format mermaid illustrates backlog dependencies rather than how slicer works.</td><td class="status">done</td></tr>
