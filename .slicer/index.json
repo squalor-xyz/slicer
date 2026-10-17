@@ -10709,7 +10709,7 @@
       "id": "s310",
       "title": "Measure startup and load rare modules on use",
       "short_title": "Measure startup and load rare modules on use",
-      "status": "started",
+      "status": "retired",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -10743,7 +10743,7 @@
         "key": "",
         "pass": "v1.12",
         "group": "",
-        "reason": "",
+        "reason": "Measurement-only outcome (2026-10-17): no stable plain-read saving of at least 10 ms was established; deferred-import samples conflicted under load (see notes). Owner retired it; no code changed.",
         "importance": 1,
         "urgency": 1,
         "effort": 1,
