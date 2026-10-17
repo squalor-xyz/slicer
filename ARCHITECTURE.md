@@ -27,6 +27,35 @@ check                                       composes render + sync + verify
 cli · tui · tui_style.py                  front ends and terminal presentation
 ```
 
+The main paths below show calls and persistence, not an exhaustive import graph:
+
+```mermaid
+flowchart TD
+  cli["cli.py"] --> ops["ops.py: roadmap mutations"]
+  tui["tui.py"] --> ops
+  ops --> store["store.py: state and persistence"]
+  store --> jsonio["jsonio.py: atomic JSON I/O"]
+  cli --> render["render.py: plan, compare, write"]
+  tui --> render
+  ops -->|"render-gated mutations"| render
+  render --> output["Generated Markdown and HTML"]
+  cli --> sync["sync.py: derived document lines"]
+  cli --> check["check.py: read-only gate"]
+  check -->|"plan and compare"| render
+  check -->|"check only"| sync
+  check --> verify["verify.py: integrity checks"]
+```
+
+Both front ends call shared operations for roadmap mutations; `ops` persists them
+through `State` in `store`, backed by `jsonio`. Rendering is a separate projection:
+front ends can invoke it directly, and `ops` also uses it to gate strict mutations.
+Generated output never becomes state. `sync` writes configured derived lines in
+project documents outside `ops`. `check` only compares rendering and sync targets
+and composes integrity verification; it does not repair them. None of them reads
+generated views back as state.
+For the meaning of state, readiness and lifecycle, see
+[How slicer works](docs/how-it-works.md).
+
 The one cycle is deliberate: `cli` imports `tui` lazily inside the `tui` subcommand, and
 `tui` imports `cli._via_editor` lazily inside `run()`, so a terminal-less environment
 never pays for curses.
