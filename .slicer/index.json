@@ -12451,10 +12451,22 @@
       "id": "s350",
       "title": "A shared step update absorbs a step held only in a local file",
       "short_title": "A shared step update absorbs a step held only in a local file",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2b0ec716-664c-4f22-a362-ce6377b1a907",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: a shared relay-run step --step update of a step held only in a local file now absorbs the run's local events first (Ledger.append_shared), so the step keeps its role and agent after the worktree is removed; an update of a step the shared ledger already holds absorbs nothing. Tests test_RelayRunStep_UpdateOfLocalOnlyStep_AbsorbsFirst and test_RelayRunStep_UpdateOfSharedStep_AbsorbsNothing; both mutations (no trigger; trigger on every update) go red. Full suite 2451 run, 0 failures, 1 skipped; slicer check passes; relay gate VERDICT: PASS. Deviation accepted by reviewer and orchestrator, pending owner acknowledgement: the regression puts begin in the shared ledger so it isolates the --step trigger from the missing-begin trigger.",
+          "created_at": "2026-10-17T22:31:38Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12474,7 +12486,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

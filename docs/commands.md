@@ -598,8 +598,10 @@ no copied event holds (the parent sat in a local file that could not be read, or
 is still copied, without that parent: the shared ledger folds a step only beside its parent. One
 stderr line per such step names it and the parent it lost, and `relay-run list` shows it as a
 root step. A `step` that goes to the shared ledger copies the run's local events first when the
-shared ledger holds no begin for the run, or when its `--parent` is a step only a local file
-holds, for the same reason.
+shared ledger holds no begin for the run, or when its `--parent` or the step it updates with
+`--step` is held only in a local file. This also preserves the updated step's role and agent
+after that local file is removed. An update of a step already in the shared ledger does not
+trigger absorption.
 Because the copies are in the shared ledger, `git worktree remove` loses no step. The
 local files are left as they are.
 If `end` itself runs sandboxed it ends the run in the local file and absorbs nothing;

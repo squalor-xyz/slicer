@@ -3007,7 +3007,8 @@ class Ledger:
 
     The shared ledger is read strictly, so an event for a run it holds no begin of, or a step
     whose parent it holds no step for, would make it `corrupt` once the file that does is gone.
-    The run's local events are copied first, which holds both.
+    An update of a step held only locally would lose its role and agent. The run's local
+    events are copied first in these cases, preserving the step's creation.
     """
     if self.fallback:
       return False
@@ -3017,7 +3018,13 @@ class Ledger:
       held = [e for _, e in relayrun.read_events(shared) if e["run"] == run_id]
       parent = str(event.get("parent") or "")
       parent_held = not parent or any(e["event"] == "step" and e["step"] == parent for e in held)
-      if not any(e["event"] == "begin" for e in held) or not parent_held:
+      local_step = False
+      if event["event"] == "step" and not any(
+        e["event"] == "step" and e["step"] == event["step"] for e in held
+      ):
+        local, _, _ = relayrun.local_run_events(self.root, run_id)
+        local_step = any(e["event"] == "step" and e["step"] == event["step"] for e in local)
+      if not any(e["event"] == "begin" for e in held) or not parent_held or local_step:
         _absorb(self.root, self, run_id)
         if self.fallback:
           return False
