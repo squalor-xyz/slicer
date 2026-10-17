@@ -12,6 +12,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- Agent instructions and the slicer skill explain that `!` after a text `list` or `find` row number marks an unmet dependency, and point to `slicer show ID --json --lean` for `depends_on`.
 - The relay board's ended summaries show the items' configured status labels beside the run outcome, keeping that cell ahead of elapsed times on narrow screens. A passed run gets `✓` only when every item has the configured done status; otherwise it gets `○`. Failed and stopped runs keep `✗` and `~`.
 
 ## [1.12.0] - 2026-10-17

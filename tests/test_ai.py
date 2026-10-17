@@ -136,6 +136,18 @@ class AiInstructionsTests(unittest.TestCase):
             ids.add(f"{slug}-{count}" if count else slug)
           self.assertIn(fragment, ids, f"Missing signpost fragment: {target}#{fragment}")
 
+  def test_Instructions_ExplainBlockedMarker_InListRows(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      text = repo.run("ai", "instructions")[1]
+    expected = (
+      "The text form of `list` and `find` marks an item that waits on a dependency "
+      "not yet met with `!` after the row number; `slicer show ID --json --lean` "
+      "names its `depends_on`."
+    )
+    for output, body in (("instructions", text), ("skill", ai.skill_text())):
+      with self.subTest(output=output):
+        self.assertIn(expected, body)
+
   def test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill(self) -> None:
     self.assertIn(ai.TRACKING, ai.INSTRUCTIONS)
     self.assertIn(ai.TRACKING, ai.skill_text())

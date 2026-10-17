@@ -11872,10 +11872,22 @@
       "id": "s339",
       "title": "Agent instructions explain the blocked marker in list rows",
       "short_title": "Agent instructions explain the blocked marker in list rows",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "37396b19-4728-4107-a8f1-4385f727bce6",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: ai instructions and the slicer skill now explain that a ! after the row number in text list/find rows marks an item waiting on an unmet dependency, pointing to show --json --lean depends_on. New test test_Instructions_ExplainBlockedMarker_InListRows (red first, mutation-checked); full suite 2367 ran, 0 failures, 1 skip; slicer check passes; relay gate VERDICT: PASS.",
+          "created_at": "2026-10-17T18:51:13Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11895,7 +11907,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
