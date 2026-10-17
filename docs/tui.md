@@ -241,7 +241,8 @@ line: `✓` for a pass only when every item in the run has the project's configu
 status, `○` for a pass with an item not done (or absent from this checkout), `✗` for a fail
 and `~` for a stopped run. The outcome cell is green for a pass and red for a fail, and the rest of
 the line stays dim. The outcome is followed by the items' configured status labels
-(for example `pass · open`), how long it ran, `ended N ago` and the number of implementer,
+(for example `pass · open`; a run with more than one item pairs each label with its id, as in
+`pass · s1 review, s2 done`), how long it ran, `ended N ago` and the number of implementer,
 reviewer and gate steps. After an hour it leaves the board. The outcome and status cell takes
 priority over elapsed cells when space is short. A line that is too narrow drops cells from
 the right, whole, instead of cutting one (the title is cut with `...`, and `round N` is the

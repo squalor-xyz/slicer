@@ -1627,8 +1627,14 @@ def _ended_line(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles:
     statuses.get(item) == done_label for item in run.items)
   glyph = {"pass": "✓" if complete else "○", "fail": "✗"}.get(run.outcome, "~")
   head = f"{glyph} {', '.join(run.items)}"
+  labelled = [item for item in run.items if item in statuses]
+  if len(run.items) > 1:
+    # Each label carries its item's id, so a run with several items says which label is whose.
+    labels = [", ".join(f"{item} {statuses[item]}" for item in labelled)] if labelled else []
+  else:
+    labels = [statuses[item] for item in labelled]
   tail = [
-    " · ".join([run.outcome, *(statuses[item] for item in run.items if item in statuses)]),
+    " · ".join([run.outcome, *labels]),
     elapsed_text(run.begun_at, _parse_stamp(run.updated_at)),
     f"ended {elapsed_text(run.updated_at, now)} ago",
     " · ".join(f"{label} {len(lane.get(role, ()))}"

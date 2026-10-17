@@ -12511,10 +12511,22 @@
       "id": "s352",
       "title": "Relay board pairs each status label with its item in a multi-item run",
       "short_title": "Relay board pairs each status label with its item in a multi-item run",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2d742891-b311-47d8-8e40-4b9cffb8ba6f",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: multi-item ended runs pair each status label with its id (pass · s1 review, s2 done); single-item runs keep the bare label; items without a status are omitted. Three tests in RelayBoardLinesTests, mutation-checked; full suite 2441 OK (1 skipped); gate PASS.",
+          "created_at": "2026-10-17T22:17:48Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12534,7 +12546,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

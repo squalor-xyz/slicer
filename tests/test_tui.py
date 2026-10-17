@@ -1647,6 +1647,26 @@ class RelayBoardLinesTests(unittest.TestCase):
                            statuses={"s283": "Open"}, done_label="Shipped")[0].text
     self.assertEqual(text, "○ s283  pass · Open")
 
+  def test_BoardLines_EndedMultiItemRun_PairsStatusWithId(self) -> None:
+    run = board_run(state="ended", outcome="pass")
+    run.items = ["s1", "s2"]
+    text = tui.board_lines([run], 0, NOW, 100,
+                           statuses={"s1": "review", "s2": "done"}, done_label="Shipped")[0].text
+    self.assertEqual(text.split("  ")[:2], ["○ s1, s2", "pass · s1 review, s2 done"])
+
+  def test_BoardLines_EndedSingleItemRun_KeepsBareLabel(self) -> None:
+    run = board_run(state="ended", outcome="pass")
+    text = tui.board_lines([run], 0, NOW, 100,
+                           statuses={"s283": "review"}, done_label="Shipped")[0].text
+    self.assertEqual(text.split("  ")[:2], ["○ s283", "pass · review"])
+
+  def test_BoardLines_EndedMultiItemRunMissingAStatus_OmitsThatItem(self) -> None:
+    run = board_run(state="ended", outcome="pass")
+    run.items = ["s1", "s2"]
+    text = tui.board_lines([run], 0, NOW, 100,
+                           statuses={"s2": "done"}, done_label="Shipped")[0].text
+    self.assertEqual(text.split("  ")[:2], ["○ s1, s2", "pass · s2 done"])
+
   def test_BoardLines_FailedStep_UsesTheErrorRole(self) -> None:
     run = board_run(board_step("1", "implementer", "fail"))
     lines = tui.board_lines([run], 0, NOW, 100)

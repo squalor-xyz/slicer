@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).
+
 ### Fixed
 
 - `edit`, `set`, `start` and `note` with a catalog record's id (for example `C01`, copied from `catalog list`) still exit 2 with `no_such_item`, and now say the id is a catalog record of its kind and name `slicer catalog show ID`, as `show` does. In a batch, the first id that is not a roadmap item decides: a catalog record gets the hint, anything else keeps the plain `no such item` message.
