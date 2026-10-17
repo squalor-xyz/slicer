@@ -32,8 +32,9 @@ The two are separate on purpose. A row is cheap to file and enough to track an i
 slice is the contract someone implements against.
 
 **In practice:** `slicer next` will offer a row that has no slice yet, and
-`slicer next --show` or `slicer next --ready` tells you to run `promote`. Once a slice exists, `next` skips it while its required sections are empty
-(by default Implement and Check) and prints which headings to fill. A vague slice stays
+`slicer next --show` or `slicer next --ready` tells you to run `promote`. Once a slice
+exists, `next` skips it while its required sections are empty (by default Implement and
+Check) and prints which headings to fill. A vague slice stays
 out of the queue until someone specifies it. See
 [configuration: sections](configuration.md#sections).
 
@@ -161,9 +162,9 @@ Consequences you can see:
 - `release` clears the claim and leaves the status. A started item stays started.
 - `start` does not check readiness. You can start a blocked item or one whose slice is
   empty, so check `next` first.
-- A claim is a label, not a lock. A second `start` by another owner succeeds and the
-  first owner's claim stays. Slicer warns when another branch or worktree on this machine
-  already names the slice.
+- A claim is a label, not a lock. A second `start` by another owner succeeds but changes
+  nothing: the first owner's claim stays. Slicer warns when another branch or worktree on
+  this machine already names the slice.
 
 ## Statuses are configuration
 
@@ -171,8 +172,8 @@ The lifecycle names (open, started, review, reviewing, parked, done, retired) ar
 **roles** that `.slicer/config.json` maps to status keys, and each key has a label that
 the generated files show. Defaults ship with `slicer init`, and a project can rename a
 label, drop `parked`, or add its own status such as `blocked` to hold an item out of
-`next`. A fresh project already ships `later` for that purpose. A custom status stays out of the queue until you move the item, or draw from it
-with `next --status NAME`.
+`next`. A fresh project already ships `later` for that purpose. A custom status stays out
+of the queue until you move the item, or draw from it with `next --status NAME`.
 
 **In practice:** a status label in a roadmap may not be the word you expect, so read
 `slicer config` for the project's own. Renaming a label only needs a re-render. Changing
