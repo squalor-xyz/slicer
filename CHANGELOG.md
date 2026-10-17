@@ -18,6 +18,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - The relay board's ended summaries show the items' configured status labels beside the run outcome, keeping that cell ahead of elapsed times on narrow screens. A passed run gets `✓` only when every item has the configured done status; otherwise it gets `○`. Failed and stopped runs keep `✗` and `~`.
 - The relay Setup says `relay-roles recommend` resolves each role, the orchestrator included, to its first matching row, and reports a role no row matches as unmatched (`(no matching row)` in the text, `unmatched` in the JSON), instead of saying it resolves every role to one row. The owner fills such a role at Setup; `--select` names only a row that matches the slice. The matrix and `recommend` are unchanged, and the relay contract marker stays `relay v5`.
 
+### Fixed
+
+- A `relay-run step` written to the shared ledger with a `--parent` that only a checkout's own fallback file holds first copies that run's local events into the shared ledger, as it already did when the run's begin was only local. Removing that checkout's worktree before `relay-run end` no longer leaves the shared ledger `corrupt`: `relay-run list` reads the run with both steps.
+
 ## [1.12.0] - 2026-10-17
 
 ### Added

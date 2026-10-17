@@ -886,6 +886,43 @@ class SandboxTests(GitLedgerCase):
     got = {r["id"]: r for r in self.listed(repo.root)}
     self.assertEqual([s["role"] for s in got[run]["steps"]], ["gate"])
 
+  def test_RelayRunStep_SharedChildOfLocalParent_SharedLedgerReadableAfterWorktreeRemoved(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)  # the begin is in the shared ledger
+    lift = self.sandbox(repo)
+    _, parent = ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))
+    self.assertRegex(parent.id, r"^c[0-9a-f]{8}-1$")  # the sandboxed step went to the local file
+    lift()
+    _, child = ops.relay_run_step(
+      repo.root, run, phase="start", role="reviewer", agent="B", parent=parent.id, now=minutes(2),
+    )
+    gone = repo._git("worktree", "remove", "--force", str(wt))
+    self.assertEqual(gone.returncode, 0, gone.stderr)
+    got = {r["id"]: r for r in self.listed(repo.root)}
+    by_id = {s["id"]: s for s in got[run]["steps"]}
+    self.assertEqual(sorted(by_id), sorted([parent.id, child.id]))
+    self.assertEqual((by_id[parent.id]["role"], by_id[child.id]["role"]), ("gate", "reviewer"))
+    self.assertEqual(by_id[child.id]["parent"], parent.id)
+
+  def test_RelayRunStep_SharedChildOfSharedParent_AbsorbsNothing(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)  # the begin is in the shared ledger
+    lift = self.sandbox(repo)
+    ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))  # unrelated
+    lift()
+    self.assertEqual([e["role"] for e in self.local(wt) if e["event"] == "step"], ["gate"])
+    _, parent = ops.relay_run_step(
+      repo.root, run, phase="start", role="reviewer", agent="B", now=minutes(2),
+    )
+    report = ops.LedgerReport()
+    _, child = ops.relay_run_step(
+      repo.root, run, phase="start", role="implementer", agent="C", parent=parent.id,
+      now=minutes(3), report=report,
+    )
+    self.assertEqual(report.absorbed, 0)
+    shared = [e["step"] for _, e in relayrun.read_events(self.common(repo)) if e["event"] == "step"]
+    self.assertEqual(shared, [parent.id, child.id])
+
   def test_RelayRunStep_SharedLedgerFileReadOnlyLockWritable_FallsBackToLocal(self) -> None:
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)
