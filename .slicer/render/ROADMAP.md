@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-335 items · — 21 · done 306 · retired 8
+335 items · — 20 · done 307 · retired 8
 
 v1.14.0 release
 
@@ -52,7 +52,7 @@ v1.13.0 release
 | 10 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
 | 11 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
 | 12 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
-| 13 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |
+| 13 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
 | 14 | [s291](slices/s291.md) | TUI queue columns are configurable | M | 2 | slicer | owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane) | — |
 | 15 | [s295](slices/s295.md) | Tests pin the render-stale flag after a failed wizard render and after a move | S | 1 | slicer | s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279 | done |
 | 16 | [s297](slices/s297.md) | Relay board colors each pipeline role by its state | S | 1 | slicer | s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294 | — |

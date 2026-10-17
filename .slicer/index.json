@@ -9543,7 +9543,7 @@
       "id": "s285",
       "title": "TUI shows the relay request for a selected slice or range",
       "short_title": "TUI shows the relay request for a selected slice or range",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s280"
