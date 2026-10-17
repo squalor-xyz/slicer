@@ -12130,7 +12130,7 @@
       "id": "s344",
       "title": "affected.py does not borrow a map recorded from a dirty tree",
       "short_title": "affected.py does not borrow a map recorded from a dirty tree",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
