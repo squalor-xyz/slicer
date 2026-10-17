@@ -281,9 +281,10 @@ def item_rows(
 ) -> list[Row]:
   """Queue rows in the given order. The number is the position in that view.
 
-  `pane_width` is the queue pane's width when the caller knows it. Below
-  NARROW_PANE the claim and size columns are left out, so the title keeps room
-  (sibling-only rows still list); None keeps both, as a wide pane does.
+  The cells after the status are config `tui.columns`, in that order. `pane_width`
+  is the queue pane's width when the caller knows it. Below NARROW_PANE the claim
+  and size columns are left out of that list, so the title keeps room (sibling-only
+  rows still list); None keeps them, as a wide pane does.
   """
   cfg = state.config
   elsewhere = elsewhere or {}
@@ -292,8 +293,9 @@ def item_rows(
   status_w = max([7, *(len(cfg.status_label(store.displayed_status(
     cfg, item, elsewhere.get(item.id, []),
   ))) for item in items)])
-  claims = {} if narrow else {item.id: _queue_claim(store.claim_cell(cfg, item, elsewhere.get(item.id)))
-                              for item in items}
+  shown = [name for name in cfg.tui_columns if not (narrow and name in ("claim", "size"))]
+  claims = {item.id: _queue_claim(store.claim_cell(cfg, item, elsewhere.get(item.id)))
+            for item in items} if "claim" in shown else {}
   # The same CLAIM column `slicer list` prints: at least its header, as wide as the longest cell.
   claim_w = max([len("CLAIM"), *(len(claim) for claim in claims.values())])
   out: list[Row] = []
@@ -302,17 +304,25 @@ def item_rows(
     marker = "!" if pending else " "
     status = store.displayed_status(cfg, item, elsewhere.get(item.id, []))
     label = cfg.status_label(status)
-    columns = "" if narrow else f"{claims[item.id]:<{claim_w}} {item.size:<2} "
-    prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} {columns}"
+    prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} "
+    priority_at = 0
+    for name in shown:
+      if name == "claim":
+        prefix += f"{claims[item.id]:<{claim_w}} "
+      elif name == "size":
+        prefix += f"{item.size:<2} "
+      else:
+        priority_at = len(prefix)
+        prefix += f"P:{item.score} "
     out.append(
       Row(
         kind=ITEM,
         target=item.id,
-        text=f"{prefix}P:{item.score} {item.display_title()}",
+        text=f"{prefix}{item.display_title()}",
         status=status,
         blocked=bool(pending),
-        priority_at=len(prefix),
-        high_priority=item.importance == 3 or item.urgency == 3,
+        priority_at=priority_at,
+        high_priority="score" in shown and (item.importance == 3 or item.urgency == 3),
       )
     )
   return out

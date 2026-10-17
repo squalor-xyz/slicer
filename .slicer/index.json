@@ -9799,10 +9799,22 @@
       "id": "s291",
       "title": "TUI queue columns are configurable",
       "short_title": "TUI queue columns are configurable",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "3bbb1bb2-ef76-4cc5-bb4a-57c81485cd82",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: tui.columns (claim, size, score; default s277 layout) sets the TUI queue row cells and order; validated (unknown/repeat/non-list refused, empty allowed), settable via slicer config tui.columns; narrow pane still drops claim and size. Full suite 2415 OK (1 skipped), slicer check OK, gate PASS. Owner decisions: narrow rule kept as s277 (drops claim+size, not size first); no config schema bump.",
+          "created_at": "2026-10-17T20:53:15Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -9822,7 +9834,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

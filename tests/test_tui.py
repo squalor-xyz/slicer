@@ -2770,3 +2770,61 @@ class RelayRequestTests(unittest.TestCase):
         self.assertIn("run S01 as slice relays", self.frame(state, view))
         view.handle(state, "\x1b")
       self.assertEqual(snapshot(), before)
+
+
+class QueueColumnsConfigTests(unittest.TestCase):
+  """`tui.columns` picks which of claim, size and score the queue row shows, and their order."""
+
+  def sized(self, columns: list[str] | None = None) -> tuple[State, Item]:
+    state = example()
+    if columns is not None:
+      state.config.tui_columns = columns
+    item = state.index.require("S02")
+    item.size = "M"
+    item.claim_owner = "Ada"
+    return state, item
+
+  def test_ItemRows_DefaultColumns_MatchS277Layout(self) -> None:
+    state, item = self.sized()
+    self.assertEqual(state.config.tui_columns, ["claim", "size", "score"])
+    row = tui.item_rows(state, [item, state.index.require("S04")])
+    self.assertEqual(row[0].text, "  1  S02   —       Ada   M  P:32 Find things")
+    self.assertEqual(row[1].text, "  2  S04   started *        P:22 Current work")
+    self.assertEqual(row[0].priority_at, row[0].text.index("P:"))
+
+  def test_ItemRows_ColumnsConfigOmitsClaim_NoClaimCell(self) -> None:
+    state, item = self.sized(["size", "score"])
+    row = tui.item_rows(state, [item])[0]
+    self.assertEqual(row.text, "  1  S02   —       M  P:32 Find things")
+    self.assertNotIn("Ada", row.text)
+
+  def test_ItemRows_ColumnsConfigOrder_Respected(self) -> None:
+    state, item = self.sized(["score", "size", "claim"])
+    row = tui.item_rows(state, [item])[0]
+    self.assertEqual(row.text, "  1  S02   —       P:32 M  Ada   Find things")
+
+  def test_ItemRows_ColumnsConfigEmpty_ShowsOnlyIdStatusAndTitle(self) -> None:
+    state, item = self.sized([])
+    row = tui.item_rows(state, [item])[0]
+    self.assertEqual(row.text, "  1  S02   —       Find things")
+    self.assertFalse(row.high_priority)
+
+  def test_ItemRows_ColumnsConfigOmitsClaim_ClaimColumnWidthNotReserved(self) -> None:
+    state, item = self.sized(["score"])
+    other = state.index.require("S04")
+    rows = tui.item_rows(state, [item, other], {"S02": [{"worktree": "x", "owner": "", "status": "started"}]})
+    self.assertEqual([r.text for r in rows], [
+      "  1  S02   —       P:32 Find things", "  2  S04   started P:22 Current work",
+    ])
+
+  def test_ItemRows_ScoreMoved_PriorityAtFollowsTheScoreCell(self) -> None:
+    state, item = self.sized(["score", "claim"])
+    row = tui.item_rows(state, [item])[0]
+    self.assertEqual(row.text, "  1  S02   —       P:32 Ada   Find things")
+    self.assertEqual(row.text[row.priority_at:row.priority_at + 4], "P:32")
+    self.assertTrue(row.high_priority)
+
+  def test_ItemRows_NarrowPaneAndNoScoreColumn_ShowsOnlyIdStatusAndTitle(self) -> None:
+    state, item = self.sized(["size", "claim"])
+    row = tui.item_rows(state, [item], pane_width=tui.NARROW_PANE - 1)[0]
+    self.assertEqual(row.text, "  1  S02   —       Find things")

@@ -844,7 +844,7 @@ def set_id_prefix(state: State, new: str) -> tuple[str, bool]:
 CONFIG_ACTION = "config"
 # The fixed-shape objects a dotted key reaches into. A free-form object
 # (`statuses`, `pointers.later`) is set whole, as JSON.
-_CONFIG_OBJECTS = ("id", "pointers", "sync")
+_CONFIG_OBJECTS = ("id", "pointers", "sync", "tui")
 # `sync.targets` holds objects; every other list in the config holds strings.
 _CONFIG_OBJECT_LISTS = ("sync.targets",)
 _UNSET_TEXT = "(unset)"

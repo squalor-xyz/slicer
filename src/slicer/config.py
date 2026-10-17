@@ -90,6 +90,21 @@ def _implement_finish(d: Mapping[str, Any]) -> str:
   return raw
 
 
+# The cells `tui.columns` may name, in the order the default shows them. The
+# queue's number, id, status and title are always shown and are not listed.
+TUI_COLUMNS = ("claim", "size", "score")
+
+
+def _tui_columns(d: Mapping[str, Any]) -> list[str]:
+  """Missing `tui` or `tui.columns` keeps the default layout. No schema bump."""
+  tui = d.get("tui", {})
+  if not isinstance(tui, dict):
+    raise ConfigError("tui must be an object")
+  if "columns" not in tui:
+    return list(TUI_COLUMNS)
+  return tui["columns"]
+
+
 DEFAULT_LATER = {
   "group_sep": "; ",
   "item_sep": "/",
@@ -159,6 +174,9 @@ class Config:
   # Where `feedback-report` files issues, as OWNER/REPO. Empty means no default:
   # the command needs `--repo`, and nothing is inferred from a git remote.
   issues_repo: str = ""
+  # Which queue cells the TUI shows after the status, and in what order. An empty
+  # list shows none. The narrow-pane rule still drops claim and size.
+  tui_columns: list[str] = field(default_factory=lambda: list(TUI_COLUMNS))
 
   def in_work(self) -> set[str]:
     """Statuses that mean someone is on an item: started, or reviewing."""
@@ -226,6 +244,21 @@ class Config:
         f"issues_repo {self.issues_repo!r} is not OWNER/REPO; use letters, digits, '.', '_' or '-' "
         "in each part, or leave it empty"
       )
+    if not isinstance(self.tui_columns, list) or any(
+      not isinstance(name, str) for name in self.tui_columns
+    ):
+      raise ConfigError(
+        f"tui.columns must be a list of column names; known: {', '.join(TUI_COLUMNS)}"
+      )
+    seen_columns: set[str] = set()
+    for name in self.tui_columns:
+      if name not in TUI_COLUMNS:
+        raise ConfigError(
+          f"tui.columns names unknown column {name!r}; known: {', '.join(TUI_COLUMNS)}"
+        )
+      if name in seen_columns:
+        raise ConfigError(f"tui.columns repeats {name!r}")
+      seen_columns.add(name)
     if self.satisfies_dependencies is not None:
       listed = self.satisfies_dependencies
       if not isinstance(listed, list) or not listed or any(
@@ -349,6 +382,7 @@ class Config:
       "claim_owner": self.claim_owner,
       "implement_finish": self.implement_finish,
       "issues_repo": self.issues_repo,
+      "tui": {"columns": list(self.tui_columns)},
     }
 
   @staticmethod
@@ -428,6 +462,7 @@ class Config:
       implement_finish=_implement_finish(d),
       satisfies_dependencies=d.get("satisfies_dependencies"),
       issues_repo=d.get("issues_repo", ""),
+      tui_columns=_tui_columns(d),
     )
     cfg.validate()
     return cfg

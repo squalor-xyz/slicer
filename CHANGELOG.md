@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- TUI: config `tui.columns` lists which of `claim`, `size` and `score` the queue row shows after the status, and in what order, so an owner can trade those cells for title room: `slicer config tui.columns '["score"]'`. The default is the layout the queue had before. An empty list shows none; an unknown or repeated name is a config error. The narrow-pane rule still drops the claim and size cells. See [configuration.md](docs/configuration.md) and [tui.md](docs/tui.md#display-and-color).
+
 - TUI: `m` marks queue items for the session; `Q` shows an orchestrator request in queue order, using a range for adjacent slices, with per-slice relay role recommendations. With no marks it uses the selected slice. It writes nothing and launches nothing. See [tui.md](docs/tui.md#relay-requests).
 
 - TUI: `R` shows the relay role matrix; Enter asks whether the selected slice is well-specified and split, then shows the CLI recommendation, including all five roles, selection reasons and alternatives. Esc cancels without writing. Matrix editing stays in `relay-roles`. See [tui.md](docs/tui.md#relay-roles).
