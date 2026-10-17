@@ -12320,7 +12320,7 @@
       "id": "s348",
       "title": "TUI history pane reads the log only when it changed",
       "short_title": "TUI history pane reads the log only when it changed",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
