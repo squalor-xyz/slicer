@@ -299,7 +299,8 @@ collision warning (`_sibling_collisions` in `src/slicer/check.py`) probes with
 and asks git for the worktree root (`rev-parse --show-toplevel`) to test whether this
 checkout is that root. Only at the worktree root does it list the sibling checkouts
 (`git worktree list --porcelain`) and read their indexes, and it reads the merge base's
-index only for a sibling whose title for a shared id differs. `main` also runs a
+index only for a sibling with a shared id whose title differs or whose id differs
+only in case, even when the titles match. `main` also runs a
 code-location hint before each command, except `--about` and `--recursive` runs, and not
 when `SLICER_NO_CODE_WARNING` is set (`vcs.foreign_worktree`, called from
 `cli._warn_code_mismatch`); it asks git only when slicer's own code is not under the

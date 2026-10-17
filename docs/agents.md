@@ -498,7 +498,7 @@ when the meaning does. Branch on the code. A refusal takes its specific code whe
 | `corrupt` | A tracking file (index, a slice, the log) is not valid JSON/UTF-8 or is the wrong shape |
 | `schema_too_new` | `index.json` or `config.json` was written by a newer slicer; upgrade slicer to open the project |
 | `bad_id` | An id is unusable as a filename, or a config prefix would produce one |
-| `case_collision` | An id differs from an existing one only in case |
+| `case_collision` | An id differs from an existing one only in case, including an id newly filed in a sibling git worktree. Exit 2, nothing written; a sibling refusal names its worktree, id and title, and suggests `slicer next-id` or leaving out `--id` |
 | `id_taken_elsewhere` | `add --id` names an id that a sibling git worktree has filed as an item of its own, not one both checkouts inherited from their merge base. Exit 2, nothing written; the message names the worktree and its title, and suggests `slicer next-id` or leaving out `--id` |
 | `already_exists` | `init` or `migrate` over a project that already has state |
 | `blank_title` | A title is empty or whitespace; also a `relay-roles` rule's text |

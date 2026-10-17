@@ -145,6 +145,33 @@ class SiblingIdTests(unittest.TestCase):
       self.assertIn("slicer next-id", error["message"])
       self.assertEqual(repo.read(".slicer/index.json"), before)
 
+  def test_Add_ExplicitIdCaseFoldOfSiblingId_RefusesCaseCollision(self) -> None:
+    with self.repo() as repo:
+      sibling = self.sibling(repo, "other")
+      code, _, err = _run(sibling, "add", "their item", "--id", "s10")
+      self.assertEqual(code, 0, err)
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("add", "our item", "--id", "S10", "--json")
+      self.assertEqual(code, 2, out)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "case_collision")
+      self.assertIn("worktree other", error["message"])
+      self.assertIn("s10", error["message"])
+      self.assertIn("'their item'", error["message"])
+      self.assertIn("slicer next-id", error["message"])
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Add_ExplicitIdCaseFoldOfInheritedId_Unchanged(self) -> None:
+    with self.repo() as repo:
+      self.sibling(repo, "other")
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("add", "again", "--id", "s01", "--json")
+      self.assertEqual(code, 2, out)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "case_collision")
+      self.assertNotIn("worktree", error["message"])
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+
   def test_Add_ExplicitIdInheritedBySibling_Allowed(self) -> None:
     with self.repo() as repo:
       self.sibling(repo, "other")  # S01 is in the merge base, so both checkouts inherit it
@@ -203,6 +230,21 @@ class SiblingIdTests(unittest.TestCase):
         "collide on merge. File this checkout's item under a new id before merging.",
         warnings,
       )
+
+  def test_Check_SiblingIdDiffersOnlyInCase_Warns(self) -> None:
+    for title in ("their item", "our item"):
+      with self.subTest(sibling_title=title), self.repo() as repo, _before_refusal():
+        sibling = self.sibling(repo, "other")
+        code, _, err = _run(sibling, "add", title, "--id", "s10")
+        self.assertEqual(code, 0, err)
+        code, _, err = repo.run("add", "our item", "--id", "S10")
+        self.assertEqual(code, 0, err)
+        warnings = self.collisions(repo)
+        self.assertEqual(len(warnings), 1, warnings)
+        self.assertIn("S10", warnings[0])
+        self.assertIn("s10", warnings[0])
+        self.assertIn("worktree other", warnings[0])
+        self.assertIn("one file on a case-insensitive filesystem", warnings[0])
 
   def test_Check_SiblingHasSameItem_DoesNotWarn(self) -> None:
     with self.repo() as repo:

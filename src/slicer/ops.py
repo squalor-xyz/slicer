@@ -342,9 +342,20 @@ def _refuse_id_taken_elsewhere(state: State, item_id: str) -> None:
     return
   ours_head = vcs.resolve(state.root, "HEAD")
   for path, sibling in store.sibling_checkouts(state.root):
-    theirs = sibling.get(item_id)
-    if theirs is None or item_id in verify.inherited_ids(state, ours_head, path):
+    folded = item_id.casefold()
+    theirs = next((it for it in sibling.items if it.id.casefold() == folded), None)
+    if theirs is None:
       continue
+    inherited = {value.casefold() for value in verify.inherited_ids(state, ours_head, path)}
+    if folded in inherited:
+      continue
+    if theirs.id != item_id:
+      raise StateError(
+        f"id {item_id} differs only in case from {theirs.id}, filed in worktree "
+        f"{path.name} as {theirs.title!r}; on a case-insensitive filesystem they "
+        "would be the same file. Use `slicer next-id` for a free id, or leave out --id",
+        code="case_collision",
+      )
     raise StateError(
       f"id {item_id} is already filed in worktree {path.name} as {theirs.title!r}, and this "
       "checkout did not inherit it from their merge base, so the two would collide on merge. "
