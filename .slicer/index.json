@@ -11452,7 +11452,7 @@
       "id": "s327",
       "title": "slicer land checks a merged branch and marks its slice done",
       "short_title": "slicer land checks a merged branch and marks its slice done",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
