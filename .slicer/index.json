@@ -9543,12 +9543,24 @@
       "id": "s285",
       "title": "TUI shows the relay request for a selected slice or range",
       "short_title": "TUI shows the relay request for a selected slice or range",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s280"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9d390cc6-ced3-4e04-997b-73e998ebe0d5",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: TUI marks queue rows with m (session-only, refused on prose rows) and Q shows the relay request for the marked slices in canonical ranked-queue order, collapsing to A..B only when adjacent in both the ranked queue and stored order, with relay-roles recommend lines per slice via s280's RolesPrompt; unpromoted items say promote first; nothing is written. Gate VERDICT: PASS; full suite 2385 ok, 1 skipped; slicer check passed.",
+          "created_at": "2026-10-17T19:55:42Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -9568,7 +9580,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
