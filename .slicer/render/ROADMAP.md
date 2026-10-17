@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-342 items · — 8 · done 326 · retired 8
+342 items · — 7 · done 327 · retired 8
 
 v1.14.0 release
 
@@ -41,7 +41,7 @@ v1.14.0 release
 | 6 | [s326](slices/s326.md) | relay-run end closes the steps still running | S | 1 | slicer | outer-session wishlist 2026-10-16, item 5: every landing marked the orchestrator step done, then ended the run | — |
 | 7 | [s327](slices/s327.md) | slicer land checks a merged branch and marks its slice done | M | 2 | slicer | outer-session wishlist 2026-10-16, item 6: landing is about seven hand-run steps per slice | — |
 | 8 | [s328](slices/s328.md) | File one item with its spec in one import, short title included | S | 1 | slicer | outer-session wishlist 2026-10-16, item 7: each filing was add with eight flags, then promote | done |
-| 9 | [s329](slices/s329.md) | retire is a command | S | 1 | slicer | outer-session wishlist 2026-10-16, item 8: reached for slicer retire, which does not exist | — |
+| 9 | [s329](slices/s329.md) | retire is a command | S | 1 | slicer | outer-session wishlist 2026-10-16, item 8: reached for slicer retire, which does not exist | done |
 | 10 | [s349](slices/s349.md) | Absorbed local events keep their fold order in the shared ledger | S | 1 | slicer | s338 gate 2026-10-17: the reviewer reproduced on base that _absorb copies local events in file order, so a child step written in the same second as its parent from another checkout lands ahead of the parent and the shared ledger reads as corrupt | done |
 | 11 | [s350](slices/s350.md) | A shared step update absorbs a step held only in a local file | S | 1 | slicer | s340 gate 2026-10-17: the reviewer's probe showed `relay-run step RUN --step ID` on the shared ledger, for a step only a local fallback file holds, is written without absorbing; after the worktree is removed the shared ledger shows that step with an empty role and agent | done |
 | 12 | [s351](slices/s351.md) | The relay closing note renders the slice | S | 1 | slicer | s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render` | done |

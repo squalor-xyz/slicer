@@ -11524,7 +11524,7 @@
       "id": "s329",
       "title": "retire is a command",
       "short_title": "retire is a command",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
