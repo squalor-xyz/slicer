@@ -11760,7 +11760,7 @@
       "id": "s335",
       "title": "Explain the human role when working with agents",
       "short_title": "Explain the human role when working with agents",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s333",
