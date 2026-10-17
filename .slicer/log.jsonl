@@ -1794,3 +1794,7 @@
 {"when": "2026-10-17T03:38:39Z", "item": "s342", "action": "add", "from": "", "to": "open", "note": "affected.py selects from a map recorded at an ancestor commit"}
 {"when": "2026-10-17T03:38:39Z", "item": "s341", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-17T03:38:39Z", "item": "s342", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-16T22:22:36Z", "item": "s305", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-16T23:39:27Z", "item": "s305", "action": "note", "from": "", "to": "", "note": "Ready for review: explicit sibling ids are compared without ", "by": "Jon Robbins"}
+{"when": "2026-10-16T23:39:27Z", "item": "s305", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T03:41:06Z", "item": "s305", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

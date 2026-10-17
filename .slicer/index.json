@@ -10442,13 +10442,28 @@
       "id": "s305",
       "title": "Sibling id refusal ignores case",
       "short_title": "Sibling id refusal ignores case",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [
         "s301"
       ],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "f00cf690-2c98-433e-bba6-fbe32cb2fd84",
+          "kind": "",
+          "text": "**2026-10-16** — Ready for review: explicit sibling ids are compared without case; case-only matches refuse with case_collision before writing, while inherited ids retain existing behavior. Check warns for case-only pairs even when titles match. Added three regression tests, updated error-code documentation, changelog and architecture. Verified 39 sibling tests; full suite 2322 tests in 1519.372s, OK (1 skipped); four mutations killed; documentation-selected test, slicer check and diff check passed. Final distinct reviewer gate: VERDICT: PASS.",
+          "created_at": "2026-10-16T23:39:27Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-17T03:41:06Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -10467,7 +10482,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

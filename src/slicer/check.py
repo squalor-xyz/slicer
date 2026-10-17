@@ -85,7 +85,7 @@ def _gitignore_lines(state: State) -> list[str]:
 
 
 def _sibling_collisions(state: State) -> list[str]:
-  """Ids a sibling worktree filed under a different title than this checkout did.
+  """New sibling ids that collide by case or have different titles here.
 
   An id both checkouts inherited from their merge base is one item that one side
   retitled, which merges cleanly, so only an id new on both sides can collide.
@@ -93,16 +93,25 @@ def _sibling_collisions(state: State) -> list[str]:
   if not vcs.is_repo(state.root):
     return []
   warnings: list[str] = []
+  ours_by_id = {item.id.casefold(): item for item in state.index.items}
   ours_head = vcs.resolve(state.root, "HEAD")
   for path, sibling in store.sibling_checkouts(state.root):
-    inherited: set[str] | None = None  # read once per sibling, and only if titles differ
+    inherited: set[str] | None = None  # read once per sibling, only for a possible clash
     for theirs in sibling.items:
-      ours = state.index.get(theirs.id)
-      if ours is None or ours.title == theirs.title:
+      ours = ours_by_id.get(theirs.id.casefold())
+      if ours is None or (ours.id == theirs.id and ours.title == theirs.title):
         continue
       if inherited is None:
-        inherited = verify.inherited_ids(state, ours_head, path)
-      if theirs.id not in inherited:
+        inherited = {value.casefold() for value in verify.inherited_ids(state, ours_head, path)}
+      if theirs.id.casefold() in inherited:
+        continue
+      if ours.id != theirs.id:
+        warnings.append(
+          f"{ours.id} here and {theirs.id} in worktree {path.name} differ only in case; "
+          "the slice files will collide on merge as one file on a case-insensitive filesystem. "
+          "File this checkout's item under a new id before merging."
+        )
+      else:
         warnings.append(
           f"{theirs.id} is {ours.title!r} here but {theirs.title!r} in worktree "
           f"{path.name}; the two will collide on merge. File this checkout's item "
