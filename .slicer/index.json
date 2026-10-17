@@ -12578,7 +12578,7 @@
       "id": "s355",
       "title": "affected.py tests pin the clean probe at discover start",
       "short_title": "affected.py tests pin the clean probe at discover start",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
