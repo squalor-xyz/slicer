@@ -1375,6 +1375,13 @@ def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.Ba
       f"skipped {entry['id']} (attempts {entry['attempts']} >= max_attempts {entry['max_attempts']})"
       for entry in result.capped
     )
+  unknown_files = getattr(result, "unknown_files", [])
+  if unknown_files:
+    payload["unknown_files"] = unknown_files
+    lines.extend(
+      f"skipped {item_id} (its files section names no path)"
+      for item_id in unknown_files
+    )
   unspecified = _unspecified_payload(result)
   if unspecified:
     payload["unspecified"] = unspecified
@@ -1594,6 +1601,8 @@ def cmd_next(args: argparse.Namespace) -> int:
     raise StateError("--batch cannot be combined with --show or -n", code="usage")
   if args.batch is not None and args.status is not None:
     raise StateError("--batch cannot be combined with --status", code="usage")
+  if args.disjoint and args.batch is None:
+    raise StateError("--disjoint on next requires --batch", code="usage")
   if args.start_to is not None and not (args.start and args.status is not None):
     raise StateError("--start-to on next requires --start and --status", code="usage")
   if args.render and not args.start:
@@ -1690,6 +1699,7 @@ def _cmd_next_batch(
   result = ops.next_batch(
     state, args.batch, elsewhere, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
+    disjoint=args.disjoint,
   )
   blocked = _blocked_payload(result.blocked)
   if not result.items:
@@ -2029,10 +2039,27 @@ def _emit_find(
   _emit(args, payload, text)
 
 
+def _deps_overlap(args: argparse.Namespace, state: store.State) -> int:
+  """The paths each pair of the named items shares, by their `files_section`."""
+  if len(args.overlap) < 2:
+    raise StateError("deps --overlap needs at least two item ids", code="usage")
+  if args.id is not None or args.format is not None:
+    raise StateError("deps --overlap cannot be combined with ID or --format", code="usage")
+  pairs = ops.path_overlap(state, args.overlap)
+  lines = [
+    f"{pair['a']} {pair['b']}  " + (", ".join(pair["shared"]) or "-")  # type: ignore[arg-type]
+    for pair in pairs
+  ]
+  _emit(args, {"overlap": pairs}, "\n".join(lines))
+  return OK
+
+
 def cmd_deps(args: argparse.Namespace) -> int:
   state = _state(args)
   index = state.index
   cfg = state.config
+  if args.overlap is not None:
+    return _deps_overlap(args, state)
   if args.id is not None:
     state.index.require(args.id)
   if args.format == "mermaid":
@@ -3600,6 +3627,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="skip fresh implementation pickups at N attempts; allow started resumes")
   sp.add_argument("--batch", type=_positive_int, default=None, metavar="K",
                   help="return up to K items; a dependent follows its dependency")
+  sp.add_argument("--disjoint", action="store_true",
+                  help="with --batch, skip an item whose files_section paths overlap a chosen item's")
   sp.add_argument("--tree", help="only items in this tree (one tree; not repeatable)")
   sp.add_argument("--size", help="only items of this exact size")
   sp.add_argument("--flag", action="append", metavar="PATTERN",
@@ -3658,6 +3687,11 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("deps", cmd_deps, "dependencies: unblocked items, or one item's edges")
   sp.add_argument("id", nargs="?")
   sp.add_argument("--format", choices=["mermaid"], help="render the dependency graph")
+  sp.add_argument(
+    "--overlap", nargs="+", metavar="ID",
+    help="print the paths each pair of these items shares in the files_section "
+    "(needs at least two ids)",
+  )
 
   sp = add("find", cmd_find, "search items by text")
   sp.add_argument("pattern", nargs="?")

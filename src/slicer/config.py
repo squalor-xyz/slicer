@@ -153,6 +153,11 @@ class Config:
   retired_dir: str = "retired"
   exclude_flags: list[str] = field(default_factory=list)
   hold_flags: list[str] = field(default_factory=lambda: ["needs-owner"])
+  # The section whose backticked repo paths `next --batch --disjoint` and
+  # `deps --overlap` compare. Empty turns both off.
+  files_section: str = ""
+  # Paths that never count as overlap, for a file every slice touches.
+  overlap_ignore: list[str] = field(default_factory=list)
   next_format: str = "**{{id}}** {{title}}"
   next_empty: str = "nothing unmarked"
   later: dict[str, Any] = field(default_factory=lambda: json.loads(json.dumps(DEFAULT_LATER)))
@@ -224,6 +229,12 @@ class Config:
     raise ConfigError(f"unknown status {label!r}; known: {sorted(self.statuses.values())}")
 
   def validate(self) -> None:
+    if not isinstance(self.files_section, str):
+      raise ConfigError("files_section must be a string")
+    if not isinstance(self.overlap_ignore, list) or any(
+      not isinstance(path, str) or not path.strip() for path in self.overlap_ignore
+    ):
+      raise ConfigError("overlap_ignore must be a list of nonempty strings")
     if not isinstance(self.hold_flags, list) or any(
       not isinstance(flag, str) or not flag.strip() for flag in self.hold_flags
     ):
@@ -377,6 +388,8 @@ class Config:
       "retired_dir": self.retired_dir,
       "exclude_flags": list(self.exclude_flags),
       "hold_flags": list(self.hold_flags),
+      "files_section": self.files_section,
+      "overlap_ignore": list(self.overlap_ignore),
       "pointers": {
         "next_format": self.next_format,
         "next_empty": self.next_empty,
@@ -459,6 +472,8 @@ class Config:
       retired_dir=d.get("retired_dir", "retired"),
       exclude_flags=list(d.get("exclude_flags", [])),
       hold_flags=d.get("hold_flags", ["needs-owner"]),
+      files_section=d.get("files_section", ""),
+      overlap_ignore=d.get("overlap_ignore", []),
       next_format=pointers.get("next_format", "**{{id}}** {{title}}"),
       next_empty=pointers.get("next_empty", "nothing unmarked"),
       later=pointers.get("later", json.loads(json.dumps(DEFAULT_LATER))),

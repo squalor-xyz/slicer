@@ -27,16 +27,16 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-342 items · — 6 · done 328 · retired 8
+342 items · — 3 · done 328 · retired 8 · review 3
 
 v1.14.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
 | 1 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | done |
-| 2 | [s322](slices/s322.md) | Print a slice's orchestrator brief with ai relay-brief | M | 2 | slicer | outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names | — |
-| 3 | [s323](slices/s323.md) | Items waiting on an owner decision are held out of next | M | 2 | slicer | outer-session wishlist 2026-10-16, item 2: open decisions lived in prose, so next showed s312 as ready | — |
-| 4 | [s324](slices/s324.md) | next --batch picks slices whose files do not overlap | M | 2 | slicer | outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections | — |
+| 2 | [s322](slices/s322.md) | Print a slice's orchestrator brief with ai relay-brief | M | 2 | slicer | outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names | review |
+| 3 | [s323](slices/s323.md) | Items waiting on an owner decision are held out of next | M | 2 | slicer | outer-session wishlist 2026-10-16, item 2: open decisions lived in prose, so next showed s312 as ready | review |
+| 4 | [s324](slices/s324.md) | next --batch picks slices whose files do not overlap | M | 2 | slicer | outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections | review |
 | 5 | [s325](slices/s325.md) | check says when only the roadmap render is stale, as after a merge | S | 1 | slicer | outer-session wishlist 2026-10-16, item 4: every landing left check failing on a stale ROADMAP render | done |
 | 6 | [s326](slices/s326.md) | relay-run end closes the steps still running | S | 1 | slicer | outer-session wishlist 2026-10-16, item 5: every landing marked the orchestrator step done, then ended the run | — |
 | 7 | [s327](slices/s327.md) | slicer land checks a merged branch and marks its slice done | M | 2 | slicer | outer-session wishlist 2026-10-16, item 6: landing is about seven hand-run steps per slice | done |

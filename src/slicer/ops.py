@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Callable, Iterator, Mapping
 
 from slicer import (
-  feedback, graph, ids, jsonio, outline, prose, refs, relayrun, render, roles, store, templates,
+  feedback, graph, ids, jsonio, outline, paths, prose, refs, relayrun, render, roles, store, templates,
   vcs, verify,
 )
 from slicer.config import CONFIG_NAME, Config
@@ -1651,6 +1651,8 @@ class BatchResult:
   capped: list[dict[str, int | str]] = field(default_factory=list)
   # Custom-queue items skipped because another owner holds the claim.
   claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
+  # `--disjoint` only: eligible items whose files section names no path.
+  unknown_files: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -1851,6 +1853,7 @@ def next_batch(
   *, tree: str | None = None, size: str | None = None,
   max_attempts: int | None = None,
   flags: list[str] | None = None, no_flags: list[str] | None = None,
+  disjoint: bool = False,
 ) -> BatchResult:
   """Up to `count` items from the next pool, dependencies before dependents.
 
@@ -1860,28 +1863,47 @@ def next_batch(
   Selection stops at `count`. An item left out only because the batch is full
   is not reported as blocked. An item still waiting on something outside the
   batch is, and the reported dependencies are the ones the batch did not take.
+
+  With `disjoint`, an item is also skipped when a path its files section names is
+  already named by a chosen item (paths in `overlap_ignore` never count), and an
+  item whose section names no path is skipped and listed in `unknown_files`.
   """
   if isinstance(count, bool) or not isinstance(count, int) or count < 1:
     raise StateError("next --batch must be an integer >= 1", code="usage")
+  if disjoint:
+    _require_files_section(state.config, "next --batch --disjoint")
   pool = _ranked_pool(
     state, elsewhere, tree=tree, size=size, include_blocked=True,
     max_attempts=max_attempts, flags=flags, no_flags=no_flags,
   )
   chosen: list[Item] = []
   chosen_ids: set[str] = set()
+  taken: set[str] = set()
+  unknown_files: list[str] = []
   while len(chosen) < count:
     pick: Item | None = None
     for item in pool.items:
       if item.id in chosen_ids:
         continue
       unmet = [dep for dep in graph.pending(state.index, item, state.config) if dep not in chosen_ids]
-      if not unmet:
-        pick = item
-        break
+      if unmet:
+        continue
+      if disjoint:
+        named = item_paths(state, item.id)
+        if not named:
+          if item.id not in unknown_files:
+            unknown_files.append(item.id)
+          continue
+        if taken.intersection(counted_paths(state.config, named)):
+          continue
+      pick = item
+      break
     if pick is None:
       break
     chosen.append(pick)
     chosen_ids.add(pick.id)
+    if disjoint:
+      taken.update(counted_paths(state.config, item_paths(state, pick.id)))
   blocked: list[tuple[str, list[str]]] = []
   for item_id, pending in pool.blocked:
     if item_id in chosen_ids:
@@ -1896,7 +1918,43 @@ def next_batch(
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
     capped=pool.capped,
+    unknown_files=unknown_files,
   )
+
+
+def _require_files_section(cfg: Config, what: str) -> None:
+  if not cfg.files_section:
+    raise StateError(
+      f"{what} needs files_section: name the section that lists an item's files with "
+      "`slicer config files_section NAME`",
+      code="usage",
+    )
+
+
+def item_paths(state: State, item_id: str) -> list[str]:
+  """The repo paths in an item's `files_section`; none when it has no slice or section."""
+  sl = state.slices.get(item_id)
+  section = sl.section(state.config.files_section) if sl is not None else None
+  return paths.extract(section.body) if section is not None else []
+
+
+def counted_paths(cfg: Config, named: list[str]) -> list[str]:
+  """The paths that can overlap: those not listed in `overlap_ignore`."""
+  return [path for path in named if path not in cfg.overlap_ignore]
+
+
+def path_overlap(state: State, item_ids: list[str]) -> list[dict[str, object]]:
+  """The paths each pair of items shares, in argument order and the first item's path order."""
+  _require_files_section(state.config, "deps --overlap")
+  for item_id in item_ids:
+    state.index.require(item_id)
+  counted = {item_id: counted_paths(state.config, item_paths(state, item_id)) for item_id in item_ids}
+  pairs: list[dict[str, object]] = []
+  for at, first in enumerate(item_ids):
+    for second in item_ids[at + 1:]:
+      shared = [path for path in counted[first] if path in counted[second]]
+      pairs.append({"a": first, "b": second, "shared": shared})
+  return pairs
 
 
 def _missing_spec(state: State, item: Item) -> list[str]:
