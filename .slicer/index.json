@@ -12130,10 +12130,22 @@
       "id": "s344",
       "title": "affected.py does not borrow a map recorded from a dirty tree",
       "short_title": "affected.py does not borrow a map recorded from a dirty tree",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "367c7a96-cb98-4b80-8340-ff1727cecf87",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: affected.py maps record \"clean\" (no uncommitted src/ or tests/ changes when the discover started); sibling_map skips unclean maps and maps without the field; own map ignores it. 56 affected tests OK, full suite 2383 OK (skipped=1); gate PASS.",
+          "created_at": "2026-10-17T20:09:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12153,7 +12165,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

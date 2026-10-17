@@ -1902,3 +1902,6 @@
 {"when": "2026-10-17T20:03:25Z", "item": "s346", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:05:39Z", "item": "s346", "action": "note", "from": "", "to": "", "note": "Ready for review: deps_lines docstring now says it shows the", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:11:19Z", "item": "s346", "action": "status", "from": "review", "to": "done", "note": "Landed: deps_lines docstring and docs/tui.md describe what i shows; gate PASS, full suite green on main.", "by": "Jon Robbins"}
+{"when": "2026-10-17T19:45:13Z", "item": "s344", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T19:58:10Z", "item": "s344", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:09:00Z", "item": "s344", "action": "note", "from": "", "to": "", "note": "Ready for review: affected.py maps record \"clean\" (no uncomm", "by": "Jon Robbins"}

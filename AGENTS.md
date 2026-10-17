@@ -40,11 +40,14 @@ The full suite takes about one minute alone and longer under load. In an agent
 session, run it in the background or with a timeout over 180 s. While iterating,
 run `python3 tests/affected.py --run` first. In a new worktree with no map of its
 own, `affected.py` uses a map that another worktree of the repository recorded at
-HEAD or, failing that, at the nearest ancestor of HEAD, when that worktree has no
-uncommitted changes under `src/` or `tests/`. It diffs the working tree against the
+HEAD or, failing that, at the nearest ancestor of HEAD, when that map is `"clean": true`
+(its tree had no uncommitted changes under `src/` or `tests/` when its discover started;
+a map written before the field existed is not borrowed) and that worktree has no
+uncommitted changes under `src/` or `tests/` now. It diffs the working tree against the
 commit that map was recorded at, and names both on stderr. Without one, run the
-full discover once first: a successful run writes `.venv/affected-map.json` for
-that HEAD, with the lines each test ran and the non-Python repo files it read, so
+full discover once first, on a clean checkout: a successful run writes
+`.venv/affected-map.json` for that HEAD (with `"clean": false` if the tree was dirty),
+holding the lines each test ran and the non-Python repo files it read, so
 a changed Markdown file or template selects the tests that read it. Run the
 full discover once before done. The exception is a diff that touches nothing
 under `src/` or `tests/`:
