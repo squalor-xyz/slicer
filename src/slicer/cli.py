@@ -426,6 +426,21 @@ def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_ai_relay_brief(args: argparse.Namespace) -> int:
+  payload = ai.relay_brief(
+    _state(args), args.id, worktree=args.worktree, branch=args.branch,
+    run=args.run, step=args.step, parallel=args.parallel or [],
+    well_specified=ops.parse_yes_no("well-specified", args.well_specified),
+    split=ops.parse_yes_no("split", args.split), prefer_agent=args.prefer_agent,
+    select=role_matrix.parse_selectors(args.select or []),
+  )
+  if args.json:
+    _dump_json(args, payload)
+  else:
+    print(payload["brief"], end="")
+  return OK
+
+
 def _init_roles(args: argparse.Namespace) -> int:
   """`ai relay --init-roles`: `relay-roles init --render` under the project lock."""
   root = Path(args.root).resolve() if args.root else None
@@ -3503,6 +3518,19 @@ def build_parser() -> argparse.ArgumentParser:
   inner.set_defaults(func=cmd_ai_relay_orchestrator)
   _json_flags(inner, suppress=True)
 
+  inner = aisub.add_parser(
+    "relay-brief", help="print a slice-specific orchestrator brief (no lock, no write)",
+    parents=[common],
+  )
+  inner.add_argument("id")
+  for flag in ("worktree", "branch", "run", "step", "well-specified", "split"):
+    inner.add_argument("--" + flag, required=True)
+  inner.add_argument("--parallel", action="append", metavar="ID")
+  inner.add_argument("--prefer-agent", metavar="AGENT")
+  inner.add_argument("--select", action="append", metavar="ROLE=ROW_ID")
+  inner.set_defaults(func=cmd_ai_relay_brief)
+  _json_flags(inner, suppress=True)
+
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
   sp.add_argument("--id-prefix", help="prefix for new ids (default S; --force retains the existing prefix)")
@@ -3844,14 +3872,14 @@ def build_parser() -> argparse.ArgumentParser:
 
   tadd("list", cmd_template_list, "name each template and say whether it differs from the default")
   inner = tadd("show", cmd_template_show, "print a template byte for byte")
-  inner.add_argument("name", help="slice.md, roadmap.md or row.md")
+  inner.add_argument("name", help="slice.md, roadmap.md, row.md or relay-brief.md")
   inner.add_argument("--default", action="store_true", help="print the built-in template, not the project's")
   inner = tadd("set", cmd_template_set, "replace a template with new text", write=True)
-  inner.add_argument("name", help="slice.md, roadmap.md or row.md")
+  inner.add_argument("name", help="slice.md, roadmap.md, row.md or relay-brief.md")
   inner.add_argument("--file", help="read the new text from this file, exactly")
   inner.add_argument("--stdin", action="store_true", help="read the new text from stdin")
   tadd("reset", cmd_template_reset, "restore a template to the built-in text",
-       write=True).add_argument("name", help="slice.md, roadmap.md or row.md")
+       write=True).add_argument("name", help="slice.md, roadmap.md, row.md or relay-brief.md")
 
   sp = _strict_flag(_render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright")))
   sp.add_argument("id")

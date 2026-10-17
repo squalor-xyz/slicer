@@ -285,7 +285,7 @@ reports drift without writing; `slicer check` includes it.
 The tracking directory name (`.slicer`) and the render output paths
 (`render/ROADMAP.md`, `render/ROADMAP.html`, `render/slices/<ID>.md`) are fixed.
 
-The escape hatch is `.slicer/templates/*.md` — `slice.md`, `roadmap.md` and `row.md`,
+The escape hatch is `.slicer/templates/*.md` — `slice.md`, `roadmap.md`, `row.md` and `relay-brief.md`,
 copied into your project by `init` and changed with `slicer template`: `list` says which
 differ from the built-in text, `show NAME` prints one (`--default` prints the built-in
 one), `set NAME --file FILE` or `--stdin` replaces it, and `reset NAME` restores the
@@ -293,6 +293,15 @@ built-in text, recreating a deleted file. They are plain `{{key}}` substitution 
 loops, no conditionals and no eval; an unknown placeholder raises rather than rendering
 empty, and `set` refuses text that names one (`bad_template`) before it writes anything.
 Anything that repeats is flattened before it reaches a template.
+
+`relay-brief.md` controls `ai relay-brief`. Its placeholders are `{{id}}`,
+`{{title}}`, `{{size}}`, `{{effort}}`, `{{worktree}}`, `{{branch}}`, `{{run}}`,
+`{{step}}`, `{{roles}}`, `{{finish_override}}`, `{{commit_title}}`, `{{parallel}}`
+and `{{contract}}`. The built-in ENVIRONMENT block is empty: add your interpreter,
+test temporary-directory rules and command helpers with
+`slicer template set relay-brief.md --stdin`. Existing projects without this file
+use the built-in text until they set or reset it; no `init --force` is needed.
+The brief does not use the render templates and is not written into `render/`.
 
 Row templates can use `{{discovered_from}}` for the raw source ID (empty when
 absent). `{{findings}}` includes the optional `discovered from ID` annotation,

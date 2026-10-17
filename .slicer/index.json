@@ -11266,7 +11266,7 @@
       "id": "s322",
       "title": "Print a slice's orchestrator brief with ai relay-brief",
       "short_title": "Print a slice's orchestrator brief with ai relay-brief",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -11276,6 +11276,17 @@
           "text": "**2026-10-16** — From the s320 relay (2026-10-16): build the brief's roles from roles.resolve and pass the accepted --prefer-agent/--select through, so the brief carries the accepted lineup, orchestrator included.",
           "created_at": "2026-10-16T20:06:23Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "4891dabf-eb35-447b-b5ab-c483cc0014f8",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: `slicer ai relay-brief ID --worktree --branch --run --step --well-specified --split [--prefer-agent] [--select] [--parallel]` prints the orchestrator brief from the new `relay-brief.md` template (built-in fallback for older projects; empty ENVIRONMENT block). Roles come from the `relay-roles recommend` resolve path, orchestrator included; contract from the live marker (relay v5); a handoff project gets start before work, then the rendered note and handoff after PASS; commit title `ID: TITLE`; `--parallel` gives ids only, without the item itself. `--json` is {brief, roles, contract}. Errors: `no_such_item`, `unspecified` (no slice or an empty required section, per the spec, documented as the exception to the `no_slice` rule). Compared with the hand-built s322 brief (no s308 brief was available): environment lines, vendor launch paths, fallback policy and test commands move to the project template; roles come from the matrix; the commit title is the full `ID: TITLE`; the note carries `--render` before handoff, after PASS. Verified: 17 AiRelayBrief tests, 57 template tests, 1,920 affected and a full suite of 2,481 run (OK, 1 skipped); mutations all red; slicer check and git diff --check clean; gate VERDICT: PASS.",
+          "created_at": "2026-10-17T23:20:55Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -11301,7 +11312,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

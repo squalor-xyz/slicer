@@ -65,7 +65,7 @@ class TemplateCommandTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       rows = json.loads(out)
       self.assertEqual([r["name"] for r in rows], list(templates.TEMPLATE_NAMES))
-      self.assertEqual([r["customized"] for r in rows], [False, False, False])
+      self.assertEqual([r["customized"] for r in rows], [False, False, False, False])
 
   def test_TemplateList_AfterSetThatChangesBytes_MarksOnlyThatTemplate(self) -> None:
     with self.repo() as repo:
@@ -73,7 +73,7 @@ class TemplateCommandTests(unittest.TestCase):
       _, out, _ = repo.run("template", "list", "--json")
       self.assertEqual(
         {r["name"]: r["customized"] for r in json.loads(out)},
-        {"slice.md": False, "roadmap.md": False, "row.md": True},
+        {"slice.md": False, "roadmap.md": False, "row.md": True, "relay-brief.md": False},
       )
 
   def test_TemplateList_Text_SaysDefaultOrCustomizedPerName(self) -> None:

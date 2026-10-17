@@ -13,7 +13,13 @@ from pathlib import Path
 from slicer.errors import StateError
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
-TEMPLATE_NAMES = ("slice.md", "roadmap.md", "row.md")
+TEMPLATE_NAMES = ("slice.md", "roadmap.md", "row.md", "relay-brief.md")
+
+
+RELAY_BRIEF_KEYS = (
+  "id", "title", "size", "effort", "worktree", "branch", "run", "step",
+  "roles", "finish_override", "commit_title", "parallel", "contract",
+)
 
 
 def default(name: str) -> str:

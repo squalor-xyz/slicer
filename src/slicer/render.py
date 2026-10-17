@@ -77,6 +77,8 @@ def validate_template(name: str, text: str, cfg: Config, index: Index) -> None:
     )
   elif name == "roadmap.md":
     render_roadmap(Index(), cfg, text, "")
+  elif name == "relay-brief.md":
+    expand(text, dict.fromkeys(templates.RELAY_BRIEF_KEYS, "stand-in"))
   else:
     raise RenderError(f"{name} is not a template")
 
