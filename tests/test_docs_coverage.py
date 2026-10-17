@@ -113,6 +113,26 @@ def _json_less_commands() -> list[str]:
   return sorted(found)
 
 
+class WorkingWithAgentsTests(unittest.TestCase):
+  def test_WorkingWithAgents_EntryPoints_LinkGuide(self) -> None:
+    for name, target in (
+      ("README.md", "docs/working-with-agents.md"),
+      ("docs/getting-started.md", "working-with-agents.md"),
+      ("docs/agents.md", "working-with-agents.md"),
+    ):
+      with self.subTest(doc=name):
+        self.assertIn(f"]({target})", (ROOT / name).read_text(encoding="utf-8"))
+
+  def test_WorkingWithAgents_RelativeLinks_Resolve(self) -> None:
+    guide = ROOT / "docs" / "working-with-agents.md"
+    missing = [guide.name]
+    if guide.is_file():
+      targets = MARKDOWN_LINK.findall(guide.read_text(encoding="utf-8"))
+      paths = [t.split("#", 1)[0] for t in targets if not t.startswith(("http://", "https://"))]
+      missing = [path for path in paths if path and not (guide.parent / path).is_file()]
+    self.assertEqual(missing, [], "the guide and each relative link target must exist")
+
+
 class AgentsDocTests(unittest.TestCase):
   def test_AgentsDoc_JsonExceptions_MatchParser(self) -> None:
     parser_set = _json_less_commands()

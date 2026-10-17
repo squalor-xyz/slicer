@@ -37,6 +37,7 @@ uv, and unreleased main. The [contributor install](AGENTS.md#install) tracks a c
 ## Documentation
 
 - [Getting started](docs/getting-started.md) — a human first-use walkthrough
+- [Working with agents](docs/working-with-agents.md) — owner decisions, relay progress, and integration
 - [Why slicer](docs/why-slicer.md) — the workflow problems it solves
 - [Command reference](docs/commands.md) — commands, flags, lifecycle, CI, and recovery
 - [TUI manual](docs/tui.md) — interactive browsing, editing, and the roadmap wizard
