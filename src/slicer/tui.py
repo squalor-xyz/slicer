@@ -1358,11 +1358,15 @@ def _lane_header(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles
 
 
 def _ended_line(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles: dict[str, str],
-                now: datetime, width: int) -> PanelLine:
-  glyph = {"pass": "✓", "fail": "✗"}.get(run.outcome, "~")
+                now: datetime, width: int, statuses: dict[str, str],
+                done_label: str | None) -> PanelLine:
+  complete = bool(run.items) and done_label is not None and all(
+    statuses.get(item) == done_label for item in run.items)
+  glyph = {"pass": "✓" if complete else "○", "fail": "✗"}.get(run.outcome, "~")
   head = f"{glyph} {', '.join(run.items)}"
   tail = [
-    run.outcome, elapsed_text(run.begun_at, _parse_stamp(run.updated_at)),
+    " · ".join([run.outcome, *(statuses[item] for item in run.items if item in statuses)]),
+    elapsed_text(run.begun_at, _parse_stamp(run.updated_at)),
     f"ended {elapsed_text(run.updated_at, now)} ago",
     " · ".join(f"{label} {len(lane.get(role, ()))}"
                for label, role in (("impl", "implementer"), ("review", "reviewer"), ("gate", "gate"))),
@@ -1390,11 +1394,14 @@ def _gate_fail_lines(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], in
 
 
 def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
-                titles: dict[str, str] | None = None) -> list[PanelLine]:
+                titles: dict[str, str] | None = None, statuses: dict[str, str] | None = None,
+                done_label: str | None = None) -> list[PanelLine]:
   """One lane per live run, one summary line per ended run.
 
   A lane is the slice (its title comes from `titles`, item id to title), a freshness line, the
   pipeline with its round, and a row per role, under the orchestrator when the run has one.
+  Ended summaries use `statuses` (item id to configured label) and show a check only when
+  every item's label equals the configured `done_label` and the run passed.
   `width` is the cells available. A row drops a cell that does not fit rather than cutting it.
   Only a running step in an active run animates; a stale lane is dimmed throughout, bar the
   freshness line, which turns to the error role.
@@ -1406,13 +1413,14 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
       PanelLine(tui_style.clipped("and `relay-run step`; see docs/commands.md#relay-run-ledger.", width), role="dim"),
     ]
   titles = titles or {}
+  statuses = statuses or {}
   lines: list[PanelLine] = []
   for run in runs:
     if lines:
       lines.append(PanelLine(""))
     lane = _lane(run)
     if run.state == "ended":
-      lines.append(_ended_line(run, lane, titles, now, width))
+      lines.append(_ended_line(run, lane, titles, now, width, statuses, done_label))
       continue
     live = run.state == "active"
     dim = "normal" if live else "dim"
@@ -1524,7 +1532,9 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   if view.mode == "board":
     put(0, 0, "Relay board: j/k or arrows scroll, b, q or Esc close", palette.attr("heading"))
     titles = {item.id: item.title for item in state.index.items}
-    lines = board_lines(view.board_runs, view.board_tick, relayrun.utcnow(), width - 1, titles)
+    statuses = {item.id: state.config.status_label(item.status) for item in state.index.items}
+    lines = board_lines(view.board_runs, view.board_tick, relayrun.utcnow(), width - 1,
+                        titles, statuses, state.config.status_label(state.config.done_status))
     view.board_at = max(0, min(view.board_at, len(lines) - visible))
     for n, line in enumerate(lines[view.board_at:view.board_at + visible], 1):
       put(n, 0, line.text, palette.attr(line.role))
