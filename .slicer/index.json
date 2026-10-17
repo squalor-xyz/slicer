@@ -11828,7 +11828,7 @@
       "id": "s336",
       "title": "Give human contributors a practical development walkthrough",
       "short_title": "Give human contributors a practical development walkthrough",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s333"
