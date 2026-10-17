@@ -1851,3 +1851,5 @@
 {"when": "2026-10-17T16:05:26Z", "item": "s278", "action": "note", "from": "", "to": "", "note": "Key i cycles the detail pane between details, dependencies a", "by": "Jon Robbins"}
 {"when": "2026-10-17T16:05:27Z", "item": "s278", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T16:39:32Z", "item": "s278", "action": "status", "from": "review", "to": "done", "note": "Landed fe94908: i cycles the detail pane between details, deps and history (read-only); gate PASS after one fix round; full suite on main 2359 OK (1 skipped), check passes", "by": "Jon Robbins"}
+{"when": "2026-10-17T16:43:04Z", "item": "s346", "action": "add", "from": "", "to": "open", "note": "TUI detail pane docs match what i does"}
+{"when": "2026-10-17T16:43:04Z", "item": "s346", "action": "promote", "from": "", "to": "", "note": ""}

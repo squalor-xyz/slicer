@@ -1,0 +1,41 @@
+{
+  "id": "s346",
+  "title": "TUI detail pane docs match what i does",
+  "lead": [
+    "Two s278 gate nits: the `deps_lines` docstring and docs/tui.md describe the dependencies pane and the `i` key on a prose block slightly wrong."
+  ],
+  "depends_note": null,
+  "findings_note": "s278 gate later notes, 2026-10-17",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** scrolling the history pane; caching the log between redraws (about 20 ms per frame re-read on this repo).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s278 gate (2026-10-17) passed with two later notes. `deps_lines` in `src/slicer/tui.py:437` says it shows \"what `slicer deps ID` prints, without the JSON\", but `slicer deps` text output has no `blocked by` line, while the pane has one plus a `held by slivers` line. `docs/tui.md:45` says that on a roadmap prose block `i` \"does nothing\", but `View.handle` notifies \"that key applies to a slice, not to a prose block\"."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: reword the `deps_lines` docstring to say it shows the data behind `slicer deps ID`, including `blocked by` from its JSON and any open slivers.\n- `docs/tui.md`: say that on a prose block `i` shows a message and keeps the details."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "None: a docstring and a docs sentence. The existing `test_tui` and docs-coverage tests stay green."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Reword the docstring.\n2. Reword the docs/tui.md sentence."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full discover (the docstring is under `src/`). `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
