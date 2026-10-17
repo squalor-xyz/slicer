@@ -1,0 +1,41 @@
+{
+  "id": "s345",
+  "title": "show names catalog show for a catalog record id",
+  "lead": [
+    "Owner report 2026-10-17: `slicer show C170` says \"no such item\" although `slicer catalog show C170` finds the record. Today `show ID` only means a roadmap item, and its error does not say where that id actually lives."
+  ],
+  "depends_note": null,
+  "findings_note": "Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** making `show` print catalog records; catalog hints on other item commands (`edit`, `set`, `start`, `note`); making `find` search the catalog; changing the `no_such_item` or `no_such_record` codes.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Roadmap items and catalog records share one id-shaped namespace on the command line (`s317`, `C170`), and agents copy ids out of `catalog list`, `check` output and item citations straight into `slicer show`. When that id is a catalog record, `show` fails with `no_such_item` (`Index.require`, `src/slicer/model.py:665`, called from `cmd_show`, `src/slicer/cli.py:2048`) and gives no next step, although `catalog show` (`Catalog.require`, `src/slicer/model.py:513`) would print it. Reproduced 2026-10-17 in a scratch project: after `catalog add \"Use git\" --kind constraint` made C01, `show C01` exited 2 with `no such item: C01` while `catalog show C01` printed it. House style asks errors to say what to do next."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: in `cmd_show`, when the item lookup fails and `state.index.catalog.get(args.id)` finds a record, raise the same `no_such_item` StateError with a message naming the record's kind and `slicer catalog show ID`. An id that is neither an item nor a record keeps today's message.\n- `tests/test_errors.py` (or the test module that covers `show` errors): the tests below.\n- `CHANGELOG.md`: one `[Unreleased]` Fixed line."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Show_CatalogRecordId_NamesCatalogShow`: a project with a catalog record C01 and no item C01; `show C01` exits 2, stderr names `slicer catalog show C01`, and `--json` keeps `error.code` `no_such_item`.\n- `test_Show_UnknownId_KeepsPlainMessage`: `show S99` with no item and no record S99 still says `no such item: S99` with no catalog hint."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the failing tests and watch them go red.\n2. Add the catalog fallback to the `show` error path only, without changing `Index.require` or the error code.\n3. Update the CHANGELOG. Mutation-check: dropping the catalog lookup turns the first test red."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full discover. `slicer check` and `git diff --check` pass.\n- A manual run in a scratch project under `.venv/` reproduces the 2026-10-17 report and shows the new hint."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

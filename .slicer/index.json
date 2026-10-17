@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 345,
+  "next_id": 346,
   "preamble": "",
   "passes": [
     {
@@ -11967,6 +11967,36 @@
         ],
         "trees_literal": false,
         "findings": "s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s345",
+      "title": "show names catalog show for a catalog record id",
+      "short_title": "show names catalog show for a catalog record id",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only",
         "discovered_from": "",
         "parent": "",
         "cites": [],

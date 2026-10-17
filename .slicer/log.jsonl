@@ -1840,3 +1840,5 @@
 {"when": "2026-10-17T12:49:22Z", "item": "s321", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T13:29:43Z", "item": "s321", "action": "status", "from": "review", "to": "done", "note": "Landed on main from feature/s321-add-pass-count (ba07865); review and gate PASS; full suite on main after merge: 2342 tests OK, 1 skipped.", "by": "Jon Robbins"}
 {"when": "2026-10-17T13:29:49Z", "item": "s321", "action": "note", "from": "", "to": "", "note": "Correction to the done note: the full suite on main after th", "by": "Jon Robbins"}
+{"when": "2026-10-17T13:29:59Z", "item": "s345", "action": "add", "from": "", "to": "open", "note": "show names catalog show for a catalog record id"}
+{"when": "2026-10-17T13:29:59Z", "item": "s345", "action": "promote", "from": "", "to": "", "note": ""}
