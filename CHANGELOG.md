@@ -30,6 +30,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - The slice relay's `## Every brief` section asks each agent to start with the model and reasoning effort its role row names, set explicitly, and to carry the label `ID role` (also its `relay-run step --task`), so a harness's agent list shows which slice and role each agent serves and which model it runs.
 - `ops.edit_section` refuses an item with no slice with the code `no_slice`, as `ops.edit_boundary` and `ops.edit_lead` already do, instead of `state`. The message is unchanged. The CLI already reported `no_slice`; a direct caller of `ops`, such as the TUI, now sees the same code.
 - `slicer migrate` catches only `SlicerError` when it maps a status label, so a bug in that lookup now raises instead of being reported as a problem with the tree. A label that names no configured status is still reported as before.
+- `relay-roles init` writes an example matrix whose `recommend` resolves the orchestrator on a fresh project: a Claude Code orchestrator (`r10`) first, a Codex orchestrator (`r11`) second, and a Codex implementer alternative (`r9`) after the Claude implementer rows. Default picks stay on Claude Code. The architect row (`r7`) still matches size L only, so a smaller slice leaves the architect unmatched. The example's rules are unchanged, and `init --force` numbers the new rows after every id the old matrix issued.
 
 ### Fixed
 

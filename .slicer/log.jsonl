@@ -1812,3 +1812,14 @@
 {"when": "2026-10-17T04:10:30Z", "item": "s310", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:19:06Z", "item": "s310", "action": "note", "from": "", "to": "", "note": "Measurement-only conclusion approved by review and final gat", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:31:26Z", "item": "s310", "action": "retire", "from": "started", "to": "retired", "note": "Measurement-only outcome (2026-10-17): no stable plain-read saving of at least 10 ms was established; deferred-import samples conflicted under load (see notes). Owner retired it; no code changed."}
+{"when": "2026-10-17T04:07:07Z", "item": "s341", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "edit", "from": "", "to": "", "note": "lead"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-17T04:18:21Z", "item": "s341", "action": "note", "from": "", "to": "", "note": "Spec corrected 2026-10-17 after the relay implementer found ", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:49:03Z", "item": "s341", "action": "note", "from": "", "to": "", "note": "Three example rows added to the relay-roles init matrix: r9 ", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:49:07Z", "item": "s341", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:50:07Z", "item": "s341", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
