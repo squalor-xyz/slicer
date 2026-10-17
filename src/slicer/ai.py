@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import shlex
+from collections.abc import Mapping, Sequence
+
+from slicer import ops, render, roles, store, templates
+from slicer.errors import StateError
 
 
 # The implement loop and the exit-code rules. The instructions and the agent
@@ -751,3 +755,66 @@ def instructions_text(finish: str = "done", required_note_kind: str = "") -> str
   if required_note_kind:
     text = text.replace(IMPLEMENT_HEADING, handoff_policy_text(required_note_kind) + IMPLEMENT_HEADING, 1)
   return text
+
+
+def relay_brief(
+  state: store.State, item_id: str, *, worktree: str, branch: str, run: str,
+  step: str, parallel: Sequence[str], well_specified: bool, split: bool,
+  prefer_agent: str | None = None, select: Mapping[str, str] | None = None,
+) -> dict[str, object]:
+  """Fill the project's orchestrator brief without starting or recording a run."""
+  item = state.index.require(item_id)
+  missing = ops._missing_spec(state, item)
+  if item.id not in state.slices or missing:
+    detail = ", ".join(missing) if missing else "slice"
+    raise StateError(
+      f"{item.id} is unspecified: missing {detail}; promote or edit the slice first",
+      code="unspecified",
+    )
+  matrix = roles.require_matrix(
+    store.read_roles(state.root), state.root / store.DIR_NAME / store.ROLES_NAME,
+  )
+  picks = roles.resolve(
+    matrix, item, well_specified, split, prefer_agent=prefer_agent, select=select,
+  )
+  role_lines = []
+  for pick in picks:
+    row = pick.row
+    if row is None:
+      role_lines.append("- no architect" if pick.role == "architect" else f"- {pick.role}: no matching row")
+    else:
+      role_lines.append(
+        f"- {pick.role}: {row.id} | {row.agent} | {row.vendor} | {row.model} | {row.reasoning}"
+      )
+  other_ids = []
+  for other_id in parallel:
+    other = state.index.require(other_id)
+    if other.id != item.id and other.id not in other_ids:
+      other_ids.append(other.id)
+  finish_override = ""
+  if state.config.implement_finish == "handoff":
+    kind = state.config.handoff_requires_note_kind
+    kind_flag = f" --kind {shlex.quote(kind)}" if kind else ""
+    finish_override = (
+      "## Finish override\n\n"
+      f"Before work, run `slicer start {item.id} --render --strict`.\n"
+      f'After VERDICT: PASS, run `slicer note {item.id}{kind_flag} --text "Ready for review: ..." --render`, '
+      f"then `slicer handoff {item.id} --render --check`.\n"
+      "Never run done in the worktree."
+    )
+  contract = contract_line()
+  context = {
+    "id": item.id, "title": item.title,
+    "size": str(item.size or "unset"),
+    "effort": str(item.effort) if item.effort is not None else "unset",
+    "worktree": worktree, "branch": branch, "run": run, "step": str(step),
+    "roles": "\n".join(role_lines), "finish_override": finish_override,
+    "commit_title": f"{item.id}: {item.title}",
+    "parallel": "Parallel slices: " + (", ".join(other_ids) if other_ids else "none"),
+    "contract": contract,
+  }
+  template = state.template_exact("relay-brief.md")
+  if template is None:
+    template = templates.default("relay-brief.md")
+  text = render.expand(template, context)
+  return {"brief": text, "roles": [pick.to_dict() for pick in picks], "contract": contract}

@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer ai relay-brief ID --worktree PATH --branch NAME --run RUN --step N --well-specified yes|no --split yes|no` prints a slice-specific orchestrator brief with resolved roles, parallel IDs, the project's finish policy and a commit title. `--prefer-agent` and repeatable `--select` preserve the accepted lineup; repeatable `--parallel` lists other slices. `--json` returns `{brief, roles, contract}`. The new `relay-brief.md` template supports `template set` and `reset`, with an empty built-in ENVIRONMENT block for project-owned commands. Read-only; no agents or runs are started.
+
 ### Changed
 
 - TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).

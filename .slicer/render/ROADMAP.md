@@ -27,14 +27,14 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-342 items · — 15 · done 319 · retired 8
+342 items · — 11 · done 319 · retired 8 · review 4
 
 v1.14.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | — |
-| 2 | [s322](slices/s322.md) | Print a slice's orchestrator brief with ai relay-brief | M | 2 | slicer | outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names | — |
+| 1 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | review |
+| 2 | [s322](slices/s322.md) | Print a slice's orchestrator brief with ai relay-brief | M | 2 | slicer | outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names | review |
 | 3 | [s323](slices/s323.md) | Items waiting on an owner decision are held out of next | M | 2 | slicer | outer-session wishlist 2026-10-16, item 2: open decisions lived in prose, so next showed s312 as ready | — |
 | 4 | [s324](slices/s324.md) | next --batch picks slices whose files do not overlap | M | 2 | slicer | outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections | — |
 | 5 | [s325](slices/s325.md) | check says when only the roadmap render is stale, as after a merge | S | 1 | slicer | outer-session wishlist 2026-10-16, item 4: every landing left check failing on a stale ROADMAP render | — |
@@ -44,8 +44,8 @@ v1.14.0 release
 | 9 | [s329](slices/s329.md) | retire is a command | S | 1 | slicer | outer-session wishlist 2026-10-16, item 8: reached for slicer retire, which does not exist | — |
 | 10 | [s349](slices/s349.md) | Absorbed local events keep their fold order in the shared ledger | S | 1 | slicer | s338 gate 2026-10-17: the reviewer reproduced on base that _absorb copies local events in file order, so a child step written in the same second as its parent from another checkout lands ahead of the parent and the shared ledger reads as corrupt | done |
 | 11 | [s350](slices/s350.md) | A shared step update absorbs a step held only in a local file | S | 1 | slicer | s340 gate 2026-10-17: the reviewer's probe showed `relay-run step RUN --step ID` on the shared ledger, for a step only a local fallback file holds, is written without absorbing; after the worktree is removed the shared ledger shows that step with an empty role and agent | — |
-| 12 | [s351](slices/s351.md) | The relay closing note renders the slice | S | 1 | slicer | s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render` | — |
-| 13 | [s352](slices/s352.md) | Relay board pairs each status label with its item in a multi-item run | S | 1 | slicer | s331 gate 2026-10-17: in a multi-item run the ended line's status cell lists labels without item ids (tui.py around line 1368) | — |
+| 12 | [s351](slices/s351.md) | The relay closing note renders the slice | S | 1 | slicer | s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render` | review |
+| 13 | [s352](slices/s352.md) | Relay board pairs each status label with its item in a multi-item run | S | 1 | slicer | s331 gate 2026-10-17: in a multi-item run the ended line's status cell lists labels without item ids (tui.py around line 1368) | review |
 | 14 | [s353](slices/s353.md) | TUI relay request leaves out marks on items no longer open | S | 1 | slicer | s285 gate 2026-10-17: marks on items that become done or retired mid-session still go into the request; at 1000+ visible rows `[x]` over a 4-digit queue number leaves one digit showing | — |
 | 15 | [s354](slices/s354.md) | Item commands name catalog show for a catalog record id | S | 1 | slicer | s345 2026-10-17: `show` now names `slicer catalog show ID` for a catalog record id; edit, set, start and note were out of its scope and still say only `no such item` | done |
 | 16 | [s355](slices/s355.md) | affected.py tests pin the clean probe at discover start | S | 1 | tests | s344 gate 2026-10-17: no test fails if the clean probe moves after the run (implementer mutation M10 survived); the dirty-then-committed test writes its unclean map by hand | done |

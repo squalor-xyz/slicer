@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import ai, cli, roles
+from slicer import ai, cli, roles, store, templates
 
 
 class AiInstructionsTests(unittest.TestCase):
@@ -1629,3 +1629,130 @@ class AiRelayRolesTests(unittest.TestCase):
         code, out, err = repo.run(*argv)
         self.assertEqual(code, 3)
         self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+
+
+class AiRelayBriefTests(unittest.TestCase):
+  def project(self):
+    repo = support.TempRepo()
+    self.addCleanup(repo.close)
+    for args in (("init",), ("relay-roles", "init"), ("add", "Build the thing", "--id", "S01", "--size", "M", "--effort", "2"),
+                 ("promote", "S01"),
+                 ("edit", "S01", "--section", "Implement", "--text", "Build it"),
+                 ("edit", "S01", "--section", "Check", "--text", "Test it")):
+      code, out, err = repo.run(*args)
+      self.assertEqual(code, 0, out + err)
+    return repo
+
+  def brief(self, repo, *extra, item="S01"):
+    return repo.run("ai", "relay-brief", item, "--worktree", str(repo.root),
+                    "--branch", "feature/brief", "--run", "run-example", "--step", "7",
+                    "--well-specified", "yes", "--split", "no", *extra)
+
+  def payload(self, repo, *extra):
+    code, out, err = self.brief(repo, *extra, "--json", "--lean")
+    self.assertEqual(code, 0, out + err)
+    return json.loads(out)
+
+  def test_AiRelayBrief_Filled_ContainsIdentityAndRun(self):
+    repo = self.project()
+    text = self.payload(repo)["brief"]
+    for expected in ("`S01: Build the thing`", "Slice: S01, size M, effort 2.", str(repo.root), "feature/brief", "RUN=run-example", "step: 7", "size M", "effort 2", "slicer ai relay-orchestrator"):
+      self.assertIn(expected, text)
+    self.assertEqual(self.brief(repo)[1], text)
+
+  def test_AiRelayBrief_MatrixChange_UsesRecommendRows(self):
+    repo = self.project()
+    repo.run("relay-roles", "set", "r3", "--model", "changed-model")
+    payload = self.payload(repo)
+    recommended = json.loads(repo.run("relay-roles", "recommend", "S01", "--well-specified", "yes", "--split", "no", "--json")[1])
+    self.assertEqual(payload["roles"], recommended["roles"])
+    for expected in ("changed-model", "no architect", "orchestrator: r10", "reviewer: r5", "gate: r6", "Claude Code", "Claude", "high"):
+      self.assertIn(expected, payload["brief"])
+
+  def test_AiRelayBrief_PreferredAgent_UsesAcceptedRows(self):
+    repo = self.project()
+    text = self.payload(repo, "--prefer-agent", "Codex")["brief"]
+    self.assertIn("implementer: r9 | Codex | OpenAI | gpt-6.1-sol | medium", text)
+    self.assertIn("orchestrator: r11 | Codex | OpenAI | gpt-6.1-sol | high", text)
+
+  def test_AiRelayBrief_SelectedRole_OverridesPreference(self):
+    repo = self.project()
+    text = self.payload(repo, "--prefer-agent", "Codex", "--select", "implementer=r3", "--select", "orchestrator=r10")["brief"]
+    self.assertIn("implementer: r3 | Claude Code | Claude | sonnet | high", text)
+    self.assertIn("orchestrator: r10 | Claude Code | Claude | opus | high", text)
+
+  def test_AiRelayBrief_HandoffProject_HasFinishOverride(self):
+    repo = self.project()
+    repo.run("config", "implement_finish", "handoff")
+    text = self.payload(repo)["brief"]
+    self.assertIn("slicer start S01 --render --strict", text)
+    self.assertIn('After VERDICT: PASS, run `slicer note S01 --text "Ready for review: ..." --render`', text)
+    self.assertIn("then `slicer handoff S01 --render --check`", text)
+    self.assertIn("Never run done in the worktree", text)
+
+  def test_AiRelayBrief_NoteKind_RequiresKindAfterPass(self):
+    repo = self.project()
+    repo.run("config", "implement_finish", "handoff")
+    repo.run("config", "note_kinds", '["implementation report"]')
+    repo.run("config", "handoff_requires_note_kind", "implementation report")
+    self.assertIn("--kind 'implementation report' --text \"Ready for review: ...\" --render", self.payload(repo)["brief"])
+
+  def test_AiRelayBrief_DoneProject_NoOverride(self):
+    repo = self.project()
+    self.assertNotIn("Finish override", self.payload(repo)["brief"])
+
+  def test_AiRelayBrief_Parallel_NamesOnlyOtherSlices(self):
+    repo = self.project()
+    repo.run("add", "Other", "--id", "S02")
+    repo.run("add", "Third", "--id", "S03")
+    text = self.payload(repo, "--parallel", "S02", "--parallel", "S01", "--parallel", "S03", "--parallel", "S02")["brief"]
+    self.assertEqual([line for line in text.splitlines() if line.startswith("Parallel slices:")],
+                     ["Parallel slices: S02, S03"])
+
+  def test_AiRelayBrief_NoSlice_Unspecified(self):
+    repo = self.project()
+    repo.run("add", "Row only", "--id", "S02")
+    code, out, err = self.brief(repo, "--json", item="S02")
+    self.assertEqual(code, 2, out + err)
+    self.assertEqual(json.loads(out)["error"]["code"], "unspecified", err)
+
+  def test_AiRelayBrief_EmptyRequiredSection_Unspecified(self):
+    repo = self.project()
+    repo.run("edit", "S01", "--section", "Check", "--text", " ")
+    code, out, err = self.brief(repo, "--json")
+    self.assertEqual(code, 2, out + err)
+    self.assertEqual(json.loads(out)["error"]["code"], "unspecified", err)
+
+  def test_AiRelayBrief_UnknownId_NoSuchItem(self):
+    repo = self.project()
+    code, out, err = self.brief(repo, "--json", item="S99")
+    self.assertEqual(code, 2, out + err)
+    self.assertEqual(json.loads(out)["error"]["code"], "no_such_item", err)
+
+  def test_AiRelayBrief_BuiltInTemplate_StatesNoGateFailureCount(self):
+    repo = self.project()
+    text = self.payload(repo)["brief"]
+    self.assertNotIn("twice", text)
+    self.assertIn("Stop section of `slicer ai relay-orchestrator`", text)
+
+  def test_AiRelayBrief_MissingProjectTemplate_UsesBuiltIn(self):
+    repo = self.project()
+    before = self.brief(repo)[1]
+    (repo.root / ".slicer" / "templates" / "relay-brief.md").unlink()
+    code, out, err = self.brief(repo)
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(out, before)
+
+  def test_AiRelayBrief_PlaceholderKeys_MatchTemplateKeys(self):
+    repo = self.project()
+    state = store.load(repo.root)
+    context = {}
+    with patch.object(ai.render, "expand", side_effect=lambda text, ctx: context.update(ctx) or text):
+      ai.relay_brief(state, "S01", worktree="w", branch="b", run="r", step="1",
+                     parallel=[], well_specified=True, split=False)
+    self.assertEqual(set(context), set(templates.RELAY_BRIEF_KEYS))
+
+  def test_AiRelayBrief_Contract_UsesLiveMarker(self):
+    repo = self.project()
+    with patch.object(ai, "contract_line", return_value="relay v999-test"):
+      self.assertEqual(self.payload(repo)["contract"], "relay v999-test")
