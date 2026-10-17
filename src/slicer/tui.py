@@ -189,6 +189,8 @@ class PanelLine:
   text: str
   entry: int | None = None
   role: str = "normal"
+  # Cell ranges (start, end) of `text`, each with the role drawn over the line's own role.
+  spans: tuple[tuple[int, int, str], ...] = ()
 
 
 @dataclass
@@ -1418,13 +1420,20 @@ def elapsed_text(start: str, end: datetime) -> str:
 
 def _fit(cells: list[str], width: int) -> str:
   """Join cells with two spaces. The first is clipped to fit; a later one that does not fit is dropped."""
+  return _place(cells, width)[0]
+
+
+def _place(cells: list[str], width: int) -> tuple[str, dict[int, int]]:
+  """`_fit`, and the start cell of each cell that stayed, by its index in `cells`."""
   if not cells:
-    return ""
+    return "", {}
   text = tui_style.clipped(cells[0], width)
-  for cell in cells[1:]:
+  starts = {0: 0}
+  for at, cell in enumerate(cells[1:], 1):
     if cell and tui_style.cell_width(text + "  " + cell) <= width:
+      starts[at] = tui_style.cell_width(text) + 2
       text += "  " + cell
-  return text.rstrip()
+  return text.rstrip(), starts
 
 
 def _ellipsis(text: str, width: int) -> str:
@@ -1528,7 +1537,14 @@ def _ended_line(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles:
                for label, role in (("impl", "implementer"), ("review", "reviewer"), ("gate", "gate"))),
   ]
   title = _title_cell(head, titles.get(run.items[0], "") if run.items else "", tail, width)
-  return PanelLine(_fit([head, title] + tail, width), role="dim")
+  text, starts = _place([head, title] + tail, width)
+  outcome_role = {"pass": "done", "fail": "error"}.get(run.outcome)
+  outcome_at = 2  # the outcome cell is tail[0], after the head and the title
+  spans = ()
+  if outcome_role and outcome_at in starts:
+    start = starts[outcome_at]
+    spans = ((start, start + tui_style.cell_width(tail[0]), outcome_role),)
+  return PanelLine(text, role="dim", spans=spans)
 
 
 def _gate_fail_lines(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], indent: str,
@@ -1589,8 +1605,17 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
     pipeline = "  " + " > ".join(parts)
     rounds = f"round {len(lane['implementer'])}" if "implementer" in lane else ""
     gap = width - tui_style.cell_width(pipeline) - tui_style.cell_width(rounds)
+    # A live run colors each role by its state; a stale or ended lane stays dimmed throughout.
+    spans = []
+    start = 2  # the indent before the first role
+    for name, part in zip(names, parts):
+      if live:
+        state_role = _marker(lane[name][-1], run, tick)[1] if name in lane else "dim"
+        spans.append((start, start + tui_style.cell_width(part), state_role))
+      start += tui_style.cell_width(part) + 3  # " > "
     lines.append(PanelLine(
-      pipeline + " " * gap + rounds if rounds and gap >= 2 else _fit([pipeline], width), role=dim))
+      pipeline + " " * gap + rounds if rounds and gap >= 2 else _fit([pipeline], width), role=dim,
+      spans=tuple(spans)))
     orchestrator = lane.get("orchestrator")
     if orchestrator:
       step = orchestrator[-1]
@@ -1702,6 +1727,9 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
     view.board_at = max(0, min(view.board_at, len(lines) - visible))
     for n, line in enumerate(lines[view.board_at:view.board_at + visible], 1):
       put(n, 0, line.text, palette.attr(line.role))
+      # Each span is painted over the whole line, so a line without spans is written once, as before.
+      for start, end, role in line.spans:
+        put(n, start, tui_style.cell_slice(line.text, start, end), palette.attr(role))
   elif view.mode in ("filter", "help", "sort"):
     title = {
       "filter": "Filters: j/k move, Space toggle, Enter apply, Esc cancel",

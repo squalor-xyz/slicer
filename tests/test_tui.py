@@ -1532,6 +1532,29 @@ def line_with(lines: list[tui.PanelLine], text: str) -> tui.PanelLine | None:
   return next((line for line in lines if text in line.text), None)
 
 
+class CellAttrScreen(Screen):
+  """A `Screen` that also keeps every cell's attribute, as a terminal does: a later write wins."""
+
+  def __init__(self, height: int, width: int) -> None:
+    super().__init__(height, width)
+    self.calls: list[tuple[int, int, str, int]] = []
+    self.attrs: dict[tuple[int, int], int] = {}
+
+  def erase(self):
+    super().erase()
+    self.calls.clear()
+    self.attrs.clear()
+
+  def addnstr(self, y, x, text, count, attr):
+    super().addnstr(y, x, text, count, attr)
+    self.calls.append((y, x, text, attr))
+    cell = x
+    for char in text:
+      for offset in range(tui_style.cell_width(char)):
+        self.attrs[(y, cell + offset)] = attr
+      cell += tui_style.cell_width(char)
+
+
 class RelayBoardLinesTests(unittest.TestCase):
   def test_BoardLines_OneRun_ShowsPipelineWithActiveRoleSpinner(self) -> None:
     lines = tui.board_lines([pipeline_run()], 0, NOW, 100)
@@ -1804,6 +1827,42 @@ class RelayBoardLinesTests(unittest.TestCase):
     for line in lines:
       self.assertLessEqual(tui_style.cell_width(line.text), 80)
 
+  def test_BoardLines_Pipeline_SpansColorEachRoleByState(self) -> None:
+    line = line_with(tui.board_lines([pipeline_run()], 0, NOW, 100), "implementer > ")
+    spans = [(tui_style.cell_slice(line.text, start, end), role) for start, end, role in line.spans]
+    self.assertEqual(spans, [("implementer", "done"), ("[reviewer]", "started"), ("gate", "dim")])
+    # Spans count cells. A line cut to the panel width keeps the cells that remain: the gate's span is past the cut.
+    cut = line_with(tui.board_lines([pipeline_run()], 0, NOW, 20), "implementer > ")
+    self.assertEqual(cut.text, "  implementer > [rev")
+    cut_spans = [(tui_style.cell_slice(cut.text, start, end), role) for start, end, role in cut.spans]
+    self.assertEqual(cut_spans, [("implementer", "done"), ("[rev", "started"), ("", "dim")])
+    # A stale lane stays dimmed throughout, so its pipeline has no spans.
+    stale = pipeline_run()
+    stale.state = "stale"
+    self.assertEqual(line_with(tui.board_lines([stale], 0, NOW, 100), "implementer > ").spans, ())
+
+  def test_BoardLines_Pipeline_FailedRoleSpanIsError(self) -> None:
+    run = board_run(board_step("1", "implementer", "done"),
+                    board_step("2", "gate", "fail", task="missing test"))
+    line = line_with(tui.board_lines([run], 0, NOW, 100), "implementer > ")
+    spans = [(tui_style.cell_slice(line.text, start, end), role) for start, end, role in line.spans]
+    # The gate's last step failed, so its role is the error role, as its lane row's [!] is.
+    self.assertEqual(spans, [("implementer", "done"), ("reviewer", "dim"), ("gate", "error")])
+
+  def test_BoardLines_EndedRun_OutcomeSpan(self) -> None:
+    labelled = {"statuses": {"s283": "Awaiting review"}, "done_label": "Shipped"}
+    for outcome, role in (("pass", "done"), ("fail", "error")):
+      line = tui.board_lines([board_run(state="ended", outcome=outcome)], 0, NOW, 100, **labelled)[0]
+      spans = [(tui_style.cell_slice(line.text, start, end), span_role) for start, end, span_role in line.spans]
+      self.assertEqual(spans, [(f"{outcome} · Awaiting review", role)], outcome)
+      self.assertEqual(line.role, "dim")
+    stopped = tui.board_lines([board_run(state="ended", outcome="stopped")], 0, NOW, 100)[0]
+    self.assertEqual(stopped.spans, ())
+    # At 14 cells the outcome cell does not fit beside the head, so there is no cell to color.
+    narrow = tui.board_lines([board_run(state="ended", outcome="pass")], 0, NOW, 14, **labelled)[0]
+    self.assertNotIn("pass", narrow.text)
+    self.assertEqual(narrow.spans, ())
+
 
 class RelayBoardElapsedTests(unittest.TestCase):
   def test_ElapsedText_Spans_UseTheShortestUnitPair(self) -> None:
@@ -2052,6 +2111,49 @@ class RelayBoardViewTests(unittest.TestCase):
       tui.draw(screen, state, view)
     header = next(text for y, text in screen.writes if y == 1)
     self.assertIn("S02  Search full title  active", header)
+
+  def test_Draw_PanelLineSpans_PaintsCells(self) -> None:
+    palette = tui_style.Palette({"normal": 1, "dim": 2, "done": 3, "started": 4, "error": 5}, 6, 7)
+    line = tui.PanelLine("宽ab cd", role="dim", spans=((0, 2, "done"), (3, 5, "started")))
+    view, state, _ = self.board([])
+    view.handle(state, "b")
+    screen = CellAttrScreen(24, 80)
+    with patch.object(tui, "board_lines", return_value=[line]):
+      tui.draw(screen, state, view, palette)
+    self.assertIn((1, "宽ab cd"), screen.writes)
+    # 宽 is two cells wide, so cells 3 and 4 hold b and the space, not the characters at indexes 3 and 4.
+    self.assertEqual([screen.attrs[(1, cell)] for cell in range(7)],
+                     [palette.attr("done"), palette.attr("done"), palette.attr("dim"),
+                      palette.attr("started"), palette.attr("started"), palette.attr("dim"),
+                      palette.attr("dim")])
+    view.board_runs = [pipeline_run()]
+    screen = CellAttrScreen(24, 80)
+    with patch.object(relayrun, "utcnow", lambda: NOW):
+      tui.draw(screen, state, view, palette)
+    row, text = next((y, t) for y, t in screen.writes if "implementer > " in t)
+
+    def attrs(word: str) -> set[int]:
+      start = text.index(word)
+      return {screen.attrs[(row, cell)] for cell in range(start, start + len(word))}
+
+    self.assertEqual(attrs("implementer"), {palette.attr("done")})
+    self.assertEqual(attrs("[reviewer]"), {palette.attr("started")})
+    self.assertEqual(attrs("gate"), {palette.attr("dim")})
+    self.assertEqual(attrs("round 1"), {palette.attr("normal")})
+
+  def test_PanelLine_NoSpans_DrawsAsBefore(self) -> None:
+    self.assertEqual(tui.PanelLine("plain").spans, ())
+    palette = tui_style.Palette({"normal": 1, "dim": 2, "error": 5}, 6, 7)
+    lines = [tui.PanelLine("first line", role="error"), tui.PanelLine("second line", role="dim")]
+    view, state, _ = self.board([])
+    view.handle(state, "b")
+    screen = CellAttrScreen(24, 80)
+    with patch.object(tui, "board_lines", return_value=lines):
+      tui.draw(screen, state, view, palette)
+    # One write per line, from the left edge, in the line's own role.
+    self.assertEqual([call for call in screen.calls if call[0] in (1, 2)],
+                     [(1, 0, "first line", palette.attr("error")),
+                      (2, 0, "second line", palette.attr("dim"))])
 
 
 class RelayBoardLoopTests(unittest.TestCase):

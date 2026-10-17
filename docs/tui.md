@@ -215,6 +215,10 @@ cutoff, and to the error color once the run is stale. The line after is the pipe
 running role is in brackets, an `architect` leads it when the run has one, and `round N` at the
 right edge is the number of implementer steps in the lane.
 
+Each role on the pipeline is colored by its state, one span per role: a finished role is green,
+the running role is cyan, a failed role is red, and a waiting role is dim. A stale run's pipeline
+stays dimmed throughout.
+
 A step fills a role's row when nothing spawned it or the orchestrator did, which is how a nested
 relay records its roles. When the run has an orchestrator step it is the root of the tree and
 the role rows hang under it with `├` and `└`; without one the rows keep the flat layout above.
@@ -232,7 +236,8 @@ counting time at its last event; only its `last heard` line stands out. A run th
 the last hour stays on the board after the active ones, newest first, as one dimmed summary
 line: `✓` for a pass only when every item in the run has the project's configured done
 status, `○` for a pass with an item not done (or absent from this checkout), `✗` for a fail
-and `~` for a stopped run. The outcome is followed by the items' configured status labels
+and `~` for a stopped run. The outcome cell is green for a pass and red for a fail, and the rest of
+the line stays dim. The outcome is followed by the items' configured status labels
 (for example `pass · open`), how long it ran, `ended N ago` and the number of implementer,
 reviewer and gate steps. After an hour it leaves the board. The outcome and status cell takes
 priority over elapsed cells when space is short. A line that is too narrow drops cells from
@@ -245,7 +250,9 @@ board wakes on a timer: in every other view the TUI still blocks on input. If th
 checkout writes to is damaged (`corrupt`), the board keeps the last frame and shows one `Error:` line until
 a read succeeds; delete or fix the ledger line it names. Colors follow the display rules
 below. In monochrome (`NO_COLOR=1`) the cues are the glyphs (`●`, `✓`, `✗`, `~`), the markers
-(`[+]`, `[!]`, `[~]`), the `[role]` brackets, the spinner, the `stale` label, and bold and dim.
+(`[+]`, `[!]`, `[~]`), the `[role]` brackets, the spinner, the `stale` label, and bold and dim. In
+monochrome a waiting pipeline role is dim, a passed outcome is not, and a failed pipeline role or a
+failed outcome is bold.
 
 In Claude Code, `/tasks` lists the same agents with their model and effort. The
 `subagentStatusLine` setting can put them in the agent panel row; see the
