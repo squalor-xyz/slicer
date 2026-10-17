@@ -12183,7 +12183,7 @@
       "id": "s345",
       "title": "show names catalog show for a catalog record id",
       "short_title": "show names catalog show for a catalog record id",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -12267,7 +12267,7 @@
       "id": "s347",
       "title": "TUI history pane scrolls through the item's whole history",
       "short_title": "TUI history pane scrolls through the item's whole history",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
