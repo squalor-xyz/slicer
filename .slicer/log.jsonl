@@ -1857,3 +1857,9 @@
 {"when": "2026-10-17T16:44:32Z", "item": "s347", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-17T16:44:34Z", "item": "s348", "action": "add", "from": "", "to": "open", "note": "TUI history pane reads the log only when it changed"}
 {"when": "2026-10-17T16:44:34Z", "item": "s348", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-17T17:04:43Z", "item": "s334", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:15:09Z", "item": "s334", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:25:14Z", "item": "s334", "action": "reject", "from": "review", "to": "open", "note": "VERDICT: FAIL - guide claims show S01 displays status; commands.md duplicates not reconciled; transcripts omit rendered lines; signpost targets untested", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:25:46Z", "item": "s334", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:31:46Z", "item": "s334", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:38:49Z", "item": "s334", "action": "note", "from": "", "to": "", "note": "Ready for review: docs/getting-started.md is now a short hum", "by": "Jon Robbins"}

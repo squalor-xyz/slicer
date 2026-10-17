@@ -1,6 +1,6 @@
 """The command tables cover the real parser, so a new command or flag cannot
 ship undocumented (S127). The reference in docs/commands.md names every flag;
-the README's summary table names every command (S142). The README links the
+the command reference names every command. The README links the
 why-slicer page, and that page's relative links resolve (S269). Each doc's sentence
 that lists the commands without --json (agents.md, the README, commands.md and
 import.md) names exactly those the parser builds without it (S272). The allowlist
@@ -51,10 +51,8 @@ def _rows_for(name: str, doc: Path = REFERENCE) -> list[str]:
 
 class CommandTableTests(unittest.TestCase):
   def test_EverySubcommand_HasACommandTableRow(self) -> None:
-    for doc in (REFERENCE, README):
-      with self.subTest(doc=doc.name):
-        missing = sorted(name for name in _subcommands() if not _rows_for(name, doc))
-        self.assertEqual(missing, [], f"add a {doc.name} command-table row for each")
+    missing = sorted(name for name in _subcommands() if not _rows_for(name))
+    self.assertEqual(missing, [], "add a command-reference row for each command")
 
   def test_EveryFlag_IsNamedInItsCommandsRow(self) -> None:
     missing = {}

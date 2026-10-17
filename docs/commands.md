@@ -79,7 +79,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `remove ID ... --force` | retire or purge despite dependents, or a done item |
 | `render` | regenerate `.slicer/render/` (ROADMAP.md, a browser-viewable ROADMAP.html, and one file per slice) |
 | `sync [--check]` | rewrite derived lines in other documents |
-| `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render, index or relay-roles merge driver (`render_driver_check`; the relay-roles one only in a project with a relay role matrix) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). In any project it also warns (exit 0) for each undeclared pass key that holds an item not done or retired, as `check` does. Render freshness is `check`'s job. `verify --landed ID [--on REF]` is a different question and writes nothing: is the item's done state committed in REF's history (default `HEAD`)? It reads REF's index and done slice file with `git show`, so neither the working tree nor an unmerged branch can satisfy it. Exit 0 when landed. Exit 1 and a reason when not: `other_branch` (a branch, remote branch or tag outside REF's history has the item done right now), `working_tree_only` (only the working tree has it done), else `not_done`. Exit 2, with no report, for an unknown id (`no_such_item`), an unusable id (`bad_id`), a ref that names no commit (`bad_ref`), a project outside a git repository (`not_git`) or `--on` without `--landed` (`usage`). An index that cannot be read at REF is exit 3; on any other ref it is skipped. See [getting started](getting-started.md#9-when-something-goes-wrong) |
+| `verify` | check the index for consistency. Inside git it also warns (exit 0) when sibling worktrees lack the render, index or relay-roles merge driver (`render_driver_check`; the relay-roles one only in a project with a relay role matrix) and when a done item has no commit subject in the last 2000 non-merge commits (`git_check`). In any project it also warns (exit 0) for each undeclared pass key that holds an item not done or retired, as `check` does. Render freshness is `check`'s job. `verify --landed ID [--on REF]` is a different question and writes nothing: is the item's done state committed in REF's history (default `HEAD`)? It reads REF's index and done slice file with `git show`, so neither the working tree nor an unmerged branch can satisfy it. Exit 0 when landed. Exit 1 and a reason when not: `other_branch` (a branch, remote branch or tag outside REF's history has the item done right now), `working_tree_only` (only the working tree has it done), else `not_done`. Exit 2, with no report, for an unknown id (`no_such_item`), an unusable id (`bad_id`), a ref that names no commit (`bad_ref`), a project outside a git repository (`not_git`) or `--on` without `--landed` (`usage`). An index that cannot be read at REF is exit 3; on any other ref it is skipped. See [Troubleshooting](#troubleshooting) |
 | `check [-r] [--diff]` | the CI gate: render staleness (each stale file's text line and `stale_render_details` entry name its cause, including a renderer-format mismatch between the file's `Render format: N.` header and the running slicer), sync drift, integrity, and unknown flags in the backtick `slicer ...` commands of live slices (commands inside fenced code blocks are literal text and are not checked). It also warns (exit 0) when a sibling git worktree has an item under the same id with a different title, which would collide on merge. Only an id that is new on both sides counts: an id already in the index at the two checkouts' merge base is one item that one side retitled, which merges cleanly. With no merge base or no readable index there, every differing id warns. The warning does not fail the gate. It also warns (exit 0) for each pass key that no `prose add-pass` declared and that holds an item not done or retired, naming the key, the count of such items and the `prose add-pass` command; a key whose items are all done or retired does not warn. It also warns (exit 0) when `.slicer/.gitignore` lacks a line `init` writes, naming the lines and `slicer setup-git --attributes` on main as the fix; a linked worktree's own writes put such a line in the repo's `info/exclude` instead (see Concurrency in the configuration guide), so only main can repair the tracked file, and the warning stays until it does. `-r`/`--recursive` runs the gate in every project below the start directory and exits with the worst result; see `list` |
 | `stats [-r]` / `log [--limit N] [--item ID] [--action A] [--by NAME] [--since TIMESTAMP] [--until TIMESTAMP]` | counts + completion % and per-tree progress (`-r`/`--recursive` gives one census per project, not a combined one; see `list`); history, newest first (`--limit` defaults to 20; `--item`/`--action`/`--by` scope it; `--since` is inclusive and `--until` exclusive, requiring timezone-aware ISO8601 timestamps; all filters apply before limit; `set` records old→new values; `by` is who started, claimed, released, handed off or finished an item) |
 | `status [-r]` | the front door: next item, progress census, and blockers in one view (`--json`). Text adds an `Only in a sibling` block, and JSON an `only_in_sibling` list, when a sibling worktree has an unclaimed open item this checkout lacks. `-r`/`--recursive` gives one such view per project; see `list` |
@@ -300,7 +300,7 @@ use the same filtered pool.
 ## Priority
 
 Items carry an Eisenhower-style priority: an `--importance` and an `--urgency` (each 1–3),
-combined into a score (importance leads). A blocker of a critical item inherits its
+combined into a score of `importance × 10 + urgency` (importance leads). A blocker of a critical item inherits its
 priority, so `slicer next` and `slicer list --sort score` surface the blockers of
 important work first, while the stored queue order stays whatever `move` set.
 
@@ -316,10 +316,34 @@ checkout-local and can also be supplied as `key:` in import outlines.
 
 ## Batch changes
 
-`done`, `start`, `release`, `park`, `unpark`, and `set` accept multiple IDs.
-For example, `slicer set S01 S02 --urgency 3 --render` applies the same fields to
-both items. Use `slicer done -` to read whitespace-separated IDs from stdin.
-See [batch changes](getting-started.md#batch-changes) for validation and output rules.
+Use multiple IDs to apply the same status, fields, or history note in one command:
+
+```sh
+slicer set S01 S02 --importance 3 --urgency 2 --render
+slicer start S01 S02 --note "Starting related work" --render
+slicer done S01 S02 --note "Implemented and verified" --render
+```
+
+`park` and `unpark` accept the same multiple-ID form. To read IDs from a file or
+pipeline, use a standalone `-`:
+
+```sh
+printf 'S01\nS02\n' | slicer done - --note "Verified" --render
+```
+
+Stdin accepts whitespace-separated IDs, not JSON. Empty stdin and mixing `-` with
+explicit IDs are errors. Repeated IDs are processed once, in their first-seen order.
+
+The whole request is validated before any item changes. An unknown ID or invalid
+field refuses the batch. The mutation loads state once and saves the index once;
+`--render` reloads state for rendering. The command holds the existing writer lock.
+Individual file writes remain atomic, but disk failures do not roll back the batch.
+
+Status changes record one history entry per changed item; items already in the
+requested status are unchanged. `set` retains its existing per-item history behavior.
+Human output has one result line per item. With `--json`, one explicit ID returns
+an object; multiple positional IDs or stdin return an array, even when duplicates
+or stdin resolve to just one ID.
 
 ## Discovery provenance
 
@@ -394,34 +418,9 @@ relay-runs.jsonl     slice-relay ledger read in a git repo, and written there on
 Sections are an ordered **list**, not a map: real slices carry headings no schema names,
 sometimes more than once, and their order is part of the document.
 
-Landing work on parallel branches touches these files: `log.jsonl` is append-only and
-union-merges automatically (via the generated `.gitattributes`), so both sides' entries
-survive without a conflict. `index.json` is the source of truth — a genuine overlap there is
-yours to resolve. Anything under `render/` is a projection of `index.json`, so after resolving
-a merge just re-run `slicer render` (and `slicer check` will flag it if you forget) rather than
-merging the generated markdown by hand.
-
-The `.gitattributes` also points `render/` at a `slicer-generated` merge driver that keeps the
-current branch's copy instead of writing conflict markers — but a driver name only resolves
-once the clone defines it. Run `slicer setup-git` to print the two lines (or `slicer setup-git
-| sh` to apply them), once per clone — slicer's git allowlist cannot run `git config` for you:
-
-```sh
-git config merge.slicer-generated.name "keep the current branch's generated files"
-git config merge.slicer-generated.driver true
-```
-
-Either way, re-run `slicer render` after resolving `index.json` so the kept files match it.
-
-A project made before a template line existed gets it with `slicer setup-git --attributes`,
-which rewrites `.slicer/.gitattributes` from the current template and leaves `config.json`
-and the templates alone. `init` writes the same file but also rewrites those. To restore
-one template without touching the config, use `slicer template reset NAME`.
-
-The scope boundary is a separate field on each slice. It renders after metadata and
-before sections, so section edits cannot remove it. Use `slicer edit ID --boundary`
-with `--text`, `--file`, `--stdin`, or the editor to change the full paragraph. Empty
-text clears it. `promote --boundary TEXT` overrides the source/default boundary.
+For merge behavior and setup, see [Git merge drivers](#git-merge-drivers).
+For the separate scope boundary and its editing rules, see
+[Writing a slice](#writing-a-slice).
 
 ## Removing an item
 
@@ -678,9 +677,7 @@ newlines, and `--text ""` clears the body. Section editing also accepts `--appen
 explicit source: it joins old and new text with one blank line, removing boundary
 newline characters. Empty appended content leaves the body unchanged.
 For example, `slicer prose edit preamble --text "Current priorities"` replaces the preamble.
-A pass group is opened with `prose add-pass 6 --heading
-"# ..."` and closed with `drop-pass`, which refuses while any item is still filed under
-it. Items are filed with `slicer add --pass 6` or moved with `slicer set <id> --pass 6`.
+For creating, assigning, and removing passes, see [Passes and flags](#passes-and-flags).
 
 A declared pass renders even with no items yet, so a group can be opened before its first
 slice exists. Markdown and HTML show version-shaped keys newest first (`v1.10` above
@@ -689,7 +686,7 @@ no pass follow: those that are not done, then done items. `prose list` stays in
 declaration order.
 
 Goals and non-goals, and how agents should treat them, are covered in
-[getting started](getting-started.md#goals-and-non-goals).
+[Goals and non-goals](#goals-and-non-goals).
 
 ### Note verification and freshness
 
@@ -719,3 +716,384 @@ notes remain untyped read data and cannot be verified by these commands.
 
 Owner attestation is a workflow convention, not caller authentication: an agent
 can invoke the command. No identity or access-control boundary is claimed.
+
+## Installation options
+
+For the standard isolated install, see [README](../README.md#install).
+
+Update with `~/.slicer-venv/bin/pip install -U squalor-slicer`;
+uninstall by deleting the venv and the symlink.
+
+For a single command, `pip install --user squalor-slicer` works too, with two caveats: on
+macOS Homebrew and recent Debian/Ubuntu/Fedora the system Python is "externally managed"
+(PEP 668) and rejects it — use the [isolated venv install](../README.md#install) — and the user scripts directory must be on
+your `PATH` (`~/.local/bin` on Linux, `~/Library/Python/3.11/bin` on macOS). Uninstall with
+`pip uninstall squalor-slicer`. Users of [pipx](https://pipx.pypa.io) or
+[uv](https://docs.astral.sh/uv/) can instead run `pipx install squalor-slicer` or
+`uv tool install squalor-slicer` for an isolated, on-PATH install in one step.
+
+To try unreleased main instead of the latest release, replace the package name with
+`git+https://github.com/squalor-xyz/slicer`.
+
+To change slicer itself, use the editable contributor install in
+[AGENTS.md](../AGENTS.md#install); the command then tracks your checkout.
+
+If `slicer` is not found, check that the directory containing its executable is on
+`PATH`. Contributors can run `PYTHONPATH=src python3 -m slicer --help` directly from
+the slicer checkout without installing anything; see the
+[contributor workflow](../AGENTS.md#working-on-the-roadmap).
+
+## Initialization
+
+Run `init` in the root of the project you want to track:
+
+```console
+$ cd /path/to/project
+$ slicer init
+initialised /path/to/project/.slicer
+relay roles: no matrix written; run `slicer relay-roles init` to write the example one
+```
+
+That creates four things:
+
+```
+.slicer/config.json        everything project-specific
+.slicer/index.json         the ordered queue — empty, next id S01
+.slicer/templates/*.md     slice.md, roadmap.md, row.md — changed with `slicer template`
+.slicer/slices/done/       where finished slices land
+```
+
+Plain `init` deliberately does **not** create `.slicer/render/` (first `slicer render`),
+`.slicer/slices/retired/` (first `slicer remove --reason`), or `.slicer/log.jsonl`
+(first change). They appear when they are first needed.
+
+`init` never overwrites an existing `index.json`. Running it twice refuses:
+
+```console
+$ slicer init
+/path/to/project/.slicer already exists; pass --force to overwrite its config and templates
+```
+
+`--force` rewrites `config.json` and the three templates. It still leaves `index.json`,
+your slices and your log alone — it is not for starting over. To restore one template you
+changed into a corner, `slicer template reset NAME` does that without touching the config.
+
+## Adding individual items
+
+`slicer add` appends one roadmap row per invocation:
+
+```console
+$ slicer add "Parse the config file" --size M --tree core --findings "G1"
+added S01  Parse the config file
+$ slicer add "Fail loudly on a missing key" --size S --tree core --depends-on S01
+added S02  Fail loudly on a missing key
+```
+
+`add` takes `--size`, `--tree` (repeatable), `--findings`, `--status`, `--pass`, `--id`,
+`--importance`/`--urgency` (the priority axes, 1–3), `--depends-on` (repeatable, using
+item ids), and `--short-title` for a shorter roadmap label while retaining the full
+title. Omitted or empty short titles fall back to the full title. `set --title` also
+updates a short title that still matches the title; a distinct short title stays put. Use `set` to change
+these fields later; repeated `set --depends-on` flags replace the dependency list.
+An open item left at importance 2, urgency 2 and no effort ranks on nothing, so `add`
+prints a stderr hint to score it and `import` lists such items under `warn`; neither
+changes what is written or the exit code.
+Both refuse a dependency `check` would reject — an unknown id (a comma list such as
+`S01,S02` is one unknown id; repeat the flag instead), the item itself, a retired item, or
+an edge that closes a cycle — and write nothing.
+
+An item added this way is a roadmap row and nothing more. There is no slice file yet;
+that is [Writing a slice](#writing-a-slice).
+
+```console
+$ slicer list
+  #  ID    STATUS  CLAIM SIZE EFFORT SCORE QUADRANT  TITLE
+  1  S01   —       -     M    -      22    -         Parse the config file
+  2! S02   —       -     S    -      22    -         Fail loudly on a missing key
+```
+
+The `!` after a row number marks an item that waits on an unfinished dependency, so row 2 waits on S01.
+
+The SCORE and QUADRANT columns are the priority score and quadrant (see
+[Priority](#priority)); a fresh item sits at a neutral 2/2.
+
+## Writing a slice
+
+A roadmap row says *what*. A slice says *why, which files, which failing test first*.
+`promote` creates one:
+
+```console
+$ slicer promote S01
+promoted S01 -> ~/code/my-project/.slicer/slices/S01.json
+```
+
+The headings come from `sections` in your config, each with an empty body, and the
+scope boundary is stored separately, seeded with your `boundary` marker. The default
+headings are:
+
+```
+Why · Files · Failing tests · Implement · Check · Git
+```
+
+The boundary renders after metadata and before these sections. Set it explicitly:
+
+```sh
+slicer edit S01 --boundary --text "**Not in this slice:** other work" --render
+```
+
+Boundary editing accepts the same input sources and editor as section replacement.
+It cannot combine with `--section` or `--append`; empty text clears the boundary and
+restores the unbounded-scope warning. `promote --boundary TEXT` sets it at creation,
+overriding any boundary in a source outline. Section edits cannot remove it.
+
+Fill sections one at a time:
+
+```console
+$ slicer edit S01 --section Why --text "Validate settings before starting the app"
+updated S01 / Why
+```
+
+For body sources, append semantics, notes, feedback, and issue exchange, see the [command table](#commands) and [Roadmap prose](#roadmap-prose). For full-slice promotion, use a [one-item outline](import.md):
+
+```sh
+slicer promote S01 --file draft.md
+```
+
+For interactive editing see the [TUI manual](tui.md#editing).
+
+## Git merge drivers
+
+`log.jsonl` is append-only and union-merges automatically via the generated
+`.gitattributes`, keeping both sides' entries.
+
+**Set up the render merge driver once per clone.** The generated `.gitattributes` points
+`render/` at a `slicer-generated` driver so a merge keeps the current branch's copy instead
+of writing conflict markers into those large files. A driver name only resolves once the
+clone defines it, and slicer's git allowlist cannot run `git config` for you, so run these
+lines once in each clone. `slicer setup-git` prints them (`slicer setup-git | sh` applies
+them), and `slicer init` also prints them when it is run inside a git repo:
+
+```sh
+git config merge.slicer-generated.name "keep the current branch's generated files"
+git config merge.slicer-generated.driver true
+git config merge.slicer-index.name "keep the larger next_id when merging the index"
+git config merge.slicer-index.driver "slicer merge-index %O %A %B"
+git config merge.slicer-relay-roles.name "keep both sides' relay roles rows and rules with fresh ids"
+git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"
+```
+
+The middle two turn on the `slicer-index` driver for `index.json`. Every filing moves the
+single `next_id` line, and edits to neighbouring items or fields overlap as lines, so
+two branches conflict there even when they changed different things. The driver merges
+by identity instead: items by id, object fields by name. It takes the larger `next_id`,
+so an id is never reused; a value only one side changed takes that change; equal changes
+coalesce; new ids from both sides are kept, yours first. An item's notes are append-only
+records with unique ids, so two branches that each added notes keep both, ordered by
+creation time, with notes that share a time kept yours first, then theirs (a note
+removed on one side stays removed only if the other side left it unchanged). Other lists
+(dependencies, flags) and prose are never combined, and the shared items' order follows
+whichever side reordered it, so these still conflict when both sides changed them
+differently:
+
+- one field, list or order changed two ways, or one note edited two ways;
+- a note removed on one side and edited on the other;
+- an item deleted on one side and edited on the other;
+- the same new id filed on both sides with different content;
+- a result that would break the index: two ids sharing a filing key, ids differing only
+  in case, a dependency cycle, or a dependency on an item the merge removed.
+
+Each conflict is written as markers around just that field or item, and stderr names it;
+resolve it by hand, run `slicer render`, then `slicer check`. A file that is not a readable
+index is never merged as clean. A project created before this driver picks up the line
+`index.json merge=slicer-index` by running `slicer setup-git --attributes`, which rewrites
+`.slicer/.gitattributes` from the current template; without it Git does not call the
+driver. `slicer` must be on the `PATH` Git runs with.
+
+The kept copy still has to match the merged `index.json`, so re-run `slicer render` after
+resolving a merge — the driver only skips the markers, it does not re-project the state.
+`slicer verify` warns (it never fails) when this clone has other worktrees but has not
+configured the driver, so a forgotten setup is caught before a merge writes markers rather
+than after. A single-worktree clone stays quiet, and `render_driver_check: false` in config
+turns the reminder off entirely.
+
+The last two `git config` lines turn on the `slicer-relay-roles` driver for
+`relay-roles.json`. (`slicer verify` warns when it is missing, under the same sibling-worktree and
+`render_driver_check` gates as the other two, and only in a project with a relay role matrix.) Two branches that
+each run `relay-roles add` issue the same `r` id, and `rule-add` the same `u` id, so Git
+can only call that a text conflict, and the file may not be repaired by hand. The driver
+matches rows and rules by id and fields by name, so edits to different rows, rules or
+fields all merge. A row or rule that both sides issued under one id with different
+content (or that the other side added under an id you issued and then removed) is kept
+twice: yours keeps the id and the one merged in gets a fresh id past every id either side
+issued, with its text unchanged; the counters end past every issued id, so they never
+issue an id twice. The reverse case is the one exception: an id that only the merged-in
+side issued and then removed can be kept by a row your side added under it, and its
+history then shows an add and a remove for that id before your row. The driver's stderr
+line is the only record of a renumbering: it writes no `log.jsonl` entry, and history
+keeps the original ids. Rows added identically on both sides are kept once. It refuses,
+with code `merge_conflict`, when both sides changed one value differently, one removed a
+row or rule the other edited, or both reordered the rows differently. A refusal leaves
+the file as it was, and slicer refuses writes while the merge is unfinished, so: keep one
+side with `git checkout --ours|--theirs .slicer/relay-roles.json`, `git add` it, finish
+the merge, then re-apply the other side's changes (every row and rule it added or
+edited, not only the conflicting value) with `slicer relay-roles`. A project created
+before this driver takes the line `relay-roles.json merge=slicer-relay-roles` with
+`slicer setup-git --attributes`.
+
+## Passes and flags
+
+Passes are an optional grouping — a review round, a milestone, a phase. Items with no
+pass render as one flat table, which is fine for most projects.
+
+```console
+$ slicer prose add-pass 2 --heading "# Pass 2 — hardening"
+$ slicer add "Rotate the signing key" --pass 2
+$ slicer set S03 --pass 2
+```
+
+Remove an empty pass with `slicer prose drop-pass 2`; it refuses while any item
+is still filed under it.
+
+`slicer add` without `--pass` files the new item under the *previous* item's pass, so once
+the tail of the queue is in a pass, every later `add` lands there too. Name the pass you
+mean, or pass `--pass ''` to file it with no pass (`slicer set ID --pass ''` clears one
+later). `import` never inherits a pass.
+
+Once the roadmap has a pass, `slicer list` (and the `find` and `deps` rows) gains a PASS
+column after CLAIM, showing each item's pass or `-`. `slicer list --pass 2` narrows the
+table to one pass.
+
+A pass is one milestone, and trees name subsystems. Flags are the other axis: free-form
+labels an item can hold several of at once, such as `security` or `perf`. Set them with
+`slicer set S01 --flag security --flag perf` (that replaces the list; `--no-flags` clears
+it). `slicer list --flag security` returns items carrying that flag, and repeating
+`--flag` matches any of the names. The TUI filter panel (`f`) lists each distinct flag
+and `(none)` for an item with no flags. `exclude_flags` in config still only drops an
+item from the sync pointers.
+
+## Goals and non-goals
+
+Goals and non-goals record what the project is *for*, so what belongs on the backlog can
+be judged — separately from what is currently queued. They are two roadmap prose blocks:
+
+```console
+$ slicer prose edit goals --file goals.md      # or --text/--stdin/$EDITOR
+$ slicer prose edit non_goals --stdin < non_goals.md
+$ slicer goals                                 # print both together
+$ slicer goals --json                          # {"goals": "...", "non_goals": "..."}
+```
+
+They render near the top of `ROADMAP.md`, so a reader sees direction before the queue, and
+`slicer check` fails if that rendered copy drifts. Agents read direction with `slicer goals
+--json` and should ask the owner to set it rather than inferring it from the backlog.
+
+## Continuous integration
+
+One command, one exit code:
+
+```yaml
+- name: Install slicer
+  run: pip install squalor-slicer
+
+- name: slicer check
+  run: slicer check
+```
+
+This is the same no-clone install as [README](../README.md#install), run in a throwaway CI
+environment where a shared venv is unnecessary. `check` composes render staleness, sync
+drift and the offline integrity checks. In a CI clone its git reads need no history: the
+clone has one worktree, so the sibling-worktree warning finds nothing to read, and the
+code-location hint runs a `git rev-parse` in the installed package's directory. So a
+shallow checkout is fine.
+
+`slicer verify` is the other one — it additionally compares the index against
+`git log --all`, warning when an item is recorded done but no commit subject mentions
+it. If you add it to CI it needs `fetch-depth: 0`, or it sees no history and skips.
+
+## Troubleshooting
+
+Exit codes: **0** fine · **1** drift or a failed check · **2** usage, validation, or
+nothing to do · **3** internal or state (`corrupt`, `locked`, `io`, `config`,
+`schema_too_new`).
+
+| What you see | What it means |
+|---|---|
+| `no .slicer/ found in … run \`slicer init\` in the project root` | You are outside a tracked project. slicer walks up from the working directory looking for `.slicer/config.json`, git-style. |
+| `… already exists; pass --force to overwrite its config and templates` | `init` on an initialised project. `--force` rewrites config and templates only. |
+| `<ID> has no slice; run \`slicer promote <ID>\` first` | `edit` on a roadmap row that has no slice file yet. |
+| `<ID> already has a slice; pass --force to overwrite it` | `promote` on an already-promoted item. `--force` discards what is there. |
+| `unknown status 'x'; known: [...]` | The status is not a key in `config.statuses`. |
+| `id <X> already exists; ids are never reused` | `add --id` naming a claimed id. Ids are claimed for the life of the project. |
+| `stale render: …` / `check failed` | Run `slicer render` (and `slicer sync` if you have sync targets). |
+| `template missing; run \`slicer template reset NAME\` to restore it` | A file under `.slicer/templates/` was deleted. |
+| `template uses {{x}}, which is not a known placeholder; nothing was written` | `slicer template set` refused text that names a placeholder the renderer does not know (`bad_template`). The file is unchanged. |
+| `… written by a newer slicer (schema N; this build knows M). Upgrade slicer to open this project.` | The project was saved by a newer slicer. 1.0.0 writes index schema 2 (`config.json` stays at 1): it opens a schema-1 project with no migration step, and the first change it saves stamps schema 2, after which an older build refuses the project rather than dropping claims. Upgrade every clone that shares the project. Pre-release checkouts from before this guard (S72) do not refuse; they can drop claims and rewrite the file at schema 1. |
+| `Git merge in progress in …; finish or abort it before changing slicer state.` | slicer refuses state changes, including TUI saves, while this checkout has a merge to finish (`merge_in_progress`, exit 2). Read-only commands, dry runs, `render` and `sync` still work for the repair; finish or abort the merge, then retry. |
+| `running code from …, but this project is … -- a different worktree of the same repo` | A stderr note, not an error: an editable install from one worktree is running against another worktree's `.slicer/`, so that checkout's `src/` edits are not what runs. Use `PYTHONPATH=src python3 -m slicer` in the checkout you are editing, or set `SLICER_NO_CODE_WARNING=1` to silence it. |
+| `refusing to write: fix the problems above` | An import or migration found problems. Nothing was written; see [import.md](import.md) or [migrate-format.md](migrate-format.md). |
+| merge conflict under `.slicer/` | `log.jsonl` union-merges on its own (via the generated `.gitattributes`). `index.json` is the source of truth. With the `slicer-index` driver configured (see [Git merge drivers](#git-merge-drivers)), independent items and fields merge and `next_id` takes the larger value, so resolve only the conflicts it leaves (markers around the single field or item; stderr names them). For anything under `render/`, don't merge it: with the `slicer-generated` driver configured (see [Git merge drivers](#git-merge-drivers)) the merge keeps the current branch's copy with no markers; either way, resolve `index.json`, run `slicer render`, `git add .slicer/render`, and continue — `slicer check` catches a forgotten re-render. A conflict on `relay-roles.json` is either the `slicer-relay-roles` driver refusing a disagreement (`merge_conflict`, or `corrupt` when an input is not a readable matrix; the file is left as it was) or, with the driver not configured in this clone, Git's text markers in the file. Either way never edit it by hand: keep one side with `git checkout --ours|--theirs .slicer/relay-roles.json`, `git add` it, finish the merge, then re-apply the other side's changes (every row and rule it added or edited, not only the conflicting value) with `slicer relay-roles`. |
+
+`slicer verify` is the broader health check — dangling dependencies, cycles, a dependency
+on a retired item, slices in the wrong folder for their status, a slice file whose name
+and contained id disagree, `has_slice` out of step with the files on disk, an id that is
+not a usable filename, and a `next_id` that would reuse an id. It reports and never
+rewrites. Render freshness belongs to `slicer check`, not `verify`.
+
+Inside a git checkout it adds two checks. Both are warnings, so `verify` still exits 0:
+
+- With `render_driver_check` on (the default), it warns when this clone has sibling
+  worktrees and the `slicer-generated`, `slicer-index` or (in a project with a relay role
+  matrix) `slicer-relay-roles` merge driver is not configured. A single-worktree
+  clone stays quiet. Set `render_driver_check` to `false` to silence the reminder.
+- With `git_check` on (the default), it warns when a done item has no commit subject
+  mentioning its id. The scan is `git log --all --no-merges`, at most 2000 commits.
+  Set `git_check` to `false` when the history cannot contain those commits, such as a
+  repo split from another. Outside a repository, or with no history, it reports
+  `git checks skipped` and stops there.
+
+To confirm that a merge really carried an item's done state, ask for that item by id:
+
+```sh
+slicer verify --landed S07 --on main      # --on defaults to HEAD
+```
+
+It exits 0 when `main`'s own index has S07 done and, if S07 has a slice, `main`'s tree
+holds the done slice file, added by a commit reachable from `main`. It reads that tree
+with `git show`, not your working tree, so an uncommitted `done` or a commit still on a
+feature branch does not count. When it has not landed it exits 1 and names why:
+`other_branch` when some other branch, remote branch or tag outside `main`'s history has
+S07 done right now (a branch that has since reopened it does not count; stashes are
+ignored), `working_tree_only` when only your working tree has it done, else `not_done`.
+Exit 2 means there is no answer to give: an unknown id (`no_such_item`), an unusable id
+(`bad_id`), a ref that names no commit (`bad_ref`), a project outside a git repository
+(`not_git`), or `--on` without `--landed`. An index that cannot be read on `main` itself is
+exit 3; one that cannot be read on some other branch is skipped. `--json` returns `{id, ref, ref_commit, landed, reason, message, commit}`. It
+writes nothing, and it follows `done_dir`, so scripts need not hard-code the done path.
+
+## Review lifecycle
+
+`start` records a claim on the item. The [command table](#commands) defines owner
+precedence and the `release` command; [Picking and listing work](#picking-and-listing-work)
+explains claim columns and sibling-worktree signals.
+
+When `implement_finish` is `handoff`, this is the finish: pass the implementation to
+someone else for review, merge, or cleanup without marking it done by handing it off:
+
+```console
+$ slicer note S01 --text "Ready for review: branch feature/S01; suite green"
+$ slicer handoff S01 --render
+S01 -> review, unclaimed
+```
+
+The item moves to the `review` status and loses its claim. `next` no longer offers it,
+and anything that depends on it stays blocked. A reviewer runs `slicer next --status
+review --start`, which returns the highest-priority review item, claims it and moves it
+to `reviewing` (the same as `slicer start S01` on a review item). Reviewing is still out
+of plain `next`, so no implementer picks it up as resumable work, and running the
+reviewer's command again resumes it. `--ready --section NAME` trims the slice to the
+sections a review needs. If the review fails, `slicer reject S01 --note "VERDICT: FAIL -
+missing test"` sends it back to the open queue, unclaimed, with the verdict added to its
+notes and history (`--to STATUS` picks another non-lifecycle status, such as a project's
+own `blocked`). Run
+`slicer done S01 --render` only once review and merge are complete; slicer records the
+handoff but never merges anything.

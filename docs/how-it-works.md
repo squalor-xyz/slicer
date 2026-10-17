@@ -51,7 +51,7 @@ goal from an item (`slicer catalog cite`) is a reference only.
 **In practice:** adding a goal never changes what `next` returns. Use goals to judge
 whether something belongs on the queue at all, and ask the owner to set them rather than
 inferring them from the backlog. `slicer goals` prints them. See
-[goals and non-goals](getting-started.md#goals-and-non-goals) and the
+[goals and non-goals](commands.md#goals-and-non-goals) and the
 [catalog](commands.md#catalog).
 
 ## How the pieces connect
@@ -255,7 +255,7 @@ tell an agent to run last. It does not make slicer refuse a command: `done` stil
 a handoff project, and `handoff` works in a done project as long as a review status is
 configured. It also decides when a sliver releases its parent in `next`. A handoff
 project needs a non-empty `review_status`. See
-[implement_finish](configuration.md#every-key) and [the loop](getting-started.md#6-the-loop).
+[implement_finish](configuration.md#every-key) and [review lifecycle](commands.md#review-lifecycle).
 
 ## Git, local state and shared state
 
