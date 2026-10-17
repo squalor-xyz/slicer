@@ -2229,15 +2229,97 @@ class DetailPaneTests(unittest.TestCase):
         result = view.handle(state, "e")
         self.assertIsNone(result.edit)
         self.assertIn("read-only", view.message)
-        # Tab does not move focus into a pane with nothing to select.
+        # Only the history pane can take focus for scrolling.
         view.handle(state, "\t")
-        self.assertEqual(view.focus, "left")
+        self.assertEqual(view.focus, "right" if detail == "history" else "left")
     # Back in the details pane, tab and e work as before.
     view = tui.View.initial(state)
     view.select((tui.ITEM, "S02"))
     view.handle(state, "\t")
     self.assertEqual(view.focus, "right")
     self.assertIsNotNone(view.handle(state, "e").edit)
+
+  def test_Handle_HistoryPaneFocused_DownScrollsHistory(self) -> None:
+    for key in ("j", "KEY_DOWN"):
+      with self.subTest(key=key):
+        state = example()
+        view = tui.View.initial(state)
+        view.detail = "history"
+        view.handle(state, "\t")
+        view.handle(state, key)
+        self.assertEqual(view.history_at, 1)
+
+  def test_Handle_HistoryPaneFocused_UpScrollsHistory(self) -> None:
+    for key, start, expected in (("k", 2, 1), ("KEY_UP", 2, 1), ("k", 0, 0)):
+      with self.subTest(key=key, start=start):
+        state = example()
+        view = tui.View.initial(state)
+        view.detail = "history"
+        view.history_at = start
+        view.handle(state, "\t")
+        view.handle(state, key)
+        self.assertEqual(view.history_at, expected)
+
+  def test_Handle_SelectOtherItem_ResetsHistoryScroll(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.detail = "history"
+    view.history_at = 7
+    view.handle(state, "j")
+    self.assertEqual(view.history_at, 0)
+
+  def test_Refresh_SelectOtherItem_ResetsHistoryScroll(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.history_at = 7
+    view.filters.query = "Search full title"
+    view.refresh(state)
+    self.assertEqual(view.history_at, 0)
+
+  def test_Handle_CycleDetail_ResetsHistoryScroll(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.detail = "history"
+    view.history_at = 7
+    view.handle(state, "i")
+    self.assertEqual(view.history_at, 0)
+
+  def test_Handle_FocusedHistoryEdit_RemainsReadOnly(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.detail = "history"
+    view.handle(state, "\t")
+    self.assertEqual(view.focus, "right")
+    with patch.object(tui, "act", side_effect=AssertionError("edit dispatched")):
+      self.assertIsNone(view.handle(state, "e").edit)
+    self.assertIn("history pane is read-only", view.message)
+
+  def test_Draw_HistoryScrolled_ShowsOlderEntries(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S02"))
+    view.detail = "history"
+    view.history_at = 25
+    entries = [model.LogEntry(f"2026-10-17T10:00:{n:02d}Z", "S02", "add", "", "open")
+               for n in range(40)]
+    screen = Screen(16, 200)
+    with patch.object(MemoryState, "history", return_value=entries):
+      tui.draw(screen, state, view)
+    self.assertIn((1, "  " + entries[14].text()), screen.writes)
+
+  def test_Draw_HistoryBeyondEnd_ClampsToLastPage(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S02"))
+    view.detail = "history"
+    view.history_at = 999
+    entries = [model.LogEntry(f"2026-10-17T10:00:{n:02d}Z", "S02", "add", "", "open")
+               for n in range(40)]
+    screen = Screen(16, 200)
+    visible = screen.height - len(tui.shortcut_lines(screen.width)) - 3
+    with patch.object(MemoryState, "history", return_value=entries):
+      tui.draw(screen, state, view)
+    self.assertIn((1, "  " + entries[visible - 1].text()), screen.writes)
 
   def test_Handle_DetailKeyLeavingDetails_ReturnsFocusToTheQueue(self) -> None:
     state = linked_example()
@@ -2280,7 +2362,7 @@ class DetailPaneTests(unittest.TestCase):
       tui.draw(screen, state, view)
       shown = [text for _, text in screen.writes]
       self.assertIn("  History", shown)
-      newest = texts(tui.history_lines(state, "S01", tui.HISTORY_LIMIT))[0]
+      newest = texts(tui.history_lines(state, "S01"))[0]
       # The pane clips a long line at the screen edge, so compare the part that fits.
       self.assertTrue(any(t.startswith("  " + newest[:60]) for t in shown), newest)
 

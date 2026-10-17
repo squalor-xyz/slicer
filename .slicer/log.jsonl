@@ -1910,3 +1910,9 @@
 {"when": "2026-10-17T20:11:19Z", "item": "s338", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:21:28Z", "item": "s338", "action": "note", "from": "", "to": "", "note": "Ready for review, verified: VERDICT: PASS after 1 round, no ", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:27:08Z", "item": "s338", "action": "status", "from": "review", "to": "done", "note": "Landed: _absorb copies a step whose parent is only in a damaged local file without that parent and reports it as orphaned, so relay-run end/step no longer fail; gate PASS, full suite green on main.", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:12:35Z", "item": "s347", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:20:32Z", "item": "s347", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:23:37Z", "item": "s347", "action": "reject", "from": "review", "to": "open", "note": "VERDICT: FAIL - CHANGELOG s278 entry still says 20 entries and tab stays in the queue, contradicting the new entry", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:24:20Z", "item": "s347", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:24:43Z", "item": "s347", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:25:48Z", "item": "s347", "action": "note", "from": "", "to": "", "note": "Ready for review: the TUI history pane shows the item's whol", "by": "Jon Robbins"}

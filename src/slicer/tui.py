@@ -32,7 +32,7 @@ class Binding:
 BINDINGS = (
   Binding(("j", "KEY_DOWN"), "j / Down", "down", "Move down"),
   Binding(("k", "KEY_UP"), "k / Up", "up", "Move up"),
-  Binding(("\t",), "Tab", "pane", "Switch queue/detail pane"),
+  Binding(("\t",), "Tab", "pane", "Switch queue/detail pane; history takes focus to scroll"),
   Binding(("/",), "/", "search", "Search item IDs and titles; Enter accepts, Esc cancels"),
   Binding(("f",), "f", "filter", "Filter items; Space toggles, Enter applies, Esc cancels"),
   Binding(("v",), "v", "view", "Cycle the unfinished, in-work, and review queues"),
@@ -44,7 +44,7 @@ BINDINGS = (
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
   Binding(("?",), "?", "help", "Show help; j/k scroll, ? or Esc closes"),
-  Binding(("i",), "i", "detail", "Cycle the detail pane: details, dependencies, history (read-only)"),
+  Binding(("i",), "i", "detail", "Cycle the detail pane: details, dependencies, history (read-only; Tab then j/k or arrows scroll)"),
   Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty removes a note)"),
   Binding(("a",), "a", "add", "Add an item"),
   Binding(("w",), "w", "wizard", "Create roadmap items with the guided wizard"),
@@ -432,8 +432,6 @@ def panel(
 # The detail pane shows one of these for an item; `i` cycles them in this order.
 DETAIL_PANES = ("details", "deps", "history")
 DETAIL_TITLES = {"details": "Details", "deps": "Dependencies", "history": "History"}
-# How many history lines the pane asks for; the pane clips to the rows it has.
-HISTORY_LIMIT = 20
 
 
 def deps_lines(state: State, target: str) -> list[PanelLine]:
@@ -459,8 +457,8 @@ def deps_lines(state: State, target: str) -> list[PanelLine]:
   return out
 
 
-def history_lines(state: State, target: str, limit: int) -> list[PanelLine]:
-  """The item's last `limit` history entries, newest first, as `slicer log --item` prints them."""
+def history_lines(state: State, target: str, limit: int | None = None) -> list[PanelLine]:
+  """The item's history, newest first, optionally limited as `slicer log --item` prints it."""
   try:
     history = state.history()
   except (SlicerError, OSError) as exc:
@@ -812,8 +810,9 @@ class View:
   selected: tuple[str, str] | None = None
   entry_at: int = 0
   # Which pane the right side shows for an item: one of DETAIL_PANES. Only "details" has
-  # anything to select or edit.
+  # editable entries; history takes focus for scrolling.
   detail: str = "details"
+  history_at: int = 0
   focus: str = "left"
   scroll: int = 0
   mode: str = "normal"
@@ -877,10 +876,11 @@ class View:
     selected = reconcile_selection(self.listing, listing, self.selected)
     if selected != self.selected:
       self.entry_at = 0
+      self.history_at = 0
     self.selected, self.listing = selected, listing
     available = entries(state, self.target) if self.selected else []
     self.entry_at = min(self.entry_at, max(0, len(available) - 1))
-    if not available or self.shown != "details":
+    if not available or self.shown == "deps":
       self.focus = "left"
 
   @property
@@ -891,6 +891,7 @@ class View:
   def select(self, identity: tuple[str, str] | None) -> None:
     if identity != self.selected:
       self.entry_at = 0
+      self.history_at = 0
     self.selected = identity
 
   def notify(self, message: str, severity: str = "info") -> None:
@@ -1035,20 +1036,23 @@ class View:
       self.view_preset = ""
       self.notify("search and filters cleared; showing all items")
     elif action == "pane":
-      editable = self.shown == "details" and entries(state, self.target)
-      self.focus = "right" if self.focus == "left" and editable else "left"
+      focusable = self.shown == "history" or (self.shown == "details" and entries(state, self.target))
+      self.focus = "right" if self.focus == "left" and focusable else "left"
     elif action == "detail":
       if not self.selected or self.selected[0] != ITEM:
         self.notify("that key applies to a slice, not to a prose block")
       else:
         self.detail = DETAIL_PANES[(DETAIL_PANES.index(self.detail) + 1) % len(DETAIL_PANES)]
         self.focus = "left"
+        self.history_at = 0
         self.notify(f"{DETAIL_TITLES[self.detail].lower()} pane")
     elif action == "edit" and self.shown != "details":
       self.notify(f"the {DETAIL_TITLES[self.shown].lower()} pane is read-only; press i for details")
     elif action in ("up", "down"):
       delta = 1 if action == "down" else -1
-      if self.focus == "right":
+      if self.focus == "right" and self.shown == "history":
+        self.history_at = max(0, self.history_at + delta)
+      elif self.focus == "right":
         available = entries(state, self.target)
         self.entry_at = max(0, min(self.entry_at + delta, len(available) - 1))
       else:
@@ -1769,11 +1773,15 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
     if view.selected and view.shown == "deps":
       lines = deps_lines(state, view.target)
     elif view.selected and view.shown == "history":
-      lines = history_lines(state, view.target, HISTORY_LIMIT)
+      lines = history_lines(state, view.target)
     else:
       lines = panel(state, view.target, view.elsewhere) if view.selected else []
     first = next((n for n, line in enumerate(lines) if line.entry == view.entry_at), 0)
-    top = max(0, first - 2) if view.focus == "right" else 0
+    if view.shown == "history":
+      view.history_at = max(0, min(view.history_at, len(lines) - visible))
+      top = view.history_at
+    else:
+      top = max(0, first - 2) if view.focus == "right" else 0
     for n, line in enumerate(lines[top:top + visible], 1):
       selected = line.entry is not None and line.entry == view.entry_at
       attr = palette.attr(line.role, selected=selected, focused=view.focus == "right")
