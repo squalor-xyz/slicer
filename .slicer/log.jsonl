@@ -1894,3 +1894,6 @@
 {"when": "2026-10-17T19:45:28Z", "item": "s340", "action": "note", "from": "", "to": "", "note": "Ready for review: a shared step whose --parent only a local ", "by": "Jon Robbins"}
 {"when": "2026-10-17T19:54:02Z", "item": "s338", "action": "note", "from": "", "to": "", "note": "From s340 gate: _absorb is now reached from Ledger.append_sh", "by": "Jon Robbins"}
 {"when": "2026-10-17T19:54:02Z", "item": "s340", "action": "status", "from": "review", "to": "done", "note": "Landed: Ledger.append_shared absorbs local fallback steps when a shared step names a parent held only locally, keeping the shared ledger readable; gate PASS, full suite green on main.", "by": "Jon Robbins"}
+{"when": "2026-10-17T19:55:30Z", "item": "s338", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:11:19Z", "item": "s338", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:21:28Z", "item": "s338", "action": "note", "from": "", "to": "", "note": "Ready for review, verified: VERDICT: PASS after 1 round, no ", "by": "Jon Robbins"}

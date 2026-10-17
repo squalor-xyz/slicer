@@ -11643,7 +11643,7 @@
       "id": "s338",
       "title": "relay-run end absorbs a step whose parent is in a damaged local file without failing",
       "short_title": "relay-run end absorbs a step whose parent is in a damaged local file without failing",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s332"
@@ -11655,6 +11655,17 @@
           "text": "**2026-10-17** — From s340 gate: _absorb is now reached from Ledger.append_shared (missing begin, and since s340 a parent held only locally) as well as relay_run_end; fix the damaged-local-file case in _absorb or local_run_events so all three paths are covered.",
           "created_at": "2026-10-17T19:54:01Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "3832f534-de77-46ba-bca2-c18a596f6c82",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review, verified: VERDICT: PASS after 1 round, no fixes. _absorb copies a step whose parent no copied event holds (its parent sat in a damaged local file) without that parent, records it in LedgerReport.orphaned, and relay-run step/end print one stderr line per orphan; the shared ledger stays foldable on all three absorb paths (end, step with no shared begin, step with local-only parent). 4 new tests, mutation-checked. Full suite 2381 OK (1 skip); slicer check passes.",
+          "created_at": "2026-10-17T20:21:28Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -11680,7 +11691,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -989,6 +989,108 @@ class SandboxTests(GitLedgerCase):
     self.assertEqual(len(err.splitlines()), 1, err)
     self.assertIn(str(other / LEDGER), err)
 
+  def named(self, err: str, step: str, parent: str) -> None:
+    """Exactly one stderr line names `step` as copied without the `parent` it lost."""
+    lines = [line for line in err.splitlines() if step in line]
+    self.assertEqual(len(lines), 1, err)
+    self.assertIn(parent, lines[0])
+
+  def test_RelayRunEnd_ParentInDamagedLocalFile_EndsAndNamesOrphan(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)  # the begin is in the shared ledger
+    other = self.linked(repo, "other")
+    lift = self.sandbox(repo)
+    _, parent = ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))
+    _, child = ops.relay_run_step(
+      other, run, phase="start", role="reviewer", agent="B", parent=parent.id, now=minutes(2),
+    )
+    with (wt / LEDGER).open("a", encoding="utf-8") as fh:  # the parent's file is damaged
+      fh.write("not json\n")
+    lift()
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(out.strip(), f"ended {run} pass; absorbed 1 event from local ledgers")
+    self.named(err, child.id, parent.id)
+    got = self.listed(repo.root)
+    self.assertEqual([(r["id"], r["outcome"]) for r in got], [(run, "pass")])
+    self.assertEqual([(s["id"], s["parent"]) for s in got[0]["steps"]], [(child.id, "")])
+
+  def test_RelayRunStep_NoSharedBeginAndDamagedParent_AbsorbsFoldsAndNamesOrphan(self) -> None:
+    repo = self.repo()
+    wt, other = self.linked(repo, "wt"), self.linked(repo, "other")
+    ops.relay_run_begin(repo.root, ["s9"], now=minutes(0))  # the shared ledger exists
+    lift = self.sandbox(repo)
+    run = ops.relay_run_begin(other, ["s1"], now=minutes(1)).id  # its begin can only go local
+    _, parent = ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(2))
+    _, child = ops.relay_run_step(
+      other, run, phase="start", role="reviewer", agent="B", parent=parent.id, now=minutes(3),
+    )
+    with (wt / LEDGER).open("a", encoding="utf-8") as fh:  # the parent's file is damaged
+      fh.write("not json\n")
+    lift()
+    code, out, err = self.cli(
+      repo.root, "relay-run", "step", run, "--role", "tester", "--agent", "D", "--phase", "start",
+      "--json",
+    )
+    self.assertEqual(code, 0, out + err)
+    new = json.loads(out)["step"]["id"]
+    self.named(err, child.id, parent.id)
+    got = {r["id"]: r for r in self.listed(repo.root)}
+    self.assertEqual({s["id"]: s["parent"] for s in got[run]["steps"]}, {child.id: "", new: ""})
+
+  def test_RelayRunStep_LocalParentBesideOrphanOfDamagedFile_AbsorbsFoldsAndNamesOrphan(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)  # the begin is in the shared ledger
+    dam = self.linked(repo, "dam")
+    lift = self.sandbox(repo)
+    _, grand = ops.relay_run_step(dam, run, phase="start", role="gate", agent="A", now=minutes(1))
+    _, orphan = ops.relay_run_step(
+      wt, run, phase="start", role="reviewer", agent="B", parent=grand.id, now=minutes(2),
+    )
+    _, parent = ops.relay_run_step(
+      wt, run, phase="start", role="implementer", agent="C", now=minutes(3),
+    )
+    with (dam / LEDGER).open("a", encoding="utf-8") as fh:  # the grandparent's file is damaged
+      fh.write("not json\n")
+    lift()
+    # The new step names `parent`, which only wt's file holds, so `parent` must reach the shared
+    # ledger with the new step, and the orphan beside it must not stop that.
+    code, out, err = self.cli(
+      repo.root, "relay-run", "step", run, "--role", "tester", "--agent", "D", "--phase", "start",
+      "--parent", parent.id, "--json",
+    )
+    self.assertEqual(code, 0, out + err)
+    new = json.loads(out)["step"]["id"]
+    self.named(err, orphan.id, grand.id)
+    got = {r["id"]: r for r in self.listed(repo.root)}
+    by_id = {s["id"]: s["parent"] for s in got[run]["steps"]}
+    self.assertEqual(by_id, {orphan.id: "", parent.id: "", new: parent.id})
+
+  def test_RelayRunEnd_ChildBeforeParentInOtherFile_KeepsItsParent(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)  # the begin is in the shared ledger
+    other = self.linked(repo, "other")
+    lift = self.sandbox(repo)
+    _, parent = ops.relay_run_step(other, run, phase="start", role="gate", agent="A", now=minutes(1))
+    _, child = ops.relay_run_step(
+      wt, run, phase="start", role="reviewer", agent="B", parent=parent.id, now=minutes(2),
+    )
+    lost = relayrun.step_event(
+      run, minutes(3), "c0000dead-1", "start", parent="c0000beef-1", role="tester", agent="C",
+    )
+    with (wt / LEDGER).open("a", encoding="utf-8") as fh:  # its parent is in no ledger at all
+      fh.write(json.dumps(lost) + "\n")
+    lift()
+    # wt reads its own file first, so the child is seen before the parent that sits in `other`.
+    code, out, err = self.cli(wt, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(out.strip(), f"ended {run} pass; absorbed 3 events from local ledgers")
+    self.named(err, lost["step"], "c0000beef-1")
+    self.assertNotIn(child.id, err)
+    got = {r["id"]: r for r in self.listed(repo.root)}
+    by_id = {s["id"]: s["parent"] for s in got[run]["steps"]}
+    self.assertEqual(by_id, {parent.id: "", child.id: parent.id, lost["step"]: ""})
+
   def test_Fold_EventsAtTheSameSecond_FileOrderThenLine(self) -> None:
     begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
     first = relayrun.step_event("r", minutes(1), "1", "start", role="first", agent="A")
