@@ -346,3 +346,22 @@ def make_mini(repo: TempRepo, into: str = "docs/slices") -> Path:
   for rel, text in MINI_SLICES.items():
     repo.write(f"{into}/{rel}", text)
   return repo.root / into
+
+
+def many_done_slices(repo: TempRepo, done: int = 2000, opened: int = 3) -> None:
+  """Build a large roadmap without timing thousands of CLI mutations."""
+  from slicer import jsonio
+  from slicer.model import Item, Section, Slice
+
+  repo.run("init")
+  state = repo.state()
+  for number in range(1, done + opened + 1):
+    sid = f"S{number:04d}"
+    status = state.config.done_status if number <= done else state.config.open_status
+    state.index.items.append(Item(id=sid, title=f"Slice {number}", status=status,
+                                 has_slice=True, importance=1, urgency=1, effort=1))
+    jsonio.write(state.slice_path(sid), Slice(sid, f"Slice {number}", sections=[
+      Section(heading, "Specified work.") for heading in state.config.required_sections
+    ]).to_dict())
+  state.index.next_id = done + opened + 1
+  state.save_index()

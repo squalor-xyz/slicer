@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- Slice bodies load on first access. A corrupt slice body is reported with `corrupt` and its filename by commands that read it (`show ID`, `render`, `check`, `verify`), while commands that do not read it (`next`, `list`) no longer fail on it. Slice-file moves do not parse bodies and update lazy lookup paths after renaming. Explicit batch `set` reads its target bodies before any changes, refusing the batch if a target is corrupt. `show ID` avoids reading unrelated bodies; `render`, `check` and `verify` still inspect every body. File layout and rendered output are unchanged.
+
 ## [1.13.0] - 2026-10-17
 
 ### Added

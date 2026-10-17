@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-342 items · — 18 · done 316 · retired 8
+342 items · — 17 · done 316 · retired 8 · review 1
 
 v1.14.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | — |
+| 1 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | review |
 | 2 | [s322](slices/s322.md) | Print a slice's orchestrator brief with ai relay-brief | M | 2 | slicer | outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names | — |
 | 3 | [s323](slices/s323.md) | Items waiting on an owner decision are held out of next | M | 2 | slicer | outer-session wishlist 2026-10-16, item 2: open decisions lived in prose, so next showed s312 as ready | — |
 | 4 | [s324](slices/s324.md) | next --batch picks slices whose files do not overlap | M | 2 | slicer | outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections | — |

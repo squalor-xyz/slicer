@@ -12,6 +12,7 @@ import re
 import stat
 import sys
 import time
+from collections.abc import Mapping, MutableMapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -255,17 +256,136 @@ class _Stage:
   templates: dict[str, str] = field(default_factory=dict)
 
 
+class LazySlices(MutableMapping[str, Slice]):
+  """Defer historical bodies while preserving eager dict order on enumeration."""
+
+  def __init__(self, files: dict[str, Path], boundary: str) -> None:
+    self._files = files
+    self._boundary = boundary
+    self._read: dict[str, Slice] = {}
+    self._cache: dict[str, Slice] = {}
+    self._paths: dict[str, Path] = {}
+    self._writes: dict[str, Slice] = {}
+    self._deleted: set[str] = set()
+    self._loaded = False
+
+  def _read_one(self, stem: str) -> Slice:
+    if stem not in self._read:
+      path = self._files[stem]
+      self._read[stem] = _from_dict(
+        path, lambda d: Slice.from_dict(d, boundary_marker=self._boundary), jsonio.read(path)
+      )
+    return self._read[stem]
+
+  def _load_all(self) -> None:
+    if self._loaded:
+      return
+    cache: dict[str, Slice] = {}
+    paths: dict[str, Path] = {}
+    for stem, path in self._files.items():
+      sl = self._read_one(stem)
+      cache[sl.id] = sl
+      paths[sl.id] = path
+    cache.update(self._writes)
+    for sid in self._deleted:
+      cache.pop(sid, None)
+    self._cache, self._paths = cache, paths
+    self._loaded = True
+
+  def __getitem__(self, sid: str) -> Slice:
+    if sid in self._deleted:
+      raise KeyError(sid)
+    if sid in self._cache:
+      return self._cache[sid]
+    if not self._loaded and sid in self._files:
+      sl = self._read_one(sid)
+      if sl.id != sid:
+        self._load_all()
+      else:
+        self._cache[sid] = sl
+        self._paths[sid] = self._files[sid]
+    return self._cache[sid]
+
+  def __setitem__(self, sid: str, sl: Slice) -> None:
+    self._deleted.discard(sid)
+    self._writes[sid] = sl
+    self._cache[sid] = sl
+
+  def __delitem__(self, sid: str) -> None:
+    self[sid]
+    self._deleted.add(sid)
+    self._writes.pop(sid, None)
+    del self._cache[sid]
+
+  def __iter__(self) -> Iterator[str]:
+    self._load_all()
+    return iter(self._cache)
+
+  def __len__(self) -> int:
+    self._load_all()
+    return len(self._cache)
+
+  def keys(self):
+    self._load_all()
+    return self._cache.keys()
+
+  def values(self):
+    self._load_all()
+    return self._cache.values()
+
+  def items(self):
+    self._load_all()
+    return self._cache.items()
+
+  def relocated(self, src: Path, dst: Path) -> None:
+    """Follow a completed rename without parsing the body it moved."""
+    self._files[src.stem] = dst
+    if src.stem in self._read:
+      self._paths[self._read[src.stem].id] = dst
+
+  def copy(self) -> LazySlices:
+    """A draft owns its discovered paths, cache and edits."""
+    other = LazySlices(self._files.copy(), self._boundary)
+    other._read = self._read.copy()
+    other._cache = self._cache.copy()
+    other._paths = self._paths.copy()
+    other._writes = self._writes.copy()
+    other._deleted = self._deleted.copy()
+    other._loaded = self._loaded
+    return other
+
+
+class SliceFiles(Mapping[str, Path]):
+  """Keep verifier paths in step with the bodies that establish contained ids."""
+
+  def __init__(self, slices: LazySlices) -> None:
+    self._slices = slices
+
+  def __getitem__(self, sid: str) -> Path:
+    if not self._slices._loaded:
+      self._slices[sid]
+    return self._slices._paths[sid]
+
+  def __iter__(self) -> Iterator[str]:
+    self._slices._load_all()
+    return iter(self._slices._paths)
+
+  def __len__(self) -> int:
+    self._slices._load_all()
+    return len(self._slices._paths)
+
+
 @dataclass
 class State:
-  """Everything on disk for one project, loaded."""
+  """Project metadata with slice bodies read only when requested."""
 
   root: Path
   config: Config
   index: Index
-  slices: dict[str, Slice] = field(default_factory=dict)
+  slices: MutableMapping[str, Slice] = field(default_factory=dict)
   # Where each loaded slice was read from, keyed by its *contained* id, so
   # verify can tell a file whose id disagrees with its filename.
-  slice_files: dict[str, Path] = field(default_factory=dict)
+  slice_files: Mapping[str, Path] = field(default_factory=dict)
   # Set only between begin_stage/commit_stage (see `staged`). While present,
   # every persistence side effect buffers here instead of hitting disk, so a
   # mutation can be rendered before it is allowed to land.
@@ -453,6 +573,8 @@ class State:
       self._stage.moves.append((src, dst))
       return
     vcs.move(self.root, src, dst)
+    if isinstance(self.slices, LazySlices):
+      self.slices.relocated(src, dst)
 
   def delete_slice(self, path: Path) -> None:
     """Unlink a slice file, after the index write when this change is staged.
@@ -499,6 +621,8 @@ class State:
     # a crash mid-flush lands where an unstaged mutation would have left it.
     for src, dst in stage.moves:
       vcs.move(self.root, src, dst)
+      if isinstance(self.slices, LazySlices):
+        self.slices.relocated(src, dst)
     for sl in stage.slices.values():
       jsonio.write(self.slice_path(sl.id), sl.to_dict())
     if stage.index:
@@ -757,8 +881,7 @@ def load(root: Path | None = None) -> State:
   ):
     index.id_prefix = config.id_prefix
     index.id_width = config.id_width
-  slices: dict[str, Slice] = {}
-  slice_files: dict[str, Path] = {}
+  files: dict[str, Path] = {}
   slices_root = sdir / SLICES_DIR
   for folder in (
     slices_root,
@@ -768,9 +891,7 @@ def load(root: Path | None = None) -> State:
     if not folder.is_dir():
       continue
     for path in sorted(folder.glob("*.json")):
-      sl = _from_dict(
-        path, lambda d: Slice.from_dict(d, boundary_marker=config.boundary), jsonio.read(path)
-      )
-      slices[sl.id] = sl
-      slice_files[sl.id] = path
-  return State(root=base, config=config, index=index, slices=slices, slice_files=slice_files)
+      files[path.stem] = path
+  slices = LazySlices(files, config.boundary)
+  return State(root=base, config=config, index=index, slices=slices,
+               slice_files=SliceFiles(slices))
