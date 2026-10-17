@@ -10486,7 +10486,7 @@
       "id": "s306",
       "title": "Add prints the bare id",
       "short_title": "Add prints id",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -10502,10 +10502,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-17T04:24:33Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],

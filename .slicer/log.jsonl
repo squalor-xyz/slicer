@@ -1808,3 +1808,4 @@
 {"when": "2026-10-17T04:16:04Z", "item": "s306", "action": "note", "from": "", "to": "", "note": "Verified current attempt: add --print-id outputs only the id", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:16:07Z", "item": "s306", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:24:33Z", "item": "s306", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:31:20Z", "item": "s306", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: add --print-id prints only the id (also on a keyed retry), refuses --json, sends the render summary to stderr. Landing review of the diff; merged main suite 2327 tests OK (1 skipped); git diff --check passed.", "by": "Jon Robbins"}
