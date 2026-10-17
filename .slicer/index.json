@@ -9330,7 +9330,7 @@
       "id": "s280",
       "title": "TUI relay-roles view and recommend for the selected slice",
       "short_title": "TUI relay-roles view and recommend for the selected slice",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -9340,6 +9340,17 @@
           "text": "**2026-10-16** — From the s320 relay (2026-10-16): relay-roles recommend now returns five roles (orchestrator appended) with alternatives and selected_by; show both in the overlay.",
           "created_at": "2026-10-16T20:06:25Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "a475e4d6-0b24-469e-994f-524cbbdec284",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: TUI key R opens the relay role matrix (same lines as relay-roles show) and, for the selected slice, asks well-specified and split yes/no, then shows relay-roles recommend's lines per role (five roles, selected_by, alternatives, (no matching row)), shared with the CLI via roles.recommend_lines so they cannot drift. No matrix shows the no_relay_roles message; prose rows are refused; Esc writes nothing; a recommend error restarts the questions. Gate PASS (relay run-20261017-185556-7ae3); full suite 2374 OK, 1 skipped; slicer check current.",
+          "created_at": "2026-10-17T19:17:06Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -9365,7 +9376,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

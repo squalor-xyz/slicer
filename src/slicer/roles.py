@@ -500,3 +500,29 @@ def render_markdown(matrix: RoleMatrix, *, level: int = 1) -> str:
   else:
     lines.append("No rules.")
   return "\n".join(lines) + "\n"
+
+
+def require_matrix(matrix: RoleMatrix | None, path: object) -> RoleMatrix:
+  """Share the missing-matrix diagnostic between read-only front ends."""
+  if matrix is None:
+    raise StateError(
+      f"{path} does not exist; run "
+      "`slicer relay-roles init` to write the example matrix",
+      code="no_relay_roles",
+    )
+  return matrix
+
+
+def _row_cells(row: RoleRow) -> str:
+  cells = [row.id, row.agent, row.vendor, row.model, row.reasoning]
+  return "  ".join(cell or EMPTY_CELL for cell in cells)
+
+
+def recommend_lines(pick: RolePick) -> list[str]:
+  """A role's selected row and why, then its alternatives indented below it."""
+  if pick.row is None:
+    return [f"{pick.role}  (no matching row)"]
+  return [
+    f"{pick.role}  {_row_cells(pick.row)}  [{pick.selected_by}]",
+    *(f"  alternative  {_row_cells(row)}" for row in pick.alternatives),
+  ]

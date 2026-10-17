@@ -96,6 +96,7 @@ The TUI initially hides the project's configured done status. View controls:
 | `T` | Move the selected item to the top |
 | `M` | Move the selected item to a numbered position |
 | `i` | Cycle the detail pane: details, [dependencies and history](#dependencies-and-history) |
+| `R` | Open the [relay role matrix](#relay-roles); Enter recommends roles for the selected slice |
 | `b` | Open the [relay board](#relay-board); `b`, `q` or Esc closes it |
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
 
@@ -121,6 +122,25 @@ preset also keeps it; the in-work preset does not gain it. The queue and detail 
 show this checkout's review label and review styling, and status sorting uses that
 visible label. Sibling data is refreshed with the view, only at the Git worktree root.
 Browsing writes no tracking state; lifecycle actions continue to use stored status.
+
+## Relay roles
+
+`R` opens the relay role matrix for the selected item, with the same Markdown as
+`slicer relay-roles show`. `j`/`k` or the arrow keys scroll; `R`, `q` or Esc closes.
+If the project has no matrix, the message names `slicer relay-roles init`.
+`R` on a roadmap prose row is refused.
+
+Press Enter to recommend roles for the selected slice. Type `yes` or `no` and
+press Enter for each question: `well-specified`, then `split`. The overlay then
+shows the same lines as `slicer relay-roles recommend ID --well-specified ANSWER
+--split ANSWER`: implementer, reviewer, gate, architect and orchestrator, each with
+its row id, agent, vendor, model, reasoning and selection reason, followed by any
+indented alternatives. A role without a match says `(no matching row)`.
+Enter starts the questions again; Esc cancels either question and closes the overlay.
+If recommendation fails, the error is shown and the questions restart at
+`well-specified` so you can retry. Viewing, recommending and cancelling
+write nothing and take no lock. Matrix rows and rules change only through the
+`relay-roles` commands.
 
 ## Relay board
 

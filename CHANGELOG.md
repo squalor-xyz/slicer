@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- TUI: `R` shows the relay role matrix; Enter asks whether the selected slice is well-specified and split, then shows the CLI recommendation, including all five roles, selection reasons and alternatives. Esc cancels without writing. Matrix editing stays in `relay-roles`. See [tui.md](docs/tui.md#relay-roles).
+
 - TUI: `i` cycles the detail pane between the details, the item's dependencies and its recent history, all read-only. The dependencies pane shows what the item waits on (an unsatisfied dependency marked `(blocked)`), what blocks it, what depends on it and any open slivers holding it; the history pane shows its last 20 entries newest first, in the format of `slicer log --item`. In either pane `e` says it is read-only and `tab` stays in the queue. See [tui.md](docs/tui.md#dependencies-and-history).
 
 ### Changed
