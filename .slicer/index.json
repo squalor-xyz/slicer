@@ -12232,10 +12232,33 @@
       "id": "s347",
       "title": "TUI history pane scrolls through the item's whole history",
       "short_title": "TUI history pane scrolls through the item's whole history",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "1441f022-211e-4ae1-a311-160849046ab1",
+          "kind": "",
+          "text": "**2026-10-17** — VERDICT: FAIL - CHANGELOG s278 entry still says 20 entries and tab stays in the queue, contradicting the new entry",
+          "created_at": "2026-10-17T20:23:37Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "8f11e193-130e-4da8-a6ec-c99c971827f2",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: the TUI history pane shows the item's whole history; tab focuses it, j/k and arrows scroll it (clamped in draw like board_at), and selecting another item or cycling i resets the offset; e stays read-only. 8 new tests in tests/test_tui.py, 13 mutations red; full suite 2396 OK (1 skipped); gate VERDICT: PASS.",
+          "created_at": "2026-10-17T20:25:48Z",
+          "attempt": 2,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12255,7 +12278,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 2
       }
     },
     {

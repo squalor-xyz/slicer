@@ -38,19 +38,21 @@ author, a verifier or an expiry, a line with its trust tier and that metadata.
 
 ### Dependencies and history
 
-`i` cycles the detail pane between the details above, the item's dependencies and its recent
+`i` cycles the detail pane between the details above, the item's dependencies and its whole
 history, and back. The pane heading names the one on screen, and the choice lasts for the
 session: moving down the queue keeps the pane, so you can read each item's dependencies or
-history in turn. Both panes are read-only. `e` says so, `tab` stays in the queue, and `i` returns
-to the details. On a roadmap prose block `i` shows a message and keeps the details, because prose
-has no dependencies or history.
+history in turn. Both panes are read-only; `e` says so. `tab` switches focus between the queue and
+history; `j`/`k` or arrows scroll history while it has focus. `tab` stays in the queue for
+dependencies. Selecting another item or cycling `i` resets the history scroll position. On a
+roadmap prose block `i` shows a message and keeps the details, because prose has no dependencies
+or history.
 
 The dependencies pane shows the same data as [`slicer deps ID`](commands.md) (its `blocked_by`
 appears only in `--json`): what the item `waits on` (a dependency that is not yet satisfied is
 marked `(blocked)`), what it is `blocked by` (the unsatisfied dependencies, then any open slivers,
 which is what puts the `!` on its queue row), what it is `depended on by`, and, when it has open
 slivers, a `held by slivers` line.
-The history pane shows the item's last 20 entries, newest first, in the format of
+The history pane shows all of the item's entries, newest first, in the format of
 [`slicer log --item ID`](commands.md): time, ID, action, status change, note and who acted. So the
 last start, handoff and reject of a relay show without leaving the TUI. A line wider than the pane
 is cut at the screen edge. If the history file is damaged, the pane shows the error in its place
