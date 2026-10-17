@@ -12052,10 +12052,22 @@
       "id": "s343",
       "title": "The relay Setup says recommend can leave a role unmatched",
       "short_title": "The relay Setup says recommend can leave a role unmatched",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e953403e-84bf-48bf-98cb-a106c6278f5c",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: the relay Setup text now says recommend resolves each role, the orchestrator included, to its first matching row and reports a role no row matches as unmatched (`(no matching row)` in the text, `unmatched` in the JSON), and that --select takes only a row that matches the slice. Tests: affected 208 OK; full suite 2375 OK (skipped=1); slicer check and git diff --check clean; gate VERDICT: PASS.",
+          "created_at": "2026-10-17T19:42:56Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12075,7 +12087,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
