@@ -50,6 +50,7 @@ class MergeGuardTests(unittest.TestCase):
       for command in (("show", "S01"), ("import", "--skeleton"),
                       ("import", "draft.md", "--dry-run"),
                       ("remove", "S01", "--purge", "--dry-run"),
+                      ("retire", "S01", "--reason", "obsolete", "--dry-run"),
                       ("render",), ("sync", "--check")):
         with self.subTest(command=command):
           code, _, err = repo.run(*command)

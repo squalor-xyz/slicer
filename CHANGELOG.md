@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer retire ID --reason TEXT` retires an item exactly as `slicer remove ID --reason TEXT` does: the same status, slice move, history entry, JSON payload, `--dry-run` preview and error codes, with `command` set to `retire` in an error envelope. It takes `--force`, `--render`, `--strict` and `--json` as `remove` does, and has no `--purge`: `remove ID --purge` still deletes an item. See [commands.md](docs/commands.md).
+
 ### Fixed
 
 - `edit`, `set`, `start` and `note` with a catalog record's id (for example `C01`, copied from `catalog list`) still exit 2 with `no_such_item`, and now say the id is a catalog record of its kind and name `slicer catalog show ID`, as `show` does. In a batch, the first id that is not a roadmap item decides: a catalog record gets the hint, anything else keeps the plain `no such item` message.

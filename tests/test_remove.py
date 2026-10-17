@@ -330,6 +330,83 @@ class RemoveCliTests(unittest.TestCase):
       self.assertEqual(payload["fields"]["reason"], "obsolete")
 
 
+def _history_without_time(repo: support.TempRepo) -> list[dict[str, object]]:
+  """The log with its timestamps taken out, so two fixtures made at different seconds compare."""
+  return [{k: v for k, v in entry.to_dict().items() if k != "when"} for entry in repo.state().history()]
+
+
+class RetireCommandTests(unittest.TestCase):
+  """`retire ID --reason TEXT` is `remove --reason` under the name the docs and render use."""
+
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    support.make_mini(repo)
+    repo.run("init")
+    repo.run("migrate", "--from", "docs/slices")
+    return repo
+
+  def test_Retire_Reason_SameStateAsRemoveReason(self) -> None:
+    with self.repo() as retired, self.repo() as removed:
+      code, out_retire, err = retired.run("retire", "S02", "--reason", "superseded by S03", "--json")
+      self.assertEqual((code, err), (0, ""))
+      code, out_remove, err = removed.run("remove", "S02", "--reason", "superseded by S03", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(json.loads(out_retire), json.loads(out_remove))
+      self.assertEqual(retired.read(".slicer/index.json"), removed.read(".slicer/index.json"))
+      self.assertEqual(_history_without_time(retired), _history_without_time(removed))
+      self.assertIn(("S02", "retire", "retired"),
+                    [(e.item, e.action, e.to) for e in retired.state().history()])
+
+  def test_Retire_NoReason_Usage(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("retire", "S02")
+      self.assertEqual(code, 2)
+      self.assertIn("required: --reason", err)
+      self.assertEqual(repo.state().index.require("S02").status, "open")
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+
+  def test_Retire_Purge_NotAccepted(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("retire", "S02", "--reason", "obsolete", "--purge")
+      self.assertEqual(code, 2)
+      self.assertIn("unrecognized arguments: --purge", err)
+      self.assertEqual(repo.state().index.require("S02").status, "open")
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+
+  def test_Retire_DryRun_PreviewsAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("retire", "S02", "--reason", "obsolete", "--dry-run")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("would be retired", out)
+      self.assertEqual(repo.state().index.require("S02").status, "open")
+      self.assertTrue((repo.root / ".slicer/slices/S02.json").is_file())
+
+  def test_Retire_DoneItem_NeedsForce(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("retire", "S01", "--reason", "obsolete")
+      self.assertEqual(code, 2)
+      self.assertIn("--force", err)
+      self.assertEqual(repo.state().index.require("S01").status, "done")
+      self.assertEqual(repo.run("retire", "S01", "--reason", "obsolete", "--force")[0], 0)
+      self.assertEqual(repo.state().index.require("S01").status, "retired")
+
+  def test_Retire_StrictRender_RendersAndMovesTheFile(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("retire", "S02", "--reason", "superseded", "--render", "--strict")
+      self.assertEqual((code, err), (0, ""))
+      self.assertIn("rendered", out)
+      self.assertEqual(repo.state().index.require("S02").status, "retired")
+      self.assertTrue((repo.root / ".slicer/slices/retired/S02.json").is_file())
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Retire_UnknownItemJson_ErrorNamesRetire(self) -> None:
+    with self.repo() as repo:
+      code, out, _ = repo.run("retire", "S99", "--reason", "obsolete", "--json")
+      self.assertEqual(code, 2)
+      error = json.loads(out)["error"]
+      self.assertEqual((error["code"], error["command"]), ("no_such_item", "retire"))
+
+
 class RetiredStatusConfigTests(unittest.TestCase):
   BASE = {
     "version": 1,
