@@ -11872,7 +11872,7 @@
       "id": "s339",
       "title": "Agent instructions explain the blocked marker in list rows",
       "short_title": "Agent instructions explain the blocked marker in list rows",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
