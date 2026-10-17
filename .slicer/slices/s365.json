@@ -1,0 +1,41 @@
+{
+  "id": "s365",
+  "title": "ai relay-brief: no-slice code, template default and module home",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s322 relay 2026-10-17: relay-brief returns `unspecified` for an item with no slice; projects created before s322 list relay-brief.md as missing until `template reset`; ai.py calls the private `ops._missing_spec` and now imports ops, render, roles, store and templates",
+  "size": "S",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the brief's content or placeholders.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Owner questions from s322:\n- `ai relay-brief` returns `unspecified` for an item with no slice, an exception to the docs/agents.md rule that the no-slice case is `no_slice`. Keep or switch?\n- Projects created before s322 show `relay-brief.md` as missing (`customized: true`) until `template reset`. Treat a missing new default template as the default instead?\nCode shape: `ai.py`, the onboarding module, now reaches into `ops._missing_spec` and four state modules. Moving `relay_brief` to a module that already reads state, or making `_missing_spec` public, keeps `ai.py` text-only."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`, `src/slicer/templates.py`, `src/slicer/ops.py`; `tests/test_ai.py`, `tests/test_templates.py`; `docs/agents.md`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Per the owner's answers: `test_AiRelayBrief_NoSlice_IsNoSlice`, `test_TemplateList_NewDefaultMissing_NotCustomized`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Wait for the owner (flagged needs-owner).\n2. Apply the answers; move `relay_brief` out of `ai.py` or make the helper public."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

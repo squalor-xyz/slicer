@@ -1,0 +1,39 @@
+{
+  "id": "s360",
+  "title": "affected.py record() keeps its clean probe before discover",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s355 relay 2026-10-17: record() in tests/affected.py takes its clean probe before its own discover, but no mutation test covers that order (s355 pinned the suite-side probe only)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "tests",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing map borrowing or the clean field.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s355 pinned the clean probe at the start of the full discover that `tests/support.py` drives. `record()` in `tests/affected.py` has its own probe-then-discover order, and moving that probe after the discover probably passes the suite, so a tree cleaned mid-run could be recorded as clean."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/test_affected.py`: a test where the tree is dirty when `record()` starts and clean when it finishes records `clean: false`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RecordCommand_DirtyAtStartCleanAtEnd_NotClean` (red under the probe-after mutation)."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Confirm the gap by mutation first; if a test already goes red, record that in the note and close the slice.\n2. Otherwise write the test and confirm it goes red under the mutation."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

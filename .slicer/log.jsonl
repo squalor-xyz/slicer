@@ -2003,3 +2003,19 @@
 {"when": "2026-10-17T23:22:20Z", "item": "s323", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:30:14Z", "item": "s322", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 3ad67e3); full suite OK after the merge commits.", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:30:15Z", "item": "s323", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 17bea64; ai.py instructions conflict with s328 resolved by keeping both texts); full suite OK after the merge commits.", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:30:21Z", "item": "s356", "action": "add", "from": "", "to": "open", "note": "Relay board keeps the outcome when it drops cells on a narrow screen"}
+{"when": "2026-10-17T23:30:21Z", "item": "s357", "action": "add", "from": "", "to": "open", "note": "promote refuses a source item's parent and discovered_from"}
+{"when": "2026-10-17T23:30:21Z", "item": "s358", "action": "add", "from": "", "to": "open", "note": "Relay contract records a failed review on a started item"}
+{"when": "2026-10-17T23:30:21Z", "item": "s359", "action": "add", "from": "", "to": "open", "note": "Docs and hints catch up with v1.14's commands"}
+{"when": "2026-10-17T23:30:21Z", "item": "s360", "action": "add", "from": "", "to": "open", "note": "affected.py record() keeps its clean probe before discover"}
+{"when": "2026-10-17T23:30:21Z", "item": "s361", "action": "add", "from": "", "to": "open", "note": "Lazy slice loading: corrupt bodies, misnamed files and moved files"}
+{"when": "2026-10-17T23:30:21Z", "item": "s362", "action": "add", "from": "", "to": "open", "note": "slicer land refuses a non-branch ref and prints root-anchored commands"}
+{"when": "2026-10-17T23:30:21Z", "item": "s363", "action": "add", "from": "", "to": "open", "note": "TUI relay request: which marked statuses drop out"}
+{"when": "2026-10-17T23:30:21Z", "item": "s364", "action": "add", "from": "", "to": "open", "note": "check's merge hint fires only on a merge-shaped stale render"}
+{"when": "2026-10-17T23:30:21Z", "item": "s365", "action": "add", "from": "", "to": "open", "note": "ai relay-brief: no-slice code, template default and module home"}
+{"when": "2026-10-17T23:30:28Z", "item": "pass.v1.15", "action": "prose", "from": "", "to": "v1.15", "note": "add-pass"}
+{"when": "2026-10-17T23:30:28Z", "item": "s361", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
+{"when": "2026-10-17T23:30:28Z", "item": "s363", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
+{"when": "2026-10-17T23:30:28Z", "item": "s364", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
+{"when": "2026-10-17T23:30:28Z", "item": "s365", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
+{"when": "2026-10-17T23:30:28Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Open owner question: should land take --owner, as done does?", "by": "Jon Robbins"}

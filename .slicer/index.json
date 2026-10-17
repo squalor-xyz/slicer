@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 356,
+  "next_id": 366,
   "preamble": "",
   "passes": [
     {
@@ -62,6 +62,12 @@
     {
       "key": "v1.14",
       "heading": "v1.14.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.15",
+      "heading": "",
       "intro": "",
       "outro": ""
     },
@@ -12780,6 +12786,326 @@
         "urgency": 1,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s356",
+      "title": "Relay board keeps the outcome when it drops cells on a narrow screen",
+      "short_title": "Narrow relay board keeps the outcome",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s357",
+      "title": "promote refuses a source item's parent and discovered_from",
+      "short_title": "promote keeps parent and discovered_from",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s328 relay 2026-10-17: a promote source silently drops `parent` and `discovered_from`, as it dropped `short_title` before s328's fix",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s358",
+      "title": "Relay contract records a failed review on a started item",
+      "short_title": "Relay review FAIL record matches the item status",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s328 and s323 relays 2026-10-17: contract v5 says a failed review is `slicer reject`, but handoff now runs after PASS, so the item is `started` at review time and reject refuses it (\"only review work can be rejected\")",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s359",
+      "title": "Docs and hints catch up with v1.14's commands",
+      "short_title": "Docs name retire, land hint and note --render",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s329, s325 and s351 relays 2026-10-17: mutating-command lists omit retire and handoff; the check troubleshooting row predates the roadmap-only hint; the missing-note-kind handoff refusal suggests a note without --render",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s360",
+      "title": "affected.py record() keeps its clean probe before discover",
+      "short_title": "affected.py record probe order is tested",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "s355 relay 2026-10-17: record() in tests/affected.py takes its clean probe before its own discover, but no mutation test covers that order (s355 pinned the suite-side probe only)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s361",
+      "title": "Lazy slice loading: corrupt bodies, misnamed files and moved files",
+      "short_title": "Lazy loading edge cases",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [
+          "needs-owner"
+        ],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s312 relay 2026-10-17: done/remove/start/park now succeed on an item whose slice body is corrupt; a lookup by an id that lives only in a misnamed file misses before a full load; a State held across an external move raises a raw FileNotFoundError",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s362",
+      "title": "slicer land refuses a non-branch ref and prints root-anchored commands",
+      "short_title": "land checks the ref and prints absolute commands",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [
+        {
+          "id": "911a85da-7065-45d8-a850-948760a09e45",
+          "kind": "",
+          "text": "**2026-10-17** — Open owner question: should land take --owner, as done does? The rest of the slice is actionable.",
+          "created_at": "2026-10-17T23:30:28Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s327 relay 2026-10-17: `--branch` accepts the checked-out branch, a tag, a sha or refs/heads/NAME, so the merged check passes vacuously; the printed `git add -A .slicer` is relative to the shell's cwd while `git worktree remove PATH` is absolute",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s363",
+      "title": "TUI relay request: which marked statuses drop out",
+      "short_title": "TUI request drops marks by status",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [
+          "needs-owner"
+        ],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s353 relay 2026-10-17: `Q` silently drops marks on done and retired items; parked, handed-off and in-review marks stay; a done item selected with no marks is still requested",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s364",
+      "title": "check's merge hint fires only on a merge-shaped stale render",
+      "short_title": "Merge hint only for content drift",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [
+          "needs-owner"
+        ],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s365",
+      "title": "ai relay-brief: no-slice code, template default and module home",
+      "short_title": "relay-brief follow-ups",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [
+          "needs-owner"
+        ],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s322 relay 2026-10-17: relay-brief returns `unspecified` for an item with no slice; projects created before s322 list relay-brief.md as missing until `template reset`; ai.py calls the private `ops._missing_spec` and now imports ops, render, roles, store and templates",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

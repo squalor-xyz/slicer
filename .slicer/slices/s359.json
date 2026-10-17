@@ -1,0 +1,39 @@
+{
+  "id": "s359",
+  "title": "Docs and hints catch up with v1.14's commands",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s329, s325 and s351 relays 2026-10-17: mutating-command lists omit retire and handoff; the check troubleshooting row predates the roadmap-only hint; the missing-note-kind handoff refusal suggests a note without --render",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** new commands or error codes.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Three small drifts from v1.14:\n- the prose lists of mutating commands name `remove` but not `retire` (s329) or `handoff`: docs/commands.md around 195, docs/agents.md around 561, docs/how-it-works.md around 153 and 294, and the `_strict_flag` docstring in cli.py;\n- the docs/commands.md troubleshooting row for a stale render does not mention s325's roadmap-only merge hint;\n- the handoff refusal for a missing `handoff_requires_note_kind` note (ops.py, handoff) suggests `slicer note ... --kind ...` without `--render`, the same gap s351 closed in the relay text."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/commands.md`, `docs/agents.md`, `docs/how-it-works.md`, `src/slicer/cli.py` (docstring), `src/slicer/ops.py` (message only; code `state` unchanged).\n- `tests/test_errors.py` for the message; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Handoff_MissingRequiredNoteKind_SuggestsRender`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; watch it go red; fix the message.\n2. Update the lists and the troubleshooting row.\n3. CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

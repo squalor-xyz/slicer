@@ -1,0 +1,41 @@
+{
+  "id": "s363",
+  "title": "TUI relay request: which marked statuses drop out",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s353 relay 2026-10-17: `Q` silently drops marks on done and retired items; parked, handed-off and in-review marks stay; a done item selected with no marks is still requested",
+  "size": "S",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** persisting marks, or a mark column.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s353 made `Q` leave out marks on finished items (done, retired) and chose to drop them rather than flag them. Three questions are left:\n- should parked, handed-off and in-review marks drop out too;\n- should `Q` say which marks it dropped (a notify naming the ids);\n- a done item selected with no marks is still requested, while the same item marked is left out.\nAlso: queue rows lose alignment past 999 rows (the number slot grows from 3 to 4 cells)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` (`View._open_request`, `item_rows`); `tests/test_tui.py`; `docs/tui.md`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Written after the owner decides: `test_RelayRequest_DroppedMarks_NotifyNamesIds`, and per-status tests for the chosen set."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Wait for the owner's answer (flagged needs-owner).\n2. Apply the chosen status set and the notify; make the unmarked selected item follow the same rule."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

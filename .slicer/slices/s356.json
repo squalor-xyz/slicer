@@ -1,0 +1,39 @@
+{
+  "id": "s356",
+  "title": "Relay board keeps the outcome when it drops cells on a narrow screen",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the multi-item status format (s352), colors, or the queue pane.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "docs/tui.md (relay board section) says the outcome and status cell takes priority over the elapsed cells. `_place` in `src/slicer/tui.py` drops a cell that does not fit and keeps placing the later, shorter ones, so a narrow board shows `10m00s` with no outcome. A single-item run with a long label hits this at width 24. s352's longer multi-item cell hits it up to width 34."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`, `_place` and the ended-line caller: once the outcome/status cell is dropped, drop the lower-priority cells after it too, or shorten them first; follow the docs' priority order.\n- `tests/test_tui.py`; `CHANGELOG.md` under Fixed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_BoardLines_EndedNarrowWidth_NoElapsedWithoutOutcome`: a multi-item ended run at width 30 shows no elapsed cell unless the outcome cell is shown.\n- `test_BoardLines_EndedWideWidth_KeepsAllCells`: unchanged layout at width 80."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch the first go red.\n2. Enforce the priority in `_place` (or at its caller) without changing wide layouts.\n3. CHANGELOG; mutation-check (old skip-and-continue rule)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

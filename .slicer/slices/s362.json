@@ -1,0 +1,39 @@
+{
+  "id": "s362",
+  "title": "slicer land refuses a non-branch ref and prints root-anchored commands",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s327 relay 2026-10-17: `--branch` accepts the checked-out branch, a tag, a sha or refs/heads/NAME, so the merged check passes vacuously; the printed `git add -A .slicer` is relative to the shell's cwd while `git worktree remove PATH` is absolute",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** running git writes from slicer (the allowlist stays closed).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer land` checks that a branch is merged and marks its slice done, then prints the git commands to finish. Two gaps:\n- `--branch` takes any ref. With the checked-out branch, a tag or a sha the ancestor check is trivially true and the printed `git branch -d` fails.\n- With `slicer --root OTHER land` run from elsewhere, the printed `git add -A .slicer` points at the wrong tree.\nOpen question for the owner: should `land` also take `--owner`, as `done` does?"
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/land.py`, `src/slicer/vcs.py` (a read-only `rev-parse --verify refs/heads/NAME` through the existing allowlist forms if one fits); `tests/test_land.py`; `docs/landing.md`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Land_BranchIsCurrentHead_Refuses`\n- `test_Land_TagNotBranch_Refuses`\n- `test_Land_OtherRoot_PrintsRootAnchoredAdd`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Refuse unless `refs/heads/BRANCH` resolves and is not HEAD's branch (stable code, documented in docs/agents.md).\n3. Print `git -C ROOT add -A .slicer` (or an absolute path).\n4. `--owner` only if the owner says so."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

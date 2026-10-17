@@ -1,0 +1,41 @@
+{
+  "id": "s361",
+  "title": "Lazy slice loading: corrupt bodies, misnamed files and moved files",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s312 relay 2026-10-17: done/remove/start/park now succeed on an item whose slice body is corrupt; a lookup by an id that lives only in a misnamed file misses before a full load; a State held across an external move raises a raw FileNotFoundError",
+  "size": "M",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** reverting lazy loading (owner decision (a), 2026-10-16).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s312 loads slice bodies on first access. Three behaviours changed or appeared:\n- `done`, `remove`, `start` and `park` now succeed on an item whose slice body is corrupt; before s312 the whole load refused. ARCHITECTURE.md says so; the CHANGELOG does not name those commands.\n- Before a full load, an id that lives only inside a misnamed slice file (its stem differs) is not found. `verify` still reports the file.\n- A State held across an external move of a slice file gets a raw `FileNotFoundError` from `jsonio.read`, not `corrupt`.\nThe first two are trade-offs the owner has to accept or reverse; the third is a bug."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/store.py` (lazy read path), `src/slicer/jsonio.py` if the error is mapped there; `CHANGELOG.md`.\n- `tests/test_store_lazy.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_LazyBody_FileMovedAfterLoad_ReportsCorrupt` (or `io`, as the owner decides).\n- Owner-dependent: `test_Done_CorruptBody_Refuses` if the owner wants the old refusal back for mutating commands."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Wait for the owner's answers on the first two points (flagged needs-owner).\n2. Map the missing file to a SlicerError with a stable code.\n3. Name the affected commands in the CHANGELOG entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

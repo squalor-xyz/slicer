@@ -1,0 +1,41 @@
+{
+  "id": "s364",
+  "title": "check's merge hint fires only on a merge-shaped stale render",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders",
+  "size": "S",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the hint text, or `stale_render_kind` values.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s325's hint says the stale roadmap render is \"as a merge leaves it\". It also prints for a missing render file or an old render format, which are not merges, although `slicer render` is still the fix. The owner decides whether the hint should require every stale cause to be `content`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/check.py` (`merge_shape`); `tests/test_check.py`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Check_RoadmapMissing_NoMergeHint`\n- `test_Check_RoadmapRendererFormat_NoMergeHint`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Wait for the owner (flagged needs-owner).\n2. If yes: require every `stale_render_details` cause to be `content` in `merge_shape`."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
