@@ -593,9 +593,13 @@ the run's events from every local file it reads, this checkout's and its sibling
 shared ledger does not hold yet, then appends the end event; its text names the count
 (`ended RUN pass; absorbed 2 events from local ledgers`). An event that would not fold (a
 timestamp or phase that does not exist) is not copied, and a local file that cannot be read
-is skipped; one stderr line names both, so the shared ledger stays sound. A `step` that goes
-to the shared ledger copies the run's local events first when the shared ledger holds no begin
-for the run, or when its `--parent` is a step only a local file holds, for the same reason.
+is skipped; one stderr line names both, so the shared ledger stays sound. A step whose parent
+no copied event holds (the parent sat in a local file that could not be read, or was not copied)
+is still copied, without that parent: the shared ledger folds a step only beside its parent. One
+stderr line per such step names it and the parent it lost, and `relay-run list` shows it as a
+root step. A `step` that goes to the shared ledger copies the run's local events first when the
+shared ledger holds no begin for the run, or when its `--parent` is a step only a local file
+holds, for the same reason.
 Because the copies are in the shared ledger, `git worktree remove` loses no step. The
 local files are left as they are.
 If `end` itself runs sandboxed it ends the run in the local file and absorbs nothing;

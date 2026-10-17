@@ -625,6 +625,17 @@ def _say_skipped(report: ops.LedgerReport) -> None:
     print(f"slicer: not copied to the shared relay-run ledger: {'; '.join(parts)}", file=sys.stderr)
 
 
+def _say_orphaned(report: ops.LedgerReport) -> None:
+  """One stderr line per step copied without its parent, so a step that `list` shows as a root
+  is not a surprise: the parent is in no ledger the copy held."""
+  for step, parent in report.orphaned:
+    print(
+      f"slicer: step {step} copied to the shared relay-run ledger without its parent {parent}, "
+      "which no copied ledger holds; `relay-run list` shows it as a root step",
+      file=sys.stderr,
+    )
+
+
 def cmd_relay_run_begin(args: argparse.Namespace) -> int:
   """Not a roadmap write: `ops` takes the project lock and appends to the ledger only."""
   report = ops.LedgerReport()
@@ -645,6 +656,7 @@ def cmd_relay_run_step(args: argparse.Namespace) -> int:
   )
   _say_fallback(report)
   _say_skipped(report)
+  _say_orphaned(report)
   _emit_run(args, {"run": run.to_dict(), "step": step.to_dict()}, step.id)
   return OK
 
@@ -654,6 +666,7 @@ def cmd_relay_run_end(args: argparse.Namespace) -> int:
   run = ops.relay_run_end(_run_root(args), args.run, args.outcome, report=report)
   _say_fallback(report)
   _say_skipped(report)
+  _say_orphaned(report)
   text = f"ended {run.id} {run.outcome}"
   if report.absorbed:
     text += f"; absorbed {_count_of(report.absorbed, 'event')} from local ledgers"

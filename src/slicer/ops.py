@@ -2974,6 +2974,8 @@ class LedgerReport:
   absorbed: int = 0  # local events copied into the shared ledger
   unreadable: list[Path] = field(default_factory=list)  # local ledgers skipped as damaged
   invalid: int = 0  # local events not copied because they would not fold
+  # (step, parent) pairs copied without a parent that no copied event holds
+  orphaned: list[tuple[str, str]] = field(default_factory=list)
 
 
 def _denied(exc: OSError) -> bool:
@@ -3094,12 +3096,25 @@ def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
 
 
 def _absorb(root: Path, ledger: Ledger, run_id: str) -> None:
-  """Copy the run's events from the local ledgers into the shared one, those not yet there."""
-  have = {relayrun.event_key(event) for _, event in relayrun.read_events(relayrun.ledger_path(root))}
+  """Copy the run's events from the local ledgers into the shared one, those not yet there.
+
+  A step whose parent no copied event holds is copied without that parent, and listed in
+  `ledger.report.orphaned`. The shared ledger folds a step only beside its parent, so the
+  dangling reference would make the whole ledger `corrupt`; the parent's own record sits in a
+  local file this call could not read, or in none.
+  """
+  shared = relayrun.read_events(relayrun.ledger_path(root))
+  have = {relayrun.event_key(event) for _, event in shared}
   events, damaged, invalid = relayrun.local_run_events(root, run_id)
   ledger.report.unreadable = damaged
   ledger.report.invalid = invalid
+  held = [event for _, event in shared if event["run"] == run_id]
+  steps = {str(event["step"]) for event in [*held, *events] if event["event"] == "step"}
   for event in events:
+    lost = ""
+    if event["event"] == "step" and event["parent"] and str(event["parent"]) not in steps:
+      lost = str(event["parent"])
+      event = {**event, "parent": ""}
     key = relayrun.event_key(event)
     if key in have:
       continue
@@ -3107,6 +3122,8 @@ def _absorb(root: Path, ledger: Ledger, run_id: str) -> None:
       return
     have.add(key)
     ledger.report.absorbed += 1
+    if lost:
+      ledger.report.orphaned.append((str(event["step"]), lost))
 
 
 def relay_run_begin(
