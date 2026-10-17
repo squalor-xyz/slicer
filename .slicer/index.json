@@ -11368,7 +11368,7 @@
       "id": "s325",
       "title": "check says when only the roadmap render is stale, as after a merge",
       "short_title": "check says when only the roadmap render is stale, as after a merge",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
