@@ -184,6 +184,25 @@ class PassGroupTests(unittest.TestCase):
     repo.run("migrate", "--from", "docs/slices")
     return repo
 
+  def test_AddPass_ItemsAlreadyInPass_TextCountsThem(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("set", "S01", "--pass", "vX")
+      self.assertEqual(code, 0, err)
+      code, out, err = repo.run("prose", "add-pass", "vX")
+      self.assertEqual(code, 0, err)
+      self.assertIn("created pass vX for 1 existing item(s)", out)
+      self.assertNotIn("no items yet", out)
+      self.assertNotIn("file items with", out)
+
+  def test_AddPass_NoItems_TextUnchanged(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("prose", "add-pass", "vX")
+      self.assertEqual(code, 0, err)
+      self.assertIn(
+        "created pass vX (no items yet); file items with `slicer add --pass vX`",
+        out,
+      )
+
   def test_AddPass_NoItems_StillRendersItsHeadingAndIntro(self) -> None:
     with self.repo() as repo:
       repo.run("prose", "add-pass", "9", "--heading", "# Pass nine")

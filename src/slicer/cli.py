@@ -2849,10 +2849,16 @@ def cmd_prose_edit(args: argparse.Namespace) -> int:
 def cmd_prose_add_pass(args: argparse.Namespace) -> int:
   state = _state(args)
   info = ops.add_pass(state, args.key, heading=args.heading or "", after=args.after)
+  item_count = sum(1 for item in state.index.items if item.pass_key == info.key)
+  text = (
+    f"created pass {info.key} for {item_count} existing item(s)"
+    if item_count
+    else f"created pass {info.key} (no items yet); file items with `slicer add --pass {info.key}`"
+  )
   _emit(
     args,
     info.to_dict(),
-    f"created pass {info.key} (no items yet); file items with `slicer add --pass {info.key}`",
+    text,
   )
   return OK
 

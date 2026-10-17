@@ -11076,10 +11076,22 @@
       "id": "s321",
       "title": "add-pass counts the items already in the pass",
       "short_title": "add-pass counts items",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2cacebd4-3f90-4edf-a3a7-275266123e68",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: add-pass reports the count of existing items in the pass and keeps the zero-item text. The new test failed against the old line at test_prose.py:193; the old-line mutation also failed there. Affected tests: 63 passed. Full suite: 2,342 passed, 1 skipped. slicer check and git diff --check passed.",
+          "created_at": "2026-10-17T12:49:18Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11099,7 +11111,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
