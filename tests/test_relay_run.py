@@ -1127,6 +1127,44 @@ class SandboxTests(GitLedgerCase):
     got = relayrun.fold(sources, minutes(2), strict=2)
     self.assertEqual([(r.id, len(r.steps)) for r in got], [("r", 1)])
 
+  def test_Fold_ChildLineBeforeParentSameSecond_Folds(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    parent = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    child = relayrun.step_event("r", minutes(1), "2", "start", role="b", agent="B", parent="1")
+    sources = [(Path("one"), [(1, begin), (2, child), (3, parent)])]
+    got = relayrun.fold(sources, minutes(2))
+    self.assertEqual([(s.id, s.parent) for s in got[0].steps], [("1", ""), ("2", "1")])
+
+  def test_Fold_ReversedThreeLevelChainSameSecond_Folds(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    parent = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    child = relayrun.step_event("r", minutes(1), "2", "start", role="b", agent="B", parent="1")
+    grandchild = relayrun.step_event("r", minutes(1), "3", "start", role="c", agent="C", parent="2")
+    sources = [(Path("one"), [(1, begin), (2, grandchild), (3, child), (4, parent)])]
+    got = relayrun.fold(sources, minutes(2))
+    self.assertEqual(
+      [(s.id, s.parent) for s in got[0].steps], [("1", ""), ("2", "1"), ("3", "2")],
+    )
+
+  def test_Absorb_ChildSameSecondAsParent_SharedLedgerFolds(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    parent = relayrun.step_event(
+      run, minutes(1), "1", "start", role="implementer", agent="A",
+    )
+    child = relayrun.step_event(
+      run, minutes(1), "2", "start", role="reviewer", agent="B", parent="1",
+    )
+    # Absorb reads this checkout's child before the sibling's parent.
+    relayrun.append(repo.root, child, path=repo.root / LEDGER)
+    relayrun.append(wt, parent, path=wt / LEDGER)
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual((code, err), (0, ""), out)
+    got = self.listed(repo.root)
+    self.assertEqual(
+      [(s["id"], s["parent"]) for s in got[0]["steps"]], [("1", ""), ("2", "1")],
+    )
+
   def test_RelayRunEnd_AbsorbsLocalStepsIntoShared(self) -> None:
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)

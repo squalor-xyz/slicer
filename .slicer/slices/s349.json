@@ -16,7 +16,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/ops.py`, `_absorb`: sort the events it copies into fold order (time, then the rank `relayrun.fold` uses) before appending.\n- `tests/test_relay_run.py`; `CHANGELOG.md` under Fixed."
+      "body": "- `src/slicer/relayrun.py`, `fold` (and `_rank` if that is where the tie-break lives): among events at the same time and rank, a step's creation folds after its parent's creation, whatever file or line order they arrive in. Owner decision 2026-10-17: fix the fold, not only `_absorb`, so every writer is covered.\n- `tests/test_relay_run.py`; `CHANGELOG.md` under Fixed."
     },
     {
       "heading": "Failing tests",
@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Reproduce with the test above and watch it go red (`corrupt`).\n2. Sort the copied events with the key the fold uses; keep the other absorb paths unchanged.\n3. CHANGELOG; mutation-check (copy in file order again; sort by time only, if rank matters)."
+      "body": "1. Reproduce with the test above and watch it go red (`corrupt`). Add `test_Fold_ChildLineBeforeParentSameSecond_Folds`: one ledger file whose child step creation line precedes its parent's at the same timestamp folds with the child under the parent.\n2. Change the fold's tie-break so a parent's creation always folds before its children (chains included), keeping the existing order for events that are not parent and child. `_absorb` needs no sort of its own.\n3. CHANGELOG; mutation-check (old tie-break; parent ordering applied only one level deep)."
     },
     {
       "heading": "Check",

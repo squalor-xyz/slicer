@@ -1944,3 +1944,9 @@
 {"when": "2026-10-17T21:01:03Z", "item": "s353", "action": "add", "from": "", "to": "open", "note": "TUI relay request leaves out marks on items no longer open"}
 {"when": "2026-10-17T21:01:03Z", "item": "s354", "action": "add", "from": "", "to": "open", "note": "Item commands name catalog show for a catalog record id"}
 {"when": "2026-10-17T21:01:03Z", "item": "s355", "action": "add", "from": "", "to": "open", "note": "affected.py tests pin the clean probe at discover start"}
+{"when": "2026-10-17T21:14:25Z", "item": "s349", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T21:29:12Z", "item": "s349", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-10-17T21:29:15Z", "item": "s349", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-17T21:29:17Z", "item": "s349", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: the (time, rank) sort cannot pass", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:12:32Z", "item": "s349", "action": "note", "from": "", "to": "", "note": "Ready for review: relayrun.fold now folds a step's creation ", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:12:32Z", "item": "s349", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

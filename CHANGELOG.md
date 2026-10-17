@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Relay-run ledgers fold a step's creation after its parent's when both have the same timestamp, including nested subagents, regardless of file or line order. Absorbing child-first local events into the shared ledger no longer makes `relay-run list` report it as corrupt.
+
 ## [1.13.0] - 2026-10-17
 
 ### Added
