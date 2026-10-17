@@ -1362,6 +1362,13 @@ def _sibling_only_lines(rows: list[dict[str, str]]) -> list[str]:
 
 def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.BatchResult) -> None:
   """Expose why candidates were skipped, each category only when non-empty."""
+  if result.held:
+    payload["held"] = result.held
+    lines.append("Held")
+    lines.extend(
+      f"  {entry['id']} {entry['title']} [{', '.join(entry['flags'])}]"
+      for entry in result.held
+    )
   if result.capped:
     payload["capped"] = result.capped
     lines.extend(
@@ -1860,6 +1867,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if i.pass_key == args.pass_key]
   if args.flag:
     items = [i for i in items if set(args.flag) & set(i.flags)]
+  if args.held:
+    items = [i for i in items if ops.held_flags(state, i)]
   elsewhere, only_sibling = store.sibling_work(state.root, state.index)
   hidden_count = 0
   if view is not None:
@@ -2262,6 +2271,17 @@ def cmd_set(args: argparse.Namespace) -> int:
   if args.pass_key:
     for pass_key in state.index.undeclared_pass_keys(items):
       _write_err(args, _undeclared_pass_line(pass_key))
+  return OK
+
+
+def cmd_decide(args: argparse.Namespace) -> int:
+  state = _state(args)
+  if sum((args.text is not None, args.file is not None, args.stdin)) != 1:
+    raise StateError("give the answer with exactly one of --text, --file, or --stdin", code="usage")
+  body = _body_from(args, "")
+  item = ops.decide(state, args.id, body)
+  hint = _render_hint(args)
+  _emit(args, item.to_dict(), f"recorded decision for {item.id}" + (f"; {hint}" if hint else ""))
   return OK
 
 
@@ -3625,6 +3645,7 @@ def build_parser() -> argparse.ArgumentParser:
                   help="only started items, plus reviewing when that status is set")
   sp.add_argument("--review", action="store_true",
                   help="only items in the review status")
+  sp.add_argument("--held", action="store_true", help="only items carrying a configured hold flag")
   sp.add_argument("--discovered-from", help="filter by exact source item ID")
   sp.add_argument("--parent", help="only slivers of this item ID")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
@@ -3752,6 +3773,12 @@ def build_parser() -> argparse.ArgumentParser:
     "check file:line references in slice text; --fix rewrites the moved ones")))
   sp.add_argument("id", nargs="*", help="item ids to scan, whatever their status (default: every open slice)")
   sp.add_argument("--fix", action="store_true", help="rewrite moved references in the lead, boundary and sections; notes are only reported")
+
+  sp = _strict_flag(_render_flag(add("decide", _mutating(cmd_decide), "record an owner decision and clear hold flags")))
+  sp.add_argument("id")
+  sp.add_argument("--text", help="inline answer; cannot combine with --file/--stdin")
+  sp.add_argument("--file", help="read the answer from this file; cannot combine with --text/--stdin")
+  sp.add_argument("--stdin", action="store_true", help="read the answer from stdin; cannot combine with --text/--file")
 
   sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")

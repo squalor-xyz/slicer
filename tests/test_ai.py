@@ -219,7 +219,7 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertIn("started work", window)
     self.assertIn("`draft`", window)
     self.assertIn("`blocked`", window)
-    self.assertIn("not a flag", window)
+    self.assertIn("hold_flags", window)
     self.assertIn("reviewing", window)
 
   def test_Instructions_NamePerCallOwnerForSharedCheckouts(self) -> None:

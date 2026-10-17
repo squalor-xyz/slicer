@@ -152,6 +152,7 @@ class Config:
   done_dir: str = "done"
   retired_dir: str = "retired"
   exclude_flags: list[str] = field(default_factory=list)
+  hold_flags: list[str] = field(default_factory=lambda: ["needs-owner"])
   next_format: str = "**{{id}}** {{title}}"
   next_empty: str = "nothing unmarked"
   later: dict[str, Any] = field(default_factory=lambda: json.loads(json.dumps(DEFAULT_LATER)))
@@ -223,6 +224,10 @@ class Config:
     raise ConfigError(f"unknown status {label!r}; known: {sorted(self.statuses.values())}")
 
   def validate(self) -> None:
+    if not isinstance(self.hold_flags, list) or any(
+      not isinstance(flag, str) or not flag.strip() for flag in self.hold_flags
+    ):
+      raise ConfigError("hold_flags must be a list of nonempty strings")
     if not isinstance(self.note_kinds, list) or any(
       not isinstance(kind, str) or not kind.strip() for kind in self.note_kinds
     ):
@@ -371,6 +376,7 @@ class Config:
       "done_dir": self.done_dir,
       "retired_dir": self.retired_dir,
       "exclude_flags": list(self.exclude_flags),
+      "hold_flags": list(self.hold_flags),
       "pointers": {
         "next_format": self.next_format,
         "next_empty": self.next_empty,
@@ -452,6 +458,7 @@ class Config:
       done_dir=d.get("done_dir", "done"),
       retired_dir=d.get("retired_dir", "retired"),
       exclude_flags=list(d.get("exclude_flags", [])),
+      hold_flags=d.get("hold_flags", ["needs-owner"]),
       next_format=pointers.get("next_format", "**{{id}}** {{title}}"),
       next_empty=pointers.get("next_empty", "nothing unmarked"),
       later=pointers.get("later", json.loads(json.dumps(DEFAULT_LATER))),

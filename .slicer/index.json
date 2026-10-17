@@ -11319,10 +11319,22 @@
       "id": "s323",
       "title": "Items waiting on an owner decision are held out of next",
       "short_title": "Items waiting on an owner decision are held out of next",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e9c538d9-ac0f-497d-ab46-7f5394efeafc",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: hold_flags config (default [\"needs-owner\"], [] disables); next/next --batch/--start skip held items and report them under held; status lists a Held block; list --held; decide ID --text|--file|--stdin writes a decision note and clears every hold flag (usage when none). Docs (configuration, commands, agents, ai instructions, CHANGELOG) updated. Full suite 2455 ran, 0 failures, 1 skipped; slicer check passes; relay gate VERDICT: PASS.",
+          "created_at": "2026-10-17T23:22:19Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11342,7 +11354,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

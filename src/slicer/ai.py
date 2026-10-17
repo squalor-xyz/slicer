@@ -643,6 +643,11 @@ headings. For a row with no spec, use
 dependencies with repeated `--depends-on ID`. To give an existing row its spec, use
 `slicer promote ID --stdin --render --json` with a one-item outline for its lead and
 sections.
+Flag an open owner decision with `slicer set ID --add-flag needs-owner` instead of
+only writing prose. Configured `hold_flags` keep it out of `next` and list it under
+`held`; `status` and `list --held` show the waiting work. Record the owner's answer
+with `slicer decide ID --text "Answer" --render`; it adds a `decision` note and
+clears every hold flag.
 
 """
 
@@ -652,7 +657,7 @@ Do not combine `--ready` and `--show`.
 
 Projects can add statuses in `config.statuses`. `next` offers only open work and
 resumes started work; parked, review, reviewing, and custom statuses `draft` or
-`blocked` stay out. Hold an item back with a custom status, not a flag.
+`blocked` stay out. Configured `hold_flags` also hold items out without changing status.
 
 `start` claims the item. `wt:NAME` marks sibling work, including a sibling
 handoff, and `next` skips it (`in_work_elsewhere`). `slicer list --json` shows

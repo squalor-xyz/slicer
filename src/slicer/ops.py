@@ -1621,10 +1621,16 @@ def reject(state: State, item_id: str, *, note: str, to: str | None = None,
   return reject_many(state, [item_id], note=note, to=to, owner=owner)[0]
 
 
+def held_flags(state: State, item: Item) -> list[str]:
+  """The configured flags holding this item out of selection, in item order."""
+  return [flag for flag in item.flags if flag in state.config.hold_flags]
+
+
 @dataclass
 class NextResult:
   item: Item | None
   blocked: list[tuple[str, list[str]]]
+  held: list[dict[str, object]] = field(default_factory=list)
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   # Eligible items skipped because a sibling worktree has them in work.
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
@@ -1639,6 +1645,7 @@ class BatchResult:
 
   items: list[Item]
   blocked: list[tuple[str, list[str]]]
+  held: list[dict[str, object]] = field(default_factory=list)
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
@@ -1650,6 +1657,7 @@ class BatchResult:
 class _NextPool:
   items: list[Item]
   blocked: list[tuple[str, list[str]]]
+  held: list[dict[str, object]] = field(default_factory=list)
   unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
@@ -1717,6 +1725,7 @@ def _ranked_pool(
     if cfg.started_status:
       active.add(cfg.started_status)
   blocked: list[tuple[str, list[str]]] = []
+  held: list[dict[str, object]] = []
   unspecified: list[tuple[str, list[str]]] = []
   skipped: list[tuple[str, list[dict[str, str]]]] = []
   capped: list[dict[str, int | str]] = []
@@ -1734,6 +1743,10 @@ def _ranked_pool(
     if flags and not any(fnmatchcase(flag, pattern) for flag in item.flags for pattern in flags):
       continue
     if no_flags and any(fnmatchcase(flag, pattern) for flag in item.flags for pattern in no_flags):
+      continue
+    holding = held_flags(state, item)
+    if holding:
+      held.append({"id": item.id, "title": item.title, "flags": holding})
       continue
     pending = graph.pending(state.index, item, cfg)
     if pending:
@@ -1772,7 +1785,7 @@ def _ranked_pool(
     # named row must not relocate empty-pass rows in the default list order.
     ranked = [it for it in graph.ranked_order(state.index, cfg, visible) if it.id in eligible]
   return _NextPool(
-    items=ranked, blocked=blocked, unspecified=unspecified,
+    items=ranked, blocked=blocked, held=held, unspecified=unspecified,
     elsewhere=skipped, capped=capped, claimed_elsewhere=claimed_elsewhere,
   )
 
@@ -1824,6 +1837,7 @@ def next_item(
   return NextResult(
     item=pool.items[offset] if offset < len(pool.items) else None,
     blocked=pool.blocked,
+    held=pool.held,
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
     capped=pool.capped,
@@ -1878,6 +1892,7 @@ def next_batch(
   return BatchResult(
     items=chosen,
     blocked=blocked,
+    held=pool.held,
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
     capped=pool.capped,
@@ -1967,6 +1982,27 @@ def add_note(state: State, item_id: str, text: str, kind: str | None = None, *,
   _append_note(item, text, kind or "", by, expiry)
   state.save_index()
   _record(state, item_id, "note", note=text.splitlines()[0][:60], by=by)
+  return item
+
+
+def decide(state: State, item_id: str, text: str) -> Item:
+  """Keep an owner's answer and release all configured holds in one index save."""
+  item = state.index.require(item_id)
+  if not held_flags(state, item):
+    raise StateError(
+      f"{item_id} has no hold flag; configured hold_flags: {state.config.hold_flags}", code="usage")
+  text = text.strip()
+  if not text:
+    raise StateError("an owner answer cannot be blank", code="usage")
+  by = _note_actor(actor(state))
+  _append_note(item, text, "decision", by)
+  item.flags = [flag for flag in item.flags if flag not in state.config.hold_flags]
+  sl = state.slices.get(item_id)
+  if sl is not None:
+    sl.flags = list(item.flags)
+    state.save_slice(sl)
+  state.save_index()
+  _record(state, item_id, "decide", note=text.splitlines()[0][:60], by=by)
   return item
 
 

@@ -1998,3 +1998,6 @@
 {"when": "2026-10-17T22:25:40Z", "item": "s322", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:20:55Z", "item": "s322", "action": "note", "from": "", "to": "", "note": "Ready for review: `slicer ai relay-brief ID --worktree --bra", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:20:55Z", "item": "s322", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:14:09Z", "item": "s323", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:22:19Z", "item": "s323", "action": "note", "from": "", "to": "", "note": "Ready for review: hold_flags config (default [\"needs-owner\"]", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:22:20Z", "item": "s323", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

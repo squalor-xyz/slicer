@@ -29,6 +29,7 @@ changes through the CLI, and its keys are read back the same way.
   "done_dir": "done",
   "retired_dir": "retired",
   "exclude_flags": [],
+  "hold_flags": ["needs-owner"],
   "pointers": {
     "next_format": "**{{id}}** {{title}}",
     "next_empty": "nothing unmarked",
@@ -105,7 +106,7 @@ default applies again. `KEY` is a top-level key, or a dotted path one level into
 
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
-| `note_kinds` | `[]` | Optional whitelist of nonempty strings for explicit `note --kind` values. Missing or empty permits any nonempty kind. Omitting `--kind` always creates an untyped note | **Yes** |
+| `note_kinds` | `[]` | Optional whitelist of nonempty strings for explicit `note --kind` values. Missing or empty permits any nonempty kind. Omitting `--kind` always creates an untyped note. `decide` writes its built-in `decision` kind even when the whitelist excludes it | **Yes** |
 | `handoff_requires_note_kind` | `""` | Nonempty requires an item note of this exact kind, with nonempty text and the current attempt, before started work can be handed off. Must belong to `note_kinds` when that whitelist is nonempty. Missing or empty keeps existing handoff behavior. Does not change `done` | **Yes**, changes handoff eligibility |
 | `id.prefix` | `"S"` | The id scheme | **Until the first item exists**, with `slicer init --force --id-prefix`; after that, only its case, with `slicer id-prefix`. `slicer config` does not set it. See below |
 | `id.width` | `2` → `S01` | As above | **Until the first item exists**, with `slicer config id.width`; after that `slicer config` refuses it |
@@ -118,7 +119,8 @@ default applies again. `KEY` is a top-level key, or a dotted path one level into
 | `boundary` | `"**Not in this slice:**"` | Seeds the separate boundary field; identifies inline boundaries in older input; `check` warns when the field is empty | Yes, but noisy |
 | `done_dir` | `"done"` | `.slicer/slices/done/`, and the subdirectory `migrate` reads finished slices from | **No — breaking** |
 | `retired_dir` | `"retired"` | `.slicer/slices/retired/` | **No — breaking** |
-| `exclude_flags` | `[]` | Flags that drop an item from the **sync pointers only**. Does not affect `next`, `list` or render. To hold an item out of `next`, give it a custom status (see [Statuses](#statuses)) | **Yes**, re-run `sync` |
+| `hold_flags` | `["needs-owner"]` | Items carrying any of these exact flags stay out of `next`, including batches and review/custom queues. `[]` disables holding. `status` reports held candidates and `list --held` filters items by these flags. `decide` records an answer and clears every matching flag. Missing uses the default; values must be a list of nonempty strings. This is independent of sync pointer exclusions | **Yes** |
+| `exclude_flags` | `[]` | Flags that drop an item from the **sync pointers only**. Does not affect `next`, `list` or render. To hold an item out of `next` without changing its status, use `hold_flags`; a custom status also works (see [Statuses](#statuses)) | **Yes**, re-run `sync` |
 | `pointers.next_format` | `"**{{id}}** {{title}}"` | The `{{next}}` substitution. `{{id}}` and `{{title}}` only | **Yes**, re-run `sync` |
 | `pointers.next_empty` | `"nothing unmarked"` | `{{next}}` when nothing qualifies | **Yes** |
 | `pointers.later` | see above | The `{{later}}` string | **Yes**, re-run `sync` |
@@ -219,8 +221,9 @@ instead be `""`, switching the feature off). Delete `parked` and `later` if you 
 Plain `next` offers only `open_status` and resumes `started_status`. Every other
 status — parked, review, reviewing, and any key you add, such as `draft` or
 `blocked` — stays out of that queue. A reviewer picks review work up with
-`next --status review`. A custom status is how you hold an item back; `exclude_flags`
-does not. `next --status draft` draws from such a queue, and `--start` claims in place
+`next --status review`. To hold an item out of `next` without changing its status,
+use `hold_flags`; a custom status also works. `exclude_flags` affects sync pointers
+only. `next --status draft` draws from such a queue, and `--start` claims in place
 or, with `--start-to KEY`, moves the claimed item.
 
 ### Dependencies and integration
