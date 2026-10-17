@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-342 items · — 18 · done 316 · retired 8
+342 items · — 17 · done 316 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -47,7 +47,7 @@ v1.14.0 release
 | 12 | [s351](slices/s351.md) | The relay closing note renders the slice | S | 1 | slicer | s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render` | — |
 | 13 | [s352](slices/s352.md) | Relay board pairs each status label with its item in a multi-item run | S | 1 | slicer | s331 gate 2026-10-17: in a multi-item run the ended line's status cell lists labels without item ids (tui.py around line 1368) | — |
 | 14 | [s353](slices/s353.md) | TUI relay request leaves out marks on items no longer open | S | 1 | slicer | s285 gate 2026-10-17: marks on items that become done or retired mid-session still go into the request; at 1000+ visible rows `[x]` over a 4-digit queue number leaves one digit showing | — |
-| 15 | [s354](slices/s354.md) | Item commands name catalog show for a catalog record id | S | 1 | slicer | s345 2026-10-17: `show` now names `slicer catalog show ID` for a catalog record id; edit, set, start and note were out of its scope and still say only `no such item` | — |
+| 15 | [s354](slices/s354.md) | Item commands name catalog show for a catalog record id | S | 1 | slicer | s345 2026-10-17: `show` now names `slicer catalog show ID` for a catalog record id; edit, set, start and note were out of its scope and still say only `no such item` | review |
 | 16 | [s355](slices/s355.md) | affected.py tests pin the clean probe at discover start | S | 1 | tests | s344 gate 2026-10-17: no test fails if the clean probe moves after the run (implementer mutation M10 survived); the dirty-then-committed test writes its unclean map by hand | — |
 
 ---

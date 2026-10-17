@@ -65,6 +65,64 @@ class ErrorEnvelopeTests(unittest.TestCase):
       self.assertEqual(err, "slicer: no such item: S99\n")
       self.assertNotIn("catalog", err)
 
+  def assert_names_catalog_show(self, code: int, out: str, err: str) -> None:
+    self.assertEqual(code, 2)
+    error = json.loads(out)["error"]
+    self.assertEqual(error["code"], "no_such_item")
+    self.assertIn("slicer catalog show C01", error["message"])
+    self.assertIn("constraint", error["message"])
+    self.assertIn("slicer catalog show C01", err)
+
+  def test_Edit_CatalogRecordId_NamesCatalogShow(self) -> None:
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("edit", "C01", "--section", "Why", "--text", "x", "--json")
+      self.assert_names_catalog_show(code, out, err)
+
+  def test_Set_CatalogRecordId_NamesCatalogShow(self) -> None:
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("set", "C01", "--size", "M", "--json")
+      self.assert_names_catalog_show(code, out, err)
+
+  def test_Start_CatalogRecordId_NamesCatalogShow(self) -> None:
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("start", "C01", "--json")
+      self.assert_names_catalog_show(code, out, err)
+
+  def test_Note_CatalogRecordId_NamesCatalogShow(self) -> None:
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("note", "C01", "--text", "x", "--json")
+      self.assert_names_catalog_show(code, out, err)
+
+  def test_Start_BatchWithCatalogRecordId_NamesTheMissingId(self) -> None:
+    # S01 is a roadmap item, so the hint names the id that is not one.
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("start", "S01", "C01", "--json")
+      self.assert_names_catalog_show(code, out, err)
+
+  def test_Set_CatalogRecordIdWithNewlineFlag_KeepsItsCode(self) -> None:
+    # A validation error raised before the lookup keeps its own code, not no_such_item.
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, _ = repo.run("set", "C01", "--add-flag", "a\nb", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "newline_in_field")
+
+  def test_ItemCommands_UnknownId_KeepsPlainMessage(self) -> None:
+    # Only a catalog record id gets the hint; an id that is neither keeps the plain line.
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      for argv in (("edit", "S99", "--section", "Why", "--text", "x"), ("set", "S99", "--size", "M"),
+                   ("start", "S99"), ("note", "S99", "--text", "x")):
+        with self.subTest(argv[0]):
+          code, _, err = repo.run(*argv)
+          self.assertEqual(code, 2)
+          self.assertEqual(err, "slicer: no such item: S99\n")
+
   def test_UnknownItem_EveryPath_ReportsTheSameCode(self) -> None:
     # `Index.require` and the `ops.*` guards used to raise different
     # exceptions with different wording for the identical condition.
