@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-331 items · — 28 · done 295 · retired 8
+331 items · — 27 · done 296 · retired 8
 
 v1.14.0 release
 
@@ -96,7 +96,7 @@ v1.12.0 release
 | 47 | [s317](slices/s317.md) | Shared file lock | S | 1 | slicer | s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298 | done |
 | 48 | [s318](slices/s318.md) | No git-dir writes from tests | S | 2 | slicer | s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298 | done |
 | 49 | [s319](slices/s319.md) | Self-contained orchestrator text | S | 2 | slicer | s296 review 2026-10-16: spec Lead vs Files; owner chose inline · discovered from s296 | done |
-| 50 | [s321](slices/s321.md) | add-pass counts items | S | 1 | slicer | dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14 | — |
+| 50 | [s321](slices/s321.md) | add-pass counts items | S | 1 | slicer | dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14 | done |
 | 51 | [s320](slices/s320.md) | Select relay role alternatives across vendors | M | 2 | slicer | Owner request, 2026-10-16: Codex implementer and orchestrator alternatives, automatic selection with overrides, and future bidirectional harness launching. | done |
 | 52 | [s330](slices/s330.md) | The git allowlist drops the unused merge-base --is-ancestor form | S | 1 | slicer | s309 report 2026-10-16: nothing calls merge-base --is-ancestor after tips_outside; owner chose to remove the shape · discovered from s309 | done |
 | 53 | [s332](slices/s332.md) | A sandboxed agent in a worktree can record relay-run steps | M | 2 | slicer | s314 Codex relay 2026-10-16: review and gate ledger entries omitted after sandbox blocks · discovered from s314 | done |
