@@ -49,6 +49,16 @@ flowchart TD
 Both front ends call shared operations for roadmap mutations; `ops` persists them
 through `State` in `store`, backed by `jsonio`. Rendering is a separate projection:
 front ends can invoke it directly, and `ops` also uses it to gate strict mutations.
+`State` loads config and index eagerly, but `State.slices` is a `LazySlices`
+mutable mapping: a single-id lookup, `get` or membership test reads only that
+file and caches its parsed body. `State.slice_files` shares the same discovered
+paths and lazily records paths by contained id. Enumeration, length, keys, values,
+items and `dict(...)` load all bodies in folder order and use contained ids, as
+an eager dict does. An id/filename mismatch on lookup forces that full load so
+verification still reports the mismatch. Draft `copy()` copies the discovered
+paths with independent caches and edits, without forcing reads. TUI reload
+replaces both mappings together.
+
 Generated output never becomes state. `sync` writes configured derived lines in
 project documents outside `ops`. `check` only compares rendering and sync targets
 and composes integrity verification; it does not repair them. None of them reads
@@ -194,6 +204,17 @@ to explain a stale file: `stale_render` stays the sorted list of paths, and
 `unknown_provenance`, `content`). A format mismatch proves the layout differs, not that
 state and templates did not also change; a legacy banner with no format is
 `unknown_provenance`, and its provenance is not guessed.
+
+**Slice errors follow reads.** Loading state only lists live, done and retired
+slice paths; parsing uses the same error codes and file diagnostics on first
+access. A corrupt historical body no longer prevents `next` from selecting open
+work. Moving a slice file does not parse its body; even a corrupt body can
+move with its item, and the lazy path map follows each completed rename.
+An explicit batch `set` reads all target bodies before changing anything, because
+it synchronizes duplicated fields; a corrupt target refuses the whole batch.
+Staged moves keep the old path until the rename is flushed. `render`,
+`check` and `verify` inspect all bodies and still fail on corruption.
+There is no cross-process cache or on-disk layout change.
 
 **Individual JSON writes are atomic.** `jsonio.write` goes through `mkstemp` in the destination
 directory then `os.replace`, and restores the umask default mode, because `mkstemp`

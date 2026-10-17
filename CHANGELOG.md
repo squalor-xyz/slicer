@@ -9,6 +9,17 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Changed
 
 - TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).
+- Slice bodies load on first access. A corrupt slice body is reported with `corrupt` and its filename by commands that read it (`show ID`, `render`, `check`, `verify`), while commands that do not read it (`next`, `list`) no longer fail on it. Slice-file moves do not parse bodies and update lazy lookup paths after renaming. Explicit batch `set` reads its target bodies before any changes, refusing the batch if a target is corrupt. `show ID` avoids reading unrelated bodies; `render`, `check` and `verify` still inspect every body. File layout and rendered output are unchanged.
+
+### Fixed
+
+- `edit`, `set`, `start` and `note` with a catalog record's id (for example `C01`, copied from `catalog list`) still exit 2 with `no_such_item`, and now say the id is a catalog record of its kind and name `slicer catalog show ID`, as `show` does. In a batch, the first id that is not a roadmap item decides: a catalog record gets the hint, anything else keeps the plain `no such item` message.
+- Relay-run ledgers fold a step's creation after its parent's when both have the same timestamp, including nested subagents, regardless of file or line order. Absorbing child-first local events into the shared ledger no longer makes `relay-run list` report it as corrupt.
+
+### Changed
+
+- TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).
+- Slice bodies load on first access. A corrupt slice body is reported with `corrupt` and its filename by commands that read it (`show ID`, `render`, `check`, `verify`), while commands that do not read it (`next`, `list`) no longer fail on it. Slice-file moves do not parse bodies and update lazy lookup paths after renaming. Explicit batch `set` reads its target bodies before any changes, refusing the batch if a target is corrupt. `show ID` avoids reading unrelated bodies; `render`, `check` and `verify` still inspect every body. File layout and rendered output are unchanged.
 
 ### Fixed
 

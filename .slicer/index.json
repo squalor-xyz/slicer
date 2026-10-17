@@ -10855,10 +10855,22 @@
       "id": "s312",
       "title": "Load done slices only when needed",
       "short_title": "Load done slices only when needed",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "f9da0907-17af-4318-bd96-378da20814a7",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: State.slices is a LazySlices mapping; single-id lookups read one slice file, enumeration loads all (render/check/verify unchanged, check passes, render byte-identical). Moves update the lazy path map without reading bodies; batch set pre-reads its targets so a corrupt target refuses before any move; draft copies own their caches and paths. Deliberate change: a corrupt slice body no longer blocks next/list or lifecycle moves (done/remove/start/park); show/render/check/verify still fail with corrupt naming the file. next --json --lean, in-process, main vs s312: 2,000-done fixture 2,003 slice reads 120-131 ms -> 3 reads 54-55 ms; this repo 336 reads 89-137 ms -> 17 reads 76-86 ms (earlier implementer medians under heavy parallel load were noise: fixture 445->790 ms, repo 374->1777 ms). Full suite: 2448 tests OK (1 skipped). Relay gate VERDICT: PASS.",
+          "created_at": "2026-10-17T22:19:25Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -10878,7 +10890,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

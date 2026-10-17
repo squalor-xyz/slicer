@@ -39,7 +39,7 @@ class CorruptStateTests(unittest.TestCase):
   def test_CorruptSlice_IsReported(self) -> None:
     with self.repo() as repo:
       state_file(repo, "slices/S01.json", "not json")
-      error = self.envelope(repo, "list")
+      error = self.envelope(repo, "show", "S01")
       self.assertEqual(error["code"], "corrupt")
       self.assertIn("S01.json", error["message"])
 
@@ -93,7 +93,7 @@ class CorruptStateTests(unittest.TestCase):
     with self.repo() as repo:
       # valid JSON, wrong shape: a section with no heading
       state_file(repo, "slices/S01.json", json.dumps({"id": "S01", "sections": [{"body": "x"}]}))
-      error = self.envelope(repo, "list")
+      error = self.envelope(repo, "show", "S01")
       self.assertEqual(error["code"], "corrupt")
       self.assertIn("S01.json", error["message"])
 

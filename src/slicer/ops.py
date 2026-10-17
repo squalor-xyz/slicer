@@ -32,7 +32,7 @@ from slicer.model import (
   successor_would_cycle,
 )
 from slicer.roles import RoleMatrix, RoleRow, RoleRule, RoleWhen
-from slicer.store import State
+from slicer.store import LazySlices, SliceFiles, State
 
 
 GITATTRIBUTES = """\
@@ -1163,6 +1163,11 @@ def set_fields_many(
   if "parent" in values:
     for item in items:
       _check_parent(state, item.id, values["parent"])
+
+  # Every explicit set syncs duplicated slice fields. Refuse unreadable targets
+  # before changing any status or moving any file in the batch.
+  for item in items:
+    state.slices.get(item.id)
 
   transitions = []
   for item in items:
@@ -2541,8 +2546,9 @@ def apply_outline(
   # Publish the in-memory draft only after the index is saved. A failed
   # interactive save must leave the caller able to correct and retry it.
   original = state
-  state = State(state.root, cfg, deepcopy(state.index), dict(state.slices),
-                dict(state.slice_files))
+  slices = state.slices.copy()
+  state = State(state.root, cfg, deepcopy(state.index), slices,
+                SliceFiles(slices) if isinstance(slices, LazySlices) else dict(state.slice_files))
   # A strict import renders this draft before anything hits disk. The copy
   # has to share the caller's stage, or save_slice writes immediately.
   if original._stage is not None:
@@ -2607,6 +2613,7 @@ def apply_outline(
         path.unlink(missing_ok=True)
     raise
   original.index, original.slices = state.index, state.slices
+  original.slice_files = state.slice_files
   try:
     for (spec, new_id), entry in zip(allocated, report.entries):
       if entry["existing"]:
