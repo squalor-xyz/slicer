@@ -11648,7 +11648,19 @@
       "depends_on": [
         "s332"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "1f5cc19c-d91e-4714-af83-55556fd3516c",
+          "kind": "",
+          "text": "**2026-10-17** — From s340 gate: _absorb is now reached from Ledger.append_shared (missing begin, and since s340 a parent held only locally) as well as relay_run_end; fix the damaged-local-file case in _absorb or local_run_events so all three paths are covered.",
+          "created_at": "2026-10-17T19:54:01Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11925,7 +11937,7 @@
       "id": "s340",
       "title": "A shared step whose parent is only in a local fallback file keeps the shared ledger readable",
       "short_title": "Shared step keeps its local-only parent",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s337"
