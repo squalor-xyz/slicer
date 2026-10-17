@@ -219,6 +219,13 @@ class TuiStyleTests(unittest.TestCase):
     self.assertLessEqual(tui_style.cell_width(text), 8)
     self.assertNotIn("\n", text)
 
+  def test_CellSlice_CombiningMark_StaysWithBase(self) -> None:
+    # The mark takes no cell of its own: it is part of the b in cell 1, and c is in cell 2.
+    text = "ab́c"
+    self.assertEqual(tui_style.cell_slice(text, 1, 2), "b́")
+    self.assertEqual(tui_style.cell_slice(text, 2, 3), "c")
+    self.assertEqual(tui_style.cell_slice(text, 0, 1), "a")
+
   def test_Canvas_UnrelatedCursesFailure_IsNotHidden(self) -> None:
     screen = StyledScreen()
     with patch.object(screen, "addnstr", side_effect=curses.error("unrelated")):

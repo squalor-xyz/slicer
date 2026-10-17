@@ -112,6 +112,24 @@ def cell_width(text: str) -> int:
              for c in text)
 
 
+def cell_slice(text: str, start: int, end: int) -> str:
+  """The characters of `text` that begin in terminal cells `start` up to `end`.
+
+  A combining mark has no cell of its own and stays with the character before it.
+  """
+  out = []
+  cell = 0
+  inside = False
+  for char in text:
+    size = cell_width(char)
+    if size:
+      inside = start <= cell < end
+      cell += size
+    if inside:
+      out.append(char)
+  return "".join(out)
+
+
 class Canvas:
   """One bounds/resize guard shared by every TUI drawing path."""
 
