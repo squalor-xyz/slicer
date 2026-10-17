@@ -38,6 +38,11 @@ class OutlineParseTests(unittest.TestCase):
     self.assertEqual(spec.pass_key, "2")
     self.assertEqual(spec.group, "Phase 0")
 
+  def test_Outline_ShortTitleKey_Parsed(self) -> None:
+    specs = self.parse("## A long descriptive title\nshort_title: Short one\n")
+    self.assertEqual(specs[0].short_title, "Short one")
+    self.assertEqual(specs[0].to_dict()["short_title"], "Short one")
+
   def test_Parse_CommaSeparatedTrees_BecomeAList(self) -> None:
     self.assertEqual(self.parse("## T\ntree: core, cli, docs\n")[0].trees, ["core", "cli", "docs"])
 

@@ -631,12 +631,14 @@ reported problems before applying agreed work with
 Score every item you file instead of leaving the defaults, which rank nothing:
 importance and urgency (1-3), effort (1-3), and size, tree, and findings where the
 project uses them. Give a one-line reason for each score in your reply; the owner
-adjusts them with `set`. For one item, use
-`slicer add "Title" --importance 3 --urgency 2 --effort 1 --render --json`; an
-outline takes the same keys. Add dependencies with repeated `--depends-on ID`.
-A row alone is not a specification: use
-`slicer promote ID --stdin --render --json` with a one-item outline to supply its
-lead and sections. Use the project's configured sections, not assumed headings.
+adjusts them with `set`. To file one item with its fields and spec, pass `import`
+a one-item outline; `--dry-run` first. An outline takes the same keys as `add`,
+`short_title` included, and the sections the project configures, not assumed
+headings. For a row with no spec, use
+`slicer add "Title" --importance 3 --urgency 2 --effort 1 --render --json`; add
+dependencies with repeated `--depends-on ID`. To give an existing row its spec, use
+`slicer promote ID --stdin --render --json` with a one-item outline for its lead and
+sections.
 
 """
 

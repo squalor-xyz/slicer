@@ -11482,10 +11482,22 @@
       "id": "s328",
       "title": "File one item with its spec in one import, short title included",
       "short_title": "File one item with its spec in one import, short title included",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e1830915-2e5b-4085-9c7f-5f50d042de83",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: import outlines take a short_title key (same one-line validation as add --short-title, defaults to the heading); import --skeleton lists every outline key (key, short_title, discovered_from, parent added, trees alias noted); slicer ai instructions, AGENTS.md, docs and CHANGELOG name one-item import with --dry-run first as the way to file an item with fields and spec. A short_title line in a promote source is refused (field_in_promote_source), as before. Full suite 2455 OK (1 skipped); gate VERDICT: PASS.",
+          "created_at": "2026-10-17T23:05:06Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11505,7 +11517,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

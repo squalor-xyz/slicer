@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer import` outlines take a `short_title:` key, which sets the item's short title as `add --short-title` does and defaults to the heading. `slicer import --skeleton` now lists every key the parser accepts (`key`, `short_title`, `discovered_from` and `parent` were missing). `slicer ai instructions` and AGENTS.md name a one-item `import` (with `--dry-run` first) as the way to file an item with its fields and spec in one command. See [import.md](docs/import.md).
+
 ### Changed
 
 - TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).

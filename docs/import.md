@@ -81,6 +81,7 @@ status: parked
 | Key | Meaning |
 |---|---|
 | `key` | Case-sensitive filing identity; one value per entry. A stored key reuses its item |
+| `short_title` | The roadmap row's short title, as `add --short-title` sets it; one line. Defaults to the heading |
 | `size` | Free text; `S`/`M`/`L` by convention |
 | `tree` | Which part of the codebase. Comma-separated, or repeat the key |
 | `findings` | A reference back to whatever raised this |
@@ -198,7 +199,7 @@ Import is all-or-nothing. Everything is validated before a byte is written.
 
 ```console
 $ slicer import roadmap.md
-slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: size, tree, trees, findings, status, pass, group, depends, discovered_from, parent, importance, urgency, effort
+slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: key, short_title, size, tree, trees, findings, status, pass, group, depends, discovered_from, parent, importance, urgency, effort
 ```
 
 **Anything the outline says that does not fit the project** is collected, reported
