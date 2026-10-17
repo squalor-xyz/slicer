@@ -51,7 +51,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `note-verify ID --note-id NOTE [--owner ACTOR]` | verify an item note as a machine actor; supports `--render` and `--strict` |
 | `note-attest ID --note-id NOTE --owner NAME` | attest an item note as `human:NAME`; a workflow convention, not caller authentication; supports `--render` and `--strict` |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
-| `prose add-pass KEY / drop-pass KEY` | open or close a pass group |
+| `prose add-pass KEY / drop-pass KEY` | open or close a pass group; `add-pass` reports how many existing items already use KEY |
 | `goals [--retired]` | print the project's goals and non-goals prose together, plus active goal and non-goal records; `--retired` includes retired ones. JSON keeps `goals` and `non_goals` and adds `records.goal` and `records.non_goal` |
 | `catalog` | add, list, show, edit, retire, and move project-knowledge records (goals, non-goals, requirements, constraints, decisions, assumptions). See [Catalog](#catalog) |
 | `relay-roles show` | print the slice-relay role matrix as Markdown, with row ids in an `ID` column and rule ids before each rule, the same bytes as `.slicer/render/RELAY-ROLES.md` without its banner. Needs a project. Without `.slicer/relay-roles.json` it exits 2 with code `no_relay_roles`. Does not lock or write. See [Relay roles](#relay-roles) |
@@ -387,7 +387,7 @@ templates/*.md       render templates, changed with `slicer template`
 relay-roles.json     the slice-relay role matrix, when the project keeps one (see Relay roles)
 render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), one file per slice, and RELAY-ROLES.md
 log.jsonl            append-only history of status changes
-relay-runs.jsonl     slice-relay ledger read in a git repo; still written for a project below the worktree root and outside git; gitignored (see Relay run ledger)
+relay-runs.jsonl     slice-relay ledger read in a git repo, and written there only by the sandbox fallback; the ledger itself for a project below the worktree root or outside git; gitignored (see Relay run ledger)
 .gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
 
