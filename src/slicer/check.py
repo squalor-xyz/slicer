@@ -26,16 +26,35 @@ class CheckReport:
   def ok(self) -> bool:
     return not (self.stale_render or self.orphan_render or self.stale_sync or self.problems)
 
+  @property
+  def stale_render_kind(self) -> str | None:
+    """`roadmap_only` for the merge's leftover, `mixed` for other stale renders, else None.
+
+    `roadmap_only` needs every stale path to be a whole-roadmap render and no orphan,
+    stale sync or problem. Any other stale render, including a roadmap render beside
+    one of those, is `mixed`, so the merge line does not claim the case.
+    """
+    if not self.stale_render:
+      return None
+    merge_shape = set(self.stale_render) <= set(render.ROADMAP_RENDER_NAMES) and not (
+      self.orphan_render or self.stale_sync or self.problems
+    )
+    return "roadmap_only" if merge_shape else "mixed"
+
   def to_dict(self) -> dict[str, object]:
-    return {
+    out: dict[str, object] = {
       "ok": self.ok,
       "stale_render": self.stale_render,
       "stale_render_details": self.stale_render_details,
-      "orphan_render": self.orphan_render,
-      "stale_sync": self.stale_sync,
-      "problems": self.problems,
-      "warnings": self.warnings,
     }
+    kind = self.stale_render_kind
+    if kind is not None:
+      out["stale_render_kind"] = kind
+    out["orphan_render"] = self.orphan_render
+    out["stale_sync"] = self.stale_sync
+    out["problems"] = self.problems
+    out["warnings"] = self.warnings
+    return out
 
 
 def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]:

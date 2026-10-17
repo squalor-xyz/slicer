@@ -28,6 +28,8 @@ RENDER_FORMAT = 1
 _FORMAT_RE = re.compile(r" Render format: (\d+)\. ")
 ROADMAP_NAME = "ROADMAP.md"
 ROADMAP_HTML_NAME = "ROADMAP.html"
+# The whole-roadmap renders: the only files a merge leaves stale on their own.
+ROADMAP_RENDER_NAMES = (ROADMAP_NAME, ROADMAP_HTML_NAME)
 RELAY_ROLES_RENDER_NAME = "RELAY-ROLES.md"
 SLICES_SUBDIR = "slices"
 

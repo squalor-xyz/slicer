@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `check` says when only the roadmap render is stale, as a merge leaves it (the `slicer-generated` driver keeps one side): when `ROADMAP.md` and `ROADMAP.html` are the only stale renders and nothing else fails, it adds a line that names `slicer render`, or `done --render` when landing. Its `--json` report adds `stale_render_kind`, `roadmap_only` for that case and `mixed` for any other stale render, present only when a render is stale. The exit code is unchanged. See [agents.md](docs/agents.md) and [landing.md](docs/landing.md).
+
 ## [1.13.0] - 2026-10-17
 
 ### Added
