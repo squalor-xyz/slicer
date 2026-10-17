@@ -12493,7 +12493,7 @@
       "id": "s351",
       "title": "The relay closing note renders the slice",
       "short_title": "The relay closing note renders the slice",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
