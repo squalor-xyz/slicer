@@ -11367,7 +11367,7 @@
       "id": "s324",
       "title": "next --batch picks slices whose files do not overlap",
       "short_title": "next --batch picks slices whose files do not overlap",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

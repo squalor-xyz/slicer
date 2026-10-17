@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-352 items · — 14 · done 330 · retired 8
+352 items · — 13 · done 331 · retired 8
 
 ## v1.15
 
@@ -53,7 +53,7 @@ v1.14.0 release
 | 11 | [s312](slices/s312.md) | Load done slices only when needed | M | 2 | slicer | Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16 | done |
 | 12 | [s322](slices/s322.md) | Print a slice's orchestrator brief with ai relay-brief | M | 2 | slicer | outer-session wishlist 2026-10-16, item 1: hand-assembled briefs caused wrong commit titles and parallel names | done |
 | 13 | [s323](slices/s323.md) | Items waiting on an owner decision are held out of next | M | 2 | slicer | outer-session wishlist 2026-10-16, item 2: open decisions lived in prose, so next showed s312 as ready | done |
-| 14 | [s324](slices/s324.md) | next --batch picks slices whose files do not overlap | M | 2 | slicer | outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections | — |
+| 14 | [s324](slices/s324.md) | next --batch picks slices whose files do not overlap | M | 2 | slicer | outer-session wishlist 2026-10-16, item 3: parallel pairs chosen by regex over Files sections | done |
 | 15 | [s325](slices/s325.md) | check says when only the roadmap render is stale, as after a merge | S | 1 | slicer | outer-session wishlist 2026-10-16, item 4: every landing left check failing on a stale ROADMAP render | done |
 | 16 | [s326](slices/s326.md) | relay-run end closes the steps still running | S | 1 | slicer | outer-session wishlist 2026-10-16, item 5: every landing marked the orchestrator step done, then ended the run | — |
 | 17 | [s327](slices/s327.md) | slicer land checks a merged branch and marks its slice done | M | 2 | slicer | outer-session wishlist 2026-10-16, item 6: landing is about seven hand-run steps per slice | done |

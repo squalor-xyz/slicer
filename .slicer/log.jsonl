@@ -2024,3 +2024,4 @@
 {"when": "2026-10-17T23:28:01Z", "item": "config.overlap_ignore", "action": "config", "from": "[]", "to": "[\"CHANGELOG.md\"]", "note": ""}
 {"when": "2026-10-17T23:45:49Z", "item": "s324", "action": "note", "from": "", "to": "", "note": "Ready for review: files_section and overlap_ignore config ke", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:45:49Z", "item": "s324", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:52:05Z", "item": "s324", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 4bb13b9); full suite OK after the merge commit.", "by": "Jon Robbins"}
