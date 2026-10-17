@@ -1971,3 +1971,6 @@
 {"when": "2026-10-17T22:31:06Z", "item": "s352", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of af75b5e); full suite 2464 OK after the merge commits.", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:31:07Z", "item": "s312", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 48a7abe); full suite 2464 OK after the merge commits.", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:31:07Z", "item": "s351", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 779206d); full suite 2464 OK after the merge commits.", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:32:09Z", "item": "s353", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:55:42Z", "item": "s353", "action": "note", "from": "", "to": "", "note": "Ready for review: Q leaves marks on done or retired items ou", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:55:43Z", "item": "s353", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

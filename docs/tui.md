@@ -153,7 +153,10 @@ write nothing and take no lock. Matrix rows and rules change only through the
 cannot be marked. Marks survive
 refreshes, searches and filters, including when a marked row is hidden. They are
 kept only for this TUI session. `Q` composes a request for all marked items, or for
-the selected item when nothing is marked. Every item must have a slice; otherwise
+the selected item when nothing is marked. A marked item that has since become done
+or retired is left out of the request, as if unmarked. Its `[x]` stays, and reopening
+the item brings it back into requests. When every mark is done or retired, `Q` uses
+the selected item. Every item must have a slice; otherwise
 the message names the items to promote first (`n`). A role matrix is required,
 just as for `R`.
 
