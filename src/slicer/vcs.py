@@ -38,15 +38,14 @@ READ_ONLY = {
 # These take arguments that vary, so a predicate on the arguments after the
 # subcommand stands in for an exact list. `show` prints one blob named
 # `COMMIT:./PATH` and accepts no option. `merge-base` answers only
-# `--is-ancestor COMMIT COMMIT` or `COMMIT COMMIT`, with no option. All take full
+# `COMMIT COMMIT`, with no option. All take full
 # object names, never a ref a caller typed, so a branch named like an option cannot
 # reach git.
 SHAPED = {
   "show": lambda rest: len(rest) == 1 and _BLOB_AT.fullmatch(rest[0]) is not None,
   "merge-base": lambda rest: (
-    len(rest) in (2, 3)
-    and (len(rest) == 2 or rest[0] == "--is-ancestor")
-    and all(_COMMIT_ONLY.fullmatch(part) for part in rest[-2:])
+    len(rest) == 2
+    and all(_COMMIT_ONLY.fullmatch(part) for part in rest)
   ),
 }
 

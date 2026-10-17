@@ -11373,11 +11373,26 @@
       "id": "s330",
       "title": "The git allowlist drops the unused merge-base --is-ancestor form",
       "short_title": "The git allowlist drops the unused merge-base --is-ancestor form",
-      "status": "open",
+      "status": "reviewing",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "9cc159a5-08aa-4463-b5f3-2233e6b15470",
+          "kind": "",
+          "text": "**2026-10-16** — Verified: merge-base permits only two full commit names and refuses --is-ancestor with StateError (state); allowlist docs and changelog match. Red and re-admission mutation each failed the refusal test; restored implementation passed 32 focused tests and the full suite (2320 tests, one skipped). slicer check and git diff --check passed. Final reviewer verdict: PASS.",
+          "created_at": "2026-10-16T23:47:05Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-17T03:41:07Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -11396,7 +11411,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

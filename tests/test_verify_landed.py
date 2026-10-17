@@ -423,8 +423,6 @@ class LandedTests(unittest.TestCase):
       sha = repo._git("rev-parse", "HEAD").stdout.strip()
       shown = vcs._run(repo.root, "show", f"{sha}:./.slicer/index.json")
       self.assertEqual(shown.returncode, 0, shown.stderr)
-      base = vcs._run(repo.root, "merge-base", "--is-ancestor", sha, sha)
-      self.assertEqual(base.returncode, 0, base.stderr)
       for forbidden in (
         ("show", sha),
         ("show", "--stat", f"{sha}:./x"),
@@ -436,7 +434,14 @@ class LandedTests(unittest.TestCase):
           with self.assertRaises(StateError):
             vcs._run(repo.root, *forbidden)
 
-  def test_Vcs_MergeBaseOfTwoCommits_IsAllowedAndNothingLooser(self) -> None:
+  def test_MergeBaseShape_IsAncestor_Refused(self) -> None:
+    with project() as repo:
+      sha = repo._git("rev-parse", "HEAD").stdout.strip()
+      with self.assertRaises(StateError) as raised:
+        vcs._run(repo.root, "merge-base", "--is-ancestor", sha, sha)
+      self.assertEqual(raised.exception.code, "state")
+
+  def test_MergeBaseShape_TwoCommits_Allowed(self) -> None:
     with project() as repo:
       sha = repo._git("rev-parse", "HEAD").stdout.strip()
       base = vcs._run(repo.root, "merge-base", sha, sha)

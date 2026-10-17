@@ -368,8 +368,8 @@ title), and the slice header of a sliver carries a `Parent: S01 title` line. Row
 `merge.slicer-generated.driver`, `merge.slicer-index.driver` and
 `merge.slicer-relay-roles.driver`, `merge-file -p`
 (three-way merge of three files to stdout, used only by `merge-index`), `show COMMIT:./PATH`
-(one file as a commit recorded it, no options) and `merge-base` with `--is-ancestor COMMIT COMMIT`
-or exactly `COMMIT COMMIT` (`log` and `show` are used by `verify --landed`; the
+(one file as a commit recorded it, no options) and `merge-base` with exactly
+`COMMIT COMMIT`, no options (`log` and `show` are used by `verify --landed`; the
 two-commit form and `show` by the sibling-collision warning in `check`). A mutation does not stage. `start` uses
 the branch and worktree queries to warn when another checkout already refers to the slice;
 the exit code does not change, and
