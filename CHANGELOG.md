@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-10-17
+
 ### Added
 
 - `slicer add --print-id` prints only the item id and a newline, including for a keyed retry; `--render` sends its summary to stderr, and `--json` cannot be combined with the flag.
