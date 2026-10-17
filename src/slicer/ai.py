@@ -255,8 +255,9 @@ The outer session, for each slice:
 4. Check the report's first line, the contract marker, and its last line,
    `nothing left running: yes`. Without that last line, stop the orchestrator
    first.
-5. Mark the orchestrator step, end the run, file the report's later notes as one
-   more commit on the slice branch, then land when the owner authorizes it.
+5. End the run with `--close-steps done`, which marks the orchestrator step, file the
+   report's later notes as one more commit on the slice branch, then land when the
+   owner authorizes it.
 
 Each slice gets a fresh orchestrator, so no orchestrator carries one slice's
 context into the next.
@@ -281,8 +282,10 @@ re-records a long-running step as a heartbeat, so its run does not go stale
 after 30 minutes. A heartbeat passes no `--task`, so the step keeps the task it
 was recorded with; each round records its own step, without `--step`.
 After the finish step, or when the relay stops, end the run with
-`slicer relay-run end RUN --outcome pass` (or `fail` or `stopped`), after marking
-each step done or failed.
+`slicer relay-run end RUN --outcome pass --close-steps done` (or `--outcome fail` or
+`stopped`, and `--close-steps fail` when the steps failed). It first marks each step
+still running, the orchestrator's own included, and without `--close-steps` it names
+those steps on stderr.
 Recording is advisory: a failed `relay-run` call never stops the relay.
 A role whose sandbox may write only inside its worktree still records: when the
 shared ledger is unwritable, `relay-run` writes the worktree's own
