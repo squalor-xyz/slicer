@@ -1958,3 +1958,4 @@
 {"when": "2026-10-17T22:12:32Z", "item": "s349", "action": "note", "from": "", "to": "", "note": "Ready for review: relayrun.fold now folds a step's creation ", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:12:32Z", "item": "s349", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:22:48Z", "item": "s354", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 39e2b59); full suite 2449 OK after the merge commits.", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:22:48Z", "item": "s349", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 79cd8e6); fold tie-break fix per owner option b; full suite 2449 OK after the merge commits.", "by": "Jon Robbins"}

@@ -12398,7 +12398,7 @@
       "id": "s349",
       "title": "Absorbed local events keep their fold order in the shared ledger",
       "short_title": "Absorbed local events keep their fold order in the shared ledger",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
