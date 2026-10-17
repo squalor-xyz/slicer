@@ -74,6 +74,7 @@ Do not open, search, parse, or edit tracking JSON, the history file, or generate
 - Goals: `slicer goals --json --lean` returns the prose plus goal and non-goal records.
 - Catalog: `slicer catalog list --json --lean` reads requirements, constraints, decisions, and assumptions.
 - Inventory: `slicer list --json --lean`, `slicer status --json --lean`, and `slicer stats --json --lean`.
+  The text form of `list` and `find` marks an item that waits on a dependency not yet met with `!` after the row number; `slicer show ID --json --lean` names its `depends_on`.
 - Slice detail: `slicer show ID --json --lean` and `slicer next --ready --json --lean`.
 - Search: `slicer find topic --json --lean`.
 - Roadmap prose: `slicer prose list --json --lean` and `slicer prose show goals --json --lean`.
