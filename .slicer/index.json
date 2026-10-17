@@ -11385,7 +11385,7 @@
       "id": "s330",
       "title": "The git allowlist drops the unused merge-base --is-ancestor form",
       "short_title": "The git allowlist drops the unused merge-base --is-ancestor form",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -11401,10 +11401,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-17T03:41:07Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
