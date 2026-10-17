@@ -2151,6 +2151,28 @@ class DetailPaneTests(unittest.TestCase):
       self.assertEqual(lines, out.splitlines())
       self.assertIn("VERDICT: FAIL - no test", lines[0])
 
+  def test_HistoryLines_UnchangedLog_ReadsOnce(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      with patch.object(State, "history", autospec=True, side_effect=State.history) as read:
+        tui.history_lines(state, "S01")
+        tui.history_lines(state, "S01")
+        self.assertEqual(read.call_count, 1)
+
+  def test_HistoryLines_AppendedEntry_ShowsNewEntry(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      with patch.object(State, "history", autospec=True, side_effect=State.history) as read:
+        tui.history_lines(state, "S01")
+        tui.history_lines(state, "S01")
+        self.assertEqual(read.call_count, 1)
+        repo.run("start", "S01")
+        lines = texts(tui.history_lines(state, "S01"))
+      _, out, _ = repo.run("log", "--item", "S01")
+      self.assertEqual(lines, out.splitlines())
+
   def test_HistoryLines_RespectsLimit(self) -> None:
     with support.TempRepo() as repo:
       self.history_repo(repo)
@@ -2159,16 +2181,17 @@ class DetailPaneTests(unittest.TestCase):
       self.assertEqual([line.split()[2] for line in lines], ["reject", "handoff"])
 
   def test_HistoryLines_EntryWithActorAndNote_UsesTheLogFormat(self) -> None:
-    state = example()
     entries = [
       model.LogEntry("2026-10-17T10:00:00Z", "S01", "reject", "review", "open", "VERDICT: FAIL", "ci"),
       model.LogEntry("2026-10-17T09:00:00Z", "S01", "add", "", "open"),
     ]
-    with patch.object(MemoryState, "history", return_value=entries):
-      self.assertEqual(texts(tui.history_lines(state, "S01", 5)), [
-        "2026-10-17T10:00:00Z  S01   reject   review -> open  VERDICT: FAIL  by ci",
-        "2026-10-17T09:00:00Z  S01   add      - -> open",
-      ])
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      with patch.object(State, "history", return_value=entries):
+        self.assertEqual(texts(tui.history_lines(repo.state(), "S01", 5)), [
+          "2026-10-17T10:00:00Z  S01   reject   review -> open  VERDICT: FAIL  by ci",
+          "2026-10-17T09:00:00Z  S01   add      - -> open",
+        ])
 
   def test_HistoryLines_NoHistory_SaysSo(self) -> None:
     with support.TempRepo() as repo:
@@ -2295,31 +2318,35 @@ class DetailPaneTests(unittest.TestCase):
     self.assertIn("history pane is read-only", view.message)
 
   def test_Draw_HistoryScrolled_ShowsOlderEntries(self) -> None:
-    state = example()
-    view = tui.View.initial(state)
-    view.select((tui.ITEM, "S02"))
-    view.detail = "history"
-    view.history_at = 25
-    entries = [model.LogEntry(f"2026-10-17T10:00:{n:02d}Z", "S02", "add", "", "open")
-               for n in range(40)]
-    screen = Screen(16, 200)
-    with patch.object(MemoryState, "history", return_value=entries):
-      tui.draw(screen, state, view)
-    self.assertIn((1, "  " + entries[14].text()), screen.writes)
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.select((tui.ITEM, "S02"))
+      view.detail = "history"
+      view.history_at = 25
+      entries = [model.LogEntry(f"2026-10-17T10:00:{n:02d}Z", "S02", "add", "", "open")
+                 for n in range(40)]
+      screen = Screen(16, 200)
+      with patch.object(State, "history", return_value=entries):
+        tui.draw(screen, state, view)
+      self.assertIn((1, "  " + entries[14].text()), screen.writes)
 
   def test_Draw_HistoryBeyondEnd_ClampsToLastPage(self) -> None:
-    state = example()
-    view = tui.View.initial(state)
-    view.select((tui.ITEM, "S02"))
-    view.detail = "history"
-    view.history_at = 999
-    entries = [model.LogEntry(f"2026-10-17T10:00:{n:02d}Z", "S02", "add", "", "open")
-               for n in range(40)]
-    screen = Screen(16, 200)
-    visible = screen.height - len(tui.shortcut_lines(screen.width)) - 3
-    with patch.object(MemoryState, "history", return_value=entries):
-      tui.draw(screen, state, view)
-    self.assertIn((1, "  " + entries[visible - 1].text()), screen.writes)
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.select((tui.ITEM, "S02"))
+      view.detail = "history"
+      view.history_at = 999
+      entries = [model.LogEntry(f"2026-10-17T10:00:{n:02d}Z", "S02", "add", "", "open")
+                 for n in range(40)]
+      screen = Screen(16, 200)
+      visible = screen.height - len(tui.shortcut_lines(screen.width)) - 3
+      with patch.object(State, "history", return_value=entries):
+        tui.draw(screen, state, view)
+      self.assertIn((1, "  " + entries[visible - 1].text()), screen.writes)
 
   def test_Handle_DetailKeyLeavingDetails_ReturnsFocusToTheQueue(self) -> None:
     state = linked_example()
