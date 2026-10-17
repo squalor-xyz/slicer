@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">335 items · — 17 · done 310 · retired 8</p>
+<p class="summary">335 items · — 14 · done 310 · retired 8 · review 3</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -78,10 +78,10 @@
 <tr class="done"><td>26</td><td>s342</td><td>affected.py borrows an ancestor map</td><td>S</td><td>1</td><td>slicer</td><td>s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337</td><td class="status">done</td></tr>
 <tr class="done"><td>27</td><td>s343</td><td>The relay Setup says recommend can leave a role unmatched</td><td>S</td><td>1</td><td>slicer</td><td>s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example&#x27;s architect row matches size L only, so a smaller slice leaves the architect unmatched</td><td class="status">done</td></tr>
 <tr class="done"><td>28</td><td>s344</td><td>affected.py does not borrow a map recorded from a dirty tree</td><td>S</td><td>1</td><td>slicer</td><td>s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps</td><td class="status">done</td></tr>
-<tr class="open"><td>29</td><td>s345</td><td>show names catalog show for a catalog record id</td><td>S</td><td>1</td><td>slicer</td><td>Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only</td><td class="status">—</td></tr>
+<tr class="other"><td>29</td><td>s345</td><td>show names catalog show for a catalog record id</td><td>S</td><td>1</td><td>slicer</td><td>Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only</td><td class="status">review</td></tr>
 <tr class="done"><td>30</td><td>s346</td><td>TUI detail pane docs match what i does</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">done</td></tr>
-<tr class="open"><td>31</td><td>s347</td><td>TUI history pane scrolls through the item&#x27;s whole history</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">—</td></tr>
-<tr class="open"><td>32</td><td>s348</td><td>TUI history pane reads the log only when it changed</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">—</td></tr>
+<tr class="other"><td>31</td><td>s347</td><td>TUI history pane scrolls through the item&#x27;s whole history</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">review</td></tr>
+<tr class="other"><td>32</td><td>s348</td><td>TUI history pane reads the log only when it changed</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">review</td></tr>
 </tbody></table>
 <h2>v1.12.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>

@@ -457,11 +457,29 @@ def deps_lines(state: State, target: str) -> list[PanelLine]:
   return out
 
 
+# Keep only the current log: changing projects cannot reuse another project's entries.
+_history_cache: tuple[tuple[str, int, int], list[model.LogEntry]] | None = None
+
+
 def history_lines(state: State, target: str, limit: int | None = None) -> list[PanelLine]:
   """The item's history, newest first, optionally limited as `slicer log --item` prints it."""
+  global _history_cache
   try:
-    history = state.history()
+    path = state.dir / store.LOG_NAME
+    try:
+      stat = path.stat()
+      key = (str(path.absolute()), stat.st_mtime_ns, stat.st_size)
+    except FileNotFoundError:
+      key = None
+    if key is not None and _history_cache is not None and _history_cache[0] == key:
+      history = _history_cache[1]
+    else:
+      _history_cache = None
+      history = state.history()
+      if key is not None:
+        _history_cache = (key, history)
   except (SlicerError, OSError) as exc:
+    _history_cache = None
     # A damaged log must not end the session: say why, as the relay board does. The state
     # directory is dropped from the path so the reason is not cut off at the pane's edge.
     reason = (str(exc).replace(f"{state.dir}{os.sep}", "").splitlines() or [type(exc).__name__])[0]
