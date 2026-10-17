@@ -1847,3 +1847,6 @@
 {"when": "2026-10-17T13:05:21Z", "item": "s333", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T14:08:20Z", "item": "s333", "action": "note", "from": "", "to": "", "note": "Gate follow-ups applied: rewrapped how-it-works.md lines 35 ", "by": "Jon Robbins"}
 {"when": "2026-10-17T14:09:30Z", "item": "s333", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge a536cff). docs/how-it-works.md with two Mermaid diagrams, linked from README.md and docs/why-slicer.md; gate PASS plus follow-up ec80d15. After the merge: links and anchors resolve, git diff --check clean, quire --config squalor render to .venv/docs-preview/how-it-works.pdf inspected (8 pages, both diagrams readable, no clipping). Docs-only: no src/ or tests/ change.", "by": "Jon Robbins"}
+{"when": "2026-10-17T14:38:04Z", "item": "s278", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T16:05:26Z", "item": "s278", "action": "note", "from": "", "to": "", "note": "Key i cycles the detail pane between details, dependencies a", "by": "Jon Robbins"}
+{"when": "2026-10-17T16:05:27Z", "item": "s278", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

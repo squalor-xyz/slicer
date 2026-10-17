@@ -36,6 +36,27 @@ slice header marks them). Those four lines are read-only; change them with the C
 shows its lead before its scope boundary. Each note shows its kind and, once it has an
 author, a verifier or an expiry, a line with its trust tier and that metadata.
 
+### Dependencies and history
+
+`i` cycles the detail pane between the details above, the item's dependencies and its recent
+history, and back. The pane heading names the one on screen, and the choice lasts for the
+session: moving down the queue keeps the pane, so you can read each item's dependencies or
+history in turn. Both panes are read-only. `e` says so, `tab` stays in the queue, and `i` returns
+to the details. On a roadmap prose block `i` does nothing, because prose has no dependencies or
+history.
+
+The dependencies pane shows the same data as [`slicer deps ID`](commands.md) (its `blocked_by`
+appears only in `--json`): what the item `waits on` (a dependency that is not yet satisfied is
+marked `(blocked)`), what it is `blocked by` (the unsatisfied dependencies, then any open slivers,
+which is what puts the `!` on its queue row), what it is `depended on by`, and, when it has open
+slivers, a `held by slivers` line.
+The history pane shows the item's last 20 entries, newest first, in the format of
+[`slicer log --item ID`](commands.md): time, ID, action, status change, note and who acted. So the
+last start, handoff and reject of a relay show without leaving the TUI. A line wider than the pane
+is cut at the screen edge. If the history file is damaged, the pane shows the error in its place
+and the TUI keeps running. Neither pane edits dependencies; the `depends` field in the details
+does that.
+
 ## The wizard
 
 The wizard collects an optional roadmap heading and each item's title, size, trees,
@@ -55,7 +76,7 @@ separate outline file. The project must already be initialized with `slicer init
 
 The main TUI screen keeps common shortcuts visible below the status and feedback
 lines: pane switching, editing, adding, starting/completing items, `h handoff`, search, filters,
-show all, jump, movement, help, quit, and `v view`. Hints use one row when they fit or two at
+show all, jump, movement, help, quit, `v view` and `i detail`. Hints use one row when they fit or two at
 80 columns, and stay visible after actions. These are fixed defaults; `?` opens
 the complete shortcut list. Prompts and overlays show their own instructions.
 
@@ -74,6 +95,7 @@ The TUI initially hides the project's configured done status. View controls:
 | `J` / `K` | Reorder the selected item down / up |
 | `T` | Move the selected item to the top |
 | `M` | Move the selected item to a numbered position |
+| `i` | Cycle the detail pane: details, [dependencies and history](#dependencies-and-history) |
 | `b` | Open the [relay board](#relay-board); `b`, `q` or Esc closes it |
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
 

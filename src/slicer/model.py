@@ -782,6 +782,20 @@ class LogEntry:
       by=d.get("by", ""),
     )
 
+  def text(self) -> str:
+    """The line `slicer log` and the TUI history pane print for this entry."""
+    return (f"{self.when}  {self.item:<5} {self.action:<8} {self.frm or '-'} -> {self.to or '-'}  "
+            f"{self.note}".rstrip() + (f"  by {self.by}" if self.by else ""))
+
+
+def newest_first(entries: Iterable[LogEntry]) -> list[LogEntry]:
+  """Entries newest first by timestamp, so union-merged history still reads in order.
+
+  The append order is reversed first so that, among entries sharing a timestamp,
+  the later-appended one is shown first; a stable sort keeps that tie-break.
+  """
+  return sorted(reversed(list(entries)), key=lambda e: e.when, reverse=True)
+
 
 def lean(payload: Any) -> Any:
   """A smaller copy of a JSON payload for `--json --lean`.
