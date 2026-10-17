@@ -12578,10 +12578,22 @@
       "id": "s355",
       "title": "affected.py tests pin the clean probe at discover start",
       "short_title": "affected.py tests pin the clean probe at discover start",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "6954eb5a-a02d-4078-b575-8a2c77e9e6ca",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: test_Record_DirtyAtStartCleanAtEnd_NotClean pins the clean probe at discover start (red under probe-at-end and clean=True mutations); the dirty-then-committed sibling test now records its unclean map through a real dirty discover run instead of a hand-written map. Tests only; full suite 2439 OK (1 skip), slicer check passes.",
+          "created_at": "2026-10-17T21:53:37Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12601,7 +12613,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

@@ -868,13 +868,11 @@ class AffectedTests(unittest.TestCase):
     _git(main, "add", "src/slicer/ops.py")
     _git(main, "commit", "-q", "-m", "source")
     recorded = _git(main, "rev-parse", "HEAD")
-    source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
     sibling = main / ".venv" / "affected-map.json"
-    sibling.parent.mkdir(parents=True, exist_ok=True)
-    sibling.write_text(json.dumps({
-      "sha": recorded, "clean": False,
-      "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]}, "reads": {},
-    }), encoding="utf-8")
+    document = self._hook_writes_for_launcher(
+      main, dirty=True, destination=sibling, dirty_text="one\ntwo\nthree\nFOUR\n",
+    )
+    self.assertEqual((document["sha"], document["clean"]), (recorded, False))
     _git(main, "commit", "-q", "-am", "edit four")
     descendant = _git(main, "rev-parse", "HEAD")
     worktree = self._linked_worktree(main)
@@ -1012,27 +1010,35 @@ class AffectedTests(unittest.TestCase):
     self.assertIs(self._hook_writes_for_launcher(directory)["clean"], True)
 
 
-  def _hook_writes_for_launcher(self, directory: Path, dirty: bool = False) -> dict:
+  def _hook_writes_for_launcher(
+    self, directory: Path, dirty: bool = False, *, remove_dirty_during_run: bool = False,
+    destination: Path | None = None, dirty_text: str = "x = 1\n",
+  ) -> dict:
     """A fresh process with the launcher's argv writes that checkout's map.
 
-    With `dirty`, an uncommitted src/ file exists before the discover starts.
+    With `dirty`, an uncommitted src/ file holding `dirty_text` exists before the discover
+    starts. With `remove_dirty_during_run`, the test body deletes that file, so the tree is
+    clean again when the run ends. The map goes to `destination`, or `directory/hook-map.json`.
     """
-    path = directory / "hook-map.json"
+    path = directory / "hook-map.json" if destination is None else destination
+    source = directory / "src" / "slicer" / "ops.py"
+    if dirty:
+      source.parent.mkdir(parents=True, exist_ok=True)
+      source.write_text(dirty_text, encoding="utf-8")
     script = (
       "import json, sys, unittest\n"
       "from pathlib import Path\n"
       "import affected\n"
       "root = Path(sys.argv[1])\n"
       "destination = Path(sys.argv[2])\n"
-      "if sys.argv[3] == 'dirty':\n"
-      "  source = root / 'src' / 'slicer' / 'ops.py'\n"
-      "  source.parent.mkdir(parents=True, exist_ok=True)\n"
-      "  source.write_text('x = 1\\n', encoding='utf-8')\n"
+      "remove_dirty = sys.argv[3] == 'remove-dirty'\n"
       "sys.argv = ['python3.14 -m unittest', 'discover', '-s', 'tests', '-t', 'tests']\n"
       "affected.install_discover_hook(destination, root)\n"
       "class Tiny(unittest.TestCase):\n"
       "  def test_ok(self):\n"
       "    (root / 'marker.txt').read_text()\n"
+      "    if remove_dirty:\n"
+      "      (root / 'src' / 'slicer' / 'ops.py').unlink()\n"
       "runner = unittest.TextTestRunner(stream=open('/dev/null', 'w'), verbosity=0)\n"
       "result = runner.run(unittest.defaultTestLoader.loadTestsFromTestCase(Tiny))\n"
       "if not result.wasSuccessful():\n"
@@ -1046,7 +1052,8 @@ class AffectedTests(unittest.TestCase):
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).resolve().parent)
     proc = subprocess.run(
-      [sys.executable, "-c", script, str(directory), str(path), "dirty" if dirty else "clean"],
+      [sys.executable, "-c", script, str(directory), str(path),
+       "remove-dirty" if remove_dirty_during_run else "keep"],
       cwd=directory, env=env, capture_output=True, text=True,
     )
     self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -1056,6 +1063,14 @@ class AffectedTests(unittest.TestCase):
   def test_DiscoverSuccess_DirtyAtStart_RecordsNotClean(self) -> None:
     directory = self._git_root()
     document = self._hook_writes_for_launcher(directory, dirty=True)
+    self.assertIs(document["clean"], False)
+
+  def test_Record_DirtyAtStartCleanAtEnd_NotClean(self) -> None:
+    # The probe runs when discover starts. A tree dirty then and clean by the end was
+    # still tested with the uncommitted change, so its map must not say clean.
+    directory = self._git_root()
+    document = self._hook_writes_for_launcher(directory, dirty=True, remove_dirty_during_run=True)
+    self.assertTrue(affected.tree_is_clean(directory))
     self.assertIs(document["clean"], False)
 
   def test_DiscoverFailure_LeavesAnExistingMap(self) -> None:
