@@ -622,6 +622,15 @@ class AiInstructionsTests(unittest.TestCase):
     section = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
     self.assertLess(len(section.encode("utf-8")), 3800)
 
+  def test_AgentsGuide_RoadmapNote_Renders(self) -> None:
+    # s351: the contributor's closing note renders the slice, as the relay's does.
+    text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")
+    section = text.split("## Working on the roadmap", 1)[1].split("## House style", 1)[0]
+    notes = [line for line in section.splitlines() if "slicer note " in line]
+    self.assertTrue(notes)
+    for line in notes:
+      self.assertIn("--render", line)
+
   def test_AgentsGuide_LandingSection_PointsAtLandingDoc(self) -> None:
     # s235: the landing steps live in docs/landing.md; AGENTS.md keeps a stub.
     root = Path(__file__).resolve().parents[1]
@@ -1342,6 +1351,39 @@ class AiRelayTests(unittest.TestCase):
     ):
       with self.subTest(sentence=sentence):
         self.assertEqual(flat.count(sentence), 1)
+
+  def test_AiRelay_ClosingNote_Renders(self) -> None:
+    # s351: the closing note renders the slice, so the render is current once it lands.
+    # Every `slicer note` line in the relay, orchestrator, instructions and skill outputs
+    # carries --render, in each finish mode and with a required report kind. The relay
+    # always names the closing note, and the orchestrator names it only when it hands off
+    # (its done mode closes with `done`). instructions and skill name the ready-for-review
+    # and kind notes, so each must print at least one note line.
+    closing = 'slicer note ID --text "Describe the verified outcome" --render'
+    for finish in ("done", "handoff"):
+      for kind in ("", "implementation report"):
+        with self.subTest(finish=finish, kind=kind):
+          with support.TempRepo() as repo:
+            self.assertEqual(repo.run("init")[0], 0)
+            path = repo.root / ".slicer/config.json"
+            data = json.loads(path.read_text())
+            data["implement_finish"] = finish
+            if kind:
+              data["handoff_requires_note_kind"] = kind
+            path.write_text(json.dumps(data) + "\n")
+            for command in ("relay", "relay-orchestrator", "instructions", "skill"):
+              with self.subTest(command=command):
+                code, text, err = repo.run("ai", command)
+                self.assertEqual((code, err), (0, ""))
+                notes = [line for line in text.splitlines() if "slicer note " in line]
+                # The done-mode orchestrator without a required kind names no note command;
+                # its closing is `slicer done --note`, which already renders.
+                names_note = not (command == "relay-orchestrator" and finish == "done" and not kind)
+                self.assertEqual(bool(notes), names_note)
+                for line in notes:
+                  self.assertIn("--render", line)
+                if command == "relay" or (command == "relay-orchestrator" and finish == "handoff"):
+                  self.assertIn(closing, text)
 
 
 class AiRelayRolesTests(unittest.TestCase):

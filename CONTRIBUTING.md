@@ -97,7 +97,7 @@ for the exact current workflow. Once acceptance passes, record the evidence and
 hand off through the worktree:
 
 ```sh
-PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> note <ID> --text "Ready for review: describe changes, checks and results"
+PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> note <ID> --text "Ready for review: describe changes, checks and results" --render
 PYTHONPATH=.worktrees/<id>/src python3 -m slicer --root .worktrees/<id> handoff <ID> --render --check
 git -C .worktrees/<id> diff --check
 git -C .worktrees/<id> status --short

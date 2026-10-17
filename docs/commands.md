@@ -124,7 +124,7 @@ adopting an attempt cap.
 If `handoff_requires_note_kind` is nonempty, started-to-review handoff requires an
 item note with that exact kind, nonempty text, and `attempt` equal to the item's
 current `attempts`. File it with `slicer note ID --kind KIND --text "Describe the
-verified outcome"`. Missing reports fail with code `state`, naming the item and
+verified outcome" --render`. Missing reports fail with code `state`, naming the item and
 kind; every batch item is validated before any writes, including strict rendering.
 Release and resume keep the report valid; reject then restart needs a new report.
 Legacy unknown-attempt notes, wrong kinds, previous-attempt reports, and history-only
@@ -1085,7 +1085,7 @@ When `implement_finish` is `handoff`, this is the finish: pass the implementatio
 someone else for review, merge, or cleanup without marking it done by handing it off:
 
 ```console
-$ slicer note S01 --text "Ready for review: branch feature/S01; suite green"
+$ slicer note S01 --text "Ready for review: branch feature/S01; suite green" --render
 $ slicer handoff S01 --render
 S01 -> review, unclaimed
 ```

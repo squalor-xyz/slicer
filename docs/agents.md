@@ -134,7 +134,7 @@ For automation, use JSON responses and inspect both the exit code and the payloa
 The command and error contracts are described below the prompts.
 
 Before handing off, read `slicer config handoff_requires_note_kind`. If nonempty,
-file `slicer note ID --kind KIND --text "Describe the verified outcome"` during the
+file `slicer note ID --kind KIND --text "Describe the verified outcome" --render` during the
 current implementation attempt. Project-aware instructions and skill output name
 that required kind. Wrong-kind, previous-attempt, legacy unknown-attempt, and
 history-only handoff notes cannot satisfy the policy. Missing reports fail with
