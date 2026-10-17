@@ -34,6 +34,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from itertools import groupby
 from pathlib import Path
 
 from slicer import feedback, jsonio, store, vcs
@@ -346,9 +347,10 @@ def fold(
 ) -> list[Run]:
   """The runs the events of these files describe, with `state` as of `now`.
 
-  Events are ordered by time. At the same second the file given first and then the line
-  decide; a begin goes before the run's other events, and no event is placed before its own
-  run's begin, so a clock that stepped back cannot orphan a step. An event identical to one
+  Events are ordered by time, then rank (begin, step creation, other events). Within a
+  time and rank, file order then line decide, pulling a step's parent creation and its
+  ancestors ahead of it when needed. No event is placed before its own run's begin, so a
+  clock that stepped back cannot orphan a step. An event identical to one
   already folded is dropped: a copy of a run's events in a second file changes nothing.
 
   The first `strict` files must be sound: a bad event in one is `corrupt`, naming file and
@@ -377,9 +379,31 @@ def fold(
       at = max(at, began.get(event["run"], at))
     return (at, _rank(event), index, number)
 
+  ordered = []
+  for (_, rank), tied in groupby(sorted(items, key=order), key=lambda item: order(item)[:2]):
+    group = list(tied)
+    if rank != 1:
+      ordered.extend(group)
+      continue
+    creations: dict[tuple[str, str], int] = {}
+    for position, (_, _, _, event, _) in enumerate(group):
+      creations.setdefault((event["run"], event["step"]), position)
+    placed: set[int] = set()
+    for position in range(len(group)):
+      chain = []
+      while position not in placed:
+        placed.add(position)  # also stops cycles; _apply still rejects missing parents
+        chain.append(group[position])
+        event = group[position][3]
+        parent = creations.get((event["run"], event["parent"]))
+        if parent is None:
+          break
+        position = parent
+      ordered.extend(reversed(chain))
+
   runs: dict[str, Run] = {}
   seen: set[str] = set()
-  for _, path, number, event, sound in sorted(items, key=order):
+  for _, path, number, event, sound in ordered:
     key = event_key(event)
     if key in seen:
       continue

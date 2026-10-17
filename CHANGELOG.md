@@ -9,6 +9,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Fixed
 
 - `edit`, `set`, `start` and `note` with a catalog record's id (for example `C01`, copied from `catalog list`) still exit 2 with `no_such_item`, and now say the id is a catalog record of its kind and name `slicer catalog show ID`, as `show` does. In a batch, the first id that is not a roadmap item decides: a catalog record gets the hint, anything else keeps the plain `no such item` message.
+- Relay-run ledgers fold a step's creation after its parent's when both have the same timestamp, including nested subagents, regardless of file or line order. Absorbing child-first local events into the shared ledger no longer makes `relay-run list` report it as corrupt.
 
 ## [1.13.0] - 2026-10-17
 

@@ -12398,10 +12398,33 @@
       "id": "s349",
       "title": "Absorbed local events keep their fold order in the shared ledger",
       "short_title": "Absorbed local events keep their fold order in the shared ledger",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "f6b537d7-555f-4fa0-a3de-ea11dbe6f2ec",
+          "kind": "",
+          "text": "**2026-10-17** — Owner decision 2026-10-17: the (time, rank) sort cannot pass, since parent and child share a rank. Fix the fold's tie-break in relayrun.py so a parent folds before its child (option b); Files and Implement amended.",
+          "created_at": "2026-10-17T21:29:17Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "23e072e5-97b9-4371-9e9d-e6f7ba65a2b5",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: relayrun.fold now folds a step's creation after its parent's at the same second and rank, chains included, whatever file or line order they arrive in; other ordering unchanged and _absorb untouched. Three regressions (absorb pair, one-file pair, reversed three-level chain) red on base; mutations of the old tie-break and one-level ordering go red. Full suite 2441 ran, 0 failures, 1 skipped; slicer check passes. Reviewer and gate VERDICT: PASS.",
+          "created_at": "2026-10-17T22:12:32Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12421,7 +12444,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
