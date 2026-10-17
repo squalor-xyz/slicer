@@ -26,6 +26,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `relay-run end`, and a `relay-run step` that copies local events first, no longer leave the shared ledger `corrupt` when a local step's parent sat in a local file that could not be read. The step is copied without its parent, one stderr line names it and the parent it lost, and `relay-run list` reads the run.
 - A `relay-run step` written to the shared ledger with a `--parent` that only a checkout's own fallback file holds first copies that run's local events into the shared ledger, as it already did when the run's begin was only local. Removing that checkout's worktree before `relay-run end` no longer leaves the shared ledger `corrupt`: `relay-run list` reads the run with both steps.
 
+- `slicer show ID` with a catalog record's id (for example `C01`, copied from `catalog list`) still exits 2 with `no_such_item`, and now says the id is a catalog record of its kind and names `slicer catalog show ID`. An id that is neither an item nor a record keeps the plain `no such item` message.
+
 ## [1.12.0] - 2026-10-17
 
 ### Added

@@ -12183,10 +12183,22 @@
       "id": "s345",
       "title": "show names catalog show for a catalog record id",
       "short_title": "show names catalog show for a catalog record id",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "22291ce9-da02-4acb-807d-d41bf91add91",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: show ID with a catalog record id (e.g. C01) still exits 2 with no_such_item and now names the record's kind and slicer catalog show ID; other misses keep the plain message. Gate PASS: full suite 2390 OK (1 skip), slicer check and git diff --check clean.",
+          "created_at": "2026-10-17T20:23:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12206,7 +12218,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

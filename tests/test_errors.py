@@ -44,6 +44,27 @@ class ErrorEnvelopeTests(unittest.TestCase):
       self.assertEqual(out, "")
       self.assertIn("no such item", err)
 
+  def test_Show_CatalogRecordId_NamesCatalogShow(self) -> None:
+    # `show` reads roadmap items only. A catalog id that copied out of `catalog
+    # list` gets the next step, under the same `no_such_item` code.
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("show", "C01", "--json")
+      self.assertEqual(code, 2)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "no_such_item")
+      self.assertIn("slicer catalog show C01", error["message"])
+      self.assertIn("constraint", error["message"])
+      self.assertIn("slicer catalog show C01", err)
+
+  def test_Show_UnknownId_KeepsPlainMessage(self) -> None:
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "constraint", "Use git")
+      code, out, err = repo.run("show", "S99")
+      self.assertEqual(code, 2)
+      self.assertEqual(err, "slicer: no such item: S99\n")
+      self.assertNotIn("catalog", err)
+
   def test_UnknownItem_EveryPath_ReportsTheSameCode(self) -> None:
     # `Index.require` and the `ops.*` guards used to raise different
     # exceptions with different wording for the identical condition.

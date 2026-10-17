@@ -1916,3 +1916,6 @@
 {"when": "2026-10-17T20:24:20Z", "item": "s347", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:24:43Z", "item": "s347", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:25:48Z", "item": "s347", "action": "note", "from": "", "to": "", "note": "Ready for review: the TUI history pane shows the item's whol", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:07:25Z", "item": "s345", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:15:12Z", "item": "s345", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:23:46Z", "item": "s345", "action": "note", "from": "", "to": "", "note": "Ready for review: show ID with a catalog record id (e.g. C01", "by": "Jon Robbins"}
