@@ -1937,3 +1937,10 @@
 {"when": "2026-10-17T20:54:18Z", "item": "s281", "action": "note", "from": "", "to": "", "note": "Ready for review: TUI catalog overlay on C lists records by ", "by": "Jon Robbins"}
 {"when": "2026-10-17T21:00:56Z", "item": "s291", "action": "status", "from": "review", "to": "done", "note": "Landed: config tui.columns picks and orders the claim/size/score queue cells; gate PASS, full suite green on main.", "by": "Jon Robbins"}
 {"when": "2026-10-17T21:00:56Z", "item": "s281", "action": "status", "from": "review", "to": "done", "note": "Landed: TUI C browses catalog records by kind and Space cites/uncites on the selected item; gate PASS, full suite green on main.", "by": "Jon Robbins"}
+{"when": "2026-10-17T21:01:03Z", "item": "s349", "action": "add", "from": "", "to": "open", "note": "Absorbed local events keep their fold order in the shared ledger"}
+{"when": "2026-10-17T21:01:03Z", "item": "s350", "action": "add", "from": "", "to": "open", "note": "A shared step update absorbs a step held only in a local file"}
+{"when": "2026-10-17T21:01:03Z", "item": "s351", "action": "add", "from": "", "to": "open", "note": "The relay closing note renders the slice"}
+{"when": "2026-10-17T21:01:03Z", "item": "s352", "action": "add", "from": "", "to": "open", "note": "Relay board pairs each status label with its item in a multi-item run"}
+{"when": "2026-10-17T21:01:03Z", "item": "s353", "action": "add", "from": "", "to": "open", "note": "TUI relay request leaves out marks on items no longer open"}
+{"when": "2026-10-17T21:01:03Z", "item": "s354", "action": "add", "from": "", "to": "open", "note": "Item commands name catalog show for a catalog record id"}
+{"when": "2026-10-17T21:01:03Z", "item": "s355", "action": "add", "from": "", "to": "open", "note": "affected.py tests pin the clean probe at discover start"}

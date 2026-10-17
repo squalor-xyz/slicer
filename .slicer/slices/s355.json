@@ -1,0 +1,39 @@
+{
+  "id": "s355",
+  "title": "affected.py tests pin the clean probe at discover start",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s344 gate 2026-10-17: no test fails if the clean probe moves after the run (implementer mutation M10 survived); the dirty-then-committed test writes its unclean map by hand",
+  "size": "S",
+  "flags": [],
+  "trees_note": "tests",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** an end-of-run probe (owner decision), or changing map borrowing.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s344 records `\"clean\"` from a probe taken when the full discover starts. Moving the probe to the end of the run passes every test, so a regression that records a tree cleaned mid-run as clean would go unnoticed."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/test_affected.py`: a test where the tree is dirty at start and clean by the end records `clean: false`; record the unclean sibling map through a real dirty run where practical."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Record_DirtyAtStartCleanAtEnd_NotClean` (red under the probe-at-end mutation)."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; confirm it goes red when the probe moves after the run.\n2. Replace the hand-written map where practical."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "s351",
+  "title": "The relay closing note renders the slice",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render`",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** making `note` render by default, or changing `handoff`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer note` supports `--render`, but the closing note in the relay text and in this repo's AGENTS.md omits it. Several v1.13 orchestrators hit a stale slice render after the note and had to run `slicer render` before committing."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: the closing `slicer note ID --text ...` lines in the relay and relay-orchestrator text gain `--render`.\n- `AGENTS.md` \"Working on the roadmap\" block: the note line gains `--render`.\n- `tests/test_ai.py` (or the module that pins the relay text); `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelay_ClosingNote_Renders`: every `slicer note` line in `ai relay` and `ai relay-orchestrator` output carries `--render`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; watch it go red.\n2. Update the text; keep the contract marker unless the meaning of the contract changes.\n3. CHANGELOG; mutation-check (drop `--render` from one line)."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

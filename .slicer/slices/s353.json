@@ -1,0 +1,39 @@
+{
+  "id": "s353",
+  "title": "TUI relay request leaves out marks on items no longer open",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s285 gate 2026-10-17: marks on items that become done or retired mid-session still go into the request; at 1000+ visible rows `[x]` over a 4-digit queue number leaves one digit showing",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** persisting marks, changing the range rule s285 set, or a mark column.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s285's marks are session-only and keyed by item. When a marked item becomes done or retired while the TUI is open, the request overlay still names it. The `[x]` marker also overwrites only three cells of the queue-number slot, so a four-digit number leaves a digit visible."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: drop (or flag) marks whose item is no longer offered by the queue before composing the request; pad `[x]` to the queue-number width.\n- `tests/test_tui.py`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRequest_MarkedItemDone_LeftOut`\n- `test_ItemRows_MarkedRowWideNumber_NoDigitShows`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Filter marks at request time; pad the marker.\n3. CHANGELOG; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

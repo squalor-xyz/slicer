@@ -1,0 +1,39 @@
+{
+  "id": "s350",
+  "title": "A shared step update absorbs a step held only in a local file",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s340 gate 2026-10-17: the reviewer's probe showed `relay-run step RUN --step ID` on the shared ledger, for a step only a local fallback file holds, is written without absorbing; after the worktree is removed the shared ledger shows that step with an empty role and agent",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing when a new step absorbs (s337, s340), or the absorb order.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s340 made a shared step whose parent is only local absorb that run's local events first. An update with `--step` to a step only a local file holds still goes straight to the shared ledger. Once the worktree and its fallback file are gone, the shared ledger holds an update for a step it never saw created, and shows it with an empty role and agent. The ledger stays readable, but the board and `relay-run list` show a blank row."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`, `Ledger.append_shared`: treat an update whose step id the shared ledger lacks, and a local file holds, as another absorb trigger.\n- `tests/test_relay_run.py`; `CHANGELOG.md` under Fixed; `docs/commands.md` Sandboxes paragraph if it lists the triggers."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayRunStep_UpdateOfLocalOnlyStep_AbsorbsFirst`: begin and a step in a checkout's local file, an update with `--step` through the shared ledger, the local file removed; `relay-run list --json` shows the step with its role and agent."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; watch it go red (empty role).\n2. Add the trigger beside s340's; mutation-check (no trigger; trigger on every update).\n3. Docs and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

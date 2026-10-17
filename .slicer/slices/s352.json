@@ -1,0 +1,39 @@
+{
+  "id": "s352",
+  "title": "Relay board pairs each status label with its item in a multi-item run",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s331 gate 2026-10-17: in a multi-item run the ended line's status cell lists labels without item ids (tui.py around line 1368)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the single-item ended line, the outcome glyph rule, or colors (s297).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s331 shows the items' configured status labels beside a finished run. A run with more than one item lists the labels without saying which item each belongs to, so `review, done` cannot be read without opening each item."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`, the ended summary in `board_lines`: for a run with more than one item, render each label as `ID label`.\n- `tests/test_tui.py`; `docs/tui.md` if it shows the line; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_BoardLines_EndedMultiItemRun_PairsStatusWithId`\n- `test_BoardLines_EndedSingleItemRun_KeepsBareLabel`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch the first go red.\n2. Pair ids with labels for multi-item runs; keep the narrow-screen order s331 set.\n3. Docs and CHANGELOG; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

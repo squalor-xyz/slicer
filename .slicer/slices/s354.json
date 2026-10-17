@@ -1,0 +1,39 @@
+{
+  "id": "s354",
+  "title": "Item commands name catalog show for a catalog record id",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s345 2026-10-17: `show` now names `slicer catalog show ID` for a catalog record id; edit, set, start and note were out of its scope and still say only `no such item`",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing error codes, or `show` (s345).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s345 added the hint to `show`. The other item commands an agent commonly aims at a wrong id still give the plain `no such item` message for a catalog record id."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: reuse s345's lookup in the item-not-found path of `edit`, `set`, `start` and `note` (one shared helper, keeping `no_such_item`).\n- `tests/test_errors.py`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Edit_CatalogRecordId_NamesCatalogShow` and the same for `set`, `start`, `note`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Factor s345's hint into a helper; write the tests and watch them go red.\n2. Call it from each command's lookup failure.\n3. CHANGELOG; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
