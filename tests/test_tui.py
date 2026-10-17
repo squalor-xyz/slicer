@@ -1606,6 +1606,24 @@ class RelayBoardLinesTests(unittest.TestCase):
     self.assertEqual(len(lines), 1)
     self.assertEqual({line.role for line in lines}, {"dim"})
 
+  def test_BoardLines_EndedPassItemNotDone_ShowsStatusAndOpenGlyph(self) -> None:
+    run = board_run(state="ended", outcome="pass")
+    text = tui.board_lines([run], 0, NOW, 100,
+                           statuses={"s283": "Awaiting review"}, done_label="Shipped")[0].text
+    self.assertEqual(text.split("  ")[:2], ["○ s283", "pass · Awaiting review"])
+
+  def test_BoardLines_EndedPassItemDone_ShowsCheck(self) -> None:
+    run = board_run(state="ended", outcome="pass")
+    text = tui.board_lines([run], 0, NOW, 100,
+                           statuses={"s283": "Shipped"}, done_label="Shipped")[0].text
+    self.assertEqual(text.split("  ")[:2], ["✓ s283", "pass · Shipped"])
+
+  def test_BoardLines_EndedNarrow_KeepsStatusCell(self) -> None:
+    run = board_run(state="ended", outcome="pass")
+    text = tui.board_lines([run], 0, NOW, 24, titles={"s283": "A long slice title"},
+                           statuses={"s283": "Open"}, done_label="Shipped")[0].text
+    self.assertEqual(text, "○ s283  pass · Open")
+
   def test_BoardLines_FailedStep_UsesTheErrorRole(self) -> None:
     run = board_run(board_step("1", "implementer", "fail"))
     lines = tui.board_lines([run], 0, NOW, 100)
@@ -1859,6 +1877,23 @@ class RelayBoardViewTests(unittest.TestCase):
       view.handle(state, "tick")
       tui.draw(Screen(24, 100), state, view)
 
+  def test_Draw_EndedPassItemDone_ShowsCheckAndConfiguredStatusLabel(self) -> None:
+    state = example()
+    state.config.statuses["shipped"] = "Delivered"
+    state.config.done_status = "shipped"
+    state.index.require("S01").status = "shipped"
+    run = board_run(state="ended", outcome="pass")
+    run.items = ["S01"]
+    view = tui.View.initial(state)
+    view.mode = "board"
+    view.board_runs = [run]
+    screen = Screen(24, 160)
+    with patch.object(relayrun, "utcnow", return_value=NOW):
+      tui.draw(screen, state, view)
+    summary = next(text for y, text in screen.writes if y == 1)
+    self.assertEqual(summary.split("  ")[:3],
+                     ["✓ S01", "Finished setup", "pass · Delivered"])
+
   def test_Handle_CorruptLedger_KeepsLastFrameAndShowsOneLine(self) -> None:
     broken = StateError("/p/.slicer/relay-runs.jsonl:3: not valid JSON (x).\nfix it", code="corrupt")
     view, state, calls = self.board([pipeline_run()], broken, [])
@@ -1946,7 +1981,7 @@ class RelayBoardViewTests(unittest.TestCase):
     self.assertIn("impl 2 · review 1 · gate 1", summary[0].text)
     self.assertIn("Relay board", summary[0].text)
     self.assertEqual(summary[0].role, "dim")
-    self.assertTrue(summary[0].text.startswith("✓ s283"), summary[0].text)
+    self.assertTrue(summary[0].text.startswith("○ s283"), summary[0].text)
     failed = line_with(lines, "ended 3m00s ago")
     self.assertTrue(failed.text.startswith("✗ s283"), failed.text)
     self.assertLess(lines.index(failed), lines.index(summary[0]))

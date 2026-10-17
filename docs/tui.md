@@ -155,7 +155,7 @@ Each active run is a lane, drawn as a tree from the steps the ledger records:
         review the diff
   [ ] gate         waiting
 
-✓ s290  Pass vanished as soon as it ended  pass  50m00s  ended 40m00s ago  impl 1 · review 1 · gate 1
+○ s290  Pass vanished as soon as it ended  pass · open  50m00s  ended 40m00s ago  impl 1 · review 1 · gate 1
 ```
 
 The header names the items, the first item's title from the roadmap (cut with `...`), the run's
@@ -182,11 +182,15 @@ such as a split part's role, share one `other:` line after the rows.
 A stale run (no event for 30 minutes) is dimmed, labelled `stale`, does not animate, and stops
 counting time at its last event; only its `last heard` line stands out. A run that ended within
 the last hour stays on the board after the active ones, newest first, as one dimmed summary
-line: `✓` for a pass, `✗` for a fail and `~` for a stopped run, then the outcome, how long it
-ran, `ended N ago` and the number of implementer, reviewer and gate steps. After an hour it
-leaves the board. A line that is too narrow drops cells from the right, whole, instead of
-cutting one (the title is cut with `...`, and `round N` is the first to go); a long task ends in
-`...`. `j`/`k` or the arrow keys scroll when the lanes outrun the screen.
+line: `✓` for a pass only when every item in the run has the project's configured done
+status, `○` for a pass with an item not done (or absent from this checkout), `✗` for a fail
+and `~` for a stopped run. The outcome is followed by the items' configured status labels
+(for example `pass · open`), how long it ran, `ended N ago` and the number of implementer,
+reviewer and gate steps. After an hour it leaves the board. The outcome and status cell takes
+priority over elapsed cells when space is short. A line that is too narrow drops cells from
+the right, whole, instead of cutting one (the title is cut with `...`, and `round N` is the
+first to go); a long task ends in `...`. `j`/`k` or the arrow keys scroll when the lanes
+outrun the screen.
 
 The board redraws four times a second and re-reads the ledgers every two seconds. Only the
 board wakes on a timer: in every other view the TUI still blocks on input. If the ledger this

@@ -11501,10 +11501,22 @@
       "id": "s331",
       "title": "Relay board shows the slice's status beside a finished run",
       "short_title": "Relay board shows the slice's status beside a finished run",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e79854d3-aa1f-48ad-8b6d-a77853047c35",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: the relay board's ended line shows the slice's configured status label after the outcome (e.g. pass · open); ✓ only when the run passed and every item has the done status, ○ for a pass with an item not done, ✗/~ unchanged; the status cell is kept ahead of elapsed cells at narrow widths. Four new tests (three board_lines, one draw wiring) mutation-checked; full suite 2,366 OK, 1 skipped; gate VERDICT: PASS.",
+          "created_at": "2026-10-17T18:20:43Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11524,7 +11536,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

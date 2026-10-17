@@ -10,6 +10,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - TUI: `i` cycles the detail pane between the details, the item's dependencies and its recent history, all read-only. The dependencies pane shows what the item waits on (an unsatisfied dependency marked `(blocked)`), what blocks it, what depends on it and any open slivers holding it; the history pane shows its last 20 entries newest first, in the format of `slicer log --item`. In either pane `e` says it is read-only and `tab` stays in the queue. See [tui.md](docs/tui.md#dependencies-and-history).
 
+### Changed
+
+- The relay board's ended summaries show the items' configured status labels beside the run outcome, keeping that cell ahead of elapsed times on narrow screens. A passed run gets `✓` only when every item has the configured done status; otherwise it gets `○`. Failed and stopped runs keep `✗` and `~`.
+
 ## [1.12.0] - 2026-10-17
 
 ### Added
