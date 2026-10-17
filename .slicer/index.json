@@ -10855,7 +10855,7 @@
       "id": "s312",
       "title": "Load done slices only when needed",
       "short_title": "Load done slices only when needed",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
