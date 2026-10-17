@@ -601,11 +601,11 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertNotIn("slicer show", pickup)
     self.assertIn("slicer start <ID> --render --strict", section)
     self.assertIn("slicer edit S07 --section Why --file note.md --render --strict", section)
-    # s235: the landing `done` moved to docs/landing.md.
+    # s235: the landing `done` moved to docs/landing.md; s327: `land` took its place.
     landing = (Path(__file__).resolve().parents[1] / "docs" / "landing.md").read_text(encoding="utf-8")
-    done = 'slicer done <ID> --note "Describe the verified outcome" --render --check'
-    self.assertIn(done, landing)
-    self.assertNotIn(done + " --strict", landing)
+    land = 'slicer land <ID> --branch feature/<id>-<slug> --note "Describe the verified outcome"'
+    self.assertIn(land, landing)
+    self.assertNotIn(land + " --strict", landing)
 
   def test_AgentsGuide_NamesSuiteDurationAndBackgroundRun(self) -> None:
     text = (Path(__file__).resolve().parents[1] / "AGENTS.md").read_text(encoding="utf-8")

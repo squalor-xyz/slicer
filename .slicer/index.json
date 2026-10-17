@@ -11452,10 +11452,22 @@
       "id": "s327",
       "title": "slicer land checks a merged branch and marks its slice done",
       "short_title": "slicer land checks a merged branch and marks its slice done",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "8a493ecf-2a0e-4441-ba6e-89bdedb9f7b7",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: slicer land ID --branch BRANCH --note TEXT refuses unknown branch (usage), unmerged tip (not_merged) and an active relay run (run_active) before writing, then runs done --render --check and prints the git commands left (commit, worktree remove, branch -d). Gate VERDICT: PASS; affected 147 OK, full suite 2489 OK 1 skipped, slicer check passes.",
+          "created_at": "2026-10-17T23:09:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11475,7 +11487,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

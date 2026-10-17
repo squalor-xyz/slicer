@@ -1978,3 +1978,6 @@
 {"when": "2026-10-17T22:08:08Z", "item": "s325", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:38:23Z", "item": "s325", "action": "note", "from": "", "to": "", "note": "Ready for review: check prints 'only the roadmap render is s", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:38:23Z", "item": "s325", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:42:08Z", "item": "s327", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:09:59Z", "item": "s327", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer land ID --branch BRANCH --note TEXT", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:09:59Z", "item": "s327", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

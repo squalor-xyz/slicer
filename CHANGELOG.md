@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer land ID --branch BRANCH --note TEXT` checks that the branch is merged into `HEAD` (`not_merged`) and that no relay run on the slice is still going, neither ended nor stale (`run_active`, naming the run), refusing before it writes anything. It then runs `done --render --check` and prints the git commands left for the person landing (the `.slicer` commit, `git worktree remove` for the branch's worktree, `git branch -d`). slicer still commits nothing. It takes one item; slivers keep `done`.
+
 ### Changed
 
 - TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).
