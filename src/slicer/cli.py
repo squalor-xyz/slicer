@@ -21,7 +21,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from contextlib import nullcontext, redirect_stderr, redirect_stdout
+from collections.abc import Iterator
+from contextlib import contextmanager, nullcontext, redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -2035,22 +2036,36 @@ def cmd_deps(args: argparse.Namespace) -> int:
   return OK
 
 
-def cmd_show(args: argparse.Namespace) -> int:
-  _prepare_note_pack(args)
-  state = _state(args)
+@contextmanager
+def _item_lookup(state: store.State, item_ids: list[str]) -> Iterator[None]:
+  """Name `slicer catalog show` when a command's item id is a catalog record.
+
+  Items and catalog records share one id shape on the command line, so a copied
+  `C01` lands in `no_such_item`. The first id that is not a roadmap item decides:
+  a catalog record gets the hint, and any other miss, or any other error, re-raises
+  unchanged. The code stays `no_such_item` either way.
+  """
   try:
-    item = state.index.require(args.id)
-  except StateError:
-    # Items and catalog records share one id shape on the command line, so a
-    # copied `C01` lands here. Name where it lives; any other miss stays as is.
-    record = state.index.catalog.get(args.id)
+    yield
+  except StateError as exc:
+    if exc.code != "no_such_item":
+      raise
+    missing = next((item_id for item_id in item_ids if state.index.get(item_id) is None), None)
+    record = None if missing is None else state.index.catalog.get(missing)
     if record is None:
       raise
     raise StateError(
-      f"no such item: {args.id} is a {record.kind} catalog record, not a roadmap item; "
-      f"run `slicer catalog show {args.id}`",
+      f"no such item: {missing} is a {record.kind} catalog record, not a roadmap item; "
+      f"run `slicer catalog show {missing}`",
       code="no_such_item",
     ) from None
+
+
+def cmd_show(args: argparse.Namespace) -> int:
+  _prepare_note_pack(args)
+  state = _state(args)
+  with _item_lookup(state, [args.id]):
+    item = state.index.require(args.id)
   item, sl, manifest = _note_projection(args, item, state.slices.get(args.id))
   if args.section is not None:
     # The read counterpart to `edit --section`: one section's body, nothing
@@ -2217,9 +2232,10 @@ def cmd_set(args: argparse.Namespace) -> int:
   fields = {key: value for key, value in fields.items() if value is not None}
   if args.no_effort:
     fields["effort"] = None
-  items = ops.set_fields_many(
-    state, item_ids, add_flags=args.add_flag, remove_flags=args.remove_flag, **fields,
-  )
+  with _item_lookup(state, item_ids):
+    items = ops.set_fields_many(
+      state, item_ids, add_flags=args.add_flag, remove_flags=args.remove_flag, **fields,
+    )
   _emit_items(args, items, batch, [f"updated {item.id}" for item in items])
   if args.pass_key:
     for pass_key in state.index.undeclared_pass_keys(items):
@@ -2232,7 +2248,8 @@ def cmd_note(args: argparse.Namespace) -> int:
   body = _body_from(args, "")
   if body is None:
     raise StateError("editor exited non-zero; nothing added", code="editor_aborted")
-  ops.add_note(state, args.id, body, kind=args.kind, owner=args.owner, stale_after=args.stale_after)
+  with _item_lookup(state, [args.id]):
+    ops.add_note(state, args.id, body, kind=args.kind, owner=args.owner, stale_after=args.stale_after)
   hint = _render_hint(args)
   _emit(args, {"id": args.id, "added": True}, f"added note to {args.id}" + (f"; {hint}" if hint else ""))
   return OK
@@ -2444,7 +2461,8 @@ def cmd_edit(args: argparse.Namespace) -> int:
   state = _state(args)
   # Look the item up first: "S99 has no slice" is a confusing thing to say
   # about an item that does not exist at all.
-  state.index.require(args.id)
+  with _item_lookup(state, [args.id]):
+    state.index.require(args.id)
   sl = state.slices.get(args.id)
   if sl is None:
     raise StateError(
@@ -2550,7 +2568,8 @@ def cmd_start(args: argparse.Namespace) -> int:
   status = state.config.started_status
   if not status:
     raise StateError("this project declares no started status; set started_status in config")
-  items = ops.start_many(state, item_ids, note=args.note or "", owner=args.owner)
+  with _item_lookup(state, item_ids):
+    items = ops.start_many(state, item_ids, note=args.note or "", owner=args.owner)
   _emit_items(args, items, batch,
               [f"{item.id} -> {state.config.status_label(item.status)}" for item in items])
   for item_id in item_ids:
