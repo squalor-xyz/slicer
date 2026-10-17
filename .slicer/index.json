@@ -12601,7 +12601,7 @@
       "id": "s353",
       "title": "TUI relay request leaves out marks on items no longer open",
       "short_title": "TUI relay request leaves out marks on items no longer open",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
