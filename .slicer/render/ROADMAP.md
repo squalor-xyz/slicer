@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-329 items · — 32 · done 289 · retired 7 · review 1
+329 items · — 32 · done 289 · retired 7 · reviewing 1
 
 v1.14.0 release
 
@@ -83,7 +83,7 @@ v1.12.0 release
 | 34 | [s303](slices/s303.md) | Undeclared pass warns | S | 1 | slicer | 2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302 | done |
 | 35 | [s304](slices/s304.md) | Relay contract version | S | 1 | slicer | owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296's spec. · discovered from s296 | retired |
 | 36 | [s305](slices/s305.md) | Sibling id refusal ignores case | S | 1 | slicer | s301 relay review, 2026-10-15: a sibling's s10 against our S10 is not refused; Index.get is case-sensitive · discovered from s301 | — |
-| 37 | [s306](slices/s306.md) | Add prints id | S | 1 | slicer | owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON | review |
+| 37 | [s306](slices/s306.md) | Add prints id | S | 1 | slicer | owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON | reviewing |
 | 38 | [s307](slices/s307.md) | Docs match what check and the git allowlist do | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15 | done |
 | 39 | [s308](slices/s308.md) | Error codes agree for a missing slice | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 4-5, 2026-10-15 | done |
 | 40 | [s309](slices/s309.md) | Fewer git calls per command | M | 2 | slicer | research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15 | done |

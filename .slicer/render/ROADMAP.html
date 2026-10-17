@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">329 items · — 32 · done 289 · retired 7 · review 1</p>
+<p class="summary">329 items · — 32 · done 289 · retired 7 · reviewing 1</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -89,7 +89,7 @@
 <tr class="done"><td>34</td><td>s303</td><td>Undeclared pass warns</td><td>S</td><td>1</td><td>slicer</td><td>2026-10-15: set --pass v1.12/v1.13 on undeclared passes said nothing; list queued v1.13 above v1.12 · discovered from s302</td><td class="status">done</td></tr>
 <tr class="retired"><td>35</td><td>s304</td><td>Relay contract version</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-15: orchestrators show as general-purpose; unify slicer and agents-repo relay contract on v4 · Folded into s296 (owner, 2026-10-15): the contract marker relay v4, RELAY_CONTRACT, the JSON contract field and the relay-orchestrator agent-type line are now in s296&#x27;s spec. · discovered from s296</td><td class="status">retired</td></tr>
 <tr class="open"><td>36</td><td>s305</td><td>Sibling id refusal ignores case</td><td>S</td><td>1</td><td>slicer</td><td>s301 relay review, 2026-10-15: a sibling&#x27;s s10 against our S10 is not refused; Index.get is case-sensitive · discovered from s301</td><td class="status">—</td></tr>
-<tr class="other"><td>37</td><td>s306</td><td>Add prints id</td><td>S</td><td>1</td><td>slicer</td><td>owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON</td><td class="status">review</td></tr>
+<tr class="started"><td>37</td><td>s306</td><td>Add prints id</td><td>S</td><td>1</td><td>slicer</td><td>owner request, 2026-10-15: file an item and get back only its id; today add prints a human line or JSON</td><td class="status">reviewing</td></tr>
 <tr class="done"><td>38</td><td>s307</td><td>Docs match what check and the git allowlist do</td><td>S</td><td>1</td><td>slicer</td><td>research/go-rewrite-evaluation.md, code review 1-2, 2026-10-15</td><td class="status">done</td></tr>
 <tr class="done"><td>39</td><td>s308</td><td>Error codes agree for a missing slice</td><td>S</td><td>1</td><td>slicer</td><td>research/go-rewrite-evaluation.md, code review 4-5, 2026-10-15</td><td class="status">done</td></tr>
 <tr class="done"><td>40</td><td>s309</td><td>Fewer git calls per command</td><td>M</td><td>2</td><td>slicer</td><td>research/go-rewrite-evaluation.md, alternatives 1 and code review 7, 2026-10-15</td><td class="status">done</td></tr>
