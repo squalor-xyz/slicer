@@ -10,6 +10,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - `slicer import` outlines take a `short_title:` key, which sets the item's short title as `add --short-title` does and defaults to the heading. `slicer import --skeleton` now lists every key the parser accepts (`key`, `short_title`, `discovered_from` and `parent` were missing). `slicer ai instructions` and AGENTS.md name a one-item `import` (with `--dry-run` first) as the way to file an item with its fields and spec in one command. See [import.md](docs/import.md).
 - `slicer retire ID --reason TEXT` retires an item exactly as `slicer remove ID --reason TEXT` does: the same status, slice move, history entry, JSON payload, `--dry-run` preview and error codes, with `command` set to `retire` in an error envelope. It takes `--force`, `--render`, `--strict` and `--json` as `remove` does, and has no `--purge`: `remove ID --purge` still deletes an item. See [commands.md](docs/commands.md).
+- `slicer land ID --branch BRANCH --note TEXT` checks that the branch is merged into `HEAD` (`not_merged`) and that no relay run on the slice is still going, neither ended nor stale (`run_active`, naming the run), refusing before it writes anything. It then runs `done --render --check` and prints the git commands left for the person landing (the `.slicer` commit, `git worktree remove` for the branch's worktree, `git branch -d`). slicer still commits nothing. It takes one item; slivers keep `done`.
 
 ### Changed
 

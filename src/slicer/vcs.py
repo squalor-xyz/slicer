@@ -239,6 +239,15 @@ def merge_base(root: Path, commit: str, other: str) -> str | None:
   return name if done.returncode == 0 and _COMMIT_ONLY.fullmatch(name) else None
 
 
+def is_ancestor(root: Path, commit: str, descendant: str) -> bool:
+  """True when `commit` is `descendant` or reachable from it (both full commit names).
+
+  The best common ancestor of the two is `commit` itself exactly then, so this needs no
+  git form beyond `merge-base`.
+  """
+  return merge_base(root, commit, descendant) == commit
+
+
 CLAIM_OWNER_ENV = "SLICER_CLAIM_OWNER"
 
 
@@ -393,6 +402,30 @@ def _worktree_paths(root: Path) -> list[Path]:
     if line.startswith("worktree "):
       paths.append(Path(line.removeprefix("worktree ")))
   return paths
+
+
+def worktree_on_branch(root: Path, branch: str) -> Path | None:
+  """The other checkout that has local `branch` checked out, or None.
+
+  Reads the `branch refs/heads/NAME` line of each `worktree list --porcelain` block. The
+  current checkout is never returned: it cannot be removed from inside itself.
+  """
+  try:
+    here = _current_worktree(root)
+    done = _run(root, "worktree", "list", "--porcelain")
+  except (FileNotFoundError, OSError):
+    return None
+  if done.returncode != 0:
+    return None
+  wanted = f"refs/heads/{branch.removeprefix('refs/heads/')}"
+  path: Path | None = None
+  for line in done.stdout.splitlines():
+    if line.startswith("worktree "):
+      path = Path(line.removeprefix("worktree "))
+    elif line == f"branch {wanted}" and path is not None:
+      if here is None or path.resolve() != here:
+        return path
+  return None
 
 
 def at_worktree_root(root: Path) -> bool:
