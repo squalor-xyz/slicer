@@ -10960,10 +10960,22 @@
       "id": "s317",
       "title": "The ledger lock shares the project lock's code",
       "short_title": "Shared file lock",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "92db1fa6-04e4-49be-bf6e-1b73d4e15d16",
+          "kind": "verified",
+          "text": "**2026-10-17** — Verified outcome: shared-ledger and project locks use store.file_lock; held-ledger timeout returns locked with the project-lock message. Full suite passed (2341 tests, 1 skipped), and slicer check passed.",
+          "created_at": "2026-10-17T12:46:44Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -10983,7 +10995,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

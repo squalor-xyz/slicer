@@ -24,7 +24,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
-from slicer import ops, relayrun
+from slicer import ops, relayrun, store
 from slicer.cli import main
 
 LEDGER = ".slicer/relay-runs.jsonl"
@@ -622,6 +622,26 @@ class CommonLedgerTests(GitLedgerCase):
     )
     self.assertIn(str(self.common(repo)), payload["message"])
 
+  def test_LedgerLock_Held_TimesOutWithLockedCode(self) -> None:
+    if store.fcntl is None:
+      self.skipTest("flock is unavailable")
+    repo = self.repo()
+    lock_path = self.common(repo).with_name(relayrun.COMMON_LOCK_NAME)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
+    try:
+      store.fcntl.flock(fd, store.fcntl.LOCK_EX | store.fcntl.LOCK_NB)
+      with patch.dict(os.environ, {store.LOCK_TIMEOUT_ENV: "0"}):
+        payload = self.refuse(repo, "relay-run", "begin", "s1", code=3, error="locked")
+    finally:
+      store.fcntl.flock(fd, store.fcntl.LOCK_UN)
+      os.close(fd)
+    self.assertEqual(
+      payload["message"],
+      "another slicer is writing this project; the lock timed out after 0s. Wait for it "
+      f"to finish, or remove {lock_path} if no slicer is running.",
+    )
+
   def test_RelayRun_List_ReadsLegacyWorktreeLedger(self) -> None:
     repo = self.repo()
     wt = self.linked(repo, "wt")
@@ -1006,15 +1026,15 @@ class SandboxTests(GitLedgerCase):
   def test_RelayRunStep_FallbackAndSharedConcurrent_DistinctIds(self) -> None:
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)
-    real_open, real_flock = ops._open_run, ops._shared_flock
+    real_open, real_file_lock = ops._open_run, store.file_lock
     refused, paused = [], []
 
-    def refuse_first_lock(lock_path: Path):
+    def refuse_first_lock(lock_path: Path, *, timeout: float | None = None):
       """The fallback writer's shared lock is refused; the shared writer's is not."""
       if not refused:
         refused.append(lock_path)
         raise PermissionError(errno.EACCES, "sandbox refuses the lock", str(lock_path))
-      return real_flock(lock_path)
+      return real_file_lock(lock_path, timeout=timeout)
 
     def read_then_shared_write(root, run_id, now):
       """The fallback writer has read the run; the shared writer completes before it writes."""
@@ -1026,7 +1046,7 @@ class SandboxTests(GitLedgerCase):
         )
       return found
 
-    with patch.object(ops, "_shared_flock", refuse_first_lock), \
+    with patch.object(store, "file_lock", refuse_first_lock), \
         patch.object(ops, "_open_run", read_then_shared_write):
       ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(1))
     self.assertEqual((len(refused), len(paused)), (1, 1))
