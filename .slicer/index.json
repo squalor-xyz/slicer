@@ -10474,10 +10474,22 @@
       "id": "s306",
       "title": "Add prints the bare id",
       "short_title": "Add prints id",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "574da246-4ccc-4ede-9830-305cdcf1f859",
+          "kind": "",
+          "text": "**2026-10-17** — Verified current attempt: add --print-id outputs only the id for new and keyed-retry filings, rejects --json without writing, and routes render summary to stderr. Focused tests passed 14/14; full suite passed 2323 tests with 1 skipped; slicer check, diff check, and all three mutation checks passed.",
+          "created_at": "2026-10-17T04:16:04Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -10497,7 +10509,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

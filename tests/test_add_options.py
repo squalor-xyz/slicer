@@ -108,3 +108,42 @@ class AddOptionsTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertEqual(json.loads(out)["error"]["code"], "newline_in_field")
       self.assertEqual(repo.read(".slicer/index.json"), before)
+
+  def test_Add_PrintId_StdoutIsBareId(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, err = repo.run(
+        "add", "Title", "--importance", "3", "--urgency", "3", "--effort", "1", "--print-id",
+      )
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out, "S01\n")
+      self.assertIsNotNone(repo.state().index.require("S01"))
+
+  def test_Add_PrintIdWithKeyRetry_PrintsExistingId(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Title", "--key", "K")
+      code, out, err = repo.run("add", "Title", "--key", "K", "--print-id")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out, "S01\n")
+      self.assertEqual([item.id for item in repo.state().index.items], ["S01"])
+
+  def test_Add_PrintIdWithRender_RenderLineOnStderr(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      code, out, err = repo.run(
+        "add", "Title", "--importance", "3", "--urgency", "3", "--effort", "1",
+        "--print-id", "--render",
+      )
+      self.assertEqual(code, 0, err)
+      self.assertEqual(out, "S01\n")
+      self.assertIn("rendered ", err)
+
+  def test_Add_PrintIdWithJson_Usage(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      before = repo.read(".slicer/index.json")
+      code, out, _ = repo.run("add", "Title", "--print-id", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
