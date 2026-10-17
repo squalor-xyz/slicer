@@ -11705,7 +11705,7 @@
       "id": "s334",
       "title": "Make getting started a short human-first walkthrough",
       "short_title": "Make getting started a short human-first walkthrough",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s333"
@@ -11766,7 +11766,19 @@
         "s333",
         "s334"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "66e2d61e-6086-4cb2-99ca-7abcb9784309",
+          "kind": "",
+          "text": "**2026-10-17** — From s334 gate: getting-started.md signposts (lines ~171-192) point at commands.md#review-lifecycle, #git-merge-drivers, #installation-options, #initialization and agents.md#worked-workflows; renaming those headings fails test_GettingStarted_MovedSections_KeepOldAnchorSignposts — update links together.",
+          "created_at": "2026-10-17T17:43:44Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
