@@ -1824,3 +1824,7 @@
 {"when": "2026-10-17T04:49:07Z", "item": "s341", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:50:07Z", "item": "s341", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:54:54Z", "item": "s341", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: relay-roles init example gains r9 (Codex implementer alternative), r10 (Claude Code orchestrator, default) and r11 (Codex orchestrator); r7 stays L-only by owner decision. Relay gate VERDICT: PASS; merged main suite 2330 tests OK (1 skipped); git diff --check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:06:51Z", "item": "s342", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:59:29Z", "item": "s342", "action": "note", "from": "", "to": "", "note": "Verified: a worktree with no map of its own borrows a clean ", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:59:32Z", "item": "s342", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T12:28:08Z", "item": "s342", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
