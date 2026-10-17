@@ -9383,7 +9383,7 @@
       "id": "s281",
       "title": "TUI catalog browse and cite",
       "short_title": "TUI catalog browse and cite",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -9811,7 +9811,7 @@
       "id": "s291",
       "title": "TUI queue columns are configurable",
       "short_title": "TUI queue columns are configurable",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
