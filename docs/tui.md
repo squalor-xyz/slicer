@@ -96,6 +96,8 @@ The TUI initially hides the project's configured done status. View controls:
 | `T` | Move the selected item to the top |
 | `M` | Move the selected item to a numbered position |
 | `i` | Cycle the detail pane: details, [dependencies and history](#dependencies-and-history) |
+| `m` | Toggle a session-only mark on the selected queue item (`[x]`) |
+| `Q` | Compose a [relay request](#relay-requests) for marked items, or the selected slice |
 | `R` | Open the [relay role matrix](#relay-roles); Enter recommends roles for the selected slice |
 | `b` | Open the [relay board](#relay-board); `b`, `q` or Esc closes it |
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
@@ -141,6 +143,32 @@ If recommendation fails, the error is shown and the questions restart at
 `well-specified` so you can retry. Viewing, recommending and cancelling
 write nothing and take no lock. Matrix rows and rules change only through the
 `relay-roles` commands.
+
+## Relay requests
+
+`m` toggles a queue item's `[x]` mark in the queue-number column; roadmap prose
+cannot be marked. Marks survive
+refreshes, searches and filters, including when a marked row is hidden. They are
+kept only for this TUI session. `Q` composes a request for all marked items, or for
+the selected item when nothing is marked. Every item must have a slice; otherwise
+the message names the items to promote first (`n`). A role matrix is required,
+just as for `R`.
+
+The request follows the canonical ranked queue used by `slicer list`, independent
+of the session sort, filters and search. It includes hidden marked items. A range
+such as `run S01..S03 as slice relays` requires the marked set to be contiguous
+both in that canonical queue over all items and in the stored item order. Done,
+retired and parked items count, so hiding an unmarked gap cannot create a range.
+Otherwise it lists IDs in canonical queue order, for example `run S01, S03 as
+slice relays`. A single slice says `run S01 as slice relays`. IDs keep their
+configured spelling.
+
+For each slice in order, the existing `well-specified` and `split` yes/no prompts
+collect its answers. Its ID and CLI recommendation lines appear under the request.
+An error keeps that slice's prompt available for retry. Once all answers are in,
+`j`/`k` or arrows scroll; `Q`, `q` or Esc closes. Esc also cancels during a prompt.
+The overlay only shows text for the owner to give an orchestrator. It writes
+nothing and launches nothing.
 
 ## Relay board
 

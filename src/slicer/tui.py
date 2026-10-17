@@ -37,6 +37,8 @@ BINDINGS = (
   Binding(("f",), "f", "filter", "Filter items; Space toggles, Enter applies, Esc cancels"),
   Binding(("v",), "v", "view", "Cycle the unfinished, in-work, and review queues"),
   Binding(("b",), "b", "board", "Relay board: live slice-relay runs; j/k or arrows scroll, b, q or Esc closes"),
+  Binding(("m",), "m", "mark", "Toggle a session-only mark on the queue item"),
+  Binding(("Q",), "Q", "request", "Compose a relay request for marked items or the selected slice"),
   Binding(("R",), "R", "roles", "Relay role matrix; Enter recommends roles for the selected slice"),
   Binding(("o",), "o", "sort", "Sort the view; j/k choose a field, Space flips direction, Enter applies"),
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
@@ -828,6 +830,8 @@ class View:
   roles_lines: list[str] = field(default_factory=list)
   roles_at: int = 0
   roles_prompt: RolesPrompt | None = None
+  marks: set[str] = field(default_factory=set)
+  request_targets: list[str] = field(default_factory=list)
   quit: bool = False
   wizard: tui_wizard.Wizard | None = None
   # The relay board: runs as of the last load, frames since it opened, the tick of that load,
@@ -866,6 +870,10 @@ class View:
       state, self.filters, self.sort_field, self.sort_desc, self.elsewhere, self.only_sibling,
       pane_width=self.pane_width,
     )
+    self.marks.intersection_update(item.id for item in state.index.items)
+    for row in listing:
+      if row.kind == ITEM and row.target in self.marks:
+        row.text = "[x]" + row.text[3:]
     selected = reconcile_selection(self.listing, listing, self.selected)
     if selected != self.selected:
       self.entry_at = 0
@@ -959,6 +967,8 @@ class View:
       return self._prompt(state, key)
     if self.mode == "move":
       return self._move(state, key)
+    if self.mode == "request":
+      return self._request(state, key)
     if self.mode in ("roles", "roles_prompt"):
       return self._roles(state, key)
     if self.mode == "note":
@@ -991,6 +1001,17 @@ class View:
       self._open_wizard(state)
     elif action == "help":
       self.mode, self.help_at = "help", 0
+    elif action == "mark":
+      if not self.selected:
+        self.notify("no item selected")
+      elif self.selected[0] != ITEM:
+        self.notify("that key applies to a slice, not to a prose block")
+      elif self.target in self.marks:
+        self.marks.remove(self.target)
+      else:
+        self.marks.add(self.target)
+    elif action == "request":
+      self._open_request(state)
     elif action == "roles":
       self._open_roles(state)
     elif action == "board":
@@ -1059,6 +1080,59 @@ class View:
         return result
       self.notify("no item selected")
     self.refresh(state)
+    return ActResult()
+
+  def _open_request(self, state: State) -> None:
+    if not self.marks and (not self.selected or self.selected[0] != ITEM):
+      self.notify("no item selected" if not self.selected else
+                  "that key applies to a slice, not to a prose block")
+      return
+    queue = graph.ranked_order(state.index, state.config, list(state.index.items))
+    wanted = self.marks or {self.target}
+    targets = [item.id for item in queue if item.id in wanted]
+    missing = [target for target in targets if target not in state.slices]
+    if missing:
+      self.notify(f"{', '.join(missing)}: promote first (press n)")
+      return
+    try:
+      relay_matrix(state)
+    except (SlicerError, OSError) as exc:
+      self.notify(str(exc), "error")
+      return
+    def adjacent(items: list) -> bool:
+      positions = [n for n, item in enumerate(items) if item.id in wanted]
+      return positions[-1] - positions[0] + 1 == len(targets)
+
+    contiguous = len(targets) > 1 and adjacent(queue) and adjacent(state.index.items)
+    selection = f"{targets[0]}..{targets[-1]}" if contiguous else ", ".join(targets)
+    self.roles_lines = [f"run {selection} as slice relays"]
+    self.request_targets = targets
+    self.roles_prompt = RolesPrompt(targets[0])
+    self.mode, self.roles_at = "request", 0
+    self.notify("")
+
+  def _request(self, state: State, key: str) -> ActResult:
+    if key == "\x1b" or (self.roles_prompt is None and key in ("Q", "q")):
+      self.mode, self.roles_prompt, self.roles_lines = "normal", None, []
+      self.request_targets = []
+      self.notify("")
+    elif self.roles_prompt is not None:
+      try:
+        prompt = self.roles_prompt
+        answers = prompt.handle(key)
+        if answers is not None:
+          lines = relay_recommend_lines(state, prompt.target, *answers)
+          self.roles_lines += [prompt.target, *lines]
+          at = self.request_targets.index(prompt.target) + 1
+          self.roles_prompt = (RolesPrompt(self.request_targets[at])
+                               if at < len(self.request_targets) else None)
+        self.notify("")
+      except (SlicerError, OSError) as exc:
+        self.notify(str(exc), "error")
+    elif key in ("j", "KEY_DOWN"):
+      self.roles_at += 1
+    elif key in ("k", "KEY_UP"):
+      self.roles_at = max(0, self.roles_at - 1)
     return ActResult()
 
   def _open_roles(self, state: State) -> None:
@@ -1611,8 +1685,11 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   shortcuts = shortcut_lines(width) if view.mode == "normal" else []
   status_y = height - 2 - len(shortcuts)
   visible = status_y - 1
-  if view.mode in ("roles", "roles_prompt"):
-    put(0, 0, "Relay roles: Enter recommends, j/k scroll, R, q or Esc close", palette.attr("heading"))
+  if view.mode in ("roles", "roles_prompt", "request"):
+    heading = (("Relay request: Esc cancels" if view.roles_prompt is not None else
+                "Relay request: j/k scroll, Q, q or Esc close") if view.mode == "request" else
+               "Relay roles: Enter recommends, j/k scroll, R, q or Esc close")
+    put(0, 0, heading, palette.attr("heading"))
     view.roles_at = max(0, min(view.roles_at, len(view.roles_lines) - visible))
     for n, line in enumerate(view.roles_lines[view.roles_at:view.roles_at + visible], 1):
       put(n, 0, line)

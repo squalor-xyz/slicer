@@ -2389,3 +2389,173 @@ class RolesTests(unittest.TestCase):
           self.assertIn(view.mode, ("roles", "roles_prompt"))
           view.handle(state, "\x1b")
         self.assertEqual((view.mode, view.quit, snapshot()), ("normal", False, before))
+
+
+class RelayRequestTests(unittest.TestCase):
+  def setup_request(self, repo):
+    repo.run("init")
+    for title in ("First", "Second", "Third"):
+      repo.run("add", title, "--size", "S", "--effort", "1")
+    for target in ("S01", "S02", "S03"):
+      repo.run("promote", target)
+    repo.run("relay-roles", "init")
+    state = repo.state()
+    return state, tui.View.initial(state)
+
+  def frame(self, state, view):
+    screen = Screen(200, 500)
+    tui.draw(screen, state, view)
+    return [text for y, text in screen.writes if 0 < y < 198]
+
+  def answer(self, state, view, value):
+    for key in value + "\n":
+      view.handle(state, key)
+
+  def test_Marks_ToggleAndSurviveRefresh(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      view.handle(state, "m")
+      view.refresh(repo.state())
+      self.assertTrue(any("[x]" in line and "S01" in line for line in self.frame(state, view)))
+      view.handle(state, "m")
+      self.assertFalse(any("[x]" in line for line in self.frame(state, view)))
+      view.handle(state, "m")
+      self.assertFalse(any("[x]" in line for line in self.frame(state, tui.View.initial(state))))
+
+  def test_Marks_ProseRowNotMarkable(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      repo.run("prose", "set", "preamble", "--text", "Context")
+      state = repo.state()
+      view.refresh(state)
+      view.select((tui.PROSE, "preamble"))
+      view.handle(state, "m")
+      self.assertEqual(view.message, "that key applies to a slice, not to a prose block")
+      self.assertFalse(any("[x]" in line for line in self.frame(state, view)))
+
+  def test_RelayRequest_RangeInQueueOrder(self):
+    for marked, expected in ((("S03", "S01", "S02"), "run S01..S03 as slice relays"),
+                             (("S03", "S01"), "run S01, S03 as slice relays"),
+                             ((), "run S01 as slice relays")):
+      with self.subTest(marked=marked), support.TempRepo() as repo:
+        state, view = self.setup_request(repo)
+        for target in marked:
+          view.select((tui.ITEM, target))
+          view.handle(state, "m")
+        view.select((tui.ITEM, "S01"))
+        view.handle(state, "Q")
+        targets = sorted(marked) if marked else ["S01"]
+        output = [expected]
+        for target in targets:
+          self.answer(state, view, "yes")
+          self.answer(state, view, "no")
+          _, lines, _ = repo.run("relay-roles", "recommend", target,
+                                 "--well-specified", "yes", "--split", "no")
+          output += [target] + lines.splitlines()
+        self.assertEqual(self.frame(state, view), output)
+        view.handle(state, "\x1b")
+        self.assertEqual(view.mode, "normal")
+
+  def test_RelayRequest_CanonicalOrderIgnoresSessionSort(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      state.index.get("S03").importance = 3
+      for field, descending in (("ranked", True), ("title", False), ("ranked", False)):
+        with self.subTest(field=field, descending=descending):
+          view.sort_field, view.sort_desc = field, descending
+          view.marks = {"S01", "S03"}
+          view.refresh(state)
+          view.handle(state, "Q")
+          output = self.frame(state, view)
+          view.handle(state, "\x1b")
+          self.assertEqual(output, ["run S03, S01 as slice relays"])
+
+  def test_RelayRequest_CanonicalGapPreventsRange(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      state.index.get("S03").importance = 3
+      view.marks = {"S02", "S03"}
+      view.handle(state, "Q")
+      self.assertEqual(self.frame(state, view), ["run S03, S02 as slice relays"])
+
+  def test_RelayRequest_HiddenStoredGapPreventsRange(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      repo.run("add", "Fourth", "--size", "S", "--effort", "1")
+      repo.run("promote", "S04")
+      state = repo.state()
+      state.index.get("S02").status = "done"
+      for field, marked, expected in (
+        ("ranked", {"S01", "S03"}, "run S01, S03 as slice relays"),
+        ("title", {"S01", "S04"}, "run S01, S04 as slice relays"),
+      ):
+        with self.subTest(field=field):
+          view.sort_field, view.sort_desc = field, False
+          view.marks = marked
+          view.refresh(state)
+          view.handle(state, "Q")
+          output = self.frame(state, view)
+          view.handle(state, "\x1b")
+          self.assertEqual(output, [expected])
+
+  def test_Marks_HiddenByFilterSurviveRefreshAndRequest(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      view.handle(state, "m")
+      view.filters.query = "Second"
+      view.refresh(state)
+      view.handle(state, "Q")
+      self.assertEqual(self.frame(state, view), ["run S01 as slice relays"])
+      view.handle(state, "\x1b")
+      view.filters.query = ""
+      view.refresh(state)
+      self.assertTrue(any("[x]" in line and "S01" in line for line in self.frame(state, view)))
+
+  def test_Marks_FixedColumnAlignsQueueRows(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      view.handle(state, "m")
+      rows = [row.text for row in view.listing if row.kind == tui.ITEM]
+      self.assertEqual([row.index(target) for row, target in zip(rows, ("S01", "S02", "S03"))],
+                       [rows[0].index("S01")] * 3)
+
+  def test_RelayRequest_HeadingMatchesPromptState(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      view.handle(state, "Q")
+      screen = Screen(200, 500)
+      tui.draw(screen, state, view)
+      self.assertEqual([text for y, text in screen.writes if y == 0],
+                       ["Relay request: Esc cancels"])
+      self.answer(state, view, "yes")
+      self.answer(state, view, "no")
+      screen = Screen(200, 500)
+      tui.draw(screen, state, view)
+      self.assertEqual([text for y, text in screen.writes if y == 0],
+                       ["Relay request: j/k scroll, Q, q or Esc close"])
+
+  def test_RelayRequest_UnpromotedItem_SaysPromoteFirst(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      repo.run("add", "Unpromoted")
+      state = repo.state()
+      view.refresh(state)
+      view.select((tui.ITEM, "S04"))
+      view.handle(state, "Q")
+      self.assertEqual((view.mode, view.message), ("normal", "S04: promote first (press n)"))
+
+  def test_RelayRequest_WritesNothing(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      def snapshot():
+        return {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      before = snapshot()
+      with patch.object(store, "project_lock", side_effect=AssertionError("read took a lock")):
+        view.handle(state, "m")
+        view.handle(state, "Q")
+        self.answer(state, view, "yes")
+        self.answer(state, view, "no")
+        self.assertIn("run S01 as slice relays", self.frame(state, view))
+        view.handle(state, "\x1b")
+      self.assertEqual(snapshot(), before)
