@@ -11367,10 +11367,22 @@
       "id": "s324",
       "title": "next --batch picks slices whose files do not overlap",
       "short_title": "next --batch picks slices whose files do not overlap",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "f4b6eb29-3652-4eb2-8d8b-4703684290c6",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: files_section and overlap_ignore config keys (this repo: Files / [\"CHANGELOG.md\"]); pure paths.extract (drops :line, ./ and all-slash tokens); next --batch K --disjoint (greedy in queue order, skips overlapping items, no-path items skipped and listed under unknown_files, held items still excluded); deps --overlap A B [C...] prints shared paths per pair. 10 new tests; full suite 2549 OK (skipped=1); gate PASS after one fix round. Output of `slicer next --batch 2 --disjoint`: s324 next --batch picks slices whose files do not overlap (score 22, started); s313 State writes survive a crash (score 11); Blocked none; skipped s326 (in work in wt:s326).",
+          "created_at": "2026-10-17T23:45:49Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11390,7 +11402,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

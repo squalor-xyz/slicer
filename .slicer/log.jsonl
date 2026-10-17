@@ -2019,3 +2019,8 @@
 {"when": "2026-10-17T23:30:28Z", "item": "s364", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
 {"when": "2026-10-17T23:30:28Z", "item": "s365", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
 {"when": "2026-10-17T23:30:28Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Open owner question: should land take --owner, as done does?", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:25:56Z", "item": "s324", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:28:01Z", "item": "config.files_section", "action": "config", "from": "", "to": "Files", "note": ""}
+{"when": "2026-10-17T23:28:01Z", "item": "config.overlap_ignore", "action": "config", "from": "[]", "to": "[\"CHANGELOG.md\"]", "note": ""}
+{"when": "2026-10-17T23:45:49Z", "item": "s324", "action": "note", "from": "", "to": "", "note": "Ready for review: files_section and overlap_ignore config ke", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:45:49Z", "item": "s324", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

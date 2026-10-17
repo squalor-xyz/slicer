@@ -369,5 +369,115 @@ class HeldTests(unittest.TestCase):
         ("S01", [{"id": "S02", "title": "design waiting", "flags": ["design"]}]))
 
 
+class DisjointTests(unittest.TestCase):
+  """`next --batch K --disjoint` and `deps --overlap` read a configured section's paths."""
+
+  def repo(self, ignore: str = "[]") -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("config", "files_section", "Files")
+    repo.run("config", "overlap_ignore", ignore)
+    return repo
+
+  def file_item(self, repo: support.TempRepo, title: str, files: str | None) -> str:
+    """Add an item; with `files`, give it a specified slice whose Files section is that text."""
+    item_id = json.loads(repo.run("add", title, "--json")[1])["id"]
+    if files is not None:
+      repo.run("promote", item_id)
+      repo.run("edit", item_id, "--section", "Implement", "--text", "Do it.")
+      repo.run("edit", item_id, "--section", "Check", "--text", "It works.")
+      repo.run("edit", item_id, "--section", "Files", "--text", files)
+    return item_id
+
+  def test_NextBatchDisjoint_SkipsOverlappingItem(self) -> None:
+    with self.repo() as repo:
+      self.file_item(repo, "first", "- `src/a.py`\n- `docs/x.md`")
+      self.file_item(repo, "overlaps first", "- `src/b.py:12`\n- `docs/x.md`")
+      self.file_item(repo, "disjoint", "- `src/c.py`")
+      self.file_item(repo, "no files", None)
+      code, out, err = repo.run("next", "--batch", "3", "--disjoint", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual([i["id"] for i in payload["items"]], ["S01", "S03"])
+      self.assertEqual(payload["unknown_files"], ["S04"])
+      plain = json.loads(repo.run("next", "--batch", "3", "--json")[1])
+      self.assertEqual([i["id"] for i in plain["items"]], ["S01", "S02", "S03"])
+      self.assertNotIn("unknown_files", plain)
+      text = repo.run("next", "--batch", "3", "--disjoint")[1]
+      self.assertIn("S04", text)
+
+  def test_NextBatchDisjoint_IgnoresOverlapIgnorePaths(self) -> None:
+    with self.repo(ignore='["CHANGELOG.md"]') as repo:
+      self.file_item(repo, "first", "- `src/a.py`\n- `CHANGELOG.md`")
+      self.file_item(repo, "second", "- `src/b.py`\n- `CHANGELOG.md`")
+      self.file_item(repo, "only changelog", "- `CHANGELOG.md`")
+      payload = json.loads(repo.run("next", "--batch", "3", "--disjoint", "--json")[1])
+      self.assertEqual([i["id"] for i in payload["items"]], ["S01", "S02", "S03"])
+      self.assertNotIn("unknown_files", payload)
+      repo.run("config", "overlap_ignore", "[]")
+      payload = json.loads(repo.run("next", "--batch", "3", "--disjoint", "--json")[1])
+      self.assertEqual([i["id"] for i in payload["items"]], ["S01"])
+
+  def test_NextBatchDisjoint_NoFilesSection_Usage(self) -> None:
+    with self.repo() as repo:
+      repo.run("config", "files_section", "")
+      self.file_item(repo, "first", "- `src/a.py`")
+      code, out, _ = repo.run("next", "--batch", "2", "--disjoint", "--json")
+      error = json.loads(out)["error"]
+      self.assertEqual((code, error["code"]), (2, "usage"))
+      self.assertIn("files_section", error["message"])
+      repo.run("config", "files_section", "Files")
+      code, out, _ = repo.run("next", "--disjoint", "--json")
+      error = json.loads(out)["error"]
+      self.assertEqual((code, error["code"]), (2, "usage"))
+      self.assertIn("--batch", error["message"])
+
+  def test_NextBatchDisjoint_HeldItem_NeverAppears(self) -> None:
+    with self.repo() as repo:
+      held = self.file_item(repo, "held", "- `src/a.py`")
+      self.file_item(repo, "other", "- `src/b.py`")
+      repo.run("set", held, "--add-flag", "needs-owner")
+      payload = json.loads(repo.run("next", "--batch", "2", "--disjoint", "--json")[1])
+      self.assertEqual([i["id"] for i in payload["items"]], ["S02"])
+      self.assertEqual([h["id"] for h in payload["held"]], ["S01"])
+
+  def test_OverlapConfig_InvalidIgnoreList_RejectedWithConfigCode(self) -> None:
+    with self.repo() as repo:
+      for value in ('[""]', '"CHANGELOG.md"'):
+        code, out, _ = repo.run("config", "overlap_ignore", value, "--json")
+        self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "bad_config_value"))
+
+  def test_DepsOverlap_PrintsSharedPaths(self) -> None:
+    with self.repo(ignore='["CHANGELOG.md"]') as repo:
+      self.file_item(repo, "one", "- `src/a.py`\n- `docs/x.md`\n- `CHANGELOG.md`")
+      self.file_item(repo, "two", "- `docs/x.md:3`\n- `src/a.py`\n- `CHANGELOG.md`")
+      self.file_item(repo, "three", "- `src/c.py`")
+      code, out, err = repo.run("deps", "--overlap", "S01", "S02", "S03", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out), {"overlap": [
+        {"a": "S01", "b": "S02", "shared": ["src/a.py", "docs/x.md"]},
+        {"a": "S01", "b": "S03", "shared": []},
+        {"a": "S02", "b": "S03", "shared": []},
+      ]})
+      text = repo.run("deps", "--overlap", "S01", "S02", "S03")[1]
+      self.assertIn("S01 S02  src/a.py, docs/x.md", text)
+      self.assertIn("S01 S03  -", text)
+
+  def test_DepsOverlap_BadArguments_Usage(self) -> None:
+    with self.repo() as repo:
+      self.file_item(repo, "one", "- `src/a.py`")
+      self.file_item(repo, "two", "- `src/a.py`")
+      for argv in (("--overlap", "S01"), ("S01", "--overlap", "S01", "S02"),
+                   ("--overlap", "S01", "S02", "--format", "mermaid")):
+        with self.subTest(argv=argv):
+          code, out, _ = repo.run("deps", *argv, "--json")
+          self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "usage"))
+      code, out, _ = repo.run("deps", "--overlap", "S01", "S99", "--json")
+      self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "no_such_item"))
+      repo.run("config", "files_section", "")
+      code, out, _ = repo.run("deps", "--overlap", "S01", "S02", "--json")
+      self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "usage"))
+
+
 if __name__ == "__main__":
   unittest.main()
