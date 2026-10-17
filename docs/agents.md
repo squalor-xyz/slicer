@@ -85,8 +85,9 @@ as a native subagent, and a role on another harness runs as a headless session i
 worktree with the same brief. The
 example matrix from `relay-roles init` has its whole-slice implementer rows on `--split no`,
 a per-part implementer row (haiku, xhigh) on `--split yes`, and a sliver row (haiku, xhigh,
-listed first among the implementers) that matches an item with a parent; `recommend` infers
-that from the item, so there is no flag for it. Without the file, Setup
+listed first among the implementers) that matches an item with a parent; `recommend` infers the
+sliver from the item's parent, so there is no flag for it. A Codex implementer alternative (`r9`,
+listed after the Claude implementer rows) matches any item. Without the file, Setup
 names `slicer relay-roles init` instead.
 `slicer ai relay-roles` is `slicer relay-roles show`; `--json` returns the Markdown under
 `relay_roles` and the structured `rows` and `rules`. A missing file is exit 2 with code
@@ -98,7 +99,9 @@ cannot be read, the relay is the generic text and the matrix is not read.
 The matrix holds `orchestrator` rows from relay-roles schema 3. A schema 1 or 2
 matrix loads without a write and its orchestrator is `unmatched` until a row is added with
 `relay-roles add --role orchestrator`; the next mutation stamps schema 3, which an older slicer
-refuses (`schema_too_new`). The example matrix from `relay-roles init` has no orchestrator row.
+refuses (`schema_too_new`). The example matrix from `relay-roles init` has a Claude Code orchestrator
+row (`r10`, the default) and a Codex one (`r11`), so `recommend` resolves the orchestrator on a fresh
+project. Its architect row (`r7`) matches size L only, so a smaller slice has no architect row.
 
 Companion launch tooling (agents repo, not this repository). `relay v5` only selects rows; it
 launches nothing, inspects no installed harness or credential, and has not been verified to

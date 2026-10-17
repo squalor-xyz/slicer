@@ -405,17 +405,21 @@ def recommend(
 
 
 def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
-  """The example matrix `relay-roles init` writes. Every row runs on one agent.
+  """The example matrix `relay-roles init` writes.
+
+  Claude Code rows pick every role by matrix order. The Codex implementer (r9) and
+  orchestrator (r11) are alternatives; the Claude orchestrator (r10) is the default.
+  The architect row (r7) matches size L only, so a smaller slice has no architect.
 
   Rows and rules are numbered from `first_row` and `first_rule`, so replacing a
   matrix that has issued ids never hands one out again.
   """
   def row(
     n: int, role: str, model: str, reasoning: str, *, when: RoleWhen | None = None,
-    note: str = "",
+    note: str = "", agent: str = "Claude Code", vendor: str = "Claude",
   ) -> RoleRow:
     return RoleRow(
-      id=f"r{first_row + n - 1}", role=role, when=when or RoleWhen(), agent="Claude Code", vendor="Claude",
+      id=f"r{first_row + n - 1}", role=role, when=when or RoleWhen(), agent=agent, vendor=vendor,
       model=model, reasoning=reasoning, note=note,
     )
 
@@ -431,9 +435,15 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
         note="anything the rows above do not match"),
     row(4, "implementer", "haiku", "xhigh", when=RoleWhen(split=True),
         note="per part of a split slice"),
+    # Listed after the Claude implementer rows, so a Claude row still matches first.
+    row(9, "implementer", "gpt-6.1-sol", "medium", agent="Codex", vendor="OpenAI",
+        note="alternate implementer for any slice, split part or sliver"),
     row(5, "reviewer", "opus", "medium"),
     row(6, "gate", "opus", "medium"),
     row(7, "architect", "opus", "high", when=RoleWhen(size=["L"])),
+    row(10, "orchestrator", "opus", "high", note="default orchestrator"),
+    row(11, "orchestrator", "gpt-6.1-sol", "high", agent="Codex", vendor="OpenAI",
+        note="alternate orchestrator"),
   ]
   texts = [
     "A reviewer never wrote code in the slice it reviews.",

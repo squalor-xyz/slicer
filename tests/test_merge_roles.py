@@ -517,16 +517,16 @@ class RelayRolesDriverEndToEndTests(unittest.TestCase):
       matrix = store.load(repo.root).roles
       self.assertEqual(
         [(r.id, r.model) for r in matrix.rows[-2:]],
-        [("r9", "trunk-arch"), ("r10", "feature-gate")],
+        [("r12", "trunk-arch"), ("r13", "feature-gate")],
       )
       self.assertEqual([r.id for r in matrix.rules[-2:]], ["u9", "u10"])
-      self.assertEqual((matrix.next_row, matrix.next_rule), (11, 11))
+      self.assertEqual((matrix.next_row, matrix.next_rule), (14, 11))
       # History is not rewritten: both branches' original add entries are still there.
       log = [
         json.loads(line) for line in repo.read(".slicer/log.jsonl").splitlines()
         if line.strip()
       ]
-      adds = [e for e in log if e["item"] == "relay-roles.r9" and e["note"] == "add"]
+      adds = [e for e in log if e["item"] == "relay-roles.r12" and e["note"] == "add"]
       self.assertEqual(sorted(e["to"] for e in adds), ["architect", "gate"])
       self.assertEqual(repo.run("render")[0], 0)
       code, out, err = repo.run("check")

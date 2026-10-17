@@ -1315,7 +1315,9 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(
       [(row["role"], row["agent"]) for row in data["rows"]],
       [("implementer", "Claude Code")] * 5
-      + [("reviewer", "Claude Code"), ("gate", "Claude Code"), ("architect", "Claude Code")],
+      + [("implementer", "Codex"), ("reviewer", "Claude Code"), ("gate", "Claude Code"),
+         ("architect", "Claude Code"), ("orchestrator", "Claude Code"),
+         ("orchestrator", "Codex")],
     )
     self.assertEqual(len(data["rules"]), 8)
     self.assertEqual(repo.run("check")[0], 0)
@@ -1334,7 +1336,7 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(repo.run("relay-roles", "remove", "r1")[0], 0)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--force")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 8)
+    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 11)
 
   def test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError(self) -> None:
     repo = self.project()
