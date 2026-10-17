@@ -541,6 +541,11 @@ class AffectedTests(unittest.TestCase):
       patch.object(affected, "DEFAULT_MAP", worktree / ".venv" / "affected-map.json"),
     )
 
+  def _commit(self, repo: Path, message: str) -> str:
+    """An empty commit in `repo`, returning the SHA it moves HEAD to."""
+    _git(repo, "commit", "-q", "--allow-empty", "-m", message)
+    return _git(repo, "rev-parse", "HEAD")
+
   def test_Select_NoLocalMap_UsesSiblingMapForSameHead(self) -> None:
     main = self._git_root()
     sibling = main / ".venv" / "affected-map.json"
@@ -560,11 +565,13 @@ class AffectedTests(unittest.TestCase):
     self.assertNotIn(str(sibling.resolve()), err)
 
   def test_Select_NoLocalMap_SiblingMapOtherSha_AsksForFullSuite(self) -> None:
+    # The sibling records a descendant of this worktree's HEAD, which is not an
+    # ancestor of HEAD, so the map is not borrowed.
     main = self._git_root()
+    worktree = self._linked_worktree(main)
+    _git(main, "commit", "-q", "--allow-empty", "-m", "next")
     sibling = main / ".venv" / "affected-map.json"
     affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
-    _git(main, "commit", "-q", "--allow-empty", "-m", "next")
-    worktree = self._linked_worktree(main)
     self._at_checkout(worktree)
     code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
     self.assertEqual(code, 2)
@@ -673,6 +680,171 @@ class AffectedTests(unittest.TestCase):
     self.assertEqual(out.splitlines(), ["mod.T.test_main"])
     self.assertIn(str(main_map.resolve()), err)
     self.assertNotIn(str(other_map.resolve()), err)
+
+  def test_SiblingMap_RecordedAtAncestor_IsBorrowed(self) -> None:
+    main = self._git_root()
+    ancestor = _git(main, "rev-parse", "HEAD")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, ancestor, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    descendant = self._commit(main, "next")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertEqual(affected.sibling_map(descendant), (sibling.resolve(), ancestor))
+
+  def test_Select_AncestorMap_SelectsTestsForLinesChangedSinceRecorded(self) -> None:
+    main = self._git_root()
+    source = main / "src" / "slicer" / "ops.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    _git(main, "add", "src/slicer/ops.py")
+    _git(main, "commit", "-q", "-m", "source")
+    ancestor = _git(main, "rev-parse", "HEAD")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, ancestor, {
+      "mod.T.test_four": ["src/slicer/ops.py:4"],
+      "mod.T.test_one": ["src/slicer/ops.py:1"],
+    })
+    source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
+    _git(main, "commit", "-q", "-am", "edit four")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertNotEqual(_git(worktree, "rev-parse", "HEAD"), ancestor)
+    self.assertEqual(_git(worktree, "status", "--porcelain"), "")
+    code, out, err = _run([])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_four"])
+    self.assertIn(str(sibling.resolve()), err)
+    self.assertIn(f"the working tree is diffed against {ancestor}", err)
+
+  def test_SiblingMap_RecordedAtNonAncestor_IsPassedOver(self) -> None:
+    main = self._git_root()
+    base = _git(main, "rev-parse", "HEAD")
+    tree = _git(main, "rev-parse", "HEAD^{tree}")
+    # A child of `base` on another branch: HEAD does not descend from it.
+    other_branch = _git(main, "commit-tree", tree, "-p", base, "-m", "other branch")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, other_branch, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    head = self._commit(main, "next")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertIsNone(affected.sibling_map(head))
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_SiblingMap_SameHead_StillPreferred(self) -> None:
+    main = self._git_root()
+    ancestor_map = main / ".venv" / "affected-map.json"
+    affected.write_map(ancestor_map, _git(main, "rev-parse", "HEAD"), {"mod.T.test_old": ["src/slicer/ops.py:4"]})
+    head = self._commit(main, "next")
+    holder = self._linked_worktree(main)
+    head_map = holder / ".venv" / "affected-map.json"
+    affected.write_map(head_map, head, {"mod.T.test_head": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertEqual(affected.sibling_map(head), (head_map.resolve(), head))
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_head"])
+    self.assertIn(str(head_map.resolve()), err)
+    self.assertNotIn(str(ancestor_map.resolve()), err)
+
+  def test_SiblingMap_TwoAncestors_UsesTheNearest(self) -> None:
+    main = self._git_root()
+    far = _git(main, "rev-parse", "HEAD")
+    far_map = main / ".venv" / "affected-map.json"
+    affected.write_map(far_map, far, {"mod.T.test_far": ["src/slicer/ops.py:4"]})
+    near = self._commit(main, "middle")
+    holder = self._linked_worktree(main)
+    near_map = holder / ".venv" / "affected-map.json"
+    affected.write_map(near_map, near, {"mod.T.test_near": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    head = self._commit(worktree, "head")
+    self._at_checkout(worktree)
+    self.assertEqual(affected.sibling_map(head), (near_map.resolve(), near))
+
+  def test_Select_NoLocalMap_SiblingAncestorDirtyUnderSrc_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    source = main / "src" / "slicer" / "ops.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("one\ntwo\nthree\nfour\n", encoding="utf-8")
+    _git(main, "add", "src/slicer/ops.py")
+    _git(main, "commit", "-q", "-m", "source")
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    self._commit(main, "next")
+    source.write_text("one\ntwo\nthree\nFOUR\n", encoding="utf-8")
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertIn("no other worktree has a readable, clean map", err)
+    self.assertNotIn(str(sibling.resolve()), err)
+
+  def test_Select_OwnMapAtAncestor_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    worktree = self._linked_worktree(main)
+    ancestor = _git(worktree, "rev-parse", "HEAD")
+    affected.write_map(worktree / ".venv" / "affected-map.json", ancestor, {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    self._commit(worktree, "next")
+    self.assertNotEqual(_git(worktree, "rev-parse", "HEAD"), ancestor)
+    self._at_checkout(worktree)
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertIn("was recorded at", err)
+
+  def test_SiblingMap_TwoAncestorsSameDistance_UsesFirstWorktree(self) -> None:
+    main = self._git_root()
+    ancestor = _git(main, "rev-parse", "HEAD")
+    main_map = main / ".venv" / "affected-map.json"
+    affected.write_map(main_map, ancestor, {"mod.T.test_main": ["src/slicer/ops.py:4"]})
+    holder = self._linked_worktree(main)
+    affected.write_map(holder / ".venv" / "affected-map.json", ancestor,
+                       {"mod.T.test_holder": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    head = self._commit(worktree, "head")
+    self._at_checkout(worktree)
+    self.assertEqual(affected.sibling_map(head), (main_map.resolve(), ancestor))
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_main"])
+    self.assertIn(str(main_map.resolve()), err)
+
+  def test_Select_BorrowedMapChangedAfterChosen_AsksForFullSuite(self) -> None:
+    main = self._git_root()
+    sibling = main / ".venv" / "affected-map.json"
+    affected.write_map(sibling, _git(main, "rev-parse", "HEAD"), {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    # sibling_map chose a commit that the map no longer records: a re-recording between the two reads.
+    with patch.object(affected, "sibling_map", return_value=(sibling, "1" * 40)):
+      code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("changed after it was chosen", err)
+    self.assertIn(DISCOVER, err)
+
+  def test_SiblingMap_RecordedShaNotFullHex_IsPassedOver(self) -> None:
+    main = self._git_root()
+    _git(main, "commit", "-q", "--allow-empty", "-m", "next")
+    head = _git(main, "rev-parse", "HEAD")
+    sibling = main / ".venv" / "affected-map.json"
+    # "HEAD~1" would resolve in the borrowing checkout, so the value is refused before git sees it.
+    affected.write_map(sibling, "HEAD~1", {"mod.T.test_a": ["src/slicer/ops.py:4"]})
+    worktree = self._linked_worktree(main)
+    self._at_checkout(worktree)
+    self.assertIsNone(affected.sibling_map(head))
+    code, out, err = _run(["--lines", "src/slicer/ops.py:4-4"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+    self.assertNotIn(str(sibling.resolve()), err)
 
   def test_DiscoverSuccess_WritesMapForHead(self) -> None:
     directory = self._git_root()

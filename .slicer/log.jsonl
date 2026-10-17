@@ -1804,3 +1804,6 @@
 {"when": "2026-10-16T23:47:06Z", "item": "s330", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T03:41:07Z", "item": "s330", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T04:04:12Z", "item": "s330", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: merge-base allowlist admits only COMMIT COMMIT; --is-ancestor refused. Landing rerun: branch suite 2320 OK, merged main with s305 2323 tests OK (1 skipped); slicer check and git diff --check passed.", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:06:51Z", "item": "s342", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:59:29Z", "item": "s342", "action": "note", "from": "", "to": "", "note": "Verified: a worktree with no map of its own borrows a clean ", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:59:32Z", "item": "s342", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

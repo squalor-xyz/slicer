@@ -4,11 +4,14 @@ The full unittest discover stays the gate before done. When that discover is
 the process entry point and passes, it writes this map for HEAD: the lines each
 test executed, and the non-Python repo files each test opened, so a Markdown or
 template change selects its readers. A worktree without a map of its own borrows
-one that another worktree of the repository recorded at the same HEAD, when that
-worktree has no uncommitted changes under `src/` or `tests/`; it is read, never
-written. The map is a local cache: when it is missing or stale, the caller is told
-to run that suite instead of a list that only looks complete. A selected id that the
-tree no longer defines is dropped from a run, and that run asks for the full suite too.
+one that another worktree of the repository recorded at HEAD or at an ancestor of
+HEAD, the nearest one when several qualify, when that worktree has no uncommitted
+changes under `src/` or `tests/`; it is read, never written. A borrowed map still
+describes every line unchanged since its commit, so the working tree is diffed against
+that commit, not HEAD. A worktree's own map is used only at the same HEAD. The map is
+a local cache: when it is missing or stale, the caller is told to run that suite
+instead of a list that only looks complete. A selected id that the tree no longer
+defines is dropped from a run, and that run asks for the full suite too.
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -26,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MAP = ROOT / ".venv" / "affected-map.json"
 DISCOVER = "python3 -m unittest discover -s tests -t tests"
 NOTHING = "nothing to run"
+_FULL_SHA = re.compile(r"[0-9a-f]{40}")
 
 
 class GitError(Exception):
@@ -128,26 +133,42 @@ def _string_lists(section: dict, name: str) -> dict[str, list[str]]:
 def select(
   map_path: Path, sha: str | None, line_specs: list[str], run: bool, *, borrow: bool = False,
 ) -> int:
-  """Select from `map_path`. With `borrow`, a missing map is replaced by a sibling's."""
+  """Select from `map_path`. With `borrow`, a missing map is replaced by a sibling's.
+
+  A borrowed map may be recorded at an ancestor of HEAD; the working tree is then
+  diffed against the commit the map was recorded at.
+  """
   if not map_path.is_file() and not borrow:
     return _full_suite(f"{map_path} is missing")
   current = sha if sha is not None else git_head(ROOT)
   if current is None:
     return _full_suite("cannot read HEAD")
-  if not map_path.is_file():
+  borrowed = not map_path.is_file()
+  expected = current
+  if borrowed:
     found = sibling_map(current)
     if found is None:
-      return _full_suite(f"{map_path} is missing, and no other worktree has a readable, clean map for {current}")
-    print(f"affected: no map in this worktree; using {found}, recorded at {current}", file=sys.stderr)
-    map_path = found
+      return _full_suite(
+        f"{map_path} is missing, and no other worktree has a readable, clean map "
+        f"for {current} or an ancestor of it"
+      )
+    map_path, expected = found
   try:
     recorded, tests, reads = load_map(map_path)
   except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
     return _full_suite(f"{map_path} cannot be read ({exc})")
-  if current != recorded:
+  if recorded != expected:
+    if borrowed:
+      return _full_suite(f"{map_path} changed after it was chosen, and is now recorded at {recorded}")
     return _full_suite(f"map was recorded at {recorded}, HEAD is {current}")
+  if borrowed:
+    print(
+      f"affected: no map in this worktree; using {map_path}, recorded at {recorded}; "
+      f"the working tree is diffed against {recorded}",
+      file=sys.stderr,
+    )
   try:
-    changed = lines_from_specs(line_specs) if line_specs else working_tree_lines(ROOT)
+    changed = lines_from_specs(line_specs) if line_specs else working_tree_lines(ROOT, recorded)
   except ValueError as exc:
     print(f"affected: {exc}", file=sys.stderr)
     return 2
@@ -156,14 +177,19 @@ def select(
   return _emit(changed, tests, reads, run)
 
 
-def sibling_map(sha: str) -> Path | None:
-  """The first worktree's map, in `git worktree list` order, that records `sha`.
+def sibling_map(sha: str) -> tuple[Path, str] | None:
+  """The map that a worktree recorded at `sha`, or at its nearest ancestor, and that commit.
 
-  Read only: each candidate is loaded and never written. A map that does not
-  load, or records another SHA, is passed over, and so is a worktree with
-  uncommitted changes under `src/` or `tests/`, whose map may describe code
-  that is not at `sha`.
+  Read only: each candidate is loaded and never written. A map recorded at `sha`
+  itself wins at once. Otherwise the candidate with the fewest commits between
+  its recorded commit and `sha` wins, the first in `git worktree list` order on a
+  tie. A map that does not load, or records a commit that is neither `sha` nor
+  one of its ancestors, is passed over, and so is a worktree with uncommitted
+  changes under `src/` or `tests/`, whose map may describe code that is not at
+  its recorded commit. A recorded value that is not a full 40-character SHA is
+  passed over before git sees it, so a hand-made `HEAD~1` cannot resolve here.
   """
+  nearest: tuple[int, Path, str] | None = None
   for worktree in _worktree_paths(ROOT):
     candidate = worktree / ".venv" / "affected-map.json"
     if not candidate.is_file():
@@ -172,9 +198,43 @@ def sibling_map(sha: str) -> Path | None:
       recorded, _, _ = load_map(candidate)
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
       continue
-    if recorded == sha and not _has_source_changes(worktree):
-      return candidate
-  return None
+    if _FULL_SHA.fullmatch(recorded) is None:
+      continue
+    distance = 0 if recorded == sha else _ancestor_distance(recorded, sha)
+    if distance is None or (nearest is not None and distance >= nearest[0]):
+      continue
+    if _has_source_changes(worktree):
+      continue
+    if distance == 0:
+      return candidate, recorded
+    nearest = (distance, candidate, recorded)
+  if nearest is None:
+    return None
+  return nearest[1], nearest[2]
+
+
+def _ancestor_distance(ancestor: str, sha: str) -> int | None:
+  """How many commits lie after `ancestor` up to `sha`, or None unless it is an ancestor.
+
+  Read only, and run in this checkout, which shares the repository's objects with
+  every other worktree. A commit that git cannot read is not an ancestor.
+  """
+  try:
+    ancestry = subprocess.run(
+      ["git", "merge-base", "--is-ancestor", ancestor, sha],
+      cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    if ancestry.returncode != 0:
+      return None
+    count = subprocess.run(
+      ["git", "rev-list", "--count", f"{ancestor}..{sha}"],
+      cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+  except OSError:
+    return None
+  if count.returncode != 0 or not count.stdout.strip().isdigit():
+    return None
+  return int(count.stdout.strip())
 
 
 def _has_source_changes(worktree: Path) -> bool:
@@ -213,11 +273,11 @@ def _worktree_paths(root: Path) -> list[Path]:
   ]
 
 
-def working_tree_lines(root: Path) -> dict[str, set[int]]:
-  """Changed lines versus HEAD, plus every line of an untracked `src/` or `tests/` file."""
+def working_tree_lines(root: Path, base: str = "HEAD") -> dict[str, set[int]]:
+  """Changed lines versus `base`, plus every line of an untracked `src/` or `tests/` file."""
   try:
     diff = subprocess.run(
-      ["git", "diff", "-U0", "HEAD", "--"],
+      ["git", "diff", "-U0", base, "--"],
       cwd=root, capture_output=True, text=True, check=False,
     )
     untracked = subprocess.run(
