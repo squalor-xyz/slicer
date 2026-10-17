@@ -11501,7 +11501,7 @@
       "id": "s331",
       "title": "Relay board shows the slice's status beside a finished run",
       "short_title": "Relay board shows the slice's status beside a finished run",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
