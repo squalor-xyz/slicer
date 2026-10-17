@@ -11319,7 +11319,7 @@
       "id": "s323",
       "title": "Items waiting on an owner decision are held out of next",
       "short_title": "Items waiting on an owner decision are held out of next",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
