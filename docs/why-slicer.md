@@ -25,7 +25,7 @@ For the concepts behind these answers, and how an item moves from queued to fini
   checks the `path:line` references in slice text against the files they cite, and says
   which still hold. `slicer verify --landed ID` checks that a done item is committed in the
   history of a ref, `HEAD` by default. See
-  [getting started](getting-started.md#8-wire-it-into-ci) and the
+  [continuous integration](commands.md#continuous-integration) and the
   [command reference](commands.md).
 
 - **Merge conflicts on tracking files.** Parallel branches collide on tracking files, such
@@ -33,7 +33,7 @@ For the concepts behind these answers, and how an item moves from queued to fini
   on the merge drivers. The `slicer-index` driver merges independent items and fields, so
   only a real disagreement stays a conflict. `slicer-relay-roles` merges the relay role
   matrix, and `slicer-generated` keeps the current branch's copy of `render/`, which you
-  then re-render. See [the loop](getting-started.md#6-the-loop) and the
+  then re-render. See [Git merge drivers](commands.md#git-merge-drivers) and the
   [command reference](commands.md).
 
 - **Agents that need a contract.** Every command an agent runs takes `--json`, and a
@@ -52,12 +52,12 @@ For the concepts behind these answers, and how an item moves from queued to fini
   with `slicer done` or sends it back to the queue with `slicer reject --note`.
   `slicer ai relay` prints an implementer, reviewer and gate workflow, with an optional
   architect, and an optional role matrix suggests the agent, model and effort for each
-  role. See [the loop](getting-started.md#6-the-loop) and
+  role. See [review lifecycle](commands.md#review-lifecycle) and
   [relay roles](commands.md#relay-roles).
 
 - **Nothing to host.** The roadmap is JSON in your repository, so it moves with branches
   and clones. slicer is standard-library Python 3.11+ with no dependencies. It runs locally
-  and needs no AI service and no API key. See [install](getting-started.md#1-install).
+  and needs no AI service and no API key. See [install](../README.md#install).
 
 ## When slicer is not for you
 

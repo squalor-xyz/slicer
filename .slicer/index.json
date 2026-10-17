@@ -11705,12 +11705,35 @@
       "id": "s334",
       "title": "Make getting started a short human-first walkthrough",
       "short_title": "Make getting started a short human-first walkthrough",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s333"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "1c437925-d272-41e7-9d58-26ec312d30f7",
+          "kind": "",
+          "text": "**2026-10-17** — VERDICT: FAIL - guide claims show S01 displays status; commands.md duplicates not reconciled; transcripts omit rendered lines; signpost targets untested",
+          "created_at": "2026-10-17T17:25:14Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "cefa0640-321f-4fcf-9652-83b9912966c0",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: docs/getting-started.md is now a short human-first walkthrough (one fictional project, done finish and handoff alternative, section discovery); reference detail moved to commands.md and agents.md with duplicates reconciled; 22 old anchors kept as signposts whose targets a test verifies; README is a short front page. Walkthrough verified in fixtures for both finish policies; full suite 2360 OK (1 skipped); slicer check passed; gate VERDICT: PASS.",
+          "created_at": "2026-10-17T17:38:49Z",
+          "attempt": 2,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11730,7 +11753,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 2
       }
     },
     {

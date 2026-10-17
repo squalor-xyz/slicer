@@ -2,30 +2,21 @@
 
 <img src="assets/slicer-512.png" alt="slicer" width="128" />
 
-Roadmap and slice management for the review → slice → implement → done loop.
+A local roadmap and slice manager. Record ideas, specify bounded work, pick what is
+ready, and track it through implementation and review. slicer stores, prioritizes,
+validates, and renders the work; you supply the planning and implementation.
 
-slicer is AI-friendly: a coding agent can review a project, turn accepted findings into
-an importable roadmap, and work through bounded slices using commands with JSON output.
-For a new project, start with goals and acceptance criteria instead of review findings.
-The AI supplies the review and planning; slicer stores, validates, prioritizes, and
-renders the work. It runs locally without an AI service or API key.
+**[Get started](docs/getting-started.md)** — take one small task from an idea to a
+checked roadmap, without an AI agent.
 
-Run `slicer ai instructions` for a concise agent quick start, or add `--json` for
-machine-readable output. It works before initialization and reads no project state.
+- [How slicer works](docs/how-it-works.md) — concepts, data flow, and lifecycle
+- [Why slicer](docs/why-slicer.md) — the workflow problems it solves
+- [Agent reference](docs/agents.md) — optional AI workflows, prompts, and JSON contracts
 
-The permanent canonical store is **git-tracked JSON under `.slicer/`**. It travels
-with branches and clones, exposes state changes in review diffs, and lets `slicer check`
-compare generated output byte for byte. The markdown under `.slicer/render/` is generated
-output — readable, committed, and never parsed back. Edit through the commands or the
-TUI, not by hand.
-
-Any future database may only be a disposable cache inside the checkout: gitignored,
-rebuildable from JSON, and never read back as authority. `~/.slicer/` is not a canonical
-state directory; canonical state stays inside the checkout. Coordination stays in git.
-
-Stdlib Python 3.11+, no dependencies.
-
-Why use it? See [Why slicer](docs/why-slicer.md).
+Stdlib Python 3.11+, no dependencies. Runs locally without an AI service or API key.
+The canonical state is git-tracked JSON under `.slicer/`; the markdown and HTML in
+`.slicer/render/` are generated views. Manage state through the commands or TUI.
+**slicer never commits, pushes, or tags.** Coordination stays in git.
 
 ## Install
 
@@ -36,129 +27,31 @@ because the `slicer` name on PyPI is taken; the command it installs is still `sl
 python3 -m venv ~/.slicer-venv
 ~/.slicer-venv/bin/pip install squalor-slicer
 ln -s ~/.slicer-venv/bin/slicer ~/.local/bin/slicer   # or anywhere on your PATH
+slicer --help
 ```
 
 `slicer --about` prints the version, description, source URL, and issues URL.
-
-`slicer --help` confirms it. Other ways in — `pip --user`, pipx, uv, unreleased main — are
-in [getting started](docs/getting-started.md#1-install); the editable install for working on
-slicer itself is in [AGENTS.md](AGENTS.md#install).
-
-## Use it on a project
-
-```sh
-cd any-repo
-slicer init                             # creates .slicer/
-slicer add "Parse the config file" --size M --tree core
-slicer promote S01                      # give it a slice file from the template
-slicer edit S01 --section Why --text "Load settings before starting the app"
-slicer render                           # regenerate .slicer/render/
-slicer check                            # the gate: exit 1 if anything drifted
-```
-
-`add` appends a roadmap row; `promote` gives it a slice file.
-
-Choose a distinct ID scheme when creating a queue with
-`slicer init --id-prefix sp- --id-width 2`: new IDs start at `sp-01`.
-Add `--id sp-21` to start at a different number in that scheme.
-
-Got a whole roadmap to load? Write it as a markdown outline and import it in one go:
-
-```sh
-slicer import --skeleton > roadmap.md   # a template, built from your config
-slicer import roadmap.md --dry-run      # validate; writes nothing
-slicer import roadmap.md                # apply
-```
-
-Each `##` heading is an item, optional `key: value` lines carry its size, tree and
-dependencies, and `###` sections become the slice itself — so one file can produce a
-fully written roadmap. It is a one-way ramp: the file is yours to delete afterwards.
-
-Already running this workflow by hand in markdown? `slicer migrate --from docs/slices`
-converts an existing tree that is **already in slicer's legacy format**. It refuses to
-write anything unless every file round-trips byte for byte, so a document slicer cannot
-reproduce is never half-migrated.
-
-## Commands
-
-| | |
-|---|---|
-| `ai` | agent onboarding: instructions, skill, relay, relay-roles |
-| `init` | create .slicer/ in a project; choose an ID prefix, width, and starting ID |
-| `setup-git` | print the git config that turns on the merge drivers (run once per clone) |
-| `merge-index` | the `index.json` merge driver Git runs; merges independent items and fields, unions notes both sides added, and takes the larger `next_id` |
-| `merge-relay-roles` | the `relay-roles.json` merge driver Git runs; keeps both sides' rows and rules, gives the one merged in a fresh id when both issued the same id, and refuses a same-field disagreement without writing |
-| `import` | add items in bulk from a markdown outline |
-| `migrate` | convert an existing markdown slice tree |
-| `next` | the highest-priority startable item |
-| `next-id` | the id the next add would take, without allocating it |
-| `id-prefix` | show the id prefix, or change its case for new ids |
-| `list` | list items by readiness, declared pass order, then effective score (empty passes merge by score), omitting done and retired unless asked. `--in-work` and `--review` show those queues |
-| `deps` | dependencies: unblocked items, or one item's edges |
-| `find` | search items by text |
-| `show` | print one slice |
-| `sections` | list configured section names, marking the ones next requires |
-| `config` | print the effective config, or one value by dotted key; set or unset one key |
-| `template` | list, show, replace and reset the render templates |
-| `recommended-workflow` | print the generic recommended project workflow |
-| `add` | append a roadmap item |
-| `promote` | give an item a slice file |
-| `move` | reorder the queue |
-| `sort` | reorder the whole queue by priority score |
-| `set` | change an item's fields |
-| `edit` | edit a slice section, scope boundary or lead |
-| `refs` | check `path:line` references in slice text against the files they cite; `--fix` rewrites the ones that moved |
-| `note` | append a dated note to an item |
-| `feedback` | keep a gitignored local log of frictions, bugs, and feature ideas, apart from the roadmap |
-| `feedback-report` | file the log's unreported bug and feature entries as GitHub issues through `gh`, one per entry |
-| `issues-pull` | file a repository's open GitHub issues as unscored roadmap rows through `gh`, one per issue |
-| `note-verify` | record machine verification of an item note |
-| `note-attest` | record owner attestation of an item note (workflow convention, not authentication) |
-| `done` | mark an item finished |
-| `start` | mark an item in progress and claim it |
-| `release` | clear a claim without changing status |
-| `handoff` | hand a started slice to review and clear its claim |
-| `reject` | send a review back with a verdict and clear its claim |
-| `park` | set an item aside |
-| `unpark` | return a parked item to the queue |
-| `prose` | read and edit the roadmap's own prose |
-| `remove` | retire an obsolete item, or purge one outright |
-| `render` | regenerate .slicer/render/ |
-| `sync` | rewrite derived lines in other documents |
-| `verify` | check the index for consistency (and against git unless git_check is off); `verify --landed ID [--on REF]` checks that an item's done state is committed in REF's history |
-| `check` | the CI gate: render, sync and integrity |
-| `goals` | show project goals and non-goals |
-| `catalog` | project-knowledge records, and citations from roadmap items |
-| `relay-roles` | the slice-relay role matrix: rows (role, conditions, agent, vendor, model, reasoning) and rules |
-| `relay-run` | record slice-relay runs and their agent steps in a local, gitignored ledger; `list` shows what is running |
-| `stats` | counts by status, size, tree and pass |
-| `status` | next item, progress, and blockers in one view |
-| `log` | recent history, newest first |
-| `tui` / `ui` | browse, read, reorder and edit interactively |
-
-Every flag, the `.slicer/` layout, removing items, and roadmap prose are in the
-[command reference](docs/commands.md); keys and screens are in the [TUI manual](docs/tui.md).
-Every command except `tui`/`ui`, `merge-index` and `merge-relay-roles` takes `--json`, failures included; the
-[agent reference](docs/agents.md) has the payloads and exit codes.
-
-**slicer never commits, pushes or tags.** Its `git` access is a read-only allowlist, and
-a mutation leaves the index untouched; see [Git access](docs/commands.md#git-access).
+[Other installation options](docs/commands.md#installation-options) include pipx,
+uv, and unreleased main. The [contributor install](AGENTS.md#install) tracks a checkout.
 
 ## Documentation
 
-- [Why slicer](docs/why-slicer.md) — the workflow problems slicer solves
-- [How slicer works](docs/how-it-works.md) — the concepts, the data flow and the item lifecycle, with diagrams
-- [Getting started](docs/getting-started.md) — install to CI, with worked workflows for a
-  new project and for an AI code review
-- [Command reference](docs/commands.md) — every command and flag, `.slicer/`, removal, prose
-- [TUI manual](docs/tui.md) — browsing, editing and the roadmap wizard
-- [Driving slicer from an agent](docs/agents.md) — reusable prompts, JSON contracts, exit codes
-- [The outline format](docs/import.md) — what `slicer import` reads
-- [Configuration](docs/configuration.md) — every `.slicer/config.json` key and default
-- [Legacy format](docs/migrate-format.md) — what `slicer migrate` reads
+- [Getting started](docs/getting-started.md) — a human first-use walkthrough
+- [Why slicer](docs/why-slicer.md) — the workflow problems it solves
+- [Command reference](docs/commands.md) — commands, flags, lifecycle, CI, and recovery
+- [TUI manual](docs/tui.md) — interactive browsing, editing, and the roadmap wizard
+- [Outline format](docs/import.md) — import a plan in bulk
+- [Configuration](docs/configuration.md) — project settings and defaults
+- [Legacy format](docs/migrate-format.md) — migrate an existing slice tree
 - [ARCHITECTURE.md](ARCHITECTURE.md) — layering and invariants
-- [AGENTS.md](AGENTS.md) — contributing: the dev loop, tests, and house style
-- [CHANGELOG.md](CHANGELOG.md) — notable changes by release
+- [AGENTS.md](AGENTS.md) — contributing, tests, and house style
+- [CHANGELOG.md](CHANGELOG.md) — changes by release
+
+Run `slicer --help` for the command list or `slicer ai instructions` for agent onboarding.
+Every command except `tui`, `ui`, `merge-index` and `merge-relay-roles` takes `--json`;
+see the [agent reference](docs/agents.md) for payloads and exit codes.
+To try slicer, follow [Getting started](docs/getting-started.md); to understand it first,
+read [How slicer works](docs/how-it-works.md).
 
 ## Tests
 
@@ -166,19 +59,12 @@ a mutation leaves the index untouched; see [Git access](docs/commands.md#git-acc
 python3 -m unittest discover -s tests -t tests
 ```
 
-No install step and no dependencies — the suite puts `src/` on `sys.path` itself.
-Fixtures and the optional live-tree migrator check are described in
-[AGENTS.md](AGENTS.md).
+No install step or dependencies. See [AGENTS.md](AGENTS.md) for fixtures and checks.
 
 ## Status
 
-slicer manages its own roadmap: `.slicer/` in this repository is a worked
-example you can read, and `.slicer/render/ROADMAP.md` is what it renders to. Run
-`slicer --version` for the installed version, and see the [changelog](CHANGELOG.md).
-Its own goals and non-goals: run `slicer goals`, or read them at the top of
-[the roadmap](.slicer/render/ROADMAP.md). In short, slicer is a small, dependency-light,
-file-based store for a project's roadmap, goals, and issues — canonical JSON that humans
-and AI agents plan from, projected deterministically to markdown — and is *not* a
-real-time, multi-user collaboration tool (coordination happens through git).
+slicer manages its own roadmap. Run `slicer status` for progress, `slicer goals` for
+its direction, and `slicer --version` for your installed version. The
+[changelog](CHANGELOG.md) records releases.
 
 Apache-2.0. Stdlib Python, no dependencies, and none planned.

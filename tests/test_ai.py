@@ -76,13 +76,65 @@ class AiInstructionsTests(unittest.TestCase):
     guide = (Path(__file__).resolve().parents[1] / "docs" / "getting-started.md").read_text(
       encoding="utf-8"
     )
-    handoff = guide.split("$ slicer handoff S01 --render", 1)[0]
-    self.assertIn("When `implement_finish` is `handoff`", handoff[-500:])
-    loop = guide.split("## 6. The loop", 1)[1].split("\n## ", 1)[0]
-    self.assertIn("`slicer ai instructions`", loop)
-    self.assertIn("default finish, `done`", loop)
-    self.assertIn("$ slicer start S01 --render", loop)
-    self.assertIn('$ slicer done S01 --note "loader now refuses a missing key" --render', loop)
+    sections = (
+      ("## Start the work", "$ slicer start S01 --render", "S01 -> started"),
+      ("## Finish and verify", "default finish, `done`",
+       'slicer done S01 --note "Greeting checked" --render', "S01 -> done", "slicer check"),
+      ("### Handoff alternative", "When `implement_finish` is `handoff`",
+       "$ slicer handoff S01 --render", "S01 -> review, unclaimed", "slicer config implement_finish"),
+    )
+    for heading, *examples in sections:
+      section = guide.partition(heading + "\n")[2].split("\n## ", 1)[0]
+      for example in examples:
+        with self.subTest(heading=heading, example=example):
+          self.assertIn(example, section)
+
+  def test_GettingStarted_MovedSections_KeepOldAnchorSignposts(self) -> None:
+    guide = (Path(__file__).resolve().parents[1] / "docs" / "getting-started.md").read_text(
+      encoding="utf-8"
+    )
+    anchors = (
+      "1-install",
+      "install-it-no-clone",
+      "develop-on-it-clone--editable",
+      "2-set-it-up",
+      "3-configure-before-you-add-anything",
+      "worked-workflows",
+      "a-new-project-goals-to-a-roadmap",
+      "an-existing-project-ai-review-to-a-roadmap",
+      "import-prioritize-and-work-through-either-example",
+      "4-get-your-roadmap-in",
+      "4a-from-nothing",
+      "4b-in-bulk-from-a-markdown-outline",
+      "4c-from-an-existing-legacy-markdown-tree",
+      "5-turn-an-item-into-a-slice",
+      "6-the-loop",
+      "priority",
+      "relay-roles",
+      "batch-changes",
+      "7-passes-if-you-want-them",
+      "goals-and-non-goals",
+      "8-wire-it-into-ci",
+      "9-when-something-goes-wrong",
+    )
+    for anchor in anchors:
+      with self.subTest(anchor=anchor):
+        pattern = rf'<a id="{anchor}"></a> \[[^\]]+\]\(([^\)]+)\)'
+        self.assertRegex(guide, pattern)
+        target, _, fragment = re.search(pattern, guide).group(1).partition("#")
+        path = Path(__file__).resolve().parents[1] / "docs" / target
+        self.assertTrue(path.is_file(), f"Missing signpost target: {target}")
+        if fragment:
+          text = path.read_text(encoding="utf-8")
+          ids = set(re.findall(r'<a id="([^"]+)"', text))
+          counts = {}
+          for heading in re.findall(r"^#{1,6} +(.+?) *#* *$", text, re.MULTILINE):
+            heading = re.sub(r"<[^>]+>", "", heading).lower()
+            slug = re.sub(r"[^\w\- ]", "", heading).replace(" ", "-")
+            count = counts.get(slug, 0)
+            counts[slug] = count + 1
+            ids.add(f"{slug}-{count}" if count else slug)
+          self.assertIn(fragment, ids, f"Missing signpost fragment: {target}#{fragment}")
 
   def test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill(self) -> None:
     self.assertIn(ai.TRACKING, ai.INSTRUCTIONS)
