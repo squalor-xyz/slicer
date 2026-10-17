@@ -1979,3 +1979,6 @@
 {"when": "2026-10-17T22:38:23Z", "item": "s325", "action": "note", "from": "", "to": "", "note": "Ready for review: check prints 'only the roadmap render is s", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:38:23Z", "item": "s325", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:49:11Z", "item": "s325", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 2d972ec); full suite OK after the merge commit.", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:32:09Z", "item": "s353", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:55:42Z", "item": "s353", "action": "note", "from": "", "to": "", "note": "Ready for review: Q leaves marks on done or retired items ou", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:55:43Z", "item": "s353", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

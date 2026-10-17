@@ -2742,6 +2742,78 @@ class RelayRequestTests(unittest.TestCase):
       view.refresh(state)
       self.assertTrue(any("[x]" in line and "S01" in line for line in self.frame(state, view)))
 
+  def test_RelayRequest_MarkedItemDone_LeftOut(self):
+    for status in ("done", "retired"):
+      with self.subTest(status=status), support.TempRepo() as repo:
+        state, view = self.setup_request(repo)
+        for target in ("S01", "S03"):
+          view.select((tui.ITEM, target))
+          view.handle(state, "m")
+        state.index.get("S03").status = status
+        view.refresh(state)
+        view.select((tui.ITEM, "S01"))
+        view.handle(state, "Q")
+        self.answer(state, view, "yes")
+        self.answer(state, view, "no")
+        _, lines, _ = repo.run("relay-roles", "recommend", "S01",
+                               "--well-specified", "yes", "--split", "no")
+        self.assertEqual(self.frame(state, view),
+                         ["run S01 as slice relays", "S01", *lines.splitlines()])
+        view.handle(state, "\x1b")
+        self.assertEqual(view.mode, "normal")
+
+  def test_RelayRequest_OnlyFinishedMarks_RequestsTheSelectedItem(self):
+    for status in ("done", "retired"):
+      with self.subTest(status=status), support.TempRepo() as repo:
+        state, view = self.setup_request(repo)
+        view.select((tui.ITEM, "S03"))
+        view.handle(state, "m")
+        state.index.get("S03").status = status
+        view.refresh(state)
+        view.select((tui.ITEM, "S02"))
+        view.handle(state, "Q")
+        self.answer(state, view, "yes")
+        self.answer(state, view, "no")
+        _, lines, _ = repo.run("relay-roles", "recommend", "S02",
+                               "--well-specified", "yes", "--split", "no")
+        self.assertEqual(self.frame(state, view),
+                         ["run S02 as slice relays", "S02", *lines.splitlines()])
+        view.handle(state, "\x1b")
+        self.assertEqual(view.mode, "normal")
+
+  def test_RelayRequest_ReopenedMark_ReturnsToTheRequest(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      view.select((tui.ITEM, "S03"))
+      view.handle(state, "m")
+      state.index.get("S03").status = "done"
+      view.refresh(state)
+      state.index.get("S03").status = "open"
+      view.refresh(state)
+      view.select((tui.ITEM, "S02"))
+      view.handle(state, "Q")
+      self.answer(state, view, "yes")
+      self.answer(state, view, "no")
+      _, lines, _ = repo.run("relay-roles", "recommend", "S03",
+                             "--well-specified", "yes", "--split", "no")
+      self.assertEqual(self.frame(state, view),
+                       ["run S03 as slice relays", "S03", *lines.splitlines()])
+      view.handle(state, "\x1b")
+
+  def test_RelayRequest_OnlyFinishedMarksOnProseRow_SaysSliceOnly(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      view.select((tui.ITEM, "S03"))
+      view.handle(state, "m")
+      repo.run("prose", "set", "preamble", "--text", "Context")
+      state = repo.state()
+      state.index.get("S03").status = "done"
+      view.refresh(state)
+      view.select((tui.PROSE, "preamble"))
+      view.handle(state, "Q")
+      self.assertEqual((view.mode, view.message),
+                       ("normal", "that key applies to a slice, not to a prose block"))
+
   def test_Marks_FixedColumnAlignsQueueRows(self):
     with support.TempRepo() as repo:
       state, view = self.setup_request(repo)
@@ -2749,6 +2821,23 @@ class RelayRequestTests(unittest.TestCase):
       rows = [row.text for row in view.listing if row.kind == tui.ITEM]
       self.assertEqual([row.index(target) for row, target in zip(rows, ("S01", "S02", "S03"))],
                        [rows[0].index("S01")] * 3)
+
+  def test_ItemRows_MarkedRowWideNumber_NoDigitShows(self):
+    state = example()
+    state.index = Index(items=[Item(f"S{n:04d}", f"Item {n}", "open") for n in range(1, 1002)])
+    view = tui.View.initial(state)
+    view.marks = {item.id for item in state.index.items}
+    view.refresh(state)
+    marked = [row for row in view.listing if row.kind == tui.ITEM]
+    view.marks = set()
+    view.refresh(state)
+    plain = [row for row in view.listing if row.kind == tui.ITEM]
+    self.assertEqual((len(marked), len(plain)), (1001, 1001))
+    for n, (row, bare) in enumerate(zip(marked, plain), 1):
+      number = f"{n:>3}"
+      with self.subTest(n=n):
+        self.assertEqual(row.text[:len(number)], "[x]".rjust(len(number)))
+        self.assertEqual(row.text[len(number):], bare.text[len(number):])
 
   def test_RelayRequest_HeadingMatchesPromptState(self):
     with support.TempRepo() as repo:

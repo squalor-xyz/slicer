@@ -278,14 +278,15 @@ def _queue_claim(cell: str) -> str:
 def item_rows(
   state: State, items: list,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
-  *, pane_width: int | None = None,
+  *, pane_width: int | None = None, marks: set[str] | None = None,
 ) -> list[Row]:
   """Queue rows in the given order. The number is the position in that view.
 
   The cells after the status are config `tui.columns`, in that order. `pane_width`
   is the queue pane's width when the caller knows it. Below NARROW_PANE the claim
   and size columns are left out of that list, so the title keeps room (sibling-only
-  rows still list); None keeps them, as a wide pane does.
+  rows still list); None keeps them, as a wide pane does. A marked id shows `[x]`
+  in the number slot, padded to that slot's width so its digits stay hidden.
   """
   cfg = state.config
   elsewhere = elsewhere or {}
@@ -305,7 +306,10 @@ def item_rows(
     marker = "!" if pending else " "
     status = store.displayed_status(cfg, item, elsewhere.get(item.id, []))
     label = cfg.status_label(status)
-    prefix = f"{n:>3}{marker} {item.id:<5} {label:<{status_w}} "
+    number = f"{n:>3}"
+    if marks and item.id in marks:
+      number = "[x]".rjust(len(number))
+    prefix = f"{number}{marker} {item.id:<5} {label:<{status_w}} "
     priority_at = 0
     for name in shown:
       if name == "claim":
@@ -734,14 +738,14 @@ def filtered_rows(
   state: State, filters: Filters, sort_field: str = "ranked", descending: bool = True,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
   only_sibling: list[dict[str, str]] | None = None,
-  *, pane_width: int | None = None,
+  *, pane_width: int | None = None, marks: set[str] | None = None,
 ) -> list[Row]:
   elsewhere = elsewhere or {}
   visible = [it for it in state.index.items if filters.matches(
     it, store.displayed_status(state.config, it, elsewhere.get(it.id, [])),
   )]
   ordered = sort_items(state, visible, sort_field, descending, elsewhere)
-  out = item_rows(state, ordered, elsewhere, pane_width=pane_width)
+  out = item_rows(state, ordered, elsewhere, pane_width=pane_width, marks=marks)
   refs = prose.refs(state.index)
   if refs:
     out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
@@ -897,14 +901,11 @@ class View:
       self.render_stale, self.drift_due = render_drifted(state), False
     # One read of the sibling worktrees feeds both the claim cells and the sibling-only block.
     self.elsewhere, self.only_sibling = store.sibling_work(state.root, state.index)
+    self.marks.intersection_update(item.id for item in state.index.items)
     listing = filtered_rows(
       state, self.filters, self.sort_field, self.sort_desc, self.elsewhere, self.only_sibling,
-      pane_width=self.pane_width,
+      pane_width=self.pane_width, marks=self.marks,
     )
-    self.marks.intersection_update(item.id for item in state.index.items)
-    for row in listing:
-      if row.kind == ITEM and row.target in self.marks:
-        row.text = "[x]" + row.text[3:]
     selected = reconcile_selection(self.listing, listing, self.selected)
     if selected != self.selected:
       self.entry_at = 0
@@ -1124,12 +1125,16 @@ class View:
     return ActResult()
 
   def _open_request(self, state: State) -> None:
-    if not self.marks and (not self.selected or self.selected[0] != ITEM):
+    # A mark on a done or retired item is left out, as if unmarked; the mark itself stays.
+    finished = state.config.finished_statuses()
+    marked = {item.id for item in state.index.items
+              if item.id in self.marks and item.status not in finished}
+    if not marked and (not self.selected or self.selected[0] != ITEM):
       self.notify("no item selected" if not self.selected else
                   "that key applies to a slice, not to a prose block")
       return
     queue = graph.ranked_order(state.index, state.config, list(state.index.items))
-    wanted = self.marks or {self.target}
+    wanted = marked or {self.target}
     targets = [item.id for item in queue if item.id in wanted]
     missing = [target for target in targets if target not in state.slices]
     if missing:
