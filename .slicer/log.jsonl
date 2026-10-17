@@ -1921,3 +1921,6 @@
 {"when": "2026-10-17T20:23:46Z", "item": "s345", "action": "note", "from": "", "to": "", "note": "Ready for review: show ID with a catalog record id (e.g. C01", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:32:48Z", "item": "s347", "action": "status", "from": "review", "to": "done", "note": "Landed: TUI history pane shows the whole history and scrolls with j/k after tab; gate PASS, full suite green on main.", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:32:48Z", "item": "s345", "action": "status", "from": "review", "to": "done", "note": "Landed: slicer show on a catalog record id names the record's kind and slicer catalog show ID; gate PASS, full suite green on main.", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:34:22Z", "item": "s281", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:42:53Z", "item": "s281", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:54:18Z", "item": "s281", "action": "note", "from": "", "to": "", "note": "Ready for review: TUI catalog overlay on C lists records by ", "by": "Jon Robbins"}

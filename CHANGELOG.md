@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- TUI: `C` browses catalog records by kind, active then retired; Space cites or uncites the selected record on the selected queue item, with one history entry per toggle. Merge and prose-row guards refuse writes. Record management stays CLI-only. See [tui.md](docs/tui.md#catalog).
+
 - TUI: `m` marks queue items for the session; `Q` shows an orchestrator request in queue order, using a range for adjacent slices, with per-slice relay role recommendations. With no marks it uses the selected slice. It writes nothing and launches nothing. See [tui.md](docs/tui.md#relay-requests).
 
 - TUI: `R` shows the relay role matrix; Enter asks whether the selected slice is well-specified and split, then shows the CLI recommendation, including all five roles, selection reasons and alternatives. Esc cancels without writing. Matrix editing stays in `relay-roles`. See [tui.md](docs/tui.md#relay-roles).
