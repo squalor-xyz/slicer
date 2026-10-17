@@ -12535,7 +12535,7 @@
       "id": "s352",
       "title": "Relay board pairs each status label with its item in a multi-item run",
       "short_title": "Relay board pairs each status label with its item in a multi-item run",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
