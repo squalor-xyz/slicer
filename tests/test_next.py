@@ -298,5 +298,76 @@ class NextVerboseTests(unittest.TestCase):
       self.assertNotIn("S01.json", status)
 
 
+class HeldTests(unittest.TestCase):
+  def repo(self):
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "waiting")
+    repo.run("set", "S01", "--add-flag", "needs-owner", "--add-flag", "keep")
+    return repo
+
+  def test_Next_StartOnlyHeldItem_ClaimsNothing(self):
+    with self.repo() as repo:
+      code, out, _ = repo.run("next", "--start", "--json")
+      shown = json.loads(repo.run("show", "S01", "--json")[1])
+      self.assertEqual((code, json.loads(out).get("item", "missing"),
+        shown["status"], shown["claim"]), (2, None, "open", None))
+
+  def test_HoldFlags_InvalidConfig_RejectsWithConfigCode(self):
+    for value in ('"x"', '[""]'):
+      with self.subTest(value=value), self.repo() as repo:
+        code, out, _ = repo.run("config", "hold_flags", value, "--json")
+        self.assertEqual((code, json.loads(out).get("error", {}).get("code")),
+          (2, "bad_config_value"))
+
+  def test_Next_HeldItem_SkippedAndListedUnderHeld(self):
+    for form in ((), ("--ready",), ("--show",)):
+      with self.subTest(form=form), self.repo() as repo:
+        repo.run("add", "ready")
+        payload = json.loads(repo.run("next", *form, "--json")[1])
+        self.assertEqual((payload.get("item", payload)["id"], payload.get("held")),
+          ("S02", [{"id": "S01", "title": "waiting", "flags": ["needs-owner"]}]))
+
+  def test_NextBatch_HeldItem_Skipped(self):
+    with self.repo() as repo:
+      repo.run("add", "dependent", "--depends-on", "S01")
+      code, out, _ = repo.run("next", "--batch", "2", "--json")
+      payload = json.loads(out)
+      self.assertEqual((code, payload["items"], payload.get("held"), payload["blocked"]),
+        (2, [], [{"id": "S01", "title": "waiting", "flags": ["needs-owner"]}],
+          [{"id": "S02", "waiting_on": ["S01"]}]))
+
+  def test_Status_ListsHeldItems(self):
+    with self.repo() as repo:
+      payload = json.loads(repo.run("status", "--json")[1])
+      self.assertEqual((payload["next"], payload.get("held"),
+        "Held\n  S01 waiting [needs-owner]" in repo.run("status")[1]),
+        (None, [{"id": "S01", "title": "waiting", "flags": ["needs-owner"]}], True))
+
+  def test_HoldFlags_EmptyConfig_NothingHeld(self):
+    with self.repo() as repo:
+      code, _, _ = repo.run("config", "hold_flags", "[]")
+      self.assertEqual(code, 0)
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual((payload.get("id"), payload.get("held", [])), ("S01", []))
+
+  def test_List_Held_ReturnsOnlyFlaggedItems(self):
+    with self.repo() as repo:
+      repo.run("add", "ready")
+      code, out, err = repo.run("list", "--held", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual([i["id"] for i in json.loads(out)], ["S01"])
+
+  def test_HoldFlags_CustomConfig_HoldsCustomFlagOnly(self):
+    with self.repo() as repo:
+      code, _, _ = repo.run("config", "hold_flags", '["design"]')
+      self.assertEqual(code, 0)
+      repo.run("add", "design waiting")
+      repo.run("set", "S02", "--add-flag", "design")
+      payload = json.loads(repo.run("next", "--json")[1])
+      self.assertEqual((payload["id"], payload.get("held")),
+        ("S01", [{"id": "S02", "title": "design waiting", "flags": ["design"]}]))
+
+
 if __name__ == "__main__":
   unittest.main()

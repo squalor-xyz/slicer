@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `hold_flags` (default `["needs-owner"]`) holds flagged items out of `next` and batches without changing their status. `next` and `status` report `held` candidates, and `list --held` filters waiting work. `decide ID --text|--file|--stdin` records a built-in `decision` note and clears all hold flags, even with a restrictive `note_kinds`. Set `hold_flags` to `[]` to disable holding.
+
 ## [1.13.0] - 2026-10-17
 
 ### Added
