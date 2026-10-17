@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-329 items · — 28 · done 293 · retired 8
+329 items · — 27 · done 294 · retired 8
 
 v1.14.0 release
 
@@ -65,7 +65,7 @@ v1.13.0 release
 | 23 | [s339](slices/s339.md) | Agent instructions explain the blocked marker in list rows | S | 1 | slicer | owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not | — |
 | 24 | [s340](slices/s340.md) | Shared step keeps its local-only parent | S | 1 | slicer | s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed · discovered from s337 | — |
 | 25 | [s341](slices/s341.md) | Example matrix gains orchestrator rows | S | 1 | slicer | s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320 | done |
-| 26 | [s342](slices/s342.md) | affected.py borrows an ancestor map | S | 1 | slicer | s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337 | — |
+| 26 | [s342](slices/s342.md) | affected.py borrows an ancestor map | S | 1 | slicer | s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337 | done |
 
 ---
 
