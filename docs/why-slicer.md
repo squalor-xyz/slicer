@@ -5,6 +5,8 @@ people or agents share the plan, the questions change: who holds each task, what
 blocked, and whether the plan still matches the code. slicer keeps the plan as checked
 state in your repository. The state is JSON under `.slicer/`, changed through commands,
 and rendered to readable markdown in `.slicer/render/`.
+For the concepts behind these answers, and how an item moves from queued to finished, see
+[How slicer works](how-it-works.md).
 
 - **Picking the next task.** `slicer next` hands you one item you can start now: its
   dependencies are done and its required sections are filled in. Started work comes

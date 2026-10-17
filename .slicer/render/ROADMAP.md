@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-331 items · — 29 · done 294 · retired 8
+331 items · — 28 · done 294 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -58,7 +58,7 @@ v1.13.0 release
 | 16 | [s297](slices/s297.md) | Relay board colors each pipeline role by its state | S | 1 | slicer | s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294 | — |
 | 17 | [s331](slices/s331.md) | Relay board shows the slice's status beside a finished run | S | 1 | slicer | owner 2026-10-16: the board's check mark on s309 read as "done" while the slice was merged but not yet done | — |
 | 18 | [s338](slices/s338.md) | relay-run end absorbs a step whose parent is in a damaged local file without failing | S | 1 | slicer | s332 relay 2026-10-16, later note 3: an absorbed step whose parent sits in a skipped damaged local file fails in the shared ledger | — |
-| 19 | [s333](slices/s333.md) | Explain how slicer works with concepts and Mermaid diagrams | M | 2 | docs | Owner documentation review 2026-10-16; README.md:7 introduces AI-first use; docs/getting-started.md:5 opens with agent onboarding; no embedded Mermaid diagrams found in README.md, CONTRIBUTING.md, ARCHITECTURE.md or docs/*.md. Existing deps --format mermaid illustrates backlog dependencies rather than how slicer works. | — |
+| 19 | [s333](slices/s333.md) | Explain how slicer works with concepts and Mermaid diagrams | M | 2 | docs | Owner documentation review 2026-10-16; README.md:7 introduces AI-first use; docs/getting-started.md:5 opens with agent onboarding; no embedded Mermaid diagrams found in README.md, CONTRIBUTING.md, ARCHITECTURE.md or docs/*.md. Existing deps --format mermaid illustrates backlog dependencies rather than how slicer works. | review |
 | 20 | [s334](slices/s334.md) | Make getting started a short human-first walkthrough | M | 2 | docs | Owner documentation review 2026-10-16; docs/getting-started.md opens with agent instructions and its worked workflows assume agent-assisted planning; its reference detail spans installation, configuration, imports, priority, relay roles, batching, passes, CI, and recovery. Owner chose refocusing this existing guide instead of adding another quickstart. | — |
 | 21 | [s335](slices/s335.md) | Explain the human role when working with agents | M | 2 | docs | Owner documentation review 2026-10-16; docs/agents.md is an agent/JSON reference and docs/tui.md describes controls, but neither is a human operator's end-to-end guide. Existing s331 addresses finished-run status presentation; s319, s320, s322 and s332 address relay contracts, roles, briefs and recording rather than this documentation gap. | — |
 | 22 | [s336](slices/s336.md) | Give human contributors a practical development walkthrough | S | 1 | docs | Owner documentation review 2026-10-16; CONTRIBUTING.md:6 only points to AGENTS.md and ARCHITECTURE.md; ARCHITECTURE.md:19 describes layers as a plain text list. Existing project guidance already defines worktrees, tests, tracking and handoff, but lacks a short human-oriented walkthrough connecting these steps. | — |
