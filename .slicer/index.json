@@ -10442,7 +10442,7 @@
       "id": "s305",
       "title": "Sibling id refusal ignores case",
       "short_title": "Sibling id refusal ignores case",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s301"
@@ -10460,10 +10460,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-17T03:41:06Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
