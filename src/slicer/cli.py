@@ -2025,7 +2025,19 @@ def cmd_deps(args: argparse.Namespace) -> int:
 def cmd_show(args: argparse.Namespace) -> int:
   _prepare_note_pack(args)
   state = _state(args)
-  item = state.index.require(args.id)
+  try:
+    item = state.index.require(args.id)
+  except StateError:
+    # Items and catalog records share one id shape on the command line, so a
+    # copied `C01` lands here. Name where it lives; any other miss stays as is.
+    record = state.index.catalog.get(args.id)
+    if record is None:
+      raise
+    raise StateError(
+      f"no such item: {args.id} is a {record.kind} catalog record, not a roadmap item; "
+      f"run `slicer catalog show {args.id}`",
+      code="no_such_item",
+    ) from None
   item, sl, manifest = _note_projection(args, item, state.slices.get(args.id))
   if args.section is not None:
     # The read counterpart to `edit --section`: one section's body, nothing
