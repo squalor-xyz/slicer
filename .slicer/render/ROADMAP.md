@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-332 items · — 27 · done 297 · retired 8
+332 items · — 26 · done 297 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -49,7 +49,7 @@ v1.13.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 10 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
+| 10 | [s278](slices/s278.md) | TUI dependency and history panes | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | review |
 | 11 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 12 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 13 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | — |

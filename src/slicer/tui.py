@@ -11,6 +11,7 @@ Editing follows the same rule: `act` never launches an editor. It returns an
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
@@ -40,6 +41,7 @@ BINDINGS = (
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
   Binding(("?",), "?", "help", "Show help; j/k scroll, ? or Esc closes"),
+  Binding(("i",), "i", "detail", "Cycle the detail pane: details, dependencies, history (read-only)"),
   Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty removes a note)"),
   Binding(("a",), "a", "add", "Add an item"),
   Binding(("w",), "w", "wizard", "Create roadmap items with the guided wizard"),
@@ -75,7 +77,7 @@ SHORTCUTS = (
   (("start",), "start"), (("done",), "done"), (("handoff",), "handoff"), (("search",), "search"),
   (("filter",), "filters"), (("sort",), "sort"), (("clear",), "show all"), (("jump",), "jump"),
   (("down", "up"), "move"), (("help",), "help"), (("quit",), "quit"),
-  (("view",), "view"), (("board",), "board"),
+  (("view",), "view"), (("board",), "board"), (("detail",), "detail"),
 )
 
 
@@ -424,6 +426,49 @@ def panel(
   return out
 
 
+# The detail pane shows one of these for an item; `i` cycles them in this order.
+DETAIL_PANES = ("details", "deps", "history")
+DETAIL_TITLES = {"details": "Details", "deps": "Dependencies", "history": "History"}
+# How many history lines the pane asks for; the pane clips to the rows it has.
+HISTORY_LIMIT = 20
+
+
+def deps_lines(state: State, target: str) -> list[PanelLine]:
+  """The dependency pane: what `slicer deps ID` prints, without the JSON."""
+  item = state.index.get(target)
+  if item is None:
+    return [PanelLine("(no such item)")]
+  index, cfg = state.index, state.config
+  blocked = graph.pending(index, item, cfg)
+  dependents = graph.dependents(index)[target]
+  out = [
+    PanelLine(f"{item.id}  {item.display_title()}", role="heading"),
+    PanelLine(""),
+    PanelLine(_labelled("waits on", ", ".join(
+      f"{dep} (blocked)" if dep in blocked else dep for dep in item.depends_on) or "-")),
+    PanelLine(_labelled("blocked by", ", ".join(blocked) or "-"),
+              role="blocked" if blocked else "normal"),
+    PanelLine(_labelled("depended on by", ", ".join(dependents) or "-")),
+  ]
+  held = graph.open_slivers(index, item, cfg.settled_statuses())
+  if held:
+    out.append(PanelLine(_labelled("held by slivers", ", ".join(held))))
+  return out
+
+
+def history_lines(state: State, target: str, limit: int) -> list[PanelLine]:
+  """The item's last `limit` history entries, newest first, as `slicer log --item` prints them."""
+  try:
+    history = state.history()
+  except (SlicerError, OSError) as exc:
+    # A damaged log must not end the session: say why, as the relay board does. The state
+    # directory is dropped from the path so the reason is not cut off at the pane's edge.
+    reason = (str(exc).replace(f"{state.dir}{os.sep}", "").splitlines() or [type(exc).__name__])[0]
+    return [PanelLine(reason, role="error")]
+  entries = model.newest_first(e for e in history if e.item == target)[:limit]
+  return [PanelLine(e.text()) for e in entries] or [PanelLine(f"no history for {target}")]
+
+
 def render_drifted(state: State) -> bool:
   """Whether `.slicer/render/` differs from what `r` would write. A plan or read that
   fails counts as drifted: the render cannot be confirmed current."""
@@ -725,6 +770,9 @@ class View:
   pane_width: int | None = None
   selected: tuple[str, str] | None = None
   entry_at: int = 0
+  # Which pane the right side shows for an item: one of DETAIL_PANES. Only "details" has
+  # anything to select or edit.
+  detail: str = "details"
   focus: str = "left"
   scroll: int = 0
   mode: str = "normal"
@@ -782,8 +830,13 @@ class View:
     self.selected, self.listing = selected, listing
     available = entries(state, self.target) if self.selected else []
     self.entry_at = min(self.entry_at, max(0, len(available) - 1))
-    if not available:
+    if not available or self.shown != "details":
       self.focus = "left"
+
+  @property
+  def shown(self) -> str:
+    """The detail pane on screen: a prose block always shows its text."""
+    return self.detail if self.selected and self.selected[0] == ITEM else "details"
 
   def select(self, identity: tuple[str, str] | None) -> None:
     if identity != self.selected:
@@ -915,7 +968,17 @@ class View:
       self.view_preset = ""
       self.notify("search and filters cleared; showing all items")
     elif action == "pane":
-      self.focus = "right" if self.focus == "left" and entries(state, self.target) else "left"
+      editable = self.shown == "details" and entries(state, self.target)
+      self.focus = "right" if self.focus == "left" and editable else "left"
+    elif action == "detail":
+      if not self.selected or self.selected[0] != ITEM:
+        self.notify("that key applies to a slice, not to a prose block")
+      else:
+        self.detail = DETAIL_PANES[(DETAIL_PANES.index(self.detail) + 1) % len(DETAIL_PANES)]
+        self.focus = "left"
+        self.notify(f"{DETAIL_TITLES[self.detail].lower()} pane")
+    elif action == "edit" and self.shown != "details":
+      self.notify(f"the {DETAIL_TITLES[self.shown].lower()} pane is read-only; press i for details")
     elif action in ("up", "down"):
       delta = 1 if action == "down" else -1
       if self.focus == "right":
@@ -1500,7 +1563,8 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
     left_width = width // 2 - 2
     right_x = left_width + 2
     put(0, 0, ("> " if view.focus == "left" else "  ") + "Queue", palette.attr("heading"), left_width)
-    put(0, right_x, ("> " if view.focus == "right" else "  ") + "Details", palette.attr("heading"))
+    put(0, right_x, ("> " if view.focus == "right" else "  ") + DETAIL_TITLES[view.shown],
+        palette.attr("heading"))
     matching = any(row.kind == ITEM for row in view.listing)
     offset = 1 if matching else 2
     if not matching:
@@ -1528,7 +1592,12 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
         x = 2 + tui_style.cell_width(tui_style.clipped(row.text[:row.priority_at], left_width))
         put(n, x, row.text[row.priority_at:row.priority_at + 4],
             palette.attr("priority", selected=selected, focused=view.focus == "left"), left_width - x)
-    lines = panel(state, view.target, view.elsewhere) if view.selected else []
+    if view.selected and view.shown == "deps":
+      lines = deps_lines(state, view.target)
+    elif view.selected and view.shown == "history":
+      lines = history_lines(state, view.target, HISTORY_LIMIT)
+    else:
+      lines = panel(state, view.target, view.elsewhere) if view.selected else []
     first = next((n for n, line in enumerate(lines) if line.entry == view.entry_at), 0)
     top = max(0, first - 2) if view.focus == "right" else 0
     for n, line in enumerate(lines[top:top + visible], 1):

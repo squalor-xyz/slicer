@@ -3283,22 +3283,14 @@ def cmd_log(args: argparse.Namespace) -> int:
       if (since is None or since <= instant) and (until is None or instant < until):
         window.append(entry)
     history = window
-  # Newest first by timestamp so union-merged history (which can interleave the
-  # lines two branches appended) still reads in order. Reverse the append order
-  # first so that, among entries sharing a timestamp, the later-appended one is
-  # shown first -- a stable sort then keeps that tie-break.
-  entries = sorted(reversed(history), key=lambda e: e.when, reverse=True)[: args.limit]
+  entries = model.newest_first(history)[: args.limit]
   filters = (args.item or []) + (args.action or []) + (args.by or [])
   if args.since is not None:
     filters.append(f"since {args.since}")
   if args.until is not None:
     filters.append(f"until {args.until}")
   empty = ("no history for " + " ".join(filters)) if filters else "no history yet"
-  text = "\n".join(
-    (f"{e.when}  {e.item:<5} {e.action:<8} {e.frm or '-'} -> {e.to or '-'}  {e.note}".rstrip()
-     + (f"  by {e.by}" if e.by else ""))
-    for e in entries
-  ) or empty
+  text = "\n".join(e.text() for e in entries) or empty
   _emit(args, [e.to_dict() for e in entries], text)
   return OK
 

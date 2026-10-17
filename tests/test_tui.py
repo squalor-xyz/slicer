@@ -2053,3 +2053,204 @@ class RelayBoardLoopTests(unittest.TestCase):
     # Each timed-out read advances the spinner one frame; a timed-out read elsewhere does nothing.
     self.assertEqual(frames, ["", "|", "/", "-", "", ""])
     self.assertEqual(len(calls), 1)
+
+
+def linked_example() -> State:
+  """`example()` where S02 waits on S03 (parked) and S01 (done), and S04 waits on S02."""
+  state = example()
+  state.index.require("S02").depends_on = ["S03", "S01"]
+  state.index.require("S04").depends_on = ["S02"]
+  return state
+
+
+def texts(lines: list[tui.PanelLine]) -> list[str]:
+  return [line.text for line in lines]
+
+
+class DetailPaneTests(unittest.TestCase):
+  def history_repo(self, repo: support.TempRepo) -> None:
+    repo.run("init")
+    repo.run("add", "First")
+    repo.run("add", "Second")
+    repo.run("promote", "S01")
+    repo.run("promote", "S02")
+    repo.run("start", "S01")
+    repo.run("start", "S02")
+    repo.run("handoff", "S01", "--note", "ready")
+    repo.run("reject", "S01", "--note", "VERDICT: FAIL - no test")
+
+  def test_DepsLines_BlockedItem_NamesPendingBlockers(self) -> None:
+    state = linked_example()
+    lines = texts(tui.deps_lines(state, "S02"))
+    self.assertEqual(lines[0], "S02  Find things")
+    self.assertIn("waits on        S03 (blocked), S01", lines)
+    self.assertIn("blocked by      S03", lines)
+    # An item with nothing pending says so instead of leaving the line out.
+    free = texts(tui.deps_lines(state, "S01"))
+    self.assertIn("waits on        -", free)
+    self.assertIn("blocked by      -", free)
+
+  def test_DepsLines_ShowsDependents(self) -> None:
+    state = linked_example()
+    self.assertIn("depended on by  S04", texts(tui.deps_lines(state, "S02")))
+    self.assertIn("depended on by  S02", texts(tui.deps_lines(state, "S03")))
+    self.assertIn("depended on by  -", texts(tui.deps_lines(state, "S04")))
+
+  def test_DepsLines_OpenSliver_NamesTheSliverHoldingItsParent(self) -> None:
+    state = linked_example()
+    state.index.items.append(Item("S05", "Sliver of S03", "open", parent="S03"))
+    lines = texts(tui.deps_lines(state, "S03"))
+    self.assertIn("blocked by      S05", lines)
+    self.assertIn("held by slivers S05", lines)
+
+  def test_HistoryLines_FiltersToItemNewestFirst(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      lines = texts(tui.history_lines(state, "S01", 50))
+      self.assertEqual([line.split()[2] for line in lines], ["reject", "handoff", "status", "promote", "add"])
+      self.assertTrue(all(line.split()[1] == "S01" for line in lines))
+      # The same lines `slicer log --item S01` prints.
+      code, out, _ = repo.run("log", "--item", "S01")
+      self.assertEqual(code, 0)
+      self.assertEqual(lines, out.splitlines())
+      self.assertIn("VERDICT: FAIL - no test", lines[0])
+
+  def test_HistoryLines_RespectsLimit(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      lines = texts(tui.history_lines(state, "S01", 2))
+      self.assertEqual([line.split()[2] for line in lines], ["reject", "handoff"])
+
+  def test_HistoryLines_EntryWithActorAndNote_UsesTheLogFormat(self) -> None:
+    state = example()
+    entries = [
+      model.LogEntry("2026-10-17T10:00:00Z", "S01", "reject", "review", "open", "VERDICT: FAIL", "ci"),
+      model.LogEntry("2026-10-17T09:00:00Z", "S01", "add", "", "open"),
+    ]
+    with patch.object(MemoryState, "history", return_value=entries):
+      self.assertEqual(texts(tui.history_lines(state, "S01", 5)), [
+        "2026-10-17T10:00:00Z  S01   reject   review -> open  VERDICT: FAIL  by ci",
+        "2026-10-17T09:00:00Z  S01   add      - -> open",
+      ])
+
+  def test_HistoryLines_NoHistory_SaysSo(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      self.assertEqual(texts(tui.history_lines(repo.state(), "S99", 50)), ["no history for S99"])
+
+  def test_HistoryLines_MalformedLog_ShowsErrorInsteadOfRaising(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      with open(repo.root / ".slicer" / "log.jsonl", "a", encoding="utf-8") as log:
+        log.write("{bad\n")
+      state = repo.state()
+      lines = tui.history_lines(state, "S01", 50)
+      self.assertEqual([line.role for line in lines], ["error"])
+      self.assertTrue(lines[0].text.startswith("log.jsonl:"), lines[0].text)
+      self.assertIn("not valid JSON", lines[0].text)
+      self.assertNotIn("\n", lines[0].text)
+      # A frame draws it rather than ending the session.
+      view = tui.View.initial(state)
+      view.select((tui.ITEM, "S01"))
+      view.detail = "history"
+      screen = Screen(24, 160)
+      tui.draw(screen, state, view)
+      self.assertTrue(any("not valid JSON" in text for _, text in screen.writes))
+
+  def test_Refresh_ReadOnlyPaneShown_ReturnsFocusToTheQueue(self) -> None:
+    state = linked_example()
+    view = tui.View.initial(state)
+    view.detail = "deps"
+    view.select((tui.PROSE, "preamble"))
+    view.handle(state, "\t")
+    self.assertEqual(view.focus, "right")
+    # The selection moves to an item, which shows the dependencies pane: nothing there to focus.
+    view.select((tui.ITEM, "S02"))
+    view.refresh(state)
+    self.assertEqual(view.shown, "deps")
+    self.assertEqual(view.focus, "left")
+
+  def test_Handle_DetailKey_CyclesDetailsDepsHistory(self) -> None:
+    state = linked_example()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S02"))
+    self.assertEqual(view.detail, "details")
+    view.handle(state, "i")
+    self.assertEqual(view.detail, "deps")
+    view.handle(state, "i")
+    self.assertEqual(view.detail, "history")
+    view.handle(state, "i")
+    self.assertEqual(view.detail, "details")
+
+  def test_Handle_EditKeyInReadOnlyPanes_SaysReadOnlyAndEditsNothing(self) -> None:
+    state = linked_example()
+    for detail in ("deps", "history"):
+      with self.subTest(detail=detail):
+        view = tui.View.initial(state)
+        view.select((tui.ITEM, "S02"))
+        view.detail = detail
+        result = view.handle(state, "e")
+        self.assertIsNone(result.edit)
+        self.assertIn("read-only", view.message)
+        # Tab does not move focus into a pane with nothing to select.
+        view.handle(state, "\t")
+        self.assertEqual(view.focus, "left")
+    # Back in the details pane, tab and e work as before.
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S02"))
+    view.handle(state, "\t")
+    self.assertEqual(view.focus, "right")
+    self.assertIsNotNone(view.handle(state, "e").edit)
+
+  def test_Handle_DetailKeyLeavingDetails_ReturnsFocusToTheQueue(self) -> None:
+    state = linked_example()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S02"))
+    view.handle(state, "\t")
+    self.assertEqual(view.focus, "right")
+    view.handle(state, "i")
+    self.assertEqual(view.focus, "left")
+
+  def test_Handle_DetailKeyOnProseRow_DoesNotCycle(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.select((tui.PROSE, "preamble"))
+    view.handle(state, "i")
+    self.assertEqual(view.detail, "details")
+    self.assertIn("applies to a slice", view.message)
+
+  def test_Draw_DepsPane_ShowsDependencyLinesUnderItsHeading(self) -> None:
+    state = linked_example()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S02"))
+    view.handle(state, "i")
+    screen = Screen(24, 100)
+    tui.draw(screen, state, view)
+    shown = [text for _, text in screen.writes]
+    self.assertIn("  Dependencies", shown)
+    self.assertIn("  blocked by      S03", shown)
+    self.assertNotIn("  Details", shown)
+    self.assertNotIn("  status          open", shown)
+
+  def test_Draw_HistoryPane_ShowsLogLinesUnderItsHeading(self) -> None:
+    with support.TempRepo() as repo:
+      self.history_repo(repo)
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.select((tui.ITEM, "S01"))
+      view.detail = "history"
+      screen = Screen(24, 160)
+      tui.draw(screen, state, view)
+      shown = [text for _, text in screen.writes]
+      self.assertIn("  History", shown)
+      newest = texts(tui.history_lines(state, "S01", tui.HISTORY_LIMIT))[0]
+      # The pane clips a long line at the screen edge, so compare the part that fits.
+      self.assertTrue(any(t.startswith("  " + newest[:60]) for t in shown), newest)
+
+  def test_Help_ListsDetailKey(self) -> None:
+    self.assertEqual(tui.key_action("i"), "detail")
+    self.assertTrue(any(l.startswith("i ") and "dependencies" in l and "history" in l
+                        for l in tui.help_lines()))
+    self.assertIn("i detail", "  ".join(tui.shortcut_lines(160)))
