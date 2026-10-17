@@ -159,6 +159,11 @@ def _render_after_mutation(args: argparse.Namespace) -> int:
   return len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
 
 
+def _print_render_summary(args: argparse.Namespace, written: int) -> None:
+  stream = sys.stderr if getattr(args, "print_id", False) else sys.stdout
+  print(f"rendered {written} file(s)", file=stream)
+
+
 def _mutating(fn):
   """Wrap a mutating handler so `--render` renders it, from one place.
 
@@ -201,7 +206,7 @@ def _mutating(fn):
         print(f"slicer: saved, but render failed: {exc}; run `slicer render`", file=sys.stderr)
         return DRIFT
       if not getattr(args, "json", False):
-        print(f"rendered {written} file(s)")
+        _print_render_summary(args, written)
     if code == OK and getattr(args, "check", False):
       return _post_check(args, args.command)
     return code
@@ -241,7 +246,7 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
     raise
   _flush_deferred(args)
   if not getattr(args, "json", False):
-    print(f"rendered {written} file(s)")
+    _print_render_summary(args, written)
   return code
 
 
@@ -2124,13 +2129,15 @@ def _undeclared_pass_line(key: str) -> str:
 
 
 def cmd_add(args: argparse.Namespace) -> int:
+  if args.print_id and args.json:
+    raise StateError("--print-id cannot be combined with --json", code="usage")
   state = _state(args)
   key = ops.filing_key(args.key)
   existing = ops.keyed_item(state, key)
   if existing is not None:
     args._no_change = True
     _emit(args, existing.to_dict() | {"existing": True},
-          f"existing {existing.id}  {existing.display_title()}")
+          existing.id if args.print_id else f"existing {existing.id}  {existing.display_title()}")
     return OK
   item = ops.add(
     state, args.title, item_id=args.id, size=args.size or "",
@@ -2140,8 +2147,8 @@ def cmd_add(args: argparse.Namespace) -> int:
     id_floor=_id_floor(state), discovered_from=args.discovered_from,
     parent=args.parent,
   )
-  text = f"added {item.id}  {item.display_title()}"
-  if item.pass_key:
+  text = item.id if args.print_id else f"added {item.id}  {item.display_title()}"
+  if item.pass_key and not args.print_id:
     text += f" (pass: {item.pass_key})"
   _emit(args, item.to_dict() | {"existing": False}, text)
   if item.unscored and item.status in (state.config.open_status, state.config.started_status):
@@ -3597,6 +3604,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--discovered-from", help="existing item ID that discovered this work")
   sp.add_argument("--parent", help="existing item ID this item is a sliver of")
   sp.add_argument("--id", help="use this id instead of the next free one")
+  sp.add_argument("--print-id", action="store_true", help="print only the filed item's id")
   sp.add_argument("--key", help="case-sensitive filing identity; retries return the existing item")
   sp.add_argument("--size")
   sp.add_argument("--tree", action="append")
