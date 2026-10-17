@@ -12463,7 +12463,7 @@
       "id": "s350",
       "title": "A shared step update absorbs a step held only in a local file",
       "short_title": "A shared step update absorbs a step held only in a local file",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
