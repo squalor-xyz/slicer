@@ -9235,7 +9235,7 @@
       "id": "s278",
       "title": "TUI dependency and history panes",
       "short_title": "TUI dependency and history panes",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
