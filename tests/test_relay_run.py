@@ -26,6 +26,7 @@ from unittest.mock import patch
 import support  # noqa: F401 -- puts src/ on sys.path
 from slicer import ops, relayrun, store
 from slicer.cli import main
+from slicer.errors import SlicerError
 
 LEDGER = ".slicer/relay-runs.jsonl"
 T0 = datetime(2026, 10, 14, 12, 0, 0, tzinfo=timezone.utc)
@@ -36,6 +37,11 @@ WRONG_TYPES = {"v": 1, "event": "begin", "run": [], "at": "2026-10-14T12:00:00Z"
 
 def minutes(n: int) -> datetime:
   return T0 + timedelta(minutes=n)
+
+
+def without_running(err: str) -> str:
+  """The stderr lines of a `relay-run end` that are not its running-steps warning (s326)."""
+  return "".join(line for line in err.splitlines(True) if "with running steps" not in line)
 
 
 class RelayRunCase(unittest.TestCase):
@@ -84,7 +90,8 @@ class FoldTests(RelayRunCase):
       "--vendor", "OpenAI", "--model", "gpt", "--reasoning", "xhigh", "--phase", "start",
     )
     self.assertEqual(self.runs(repo)[0]["counts"]["running"], 1)
-    self.ok(repo, "relay-run", "end", run, "--outcome", "pass")
+    code, _, err = repo.run("relay-run", "end", run, "--outcome", "pass", "--json")
+    self.assertEqual((code, err), (0, f"slicer: ended {run} with running steps: 2\n"))
     runs = self.runs(repo)
     self.assertEqual(len(runs), 1)
     got = runs[0]
@@ -206,7 +213,8 @@ class FoldTests(RelayRunCase):
     run = self.begin(repo, "s1")
     self.step(repo, run)
     self.assertEqual(self.runs(repo)[0]["counts"]["running"], 1)
-    self.ok(repo, "relay-run", "end", run, "--outcome", "stopped")
+    code, _, err = repo.run("relay-run", "end", run, "--outcome", "stopped", "--json")
+    self.assertEqual((code, err), (0, f"slicer: ended {run} with running steps: 1\n"))
     got = self.runs(repo)[0]
     self.assertEqual(got["steps"][0]["phase"], "start")
     self.assertEqual(got["counts"]["running"], 0)
@@ -355,6 +363,118 @@ class FoldTests(RelayRunCase):
     after = repo.read(LEDGER)
     self.assertTrue(after.startswith(before))
     self.assertEqual(len(after.splitlines()), len(before.splitlines()) + 1)
+
+
+class CloseStepsTests(RelayRunCase):
+  """`relay-run end --close-steps` closes the steps still running before it ends the run (s326)."""
+
+  def two_running_one_done(self, repo: support.TempRepo) -> str:
+    run = self.begin(repo, "s1")
+    self.step(repo, run, "--task", "write tests")
+    done = self.step(repo, run, "--task", "old")["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", done, "--phase", "done")
+    self.step(repo, run, "--task", "review")
+    return run
+
+  def events(self, repo: support.TempRepo) -> list[dict]:
+    return [event for _, event in relayrun.read_events(repo.root / LEDGER)]
+
+  def test_RelayRunEnd_CloseStepsDone_MarksRunningStepsDone(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    before = len(self.events(repo))
+    code, out, err = repo.run("relay-run", "end", run, "--outcome", "pass", "--close-steps", "done")
+    self.assertEqual((code, err), (0, ""), out)
+    self.assertEqual(out.strip(), f"ended {run} pass; closed steps: 1, 3")
+    added = self.events(repo)[before:]
+    self.assertEqual([(e["event"], e.get("step"), e.get("phase")) for e in added],
+                     [("step", "1", "done"), ("step", "3", "done"), ("end", None, None)])
+    # A close names only the phase: the role, the agent and the task stay as recorded.
+    self.assertTrue(all(e["role"] == e["task"] == e["parent"] == "" for e in added[:2]))
+    got = self.runs(repo)[0]
+    self.assertEqual([(s["id"], s["phase"], s["role"], s["task"]) for s in got["steps"]], [
+      ("1", "done", "implementer", "write tests"), ("2", "done", "implementer", "old"),
+      ("3", "done", "implementer", "review"),
+    ])
+    self.assertEqual(got["outcome"], "pass")
+
+  def test_RelayRunEnd_CloseStepsDone_JsonNamesTheClosedSteps(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    payload = self.ok(repo, "relay-run", "end", run, "--outcome", "pass", "--close-steps", "done")
+    self.assertEqual(payload["closed_steps"], ["1", "3"])
+    self.assertEqual(payload["run"]["state"], "ended")
+
+  def test_RelayRunEnd_CloseStepsFail_MarksThemFailed(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    payload = self.ok(repo, "relay-run", "end", run, "--outcome", "fail", "--close-steps", "fail")
+    self.assertEqual(payload["closed_steps"], ["1", "3"])
+    self.assertEqual([(s["id"], s["phase"]) for s in payload["run"]["steps"]],
+                     [("1", "fail"), ("2", "done"), ("3", "fail")])
+
+  def test_RelayRunEnd_CloseStepsNoneRunning_ClosesNothing(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    before = len(self.events(repo))
+    payload = self.ok(repo, "relay-run", "end", run, "--outcome", "pass", "--close-steps", "done")
+    self.assertEqual(payload["closed_steps"], [])
+    self.assertEqual([e["event"] for e in self.events(repo)[before:]], ["end"])
+
+  def test_RelayRunEnd_CloseStepsOtherPhase_Refused(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    before = repo.read(LEDGER)
+    with self.assertRaises(SlicerError) as caught:
+      ops.relay_run_end(repo.root, run, "pass", close_steps="start")
+    self.assertEqual(caught.exception.code, "bad_run_field")
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_RelayRunEnd_CloseStepsOtherPhaseCli_BadRunFieldAndNothingWritten(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    before = repo.read(LEDGER)
+    self.refuse(repo, "relay-run", "end", run, "--outcome", "pass", "--close-steps", "bogus",
+                code=2, error="bad_run_field")
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_RelayRunEnd_RunningStepsWithoutFlag_WarnsOnStderr(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    before = len(self.events(repo))
+    code, out, err = repo.run("relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual(code, 0, out)
+    self.assertEqual(out.strip(), f"ended {run} pass")
+    self.assertEqual(err.splitlines(), [f"slicer: ended {run} with running steps: 1, 3"])
+    self.assertEqual([e["event"] for e in self.events(repo)[before:]], ["end"])
+
+  def test_RelayRunEnd_NoRunningStepsWithoutFlag_StaysSilent(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    got = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", got, "--phase", "done")
+    payload = self.ok(repo, "relay-run", "end", run, "--outcome", "pass")
+    self.assertEqual(payload["closed_steps"], [])
+
+  def test_RelayRunEnd_CloseSteps_AllOrNothingUnderLock(self) -> None:
+    repo = self.project()
+    run = self.two_running_one_done(repo)
+    real = relayrun.append
+    calls: list[str] = []
+
+    def failing(root, event, **kwargs):
+      calls.append(str(event["event"]))
+      if len(calls) == 2:  # the second close
+        raise OSError(errno.EIO, "disk")
+      return real(root, event, **kwargs)
+
+    with patch.object(relayrun, "append", failing):
+      with self.assertRaises(OSError):
+        ops.relay_run_end(repo.root, run, "pass", close_steps="done")
+    self.assertEqual(calls, ["step", "step"])  # the end event was never attempted
+    self.assertNotIn("end", [e["event"] for e in self.events(repo)])
+    got = self.runs(repo)[0]
+    self.assertEqual((got["state"], got["outcome"]), ("active", ""))
 
 
 class ListTests(RelayRunCase):
@@ -1006,7 +1126,7 @@ class SandboxTests(GitLedgerCase):
     code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
     self.assertEqual(code, 0, out + err)
     self.assertIn("absorbed 1 event ", out)
-    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertEqual(len(without_running(err).splitlines()), 1, err)
     self.assertIn("2 invalid", err)
     self.assertEqual([len(r["steps"]) for r in self.listed(repo.root)], [1])
 
@@ -1022,7 +1142,7 @@ class SandboxTests(GitLedgerCase):
 
   def named(self, err: str, step: str, parent: str) -> None:
     """Exactly one stderr line names `step` as copied without the `parent` it lost."""
-    lines = [line for line in err.splitlines() if step in line]
+    lines = [line for line in without_running(err).splitlines() if step in line]
     self.assertEqual(len(lines), 1, err)
     self.assertIn(parent, lines[0])
 
@@ -1117,7 +1237,7 @@ class SandboxTests(GitLedgerCase):
     self.assertEqual(code, 0, out + err)
     self.assertEqual(out.strip(), f"ended {run} pass; absorbed 3 events from local ledgers")
     self.named(err, lost["step"], "c0000beef-1")
-    self.assertNotIn(child.id, err)
+    self.assertNotIn(child.id, without_running(err))
     got = {r["id"]: r for r in self.listed(repo.root)}
     by_id = {s["id"]: s["parent"] for s in got[run]["steps"]}
     self.assertEqual(by_id, {parent.id: "", child.id: parent.id, lost["step"]: ""})
@@ -1190,7 +1310,7 @@ class SandboxTests(GitLedgerCase):
     relayrun.append(repo.root, child, path=repo.root / LEDGER)
     relayrun.append(wt, parent, path=wt / LEDGER)
     code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
-    self.assertEqual((code, err), (0, ""), out)
+    self.assertEqual((code, err), (0, f"slicer: ended {run} with running steps: 1, 2\n"), out)
     got = self.listed(repo.root)
     self.assertEqual(
       [(s["id"], s["parent"]) for s in got[0]["steps"]], [("1", ""), ("2", "1")],
@@ -1200,13 +1320,17 @@ class SandboxTests(GitLedgerCase):
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)
     lift = self.sandbox(repo)
-    for task in ("write tests", "review"):
-      ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", task=task)
+    ids = [
+      ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", task=task)[1].id
+      for task in ("write tests", "review")
+    ]
     with (wt / LEDGER).open("a", encoding="utf-8") as fh:  # an event the shared ledger has
       fh.write(self.common(repo).read_text(encoding="utf-8").splitlines()[0] + "\n")
     lift()
     code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass")
-    self.assertEqual((code, err), (0, ""), out)
+    self.assertEqual(
+      (code, err), (0, f"slicer: ended {run} with running steps: {', '.join(ids)}\n"), out,
+    )
     self.assertEqual(out.strip(), f"ended {run} pass; absorbed 2 events from local ledgers")
     shared = [e["event"] for _, e in relayrun.read_events(self.common(repo))]
     self.assertEqual(shared, ["begin", "step", "step", "end"])
@@ -1225,11 +1349,49 @@ class SandboxTests(GitLedgerCase):
     code, out, err = self.cli(wt, "relay-run", "end", run, "--outcome", "fail")
     self.assertEqual(code, 0, out + err)
     self.assertEqual(out.strip(), f"ended {run} fail")
-    self.assertEqual(len(err.splitlines()), 1, err)
+    self.assertEqual(len(without_running(err).splitlines()), 1, err)
+    self.assertIn("with running steps", err)
     self.assertEqual([e["event"] for e in self.local(wt)], ["step", "end"])
     self.assertEqual(self.common(repo).read_bytes(), shared)
     got = self.listed(wt)
     self.assertEqual([(r["id"], r["outcome"], len(r["steps"])) for r in got], [(run, "fail", 1)])
+
+  def test_RelayRunEnd_CloseStepsSharedStillReadOnly_ClosesAndEndsLocally(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    self.sandbox(repo)
+    local = ops.relay_run_step(wt, run, phase="start", role="gate", agent="A")[1].id
+    shared = self.common(repo).read_bytes()
+    code, out, err = self.cli(wt, "relay-run", "end", run, "--outcome", "pass",
+                              "--close-steps", "done")
+    self.assertEqual(code, 0, out + err)
+    self.assertEqual(out.strip(), f"ended {run} pass; closed steps: {local}")
+    self.assertEqual(len(err.splitlines()), 1, err)  # only the fallback notice
+    self.assertEqual([(e["event"], e.get("phase")) for e in self.local(wt)],
+                     [("step", "start"), ("step", "done"), ("end", None)])
+    self.assertEqual(self.common(repo).read_bytes(), shared)
+    got = self.listed(wt)
+    self.assertEqual([(s["id"], s["phase"]) for s in got[0]["steps"]], [(local, "done")])
+
+  def test_RelayRunEnd_CloseStepsOnLocalStep_LandsInSharedLedger(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    lift = self.sandbox(repo)
+    local = ops.relay_run_step(wt, run, phase="start", role="gate", agent="A")[1].id
+    lift()
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "pass",
+                              "--close-steps", "done")
+    self.assertEqual((code, err), (0, ""), out)
+    self.assertEqual(out.strip(), f"ended {run} pass; absorbed 1 event from local ledgers; "
+                                  f"closed steps: {local}")
+    shared = [(e["event"], e.get("step"), e.get("phase")) for _, e in
+              relayrun.read_events(self.common(repo))]
+    self.assertEqual(shared, [("begin", None, None), ("step", local, "start"),
+                              ("step", local, "done"), ("end", None, None)])
+    gone = repo._git("worktree", "remove", "--force", str(wt))
+    self.assertEqual(gone.returncode, 0, gone.stderr)
+    got = self.listed(repo.root)
+    self.assertEqual([(s["id"], s["phase"]) for s in got[0]["steps"]], [(local, "done")])
 
   def test_RelayRunStep_FallbackAndSharedConcurrent_DistinctIds(self) -> None:
     repo = self.repo()
@@ -1380,7 +1542,7 @@ class LedgerTests(RelayRunCase):
     code_before = repo.run("check")[0]
     run = self.begin(repo, "s1")
     self.step(repo, run)
-    self.ok(repo, "relay-run", "end", run, "--outcome", "pass")
+    self.ok(repo, "relay-run", "end", run, "--outcome", "pass", "--close-steps", "done")
     self.assertTrue((repo.root / ".git" / "slicer" / relayrun.LEDGER_NAME).is_file())
     self.assertFalse((repo.root / LEDGER).exists())
     self.assertEqual(snapshot(), before)

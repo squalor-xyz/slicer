@@ -11433,7 +11433,7 @@
       "id": "s326",
       "title": "relay-run end closes the steps still running",
       "short_title": "relay-run end closes the steps still running",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -11443,6 +11443,17 @@
           "text": "**2026-10-16** — s332 relay 2026-10-16, later note: with the s332 fallback, write the closing events after _absorb and through Ledger.append, so closes of steps recorded in a local fallback file land in the shared ledger.",
           "created_at": "2026-10-16T14:08:12Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "4e53276a-4dce-475a-b2f4-c09834063d7e",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: relay-run end --close-steps done|fail marks every running step of the run (after _absorb, through Ledger.append) before the end event, with no end event if a close fails; a plain end with running steps names them on stderr; --json gains closed_steps; a bad --close-steps is bad_run_field. Relay text Close step, commands.md, agents.md, CHANGELOG updated. Gate VERDICT: PASS (relay run-20261017-232448-db6e). Full suite 2551 ran, 0 failures, 1 skipped; slicer check passes.",
+          "created_at": "2026-10-17T23:55:48Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -11468,7 +11479,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

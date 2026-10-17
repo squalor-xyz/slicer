@@ -3257,16 +3257,32 @@ def relay_run_step(
 
 
 def relay_run_end(
-  root: Path, run_id: str, outcome: str, *, now: datetime | None = None,
-  report: LedgerReport | None = None,
-) -> relayrun.Run:
-  """Close the run. When the shared ledger can be written, the run's events from the local
-  ledgers are copied into it first, so removing a worktree afterwards loses none of them."""
+  root: Path, run_id: str, outcome: str, *, close_steps: str | None = None,
+  now: datetime | None = None, report: LedgerReport | None = None,
+) -> tuple[relayrun.Run, list[str]]:
+  """Close the run, and return it with the ids of the steps this call closed.
+
+  When the shared ledger can be written, the run's events from the local ledgers are copied
+  into it first, so removing a worktree afterwards loses none of them. With `close_steps`
+  (`done` or `fail`), each step still running then gets one step event with that phase, and
+  no other field, before the end event. They are all written under the one ledger lock; a
+  refused write stops the call before the end event, so the run is not ended.
+  """
   now = now or relayrun.utcnow()
   relayrun.choice("outcome", outcome, relayrun.OUTCOMES)
+  if close_steps is not None:
+    relayrun.choice("close_steps", close_steps, ("done", "fail"))
   with ledger_lock(root, report) as ledger:
     _open_run(root, run_id, now)
     if ledger.can_fall_back and not ledger.fallback:
       _absorb(root, ledger, run_id)
+    closed: list[str] = []
+    if close_steps is not None:
+      # The fold reads the local files too, and `append` copies a local-only step before it
+      # updates it, so a step recorded in a sandbox's file is closed in the shared ledger.
+      running = [s.id for s in _open_run(root, run_id, now).steps if s.phase == "start"]
+      for step_id in running:
+        ledger.append(relayrun.step_event(run_id, now, step_id, close_steps))
+        closed.append(step_id)
     ledger.append(relayrun.end_event(run_id, now, outcome))
-    return next(r for r in relayrun.load_all(root, now) if r.id == run_id)
+    return next(r for r in relayrun.load_all(root, now) if r.id == run_id), closed

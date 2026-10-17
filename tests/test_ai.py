@@ -1323,7 +1323,7 @@ class AiRelayTests(unittest.TestCase):
         "`slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR "
         "--model MODEL --reasoning REASONING --phase start --task TASK`",
         "`slicer relay-run step RUN --step STEP --phase done`",
-        "`slicer relay-run end RUN --outcome pass`",
+        "`slicer relay-run end RUN --outcome pass --close-steps done`",
       ):
         with self.subTest(label=label, phrase=phrase):
           self.assertIn(phrase, flat)
@@ -1345,8 +1345,10 @@ class AiRelayTests(unittest.TestCase):
       "`slicer relay-run step RUN --step STEP --phase start` re-records a long-running step "
       "as a heartbeat, so its run does not go stale after 30 minutes.",
       "After the finish step, or when the relay stops, end the run with "
-      "`slicer relay-run end RUN --outcome pass` (or `fail` or `stopped`), after marking "
-      "each step done or failed.",
+      "`slicer relay-run end RUN --outcome pass --close-steps done` (or `--outcome fail` or "
+      "`stopped`, and `--close-steps fail` when the steps failed). It first marks each step "
+      "still running, the orchestrator's own included, and without `--close-steps` it names "
+      "those steps on stderr.",
       "Recording is advisory: a failed `relay-run` call never stops the relay.",
     ):
       with self.subTest(sentence=sentence):

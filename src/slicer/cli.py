@@ -680,14 +680,21 @@ def cmd_relay_run_step(args: argparse.Namespace) -> int:
 
 def cmd_relay_run_end(args: argparse.Namespace) -> int:
   report = ops.LedgerReport()
-  run = ops.relay_run_end(_run_root(args), args.run, args.outcome, report=report)
+  run, closed = ops.relay_run_end(
+    _run_root(args), args.run, args.outcome, close_steps=args.close_steps, report=report,
+  )
   _say_fallback(report)
   _say_skipped(report)
   _say_orphaned(report)
+  running = [step.id for step in run.steps if step.phase == "start"]
+  if running:  # `--close-steps` leaves none, so this names the steps a plain `end` left behind
+    print(f"slicer: ended {run.id} with running steps: {', '.join(running)}", file=sys.stderr)
   text = f"ended {run.id} {run.outcome}"
   if report.absorbed:
     text += f"; absorbed {_count_of(report.absorbed, 'event')} from local ledgers"
-  _emit_run(args, {"run": run.to_dict()}, text)
+  if closed:
+    text += f"; closed steps: {', '.join(closed)}"
+  _emit_run(args, {"run": run.to_dict(), "closed_steps": closed}, text)
   return OK
 
 
@@ -4140,6 +4147,10 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument(
     "--outcome", required=True, metavar="pass|fail|stopped",
     help="how the run ended",
+  )
+  inner.add_argument(
+    "--close-steps", metavar="done|fail",
+    help="first mark every step still running with this phase",
   )
 
   inner = uadd(

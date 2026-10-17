@@ -2001,3 +2001,6 @@
 {"when": "2026-10-17T22:14:09Z", "item": "s323", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:22:19Z", "item": "s323", "action": "note", "from": "", "to": "", "note": "Ready for review: hold_flags config (default [\"needs-owner\"]", "by": "Jon Robbins"}
 {"when": "2026-10-17T23:22:20Z", "item": "s323", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:25:36Z", "item": "s326", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:55:48Z", "item": "s326", "action": "note", "from": "", "to": "", "note": "Ready for review: relay-run end --close-steps done|fail mark", "by": "Jon Robbins"}
+{"when": "2026-10-17T23:55:49Z", "item": "s326", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
