@@ -453,14 +453,9 @@ def _csv(value: str | None) -> list[str] | None:
 def _read_matrix(args: argparse.Namespace) -> role_matrix.RoleMatrix:
   """The matrix without loading the rest of the project: no lock, no write."""
   root = store.discover(Path(args.root).resolve() if args.root else None)
-  matrix = store.read_roles(root)
-  if matrix is None:
-    raise StateError(
-      f"{root / store.DIR_NAME / store.ROLES_NAME} does not exist; run "
-      "`slicer relay-roles init` to write the example matrix",
-      code="no_relay_roles",
-    )
-  return matrix
+  return role_matrix.require_matrix(
+    store.read_roles(root), root / store.DIR_NAME / store.ROLES_NAME,
+  )
 
 
 def cmd_relay_roles_show(args: argparse.Namespace) -> int:
@@ -473,21 +468,6 @@ def cmd_relay_roles_show(args: argparse.Namespace) -> int:
   }
   _emit(args, payload, text.rstrip("\n"), keep_empty=("rows", "rules"))
   return OK
-
-
-def _row_cells(row: role_matrix.RoleRow) -> str:
-  cells = [row.id, row.agent, row.vendor, row.model, row.reasoning]
-  return "  ".join(cell or role_matrix.EMPTY_CELL for cell in cells)
-
-
-def _recommend_lines(pick: role_matrix.RolePick) -> list[str]:
-  """A role's selected row and why, then its alternatives indented below it."""
-  if pick.row is None:
-    return [f"{pick.role}  (no matching row)"]
-  return [
-    f"{pick.role}  {_row_cells(pick.row)}  [{pick.selected_by}]",
-    *(f"  alternative  {_row_cells(row)}" for row in pick.alternatives),
-  ]
 
 
 def cmd_relay_roles_recommend(args: argparse.Namespace) -> int:
@@ -513,7 +493,7 @@ def cmd_relay_roles_recommend(args: argparse.Namespace) -> int:
     # it only makes the output compact.
     _dump_json(args, payload)
   else:
-    _emit(args, payload, "\n".join(line for pick in picks for line in _recommend_lines(pick)))
+    _emit(args, payload, "\n".join(line for pick in picks for line in role_matrix.recommend_lines(pick)))
   return OK
 
 

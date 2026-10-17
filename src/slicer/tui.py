@@ -37,6 +37,7 @@ BINDINGS = (
   Binding(("f",), "f", "filter", "Filter items; Space toggles, Enter applies, Esc cancels"),
   Binding(("v",), "v", "view", "Cycle the unfinished, in-work, and review queues"),
   Binding(("b",), "b", "board", "Relay board: live slice-relay runs; j/k or arrows scroll, b, q or Esc closes"),
+  Binding(("R",), "R", "roles", "Relay role matrix; Enter recommends roles for the selected slice"),
   Binding(("o",), "o", "sort", "Sort the view; j/k choose a field, Space flips direction, Enter applies"),
   Binding(("c",), "c", "clear", "Clear search and all filters (show done and retired too)"),
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
@@ -753,6 +754,44 @@ def reconcile_selection(
   return available[0] if available else None
 
 
+def relay_matrix(state: State) -> roles.RoleMatrix:
+  return roles.require_matrix(
+    store.read_roles(state.root), state.root / store.DIR_NAME / store.ROLES_NAME,
+  )
+
+
+def relay_recommend_lines(state: State, target: str, well_specified: bool, split: bool) -> list[str]:
+  """One slice's CLI recommendation, reusable by other read-only overlays."""
+  picks = roles.resolve(relay_matrix(state), state.index.require(target), well_specified, split)
+  return [line for pick in picks for line in roles.recommend_lines(pick)]
+
+
+@dataclass
+class RolesPrompt:
+  """Two yes/no answers for one slice, kept only for the open prompt."""
+
+  target: str
+  answers: list[bool] = field(default_factory=list)
+  text: str = ""
+
+  @property
+  def question(self) -> str:
+    return "split" if self.answers else "well-specified"
+
+  def handle(self, key: str) -> tuple[bool, bool] | None:
+    if key in ("\n", "\r", "KEY_ENTER"):
+      answer = ops.parse_yes_no(self.question, self.text.strip().casefold())
+      self.answers.append(answer)
+      self.text = ""
+      if len(self.answers) == 2:
+        answers = self.answers[0], self.answers[1]
+        self.answers.clear()
+        return answers
+    else:
+      self.text, _ = tui_wizard.text_input(self.text, key)
+    return None
+
+
 @dataclass
 class View:
   """Session-only interaction state; no terminal calls or persisted preferences."""
@@ -786,6 +825,9 @@ class View:
   draft: Filters | None = None
   choice_at: int = 0
   help_at: int = 0
+  roles_lines: list[str] = field(default_factory=list)
+  roles_at: int = 0
+  roles_prompt: RolesPrompt | None = None
   quit: bool = False
   wizard: tui_wizard.Wizard | None = None
   # The relay board: runs as of the last load, frames since it opened, the tick of that load,
@@ -917,6 +959,8 @@ class View:
       return self._prompt(state, key)
     if self.mode == "move":
       return self._move(state, key)
+    if self.mode in ("roles", "roles_prompt"):
+      return self._roles(state, key)
     if self.mode == "note":
       return self._note(state, key)
     if self.mode == "filter":
@@ -947,6 +991,8 @@ class View:
       self._open_wizard(state)
     elif action == "help":
       self.mode, self.help_at = "help", 0
+    elif action == "roles":
+      self._open_roles(state)
     elif action == "board":
       self.mode, self.board_tick, self.board_at = "board", 0, 0
       self.board_runs = []  # never show a frame from an earlier opening; the load resets the error
@@ -1013,6 +1059,42 @@ class View:
         return result
       self.notify("no item selected")
     self.refresh(state)
+    return ActResult()
+
+  def _open_roles(self, state: State) -> None:
+    if not self.selected:
+      self.notify("no item selected")
+    elif self.selected[0] != ITEM:
+      self.notify("that key applies to a slice, not to a prose block")
+    else:
+      try:
+        self.roles_lines = roles.render_markdown(relay_matrix(state)).splitlines()
+        self.mode, self.roles_at, self.roles_prompt = "roles", 0, None
+        self.notify("")
+      except (SlicerError, OSError) as exc:
+        self.notify(str(exc), "error")
+
+  def _roles(self, state: State, key: str) -> ActResult:
+    if key == "\x1b" or (self.mode == "roles" and key in ("R", "q")):
+      message = "cancelled" if self.roles_prompt is not None else ""
+      self.mode, self.roles_prompt, self.roles_lines = "normal", None, []
+      self.notify(message)
+    elif self.roles_prompt is not None:
+      try:
+        answers = self.roles_prompt.handle(key)
+        if answers is not None:
+          self.roles_lines = relay_recommend_lines(state, self.roles_prompt.target, *answers)
+          self.mode, self.roles_at, self.roles_prompt = "roles", 0, None
+        self.notify("")
+      except (SlicerError, OSError) as exc:
+        self.notify(str(exc), "error")
+    elif key in ("\n", "\r", "KEY_ENTER"):
+      self.roles_prompt = RolesPrompt(self.target)
+      self.mode = "roles_prompt"
+    elif key in ("j", "KEY_DOWN"):
+      self.roles_at += 1
+    elif key in ("k", "KEY_UP"):
+      self.roles_at = max(0, self.roles_at - 1)
     return ActResult()
 
   def _open_wizard(self, state: State) -> None:
@@ -1529,7 +1611,12 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   shortcuts = shortcut_lines(width) if view.mode == "normal" else []
   status_y = height - 2 - len(shortcuts)
   visible = status_y - 1
-  if view.mode == "board":
+  if view.mode in ("roles", "roles_prompt"):
+    put(0, 0, "Relay roles: Enter recommends, j/k scroll, R, q or Esc close", palette.attr("heading"))
+    view.roles_at = max(0, min(view.roles_at, len(view.roles_lines) - visible))
+    for n, line in enumerate(view.roles_lines[view.roles_at:view.roles_at + visible], 1):
+      put(n, 0, line)
+  elif view.mode == "board":
     put(0, 0, "Relay board: j/k or arrows scroll, b, q or Esc close", palette.attr("heading"))
     titles = {item.id: item.title for item in state.index.items}
     statuses = {item.id: state.config.status_label(item.status) for item in state.index.items}
@@ -1615,7 +1702,13 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
       attr = palette.attr(line.role, selected=selected, focused=view.focus == "right")
       put(n, right_x, ("> " if selected else "  ") + line.text, attr)
   put(status_y, 0, view.status(state), palette.attr("dim"))
-  if view.mode in ("search", "jump", "move", "note"):
+  if view.roles_prompt is not None:
+    prompt = view.roles_prompt
+    put(status_y + 1, 0, f"{prompt.target} {prompt.question} (yes/no, Enter accepts, Esc cancels): {prompt.text}",
+        palette.attr(selected=True, focused=True))
+    if view.message:
+      put(status_y, 0, view.feedback(), palette.attr(view.message_severity))
+  elif view.mode in ("search", "jump", "move", "note"):
     label = {
       "search": "Search", "jump": "Jump to ID", "move": "Move to position",
       "note": "Handoff note, optional" if view.note_action == "handoff"

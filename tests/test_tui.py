@@ -2289,3 +2289,103 @@ class DetailPaneTests(unittest.TestCase):
     self.assertTrue(any(l.startswith("i ") and "dependencies" in l and "history" in l
                         for l in tui.help_lines()))
     self.assertIn("i detail", "  ".join(tui.shortcut_lines(160)))
+
+
+class RolesTests(unittest.TestCase):
+  def setup_roles(self, repo, *, matrix=True):
+    repo.run("init")
+    repo.run("add", "Role selection", "--size", "S", "--effort", "1")
+    repo.run("promote", "S01")
+    if matrix:
+      repo.run("relay-roles", "init")
+    state = repo.state()
+    view = tui.View.initial(state)
+    view.select((tui.ITEM, "S01"))
+    return state, view
+
+  def frame(self, state, view):
+    screen = Screen(200, 500)
+    tui.draw(screen, state, view)
+    return [text for y, text in screen.writes if 0 < y < 198]
+
+  def answer(self, state, view, value):
+    for key in value + "\n":
+      view.handle(state, key)
+
+  def test_Roles_NoMatrix_NamesRelayRolesInit(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_roles(repo, matrix=False)
+      _, _, error = repo.run("relay-roles", "show")
+      view.handle(state, "R")
+      self.assertEqual(view.message, error.strip().removeprefix("slicer: "))
+
+  def test_Roles_Overlay_MatchesRelayRolesShow(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_roles(repo)
+      _, output, _ = repo.run("relay-roles", "show")
+      view.handle(state, "R")
+      self.assertEqual(self.frame(state, view), [line for line in output.splitlines() if line])
+
+  def test_Roles_Recommend_SameRowsAsCli(self):
+    for well, split in (("yes", "no"), ("no", "yes")):
+      with self.subTest(well=well, split=split), support.TempRepo() as repo:
+        state, view = self.setup_roles(repo)
+        _, output, _ = repo.run("relay-roles", "recommend", "S01",
+                                "--well-specified", well, "--split", split)
+        view.handle(state, "R")
+        view.handle(state, "\n")
+        self.answer(state, view, well)
+        self.answer(state, view, split)
+        self.assertEqual(self.frame(state, view), output.splitlines())
+
+  def test_Roles_Recommend_MatrixErrorThenRetry_ShowsRows(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_roles(repo)
+      _, output, _ = repo.run("relay-roles", "recommend", "S01",
+                              "--well-specified", "yes", "--split", "no")
+      view.handle(state, "R")
+      view.handle(state, "\n")
+      self.answer(state, view, "yes")
+      with patch.object(store, "read_roles", side_effect=StateError("invalid relay matrix")):
+        self.answer(state, view, "no")
+      self.assertEqual(view.message, "invalid relay matrix")
+      self.assertEqual(view.roles_prompt.question, "well-specified")
+      self.answer(state, view, "yes")
+      self.answer(state, view, "no")
+      self.assertEqual(self.frame(state, view), output.splitlines())
+
+  def test_Roles_MatrixClose_ClearsMessage(self):
+    for key in ("R", "q", "\x1b"):
+      with self.subTest(key=key), support.TempRepo() as repo:
+        state, view = self.setup_roles(repo)
+        view.handle(state, "R")
+        view.handle(state, key)
+        self.assertEqual((view.mode, view.message), ("normal", ""))
+
+  def test_Roles_Recommend_ProseRow_Refused(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_roles(repo)
+      repo.run("prose", "set", "preamble", "--text", "Context")
+      state = repo.state()
+      view.select((tui.PROSE, "preamble"))
+      view.handle(state, "R")
+      view.handle(state, "\n")
+      self.assertEqual((view.mode, view.message),
+                       ("normal", "that key applies to a slice, not to a prose block"))
+
+  def test_Roles_Esc_WritesNothing(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_roles(repo)
+      def snapshot():
+        return {p.relative_to(repo.root): p.read_bytes()
+                for p in repo.root.rglob("*") if p.is_file()}
+      before = snapshot()
+      for keys in (("R",), ("R", "\n"), ("R", "\n", "yes\n"),
+                   ("R", "\n", "yes\n", "no\n")):
+        with patch.object(store, "project_lock", side_effect=AssertionError("read took a lock")):
+          for chunk in keys:
+            for key in chunk:
+              view.handle(state, key)
+          self.assertIn(view.mode, ("roles", "roles_prompt"))
+          view.handle(state, "\x1b")
+        self.assertEqual((view.mode, view.quit, snapshot()), ("normal", False, before))
