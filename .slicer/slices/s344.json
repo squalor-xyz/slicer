@@ -1,0 +1,41 @@
+{
+  "id": "s344",
+  "title": "affected.py does not borrow a map recorded from a dirty tree",
+  "lead": [
+    "A map that the full discover records from a working tree with uncommitted changes under `src/` or `tests/` says so, and `tests/affected.py` never borrows such a map from another worktree."
+  ],
+  "depends_note": null,
+  "findings_note": "s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** a worktree's own map (it is used only at its own HEAD, as today); recording or refreshing a map automatically; changing what a map records about tests and reads; borrowing a map recorded at a commit that is not an ancestor of HEAD.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s342 (landed 2026-10-17) lets a worktree with no map of its own borrow a sibling worktree's map recorded at HEAD or the nearest ancestor of HEAD, when that sibling has no uncommitted changes under `src/` or `tests/` (`_has_source_changes`, `tests/affected.py:240`). That check looks at the sibling now, not when its map was recorded. A map the full discover writes from a dirty tree records HEAD (`write_map`, called around `tests/affected.py:696`) but describes lines of uncommitted code. Once the sibling commits that work, it is clean, the map passes the check, and a borrower diffs against the recorded commit with line numbers that do not match the code the map traced, so the selection can miss tests. The s342 reviewer reproduced this in a fixture. The hazard existed before s342 at the same HEAD; s342 widened it to descendants. A check on the holder (`git diff --quiet RECORDED HEAD -- src tests`) would also refuse main's clean map after any code merge, which is the case s342 exists for, so the map itself has to say whether its tree was clean. On 2026-10-17 the owner accepted s342 with this as a follow-up.\n\nScores: importance 2 because a wrong selection hides failing tests while iterating; urgency 1 because the full discover still runs once before done, so a missed test is caught before handoff; effort 1 and size S because it is one field written and one check in one script, plus tests. Tree slicer, pass v1.13. Discovered from s342."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/affected.py`: `write_map` writes a `\"clean\"` boolean after `\"sha\"`, true only when the recording tree has no uncommitted changes under `src/` or `tests/` (probe with `_has_source_changes(root)` when the discover starts, so changes made during the run cannot be missed; false when the probe fails). `load_map` returns it; a map without the field, written before this change, reads as not clean. `sibling_map` passes over a map that is not clean. `select` on a worktree's own map ignores the field. Update the module docstring.\n- `tests/test_affected.py`: the sibling-map tests and the write/read round-trip tests.\n- `AGENTS.md` (Commands, the paragraph on borrowed maps) and `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Select_NoLocalMap_SiblingMapRecordedDirtyThenCommitted_AsksForFullSuite`: a sibling records its map with an uncommitted change under `src/`, then commits it; a worktree at a descendant of the recorded commit asks for the full suite.\n- `test_Select_NoLocalMap_SiblingMapWithoutCleanField_AsksForFullSuite`: a sibling map with no `clean` key is not borrowed.\n- `test_WriteMap_DirtyTree_RecordsNotClean` and `test_WriteMap_CleanTree_RecordsClean`.\n- `test_Select_LocalMapRecordedDirty_StillUsedAtHead`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the failing tests and watch them go red.\n2. Probe cleanliness when the full discover starts, write the field, read it in `load_map`, and skip unclean maps in `sibling_map`.\n3. Update the existing tests that build maps by hand, the docs and the CHANGELOG. Mutation-check: dropping the check in `sibling_map`, and treating a missing field as clean, each turn a test red."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full discover. `slicer check` and `git diff --check` pass.\n- After the change, run the full discover once on a clean `main` so its map carries `\"clean\": true`; a new worktree then borrows it."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,41 @@
+{
+  "id": "s343",
+  "title": "The relay Setup says recommend can leave a role unmatched",
+  "lead": [
+    "The relay Setup text says `relay-roles recommend` resolves each role to a matching row and reports a role with no matching row as unmatched, as the example matrix does for the architect below size L, instead of claiming it resolves every role."
+  ],
+  "depends_note": null,
+  "findings_note": "s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example's architect row matches size L only, so a smaller slice leaves the architect unmatched",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing `recommend` or any matrix row (r7 stays size L only, by owner decision on 2026-10-17); the generic relay text a project without a matrix gets; bumping the relay contract marker, since this corrects what the text says `recommend` returns and adds no rule an outer session follows.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s320 (landed 2026-10-16) wrote the Setup sentence in `ROLES_PROPOSE` (`src/slicer/ai.py:382-385`): `recommend` \"matches the slice against the matrix and resolves every role, the orchestrator included, to one row\". s341 (landed 2026-10-17) gave the example matrix orchestrator rows, but on 2026-10-17 the owner chose to keep the architect row (r7) size L only, so on an S or M slice `recommend` prints `architect  (no matching row)` and its JSON lists `\"unmatched\": [\"architect\"]`. The s341 relay hit exactly this: the sentence led its first spec to expect `unmatched == []` on an S item. A matrix a project edits can leave any role unmatched, so the sentence is wrong for every project, not only the example.\n\nScores: importance 2 because the text is the relay contract an outer session reads at Setup, and it already misled one spec; urgency 1 because `recommend` itself prints the gap and the owner settles the lineup at Setup anyway; effort 1 and size S because it is one sentence, its test and the matching docs. Tree slicer, pass v1.13 beside the other relay follow-ups. Discovered from s341."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`, `ROLES_PROPOSE` (around line 382): replace \"resolves every role, the orchestrator included, to one row\" with text that says it resolves each role, the orchestrator included, to the first matching row, and reports a role no row matches as unmatched (`(no matching row)`, and `unmatched` in the JSON), which the owner fills by naming a row or by dropping that role, as with an architect on a slice below size L in the example matrix.\n- `tests/test_relay_roles.py`, `test_AiRelay_Setup_ExplainsCollectiveAcceptanceOverridesAndRouting` (around line 1931): the pinned phrase follows the new text.\n- `docs/agents.md` and `docs/commands.md`: any sentence that says `recommend` resolves every role (search with `rg -n \"every role\" docs`).\n- `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelay_Setup_SaysAnUnmatchedRoleIsReported`: with a matrix, the `## Setup` section of `ai relay` names `(no matching row)` and `unmatched`, and no longer contains \"resolves every role\"."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the failing test and watch it go red.\n2. Reword the `ROLES_PROPOSE` sentence; update the pinned phrase in the existing Setup test and the docs.\n3. Mutation-check: restoring the old sentence turns the new test red."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full discover. `slicer check` and `git diff --check` pass.\n- `slicer ai relay` in this repo shows the new Setup sentence."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

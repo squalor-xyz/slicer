@@ -1829,3 +1829,5 @@
 {"when": "2026-10-17T04:59:32Z", "item": "s342", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T12:28:08Z", "item": "s342", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T12:33:25Z", "item": "s342", "action": "status", "from": "reviewing", "to": "done", "note": "Landed: affected.py borrows a clean sibling map recorded at HEAD or the nearest ancestor and diffs against that commit. Relay gate VERDICT: PASS; merged main suite 2340 tests OK (1 skipped); git diff --check passed. Owner accepted the dirty-recorded-map hazard with a follow-up item.", "by": "Jon Robbins"}
+{"when": "2026-10-17T12:33:47Z", "item": "s343", "action": "add", "from": "", "to": "open", "note": "The relay Setup says recommend can leave a role unmatched"}
+{"when": "2026-10-17T12:33:47Z", "item": "s344", "action": "add", "from": "", "to": "open", "note": "affected.py does not borrow a map recorded from a dirty tree"}

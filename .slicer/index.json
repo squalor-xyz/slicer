@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 343,
+  "next_id": 345,
   "preamble": "",
   "passes": [
     {
@@ -11883,6 +11883,66 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s343",
+      "title": "The relay Setup says recommend can leave a role unmatched",
+      "short_title": "The relay Setup says recommend can leave a role unmatched",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example's architect row matches size L only, so a smaller slice leaves the architect unmatched",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s344",
+      "title": "affected.py does not borrow a map recorded from a dirty tree",
+      "short_title": "affected.py does not borrow a map recorded from a dirty tree",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],
