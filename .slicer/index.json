@@ -11266,7 +11266,7 @@
       "id": "s322",
       "title": "Print a slice's orchestrator brief with ai relay-brief",
       "short_title": "Print a slice's orchestrator brief with ai relay-brief",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
