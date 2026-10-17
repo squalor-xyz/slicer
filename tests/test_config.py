@@ -230,5 +230,73 @@ class IndexSchemeValidationTests(unittest.TestCase):
       self.assertIn("id_width", err)
 
 
+class TuiColumnsConfigTests(unittest.TestCase):
+  def repo(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "A thing")
+    return repo
+
+  def test_Config_TuiColumnsUnknownName_Refused(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", tui={"columns": ["claim", "owner"]})
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("tui.columns", err)
+      self.assertIn("'owner'", err)
+      self.assertIn("claim, size, score", err)
+
+  def test_Config_TuiColumnsRepeatedName_Refused(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", tui={"columns": ["score", "claim", "score"]})
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("tui.columns repeats 'score'", err)
+
+  def test_Config_TuiColumnsNotAListOfStrings_Refused(self) -> None:
+    for bad in ("score", [1], {"score": 1}, None):
+      with self.subTest(bad=bad), self.repo() as repo:
+        poke(repo, "config.json", tui={"columns": bad})
+        code, _, err = repo.run("list")
+        self.assertEqual(code, 3)
+        self.assertIn("tui.columns must be a list", err)
+
+  def test_Config_TuiNotAnObject_Refused(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", tui=["score"])
+      code, _, err = repo.run("list")
+      self.assertEqual(code, 3)
+      self.assertIn("tui must be an object", err)
+
+  def test_Config_TuiColumnsEmptyList_Accepted(self) -> None:
+    with self.repo() as repo:
+      poke(repo, "config.json", tui={"columns": []})
+      self.assertEqual(repo.run("list")[0], 0)
+      code, out, err = repo.run("config", "tui.columns")
+      self.assertEqual((code, out), (0, ""), err)
+
+  def test_Config_TuiColumnsMissing_IsTheS277Default(self) -> None:
+    with self.repo() as repo:
+      path = repo.root / ".slicer" / "config.json"
+      data = json.loads(path.read_text())
+      data.pop("tui")
+      path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+      self.assertEqual(repo.run("config", "tui.columns")[1], "claim\nsize\nscore\n")
+
+  def test_Config_TuiColumnsSetThroughTheCli_ReadsBackAndUnsets(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("config", "tui.columns", '["score"]')
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("config", "tui.columns")[1], "score\n")
+      self.assertEqual(json.loads((repo.root / ".slicer/config.json").read_text())["tui"],
+                       {"columns": ["score"]})
+      code, _, err = repo.run("config", "tui.columns", '["bogus"]')
+      self.assertEqual(code, 2)
+      self.assertIn("tui.columns", err)
+      self.assertEqual(repo.run("config", "tui.columns")[1], "score\n")
+      self.assertEqual(repo.run("config", "tui.columns", "--unset")[0], 0)
+      self.assertEqual(repo.run("config", "tui.columns")[1], "claim\nsize\nscore\n")
+
+
 if __name__ == "__main__":
   unittest.main()

@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-335 items · — 18 · done 309 · retired 8
+335 items · — 16 · done 309 · retired 8 · review 2
 
 v1.14.0 release
 
@@ -53,11 +53,11 @@ v1.13.0 release
 | 11 | [s280](slices/s280.md) | TUI relay-roles view and recommend for the selected slice | S | 1 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | done |
 | 12 | [s281](slices/s281.md) | TUI catalog browse and cite | M | 2 | slicer | owner request, session 2026-10-14: bring the TUI up to date with recent CLI features | — |
 | 13 | [s285](slices/s285.md) | TUI shows the relay request for a selected slice or range | S | 1 | slicer | owner request, session 2026-10-14: monitor slice relays from the TUI | done |
-| 14 | [s291](slices/s291.md) | TUI queue columns are configurable | M | 2 | slicer | owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane) | — |
+| 14 | [s291](slices/s291.md) | TUI queue columns are configurable | M | 2 | slicer | owner, 2026-10-15, s277 relay: asked whether the queue's columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane) | review |
 | 15 | [s295](slices/s295.md) | Tests pin the render-stale flag after a failed wizard render and after a move | S | 1 | slicer | s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279 | done |
 | 16 | [s297](slices/s297.md) | Relay board colors each pipeline role by its state | S | 1 | slicer | s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294 | — |
 | 17 | [s331](slices/s331.md) | Relay board shows the slice's status beside a finished run | S | 1 | slicer | owner 2026-10-16: the board's check mark on s309 read as "done" while the slice was merged but not yet done | done |
-| 18 | [s338](slices/s338.md) | relay-run end absorbs a step whose parent is in a damaged local file without failing | S | 1 | slicer | s332 relay 2026-10-16, later note 3: an absorbed step whose parent sits in a skipped damaged local file fails in the shared ledger | — |
+| 18 | [s338](slices/s338.md) | relay-run end absorbs a step whose parent is in a damaged local file without failing | S | 1 | slicer | s332 relay 2026-10-16, later note 3: an absorbed step whose parent sits in a skipped damaged local file fails in the shared ledger | review |
 | 19 | [s333](slices/s333.md) | Explain how slicer works with concepts and Mermaid diagrams | M | 2 | docs | Owner documentation review 2026-10-16; README.md:7 introduces AI-first use; docs/getting-started.md:5 opens with agent onboarding; no embedded Mermaid diagrams found in README.md, CONTRIBUTING.md, ARCHITECTURE.md or docs/*.md. Existing deps --format mermaid illustrates backlog dependencies rather than how slicer works. | done |
 | 20 | [s334](slices/s334.md) | Make getting started a short human-first walkthrough | M | 2 | docs | Owner documentation review 2026-10-16; docs/getting-started.md opens with agent instructions and its worked workflows assume agent-assisted planning; its reference detail spans installation, configuration, imports, priority, relay roles, batching, passes, CI, and recovery. Owner chose refocusing this existing guide instead of adding another quickstart. | done |
 | 21 | [s335](slices/s335.md) | Explain the human role when working with agents | M | 2 | docs | Owner documentation review 2026-10-16; docs/agents.md is an agent/JSON reference and docs/tui.md describes controls, but neither is a human operator's end-to-end guide. Existing s331 addresses finished-run status presentation; s319, s320, s322 and s332 address relay contracts, roles, briefs and recording rather than this documentation gap. | done |

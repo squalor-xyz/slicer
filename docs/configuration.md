@@ -48,7 +48,8 @@ changes through the CLI, and its keys are read back the same way.
   "render_driver_check": true,
   "claim_owner": "",
   "implement_finish": "done",
-  "issues_repo": ""
+  "issues_repo": "",
+  "tui": { "columns": ["claim", "size", "score"] }
 }
 ```
 
@@ -66,7 +67,8 @@ Read any value without opening the file: `slicer config KEY` prints it, and
 
 `slicer config KEY VALUE` writes one key; `slicer config KEY --unset` removes it, so the
 default applies again. `KEY` is a top-level key, or a dotted path one level into `id`,
-`pointers` or `sync` (`id.width`, `pointers.next_format`, `sync.targets`).
+`pointers`, `sync` or `tui` (`id.width`, `pointers.next_format`, `sync.targets`,
+`tui.columns`).
 
 - **The value is read as the key's type.** A string is taken literally. `id.width` takes
   a whole number, `git_check` and `render_driver_check` take `true` or `false`, and a
@@ -131,6 +133,7 @@ default applies again. `KEY` is a top-level key, or a dotted path one level into
 | `claim_owner` | `""` | Who `start` writes onto a claim. Empty uses the git user name, then the worktree directory name. A per-call `--owner` or the `SLICER_CLAIM_OWNER` environment variable overrides it | **Yes** |
 | `implement_finish` | `"done"` | How `slicer ai instructions` and `slicer ai skill` finish the implement loop. `done` keeps step 4 as `done` and mentions the handoff alternative. The done-mode skill says step 4 is the finish, and the handoff-mode skill keeps the review-and-merge sentence. `handoff` makes step 4 handoff only, and that skill text does not contain the done command. A missing key means `done`. `handoff` is a config error when `review_status` is empty. The commands do not switch to handoff just because a review status is set | **Yes** |
 | `issues_repo` | `""` | Where `slicer feedback-report` files issues and `slicer issues-pull` reads open ones, as `OWNER/REPO`; each part is letters, digits, `.`, `_` or `-`, and `..` is refused. A per-call `--repo` overrides it. **Empty means no default**: the command then needs `--repo`, and slicer never falls back to a git remote or to its own repository. Any other value is a config error | **Yes** |
+| `tui.columns` | `["claim", "size", "score"]` | Which cells the TUI queue row shows after the status, and in what order, from `claim`, `size` and `score`. A JSON list of strings: `slicer config tui.columns '["score"]'` drops the claim and size cells. The default is the layout the queue always had. An empty list shows none, so a row is its number, id, status and title. A name that is not one of the three, or a repeated name, is a config error. The number, id, status and title cannot be moved or hidden. Below a 50-cell queue pane the claim and size cells are still dropped whatever the list says. Affects the TUI only; `slicer list` keeps its own columns. A missing `tui` or `tui.columns` means the default | **Yes** |
 
 ## The ones that will surprise you
 

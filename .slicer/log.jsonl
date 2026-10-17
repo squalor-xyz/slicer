@@ -1909,3 +1909,6 @@
 {"when": "2026-10-17T19:55:30Z", "item": "s338", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:11:19Z", "item": "s338", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T20:21:28Z", "item": "s338", "action": "note", "from": "", "to": "", "note": "Ready for review, verified: VERDICT: PASS after 1 round, no ", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:25:58Z", "item": "s291", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:40:06Z", "item": "s291", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T20:53:15Z", "item": "s291", "action": "note", "from": "", "to": "", "note": "Ready for review: tui.columns (claim, size, score; default s", "by": "Jon Robbins"}
