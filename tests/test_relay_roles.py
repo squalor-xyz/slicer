@@ -1928,7 +1928,7 @@ class AiRelayContractTests(RelayRolesCase):
     out = self.ok(repo, "ai", "relay")
     setup = self.section(out, "## Setup", "## Roles matrix")
     for phrase in (
-      "resolves every role, the orchestrator included, to one row",
+      "resolves each role, the orchestrator included, to the first matching row",
       "lists each role's other matching rows as alternatives",
       "matrix order decides which row a role gets",
       "`--prefer-agent AGENT`",
@@ -1949,6 +1949,17 @@ class AiRelayContractTests(RelayRolesCase):
           self.section(text, "## Setup", "## Order"),
         )
         self.assertIn("headless session", self.section(text, "## Every brief", "\n## "))
+
+  def test_AiRelay_Setup_SaysAnUnmatchedRoleIsReported(self) -> None:
+    repo = self.with_matrix()
+    setup = self.section(self.ok(repo, "ai", "relay"), "## Setup", "## Roles matrix")
+    self.assertIn("(no matching row)", setup)
+    self.assertIn("reports a role no row matches as unmatched", setup)
+    self.assertIn("`unmatched` in its JSON", setup)
+    self.assertIn("only for a row that matches the slice", setup)
+    self.assertIn("goes into the lineup as named", setup)
+    self.assertIn("not through `--select`", setup)
+    self.assertNotIn("resolves every role", setup)
 
   def test_AiRelay_NoMatrix_SetupNamesNoSelectionFlags(self) -> None:
     setup = self.section(ai.relay_text(in_project=True), "## Setup", "## Order")

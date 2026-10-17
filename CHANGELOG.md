@@ -16,6 +16,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - Agent instructions and the slicer skill explain that `!` after a text `list` or `find` row number marks an unmet dependency, and point to `slicer show ID --json --lean` for `depends_on`.
 - The relay board's ended summaries show the items' configured status labels beside the run outcome, keeping that cell ahead of elapsed times on narrow screens. A passed run gets `✓` only when every item has the configured done status; otherwise it gets `○`. Failed and stopped runs keep `✗` and `~`.
+- The relay Setup says `relay-roles recommend` resolves each role, the orchestrator included, to its first matching row, and reports a role no row matches as unmatched (`(no matching row)` in the text, `unmatched` in the JSON), instead of saying it resolves every role to one row. The owner fills such a role at Setup; `--select` names only a row that matches the slice. The matrix and `recommend` are unchanged, and the relay contract marker stays `relay v5`.
 
 ## [1.12.0] - 2026-10-17
 
