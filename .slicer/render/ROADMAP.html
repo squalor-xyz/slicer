@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">335 items · — 21 · done 306 · retired 8</p>
+<p class="summary">335 items · — 19 · done 306 · retired 8 · review 2</p>
 <h2>v1.14.0 release</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s312</td><td>Load done slices only when needed</td><td>M</td><td>2</td><td>slicer</td><td>Go rewrite evaluation 2026-10-15; owner chose lazy mapping (a) 2026-10-16</td><td class="status">—</td></tr>
@@ -62,7 +62,7 @@
 <tr class="done"><td>10</td><td>s278</td><td>TUI dependency and history panes</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-14: bring the TUI up to date with recent CLI features</td><td class="status">done</td></tr>
 <tr class="done"><td>11</td><td>s280</td><td>TUI relay-roles view and recommend for the selected slice</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-14: bring the TUI up to date with recent CLI features</td><td class="status">done</td></tr>
 <tr class="open"><td>12</td><td>s281</td><td>TUI catalog browse and cite</td><td>M</td><td>2</td><td>slicer</td><td>owner request, session 2026-10-14: bring the TUI up to date with recent CLI features</td><td class="status">—</td></tr>
-<tr class="open"><td>13</td><td>s285</td><td>TUI shows the relay request for a selected slice or range</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-14: monitor slice relays from the TUI</td><td class="status">—</td></tr>
+<tr class="other"><td>13</td><td>s285</td><td>TUI shows the relay request for a selected slice or range</td><td>S</td><td>1</td><td>slicer</td><td>owner request, session 2026-10-14: monitor slice relays from the TUI</td><td class="status">review</td></tr>
 <tr class="open"><td>14</td><td>s291</td><td>TUI queue columns are configurable</td><td>M</td><td>2</td><td>slicer</td><td>owner, 2026-10-15, s277 relay: asked whether the queue&#x27;s columns could be chosen by the user after the claim column crowded titles at 80 columns; s277 shipped a fixed rule (claim capped at 8 cells, size dropped below a 50-cell pane)</td><td class="status">—</td></tr>
 <tr class="done"><td>15</td><td>s295</td><td>Tests pin the render-stale flag after a failed wizard render and after a move</td><td>S</td><td>1</td><td>slicer</td><td>s279 gate non-blocking note, nested-relay trial 2026-10-15 · discovered from s279</td><td class="status">done</td></tr>
 <tr class="open"><td>16</td><td>s297</td><td>Relay board colors each pipeline role by its state</td><td>S</td><td>1</td><td>slicer</td><td>s294 gate OWNER item, owner chose land + follow-up 2026-10-15 · discovered from s294</td><td class="status">—</td></tr>
@@ -79,7 +79,7 @@
 <tr class="done"><td>27</td><td>s343</td><td>The relay Setup says recommend can leave a role unmatched</td><td>S</td><td>1</td><td>slicer</td><td>s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example&#x27;s architect row matches size L only, so a smaller slice leaves the architect unmatched</td><td class="status">done</td></tr>
 <tr class="open"><td>28</td><td>s344</td><td>affected.py does not borrow a map recorded from a dirty tree</td><td>S</td><td>1</td><td>slicer</td><td>s342 relay 2026-10-17 owner decision: a map recorded with uncommitted changes under src/ or tests/ passes the borrow check once that work is committed, and s342 widened the hazard to ancestor maps</td><td class="status">—</td></tr>
 <tr class="open"><td>29</td><td>s345</td><td>show names catalog show for a catalog record id</td><td>S</td><td>1</td><td>slicer</td><td>Owner report 2026-10-17: show C170 says no such item while catalog show C170 finds it; reproduced with C01 in a scratch project; cmd_show src/slicer/cli.py:2048 uses Index.require src/slicer/model.py:665 only</td><td class="status">—</td></tr>
-<tr class="open"><td>30</td><td>s346</td><td>TUI detail pane docs match what i does</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">—</td></tr>
+<tr class="other"><td>30</td><td>s346</td><td>TUI detail pane docs match what i does</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">review</td></tr>
 <tr class="open"><td>31</td><td>s347</td><td>TUI history pane scrolls through the item&#x27;s whole history</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">—</td></tr>
 <tr class="open"><td>32</td><td>s348</td><td>TUI history pane reads the log only when it changed</td><td>S</td><td>1</td><td>slicer</td><td>s278 gate later notes, 2026-10-17 · discovered from s278</td><td class="status">—</td></tr>
 </tbody></table>
