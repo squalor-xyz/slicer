@@ -96,7 +96,7 @@ When slicer warns that the running code belongs to another worktree, run
 `PYTHONPATH=src python3 -m slicer` for this checkout.
 
 Before handoff, read `slicer config handoff_requires_note_kind`. If nonempty,
-file `slicer note ID --kind KIND --text "Describe the verified outcome"`
+file `slicer note ID --kind KIND --text "Describe the verified outcome" --render`
 for this implementation attempt. A report from a previous attempt cannot satisfy it.
 """
 
@@ -135,7 +135,7 @@ def handoff_policy_text(kind: str) -> str:
     return ""
   return (
     f"This project sets handoff_requires_note_kind to {kind!r}. Before handoff, run "
-    f"`slicer note ID --kind {shlex.quote(kind)} --text \"Describe the verified outcome\"`. "
+    f"`slicer note ID --kind {shlex.quote(kind)} --text \"Describe the verified outcome\" --render`. "
     "The note must be nonempty and belong to the current implementation attempt. "
     "Release and resume keep its association; reject then restart needs a new report. "
     "Changing attempts manually changes which reports belong to the current attempt.\n\n"
@@ -261,7 +261,7 @@ The orchestrator runs its one slice in the worktree it was given:
 `slicer start ID --render --strict`, red tests, implementation, review,
 accepted findings back to the implementer, then
 the architect, when the owner chose one, then the gate. Close with
-`slicer note ID --text "Describe the verified outcome"` plus the finish step.
+`slicer note ID --text "Describe the verified outcome" --render` plus the finish step.
 The orchestrator commits on the slice branch only when its brief allows it; merge
 and push are the outer session's, when the owner authorizes them.
 
@@ -546,7 +546,7 @@ def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str
   """
   if finish == "handoff":
     step = (
-      "`slicer note ID --text \"Describe the verified outcome\"`\n"
+      "`slicer note ID --text \"Describe the verified outcome\" --render`\n"
       "  and then the finish step, `slicer handoff ID --render --check`."
     )
   else:
@@ -554,9 +554,11 @@ def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str
       "the finish step,\n"
       "  `slicer done ID --note \"Describe the verified outcome\" --render --check`."
     )
+  # The handoff note is too long to follow "They are " on a line of 88 columns, so it wraps.
+  lead = "\n  " if finish == "handoff" else " "
   tracking = (
     "- Tracking order: the closing note and the finish step run only after\n"
-    f"  `VERDICT: PASS`. They are {step}\n"
+    f"  `VERDICT: PASS`. They are{lead}{step}\n"
     "  Every implementer brief says so; before review the implementer runs neither.\n"
   )
   body = ORCHESTRATOR_RULES.format(
@@ -664,7 +666,7 @@ HANDOFF_SECTION = f"""\
 ## Hand off for review
 
 When the implementation is ready for someone else to review, merge, or clean up, record
-the context with `slicer note ID --text "Ready for review: ..."`, then run
+the context with `slicer note ID --text "Ready for review: ..." --render`, then run
 `slicer handoff ID --render --json`. A reviewer picks up the next review item with
 `slicer next --status review --start --ready --render --section "Check" --json`: it claims the
 item and moves it to `reviewing`, so `next` never hands it to an implementer, and the
@@ -673,7 +675,7 @@ same command resumes it later. If the review fails, run
 to open (or `--to STATUS`), records the verdict, and clears the claim. {HANDOFF_APPLIES}
 
 Read `slicer config handoff_requires_note_kind` before handing off. A nonempty value
-requires `slicer note ID --kind KIND --text "Describe the verified outcome"` for the
+requires `slicer note ID --kind KIND --text "Describe the verified outcome" --render` for the
 current attempt. Previous-attempt and legacy unknown-attempt notes do not satisfy it;
 `handoff --note` only records history. Changing attempts manually changes report association.
 

@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- The closing `slicer note ID --text ...` that the slice relay and its orchestrator give, the `--kind` note that `handoff_requires_note_kind` names, and the `Ready for review` note in the agent instructions, the slicer skill, AGENTS.md, CONTRIBUTING.md and the note examples in docs/agents.md and docs/commands.md now carry `--render`, so the slice's render is current when the note lands. A stale `slices/ID.md` after the note needed an extra `slicer render`. `note` still renders only when asked, `handoff` is unchanged, and the relay contract marker stays `relay v5`.
+
 ## [1.13.0] - 2026-10-17
 
 ### Added

@@ -120,7 +120,7 @@ this project's headings):
 PYTHONPATH=src python3 -m slicer next --ready --section "Implement" --section "Check" --json --lean
 ```
 
-Read the returned slice's scope, dependencies, acceptance checks, relevant source
+Read the slice's scope, dependencies, acceptance checks, relevant source
 and tests before claiming. Resolve missing criteria first;
 a row without a slice needs `promote` and a specification.
 
@@ -144,7 +144,7 @@ PYTHONPATH=src python3 -m slicer start <ID> --render --strict
 # Tests this diff hits; on exit 2, or before done unless docs-only (see Commands), run the full discover.
 python3 tests/affected.py --run
 python3 -m unittest discover -s tests -t tests
-PYTHONPATH=src python3 -m slicer note <ID> --text "Ready for review: ..."
+PYTHONPATH=src python3 -m slicer note <ID> --text "Ready for review: ..." --render
 PYTHONPATH=src python3 -m slicer handoff <ID> --render --check
 git diff --check
 git status --short

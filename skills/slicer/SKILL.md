@@ -68,7 +68,7 @@ When slicer warns that the running code belongs to another worktree, run
 `PYTHONPATH=src python3 -m slicer` for this checkout.
 
 Before handoff, read `slicer config handoff_requires_note_kind`. If nonempty,
-file `slicer note ID --kind KIND --text "Describe the verified outcome"`
+file `slicer note ID --kind KIND --text "Describe the verified outcome" --render`
 for this implementation attempt. A report from a previous attempt cannot satisfy it.
 
 Step 4 is the finish. Commit or publish only when the project instructions authorize it.

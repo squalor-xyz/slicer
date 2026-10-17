@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-342 items · — 18 · done 316 · retired 8
+342 items · — 17 · done 316 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -44,7 +44,7 @@ v1.14.0 release
 | 9 | [s329](slices/s329.md) | retire is a command | S | 1 | slicer | outer-session wishlist 2026-10-16, item 8: reached for slicer retire, which does not exist | — |
 | 10 | [s349](slices/s349.md) | Absorbed local events keep their fold order in the shared ledger | S | 1 | slicer | s338 gate 2026-10-17: the reviewer reproduced on base that _absorb copies local events in file order, so a child step written in the same second as its parent from another checkout lands ahead of the parent and the shared ledger reads as corrupt | — |
 | 11 | [s350](slices/s350.md) | A shared step update absorbs a step held only in a local file | S | 1 | slicer | s340 gate 2026-10-17: the reviewer's probe showed `relay-run step RUN --step ID` on the shared ledger, for a step only a local fallback file holds, is written without absorbing; after the worktree is removed the shared ledger shows that step with an empty role and agent | — |
-| 12 | [s351](slices/s351.md) | The relay closing note renders the slice | S | 1 | slicer | s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render` | — |
+| 12 | [s351](slices/s351.md) | The relay closing note renders the slice | S | 1 | slicer | s343 and s345 relay runs 2026-10-17: the closing `slicer note ID --text ...` the relay contract and AGENTS.md give has no `--render`, so `slicer check` reported a stale slices/ID.md until an extra `slicer render` | review |
 | 13 | [s352](slices/s352.md) | Relay board pairs each status label with its item in a multi-item run | S | 1 | slicer | s331 gate 2026-10-17: in a multi-item run the ended line's status cell lists labels without item ids (tui.py around line 1368) | — |
 | 14 | [s353](slices/s353.md) | TUI relay request leaves out marks on items no longer open | S | 1 | slicer | s285 gate 2026-10-17: marks on items that become done or retired mid-session still go into the request; at 1000+ visible rows `[x]` over a 4-digit queue number leaves one digit showing | — |
 | 15 | [s354](slices/s354.md) | Item commands name catalog show for a catalog record id | S | 1 | slicer | s345 2026-10-17: `show` now names `slicer catalog show ID` for a catalog record id; edit, set, start and note were out of its scope and still say only `no such item` | — |
