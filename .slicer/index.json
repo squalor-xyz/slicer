@@ -12052,7 +12052,7 @@
       "id": "s343",
       "title": "The relay Setup says recommend can leave a role unmatched",
       "short_title": "The relay Setup says recommend can leave a role unmatched",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
