@@ -12571,7 +12571,7 @@
       "id": "s354",
       "title": "Item commands name catalog show for a catalog record id",
       "short_title": "Item commands name catalog show for a catalog record id",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
