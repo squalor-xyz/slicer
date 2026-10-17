@@ -904,6 +904,37 @@ class SandboxTests(GitLedgerCase):
     self.assertEqual((by_id[parent.id]["role"], by_id[child.id]["role"]), ("gate", "reviewer"))
     self.assertEqual(by_id[child.id]["parent"], parent.id)
 
+  def test_RelayRunStep_UpdateOfLocalOnlyStep_AbsorbsFirst(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)  # isolate this trigger from a missing begin
+    lift = self.sandbox(repo)
+    _, step = ops.relay_run_step(
+      wt, run, phase="start", role="reviewer", agent="Codex CLI", now=minutes(1),
+    )
+    lift()
+    self.cli(
+      repo.root, "relay-run", "step", run, "--step", step.id, "--phase", "done",
+    )
+    (wt / LEDGER).unlink()
+    got = self.listed(repo.root)[0]["steps"]
+    self.assertEqual([(s["id"], s["role"], s["agent"], s["phase"]) for s in got],
+                     [(step.id, "reviewer", "Codex CLI", "done")])
+
+  def test_RelayRunStep_UpdateOfSharedStep_AbsorbsNothing(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    _, step = ops.relay_run_step(
+      repo.root, run, phase="start", role="reviewer", agent="Codex CLI", now=minutes(1),
+    )
+    lift = self.sandbox(repo)
+    ops.relay_run_step(wt, run, phase="start", role="gate", agent="A", now=minutes(2))
+    lift()
+    ops.relay_run_step(repo.root, run, step=step.id, phase="done", now=minutes(3))
+    (wt / LEDGER).unlink()
+    got = self.listed(repo.root)[0]["steps"]
+    self.assertEqual([(s["id"], s["role"], s["agent"], s["phase"]) for s in got],
+                     [(step.id, "reviewer", "Codex CLI", "done")])
+
   def test_RelayRunStep_SharedChildOfSharedParent_AbsorbsNothing(self) -> None:
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)  # the begin is in the shared ledger
