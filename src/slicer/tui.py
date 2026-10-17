@@ -437,7 +437,7 @@ HISTORY_LIMIT = 20
 
 
 def deps_lines(state: State, target: str) -> list[PanelLine]:
-  """The dependency pane: what `slicer deps ID` prints, without the JSON."""
+  """The data behind `slicer deps ID`, including `blocked by` from its JSON and any open slivers."""
   item = state.index.get(target)
   if item is None:
     return [PanelLine("(no such item)")]

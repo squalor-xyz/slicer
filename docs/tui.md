@@ -42,8 +42,8 @@ author, a verifier or an expiry, a line with its trust tier and that metadata.
 history, and back. The pane heading names the one on screen, and the choice lasts for the
 session: moving down the queue keeps the pane, so you can read each item's dependencies or
 history in turn. Both panes are read-only. `e` says so, `tab` stays in the queue, and `i` returns
-to the details. On a roadmap prose block `i` does nothing, because prose has no dependencies or
-history.
+to the details. On a roadmap prose block `i` shows a message and keeps the details, because prose
+has no dependencies or history.
 
 The dependencies pane shows the same data as [`slicer deps ID`](commands.md) (its `blocked_by`
 appears only in `--json`): what the item `waits on` (a dependency that is not yet satisfied is

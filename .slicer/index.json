@@ -12190,10 +12190,22 @@
       "id": "s346",
       "title": "TUI detail pane docs match what i does",
       "short_title": "TUI detail pane docs match what i does",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "71e9b984-1e12-422d-add8-5d956c53dcc6",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: deps_lines docstring now says it shows the data behind slicer deps ID, including blocked by from its JSON and any open slivers; docs/tui.md says i on a prose block shows a message and keeps the details. Full suite 2388 OK (skipped=1), slicer check and git diff --check pass; gate VERDICT: PASS.",
+          "created_at": "2026-10-17T20:05:39Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12213,7 +12225,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
