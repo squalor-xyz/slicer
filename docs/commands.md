@@ -387,7 +387,7 @@ templates/*.md       render templates, changed with `slicer template`
 relay-roles.json     the slice-relay role matrix, when the project keeps one (see Relay roles)
 render/              GENERATED - ROADMAP.md, ROADMAP.html (browser-viewable), one file per slice, and RELAY-ROLES.md
 log.jsonl            append-only history of status changes
-relay-runs.jsonl     slice-relay ledger outside git; in a git repo only the fallback a sandboxed role writes, and older slicers' ledger; gitignored (see Relay run ledger)
+relay-runs.jsonl     slice-relay ledger read in a git repo; still written for a project below the worktree root and outside git; gitignored (see Relay run ledger)
 .gitattributes       union-merges log.jsonl, and keeps generated render/ on merge (see below)
 ```
 

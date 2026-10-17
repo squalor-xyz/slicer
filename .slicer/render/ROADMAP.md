@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-329 items · — 28 · done 293 · retired 8
+329 items · — 26 · done 293 · retired 8 · review 1 · reviewing 1
 
 v1.14.0 release
 
@@ -65,7 +65,7 @@ v1.13.0 release
 | 23 | [s339](slices/s339.md) | Agent instructions explain the blocked marker in list rows | S | 1 | slicer | owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not | — |
 | 24 | [s340](slices/s340.md) | Shared step keeps its local-only parent | S | 1 | slicer | s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed · discovered from s337 | — |
 | 25 | [s341](slices/s341.md) | Example matrix gains orchestrator rows | S | 1 | slicer | s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320 | done |
-| 26 | [s342](slices/s342.md) | affected.py borrows an ancestor map | S | 1 | slicer | s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337 | — |
+| 26 | [s342](slices/s342.md) | affected.py borrows an ancestor map | S | 1 | slicer | s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337 | reviewing |
 
 ---
 
@@ -91,7 +91,7 @@ v1.12.0 release
 | 42 | [s314](slices/s314.md) | List one relay run | S | 1 | slicer | s296 relay run 2026-10-16: orchestrator brief's relay-run list RUN errors · discovered from s296 | done |
 | 43 | [s315](slices/s315.md) | Pin relay v4 wiring | S | 1 | slicer | s296 review 2026-10-16, Low: literal contract string and unpinned orchestrator bullets · discovered from s296 | done |
 | 44 | [s316](slices/s316.md) | Extend legacy runs | S | 1 | slicer | s298 relay 2026-10-16: legacy-ledger run lists but step/end give unknown_run · Owner chose 2026-10-16 to keep s298's documented workaround (begin a new run) instead of writing legacy ledgers; no run in this repo is affected. · discovered from s298 | retired |
-| 45 | [s317](slices/s317.md) | Shared file lock | S | 1 | slicer | s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298 | — |
+| 45 | [s317](slices/s317.md) | Shared file lock | S | 1 | slicer | s298 review 2026-10-16: ledger_lock copies project_lock; docs listing wording · discovered from s298 | review |
 | 46 | [s318](slices/s318.md) | No git-dir writes from tests | S | 2 | slicer | s298 relay 2026-10-16: mutation runs leaked 150 fixture lines into .git/slicer · discovered from s298 | done |
 | 47 | [s319](slices/s319.md) | Self-contained orchestrator text | S | 2 | slicer | s296 review 2026-10-16: spec Lead vs Files; owner chose inline · discovered from s296 | done |
 | 48 | [s321](slices/s321.md) | add-pass counts items | S | 1 | slicer | dogfooding 2026-10-16: add-pass said no items yet with s312 already in v1.14 | — |

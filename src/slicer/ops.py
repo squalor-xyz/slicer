@@ -11,7 +11,6 @@ import json
 import os
 import re
 import shlex
-import time
 from contextlib import ExitStack, contextmanager
 from uuid import uuid4
 from copy import deepcopy
@@ -3048,34 +3047,6 @@ class Ledger:
 
 
 @contextmanager
-def _shared_flock(lock_path: Path) -> Iterator[None]:
-  lock_path.parent.mkdir(parents=True, exist_ok=True)
-  timeout = store._lock_timeout()
-  fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
-  try:
-    deadline = time.monotonic() + timeout
-    while True:
-      try:
-        store.fcntl.flock(fd, store.fcntl.LOCK_EX | store.fcntl.LOCK_NB)
-        break
-      except OSError:
-        if time.monotonic() >= deadline:
-          raise StateError(
-            f"another slicer is writing the relay-run ledger; the lock timed out after "
-            f"{timeout:g}s. Wait for it to finish, or remove {lock_path} if no slicer is "
-            "running.",
-            code="locked",
-          ) from None
-        time.sleep(0.05)
-    try:
-      yield
-    finally:
-      store.fcntl.flock(fd, store.fcntl.LOCK_UN)
-  finally:
-    os.close(fd)
-
-
-@contextmanager
 def ledger_lock(root: Path, report: LedgerReport | None = None) -> Iterator[Ledger]:
   """Serialise appenders to the ledger `root` writes to, and say where an event goes.
 
@@ -3092,7 +3063,7 @@ def ledger_lock(root: Path, report: LedgerReport | None = None) -> Iterator[Ledg
       stack.enter_context(store.project_lock(root))
     elif store.fcntl is not None:
       try:
-        stack.enter_context(_shared_flock(common.with_name(relayrun.COMMON_LOCK_NAME)))
+        stack.enter_context(store.file_lock(common.with_name(relayrun.COMMON_LOCK_NAME)))
       except OSError as exc:
         if not _denied(exc):
           raise

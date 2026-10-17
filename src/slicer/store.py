@@ -156,6 +156,47 @@ def _lock_timeout() -> float:
 
 
 @contextmanager
+def file_lock(path: Path, *, timeout: float | None = None) -> Iterator[None]:
+  """Take an exclusive flock on a file, waiting up to the configured timeout.
+
+  Where `flock` is unavailable this is a no-op. Lock files may live in a shared
+  directory that does not exist yet, so create the parent before opening the file.
+  """
+  if fcntl is None:
+    yield
+    return
+  if timeout is None:
+    timeout = _lock_timeout()
+  path.parent.mkdir(parents=True, exist_ok=True)
+  fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o666)
+  try:
+    deadline = time.monotonic() + timeout
+    announced = False
+    while True:
+      try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        break
+      except OSError:
+        if time.monotonic() >= deadline:
+          raise StateError(
+            "another slicer is writing this project; the lock timed out after "
+            f"{timeout:g}s. Wait for it to finish, or remove {path} if no "
+            "slicer is running.",
+            code="locked",
+          ) from None
+        if not announced:
+          print("waiting for another slicer to finish...", file=sys.stderr)
+          announced = True
+        time.sleep(0.05)
+    try:
+      yield
+    finally:
+      fcntl.flock(fd, fcntl.LOCK_UN)
+  finally:
+    os.close(fd)
+
+
+@contextmanager
 def project_lock(start: Path | None = None, *, timeout: float | None = None) -> Iterator[None]:
   """Serialise writers on `.slicer/lock` so two mutations cannot interleave.
 
@@ -176,44 +217,18 @@ def project_lock(start: Path | None = None, *, timeout: float | None = None) -> 
     yield
     return
   lock_path = root / DIR_NAME / LOCK_NAME
-  if timeout is None:
-    timeout = _lock_timeout()
-  fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o666)
-  try:
-    deadline = time.monotonic() + timeout
-    announced = False
-    while True:
-      try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        break
-      except OSError:
-        if time.monotonic() >= deadline:
-          raise StateError(
-            "another slicer is writing this project; the lock timed out after "
-            f"{timeout:g}s. Wait for it to finish, or remove {lock_path} if no "
-            "slicer is running.",
-            code="locked",
-          ) from None
-        if not announced:
-          print("waiting for another slicer to finish...", file=sys.stderr)
-          announced = True
-        time.sleep(0.05)
-    try:
-      # `feedback` imports this module, hence the local import.
-      from slicer import feedback
+  with file_lock(lock_path, timeout=timeout):
+    # `feedback` imports this module, hence the local import.
+    from slicer import feedback
 
-      # Every writer lists the lock, so a project made before `init` listed the lock gets the
-      # line on its next write. The line is advisory: an unreadable or unwritable
-      # .slicer/.gitignore must not block the write, so the error is ignored here.
-      try:
-        feedback.ensure_gitignore(root, LOCK_NAME)
-      except (OSError, UnicodeDecodeError):
-        pass
-      yield
-    finally:
-      fcntl.flock(fd, fcntl.LOCK_UN)
-  finally:
-    os.close(fd)
+    # Every writer lists the lock, so a project made before `init` listed the lock gets the
+    # line on its next write. The line is advisory: an unreadable or unwritable
+    # .slicer/.gitignore must not block the write, so the error is ignored here.
+    try:
+      feedback.ensure_gitignore(root, LOCK_NAME)
+    except (OSError, UnicodeDecodeError):
+      pass
+    yield
 
 
 _UNLOADED = object()
