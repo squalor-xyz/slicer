@@ -10685,11 +10685,26 @@
       "id": "s310",
       "title": "Measure startup and load rare modules on use",
       "short_title": "Measure startup and load rare modules on use",
-      "status": "open",
+      "status": "started",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
-      "claim": null,
+      "note_records": [
+        {
+          "id": "2aecb177-cbbc-4401-bf57-c6096c302ef6",
+          "kind": "",
+          "text": "**2026-10-17** — Measurement-only conclusion approved by review and final gate. A stable saving of at least 10 ms on a plain read was not established; the measurements also do not disprove that such a saving exists.\n\nInitial clean baseline: `python3.12 -X importtime -c \"import slicer.cli\"` reported 49.625 ms cumulative for `slicer.cli`; direct candidate branches totaled 3.764 ms. Five `list --json --lean` runs took 128.500, 121.501, 121.358, 123.989, and 124.618 ms (mean 123.993 ms).\n\nLater, under noisy load, five instrumented direct-branch totals for `mergeindex`, `mergeroles`, and `migrator` were 19.263, 24.594, 25.048, 20.121, and 27.925 ms. These are importtime costs, not measured plain-read savings. A scratch-only variant moved those imports to their handlers; its plain list commands all exited 0. `github`, `roles`, `refs`, and `relayrun` remained loaded transitively through `config`, `store`, and `ops`.\n\nReviewer-verified scratch comparison: first five wall-time medians were 667.706 ms baseline and 670.053 ms variant; ten-run medians were 655.396 and 657.318 ms. A later five-run sample had medians 849.251 and 807.412 ms; median paired wall saving was 56.027 ms. Child CPU medians in that sample were 661.575 and 619.442 ms; median paired CPU saving was 13.361 ms. The samples conflict under load, so they do not support a stable latency claim. No production, test, or changelog changes were made; red tests and mutation evidence are not applicable.\n\n`slicer check` passed with 329 items and current render/sync; `git diff --check` passed. `tests/affected.py --run` exited 2 because no affected map or clean donor map was available; full discovery was waived for this measurement-only outcome. The owner retains the retirement decision. No handoff or commit was made.",
+          "created_at": "2026-10-17T04:19:06Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-10-17T04:10:30Z"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -10708,7 +10723,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

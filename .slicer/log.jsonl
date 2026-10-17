@@ -1794,3 +1794,5 @@
 {"when": "2026-10-17T03:38:39Z", "item": "s342", "action": "add", "from": "", "to": "open", "note": "affected.py selects from a map recorded at an ancestor commit"}
 {"when": "2026-10-17T03:38:39Z", "item": "s341", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-17T03:38:39Z", "item": "s342", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-17T04:10:30Z", "item": "s310", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T04:19:06Z", "item": "s310", "action": "note", "from": "", "to": "", "note": "Measurement-only conclusion approved by review and final gat", "by": "Jon Robbins"}
