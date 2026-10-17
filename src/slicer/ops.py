@@ -3003,15 +3003,19 @@ class Ledger:
   def append_shared(self, event: dict[str, object], *, absorbing: bool = False) -> bool:
     """Append to the shared ledger. False once it is refused and the call is local.
 
-    The shared ledger is read strictly, so an event for a run it holds no begin of would make
-    it `corrupt` once the file that does is gone. The run's local events are copied first.
+    The shared ledger is read strictly, so an event for a run it holds no begin of, or a step
+    whose parent it holds no step for, would make it `corrupt` once the file that does is gone.
+    The run's local events are copied first, which holds both.
     """
     if self.fallback:
       return False
     if self.can_fall_back and not absorbing and event["event"] != "begin":
       shared = relayrun.ledger_path(self.root)
       run_id = str(event["run"])
-      if not any(e["event"] == "begin" and e["run"] == run_id for _, e in relayrun.read_events(shared)):
+      held = [e for _, e in relayrun.read_events(shared) if e["run"] == run_id]
+      parent = str(event.get("parent") or "")
+      parent_held = not parent or any(e["event"] == "step" and e["step"] == parent for e in held)
+      if not any(e["event"] == "begin" for e in held) or not parent_held:
         _absorb(self.root, self, run_id)
         if self.fallback:
           return False

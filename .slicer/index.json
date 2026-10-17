@@ -11925,12 +11925,24 @@
       "id": "s340",
       "title": "A shared step whose parent is only in a local fallback file keeps the shared ledger readable",
       "short_title": "Shared step keeps its local-only parent",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s337"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "b63a0175-7889-4310-8b83-f8a620e68e32",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: a shared step whose --parent only a local fallback file holds now absorbs the run's local events first, so the shared ledger stays readable after the worktree is removed. New tests cover that fix and the trigger's narrowness (absorbs nothing when the parent is already shared). Full suite 2376 OK (skipped=1); the gate passed.",
+          "created_at": "2026-10-17T19:45:28Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11950,7 +11962,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

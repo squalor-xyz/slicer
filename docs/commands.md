@@ -594,9 +594,10 @@ shared ledger does not hold yet, then appends the end event; its text names the 
 (`ended RUN pass; absorbed 2 events from local ledgers`). An event that would not fold (a
 timestamp or phase that does not exist) is not copied, and a local file that cannot be read
 is skipped; one stderr line names both, so the shared ledger stays sound. A `step` that goes
-to the shared ledger for a run whose begin is only in a local file copies the run's local
-events first, for the same reason. Because the copies are in the
-shared ledger, `git worktree remove` loses no step. The local files are left as they are.
+to the shared ledger copies the run's local events first when the shared ledger holds no begin
+for the run, or when its `--parent` is a step only a local file holds, for the same reason.
+Because the copies are in the shared ledger, `git worktree remove` loses no step. The
+local files are left as they are.
 If `end` itself runs sandboxed it ends the run in the local file and absorbs nothing;
 a later `end` cannot repeat, so end runs from the session that owns the run.
 

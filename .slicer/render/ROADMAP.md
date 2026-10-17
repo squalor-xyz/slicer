@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-335 items · — 23 · done 304 · retired 8
+335 items · — 22 · done 304 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -63,7 +63,7 @@ v1.13.0 release
 | 21 | [s335](slices/s335.md) | Explain the human role when working with agents | M | 2 | docs | Owner documentation review 2026-10-16; docs/agents.md is an agent/JSON reference and docs/tui.md describes controls, but neither is a human operator's end-to-end guide. Existing s331 addresses finished-run status presentation; s319, s320, s322 and s332 address relay contracts, roles, briefs and recording rather than this documentation gap. | done |
 | 22 | [s336](slices/s336.md) | Give human contributors a practical development walkthrough | S | 1 | docs | Owner documentation review 2026-10-16; CONTRIBUTING.md:6 only points to AGENTS.md and ARCHITECTURE.md; ARCHITECTURE.md:19 describes layers as a plain text list. Existing project guidance already defines worktrees, tests, tracking and handoff, but lacks a short human-oriented walkthrough connecting these steps. | done |
 | 23 | [s339](slices/s339.md) | Agent instructions explain the blocked marker in list rows | S | 1 | slicer | owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not | done |
-| 24 | [s340](slices/s340.md) | Shared step keeps its local-only parent | S | 1 | slicer | s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed · discovered from s337 | — |
+| 24 | [s340](slices/s340.md) | Shared step keeps its local-only parent | S | 1 | slicer | s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed · discovered from s337 | review |
 | 25 | [s341](slices/s341.md) | Example matrix gains orchestrator rows | S | 1 | slicer | s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320 | done |
 | 26 | [s342](slices/s342.md) | affected.py borrows an ancestor map | S | 1 | slicer | s337 relay 2026-10-16, later note 2: affected.py --run is unusable in a new worktree because a sibling map is borrowed only at the same HEAD, and a full discover ran past 600 s under load · discovered from s337 | done |
 | 27 | [s343](slices/s343.md) | The relay Setup says recommend can leave a role unmatched | S | 1 | slicer | s341 relay 2026-10-17 later note: the Setup text says recommend resolves every role, but the example's architect row matches size L only, so a smaller slice leaves the architect unmatched | — |

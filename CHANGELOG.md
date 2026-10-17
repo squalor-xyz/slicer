@@ -17,6 +17,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - Agent instructions and the slicer skill explain that `!` after a text `list` or `find` row number marks an unmet dependency, and point to `slicer show ID --json --lean` for `depends_on`.
 - The relay board's ended summaries show the items' configured status labels beside the run outcome, keeping that cell ahead of elapsed times on narrow screens. A passed run gets `✓` only when every item has the configured done status; otherwise it gets `○`. Failed and stopped runs keep `✗` and `~`.
 
+### Fixed
+
+- A `relay-run step` written to the shared ledger with a `--parent` that only a checkout's own fallback file holds first copies that run's local events into the shared ledger, as it already did when the run's begin was only local. Removing that checkout's worktree before `relay-run end` no longer leaves the shared ledger `corrupt`: `relay-run list` reads the run with both steps.
+
 ## [1.12.0] - 2026-10-17
 
 ### Added
