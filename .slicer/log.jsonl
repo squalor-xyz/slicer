@@ -1865,3 +1865,6 @@
 {"when": "2026-10-17T17:38:49Z", "item": "s334", "action": "note", "from": "", "to": "", "note": "Ready for review: docs/getting-started.md is now a short hum", "by": "Jon Robbins"}
 {"when": "2026-10-17T17:43:43Z", "item": "s334", "action": "status", "from": "review", "to": "done", "note": "Landed: getting-started is a short human-first walkthrough; reference moved to commands.md/agents.md with anchored signposts; gate PASS, full suite green on main.", "by": "Jon Robbins"}
 {"when": "2026-10-17T17:43:44Z", "item": "s335", "action": "note", "from": "", "to": "", "note": "From s334 gate: getting-started.md signposts (lines ~171-192", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:45:31Z", "item": "s335", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:52:50Z", "item": "s335", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T17:58:26Z", "item": "s335", "action": "note", "from": "", "to": "", "note": "Ready for review: docs/working-with-agents.md explains the o", "by": "Jon Robbins"}

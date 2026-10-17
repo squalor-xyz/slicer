@@ -11760,7 +11760,7 @@
       "id": "s335",
       "title": "Explain the human role when working with agents",
       "short_title": "Explain the human role when working with agents",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s333",
@@ -11773,6 +11773,17 @@
           "text": "**2026-10-17** — From s334 gate: getting-started.md signposts (lines ~171-192) point at commands.md#review-lifecycle, #git-merge-drivers, #installation-options, #initialization and agents.md#worked-workflows; renaming those headings fails test_GettingStarted_MovedSections_KeepOldAnchorSignposts — update links together.",
           "created_at": "2026-10-17T17:43:44Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "4a1702eb-b5d3-4ec7-947f-7cc37f4e0823",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: docs/working-with-agents.md explains the owner's decisions and inspection surfaces (status, show, log, relay-run list, TUI relay board), with a Mermaid owner/outer/orchestrator/implementer/gate sequence; linked from README.md, docs/getting-started.md and docs/agents.md; two link tests in tests/test_docs_coverage.py. Full suite 2362 ran, 0 failures, 1 skipped; affected 24 OK; slicer check and git diff --check pass; reviewer and gate PASS.",
+          "created_at": "2026-10-17T17:58:26Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -11798,7 +11809,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

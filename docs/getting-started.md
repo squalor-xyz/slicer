@@ -164,7 +164,8 @@ and integration steps; only then is `done` recorded. See
 ## Continue in your own project
 
 Use the [TUI](tui.md) with `slicer tui` if you prefer interactive editing.
-[AI assistance](agents.md) is optional; `slicer ai instructions` provides agent
+[Working with agents](working-with-agents.md) explains owner decisions and relay
+inspection. [AI assistance](agents.md) is optional; `slicer ai instructions` provides agent
 onboarding. For a larger plan, use an [outline import](import.md), or consult the
 [command reference](commands.md) as needed.
 

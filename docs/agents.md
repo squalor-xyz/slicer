@@ -1,5 +1,9 @@
 # Driving slicer from an agent
 
+For the owner's decisions, progress inspection, and integration responsibilities,
+read [Working with agents](working-with-agents.md). This page is the agent and
+JSON reference; the generated commands below remain authoritative for the workflow.
+
 Start with `slicer ai instructions` for the canonical concise onboarding guide.
 It is available wherever slicer is installed and works without an initialized project.
 A readable project whose `implement_finish` is `handoff` changes step 4 to handoff;
