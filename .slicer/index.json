@@ -11640,7 +11640,7 @@
       "id": "s333",
       "title": "Explain how slicer works with concepts and Mermaid diagrams",
       "short_title": "Explain how slicer works with concepts and Mermaid diagrams",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
