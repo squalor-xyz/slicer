@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-335 items · — 26 · done 301 · retired 8
+335 items · — 25 · done 301 · retired 8 · review 1
 
 v1.14.0 release
 
@@ -61,7 +61,7 @@ v1.13.0 release
 | 19 | [s333](slices/s333.md) | Explain how slicer works with concepts and Mermaid diagrams | M | 2 | docs | Owner documentation review 2026-10-16; README.md:7 introduces AI-first use; docs/getting-started.md:5 opens with agent onboarding; no embedded Mermaid diagrams found in README.md, CONTRIBUTING.md, ARCHITECTURE.md or docs/*.md. Existing deps --format mermaid illustrates backlog dependencies rather than how slicer works. | done |
 | 20 | [s334](slices/s334.md) | Make getting started a short human-first walkthrough | M | 2 | docs | Owner documentation review 2026-10-16; docs/getting-started.md opens with agent instructions and its worked workflows assume agent-assisted planning; its reference detail spans installation, configuration, imports, priority, relay roles, batching, passes, CI, and recovery. Owner chose refocusing this existing guide instead of adding another quickstart. | done |
 | 21 | [s335](slices/s335.md) | Explain the human role when working with agents | M | 2 | docs | Owner documentation review 2026-10-16; docs/agents.md is an agent/JSON reference and docs/tui.md describes controls, but neither is a human operator's end-to-end guide. Existing s331 addresses finished-run status presentation; s319, s320, s322 and s332 address relay contracts, roles, briefs and recording rather than this documentation gap. | done |
-| 22 | [s336](slices/s336.md) | Give human contributors a practical development walkthrough | S | 1 | docs | Owner documentation review 2026-10-16; CONTRIBUTING.md:6 only points to AGENTS.md and ARCHITECTURE.md; ARCHITECTURE.md:19 describes layers as a plain text list. Existing project guidance already defines worktrees, tests, tracking and handoff, but lacks a short human-oriented walkthrough connecting these steps. | — |
+| 22 | [s336](slices/s336.md) | Give human contributors a practical development walkthrough | S | 1 | docs | Owner documentation review 2026-10-16; CONTRIBUTING.md:6 only points to AGENTS.md and ARCHITECTURE.md; ARCHITECTURE.md:19 describes layers as a plain text list. Existing project guidance already defines worktrees, tests, tracking and handoff, but lacks a short human-oriented walkthrough connecting these steps. | review |
 | 23 | [s339](slices/s339.md) | Agent instructions explain the blocked marker in list rows | S | 1 | slicer | owner session 2026-10-16: an agent saw `!` on s334-s336 and s285 in `slicer list` and could not say what it meant; docs/commands.md:244 documents it, but src/slicer/ai.py (TRACKING, line 76) does not | — |
 | 24 | [s340](slices/s340.md) | Shared step keeps its local-only parent | S | 1 | slicer | s337 relay 2026-10-16, later note 1: a shared-ledger step whose --parent exists only in a local fallback file corrupts the shared ledger once that worktree is removed · discovered from s337 | — |
 | 25 | [s341](slices/s341.md) | Example matrix gains orchestrator rows | S | 1 | slicer | s320 relay 2026-10-16 owner question: the relay-roles init example has no orchestrator row, so recommend leaves the orchestrator unmatched on a fresh project; owner chose Claude and Codex orchestrator rows plus a Codex implementer alternative · discovered from s320 | done |

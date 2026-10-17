@@ -11828,12 +11828,24 @@
       "id": "s336",
       "title": "Give human contributors a practical development walkthrough",
       "short_title": "Give human contributors a practical development walkthrough",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s333"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2c9315d3-025d-407f-b7cc-e0e4cc68ca5f",
+          "kind": "",
+          "text": "**2026-10-17** — Ready for review: CONTRIBUTING.md now walks a human contributor through choosing a specified slice, cutting its worktree before claiming, launch-directory commands with PYTHONPATH/--root/git -C, affected tests vs full suite (docs-only exception), slicer check, git diff --check and handoff, linking AGENTS.md, docs/landing.md, how-it-works, getting-started and working-with-agents; ARCHITECTURE.md Shape gains a Mermaid map (cli/tui -> ops -> store -> jsonio; cli/tui/ops -> render; cli -> sync; check -> render/sync/verify) verified against the source and rendered with quire; README links the guide. Affected 7 OK, full suite 2366 OK (1 skipped), slicer check and git diff --check pass; gate PASS.",
+          "created_at": "2026-10-17T18:36:54Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -11853,7 +11865,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

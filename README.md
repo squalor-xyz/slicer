@@ -45,7 +45,8 @@ uv, and unreleased main. The [contributor install](AGENTS.md#install) tracks a c
 - [Configuration](docs/configuration.md) — project settings and defaults
 - [Legacy format](docs/migrate-format.md) — migrate an existing slice tree
 - [ARCHITECTURE.md](ARCHITECTURE.md) — layering and invariants
-- [AGENTS.md](AGENTS.md) — contributing, tests, and house style
+- [Contributing](CONTRIBUTING.md) — a development walkthrough for human contributors
+- [AGENTS.md](AGENTS.md) — contributor rules, tests, and house style
 - [CHANGELOG.md](CHANGELOG.md) — changes by release
 
 Run `slicer --help` for the command list or `slicer ai instructions` for agent onboarding.
