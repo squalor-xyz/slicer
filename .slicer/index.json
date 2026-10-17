@@ -9330,7 +9330,7 @@
       "id": "s280",
       "title": "TUI relay-roles view and recommend for the selected slice",
       "short_title": "TUI relay-roles view and recommend for the selected slice",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
