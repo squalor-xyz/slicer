@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-10-17
+
 ### Added
 
 - TUI: config `tui.columns` lists which of `claim`, `size` and `score` the queue row shows after the status, and in what order, so an owner can trade those cells for title room: `slicer config tui.columns '["score"]'`. The default is the layout the queue had before. An empty list shows none; an unknown or repeated name is a config error. The narrow-pane rule still drops the claim and size cells. See [configuration.md](docs/configuration.md) and [tui.md](docs/tui.md#display-and-color).
