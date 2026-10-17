@@ -147,6 +147,7 @@ a mutation leaves the index untouched; see [Git access](docs/commands.md#git-acc
 ## Documentation
 
 - [Why slicer](docs/why-slicer.md) — the workflow problems slicer solves
+- [How slicer works](docs/how-it-works.md) — the concepts, the data flow and the item lifecycle, with diagrams
 - [Getting started](docs/getting-started.md) — install to CI, with worked workflows for a
   new project and for an AI code review
 - [Command reference](docs/commands.md) — every command and flag, `.slicer/`, removal, prose

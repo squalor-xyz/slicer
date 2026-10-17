@@ -1842,3 +1842,7 @@
 {"when": "2026-10-17T13:29:49Z", "item": "s321", "action": "note", "from": "", "to": "", "note": "Correction to the done note: the full suite on main after th", "by": "Jon Robbins"}
 {"when": "2026-10-17T13:29:59Z", "item": "s345", "action": "add", "from": "", "to": "open", "note": "show names catalog show for a catalog record id"}
 {"when": "2026-10-17T13:29:59Z", "item": "s345", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-17T12:46:34Z", "item": "s333", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T13:05:21Z", "item": "s333", "action": "note", "from": "", "to": "", "note": "Verified: docs/how-it-works.md explains items vs slices, goa", "by": "Jon Robbins"}
+{"when": "2026-10-17T13:05:21Z", "item": "s333", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-17T14:08:20Z", "item": "s333", "action": "note", "from": "", "to": "", "note": "Gate follow-ups applied: rewrapped how-it-works.md lines 35 ", "by": "Jon Robbins"}

@@ -11640,10 +11640,33 @@
       "id": "s333",
       "title": "Explain how slicer works with concepts and Mermaid diagrams",
       "short_title": "Explain how slicer works with concepts and Mermaid diagrams",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c56a86aa-3483-4510-9909-5650432bef71",
+          "kind": "",
+          "text": "**2026-10-17** — Verified: docs/how-it-works.md explains items vs slices, goals vs queue, readiness, priority, claims, statuses, finish policies and generated vs canonical state with a system flowchart and a lifecycle diagram; linked from README.md and docs/why-slicer.md. Claims checked against src and a scratch project; quire --config squalor PDF (8 pages) inspected, diagrams readable with no clipping; affected tests 6 OK, slicer check and git diff --check clean; reviewer findings fixed; gate VERDICT: PASS.",
+          "created_at": "2026-10-17T13:05:21Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "014ea050-0bb1-4193-99c0-9c3e27d988ab",
+          "kind": "",
+          "text": "**2026-10-17** — Gate follow-ups applied: rewrapped how-it-works.md lines 35 and 174 (and the claim bullet), and line 164 now says a second start by another owner succeeds but changes nothing (ops.start_many writes nothing for an item already started and claimed).",
+          "created_at": "2026-10-17T14:08:20Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -11663,7 +11686,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
