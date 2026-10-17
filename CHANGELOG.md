@@ -10,6 +10,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - TUI: the relay board's ended summary for a run with more than one item shows each status label with its item id (`pass · s1 review, s2 done`), so a label can be matched to its item. A single-item run keeps the bare label. See [tui.md](docs/tui.md#relay-board).
 - Slice bodies load on first access. A corrupt slice body is reported with `corrupt` and its filename by commands that read it (`show ID`, `render`, `check`, `verify`), while commands that do not read it (`next`, `list`) no longer fail on it. Slice-file moves do not parse bodies and update lazy lookup paths after renaming. Explicit batch `set` reads its target bodies before any changes, refusing the batch if a target is corrupt. `show ID` avoids reading unrelated bodies; `render`, `check` and `verify` still inspect every body. File layout and rendered output are unchanged.
+- `check` says when only the roadmap render is stale, as a merge leaves it (the `slicer-generated` driver keeps one side): when `ROADMAP.md` and `ROADMAP.html` are the only stale renders and nothing else fails, it adds a line that names `slicer render`, or `done --render` when landing. Its `--json` report adds `stale_render_kind`, `roadmap_only` for that case and `mixed` for any other stale render, present only when a render is stale. The exit code is unchanged. See [agents.md](docs/agents.md) and [landing.md](docs/landing.md).
 
 ### Fixed
 

@@ -3152,6 +3152,11 @@ def _check_report(state: store.State, *, show_diff: bool = False) -> tuple[check
     lines.append(f"stale render: {rel}: {detail['detail']}")
     if show_diff:
       lines.append(render.unified(expected, state.render_dir, rel))
+  if report.stale_render_kind == "roadmap_only":
+    lines.append(
+      "only the roadmap render is stale, as a merge leaves it (the slicer-generated driver "
+      "keeps one side); run slicer render, or done --render when landing"
+    )
   lines.extend(f"orphan render: {rel}" for rel in report.orphan_render)
   lines.extend(f"stale sync: {s}" for s in report.stale_sync)
   lines.extend(f"problem: {p}" for p in report.problems)

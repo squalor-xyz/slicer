@@ -18,6 +18,8 @@ Otherwise commit on its branch, merge into `main` with `git merge --no-ff`, then
 PYTHONPATH=src python3 -m slicer done <ID> --note "Describe the verified outcome" --render --check
 ```
 
+Until `done --render` runs, `check` on `main` fails on the stale `ROADMAP.md` and `ROADMAP.html`, which a merge leaves behind because the `slicer-generated` driver keeps `main`'s roadmap render, and `check` names that case.
+
 A slice with slivers lands once: its slivers run in the parent's worktree and
 branch. Merge that branch with `git merge --no-ff`, then on `main` run `done` on each
 sliver and last on the parent, and commit all of it as one "mark done" commit. `done` on

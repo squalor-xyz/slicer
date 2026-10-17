@@ -1975,3 +1975,6 @@
 {"when": "2026-10-17T22:31:38Z", "item": "s350", "action": "note", "from": "", "to": "", "note": "Ready for review: a shared relay-run step --step update of a", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:31:38Z", "item": "s350", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-17T22:40:28Z", "item": "s350", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of 5a0a94d); full suite OK after the merge commit.", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:08:08Z", "item": "s325", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:38:23Z", "item": "s325", "action": "note", "from": "", "to": "", "note": "Ready for review: check prints 'only the roadmap render is s", "by": "Jon Robbins"}
+{"when": "2026-10-17T22:38:23Z", "item": "s325", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
