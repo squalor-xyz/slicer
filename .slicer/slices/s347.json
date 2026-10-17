@@ -1,0 +1,41 @@
+{
+  "id": "s347",
+  "title": "TUI history pane scrolls through the item's whole history",
+  "lead": [
+    "The history pane (s278) shows only the item's newest 20 entries and cannot scroll; let it take focus and scroll like the relay board."
+  ],
+  "depends_note": null,
+  "findings_note": "s278 gate later notes, 2026-10-17",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** scrolling the dependencies pane; a project-wide history view; caching the log between redraws.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s278's history pane calls `history_lines(state, target, HISTORY_LIMIT)` with `HISTORY_LIMIT = 20` (`src/slicer/tui.py:433`), and `tab` stays in the queue while it is shown (`View.handle`, the `pane` action), so an item with a long relay history loses its older starts, handoffs and rejects, and a short terminal clips even those 20. The relay board already scrolls with `board_at` and j/k (`src/slicer/tui.py:930`). Raised as a later note by the s278 gate, 2026-10-17."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: a `history_at` offset on `View`; in the history pane `tab` moves focus to the pane, j/k and arrows move `history_at`, clamped as `board_at` is in `draw()`; selecting another item or cycling `i` resets it. `history_lines` stops truncating to 20 (or the limit rises), and `draw()` slices from `history_at`.\n- `docs/tui.md` (Dependencies and history), `CHANGELOG.md`, `tests/test_tui.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Handle_HistoryPaneFocused_DownScrollsHistory`\n- `test_Handle_SelectOtherItem_ResetsHistoryScroll`\n- `test_Draw_HistoryScrolled_ShowsOlderEntries` (a curses stub as the existing draw tests use)\n- `e` in the focused history pane still says it is read-only."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the offset, the focus rule and the scroll keys; drop the 20-entry cap.\n3. Update the docs and CHANGELOG. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full discover. `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

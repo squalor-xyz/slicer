@@ -1,0 +1,41 @@
+{
+  "id": "s348",
+  "title": "TUI history pane reads the log only when it changed",
+  "lead": [
+    "The history pane re-reads and parses `.slicer/log.jsonl` on every redraw; reuse the parsed history until the file changes."
+  ],
+  "depends_note": null,
+  "findings_note": "s278 gate later notes, 2026-10-17",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** caching `State.history()` for the CLI or other callers; scrolling the history pane.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s278's `history_lines` calls `State.history()` (`src/slicer/store.py:527`), which reads and parses the whole log, each time `draw()` paints the history pane (`src/slicer/tui.py`, the `view.shown == \"history\"` branch). The s278 gate measured about 20 ms per frame on this repo's log, and the log only grows. A redraw with no new history should not pay for a re-parse."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: cache the parsed history keyed on the log file's `(st_mtime_ns, st_size)`; a missing file or a changed key re-reads; a read error is not cached, so the pane keeps showing it until the file is fixed. `history_lines` keeps its signature and output.\n- `CHANGELOG.md`, `tests/test_tui.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_HistoryLines_UnchangedLog_ReadsOnce` (patch `State.history` to count calls across two `history_lines` calls)\n- `test_HistoryLines_AppendedEntry_ShowsNewEntry`\n- `test_HistoryLines_MalformedLog_ShowsErrorInsteadOfRaising` stays green."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Add the cache. Mutation-check: always re-reading turns the first test red; never re-reading turns the second red.\n3. Update the CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full discover. `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

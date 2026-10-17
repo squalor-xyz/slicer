@@ -1853,3 +1853,7 @@
 {"when": "2026-10-17T16:39:32Z", "item": "s278", "action": "status", "from": "review", "to": "done", "note": "Landed fe94908: i cycles the detail pane between details, deps and history (read-only); gate PASS after one fix round; full suite on main 2359 OK (1 skipped), check passes", "by": "Jon Robbins"}
 {"when": "2026-10-17T16:43:04Z", "item": "s346", "action": "add", "from": "", "to": "open", "note": "TUI detail pane docs match what i does"}
 {"when": "2026-10-17T16:43:04Z", "item": "s346", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-17T16:44:30Z", "item": "s347", "action": "add", "from": "", "to": "open", "note": "TUI history pane scrolls through the item's whole history"}
+{"when": "2026-10-17T16:44:32Z", "item": "s347", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-17T16:44:34Z", "item": "s348", "action": "add", "from": "", "to": "open", "note": "TUI history pane reads the log only when it changed"}
+{"when": "2026-10-17T16:44:34Z", "item": "s348", "action": "promote", "from": "", "to": "", "note": ""}

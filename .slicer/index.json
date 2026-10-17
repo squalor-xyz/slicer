@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 347,
+  "next_id": 349,
   "preamble": "",
   "passes": [
     {
@@ -12049,6 +12049,66 @@
       "id": "s346",
       "title": "TUI detail pane docs match what i does",
       "short_title": "TUI detail pane docs match what i does",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s278 gate later notes, 2026-10-17",
+        "discovered_from": "s278",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s347",
+      "title": "TUI history pane scrolls through the item's whole history",
+      "short_title": "TUI history pane scrolls through the item's whole history",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s278 gate later notes, 2026-10-17",
+        "discovered_from": "s278",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.13",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s348",
+      "title": "TUI history pane reads the log only when it changed",
+      "short_title": "TUI history pane reads the log only when it changed",
       "status": "open",
       "has_slice": true,
       "depends_on": [],
