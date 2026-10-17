@@ -11482,7 +11482,7 @@
       "id": "s328",
       "title": "File one item with its spec in one import, short title included",
       "short_title": "File one item with its spec in one import, short title included",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
