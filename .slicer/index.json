@@ -10960,7 +10960,7 @@
       "id": "s317",
       "title": "The ledger lock shares the project lock's code",
       "short_title": "Shared file lock",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
