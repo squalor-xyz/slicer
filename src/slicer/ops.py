@@ -17,6 +17,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from fnmatch import fnmatchcase
+from collections.abc import Collection
 from pathlib import Path
 from typing import Callable, Iterator, Mapping, Sequence
 
@@ -1931,11 +1932,13 @@ def next_batch(
   With `disjoint`, an item is also skipped when a path its files section names is
   already named by a chosen item (paths in `overlap_ignore` never count), and an
   item whose section names no path is skipped and listed in `unknown_files`.
+  Pending dependencies remain blockers even when already chosen in this mode.
   """
   if isinstance(count, bool) or not isinstance(count, int) or count < 1:
     raise StateError("next --batch must be an integer >= 1", code="usage")
   if disjoint:
     _require_files_section(state.config, "next --batch --disjoint")
+  top_level = {entry.name for entry in state.root.iterdir()} if disjoint else set()
   pool = _ranked_pool(
     state, elsewhere, tree=tree, size=size, include_blocked=True,
     max_attempts=max_attempts, flags=flags, no_flags=no_flags,
@@ -1949,11 +1952,11 @@ def next_batch(
     for item in pool.items:
       if item.id in chosen_ids:
         continue
-      unmet = [dep for dep in graph.pending(state.index, item, state.config) if dep not in chosen_ids]
+      unmet = [dep for dep in graph.pending(state.index, item, state.config) if disjoint or dep not in chosen_ids]
       if unmet:
         continue
       if disjoint:
-        named = item_paths(state, item.id)
+        named = item_paths(state, item.id, top_level=top_level)
         if not named:
           if item.id not in unknown_files:
             unknown_files.append(item.id)
@@ -1967,12 +1970,12 @@ def next_batch(
     chosen.append(pick)
     chosen_ids.add(pick.id)
     if disjoint:
-      taken.update(counted_paths(state.config, item_paths(state, pick.id)))
+      taken.update(counted_paths(state.config, item_paths(state, pick.id, top_level=top_level)))
   blocked: list[tuple[str, list[str]]] = []
   for item_id, pending in pool.blocked:
     if item_id in chosen_ids:
       continue
-    unmet = [dep for dep in pending if dep not in chosen_ids]
+    unmet = [dep for dep in pending if disjoint or dep not in chosen_ids]
     if unmet:
       blocked.append((item_id, unmet))
   return BatchResult(
@@ -1995,11 +1998,32 @@ def _require_files_section(cfg: Config, what: str) -> None:
     )
 
 
-def item_paths(state: State, item_id: str) -> list[str]:
-  """The repo paths in an item's `files_section`; none when it has no slice or section."""
+def files_section_warning(state: State) -> str | None:
+  """Explain a configured heading absent from every item's slice."""
+  heading = state.config.files_section
+  if heading and not any(
+    sl is not None and sl.section(heading) is not None
+    for item in state.index.items
+    for sl in [state.slices.get(item.id)]
+  ):
+    return (
+      f"no item has the configured files_section {heading!r}; "
+      "run `slicer config files_section NAME` to name the files heading"
+    )
+  return None
+
+
+def item_paths(state: State, item_id: str, *, top_level: Collection[str]) -> list[str]:
+  """Paths in an item's `files_section`, using names from the project root.
+
+  No paths when the item has no slice or section. The caller supplies the root
+  names once per operation, so comparing items does not repeatedly list it.
+  """
   sl = state.slices.get(item_id)
   section = sl.section(state.config.files_section) if sl is not None else None
-  return paths.extract(section.body) if section is not None else []
+  if section is None:
+    return []
+  return paths.extract(section.body, top_level=top_level)
 
 
 def counted_paths(cfg: Config, named: list[str]) -> list[str]:
@@ -2012,7 +2036,11 @@ def path_overlap(state: State, item_ids: list[str]) -> list[dict[str, object]]:
   _require_files_section(state.config, "deps --overlap")
   for item_id in item_ids:
     state.index.require(item_id)
-  counted = {item_id: counted_paths(state.config, item_paths(state, item_id)) for item_id in item_ids}
+  top_level = {entry.name for entry in state.root.iterdir()}
+  counted = {
+    item_id: counted_paths(state.config, item_paths(state, item_id, top_level=top_level))
+    for item_id in item_ids
+  }
   pairs: list[dict[str, object]] = []
   for at, first in enumerate(item_ids):
     for second in item_ids[at + 1:]:

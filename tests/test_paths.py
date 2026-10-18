@@ -18,7 +18,7 @@ class PathsTests(unittest.TestCase):
       "plain src/unticked.py\n"
       "- slashes only: `/`, `//`, `./`\n"
     )
-    self.assertEqual(paths.extract(body), [
+    self.assertEqual(paths.extract(body, top_level={"CHANGELOG.md"}), [
       "src/slicer/config.py",
       "src/slicer/ops.py",
       "tests/test_next.py",
@@ -26,6 +26,37 @@ class PathsTests(unittest.TestCase):
       "CHANGELOG.md",
       "Makefile/",
     ])
+
+  def test_Extract_IdentifierTokens_NotPaths(self) -> None:
+    for token in ("os.path", "os.fsync", "Config.load", "and/or"):
+      with self.subTest(token=token):
+        self.assertEqual(paths.extract(f"`{token}`"), [])
+
+  def test_Extract_RepoPaths_Preserved(self) -> None:
+    for token, expected in (
+      ("src/slicer/paths.py", "src/slicer/paths.py"),
+      ("docs/configuration.md", "docs/configuration.md"),
+      ("CHANGELOG.md", "CHANGELOG.md"),
+      ("tests/fixtures/legacy/", "tests/fixtures/legacy/"),
+      ("src/slicer/paths.py:12", "src/slicer/paths.py"),
+    ):
+      with self.subTest(token=token):
+        self.assertEqual(paths.extract(f"`{token}`", top_level={"CHANGELOG.md"}), [expected])
+
+  def test_Extract_KnownTopLevel_ExtensionlessPaths(self) -> None:
+    self.assertEqual(paths.extract("`assets/template`", top_level={"assets"}), ["assets/template"])
+
+  def test_Extract_KnownTopLevel_BareNamesNeedExtension(self) -> None:
+    top_level = {"tests", "src", "LICENSE", "CHANGELOG.md"}
+    for token, expected in (
+      ("tests", []),
+      ("src", []),
+      ("LICENSE", []),
+      ("CHANGELOG.md", ["CHANGELOG.md"]),
+      ("tests/", ["tests/"]),
+    ):
+      with self.subTest(token=token):
+        self.assertEqual(paths.extract(f"`{token}`", top_level=top_level), expected)
 
   def test_Paths_NoBackticks_ReturnsEmpty(self) -> None:
     self.assertEqual(paths.extract(""), [])
