@@ -2060,3 +2060,6 @@
 {"when": "2026-10-18T03:31:53Z", "item": "s356", "action": "note", "from": "", "to": "", "note": "Ready for review: the relay board's ended line now calls _pl", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:31:53Z", "item": "s356", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:31:57Z", "item": "s356", "action": "note", "from": "", "to": "", "note": "Ready for review: the relay board ended line now places its ", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:34:09Z", "item": "s363", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T04:09:35Z", "item": "s363", "action": "note", "from": "", "to": "", "note": "Ready for review: Q names each marked item it leaves out wit", "by": "Jon Robbins"}
+{"when": "2026-10-18T04:09:35Z", "item": "s363", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

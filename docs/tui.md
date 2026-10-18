@@ -155,8 +155,12 @@ refreshes, searches and filters, including when a marked row is hidden. They are
 kept only for this TUI session. `Q` composes a request for all marked items, or for
 the selected item when nothing is marked. A marked item that has since become done
 or retired is left out of the request, as if unmarked. Its `[x]` stays, and reopening
-the item brings it back into requests. When every mark is done or retired, `Q` uses
-the selected item. Every item must have a slice; otherwise
+the item brings it back into requests. Marks on parked items and on items in review
+stay in the request. When every mark is done or retired, `Q` uses the selected item;
+a selected item that is done or retired is left out the same way, and when nothing is
+left to request the key says so and opens no request. Every id left out is named in
+the message with its status, for example `left out: S03 (done)`, or
+`nothing to request; left out: S02 (done)`. Every item must have a slice; otherwise
 the message names the items to promote first (`n`). A role matrix is required,
 just as for `R`.
 
@@ -278,8 +282,9 @@ when the item has none. After the status, the queue row shows the cells config `
 `claim`, `size` and `score`, all three by default. `slicer config tui.columns '["score"]'`
 leaves the claim and size cells out so the title keeps room, and
 `'["score","size","claim"]'` reorders them; an empty list shows none. The number, id,
-status and title always show. Hiding the score cell also hides the high-priority emphasis,
-which marks that cell. The claim cell is the
+status and title always show. The number slot is as wide as the view's longest number,
+at least three cells, so ids line up in every row, past 999 rows too.
+Hiding the score cell also hides the high-priority emphasis, which marks that cell. The claim cell is the
 CLAIM cell `slicer list` prints: the owner, `*` for work in progress with no claim,
 `wt:NAME` (`wt:NAME+N` for N more worktrees) for work in a sibling worktree, or `-`.
 The queue shows at most eight cells of a claim: a longer one is cut and ends in `…`,

@@ -301,14 +301,17 @@ def item_rows(
   # The same CLAIM column `slicer list` prints: at least its header, as wide as the longest cell.
   claim_w = max([len("CLAIM"), *(len(claim) for claim in claims.values())])
   out: list[Row] = []
+  # Every number in this view gets the same slot: as wide as the longest one, never under 3.
+  # A slot that grew per row would shift the ids of rows past 999 one cell right.
+  number_w = max(3, len(str(len(items))))
   for n, item in enumerate(items, 1):
     pending = graph.pending(state.index, item, cfg)
     marker = "!" if pending else " "
     status = store.displayed_status(cfg, item, elsewhere.get(item.id, []))
     label = cfg.status_label(status)
-    number = f"{n:>3}"
+    number = f"{n:>{number_w}}"
     if marks and item.id in marks:
-      number = "[x]".rjust(len(number))
+      number = "[x]".rjust(number_w)
     prefix = f"{number}{marker} {item.id:<5} {label:<{status_w}} "
     priority_at = 0
     for name in shown:
@@ -1125,25 +1128,45 @@ class View:
     return ActResult()
 
   def _open_request(self, state: State) -> None:
-    # A mark on a done or retired item is left out, as if unmarked; the mark itself stays.
+    # A mark on a done or retired item is left out of the request; the mark itself stays.
+    # A selected done or retired item is left out the same way when no mark is requested.
+    # Every id left out is named in the notice, including when nothing is requested.
     finished = state.config.finished_statuses()
-    marked = {item.id for item in state.index.items
-              if item.id in self.marks and item.status not in finished}
-    if not marked and (not self.selected or self.selected[0] != ITEM):
-      self.notify("no item selected" if not self.selected else
-                  "that key applies to a slice, not to a prose block")
-      return
     queue = graph.ranked_order(state.index, state.config, list(state.index.items))
-    wanted = marked or {self.target}
+    statuses = {item.id: item.status for item in state.index.items}
+    marked = [item.id for item in queue if item.id in self.marks]
+    wanted = {target for target in marked if statuses[target] not in finished}
+    left_out = {target for target in marked if target not in wanted}
+    if not wanted and self.selected and self.selected[0] == ITEM:
+      if statuses[self.target] in finished:
+        left_out.add(self.target)
+      else:
+        wanted = {self.target}
+    named = [f"{item.id} ({state.config.status_label(item.status)})"
+             for item in queue if item.id in left_out]
+    notice = f"left out: {', '.join(named)}" if named else ""
+
+    def say(message: str, severity: str = "info") -> None:
+      self.notify("; ".join(part for part in (message, notice) if part), severity)
+
+    if not wanted:
+      if not self.selected:
+        reason = "no item selected"
+      elif self.selected[0] != ITEM:
+        reason = "that key applies to a slice, not to a prose block"
+      else:
+        reason = "nothing to request"
+      say(reason)
+      return
     targets = [item.id for item in queue if item.id in wanted]
     missing = [target for target in targets if target not in state.slices]
     if missing:
-      self.notify(f"{', '.join(missing)}: promote first (press n)")
+      say(f"{', '.join(missing)}: promote first (press n)")
       return
     try:
       relay_matrix(state)
     except (SlicerError, OSError) as exc:
-      self.notify(str(exc), "error")
+      say(str(exc), "error")
       return
     def adjacent(items: list) -> bool:
       positions = [n for n, item in enumerate(items) if item.id in wanted]
@@ -1155,7 +1178,7 @@ class View:
     self.request_targets = targets
     self.roles_prompt = RolesPrompt(targets[0])
     self.mode, self.roles_at = "request", 0
-    self.notify("")
+    say("")
 
   def _request(self, state: State, key: str) -> ActResult:
     if key == "\x1b" or (self.roles_prompt is None and key in ("Q", "q")):
