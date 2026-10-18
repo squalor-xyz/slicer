@@ -427,7 +427,7 @@ def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
 
 
 def cmd_ai_relay_brief(args: argparse.Namespace) -> int:
-  payload = ai.relay_brief(
+  payload = ops.relay_brief(
     _state(args), args.id, worktree=args.worktree, branch=args.branch,
     run=args.run, step=args.step, parallel=args.parallel or [],
     well_specified=ops.parse_yes_no("well-specified", args.well_specified),
@@ -2846,7 +2846,7 @@ def _template_rows(root: Path) -> list[dict[str, object]]:
     text = store.read_template_exact(root, name)
     rows.append({
       "name": name,
-      "customized": text != templates.default(name),
+      "customized": templates.is_customized(name, text),
       "missing": text is None,
     })
   return rows

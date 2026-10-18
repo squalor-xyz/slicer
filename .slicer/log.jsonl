@@ -2076,3 +2076,6 @@
 {"when": "2026-10-18T03:57:32Z", "item": "s360", "action": "status", "from": "review", "to": "done", "note": "Landed: test pins affected.py record() probe before its discover; suite OK on main", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:57:32Z", "item": "s357", "action": "status", "from": "review", "to": "done", "note": "Landed: promote refuses parent and discovered_from in a source; suite OK on main", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:57:33Z", "item": "s362", "action": "status", "from": "review", "to": "done", "note": "Landed: land refuses non-branch refs (invalid_branch), anchors commands with git -C ROOT, takes --owner; suite OK on main", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:33:22Z", "item": "s365", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:47:46Z", "item": "s365", "action": "note", "from": "", "to": "", "note": "Ready for review: ai relay-brief returns no_slice for an ite", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:47:46Z", "item": "s365", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -13225,7 +13225,7 @@
       "id": "s365",
       "title": "ai relay-brief: no-slice code, template default and module home",
       "short_title": "relay-brief follow-ups",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13235,6 +13235,17 @@
           "text": "**2026-10-18** — Owner decisions 2026-10-17: no_slice; missing built-in template counts as default; move relay_brief out of ai.py.",
           "created_at": "2026-10-18T02:33:10Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "ea8f4cfa-7f66-44a0-a83b-7deb3939b8e1",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: ai relay-brief returns no_slice for an item with no slice; template list counts a missing built-in template as the default (customized false, missing true); relay_brief moved from ai.py to ops.py so ai.py imports no state module, command and JSON unchanged. Full suite 2565 ran, 0 failures, 1 skip; slicer check passes; reviewer VERDICT: PASS.",
+          "created_at": "2026-10-18T03:47:46Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -13260,7 +13271,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

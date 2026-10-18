@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import io
 import json
 import re
@@ -12,7 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import ai, cli, roles, store, templates
+from slicer import ai, cli, ops, roles, store, templates
 
 
 class AiInstructionsTests(unittest.TestCase):
@@ -1650,6 +1651,20 @@ class AiRelayRolesTests(unittest.TestCase):
         self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
 
 
+class AiModuleTests(unittest.TestCase):
+  def test_AiModule_Imports_ReachNoStateModule(self) -> None:
+    source = (Path(support.__file__).resolve().parents[1] / "src" / "slicer" / "ai.py").read_text(encoding="utf-8")
+    imported = set()
+    for node in ast.walk(ast.parse(source)):
+      if isinstance(node, ast.ImportFrom) and node.module == "slicer":
+        imported.update(alias.name for alias in node.names)
+      elif isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("slicer."):
+        imported.add(node.module.split(".")[1])
+      elif isinstance(node, ast.Import):
+        imported.update(alias.name.split(".")[1] for alias in node.names if alias.name.startswith("slicer."))
+    self.assertFalse(imported & {"ops", "render", "roles", "store", "templates"}, sorted(imported))
+
+
 class AiRelayBriefTests(unittest.TestCase):
   def project(self):
     repo = support.TempRepo()
@@ -1728,12 +1743,12 @@ class AiRelayBriefTests(unittest.TestCase):
     self.assertEqual([line for line in text.splitlines() if line.startswith("Parallel slices:")],
                      ["Parallel slices: S02, S03"])
 
-  def test_AiRelayBrief_NoSlice_Unspecified(self):
+  def test_AiRelayBrief_NoSlice_IsNoSlice(self):
     repo = self.project()
     repo.run("add", "Row only", "--id", "S02")
     code, out, err = self.brief(repo, "--json", item="S02")
     self.assertEqual(code, 2, out + err)
-    self.assertEqual(json.loads(out)["error"]["code"], "unspecified", err)
+    self.assertEqual(json.loads(out)["error"]["code"], "no_slice", err)
 
   def test_AiRelayBrief_EmptyRequiredSection_Unspecified(self):
     repo = self.project()
@@ -1766,8 +1781,8 @@ class AiRelayBriefTests(unittest.TestCase):
     repo = self.project()
     state = store.load(repo.root)
     context = {}
-    with patch.object(ai.render, "expand", side_effect=lambda text, ctx: context.update(ctx) or text):
-      ai.relay_brief(state, "S01", worktree="w", branch="b", run="r", step="1",
+    with patch.object(ops.render, "expand", side_effect=lambda text, ctx: context.update(ctx) or text):
+      ops.relay_brief(state, "S01", worktree="w", branch="b", run="r", step="1",
                      parallel=[], well_specified=True, split=False)
     self.assertEqual(set(context), set(templates.RELAY_BRIEF_KEYS))
 
