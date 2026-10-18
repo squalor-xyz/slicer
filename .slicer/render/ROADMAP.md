@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-354 items · — 14 · done 332 · retired 8
+354 items · — 13 · done 332 · retired 8 · review 1
 
 ## v1.15
 
@@ -41,7 +41,7 @@
 | 6 | [s361](slices/s361.md) | Lazy loading edge cases | M | 2 | slicer | s312 relay 2026-10-17: done/remove/start/park now succeed on an item whose slice body is corrupt; a lookup by an id that lives only in a misnamed file misses before a full load; a State held across an external move raises a raw FileNotFoundError | — |
 | 7 | [s362](slices/s362.md) | land checks the ref and prints absolute commands | S | 1 | slicer | s327 relay 2026-10-17: `--branch` accepts the checked-out branch, a tag, a sha or refs/heads/NAME, so the merged check passes vacuously; the printed `git add -A .slicer` is relative to the shell's cwd while `git worktree remove PATH` is absolute | — |
 | 8 | [s363](slices/s363.md) | TUI request drops marks by status | S | 1 | slicer | s353 relay 2026-10-17: `Q` silently drops marks on done and retired items; parked, handed-off and in-review marks stay; a done item selected with no marks is still requested | — |
-| 9 | [s364](slices/s364.md) | Merge hint only for content drift | S | 1 | slicer | s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders | — |
+| 9 | [s364](slices/s364.md) | Merge hint only for content drift | S | 1 | slicer | s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders | review |
 | 10 | [s365](slices/s365.md) | relay-brief follow-ups | S | 1 | slicer | s322 relay 2026-10-17: relay-brief returns `unspecified` for an item with no slice; projects created before s322 list relay-brief.md as missing until `template reset`; ai.py calls the private `ops._missing_spec` and now imports ops, render, roles, store and templates | — |
 | 11 | [s366](slices/s366.md) | Overlap paths ignore prose tokens | S | 1 | slicer | s324 relay 2026-10-17: paths.extract accepts `and/or`, `os.path`, `os.fsync` and `Config.load` as paths (s313's Files yields `os.fsync`); a files_section naming no existing heading puts every item in unknown_files without a word | — |
 | 12 | [s367](slices/s367.md) | affected.py handles new repo files | S | 1 | tests | s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with "src/slicer/templates/relay-brief.md is not in the map", because the borrowed map predates s322's template | — |

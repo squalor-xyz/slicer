@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `check` gives the merge line and `stale_render_kind` `roadmap_only` only when every stale cause is `content`. A roadmap render that is missing, has an older render format or has an unstamped header is `mixed` and gets no merge line; its stale line still names `slicer render`. See [agents.md](docs/agents.md).
+
 ## [1.14.0] - 2026-10-17
 
 ### Added

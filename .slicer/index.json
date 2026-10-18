@@ -13102,7 +13102,7 @@
       "id": "s364",
       "title": "check's merge hint fires only on a merge-shaped stale render",
       "short_title": "Merge hint only for content drift",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13112,6 +13112,17 @@
           "text": "**2026-10-18** — Owner decision 2026-10-17: merge hint only when every stale cause is content.",
           "created_at": "2026-10-18T02:33:10Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "18cd04da-3699-4c1b-b5e0-2eddb43d7620",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: check's merge hint and stale_render_kind roadmap_only now require every stale render cause to be content; a missing, renderer_format or unknown_provenance roadmap render, or mixed causes, is mixed with no merge line. Four tests (Missing, RendererFormat, Unstamped, MixedCauses), each mutation-proven; docs/agents.md check row and CHANGELOG updated. Gate VERDICT: PASS; full suite 2564 OK (1 skipped); slicer check passes.",
+          "created_at": "2026-10-18T03:57:18Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -13137,7 +13148,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
