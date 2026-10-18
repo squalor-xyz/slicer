@@ -1526,16 +1526,25 @@ def _fit(cells: list[str], width: int) -> str:
   return _place(cells, width)[0]
 
 
-def _place(cells: list[str], width: int) -> tuple[str, dict[int, int]]:
-  """`_fit`, and the start cell of each cell that stayed, by its index in `cells`."""
+def _place(cells: list[str], width: int, ordered: bool = False) -> tuple[str, dict[int, int]]:
+  """`_fit`, and the start cell of each cell that stayed, by its index in `cells`.
+
+  With `ordered`, the first cell that does not fit ends the line: every cell after it is
+  dropped too, even one that would fit, so a lower-priority cell never shows beside a
+  higher-priority one that was dropped.
+  """
   if not cells:
     return "", {}
   text = tui_style.clipped(cells[0], width)
   starts = {0: 0}
   for at, cell in enumerate(cells[1:], 1):
-    if cell and tui_style.cell_width(text + "  " + cell) <= width:
+    if not cell:
+      continue
+    if tui_style.cell_width(text + "  " + cell) <= width:
       starts[at] = tui_style.cell_width(text) + 2
       text += "  " + cell
+    elif ordered:
+      break
   return text.rstrip(), starts
 
 
@@ -1646,7 +1655,9 @@ def _ended_line(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles:
                for label, role in (("impl", "implementer"), ("review", "reviewer"), ("gate", "gate"))),
   ]
   title = _title_cell(head, titles.get(run.items[0], "") if run.items else "", tail, width)
-  text, starts = _place([head, title] + tail, width)
+  # The outcome and status cell outranks the elapsed cells, and a narrow line drops cells from
+  # the right, whole (docs/tui.md), so no cell after a dropped one shows.
+  text, starts = _place([head, title] + tail, width, ordered=True)
   outcome_role = {"pass": "done", "fail": "error"}.get(run.outcome)
   outcome_at = 2  # the outcome cell is tail[0], after the head and the title
   spans = ()

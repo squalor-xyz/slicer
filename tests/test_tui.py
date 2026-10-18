@@ -1647,6 +1647,28 @@ class RelayBoardLinesTests(unittest.TestCase):
                            statuses={"s283": "Open"}, done_label="Shipped")[0].text
     self.assertEqual(text, "○ s283  pass · Open")
 
+  def test_BoardLines_EndedNarrowWidth_NoElapsedWithoutOutcome(self) -> None:
+    run = board_run(board_step("1", "implementer", "done"), state="ended", outcome="pass")
+    run.items = ["s1", "s2"]
+    labelled = {"statuses": {"s1": "review", "s2": "done"}, "done_label": "Shipped"}
+    # At 30 the outcome cell does not fit beside the head. The elapsed cell after it would fit,
+    # but cells drop from the right, whole, so it must not show without the outcome.
+    self.assertEqual(tui.board_lines([run], 0, NOW, 30, **labelled)[0].text, "○ s1, s2")
+    for width in range(8, 61):
+      text = tui.board_lines([run], 0, NOW, width, **labelled)[0].text
+      if "10m00s" in text:
+        self.assertIn("pass", text, (width, text))
+
+  def test_BoardLines_EndedWideWidth_KeepsAllCells(self) -> None:
+    run = board_run(board_step("1", "implementer", "done"), state="ended", outcome="pass")
+    text = tui.board_lines([run], 0, NOW, 80, statuses={"s283": "Open"}, done_label="Shipped")[0].text
+    self.assertEqual(text, "○ s283  pass · Open  10m00s  ended 2m04s ago  impl 1 · review 0 · gate 0")
+    run.items = ["s1", "s2"]
+    text = tui.board_lines([run], 0, NOW, 100, statuses={"s1": "review", "s2": "done"},
+                           done_label="Shipped")[0].text
+    expected = "○ s1, s2  pass · s1 review, s2 done  10m00s  ended 2m04s ago  impl 1 · review 0 · gate 0"
+    self.assertEqual(text, expected)
+
   def test_BoardLines_EndedMultiItemRun_PairsStatusWithId(self) -> None:
     run = board_run(state="ended", outcome="pass")
     run.items = ["s1", "s2"]
@@ -1882,6 +1904,16 @@ class RelayBoardLinesTests(unittest.TestCase):
     narrow = tui.board_lines([board_run(state="ended", outcome="pass")], 0, NOW, 14, **labelled)[0]
     self.assertNotIn("pass", narrow.text)
     self.assertEqual(narrow.spans, ())
+
+
+class PlaceCellsTests(unittest.TestCase):
+  def test_Place_DefaultDropsACellThatDoesNotFit_KeepsALaterOneThatFits(self) -> None:
+    # Lane headers and step lines rely on this: a cell that does not fit is skipped,
+    # and a later one that fits still goes in.
+    self.assertEqual(tui._place(["a", "bbbb", "cc"], 5), ("a  cc", {0: 0, 2: 3}))
+
+  def test_Place_Ordered_DropsEveryCellAfterOneThatDoesNotFit(self) -> None:
+    self.assertEqual(tui._place(["a", "bbbb", "cc"], 5, ordered=True), ("a", {0: 0}))
 
 
 class RelayBoardElapsedTests(unittest.TestCase):

@@ -44,10 +44,10 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">354 items · — 14 · done 332 · retired 8</p>
+<p class="summary">354 items · — 13 · done 332 · retired 8 · review 1</p>
 <h2>v1.15</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
-<tr class="open"><td>1</td><td>s356</td><td>Narrow relay board keeps the outcome</td><td>S</td><td>1</td><td>slicer</td><td>s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells</td><td class="status">—</td></tr>
+<tr class="other"><td>1</td><td>s356</td><td>Narrow relay board keeps the outcome</td><td>S</td><td>1</td><td>slicer</td><td>s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells</td><td class="status">review</td></tr>
 <tr class="open"><td>2</td><td>s357</td><td>promote keeps parent and discovered_from</td><td>S</td><td>1</td><td>slicer</td><td>s328 relay 2026-10-17: a promote source silently drops `parent` and `discovered_from`, as it dropped `short_title` before s328&#x27;s fix</td><td class="status">—</td></tr>
 <tr class="open"><td>3</td><td>s358</td><td>Relay review FAIL record matches the item status</td><td>S</td><td>1</td><td>slicer</td><td>s328 and s323 relays 2026-10-17: contract v5 says a failed review is `slicer reject`, but handoff now runs after PASS, so the item is `started` at review time and reject refuses it (&quot;only review work can be rejected&quot;)</td><td class="status">—</td></tr>
 <tr class="open"><td>4</td><td>s359</td><td>Docs name retire, land hint and note --render</td><td>S</td><td>1</td><td>slicer</td><td>s329, s325 and s351 relays 2026-10-17: mutating-command lists omit retire and handoff; the check troubleshooting row predates the roadmap-only hint; the missing-note-kind handoff refusal suggests a note without --render</td><td class="status">—</td></tr>

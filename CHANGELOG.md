@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- TUI: on a narrow screen the relay board's ended line drops cells from the right, whole, as [tui.md](docs/tui.md#relay-board) describes. When the outcome and status cell does not fit, the elapsed and count cells after it are dropped too, so a bare `10m00s` no longer shows with no outcome beside it. Wide layouts are unchanged.
+
 ## [1.14.0] - 2026-10-17
 
 ### Added
