@@ -1829,7 +1829,7 @@ class AiRelayContractTests(RelayRolesCase):
   """The nested relay: `ai relay` is the outer session's contract and
   `ai relay-orchestrator` the orchestrator's, both carrying one version marker."""
 
-  MARKER = "Contract: relay v5"
+  MARKER = "Contract: relay v6"
 
   def flat(self, text: str) -> str:
     return " ".join(text.split())
@@ -1910,10 +1910,10 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelay_Json_CarriesContract(self) -> None:
     repo = self.project()
     relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(relay["contract"], "relay v5")
+    self.assertEqual(relay["contract"], "relay v6")
     self.assertEqual(relay["relay"].rstrip("\n"), self.ok(repo, "ai", "relay").rstrip("\n"))
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(orchestrator["contract"], "relay v5")
+    self.assertEqual(orchestrator["contract"], "relay v6")
 
   def test_AiRelay_Setup_NamesOrchestratorAgentType(self) -> None:
     setup = self.section(ai.relay_text(), "## Setup", "## Order")
@@ -1968,11 +1968,11 @@ class AiRelayContractTests(RelayRolesCase):
 
   def test_AiRelay_ContractMarker_AgreesAcrossBothCommandsAndTheConstant(self) -> None:
     repo = self.project()
-    self.assertEqual(ai.RELAY_CONTRACT, 5)
+    self.assertEqual(ai.RELAY_CONTRACT, 6)
     texts = [self.ok(repo, "ai", "relay"), self.orchestrator(repo)]
-    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v5"})
+    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v6"})
     payloads = [json.loads(self.ok(repo, "ai", c, "--json")) for c in ("relay", "relay-orchestrator")]
-    self.assertEqual({p["contract"] for p in payloads}, {"relay v5"})
+    self.assertEqual({p["contract"] for p in payloads}, {"relay v6"})
 
   def test_AiRelayOrchestrator_Waiting_NoForegroundAssumed(self) -> None:
     repo = self.project()
@@ -2060,7 +2060,7 @@ class AiRelayContractTests(RelayRolesCase):
     text = self.orchestrator(repo)
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     self.assertEqual(list(payload), ["contract", "orchestrator"])
-    self.assertEqual(payload["contract"], "relay v5")
+    self.assertEqual(payload["contract"], "relay v6")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))
     self.assertEqual(lean, payload)
