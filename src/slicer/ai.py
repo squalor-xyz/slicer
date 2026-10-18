@@ -154,7 +154,9 @@ def handoff_policy_text(kind: str) -> str:
 # rewording. 5: Setup resolves the role lineup, orchestrator included, with
 # `relay-roles recommend` and the owner accepts it as a whole or overrides rows; a role
 # runs as a native subagent on the orchestrator's harness and as a headless session on another.
-RELAY_CONTRACT = 5
+# 6: A failed review is recorded with `slicer note ID --text "Review FAIL: ..." --render`
+# on the started item, not `reject`.
+RELAY_CONTRACT = 6
 
 
 def contract_line() -> str:
@@ -343,9 +345,11 @@ RELAY_GATE = """\
 Name the diff under review. The criteria are: earlier blockers resolved with a
 proving test, no new issue of medium severity or worse, tests green, and
 docs matching the code. The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`.
-FAIL goes back to the implementer and then the gate again. A failed review is
-`slicer reject ID --note "VERDICT: FAIL - reason"`. Any implementer change after
-a review needs another gate.
+FAIL goes back to the implementer and then the gate again.
+Record a failed review on the started item with
+`slicer note ID --text "Review FAIL: ..." --render`.
+Add `--kind` only when `note_kinds` configures a kind for reviews.
+Any implementer change after a review needs another gate.
 
 """
 

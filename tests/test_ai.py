@@ -921,6 +921,22 @@ class AiRelayTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(json.loads(out)["contract"], "relay v999-test")
 
+  def test_AiRelayOrchestrator_FailedReview_NoReject(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      for command in ("relay-orchestrator", "relay"):
+        text = repo.run("ai", command)[1]
+        for phrase, present in (
+          ("slicer reject", False),
+          ('slicer note ID --text "Review FAIL: ..." --render', True),
+          ("Record a failed review on the started item", True),
+          ("Add `--kind` only when `note_kinds` configures a kind for reviews.", True),
+        ):
+          with self.subTest(command=command, phrase=phrase):
+            if present:
+              self.assertIn(phrase, text)
+            else:
+              self.assertNotIn(phrase, text)
+
   def test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, _ = repo.run("ai", "relay-orchestrator")
@@ -947,7 +963,7 @@ class AiRelayTests(unittest.TestCase):
       code, out, err = repo.run("ai", "relay", "--json")
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
-      self.assertEqual(json.loads(out), {"contract": "relay v5", "relay": text})
+      self.assertEqual(json.loads(out), {"contract": "relay v6", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -1378,10 +1394,11 @@ class AiRelayTests(unittest.TestCase):
                 code, text, err = repo.run("ai", command)
                 self.assertEqual((code, err), (0, ""))
                 notes = [line for line in text.splitlines() if "slicer note " in line]
-                # The done-mode orchestrator without a required kind names no note command;
-                # its closing is `slicer done --note`, which already renders.
+                # Review FAIL notes are separate from closing notes. The done-mode
+                # orchestrator without a required kind closes with `slicer done --note`.
+                closing_notes = [line for line in notes if '"Review FAIL:' not in line]
                 names_note = not (command == "relay-orchestrator" and finish == "done" and not kind)
-                self.assertEqual(bool(notes), names_note)
+                self.assertEqual(bool(closing_notes), names_note)
                 for line in notes:
                   self.assertIn("--render", line)
                 if command == "relay" or (command == "relay-orchestrator" and finish == "handoff"):

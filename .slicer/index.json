@@ -12875,10 +12875,22 @@
       "id": "s358",
       "title": "Relay contract records a failed review on a started item",
       "short_title": "Relay review FAIL record matches the item status",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "58545434-5a60-4118-b1cb-b73adca05f17",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: relay contract v6 records a failed review as slicer note ID --text \"Review FAIL: ...\" --render on the started item, not reject (shared RELAY_GATE text in ai relay and ai relay-orchestrator); marker bumped to v6 with pinned tests and docs updated; CHANGELOG entry. Gate VERDICT: PASS; full suite 2561 OK (1 skipped) before a comment/CHANGELOG-only fix round; focused 117 OK and slicer check pass after it.",
+          "created_at": "2026-10-18T03:31:54Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12898,7 +12910,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
