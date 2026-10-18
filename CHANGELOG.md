@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-10-17
+
 ### Added
 
 - `slicer relay-run end RUN --outcome pass --close-steps done|fail` first marks every step still running with that phase, under the same ledger lock and after the local events are copied into the shared ledger, so a step recorded only in a sandbox's local file is closed in the shared one. A failed write stops before the end event. The `--json` payload gains `closed_steps`, and the text names them. A plain `end` on a run with running steps prints `slicer: ended RUN with running steps: 1, 4` on stderr, still without touching them. The relay text's Close step uses `--close-steps done`, so the outer session no longer marks the orchestrator's step by hand. See [commands.md](docs/commands.md).
