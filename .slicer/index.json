@@ -13345,7 +13345,7 @@
       "id": "s366",
       "title": "Files-section paths skip prose tokens and warn on a missing heading",
       "short_title": "Overlap paths ignore prose tokens",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
