@@ -2116,3 +2116,4 @@
 {"when": "2026-10-18T14:45:03Z", "item": "template.relay-brief.md", "action": "template", "from": "missing", "to": "custom", "note": ""}
 {"when": "2026-10-18T14:57:15Z", "item": "s373", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v7 (small fix round reviewe", "by": "Jon Robbins"}
 {"when": "2026-10-18T14:57:15Z", "item": "s373", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-18T15:05:16Z", "item": "s373", "action": "status", "from": "review", "to": "done", "note": "Landed on main: relay contract v7 (small fix round reviewed and gated in one pass; a denied slicer step stops before the commit) and this repo's relay-brief template with its ENVIRONMENT lines. Suite 2600 OK on main after the merge.", "by": "Jon Robbins"}

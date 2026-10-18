@@ -13596,7 +13596,7 @@
       "id": "s373",
       "title": "Relay contract v7 takes the agents role's last two rules, and this repo sets its relay brief",
       "short_title": "Relay contract v7",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
