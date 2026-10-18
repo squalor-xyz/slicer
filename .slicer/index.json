@@ -13596,10 +13596,22 @@
       "id": "s373",
       "title": "Relay contract v7 takes the agents role's last two rules, and this repo sets its relay brief",
       "short_title": "Relay contract v7",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "966cb944-bce2-4caa-991f-bbab030925a2",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: relay contract v7 (small fix round reviewed and gated in one pass; permission-denied slicer step stops before the commit), docs/CHANGELOG updated, relay-brief.md customized with this repo's ENVIRONMENT; full suite 2600 OK (1 skipped), affected 340 OK, 7 mutations red, reviewer and gate PASS",
+          "created_at": "2026-10-18T14:57:15Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -13619,7 +13631,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

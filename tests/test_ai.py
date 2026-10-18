@@ -913,6 +913,37 @@ class AiRelayTests(unittest.TestCase):
         self.assertIn(f"slicer {finish} ID", order)
         self.assertIn("Recording is advisory: a failed `relay-run` call never stops the relay.", text)
 
+  def rule(self, finish: str, name: str) -> str:
+    text = ai.orchestrator_text(finish)
+    rules = text.split("## Rules\n\n", 1)[1].split("\n## ", 1)[0]
+    bullet = next((b for b in rules.split("\n- ") if b.lstrip("- ").startswith(name)), "")
+    self.assertTrue(bullet, f"no rule starting {name!r}")
+    return " ".join(bullet.split())
+
+  def test_OrchestratorText_SmallFixRound_ReviewAndGateInOnePass(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "A small fix round")
+        for phrase in (
+          "(accepted findings only, no new files)",
+          "reviewed and gated in one pass",
+          "resume the reviewer, who checks the new diff and gives the VERDICT",
+          "Anything larger gets a review round, then a gate round.",
+        ):
+          self.assertIn(phrase, rule)
+
+  def test_OrchestratorText_PermissionDenied_StopsBeforeCommit(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "A role's slicer step")
+        for phrase in (
+          "denies",
+          "do not run it yourself and do not work around it",
+          "Stop before the commit with OUTCOME stopped",
+          "put the denial's exact text under owner needed",
+        ):
+          self.assertIn(phrase, rule)
+
   def test_AiRelay_Json_ContractFollowsContractLine(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       with patch.object(ai, "contract_line", return_value="relay v999-test"):
@@ -964,7 +995,7 @@ class AiRelayTests(unittest.TestCase):
       code, out, err = repo.run("ai", "relay", "--json")
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
-      self.assertEqual(json.loads(out), {"contract": "relay v6", "relay": text})
+      self.assertEqual(json.loads(out), {"contract": "relay v7", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")

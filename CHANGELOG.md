@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- Relay contract v7: `slicer ai relay-orchestrator` gains two rules from the agents repo's role. A small fix round (accepted findings only, no new files) is reviewed and gated in one pass, by resuming the reviewer. A role's slicer step that a harness permission check denies is not run by the orchestrator and not worked around: it stops before the commit with `OUTCOME stopped` and the denial's exact text under `owner needed`. `ai.RELAY_CONTRACT` is 7. The agents repo's `relay-orchestrator` role carries an `Expects:` line that its doctor checks against the marker. See [agents.md](docs/agents.md).
+
 ## [1.15.0] - 2026-10-18
 
 ### Changed
