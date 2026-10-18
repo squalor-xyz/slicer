@@ -13698,10 +13698,22 @@
       "id": "s376",
       "title": "plan-parallel recommends a wave plan for running slices in parallel",
       "short_title": "plan-parallel wave plan",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "40bf83ed-f4cd-41c2-8e5d-60f7c2ecd71a",
+          "kind": "",
+          "text": "**2026-10-18** — plan-parallel wave plan: 21 tests, full suite 2621 OK, reviewed and gated PASS",
+          "created_at": "2026-10-18T19:59:31Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -13721,7 +13733,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],
