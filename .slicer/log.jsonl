@@ -2103,3 +2103,8 @@
 {"when": "2026-10-18T04:13:15Z", "item": "s366", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-18T04:21:52Z", "item": "s359", "action": "status", "from": "review", "to": "done", "note": "Landed: docs name retire, handoff and land; troubleshooting row names the merge hint; handoff note-kind refusal suggests --render; suite OK on main", "by": "Jon Robbins"}
 {"when": "2026-10-18T04:21:52Z", "item": "s366", "action": "status", "from": "review", "to": "done", "note": "Landed: path tokens need a slash or extension; --disjoint leaves out dependents of batch members; missing files_section warns; suite OK on main", "by": "Jon Robbins"}
+{"when": "2026-10-18T04:21:53Z", "item": "s368", "action": "add", "from": "", "to": "open", "note": "Relay board lane and step lines drop cells from the right, whole"}
+{"when": "2026-10-18T04:21:53Z", "item": "s369", "action": "add", "from": "", "to": "open", "note": "set takes --discovered-from, and the promote refusal names the right command"}
+{"when": "2026-10-18T04:21:53Z", "item": "s370", "action": "add", "from": "", "to": "open", "note": "Lazy loading follow-ups: moves, index staleness and a stale comment"}
+{"when": "2026-10-18T04:21:53Z", "item": "s371", "action": "add", "from": "", "to": "open", "note": "Queue prose rows align with wide row numbers"}
+{"when": "2026-10-18T04:21:53Z", "item": "s372", "action": "add", "from": "", "to": "open", "note": "Docs list every command that takes --render"}

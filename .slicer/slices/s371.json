@@ -1,0 +1,39 @@
+{
+  "id": "s371",
+  "title": "Queue prose rows align with wide row numbers",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long \"left out:\" notice has no cap",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the relay request rules (s363).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s363 made the item-row number slot as wide as the view's row count. Prose and sibling-only rows still indent by a fixed 5 cells, so past 999 rows they sit one cell left of the item rows. The `Q` notice naming dropped marks can run past the screen and is cut mid-id."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py` (prose and sibling row indent from the same number width; cap the notice with \"and N more\").\n- `tests/test_tui.py`; `CHANGELOG.md` under Fixed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_ItemRows_Over999_ProseRowAligned`\n- `test_RelayRequest_ManyDropped_NoticeCapped`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Share the number width; cap the notice.\n3. CHANGELOG; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

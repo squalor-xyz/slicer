@@ -1,0 +1,39 @@
+{
+  "id": "s372",
+  "title": "Docs list every command that takes --render",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s359 relay 2026-10-18: the docs/commands.md \"Every command that changes state\" list omits config, template, catalog, id-prefix, issues-pull, note-verify and relay-roles; docs/agents.md's \"every mutating command takes --render ... except land\" does not account for relay-run, feedback or init; s366 relay: docs/agents.md:370 says \"backticked repo paths\" for --disjoint where configuration.md says project paths",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** adding `--render` to any command.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s359 caught the lists up with v1.14's commands but found more gaps: several commands that write tracked state and take `--render` are not listed, and the agents.md rule has unlisted exceptions. A test that derives the list from the parser would stop the drift."
+    },
+    {
+      "heading": "Files",
+      "body": "- `docs/commands.md`, `docs/agents.md` (also the --disjoint sentence near 370: \"project paths\", as docs/configuration.md says).\n- `tests/test_docs.py` (or the existing docs test module): a test that every parser with `--render` is named in the list, and every listed command has it.\n- `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_CommandsDoc_RenderList_MatchesParser`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; watch it go red.\n2. Complete the lists; name the exceptions in agents.md.\n3. CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

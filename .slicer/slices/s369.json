@@ -1,0 +1,39 @@
+{
+  "id": "s369",
+  "title": "set takes --discovered-from, and the promote refusal names the right command",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s357 relay 2026-10-18: `field_in_promote_source` says \"set them with `add` or `set`\", but `set` has no `--discovered-from`; only `add --discovered-from` sets it",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** which fields promote applies.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s357 made `promote` refuse `parent` and `discovered_from` in a source outline. The refusal tells the author to use `add` or `set`, but after an item exists nothing can set or clear `discovered_from`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`set` parser), `src/slicer/ops.py` (set path; the refusal message names each key's command).\n- `tests/test_ops.py` or `tests/test_cli.py`; `docs/commands.md` (set row); `CHANGELOG.md` under Added."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Set_DiscoveredFrom_SetsAndClears` (`''` clears; an unknown id refuses like `--parent`).\n- `test_Promote_SourceWithDiscoveredFrom_MessageNamesSet`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Add `set --discovered-from ID` with the same validation as `add`; `''` clears.\n3. Docs, CHANGELOG; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
