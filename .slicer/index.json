@@ -13183,7 +13183,7 @@
       "id": "s364",
       "title": "check's merge hint fires only on a merge-shaped stale render",
       "short_title": "Merge hint only for content drift",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
