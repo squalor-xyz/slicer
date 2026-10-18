@@ -2062,3 +2062,4 @@
 {"when": "2026-10-18T03:31:57Z", "item": "s356", "action": "note", "from": "", "to": "", "note": "Ready for review: the relay board ended line now places its ", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:47:13Z", "item": "s367", "action": "status", "from": "review", "to": "done", "note": "Landed: affected.py selects directory readers for an unmapped non-Python file; suite 2567 OK on main", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:47:14Z", "item": "s358", "action": "status", "from": "review", "to": "done", "note": "Landed: relay contract v6 records a review FAIL as a note; suite 2567 OK on main", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:47:14Z", "item": "s356", "action": "status", "from": "review", "to": "done", "note": "Landed: ended relay board line drops cells after the first that does not fit; suite 2567 OK on main", "by": "Jon Robbins"}

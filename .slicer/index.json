@@ -12815,7 +12815,7 @@
       "id": "s356",
       "title": "Relay board keeps the outcome when it drops cells on a narrow screen",
       "short_title": "Narrow relay board keeps the outcome",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
