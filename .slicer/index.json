@@ -11451,7 +11451,7 @@
       "id": "s326",
       "title": "relay-run end closes the steps still running",
       "short_title": "relay-run end closes the steps still running",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
