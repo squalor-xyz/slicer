@@ -44,8 +44,9 @@ class Landing:
 def merged_tip(state: State, branch: str) -> str:
   """The full commit name of `branch`, once it is known to be merged into HEAD.
 
-  Refuses with `invalid_branch` unless `branch` is a local branch other than the
-  checked-out one, and with `not_merged` when its tip is not reachable from HEAD.
+  Refuses with `invalid_branch` when the project is not in a git repository or `branch` is
+  not a local branch other than the checked-out one, and with `not_merged` when its tip is
+  not reachable from HEAD.
   """
   if not vcs.is_repo(state.root):
     raise StateError(

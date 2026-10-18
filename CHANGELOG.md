@@ -13,6 +13,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - TUI: on a narrow screen the relay board's ended line drops cells from the right, whole, as [tui.md](docs/tui.md#relay-board) describes. When the outcome and status cell does not fit, the elapsed and count cells after it are dropped too, so a bare `10m00s` no longer shows with no outcome beside it. Wide layouts are unchanged.
 - `promote --file` refuses an outline source that sets `parent` or `discovered_from`, as it already refused `short_title`. Both were dropped without a word, so an author who wrote one believed it took effect. The refusal is `field_in_promote_source` (exit 2), names the key, and writes nothing. Change a parent with `set --parent`; `discovered_from` takes `add --discovered-from`, since `set` has no flag for it.
 - `slicer land --branch` refuses anything except an exact short local branch name other than the checked-out branch (`invalid_branch`, nothing written). Its printed git commands use the absolute project root with `git -C`, so `--root OTHER` works from elsewhere. `land --owner NAME` records the done transition as `done --owner` does. See [landing.md](docs/landing.md).
+- `slicer handoff` refuses a started item that lacks its `handoff_requires_note_kind` note with a filing command that renders: `slicer note ID --kind KIND --text "Describe the verified outcome" --render`, as the relay text does. The error code stays `state`.
+- The docs name `retire`, `handoff` and `land` in their lists of mutating commands, the stale-render troubleshooting row names the roadmap-only merge hint, and `land`'s `invalid_branch` refusal covers a project outside a git repository. Docs and messages only; no command or error code changes.
 
 ## [1.14.0] - 2026-10-17
 

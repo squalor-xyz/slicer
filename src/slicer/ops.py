@@ -1534,7 +1534,7 @@ def handoff_many(
       problems.append(
         f"{item.id} needs a nonempty {cfg.handoff_requires_note_kind!r} note for "
         f"current attempt {item.attempts}; run `slicer note {item.id} "
-        f"--kind {shlex.quote(cfg.handoff_requires_note_kind)} --text \"Describe the verified outcome\"`"
+        f"--kind {shlex.quote(cfg.handoff_requires_note_kind)} --text \"Describe the verified outcome\" --render`"
       )
   if problems:
     raise StateError("; ".join(problems) + ". Nothing was changed.", code="state")
