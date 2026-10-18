@@ -36,6 +36,14 @@ class CheckTests(unittest.TestCase):
       text = path.read_text(encoding="utf-8")
       path.write_text(text + "tampered\n", encoding="utf-8", newline="\n")
 
+  def _age_format(self, repo: support.TempRepo, *rels: str) -> None:
+    old = f"Render format: {render.RENDER_FORMAT}."
+    for rel in rels:
+      path = repo.root / ".slicer/render" / rel
+      text = path.read_text(encoding="utf-8")
+      self.assertIn(old, text.split("\n", 1)[0])
+      path.write_text(text.replace(old, "Render format: 0.", 1), encoding="utf-8", newline="\n")
+
   def _json(self, repo: support.TempRepo) -> tuple[int, dict]:
     code, out, _ = repo.run("check", "--json")
     return code, json.loads(out)
@@ -128,6 +136,52 @@ class CheckTests(unittest.TestCase):
       self.assertIn("stale render: RELAY-ROLES.md", out)
       self.assertNotIn("only the roadmap render is stale", out)
       self.assertEqual(self._json(repo)[1]["stale_render_kind"], "mixed")
+
+  def test_Check_RoadmapMissing_NoMergeHint(self) -> None:
+    with self.repo() as repo:
+      (repo.root / ".slicer/render/ROADMAP.md").unlink()
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("stale render: ROADMAP.md: file is missing", out)
+      self.assertNotIn("only the roadmap render is stale", out)
+      self.assertEqual(self._json(repo)[1]["stale_render_kind"], "mixed")
+
+  def test_Check_RoadmapRendererFormat_NoMergeHint(self) -> None:
+    with self.repo() as repo:
+      self._age_format(repo, "ROADMAP.md", "ROADMAP.html")
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("stale render: ROADMAP.md: rendered with render format 0", out)
+      self.assertNotIn("only the roadmap render is stale", out)
+      _, report = self._json(repo)
+      self.assertEqual(report["stale_render"], ["ROADMAP.html", "ROADMAP.md"])
+      self.assertEqual(report["stale_render_kind"], "mixed")
+
+  def test_Check_RoadmapUnstamped_NoMergeHint(self) -> None:
+    with self.repo() as repo:
+      path = repo.root / ".slicer/render/ROADMAP.md"
+      stamp = f" Render format: {render.RENDER_FORMAT}."
+      text = path.read_text(encoding="utf-8")
+      self.assertIn(stamp, text.split("\n", 1)[0])
+      path.write_text(text.replace(stamp, "", 1), encoding="utf-8", newline="\n")
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("stale render: ROADMAP.md: the header records no readable render format", out)
+      self.assertNotIn("only the roadmap render is stale", out)
+      self.assertEqual(self._json(repo)[1]["stale_render_kind"], "mixed")
+
+  def test_Check_RoadmapMixedCauses_NoMergeHint(self) -> None:
+    with self.repo() as repo:
+      self._tamper(repo, "ROADMAP.md")
+      (repo.root / ".slicer/render/ROADMAP.html").unlink()
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 1)
+      self.assertIn("stale render: ROADMAP.html: file is missing", out)
+      self.assertIn("stale render: ROADMAP.md: content differs", out)
+      self.assertNotIn("only the roadmap render is stale", out)
+      _, report = self._json(repo)
+      self.assertEqual(report["stale_render"], ["ROADMAP.html", "ROADMAP.md"])
+      self.assertEqual(report["stale_render_kind"], "mixed")
 
 
   def test_CheckJson_OnlyOrphan_NoStaleRenderKind(self) -> None:
