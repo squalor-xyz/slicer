@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-10-18
+
 ### Changed
 
 - `slicer ai relay-brief` on an item with no slice now fails with `no_slice` instead of `unspecified`, as every other command does; an empty required section is still `unspecified`. Branch on the code.
@@ -17,7 +19,6 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Fixed
 
 - Files-section path extraction skips dotted identifiers and prose such as `os.path`, `os.fsync`, `Config.load` and `and/or`, while preserving project paths and known files with extensions in the project root (the directory holding `.slicer/`). Bare root names such as `tests`, `src` and `LICENSE` do not count. `next --batch --disjoint` and `deps --overlap` warn on stderr if no item has the configured heading. Disjoint batches exclude dependents whose unmet dependency is already selected and report them in `blocked`; plain `--batch` keeps its dependency ordering. See [configuration.md](docs/configuration.md) and [commands.md](docs/commands.md).
-
 - `tests/affected.py` no longer refuses a changed non-Python file that the map does not name, such as a template added after a borrowed map was recorded. It selects the tests that read a file in that file's directory and says so on stderr. A new Python file, or a file whose directory no test reads, still refuses.
 - Relay contract v6 records a failed review on the started item with `slicer note ID --text "Review FAIL: ..." --render`, adding `--kind` only when `note_kinds` configures a kind for reviews. This replaces `slicer reject`, which refuses an item that is still started at review time. The closing note and finish step still run only after `VERDICT: PASS`.
 - TUI: on a narrow screen the relay board's ended line drops cells from the right, whole, as [tui.md](docs/tui.md#relay-board) describes. When the outcome and status cell does not fit, the elapsed and count cells after it are dropped too, so a bare `10m00s` no longer shows with no outcome beside it. Wide layouts are unchanged.
