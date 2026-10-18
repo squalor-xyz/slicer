@@ -91,8 +91,17 @@ class TemplateCommandTests(unittest.TestCase):
       code, out, err = repo.run("template", "list", "--json")
       self.assertEqual(code, 0, err)
       row = {r["name"]: r for r in json.loads(out)}["slice.md"]
-      self.assertEqual((row["customized"], row["missing"]), (True, True))
+      self.assertEqual((row["customized"], row["missing"]), (False, True))
       self.assertIn("missing", repo.run("template", "list")[1])
+
+  def test_TemplateList_NewDefaultMissing_NotCustomized(self) -> None:
+    with self.repo() as repo:
+      (repo.root / ".slicer/templates/relay-brief.md").unlink()
+      code, out, err = repo.run("template", "list", "--json")
+      self.assertEqual(code, 0, err)
+      rows = {r["name"]: r for r in json.loads(out)}
+      self.assertEqual((rows["relay-brief.md"]["customized"], rows["relay-brief.md"]["missing"]), (False, True))
+      self.assertEqual([r["customized"] for r in rows.values()], [False, False, False, False])
 
   # ---- show -------------------------------------------------------------
 

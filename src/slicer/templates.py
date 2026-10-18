@@ -30,6 +30,16 @@ def defaults() -> dict[str, str]:
   return {name: default(name) for name in TEMPLATE_NAMES}
 
 
+def effective(name: str, text: str | None) -> str:
+  """The project's text for a built-in template, or the default when the file is missing."""
+  return default(name) if text is None else text
+
+
+def is_customized(name: str, text: str | None) -> bool:
+  """Whether a project's copy differs from the default; a missing file counts as the default."""
+  return text is not None and text != default(name)
+
+
 def require(name: str) -> str:
   """The name, or an `unknown_template` error that lists the valid ones."""
   if name not in TEMPLATE_NAMES:

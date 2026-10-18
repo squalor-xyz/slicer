@@ -18,10 +18,10 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Callable, Iterator, Mapping
+from typing import Callable, Iterator, Mapping, Sequence
 
 from slicer import (
-  feedback, graph, ids, jsonio, outline, paths, prose, refs, relayrun, render, roles, store, templates,
+  ai, feedback, graph, ids, jsonio, outline, paths, prose, refs, relayrun, render, roles, store, templates,
   vcs, verify,
 )
 from slicer.config import CONFIG_NAME, Config
@@ -1069,6 +1069,68 @@ def template_reset(state: State, name: str) -> TemplateChange:
   """Restore one template to the built-in text, recreating it if it was deleted."""
   templates.require(name)
   return template_set(state, name, templates.default(name))
+
+
+def relay_brief(
+  state: State, item_id: str, *, worktree: str, branch: str, run: str,
+  step: str, parallel: Sequence[str], well_specified: bool, split: bool,
+  prefer_agent: str | None = None, select: Mapping[str, str] | None = None,
+) -> dict[str, object]:
+  """Fill the project's orchestrator brief without starting or recording a run."""
+  item = state.index.require(item_id)
+  if item.id not in state.slices:
+    raise StateError(f"{item.id} has no slice; run `slicer promote {item.id}` first", code="no_slice")
+  missing = _missing_spec(state, item)
+  if missing:
+    raise StateError(
+      f"{item.id} is unspecified: missing {', '.join(missing)}; promote or edit the slice first",
+      code="unspecified",
+    )
+  matrix = roles.require_matrix(
+    store.read_roles(state.root), state.root / store.DIR_NAME / store.ROLES_NAME,
+  )
+  picks = roles.resolve(
+    matrix, item, well_specified, split, prefer_agent=prefer_agent, select=select,
+  )
+  role_lines = []
+  for pick in picks:
+    row = pick.row
+    if row is None:
+      role_lines.append("- no architect" if pick.role == "architect" else f"- {pick.role}: no matching row")
+    else:
+      role_lines.append(
+        f"- {pick.role}: {row.id} | {row.agent} | {row.vendor} | {row.model} | {row.reasoning}"
+      )
+  other_ids = []
+  for other_id in parallel:
+    other = state.index.require(other_id)
+    if other.id != item.id and other.id not in other_ids:
+      other_ids.append(other.id)
+  finish_override = ""
+  if state.config.implement_finish == "handoff":
+    kind = state.config.handoff_requires_note_kind
+    kind_flag = f" --kind {shlex.quote(kind)}" if kind else ""
+    finish_override = (
+      "## Finish override\n\n"
+      f"Before work, run `slicer start {item.id} --render --strict`.\n"
+      f'After VERDICT: PASS, run `slicer note {item.id}{kind_flag} --text "Ready for review: ..." --render`, '
+      f"then `slicer handoff {item.id} --render --check`.\n"
+      "Never run done in the worktree."
+    )
+  contract = ai.contract_line()
+  context = {
+    "id": item.id, "title": item.title,
+    "size": str(item.size or "unset"),
+    "effort": str(item.effort) if item.effort is not None else "unset",
+    "worktree": worktree, "branch": branch, "run": run, "step": str(step),
+    "roles": "\n".join(role_lines), "finish_override": finish_override,
+    "commit_title": f"{item.id}: {item.title}",
+    "parallel": "Parallel slices: " + (", ".join(other_ids) if other_ids else "none"),
+    "contract": contract,
+  }
+  template = templates.effective("relay-brief.md", state.template_exact("relay-brief.md"))
+  text = render.expand(template, context)
+  return {"brief": text, "roles": [pick.to_dict() for pick in picks], "contract": contract}
 
 
 def _relocate_slice(state: State, item_id: str) -> None:

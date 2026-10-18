@@ -6,6 +6,12 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `slicer ai relay-brief` on an item with no slice now fails with `no_slice` instead of `unspecified`, as every other command does; an empty required section is still `unspecified`. Branch on the code.
+- `slicer template list` no longer reports a missing built-in template as `customized`: a missing file is `customized: false, missing: true` until `template set` or `reset` writes it. A project created before `relay-brief.md` existed now lists it as the default. See [commands.md](docs/commands.md).
+- `relay_brief` moved from `slicer/ai.py` to `slicer/ops.py`, so `ai.py` imports no state module. The command and its JSON output are unchanged.
+
 ### Fixed
 
 - `tests/affected.py` no longer refuses a changed non-Python file that the map does not name, such as a template added after a borrowed map was recorded. It selects the tests that read a file in that file's directory and says so on stderr. A new Python file, or a file whose directory no test reads, still refuses.
