@@ -377,6 +377,7 @@ class DisjointTests(unittest.TestCase):
     repo.run("init")
     repo.run("config", "files_section", "Files")
     repo.run("config", "overlap_ignore", ignore)
+    (repo.root / "CHANGELOG.md").write_text("Changelog\n")
     return repo
 
   def file_item(self, repo: support.TempRepo, title: str, files: str | None) -> str:
@@ -388,6 +389,41 @@ class DisjointTests(unittest.TestCase):
       repo.run("edit", item_id, "--section", "Check", "--text", "It works.")
       repo.run("edit", item_id, "--section", "Files", "--text", files)
     return item_id
+
+  def test_NextBatchDisjoint_FilesSectionMissing_Warns(self) -> None:
+    with self.repo() as repo:
+      self.file_item(repo, "first", "- `src/a.py`")
+      self.file_item(repo, "second", "- `src/b.py`")
+      repo.run("config", "files_section", "MissingFiles")
+      for command in (("next", "--batch", "2", "--disjoint"),
+                      ("deps", "--overlap", "S01", "S02")):
+        with self.subTest(command=command):
+          code, out, err = repo.run(*command, "--json")
+          self.assertIn("no item has", err)
+          self.assertIn("MissingFiles", err)
+          self.assertIn("files_section", err)
+          self.assertEqual(code, 2 if command[0] == "next" else 0)
+          payload = json.loads(out)
+          if command[0] == "next":
+            self.assertEqual(payload["unknown_files"], ["S01", "S02"])
+          else:
+            self.assertEqual(payload, {"overlap": [{"a": "S01", "b": "S02", "shared": []}]})
+      repo.run("config", "files_section", "Files")
+      for command in (("next", "--batch", "2", "--disjoint"),
+                      ("deps", "--overlap", "S01", "S02")):
+        with self.subTest(present=command):
+          self.assertNotIn("no item has", repo.run(*command, "--json")[2])
+
+  def test_NextBatchDisjoint_DependentAfterDependency(self) -> None:
+    with self.repo() as repo:
+      first = self.file_item(repo, "dependency", "- `src/a.py`")
+      second = self.file_item(repo, "dependent", "- `src/b.py`")
+      repo.run("set", second, "--depends-on", first)
+      plain = json.loads(repo.run("next", "--batch", "2", "--json")[1])
+      self.assertEqual([i["id"] for i in plain["items"]], [first, second])
+      payload = json.loads(repo.run("next", "--batch", "2", "--disjoint", "--json")[1])
+      self.assertEqual([i["id"] for i in payload["items"]], [first])
+      self.assertEqual(payload["blocked"], [{"id": second, "waiting_on": [first]}])
 
   def test_NextBatchDisjoint_SkipsOverlappingItem(self) -> None:
     with self.repo() as repo:

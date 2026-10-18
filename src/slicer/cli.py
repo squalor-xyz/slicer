@@ -1708,6 +1708,8 @@ def _cmd_next_batch(
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
     disjoint=args.disjoint,
   )
+  if args.disjoint:
+    _warn_files_section(state)
   blocked = _blocked_payload(result.blocked)
   if not result.items:
     payload: dict[str, object] = {"items": [], "blocked": blocked}
@@ -2046,6 +2048,12 @@ def _emit_find(
   _emit(args, payload, text)
 
 
+def _warn_files_section(state: store.State) -> None:
+  warning = ops.files_section_warning(state)
+  if warning is not None:
+    print(f"slicer: warning: {warning}", file=sys.stderr)
+
+
 def _deps_overlap(args: argparse.Namespace, state: store.State) -> int:
   """The paths each pair of the named items shares, by their `files_section`."""
   if len(args.overlap) < 2:
@@ -2053,6 +2061,7 @@ def _deps_overlap(args: argparse.Namespace, state: store.State) -> int:
   if args.id is not None or args.format is not None:
     raise StateError("deps --overlap cannot be combined with ID or --format", code="usage")
   pairs = ops.path_overlap(state, args.overlap)
+  _warn_files_section(state)
   lines = [
     f"{pair['a']} {pair['b']}  " + (", ".join(pair["shared"]) or "-")  # type: ignore[arg-type]
     for pair in pairs

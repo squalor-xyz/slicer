@@ -1,4 +1,4 @@
-"""The repo paths a section body names, so two items can be compared by file.
+"""The project paths a section body names, so two items can be compared by file.
 
 A slice's Files section lists the paths it will touch in backticks. Which section
 that is belongs to the project (`files_section`), so this module only reads text:
@@ -8,6 +8,7 @@ a body in, an ordered list of paths out. No I/O, and no check that a path exists
 from __future__ import annotations
 
 import re
+from collections.abc import Collection
 
 _SPAN = re.compile(r"`([^`\n]+)`")
 # A path is made of name characters and slashes. Anything with a space, a quote
@@ -19,11 +20,15 @@ _LINE_SUFFIX = re.compile(r":\d+(?:-\d+)?$")
 _EXTENSION = re.compile(r"\.[A-Za-z][A-Za-z0-9]*$")
 
 
-def extract(body: str) -> list[str]:
+def extract(body: str, *, top_level: Collection[str] = ()) -> list[str]:
   """Backticked paths in `body`, first appearance first, each once.
 
-  A path is a token with a `/` or a file extension. A `:line` suffix is dropped
-  and a leading `./` is not part of the name.
+  A token needs a slash plus a file extension, a trailing directory slash,
+  or a slash and a first component in the supplied project root names. A token
+  without a slash needs both a file extension and a match in those names.
+  This admits root files without treating bare directory names as paths.
+  A `:line` suffix is dropped and a leading `./` is not part of the name.
+  No filesystem I/O.
   """
   found: list[str] = []
   for span in _SPAN.findall(body):
@@ -32,7 +37,11 @@ def extract(body: str) -> list[str]:
       continue
     if token.startswith("./"):
       token = token[2:]
-    if not token.strip("/") or not ("/" in token or _EXTENSION.search(token)):
+    if not token.strip("/") or not (
+      ("/" in token and _EXTENSION.search(token))
+      or token.endswith("/")
+      or (token.split("/", 1)[0] in top_level and ("/" in token or _EXTENSION.search(token)))
+    ):
       continue
     if token not in found:
       found.append(token)

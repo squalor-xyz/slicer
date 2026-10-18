@@ -13221,7 +13221,7 @@
       "id": "s366",
       "title": "Files-section paths skip prose tokens and warn on a missing heading",
       "short_title": "Overlap paths ignore prose tokens",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13231,6 +13231,17 @@
           "text": "**2026-10-18** — Owner decision 2026-10-17: --disjoint leaves out a dependent whose dependency is in the batch.",
           "created_at": "2026-10-18T02:33:10Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "f1628688-f9dc-4bab-b164-e495810bc7aa",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: Files-section paths now need a slash plus an extension, a trailing slash, or a project-root first component (a bare name also needs an extension), so os.path, os.fsync, Config.load, and/or, tests and LICENSE are no longer paths; next --batch --disjoint and deps --overlap warn on stderr when no item has the configured files_section; next --batch --disjoint leaves out a dependent whose dependency is in the batch and reports it in blocked. Codex implementer, opus review PASS (3 low findings fixed), gate PASS; full suite 2573 run, 0 failures, 1 skipped; slicer check passed.",
+          "created_at": "2026-10-18T04:13:15Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -13256,7 +13267,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
