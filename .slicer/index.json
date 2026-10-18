@@ -13698,7 +13698,7 @@
       "id": "s376",
       "title": "plan-parallel recommends a wave plan for running slices in parallel",
       "short_title": "plan-parallel wave plan",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13714,10 +13714,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-18T20:09:46Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],

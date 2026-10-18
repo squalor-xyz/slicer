@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">363 items · — 9 · done 345 · retired 8 · reviewing 1</p>
+<p class="summary">363 items · — 9 · done 346 · retired 8</p>
 <h2>v1.16</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="open"><td>1</td><td>s368</td><td>Lane lines drop cells in order</td><td>S</td><td>1</td><td>slicer</td><td>s356 relay 2026-10-18: lane headers and step lines (`_fit`, tui.py) still skip a cell that does not fit and keep later ones, against docs/tui.md&#x27;s &quot;drops cells from the right, whole&quot;</td><td class="status">—</td></tr>
@@ -55,7 +55,7 @@
 <tr class="done"><td>6</td><td>s373</td><td>Relay contract v7</td><td>S</td><td>1</td><td>slicer</td><td>2026-10-18 owner: unify the relay on slicer&#x27;s contract; the agents-repo orchestrator role was a full v4 copy whose small-fix-round and permission-denial rules exist nowhere in slicer; this repo has no relay-brief.md, so every v1.15 brief was assembled by hand</td><td class="status">done</td></tr>
 <tr class="open"><td>7</td><td>s374</td><td>Worktrees miss the borrowed affected map</td><td>S</td><td>1</td><td>slicer</td><td>v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established</td><td class="status">—</td></tr>
 <tr class="open"><td>8</td><td>s375</td><td>Order names one-pass fix round</td><td>S</td><td>1</td><td>slicer</td><td>s373 relay review 2026-10-18: v7&#x27;s ORCHESTRATOR_RULES gained &quot;a small fix round is reviewed and gated in one pass&quot;, but Order step 2 still reads &quot;review, then accepted findings back to the implementer for each fix round, ... then the gate&quot; with no pointer to that exception</td><td class="status">—</td></tr>
-<tr class="started"><td>9</td><td>s376</td><td>plan-parallel wave plan</td><td>M</td><td>2</td><td>slicer</td><td>owner 2026-10-18: recommend a parallel implementation path, like `next` for parallel work; the v1.14 and v1.15 relay runs planned their waves by hand from each slice&#x27;s Files and dependencies</td><td class="status">reviewing</td></tr>
+<tr class="done"><td>9</td><td>s376</td><td>plan-parallel wave plan</td><td>M</td><td>2</td><td>slicer</td><td>owner 2026-10-18: recommend a parallel implementation path, like `next` for parallel work; the v1.14 and v1.15 relay runs planned their waves by hand from each slice&#x27;s Files and dependencies</td><td class="status">done</td></tr>
 </tbody></table>
 <h2>v1.15</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>

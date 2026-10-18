@@ -2123,3 +2123,4 @@
 {"when": "2026-10-18T19:59:31Z", "item": "s376", "action": "note", "from": "", "to": "", "note": "plan-parallel wave plan: 21 tests, full suite 2621 OK, revie", "by": "Jon Robbins"}
 {"when": "2026-10-18T19:59:31Z", "item": "s376", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-18T20:09:46Z", "item": "s376", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T20:16:03Z", "item": "s376", "action": "status", "from": "reviewing", "to": "done", "note": "plan-parallel lands: wave plan from rank, dependencies and counted paths; 21 tests, full suite 2621 OK on the merge; relay gate PASS", "by": "Jon Robbins"}

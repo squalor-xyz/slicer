@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-363 items · — 9 · done 345 · retired 8 · reviewing 1
+363 items · — 9 · done 346 · retired 8
 
 ## v1.16
 
@@ -41,7 +41,7 @@
 | 6 | [s373](slices/s373.md) | Relay contract v7 | S | 1 | slicer | 2026-10-18 owner: unify the relay on slicer's contract; the agents-repo orchestrator role was a full v4 copy whose small-fix-round and permission-denial rules exist nowhere in slicer; this repo has no relay-brief.md, so every v1.15 brief was assembled by hand | done |
 | 7 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | — |
 | 8 | [s375](slices/s375.md) | Order names one-pass fix round | S | 1 | slicer | s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained "a small fix round is reviewed and gated in one pass", but Order step 2 still reads "review, then accepted findings back to the implementer for each fix round, ... then the gate" with no pointer to that exception | — |
-| 9 | [s376](slices/s376.md) | plan-parallel wave plan | M | 2 | slicer | owner 2026-10-18: recommend a parallel implementation path, like `next` for parallel work; the v1.14 and v1.15 relay runs planned their waves by hand from each slice's Files and dependencies | reviewing |
+| 9 | [s376](slices/s376.md) | plan-parallel wave plan | M | 2 | slicer | owner 2026-10-18: recommend a parallel implementation path, like `next` for parallel work; the v1.14 and v1.15 relay runs planned their waves by hand from each slice's Files and dependencies | done |
 
 ---
 
