@@ -2074,3 +2074,4 @@
 {"when": "2026-10-18T03:44:20Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Ready for review: land refuses --branch unless it names a lo", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:44:20Z", "item": "s362", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:57:32Z", "item": "s360", "action": "status", "from": "review", "to": "done", "note": "Landed: test pins affected.py record() probe before its discover; suite OK on main", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:57:32Z", "item": "s357", "action": "status", "from": "review", "to": "done", "note": "Landed: promote refuses parent and discovered_from in a source; suite OK on main", "by": "Jon Robbins"}

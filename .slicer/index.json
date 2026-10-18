@@ -12868,7 +12868,7 @@
       "id": "s357",
       "title": "promote refuses a source item's parent and discovered_from",
       "short_title": "promote keeps parent and discovered_from",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
