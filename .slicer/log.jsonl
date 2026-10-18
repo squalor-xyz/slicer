@@ -2031,3 +2031,22 @@
 {"when": "2026-10-18T00:01:41Z", "item": "s326", "action": "status", "from": "review", "to": "done", "note": "Landed on main (merge of a08587e); full suite OK after the merge commit.", "by": "Jon Robbins"}
 {"when": "2026-10-18T00:01:41Z", "item": "s366", "action": "add", "from": "", "to": "open", "note": "Files-section paths skip prose tokens and warn on a missing heading"}
 {"when": "2026-10-18T00:01:41Z", "item": "s367", "action": "add", "from": "", "to": "open", "note": "affected.py selects by diff when a new non-Python file is missing from the map"}
+{"when": "2026-10-18T02:33:08Z", "item": "s361", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T02:33:08Z", "item": "s361", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-18T02:33:08Z", "item": "s364", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T02:33:08Z", "item": "s363", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-18T02:33:08Z", "item": "s363", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T02:33:09Z", "item": "s365", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-10-18T02:33:09Z", "item": "s365", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T02:33:09Z", "item": "s366", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T02:33:09Z", "item": "s362", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T02:33:09Z", "item": "s361", "action": "set", "from": "", "to": "", "note": "flags needs-owner→-"}
+{"when": "2026-10-18T02:33:09Z", "item": "s363", "action": "set", "from": "", "to": "", "note": "flags needs-owner→-"}
+{"when": "2026-10-18T02:33:09Z", "item": "s364", "action": "set", "from": "", "to": "", "note": "flags needs-owner→-"}
+{"when": "2026-10-18T02:33:10Z", "item": "s365", "action": "set", "from": "", "to": "", "note": "flags needs-owner→-"}
+{"when": "2026-10-18T02:33:10Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Owner decisions 2026-10-17: accept corrupt-body mutations (d", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:33:10Z", "item": "s363", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: drop set stays done+retired; Q no", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:33:10Z", "item": "s364", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: merge hint only when every stale ", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:33:10Z", "item": "s365", "action": "note", "from": "", "to": "", "note": "Owner decisions 2026-10-17: no_slice; missing built-in templ", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:33:10Z", "item": "s366", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: --disjoint leaves out a dependent", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:33:10Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: land takes --owner, passed throug", "by": "Jon Robbins"}

@@ -5,9 +5,7 @@
   "depends_note": null,
   "findings_note": "s312 relay 2026-10-17: done/remove/start/park now succeed on an item whose slice body is corrupt; a lookup by an id that lives only in a misnamed file misses before a full load; a State held across an external move raises a raw FileNotFoundError",
   "size": "M",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
   "boundary": "**Not in this slice:** reverting lazy loading (owner decision (a), 2026-10-16).",
@@ -22,11 +20,11 @@
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_LazyBody_FileMovedAfterLoad_ReportsCorrupt` (or `io`, as the owner decides).\n- Owner-dependent: `test_Done_CorruptBody_Refuses` if the owner wants the old refusal back for mutating commands."
+      "body": "- `test_LazyBody_FileMovedAfterLoad_ReportsCorrupt`\n- `test_Lookup_IdOnlyInMisnamedFile_FoundAfterFullLoad`\n- `test_Lookup_UnknownId_StillNotFound`"
     },
     {
       "heading": "Implement",
-      "body": "1. Wait for the owner's answers on the first two points (flagged needs-owner).\n2. Map the missing file to a SlicerError with a stable code.\n3. Name the affected commands in the CHANGELOG entry."
+      "body": "1. Owner decisions 2026-10-17: keep mutating commands working on a corrupt body (document done, remove, start and park in CHANGELOG and ARCHITECTURE.md); a lookup that misses before a full load does one full load before reporting not_found; a slice file moved after load maps to SlicerError code `corrupt`.\n2. Write the failing tests (moved file is corrupt; misnamed-file id is found by lookup); watch them go red.\n3. Implement the fallback full load and the error mapping; name the affected commands in the CHANGELOG entry.\n4. Mutation-check each new test."
     },
     {
       "heading": "Check",

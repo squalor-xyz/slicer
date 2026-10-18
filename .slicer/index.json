@@ -12968,13 +12968,23 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "bf4dcc8e-64a3-49b7-a878-b77771ba4433",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decisions 2026-10-17: accept corrupt-body mutations (document them); full load on lookup miss; moved file is corrupt.",
+          "created_at": "2026-10-18T02:33:10Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [
           "slicer"
         ],
@@ -13011,6 +13021,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "dd00b6a3-e409-49b9-939f-c2acaae8ea72",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decision 2026-10-17: land takes --owner, passed through to done.",
+          "created_at": "2026-10-18T02:33:10Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -13042,13 +13063,23 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "5850070f-2444-458b-9da6-d2cd329c1a6c",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decision 2026-10-17: drop set stays done+retired; Q notifies naming dropped ids; unmarked selected done item follows the same rule.",
+          "created_at": "2026-10-18T02:33:10Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [
           "slicer"
         ],
@@ -13074,13 +13105,23 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "1ee776f7-54e4-49a0-a4fa-61fabe86a5ee",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decision 2026-10-17: merge hint only when every stale cause is content.",
+          "created_at": "2026-10-18T02:33:10Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [
           "slicer"
         ],
@@ -13106,13 +13147,23 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "b8fef932-7916-487b-8bb9-016e523bd774",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decisions 2026-10-17: no_slice; missing built-in template counts as default; move relay_brief out of ai.py.",
+          "created_at": "2026-10-18T02:33:10Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [
           "slicer"
         ],
@@ -13138,7 +13189,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2ccc74e0-7bfc-47bb-a26c-5b638f02cc71",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decision 2026-10-17: --disjoint leaves out a dependent whose dependency is in the batch.",
+          "created_at": "2026-10-18T02:33:10Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",

@@ -5,9 +5,7 @@
   "depends_note": null,
   "findings_note": "s322 relay 2026-10-17: relay-brief returns `unspecified` for an item with no slice; projects created before s322 list relay-brief.md as missing until `template reset`; ai.py calls the private `ops._missing_spec` and now imports ops, render, roles, store and templates",
   "size": "S",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
   "boundary": "**Not in this slice:** the brief's content or placeholders.",
@@ -22,11 +20,11 @@
     },
     {
       "heading": "Failing tests",
-      "body": "- Per the owner's answers: `test_AiRelayBrief_NoSlice_IsNoSlice`, `test_TemplateList_NewDefaultMissing_NotCustomized`."
+      "body": "- `test_AiRelayBrief_NoSlice_IsNoSlice`\n- `test_TemplateList_NewDefaultMissing_NotCustomized`\n- A test (or import check) that `ai.py` no longer imports ops, render, roles or store."
     },
     {
       "heading": "Implement",
-      "body": "1. Wait for the owner (flagged needs-owner).\n2. Apply the answers; move `relay_brief` out of `ai.py` or make the helper public."
+      "body": "1. Owner decisions 2026-10-17: an item with no slice returns `no_slice`; a built-in template missing from a project counts as the default (not customized) until set; move `relay_brief` out of `ai.py` into a module that already reads state (ops.py or a new module), keeping `ai.py` text-only and the CLI command unchanged.\n2. Write the tests; watch them go red.\n3. Implement; update docs/agents.md and CHANGELOG; mutation-check."
     },
     {
       "heading": "Check",

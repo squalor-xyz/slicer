@@ -5,9 +5,7 @@
   "depends_note": null,
   "findings_note": "s353 relay 2026-10-17: `Q` silently drops marks on done and retired items; parked, handed-off and in-review marks stay; a done item selected with no marks is still requested",
   "size": "S",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
   "boundary": "**Not in this slice:** persisting marks, or a mark column.",
@@ -22,11 +20,11 @@
     },
     {
       "heading": "Failing tests",
-      "body": "- Written after the owner decides: `test_RelayRequest_DroppedMarks_NotifyNamesIds`, and per-status tests for the chosen set."
+      "body": "- `test_RelayRequest_DroppedMarks_NotifyNamesIds`\n- `test_RelayRequest_SelectedUnmarkedDone_LeftOut`\n- `test_RelayRequest_ParkedMark_StaysRequested`\n- `test_ItemRows_Over999_Aligned`"
     },
     {
       "heading": "Implement",
-      "body": "1. Wait for the owner's answer (flagged needs-owner).\n2. Apply the chosen status set and the notify; make the unmarked selected item follow the same rule."
+      "body": "1. Owner decision 2026-10-17: the drop set stays done and retired; parked, handed-off and in-review marks stay requestable. `Q` notifies naming the dropped ids. A selected unmarked done or retired item follows the same rule. Fix row alignment past 999 rows.\n2. Write the tests; watch them go red.\n3. Implement; update docs/tui.md and CHANGELOG; mutation-check."
     },
     {
       "heading": "Check",

@@ -5,9 +5,7 @@
   "depends_note": null,
   "findings_note": "s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders",
   "size": "S",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
   "boundary": "**Not in this slice:** the hint text, or `stale_render_kind` values.",
@@ -26,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Wait for the owner (flagged needs-owner).\n2. If yes: require every `stale_render_details` cause to be `content` in `merge_shape`."
+      "body": "1. Owner decision 2026-10-17: the hint prints only when every stale cause is `content`.\n2. Write the tests; watch them go red.\n3. Require every `stale_render_details` cause to be `content` in `merge_shape`; CHANGELOG; mutation-check."
     },
     {
       "heading": "Check",

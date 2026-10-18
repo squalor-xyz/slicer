@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; watch them go red.\n2. Refuse unless `refs/heads/BRANCH` resolves and is not HEAD's branch (stable code, documented in docs/agents.md).\n3. Print `git -C ROOT add -A .slicer` (or an absolute path).\n4. `--owner` only if the owner says so."
+      "body": "1. Write the tests (plus `test_Land_Owner_RecordedOnDone`); watch them go red.\n2. Refuse unless `refs/heads/BRANCH` resolves and is not HEAD's branch (stable code, documented in docs/agents.md).\n3. Print `git -C ROOT add -A .slicer` (or an absolute path).\n4. Owner decision 2026-10-17: add `land --owner NAME`, passed to the done transition as `done --owner` does; document it in docs/landing.md.\n5. CHANGELOG; mutation-check."
     },
     {
       "heading": "Check",

@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; watch them go red.\n2. Tighten the token rule; add the warning.\n3. Apply the owner's answer on dependents if given; otherwise keep the documented rule."
+      "body": "1. Write the tests; watch them go red.\n2. Tighten the token rule; add the warning.\n3. Owner decision 2026-10-17: `next --batch --disjoint` leaves out a slice whose dependency is already in the batch; pin it with `test_NextBatchDisjoint_DependentAfterDependency` and document it in docs/commands.md.\n4. CHANGELOG; mutation-check."
     },
     {
       "heading": "Check",
