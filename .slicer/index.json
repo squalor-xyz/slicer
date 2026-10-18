@@ -13236,7 +13236,7 @@
       "id": "s365",
       "title": "ai relay-brief: no-slice code, template default and module home",
       "short_title": "relay-brief follow-ups",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
