@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 377,
+  "next_id": 378,
   "preamble": "",
   "passes": [
     {
@@ -13734,6 +13734,36 @@
         "urgency": 1,
         "effort": 2,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s377",
+      "title": "plan-parallel blocked names the right dependencies",
+      "short_title": "plan-parallel blocked waiting_on",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies \"never placed\", but a capped, unspecified or sibling-held item keeps its full pending list",
+        "discovered_from": "s376",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
       }
     }
   ],

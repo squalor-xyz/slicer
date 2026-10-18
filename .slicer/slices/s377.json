@@ -1,0 +1,39 @@
+{
+  "id": "s377",
+  "title": "plan-parallel blocked names the right dependencies",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies \"never placed\", but a capped, unspecified or sibling-held item keeps its full pending list",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing which dependencies `blocked` reports, or the `next --batch --disjoint` shape it mirrors.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`plan_parallel` in `src/slicer/ops.py` builds `blocked` two ways. An item still in the pool after the last wave lists only the dependencies that never got a wave. An item the pool dropped (capped, unspecified, or held by a sibling worktree) keeps every pending dependency. No test pins the first case when only some dependencies were placed. The `plan-parallel` row in `docs/agents.md` describes only the first case, so a reader expects the narrower list for every item."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/test_plan_parallel.py`.\n- `docs/agents.md` (the `plan-parallel` row's `blocked` sentence)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_PlanParallel_OneDependencyPlacedOneNot_WaitingOnNamesOnlyTheUnplaced`. It fails until the code is mutated to report the full pending list; it is a guard test, so watch it go red under that mutation instead of on a clean tree."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add the test. Item A depends on B (open, disjoint, placed in a wave) and on C (outside the pool, never placed). Assert that A is in `blocked` with `waiting_on == [\"C\"]` and in no wave.\n2. Mutation-check: make the leftover branch report `pending` instead of `unmet` and watch the test go red, then revert.\n3. Reword the `blocked` sentence in `docs/agents.md`: an item left over after the last wave lists only its never-placed dependencies; a capped, unspecified or sibling-held item lists every dependency it was waiting on, as `next --batch` does."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
