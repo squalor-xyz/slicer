@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-354 items · — 11 · done 333 · retired 8 · review 2
+354 items · — 11 · done 334 · retired 8 · review 1
 
 ## v1.15
 
@@ -35,7 +35,7 @@
 |---|---|---|---|---|---|---|---|
 | 1 | [s356](slices/s356.md) | Narrow relay board keeps the outcome | S | 1 | slicer | s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells | review |
 | 2 | [s357](slices/s357.md) | promote keeps parent and discovered_from | S | 1 | slicer | s328 relay 2026-10-17: a promote source silently drops `parent` and `discovered_from`, as it dropped `short_title` before s328's fix | — |
-| 3 | [s358](slices/s358.md) | Relay review FAIL record matches the item status | S | 1 | slicer | s328 and s323 relays 2026-10-17: contract v5 says a failed review is `slicer reject`, but handoff now runs after PASS, so the item is `started` at review time and reject refuses it ("only review work can be rejected") | review |
+| 3 | [s358](slices/s358.md) | Relay review FAIL record matches the item status | S | 1 | slicer | s328 and s323 relays 2026-10-17: contract v5 says a failed review is `slicer reject`, but handoff now runs after PASS, so the item is `started` at review time and reject refuses it ("only review work can be rejected") | done |
 | 4 | [s359](slices/s359.md) | Docs name retire, land hint and note --render | S | 1 | slicer | s329, s325 and s351 relays 2026-10-17: mutating-command lists omit retire and handoff; the check troubleshooting row predates the roadmap-only hint; the missing-note-kind handoff refusal suggests a note without --render | — |
 | 5 | [s360](slices/s360.md) | affected.py record probe order is tested | S | 1 | tests | s355 relay 2026-10-17: record() in tests/affected.py takes its clean probe before its own discover, but no mutation test covers that order (s355 pinned the suite-side probe only) | — |
 | 6 | [s361](slices/s361.md) | Lazy loading edge cases | M | 2 | slicer | s312 relay 2026-10-17: done/remove/start/park now succeed on an item whose slice body is corrupt; a lookup by an id that lives only in a misnamed file misses before a full load; a State held across an external move raises a raw FileNotFoundError | — |

@@ -12898,7 +12898,7 @@
       "id": "s358",
       "title": "Relay contract records a failed review on a started item",
       "short_title": "Relay review FAIL record matches the item status",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
