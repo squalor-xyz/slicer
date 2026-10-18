@@ -1,0 +1,39 @@
+{
+  "id": "s373",
+  "title": "Relay contract v7 takes the agents role's last two rules, and this repo sets its relay brief",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "2026-10-18 owner: unify the relay on slicer's contract; the agents-repo orchestrator role was a full v4 copy whose small-fix-round and permission-denial rules exist nowhere in slicer; this repo has no relay-brief.md, so every v1.15 brief was assembled by hand",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the agents repo's role, playbook and doctor (changed outside this repo after this lands); other contract rules; the built-in relay-brief template.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The agents-repo `relay-orchestrator` role becomes a thin pointer to `slicer ai relay-orchestrator` (owner, 2026-10-18). Two of its rules are not vendor-specific and have no home in slicer: a small fix round is reviewed and gated in one pass, and a slicer step that a harness permission check denies stops the run instead of being worked around. Moving them changes what an orchestrator follows, so the contract goes to v7. This repo also has no `relay-brief.md`, so `slicer ai relay-brief` prints an empty ENVIRONMENT block and the outer session pasted the environment lines by hand in every v1.15 brief."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: two bullets in `ORCHESTRATOR_RULES` (Rules); `RELAY_CONTRACT = 7` with a `7:` line in its comment; the comment's sentence about the role files becomes \"The agents repo's `relay-orchestrator` role carries an `Expects:` line that its doctor checks against this marker.\"\n- `tests/test_relay_roles.py` and `tests/test_ai.py`: the pinned `relay v6` markers and the rule assertions.\n- `docs/agents.md` (lines ~39-40, 69, 115, 344-346) and `docs/commands.md` (rows for `ai relay`, `ai relay-orchestrator`): `relay v7`; agents.md:40 describes the `Expects:` line instead of \"shared with the role\".\n- `.slicer/templates/relay-brief.md` through `slicer template set relay-brief.md --stdin` only: the built-in text with `## ENVIRONMENT` filled for this repo.\n- `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_OrchestratorText_SmallFixRound_ReviewAndGateInOnePass`\n- `test_OrchestratorText_PermissionDenied_StopsBeforeCommit`\n- the existing marker tests, red until the bump: `relay v7`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the two tests and change the marker pins; watch them go red.\n2. Add the rules to `ORCHESTRATOR_RULES`:\n   - \"A small fix round (accepted findings only, no new files) is reviewed and gated in one pass: resume the reviewer, who checks the new diff and gives the VERDICT. Anything larger gets a review round, then a gate round.\"\n   - \"A role's slicer step that a harness permission check denies: do not run it yourself and do not work around it. Stop before the commit with OUTCOME stopped and put the denial's exact text under owner needed.\"\n   Keep the report under 30 lines and the shared sections identical in both texts.\n3. Bump `RELAY_CONTRACT` to 7, update the comment, docs and CHANGELOG.\n4. Set the template from the built-in text (`slicer template show relay-brief.md --default`), filling `## ENVIRONMENT` with:\n   - Use python3.12, never python3 (python3 here is 3.9).\n   - Run slicer for this worktree as `PYTHONPATH={{worktree}}/src python3.12 -m slicer --root {{worktree}} ...`; in zsh define a function, not a variable.\n   - Every command that runs tests sets `TMPDIR={{worktree}}/.venv/tmp-<role>` (implementer, reviewer, gate, orchestrator); each agent cleans only its own directory.\n   - Never run `unittest discover -p`; filter with `-k '*Name*'`.\n   - Mutation runs use `PYTHONDONTWRITEBYTECODE=1` and clear `__pycache__`.\n   - The full suite, `python3.12 -m unittest discover -s {{worktree}}/tests -t {{worktree}}/tests`, runs in the foreground with a 600000 ms timeout: about 1 min alone, 25-40 min under parallel load. Iterate with `python3.12 {{worktree}}/tests/affected.py --run`.\n   - No `cd`: absolute paths and `git -C {{worktree}}`.\n   - Never read or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl` or `.slicer/render/`; use slicer reads.\n   - Follow `{{worktree}}/AGENTS.md`: two-space indent, stdlib only, invariants.\n5. Mutation-check the two new tests."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes.\n- The first line of `slicer ai relay-orchestrator` is `Contract: relay v7`; `slicer template list` shows `relay-brief.md customized`; `slicer ai relay-brief` for an open item prints the ENVIRONMENT lines with the worktree path filled in."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

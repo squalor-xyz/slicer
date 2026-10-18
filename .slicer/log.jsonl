@@ -2109,3 +2109,6 @@
 {"when": "2026-10-18T04:21:53Z", "item": "s371", "action": "add", "from": "", "to": "open", "note": "Queue prose rows align with wide row numbers"}
 {"when": "2026-10-18T04:21:53Z", "item": "s372", "action": "add", "from": "", "to": "open", "note": "Docs list every command that takes --render"}
 {"when": "2026-10-18T04:21:58Z", "item": "pass.v1.16", "action": "prose", "from": "", "to": "v1.16", "note": "add-pass"}
+{"when": "2026-10-18T14:32:30Z", "item": "s373", "action": "add", "from": "", "to": "open", "note": "Relay contract v7 takes the agents role's last two rules, and this repo sets its relay brief"}
+{"when": "2026-10-18T14:32:30Z", "item": "s374", "action": "add", "from": "", "to": "open", "note": "Find why fresh worktrees found no affected map to borrow"}
+{"when": "2026-10-18T14:32:35Z", "item": "s373", "action": "edit", "from": "", "to": "", "note": "Check"}

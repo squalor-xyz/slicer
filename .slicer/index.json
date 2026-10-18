@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 373,
+  "next_id": 375,
   "preamble": "",
   "passes": [
     {
@@ -13579,6 +13579,66 @@
         ],
         "trees_literal": false,
         "findings": "s359 relay 2026-10-18: the docs/commands.md \"Every command that changes state\" list omits config, template, catalog, id-prefix, issues-pull, note-verify and relay-roles; docs/agents.md's \"every mutating command takes --render ... except land\" does not account for relay-run, feedback or init; s366 relay: docs/agents.md:370 says \"backticked repo paths\" for --disjoint where configuration.md says project paths",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s373",
+      "title": "Relay contract v7 takes the agents role's last two rules, and this repo sets its relay brief",
+      "short_title": "Relay contract v7",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "2026-10-18 owner: unify the relay on slicer's contract; the agents-repo orchestrator role was a full v4 copy whose small-fix-round and permission-denial rules exist nowhere in slicer; this repo has no relay-brief.md, so every v1.15 brief was assembled by hand",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s374",
+      "title": "Find why fresh worktrees found no affected map to borrow",
+      "short_title": "Worktrees miss the borrowed affected map",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established",
         "discovered_from": "",
         "parent": "",
         "cites": [],

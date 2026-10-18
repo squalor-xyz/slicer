@@ -1,0 +1,39 @@
+{
+  "id": "s374",
+  "title": "Find why fresh worktrees found no affected map to borrow",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the borrow rules (s367) without a reproduction that shows they are wrong.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`affected.py` borrows another worktree's clean map recorded at HEAD or an ancestor (AGENTS.md, Commands). In the v1.15 run fresh worktrees often found none, so the implementer's iteration loop cost a full suite under parallel load (25-40 min). Possible causes include main's map being recorded dirty (`\"clean\": false`), main's map being at a commit that is not an ancestor of the worktree's HEAD, or main having uncommitted changes under `src/` or `tests/` at the time; none is confirmed."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/affected.py` (borrow lookup and its stderr), `tests/test_affected.py`.\n- `AGENTS.md` (Commands) if the rule or its wording changes; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- A test that reproduces the miss, named after the cause once found."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Reproduce: on main run the full discover on a clean tree, cut a worktree from main, run `python3.12 tests/affected.py --run` there, and record its stderr. Repeat after a merge commit and after a `done` commit on main.\n2. If it borrows, close the item with a note recording the reproduction. If not, write the failing test for the cause, fix it, and update AGENTS.md if the rule changes.\n3. CHANGELOG under Fixed if code changed; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
