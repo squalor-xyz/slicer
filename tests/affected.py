@@ -528,9 +528,17 @@ def _emit(
   run: bool,
 ) -> int:
   known = _mapped_paths(tests) | _read_paths(reads)
+  neighbours: dict[str, list[str]] = {}
   for path in changed:
     if path.startswith("src/slicer/") and path not in known:
-      return _full_suite(f"{path} is not in the map")
+      # No test has read this file yet, so the readers of its directory stand in for it.
+      # A Python file is mapped by line, and its neighbours say nothing about it: refuse.
+      if path.endswith(".py"):
+        return _full_suite(f"{path} is not in the map")
+      readers = _directory_readers(path, reads)
+      if not readers:
+        return _full_suite(f"{path} is not in the map, and no test reads a file in {_directory(path)}/")
+      neighbours[path] = readers
     if path.startswith("tests/") and not _is_test_module(path):
       return _full_suite(f"{path} is not a test module")
   selected: set[str] = set()
@@ -550,6 +558,13 @@ def _emit(
       selected.update(_tests_in_module(path))
     except LoadError as exc:
       return _full_suite(f"{path} could not be loaded ({exc})")
+  for path, readers in sorted(neighbours.items()):
+    print(
+      f"affected: {path} is not in the map, so the tests that read files in {_directory(path)}/ "
+      "were selected instead",
+      file=sys.stderr,
+    )
+    selected.update(readers)
   if not selected:
     print(NOTHING)
     return 0
@@ -635,6 +650,19 @@ def _mapped_paths(tests: dict[str, list[str]]) -> set[str]:
 
 def _read_paths(reads: dict[str, list[str]]) -> set[str]:
   return {path for files in reads.values() for path in files}
+
+
+def _directory(path: str) -> str:
+  return Path(path).parent.as_posix()
+
+
+def _directory_readers(path: str, reads: dict[str, list[str]]) -> list[str]:
+  """The tests that read a file in the directory of `path`, sorted by id."""
+  directory = _directory(path)
+  return sorted(
+    test_id for test_id, files in reads.items()
+    if any(_directory(name) == directory for name in files)
+  )
 
 
 def _is_test_module(path: str) -> bool:

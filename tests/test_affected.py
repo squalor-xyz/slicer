@@ -313,11 +313,60 @@ class AffectedTests(unittest.TestCase):
     ])
     self.assertEqual(code, 0, err)
     self.assertEqual(out.splitlines(), ["mod.T.test_reader"])
+    # A new file in a directory that no test reads still refuses.
     code, out, err = _run([
-      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/templates/unread.html:1-1",
+      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/other/unread.html:1-1",
     ])
     self.assertEqual(code, 2)
     self.assertEqual(out, "")
+    self.assertIn(DISCOVER, err)
+
+  def test_Run_NewTemplateNotInMap_SelectsLoaderTests(self) -> None:
+    # A template added after the borrowed map was recorded is in no test's reads. Its
+    # sibling template is read by a loader test, which is selected in its place.
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_loader": ["src/slicer/ops.py:4"], "mod.T.test_other": ["src/slicer/ops.py:4"]},
+      "reads": {
+        "mod.T.test_loader": ["src/slicer/templates/row.md"],
+        "mod.T.test_other": ["docs/other.md", "src/slicer/templates/sub/x.md"],
+      },
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/templates/relay-brief.md:1-1",
+    ])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_loader"])
+    self.assertIn("src/slicer/templates/relay-brief.md is not in the map", err)
+    self.assertIn("the tests that read files in src/slicer/templates/ were selected instead", err)
+    self.assertNotIn(DISCOVER, err)
+
+  def test_Run_NewFileNoNeighbour_StillRefuses(self) -> None:
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]},
+      "reads": {"mod.T.test_a": ["docs/other.md"]},
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/templates/relay-brief.md:1-1",
+    ])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("src/slicer/templates/relay-brief.md is not in the map", err)
+    self.assertIn("no test reads a file in src/slicer/templates/", err)
+    self.assertIn(DISCOVER, err)
+    # Python files are mapped by line, so a sibling's reads say nothing about a new one.
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]},
+      "reads": {"mod.T.test_a": ["src/slicer/templates/row.md"]},
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "src/slicer/templates/new_helper.py:1-1",
+    ])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("src/slicer/templates/new_helper.py is not in the map", err)
     self.assertIn(DISCOVER, err)
 
   def test_Select_MissingMap_ExitsTwoAndNamesDiscover(self) -> None:
