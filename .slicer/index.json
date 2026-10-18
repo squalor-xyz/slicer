@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 376,
+  "next_id": 377,
   "preamble": "",
   "passes": [
     {
@@ -13691,6 +13691,36 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s376",
+      "title": "plan-parallel recommends a wave plan for running slices in parallel",
+      "short_title": "plan-parallel wave plan",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner 2026-10-18: recommend a parallel implementation path, like `next` for parallel work; the v1.14 and v1.15 relay runs planned their waves by hand from each slice's Files and dependencies",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
         "attempts": 0
       }
     }
