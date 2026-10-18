@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 366,
+  "next_id": 368,
   "preamble": "",
   "passes": [
     {
@@ -13127,6 +13127,66 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s366",
+      "title": "Files-section paths skip prose tokens and warn on a missing heading",
+      "short_title": "Overlap paths ignore prose tokens",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s324 relay 2026-10-17: paths.extract accepts `and/or`, `os.path`, `os.fsync` and `Config.load` as paths (s313's Files yields `os.fsync`); a files_section naming no existing heading puts every item in unknown_files without a word",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s367",
+      "title": "affected.py selects by diff when a new non-Python file is missing from the map",
+      "short_title": "affected.py handles new repo files",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with \"src/slicer/templates/relay-brief.md is not in the map\", because the borrowed map predates s322's template",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.15",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 1,
         "attempts": 0
       }

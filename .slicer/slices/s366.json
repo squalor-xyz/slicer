@@ -1,0 +1,39 @@
+{
+  "id": "s366",
+  "title": "Files-section paths skip prose tokens and warn on a missing heading",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s324 relay 2026-10-17: paths.extract accepts `and/or`, `os.path`, `os.fsync` and `Config.load` as paths (s313's Files yields `os.fsync`); a files_section naming no existing heading puts every item in unknown_files without a word",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** directory-contains-file overlap, or changing `--batch`'s dependency rule.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s324 picks disjoint batches from each slice's Files section. Its token rule takes identifiers and prose as paths, so two slices that both mention `os.path` count as overlapping, and a slice whose only token is `os.fsync` is not unknown. When `files_section` names a heading no slice has, every item lands in `unknown_files`, `deps --overlap` prints `-` everywhere, and nothing says the config is wrong.\nOpen owner question: should `next --batch --disjoint` also leave out a dependent whose dependency is already in the batch, so the whole batch can run in parallel?"
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/paths.py` (`extract`): require a path separator plus a file extension or a known top-level directory, or backtick-quoted tokens only; document the rule.\n- `src/slicer/cli.py` / `src/slicer/ops.py`: a stderr warning (or `config` error) when no item has the configured `files_section`.\n- `tests/test_paths.py`, `tests/test_next.py`; `docs/configuration.md`; `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Extract_IdentifierTokens_NotPaths` (`os.path`, `Config.load`, `and/or`).\n- `test_NextBatchDisjoint_FilesSectionMissing_Warns`\n- `test_NextBatchDisjoint_DependentAfterDependency` (pins today's rule, or the owner's new one)."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Tighten the token rule; add the warning.\n3. Apply the owner's answer on dependents if given; otherwise keep the documented rule."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

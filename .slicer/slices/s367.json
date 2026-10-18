@@ -1,0 +1,39 @@
+{
+  "id": "s367",
+  "title": "affected.py selects by diff when a new non-Python file is missing from the map",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with \"src/slicer/templates/relay-brief.md is not in the map\", because the borrowed map predates s322's template",
+  "size": "S",
+  "flags": [],
+  "trees_note": "tests",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the clean flag or map borrowing rules (s344, s355).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A map borrowed from another worktree is recorded at an older commit. A non-Python file added since then (s322's `relay-brief.md` template) is not in the map, and `affected.py --run` exits 2, so every relay after s322 ran the full discover instead of the affected tests. Each full run took 20 to 30 minutes under parallel load."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/affected.py`: a changed file absent from the map selects the tests that read files under its directory (or its loader module), and says so on stderr, instead of refusing; refuse only when that is empty.\n- `tests/test_affected.py`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Run_NewTemplateNotInMap_SelectsLoaderTests`\n- `test_Run_NewFileNoNeighbour_StillRefuses`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch the first go red.\n2. Add the fallback selection with a stderr line naming it."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
