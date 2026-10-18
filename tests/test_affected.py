@@ -1024,6 +1024,27 @@ class AffectedTests(unittest.TestCase):
       self.assertEqual(_run(["record", "--map", str(path)])[0], 0)
     self.assertIs(json.loads(path.read_text(encoding="utf-8"))["clean"], False)
 
+  def test_RecordCommand_DirtyAtStartCleanAtEnd_NotClean(self) -> None:
+    # `record` probes the tree before its discover runs. The change is gone by the time
+    # discover returns, but the suite ran with it, so the map must not say clean.
+    repo = self._git_root()
+    source = repo / "src" / "slicer" / "ops.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("one\n", encoding="utf-8")
+    class Tiny(unittest.TestCase):
+      def test_ok(self) -> None:
+        return None
+    path = repo / "affected-map.json"
+    def discover_after_cleaning(*args, **kwargs):
+      source.unlink()
+      return unittest.TestLoader().loadTestsFromTestCase(Tiny)
+    self.assertFalse(affected.tree_is_clean(repo))
+    with patch.object(affected, "ROOT", repo), \
+         patch.object(unittest.defaultTestLoader, "discover", side_effect=discover_after_cleaning):
+      self.assertEqual(_run(["record", "--map", str(path)])[0], 0)
+    self.assertTrue(affected.tree_is_clean(repo))
+    self.assertIs(json.loads(path.read_text(encoding="utf-8"))["clean"], False)
+
   def test_DiscoverSuccess_WritesMapForHead(self) -> None:
     directory = self._git_root()
     sha = subprocess.run(
