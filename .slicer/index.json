@@ -13024,7 +13024,7 @@
       "id": "s361",
       "title": "Lazy slice loading: corrupt bodies, misnamed files and moved files",
       "short_title": "Lazy loading edge cases",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
