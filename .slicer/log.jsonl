@@ -2066,3 +2066,6 @@
 {"when": "2026-10-18T03:17:31Z", "item": "s360", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:40:27Z", "item": "s360", "action": "note", "from": "", "to": "", "note": "Ready for review: gap confirmed by mutation (record() probe ", "by": "Jon Robbins"}
 {"when": "2026-10-18T03:40:27Z", "item": "s360", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:17:43Z", "item": "s357", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:40:57Z", "item": "s357", "action": "note", "from": "", "to": "", "note": "Ready for review: promote --file now refuses an outline sour", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:40:57Z", "item": "s357", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

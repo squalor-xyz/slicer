@@ -241,6 +241,32 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(repo.state().index.require("S05").short_title, "Idea")
       self.assertFalse(repo.state().index.require("S05").has_slice)
 
+  def test_Promote_SourceWithParent_Refuses(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\nparent: S01\n\n### Why\nBecause.\n")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"), "--json")
+      self.assertEqual(code, 2, err)
+      self.assertIn("field_in_promote_source", out + err)
+      self.assertIn("cannot set 'parent'", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.state().index.require("S05").parent, "")
+      self.assertFalse(repo.state().index.require("S05").has_slice)
+
+  def test_Promote_SourceWithDiscoveredFrom_Refuses(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\ndiscovered_from: S01\n\n### Why\nBecause.\n")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"), "--json")
+      self.assertEqual(code, 2, err)
+      self.assertIn("field_in_promote_source", out + err)
+      self.assertIn("cannot set 'discovered_from'", err)
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      self.assertEqual(repo.state().index.require("S05").discovered_from, "")
+      self.assertFalse(repo.state().index.require("S05").has_slice)
+
   def test_Promote_SourceWithDepends_RefusesAndWritesNothing(self) -> None:
     for line in ("depends: S01", "depends: Some, comma title", "depends: A\ndepends: B"):
       with self.subTest(line=line), self.repo() as repo:

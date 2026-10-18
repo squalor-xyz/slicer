@@ -752,6 +752,8 @@ _SOURCE_FIELD_DEFAULTS = {
   "group": "",
   "status": "",
   "depends": [],
+  "discovered_from": "",
+  "parent": "",
   "importance": 2,
   "urgency": 2,
   "effort": None,
