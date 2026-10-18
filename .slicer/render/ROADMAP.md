@@ -27,15 +27,15 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-354 items · — 13 · done 332 · retired 8 · review 1
+354 items · — 11 · done 333 · retired 8 · review 2
 
 ## v1.15
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s356](slices/s356.md) | Narrow relay board keeps the outcome | S | 1 | slicer | s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells | — |
+| 1 | [s356](slices/s356.md) | Narrow relay board keeps the outcome | S | 1 | slicer | s352 relay 2026-10-17: `_place` skips the outcome/status cell when it does not fit but still places later, shorter elapsed cells | review |
 | 2 | [s357](slices/s357.md) | promote keeps parent and discovered_from | S | 1 | slicer | s328 relay 2026-10-17: a promote source silently drops `parent` and `discovered_from`, as it dropped `short_title` before s328's fix | — |
-| 3 | [s358](slices/s358.md) | Relay review FAIL record matches the item status | S | 1 | slicer | s328 and s323 relays 2026-10-17: contract v5 says a failed review is `slicer reject`, but handoff now runs after PASS, so the item is `started` at review time and reject refuses it ("only review work can be rejected") | — |
+| 3 | [s358](slices/s358.md) | Relay review FAIL record matches the item status | S | 1 | slicer | s328 and s323 relays 2026-10-17: contract v5 says a failed review is `slicer reject`, but handoff now runs after PASS, so the item is `started` at review time and reject refuses it ("only review work can be rejected") | review |
 | 4 | [s359](slices/s359.md) | Docs name retire, land hint and note --render | S | 1 | slicer | s329, s325 and s351 relays 2026-10-17: mutating-command lists omit retire and handoff; the check troubleshooting row predates the roadmap-only hint; the missing-note-kind handoff refusal suggests a note without --render | — |
 | 5 | [s360](slices/s360.md) | affected.py record probe order is tested | S | 1 | tests | s355 relay 2026-10-17: record() in tests/affected.py takes its clean probe before its own discover, but no mutation test covers that order (s355 pinned the suite-side probe only) | — |
 | 6 | [s361](slices/s361.md) | Lazy loading edge cases | M | 2 | slicer | s312 relay 2026-10-17: done/remove/start/park now succeed on an item whose slice body is corrupt; a lookup by an id that lives only in a misnamed file misses before a full load; a State held across an external move raises a raw FileNotFoundError | — |
@@ -44,7 +44,7 @@
 | 9 | [s364](slices/s364.md) | Merge hint only for content drift | S | 1 | slicer | s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders | — |
 | 10 | [s365](slices/s365.md) | relay-brief follow-ups | S | 1 | slicer | s322 relay 2026-10-17: relay-brief returns `unspecified` for an item with no slice; projects created before s322 list relay-brief.md as missing until `template reset`; ai.py calls the private `ops._missing_spec` and now imports ops, render, roles, store and templates | — |
 | 11 | [s366](slices/s366.md) | Overlap paths ignore prose tokens | S | 1 | slicer | s324 relay 2026-10-17: paths.extract accepts `and/or`, `os.path`, `os.fsync` and `Config.load` as paths (s313's Files yields `os.fsync`); a files_section naming no existing heading puts every item in unknown_files without a word | — |
-| 12 | [s367](slices/s367.md) | affected.py handles new repo files | S | 1 | tests | s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with "src/slicer/templates/relay-brief.md is not in the map", because the borrowed map predates s322's template | review |
+| 12 | [s367](slices/s367.md) | affected.py handles new repo files | S | 1 | tests | s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with "src/slicer/templates/relay-brief.md is not in the map", because the borrowed map predates s322's template | done |
 
 ---
 

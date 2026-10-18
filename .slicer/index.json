@@ -13263,7 +13263,7 @@
       "id": "s367",
       "title": "affected.py selects by diff when a new non-Python file is missing from the map",
       "short_title": "affected.py handles new repo files",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
