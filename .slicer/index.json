@@ -13066,7 +13066,7 @@
       "id": "s362",
       "title": "slicer land refuses a non-branch ref and prints root-anchored commands",
       "short_title": "land checks the ref and prints absolute commands",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
