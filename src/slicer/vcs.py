@@ -170,6 +170,23 @@ def resolve(root: Path, ref: str) -> str | None:
   return name if done.returncode == 0 and _COMMIT_ONLY.fullmatch(name) else None
 
 
+def is_current_branch(root: Path, branch: str) -> bool:
+  """Compare full refs so a same-named tag cannot change the branch's spelling."""
+  done = _run(root, "rev-parse", "--symbolic-full-name", "HEAD")
+  return done.returncode == 0 and done.stdout.strip() == f"refs/heads/{branch}"
+
+
+def local_branch_tip(root: Path, branch: str) -> str | None:
+  """Resolve an exact short local branch name, never a tag or revision expression."""
+  if not is_repo(root):
+    return None
+  ref = f"refs/heads/{branch}"
+  listed = _run(root, "branch", "--all", "--format=%(refname)")
+  if listed.returncode != 0 or ref not in listed.stdout.splitlines():
+    return None
+  return resolve(root, ref)
+
+
 def show_file(root: Path, commit: str, relpath: str) -> str | None:
   """The text of `relpath` (relative to `root`) as `commit` recorded it, or None.
 

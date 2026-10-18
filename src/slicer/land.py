@@ -44,14 +44,20 @@ class Landing:
 def merged_tip(state: State, branch: str) -> str:
   """The full commit name of `branch`, once it is known to be merged into HEAD.
 
-  Refuses with `usage` when `branch` names no commit (or this is not a git repo) and with
-  `not_merged` when its tip is not reachable from HEAD.
+  Refuses with `invalid_branch` unless `branch` is a local branch other than the
+  checked-out one, and with `not_merged` when its tip is not reachable from HEAD.
   """
-  tip = vcs.resolve(state.root, branch)
-  if tip is None:
+  if not vcs.is_repo(state.root):
     raise StateError(
-      f"{branch!r} names no commit in this repository; pass the slice's branch with --branch",
-      code="usage",
+      f"{state.root} is not a git repository; run land in the repository that merged the slice",
+      code="invalid_branch",
+    )
+  tip = vcs.local_branch_tip(state.root, branch)
+  if tip is None or vcs.is_current_branch(state.root, branch):
+    raise StateError(
+      f"{branch!r} must name a local branch other than the checked-out branch; "
+      "pass the slice's short branch name with --branch",
+      code="invalid_branch",
     )
   head = vcs.resolve(state.root, "HEAD")
   if head is None or not vcs.is_ancestor(state.root, tip, head):
@@ -73,12 +79,13 @@ def refuse_active_run(state: State, item_id: str) -> None:
       )
 
 
-def commands_left(item_id: str, branch: str, worktree: Path | None) -> list[str]:
+def commands_left(root: Path, item_id: str, branch: str, worktree: Path | None) -> list[str]:
   """The git commands that finish a landing, in the order to run them."""
-  lines = [f'git add -A {DIR_NAME} && git commit -m "{item_id} done"']
+  git = f"git -C {shlex.quote(str(root))}"
+  lines = [f'{git} add -A {DIR_NAME} && {git} commit -m "{item_id} done"']
   if worktree is not None:
-    lines.append(f"git worktree remove {shlex.quote(str(worktree))}")
-  lines.append(f"git branch -d {shlex.quote(branch)}")
+    lines.append(f"{git} worktree remove {shlex.quote(str(worktree))}")
+  lines.append(f"{git} branch -d {shlex.quote(branch)}")
   return lines
 
 
@@ -93,5 +100,5 @@ def land(state: State, item_id: str, branch: str, *, note: str, by: str = "") ->
   items, written = ops.done_and_render(state, [item_id], note=note, by=by)
   return Landing(
     item=items[0], branch=branch, tip=tip, worktree=worktree,
-    commands=commands_left(item_id, branch, worktree), written=written,
+    commands=commands_left(state.root, item_id, branch, worktree), written=written,
   )

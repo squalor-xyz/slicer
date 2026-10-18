@@ -18,7 +18,11 @@ Otherwise commit on its branch, merge into `main` with `git merge --no-ff`, then
 PYTHONPATH=src python3 -m slicer land <ID> --branch feature/<id>-<slug> --note "Describe the verified outcome"
 ```
 
-`land` refuses (`not_merged`) unless the branch's tip is reachable from `HEAD`, and refuses (`run_active`) while a relay run on the slice is neither ended nor stale; either way nothing is written. Then it runs `done --render --check` and prints the git commands left: the commit of `.slicer`, `git worktree remove` for the branch's worktree, and `git branch -d`. slicer runs none of them. It does not run the suite or merge.
+`land --owner NAME` records the done transition under that name, with the same actor precedence as `done --owner`.
+
+`--branch` must be an exact short local branch name other than the checked-out branch. A tag, SHA, revision expression, full `refs/heads/NAME`, unknown branch or current branch is refused (`invalid_branch`), before anything is written.
+
+`land` refuses (`not_merged`) unless the branch's tip is reachable from `HEAD`, and refuses (`run_active`) while a relay run on the slice is neither ended nor stale; either way nothing is written. Then it runs `done --render --check` and prints the git commands left: the commit of `.slicer`, `git worktree remove` for the branch's worktree, and `git branch -d`. Each printed git command uses `git -C ROOT`, with the absolute project root shell-quoted, so it works when `slicer --root OTHER land` runs from elsewhere. slicer runs none of them. It does not run the suite or merge.
 
 Until `done --render` runs, `check` on `main` fails on the stale `ROADMAP.md` and `ROADMAP.html`, which a merge leaves behind because the `slicer-generated` driver keeps `main`'s roadmap render, and `check` names that case.
 

@@ -9,6 +9,7 @@ refusal tests compare the whole `.slicer/` tree before and after.
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -72,6 +73,16 @@ class LandCase(unittest.TestCase):
 
 
 class LandTests(LandCase):
+  def test_Land_NotARepo_InvalidBranchNamesRepository(self) -> None:
+    repo = support.TempRepo()
+    self.addCleanup(repo.close)
+    self.enterContext(support.isolated_discovery(repo.root))
+    self.assertEqual(repo.run("init")[0], 0)
+    self.assertEqual(repo.run("add", "one")[0], 0)
+    payload = self.refused(repo, 2, "invalid_branch")
+    self.assertIn("not a git repository", payload["message"])
+    self.assertIn(str(repo.root), payload["message"])
+
   def test_Land_BranchNotMerged_NotMergedAndNothingWritten(self) -> None:
     repo = self.repo()
     self.worktree(repo)  # a commit the branch holds and HEAD does not
@@ -134,9 +145,9 @@ class LandTests(LandCase):
     self.assertEqual(payload["tip"], vcs.resolve(repo.root, BRANCH))
     self.assertEqual(payload["worktree"], str(path))
     self.assertEqual(payload["commands"], [
-      'git add -A .slicer && git commit -m "S01 done"',
-      f"git worktree remove {path}",
-      f"git branch -d {BRANCH}",
+      f'git -C {repo.root} add -A .slicer && git -C {repo.root} commit -m "S01 done"',
+      f"git -C {repo.root} worktree remove {path}",
+      f"git -C {repo.root} branch -d {BRANCH}",
     ])
 
   def test_Land_PrintsCommitWorktreeRemoveAndBranchDelete(self) -> None:
@@ -146,9 +157,9 @@ class LandTests(LandCase):
     code, out, err = self.land(repo)
     self.assertEqual((code, err), (0, ""), out)
     self.assertEqual(out.splitlines()[-3:], [
-      'git add -A .slicer && git commit -m "S01 done"',
-      f"git worktree remove {path}",
-      f"git branch -d {BRANCH}",
+      f'git -C {repo.root} add -A .slicer && git -C {repo.root} commit -m "S01 done"',
+      f"git -C {repo.root} worktree remove {path}",
+      f"git -C {repo.root} branch -d {BRANCH}",
     ])
 
   def test_Land_NoWorktreeOnBranch_OmitsWorktreeRemove(self) -> None:
@@ -162,8 +173,8 @@ class LandTests(LandCase):
     payload = json.loads(out)
     self.assertIsNone(payload["worktree"])
     self.assertEqual(payload["commands"], [
-      'git add -A .slicer && git commit -m "S01 done"',
-      f"git branch -d {BRANCH}",
+      f'git -C {repo.root} add -A .slicer && git -C {repo.root} commit -m "S01 done"',
+      f"git -C {repo.root} branch -d {BRANCH}",
     ])
 
   def test_WorktreeOnBranch_OtherCheckoutListedFirst_NamesTheOneOnTheBranch(self) -> None:
@@ -195,18 +206,46 @@ class LandTests(LandCase):
         self.assertEqual((code, err), (0, ""), out)
         self.assertEqual(json.loads(out)["worktree"], str(path))
 
-  def test_Land_BranchCheckedOutHere_OmitsWorktreeRemove(self) -> None:
+  def test_Land_BranchIsCurrentHead_Refuses(self) -> None:
     repo = self.repo()
     here = repo._git("branch", "--show-current").stdout.strip()
-    code, out, err = self.land(repo, "--json", branch=here)
-    self.assertEqual((code, err), (0, ""), out)
-    payload = json.loads(out)
-    self.assertIsNone(payload["worktree"])  # the current checkout cannot be removed from inside
-    self.assertEqual(len(payload["commands"]), 2)
+    self.refused(repo, 2, "invalid_branch", branch=here)
 
-  def test_Land_UnknownBranch_Usage(self) -> None:
+  def test_Land_BranchIsCurrentHeadWithSameNamedTag_Refuses(self) -> None:
     repo = self.repo()
-    payload = self.refused(repo, 2, "usage", branch="feature/nope")
+    here = repo._git("branch", "--show-current").stdout.strip()
+    self.assertEqual(repo._git("tag", here).returncode, 0)
+    self.refused(repo, 2, "invalid_branch", branch=here)
+
+  def test_Land_TagNotBranch_Refuses(self) -> None:
+    repo = self.repo()
+    self.assertEqual(repo._git("tag", "land-tag").returncode, 0)
+    self.refused(repo, 2, "invalid_branch", branch="land-tag")
+
+  def test_Land_OtherRoot_PrintsRootAnchoredAdd(self) -> None:
+    repo = self.repo()
+    self.worktree(repo)
+    self.merge(repo)
+    # TempRepo.run passes --root while the process stays in the launch checkout.
+    code, out, err = self.land(repo, "--json")
+    self.assertEqual((code, err), (0, ""), out)
+    command = json.loads(out)["commands"][0]
+    self.assertEqual(shlex.split(command)[:6],
+                     ["git", "-C", str(repo.root), "add", "-A", ".slicer"])
+
+  def test_Land_Owner_RecordedOnDone(self) -> None:
+    repo = self.repo()
+    self.worktree(repo)
+    self.merge(repo)
+    code, out, err = self.land(repo, "--owner", "Landing Owner")
+    self.assertEqual((code, err), (0, ""), out)
+    log = json.loads(repo.run("log", "--json", "--lean")[1])
+    done = [entry for entry in log if entry["action"] == "status"]
+    self.assertEqual([entry["by"] for entry in done], ["Landing Owner"])
+
+  def test_Land_UnknownBranch_InvalidBranch(self) -> None:
+    repo = self.repo()
+    payload = self.refused(repo, 2, "invalid_branch", branch="feature/nope")
     self.assertIn("feature/nope", payload["message"])
     self.assertEqual(self.status(repo), "open")
 
