@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 375,
+  "next_id": 376,
   "preamble": "",
   "passes": [
     {
@@ -13651,6 +13651,36 @@
         ],
         "trees_literal": false,
         "findings": "v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s375",
+      "title": "The orchestrator's Order names the one-pass fix round",
+      "short_title": "Order names one-pass fix round",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained \"a small fix round is reviewed and gated in one pass\", but Order step 2 still reads \"review, then accepted findings back to the implementer for each fix round, ... then the gate\" with no pointer to that exception",
         "discovered_from": "",
         "parent": "",
         "cites": [],

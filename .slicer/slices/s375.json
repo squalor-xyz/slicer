@@ -1,0 +1,39 @@
+{
+  "id": "s375",
+  "title": "The orchestrator's Order names the one-pass fix round",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained \"a small fix round is reviewed and gated in one pass\", but Order step 2 still reads \"review, then accepted findings back to the implementer for each fix round, ... then the gate\" with no pointer to that exception",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing either rule; a contract bump (this is a rewording, so `RELAY_CONTRACT` stays 7).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "An orchestrator that reads Order alone runs a separate gate round after every small fix round, against the v7 rule in Rules. Order should say where the exception applies."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py` (`ORCHESTRATOR_RULES`, Order step 2).\n- `tests/test_ai.py`; `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_OrchestratorText_OrderStep2_PointsToOnePassFixRound`"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; watch it go red.\n2. Add to Order step 2: \"(a small fix round is reviewed and gated in one pass; see Rules)\". Keep the report under 30 lines.\n3. CHANGELOG; mutation-check."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
