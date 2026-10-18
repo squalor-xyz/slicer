@@ -25,6 +25,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - A lookup by slice id that misses does one full load before it reports the id as not found when the index marks the id `has_slice` but no file has that stem, so an id that lives only in a misnamed slice file is found; `verify` still reports the mismatch. A row-only item or an id the index does not know stays lazy, so a corrupt historical body still never blocks `next` or `show`.
 - A slice file moved or removed after the roadmap loaded is reported as `corrupt` with its path, not as a raw `FileNotFoundError`.
 - TUI: queue rows past 999 line up. The number slot is as wide as the view's longest number, at least three cells, instead of growing from three to four cells at row 1000, which shifted every id from there on by one cell. See [tui.md](docs/tui.md#display-and-color).
+- `slicer handoff` refuses a started item that lacks its `handoff_requires_note_kind` note with a filing command that renders: `slicer note ID --kind KIND --text "Describe the verified outcome" --render`, as the relay text does. The error code stays `state`.
+- The docs name `retire`, `handoff` and `land` in their lists of mutating commands, the stale-render troubleshooting row names the roadmap-only merge hint, and `land`'s `invalid_branch` refusal covers a project outside a git repository. Docs and messages only; no command or error code changes.
 
 ## [1.14.0] - 2026-10-17
 

@@ -328,8 +328,8 @@ def _check_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
 def _strict_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
   """`--strict` gates a mutation on its render (with `--render`): the change is
   rolled back, and nothing printed, if the render fails. Offered on the
-  mutating commands, including import, migrate, and remove. `done --render`
-  already behaves this way and does not take the flag."""
+  mutating commands, including import, migrate, remove, retire, and handoff.
+  `done --render` already behaves this way and does not take the flag."""
   sp.add_argument(
     "--strict", action="store_true",
     help="with --render, require the render to succeed before the change lands",

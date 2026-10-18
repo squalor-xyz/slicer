@@ -163,6 +163,19 @@ class ErrorEnvelopeTests(unittest.TestCase):
       repo.run("promote", "S01")
       self.assertEqual(self.envelope(repo, "promote", "S01")["code"], "state")
 
+  def test_Handoff_MissingRequiredNoteKind_SuggestsRender(self) -> None:
+    # The filing command in the refusal renders, as the relay text and `ai` do.
+    with self.repo() as repo:
+      repo.run("config", "handoff_requires_note_kind", "report")
+      repo.run("promote", "S01")
+      repo.run("start", "S01")
+      error = self.envelope(repo, "handoff", "S01")
+      self.assertEqual(error["code"], "state")
+      self.assertIn(
+        'slicer note S01 --kind report --text "Describe the verified outcome" --render',
+        error["message"],
+      )
+
   def test_EveryEnvelope_HasTheSameKeys(self) -> None:
     with self.repo() as repo:
       for argv in (("show", "S99"), ("set", "S01", "--status", "no"), ("promote", "S99")):

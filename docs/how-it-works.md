@@ -150,7 +150,7 @@ New users often treat these as one. They are stored and computed differently.
 
 | | Where it lives | Who changes it | What it tells you |
 |---|---|---|---|
-| **Status** | Stored on the item | `start`, `handoff`, `reject`, `park`, `unpark`, `done`, `remove`, `set --status` | Where the item is in its lifecycle |
+| **Status** | Stored on the item | `start`, `handoff`, `reject`, `park`, `unpark`, `done`, `land`, `remove`, `retire`, `set --status` | Where the item is in its lifecycle |
 | **Readiness** | Computed on every read | Nothing directly: change status, dependencies or the slice | Whether `next` would offer it |
 | **Claim** | Stored on the item as an owner and a time | `start` sets it, as do `next --start` and claiming from a custom queue. `release`, `handoff`, `reject` and `done` clear it | Who said they are working on it |
 
@@ -291,9 +291,9 @@ reservation. `slicer verify --landed ID` checks that a done item is in a ref's h
 
 | What you change | Commands |
 |---|---|
-| What exists | `add`, `import`, `promote`, `edit`, `set`, `note`, `move`, `sort`, `remove` |
+| What exists | `add`, `import`, `promote`, `edit`, `set`, `note`, `move`, `sort`, `remove`, `retire` |
 | Direction and prose | `prose`, `catalog` (`goals` only reads) |
-| Where an item is in its life | `start`, `release`, `handoff`, `reject`, `park`, `unpark`, `done` |
+| Where an item is in its life | `start`, `release`, `handoff`, `reject`, `park`, `unpark`, `done`, `land` |
 | Generated output | `render`, `sync` |
 | Nothing (reads and checks) | `next`, `list`, `show`, `deps`, `find`, `stats`, `status`, `log`, `check`, `verify` |
 
