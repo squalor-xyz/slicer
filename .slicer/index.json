@@ -12845,10 +12845,22 @@
       "id": "s357",
       "title": "promote refuses a source item's parent and discovered_from",
       "short_title": "promote keeps parent and discovered_from",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "40153a1c-8f7a-458c-8d9d-fb35eb3f36d4",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: promote --file now refuses an outline source that sets parent or discovered_from (field_in_promote_source, exit 2, names the key, writes nothing); ops._SOURCE_FIELD_DEFAULTS gains both keys. New tests test_Promote_SourceWithParent_Refuses and test_Promote_SourceWithDiscoveredFrom_Refuses went red first and catch each key's removal. Full suite 2564 OK (1 skipped), affected 117 OK, slicer check passed. Reviewer and gate: VERDICT: PASS.",
+          "created_at": "2026-10-18T03:40:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12868,7 +12880,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
