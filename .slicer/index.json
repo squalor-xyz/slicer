@@ -13024,7 +13024,7 @@
       "id": "s361",
       "title": "Lazy slice loading: corrupt bodies, misnamed files and moved files",
       "short_title": "Lazy loading edge cases",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13034,6 +13034,39 @@
           "text": "**2026-10-18** — Owner decisions 2026-10-17: accept corrupt-body mutations (document them); full load on lookup miss; moved file is corrupt.",
           "created_at": "2026-10-18T02:33:10Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "9d0aee9c-5acb-4ec3-9fdf-2c02bce27852",
+          "kind": "",
+          "text": "**2026-10-18** — Review FAIL: blocker - the lookup-miss full load (store.py LazySlices.__getitem__) also fires for row-only ids (has_slice=False), so a corrupt unrelated historical body plus any open row without a spec makes next and show <row-only id> exit 3 corrupt (HEAD exits 0); contradicts ARCHITECTURE.md 'a corrupt historical body no longer prevents next'. Scope needs owner call: (a) fall back only for has_slice ids, (b) fallback skips corrupt files, (c) accept and document. Low: test_Lookup_UnknownId_StillNotFound is a guard, not red-first.",
+          "created_at": "2026-10-18T03:35:53Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "7236fc74-3fed-4982-8f02-a8b95d6782e8",
+          "kind": "",
+          "text": "**2026-10-18** — Owner decision 2026-10-17: lookup-miss full load only for has_slice ids with no file of that stem; row-only ids stay lazy.",
+          "created_at": "2026-10-18T03:37:53Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "5155d46c-d865-4f2d-976e-d2f8060d5149",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: a slice file moved or removed after load maps to corrupt; a lookup miss does one full load only for has_slice ids with no file of that stem (misnamed file found), row-only and unknown ids stay lazy so a corrupt historical body never blocks next or show; done, remove, start and park on a corrupt body documented in CHANGELOG and ARCHITECTURE.md; full suite 2566 OK skipped=1; gate PASS",
+          "created_at": "2026-10-18T04:03:15Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -13059,7 +13092,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

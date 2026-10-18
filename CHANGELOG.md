@@ -11,6 +11,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer ai relay-brief` on an item with no slice now fails with `no_slice` instead of `unspecified`, as every other command does; an empty required section is still `unspecified`. Branch on the code.
 - `slicer template list` no longer reports a missing built-in template as `customized`: a missing file is `customized: false, missing: true` until `template set` or `reset` writes it. A project created before `relay-brief.md` existed now lists it as the default. See [commands.md](docs/commands.md).
 - `relay_brief` moved from `slicer/ai.py` to `slicer/ops.py`, so `ai.py` imports no state module. The command and its JSON output are unchanged.
+- `done`, `remove`, `start` and `park` now succeed on an item whose slice body is corrupt. Slice bodies load on first access, and these commands change the index and move the file without parsing the body, where they once refused the whole load. `show ID`, `render`, `check` and `verify` still report the corrupt body with `corrupt` and its filename.
 
 ### Fixed
 
@@ -20,6 +21,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `promote --file` refuses an outline source that sets `parent` or `discovered_from`, as it already refused `short_title`. Both were dropped without a word, so an author who wrote one believed it took effect. The refusal is `field_in_promote_source` (exit 2), names the key, and writes nothing. Change a parent with `set --parent`; `discovered_from` takes `add --discovered-from`, since `set` has no flag for it.
 - `slicer land --branch` refuses anything except an exact short local branch name other than the checked-out branch (`invalid_branch`, nothing written). Its printed git commands use the absolute project root with `git -C`, so `--root OTHER` works from elsewhere. `land --owner NAME` records the done transition as `done --owner` does. See [landing.md](docs/landing.md).
 - `check` gives the merge line and `stale_render_kind` `roadmap_only` only when every stale cause is `content`. A roadmap render that is missing, has an older render format or has an unstamped header is `mixed` and gets no merge line; its stale line still names `slicer render`. See [agents.md](docs/agents.md).
+- A lookup by slice id that misses does one full load before it reports the id as not found when the index marks the id `has_slice` but no file has that stem, so an id that lives only in a misnamed slice file is found; `verify` still reports the mismatch. A row-only item or an id the index does not know stays lazy, so a corrupt historical body still never blocks `next` or `show`.
+- A slice file moved or removed after the roadmap loaded is reported as `corrupt` with its path, not as a raw `FileNotFoundError`.
 
 ## [1.14.0] - 2026-10-17
 

@@ -2084,3 +2084,9 @@
 {"when": "2026-10-18T03:57:19Z", "item": "s364", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-18T04:04:52Z", "item": "s365", "action": "status", "from": "review", "to": "done", "note": "Landed: relay-brief no_slice, missing built-in template counts as default, relay_brief moved to ops.py; suite OK on main", "by": "Jon Robbins"}
 {"when": "2026-10-18T04:04:53Z", "item": "s364", "action": "status", "from": "review", "to": "done", "note": "Landed: merge hint and roadmap_only only when every stale cause is content; suite OK on main", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:34:49Z", "item": "s361", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:35:53Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Review FAIL: blocker - the lookup-miss full load (store.py L", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:37:53Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: lookup-miss full load only for ha", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:37:54Z", "item": "s361", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T04:03:15Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Ready for review: a slice file moved or removed after load m", "by": "Jon Robbins"}
+{"when": "2026-10-18T04:03:16Z", "item": "s361", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -12,7 +12,7 @@ import re
 import stat
 import sys
 import time
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Callable, Mapping, MutableMapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -259,9 +259,17 @@ class _Stage:
 class LazySlices(MutableMapping[str, Slice]):
   """Defer historical bodies while preserving eager dict order on enumeration."""
 
-  def __init__(self, files: dict[str, Path], boundary: str) -> None:
+  def __init__(
+    self, files: dict[str, Path], boundary: str,
+    expects_body: Callable[[str], bool] | None = None,
+  ) -> None:
     self._files = files
     self._boundary = boundary
+    # True for an id the index marks `has_slice`. Only such an id can live in a
+    # misnamed file, so only its miss is worth a full load; a row-only or unknown
+    # id stays lazy and a corrupt historical body never blocks it. None means
+    # every miss forces the load.
+    self._expects_body = expects_body
     self._read: dict[str, Slice] = {}
     self._cache: dict[str, Slice] = {}
     self._paths: dict[str, Path] = {}
@@ -272,8 +280,17 @@ class LazySlices(MutableMapping[str, Slice]):
   def _read_one(self, stem: str) -> Slice:
     if stem not in self._read:
       path = self._files[stem]
+      try:
+        data = jsonio.read(path)
+      except FileNotFoundError:
+        # The path map was built at load; a file moved or removed since then
+        # is a corrupt tree, not a raw OS error.
+        raise StateError(
+          f"{path}: slice file is gone; it was moved or removed after the roadmap loaded"
+          " (reload and run `slicer verify`)", code="corrupt"
+        ) from None
       self._read[stem] = _from_dict(
-        path, lambda d: Slice.from_dict(d, boundary_marker=self._boundary), jsonio.read(path)
+        path, lambda d: Slice.from_dict(d, boundary_marker=self._boundary), data
       )
     return self._read[stem]
 
@@ -304,6 +321,11 @@ class LazySlices(MutableMapping[str, Slice]):
       else:
         self._cache[sid] = sl
         self._paths[sid] = self._files[sid]
+    if (sid not in self._cache and not self._loaded
+        and (self._expects_body is None or self._expects_body(sid))):
+      # A has_slice id with no file of its stem may live in a misnamed file;
+      # one full load settles it.
+      self._load_all()
     return self._cache[sid]
 
   def __setitem__(self, sid: str, sl: Slice) -> None:
@@ -345,7 +367,7 @@ class LazySlices(MutableMapping[str, Slice]):
 
   def copy(self) -> LazySlices:
     """A draft owns its discovered paths, cache and edits."""
-    other = LazySlices(self._files.copy(), self._boundary)
+    other = LazySlices(self._files.copy(), self._boundary, self._expects_body)
     other._read = self._read.copy()
     other._cache = self._cache.copy()
     other._paths = self._paths.copy()
@@ -892,6 +914,10 @@ def load(root: Path | None = None) -> State:
       continue
     for path in sorted(folder.glob("*.json")):
       files[path.stem] = path
-  slices = LazySlices(files, config.boundary)
+  def expects_body(sid: str) -> bool:
+    item = index.get(sid)
+    return item is not None and item.has_slice
+
+  slices = LazySlices(files, config.boundary, expects_body)
   return State(root=base, config=config, index=index, slices=slices,
                slice_files=SliceFiles(slices))
