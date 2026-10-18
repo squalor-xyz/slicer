@@ -12,6 +12,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `slicer template list` no longer reports a missing built-in template as `customized`: a missing file is `customized: false, missing: true` until `template set` or `reset` writes it. A project created before `relay-brief.md` existed now lists it as the default. See [commands.md](docs/commands.md).
 - `relay_brief` moved from `slicer/ai.py` to `slicer/ops.py`, so `ai.py` imports no state module. The command and its JSON output are unchanged.
 - `done`, `remove`, `start` and `park` now succeed on an item whose slice body is corrupt. Slice bodies load on first access, and these commands change the index and move the file without parsing the body, where they once refused the whole load. `show ID`, `render`, `check` and `verify` still report the corrupt body with `corrupt` and its filename.
+- TUI: `Q` names each marked item it leaves out of the relay request, with its status (`left out: S03 (done)`), so a dropped mark is no longer silent. A selected done or retired item with no requested mark is left out the same way: `Q` no longer requests it. When nothing is left to request, `Q` says so and opens no request. Marks on parked items and on items in review stay requestable. See [tui.md](docs/tui.md#relay-requests).
 
 ### Fixed
 
@@ -23,6 +24,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - `check` gives the merge line and `stale_render_kind` `roadmap_only` only when every stale cause is `content`. A roadmap render that is missing, has an older render format or has an unstamped header is `mixed` and gets no merge line; its stale line still names `slicer render`. See [agents.md](docs/agents.md).
 - A lookup by slice id that misses does one full load before it reports the id as not found when the index marks the id `has_slice` but no file has that stem, so an id that lives only in a misnamed slice file is found; `verify` still reports the mismatch. A row-only item or an id the index does not know stays lazy, so a corrupt historical body still never blocks `next` or `show`.
 - A slice file moved or removed after the roadmap loaded is reported as `corrupt` with its path, not as a raw `FileNotFoundError`.
+- TUI: queue rows past 999 line up. The number slot is as wide as the view's longest number, at least three cells, instead of growing from three to four cells at row 1000, which shifted every id from there on by one cell. See [tui.md](docs/tui.md#display-and-color).
 
 ## [1.14.0] - 2026-10-17
 

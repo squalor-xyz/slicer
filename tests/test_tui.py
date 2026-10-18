@@ -2832,6 +2832,51 @@ class RelayRequestTests(unittest.TestCase):
                        ["run S03 as slice relays", "S03", *lines.splitlines()])
       view.handle(state, "\x1b")
 
+  def test_RelayRequest_DroppedMarks_NotifyNamesIds(self):
+    for status in ("done", "retired"):
+      with self.subTest(status=status), support.TempRepo() as repo:
+        state, view = self.setup_request(repo)
+        for target in ("S01", "S03"):
+          view.select((tui.ITEM, target))
+          view.handle(state, "m")
+        state.index.get("S03").status = status
+        view.refresh(state)
+        view.select((tui.ITEM, "S01"))
+        view.handle(state, "Q")
+        self.assertEqual((self.frame(state, view), view.message),
+                         (["run S01 as slice relays"], f"left out: S03 ({status})"))
+        view.handle(state, "\x1b")
+        self.assertEqual(view.mode, "normal")
+
+  def test_RelayRequest_SelectedUnmarkedDone_LeftOut(self):
+    for status in ("done", "retired"):
+      with self.subTest(status=status), support.TempRepo() as repo:
+        state, view = self.setup_request(repo)
+        state.index.get("S02").status = status
+        view.filters.values["status"] = {status}
+        view.refresh(state)
+        view.select((tui.ITEM, "S02"))
+        view.handle(state, "Q")
+        self.assertEqual((view.mode, view.roles_prompt, view.message),
+                         ("normal", None, f"nothing to request; left out: S02 ({status})"))
+
+  def test_RelayRequest_ParkedMark_StaysRequested(self):
+    for status in ("parked", "review", "reviewing"):
+      with self.subTest(status=status), support.TempRepo() as repo:
+        state, view = self.setup_request(repo)
+        for target in ("S01", "S02", "S03"):
+          view.select((tui.ITEM, target))
+          view.handle(state, "m")
+        state.index.get("S02").status = "done"
+        state.index.get("S03").status = status
+        view.refresh(state)
+        view.select((tui.ITEM, "S01"))
+        view.handle(state, "Q")
+        self.assertEqual((sorted(view.request_targets), view.mode, view.message),
+                         (["S01", "S03"], "request", "left out: S02 (done)"))
+        view.handle(state, "\x1b")
+        self.assertEqual(view.mode, "normal")
+
   def test_RelayRequest_OnlyFinishedMarksOnProseRow_SaysSliceOnly(self):
     with support.TempRepo() as repo:
       state, view = self.setup_request(repo)
@@ -2844,7 +2889,8 @@ class RelayRequestTests(unittest.TestCase):
       view.select((tui.PROSE, "preamble"))
       view.handle(state, "Q")
       self.assertEqual((view.mode, view.message),
-                       ("normal", "that key applies to a slice, not to a prose block"))
+                       ("normal", "that key applies to a slice, not to a prose block; "
+                                  "left out: S03 (done)"))
 
   def test_Marks_FixedColumnAlignsQueueRows(self):
     with support.TempRepo() as repo:
@@ -2866,10 +2912,20 @@ class RelayRequestTests(unittest.TestCase):
     plain = [row for row in view.listing if row.kind == tui.ITEM]
     self.assertEqual((len(marked), len(plain)), (1001, 1001))
     for n, (row, bare) in enumerate(zip(marked, plain), 1):
-      number = f"{n:>3}"
+      number = f"{n:>4}"  # 1001 rows: every row's number slot is four cells wide
       with self.subTest(n=n):
         self.assertEqual(row.text[:len(number)], "[x]".rjust(len(number)))
         self.assertEqual(row.text[len(number):], bare.text[len(number):])
+
+  def test_ItemRows_Over999_Aligned(self):
+    state = example()
+    state.index = Index(items=[Item(f"S{n:04d}", f"Item {n}", "open") for n in range(1, 1002)])
+    for marks in (None, {"S0999", "S1000", "S1001"}):
+      with self.subTest(marked=marks is not None):
+        rows = tui.item_rows(state, state.index.items, marks=marks)
+        self.assertEqual(len(rows), 1001)
+        columns = {row.text.index(row.target) for row in rows}
+        self.assertEqual(columns, {rows[0].text.index(rows[0].target)})
 
   def test_RelayRequest_HeadingMatchesPromptState(self):
     with support.TempRepo() as repo:
