@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 378,
+  "next_id": 381,
   "preamble": "",
   "passes": [
     {
@@ -13763,6 +13763,96 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s378",
+      "title": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules",
+      "short_title": "Machine-readable relay contract",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "ork.contract-json",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s379",
+      "title": "A project check_command config key that scripted orchestrators run before review",
+      "short_title": "check_command config key",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "ork.check-command",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s380",
+      "title": "slicer goals prints '(none set)' and a Python list literal when only catalog goal records exist",
+      "short_title": "goals output with catalog-only goals",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "ork.goals-output",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
         "attempts": 0
       }
     }

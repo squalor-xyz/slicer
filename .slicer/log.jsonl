@@ -2125,3 +2125,6 @@
 {"when": "2026-10-18T20:09:46Z", "item": "s376", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-18T20:16:03Z", "item": "s376", "action": "status", "from": "reviewing", "to": "done", "note": "plan-parallel lands: wave plan from rank, dependencies and counted paths; 21 tests, full suite 2621 OK on the merge; relay gate PASS", "by": "Jon Robbins"}
 {"when": "2026-10-18T20:16:42Z", "item": "s377", "action": "add", "from": "", "to": "open", "note": "plan-parallel blocked names the right dependencies"}
+{"when": "2026-10-18T21:21:00Z", "item": "s378", "action": "add", "from": "", "to": "open", "note": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules"}
+{"when": "2026-10-18T21:21:00Z", "item": "s379", "action": "add", "from": "", "to": "open", "note": "A project check_command config key that scripted orchestrators run before review"}
+{"when": "2026-10-18T21:21:00Z", "item": "s380", "action": "add", "from": "", "to": "open", "note": "slicer goals prints '(none set)' and a Python list literal when only catalog goal records exist"}
