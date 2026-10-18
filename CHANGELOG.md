@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `slicer land --branch` refuses anything except an exact short local branch name other than the checked-out branch (`invalid_branch`, nothing written). Its printed git commands use the absolute project root with `git -C`, so `--root OTHER` works from elsewhere. `land --owner NAME` records the done transition as `done --owner` does. See [landing.md](docs/landing.md).
+
 ## [1.14.0] - 2026-10-17
 
 ### Added

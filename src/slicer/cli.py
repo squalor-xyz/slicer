@@ -2714,7 +2714,7 @@ def cmd_land(args: argparse.Namespace) -> int:
   Prints the git commands left; slicer commits, removes and deletes nothing itself.
   """
   state = _state(args)
-  landing = land.land(state, args.id, args.branch, note=args.note, by=ops.actor(state))
+  landing = land.land(state, args.id, args.branch, note=args.note, by=ops.actor(state, args.owner))
   lines = [
     f"{landing.item.id} -> {state.config.status_label(landing.item.status)}",
     f"rendered {landing.written} file(s)",
@@ -3873,6 +3873,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("id", help="the item to land")
   sp.add_argument("--branch", required=True, help="the slice's branch; it must be merged into HEAD")
   sp.add_argument("--note", required=True, help="one line recorded in history, as for `done`")
+  sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
   sp = _strict_flag(_render_flag(add("start", _mutating(cmd_start), "mark an item in progress and claim it")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")

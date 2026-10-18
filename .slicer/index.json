@@ -13007,7 +13007,7 @@
       "id": "s362",
       "title": "slicer land refuses a non-branch ref and prints root-anchored commands",
       "short_title": "land checks the ref and prints absolute commands",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13028,6 +13028,28 @@
           "text": "**2026-10-18** — Owner decision 2026-10-17: land takes --owner, passed through to done.",
           "created_at": "2026-10-18T02:33:10Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "6687b3ba-ddba-4610-974e-ff92f51c6070",
+          "kind": "",
+          "text": "**2026-10-18** — Review FAIL: (1) medium - docs/commands.md:78 land row still documents the usage code for an unknown branch and unanchored printed git commands; must say invalid_branch, git -C ROOT forms, and --owner. (2) low - on a non-git project land refuses with invalid_branch but the message does not say the project is not a git repository.",
+          "created_at": "2026-10-18T03:32:02Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "6fd9fded-380b-4176-8fd9-6470194621b5",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: land refuses --branch unless it names a local branch other than the checked-out one (invalid_branch; a non-git project is named as such), prints every git command as git -C ROOT, and takes --owner passed to done. Docs (landing, agents, commands) and CHANGELOG updated. Gate VERDICT: PASS; full suite 2565 ran, 0 failures, 1 skipped; slicer check passes.",
+          "created_at": "2026-10-18T03:44:20Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -13053,7 +13075,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

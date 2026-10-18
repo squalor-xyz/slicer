@@ -2050,3 +2050,7 @@
 {"when": "2026-10-18T02:33:10Z", "item": "s365", "action": "note", "from": "", "to": "", "note": "Owner decisions 2026-10-17: no_slice; missing built-in templ", "by": "Jon Robbins"}
 {"when": "2026-10-18T02:33:10Z", "item": "s366", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: --disjoint leaves out a dependent", "by": "Jon Robbins"}
 {"when": "2026-10-18T02:33:10Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: land takes --owner, passed throug", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:34:43Z", "item": "s362", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:32:02Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Review FAIL: (1) medium - docs/commands.md:78 land row still", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:44:20Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Ready for review: land refuses --branch unless it names a lo", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:44:20Z", "item": "s362", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
