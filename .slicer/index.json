@@ -12815,10 +12815,33 @@
       "id": "s356",
       "title": "Relay board keeps the outcome when it drops cells on a narrow screen",
       "short_title": "Narrow relay board keeps the outcome",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "a835f5af-83ae-4aae-b3c0-fbc2b8c8077b",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: the relay board's ended line now calls _place(..., ordered=True), so once the outcome/status cell does not fit, no later cell (elapsed, ended N ago, step counts) shows; the default _place (used via _fit by lane headers and step lines) keeps skip-and-continue. New tests: test_BoardLines_EndedNarrowWidth_NoElapsedWithoutOutcome (red on the old rule: '○ s1, s2  10m00s'), test_BoardLines_EndedWideWidth_KeepsAllCells, PlaceCellsTests (default and ordered). CHANGELOG Unreleased/Fixed. Full suite 2564 OK (skipped=1), slicer check passes, review and gate VERDICT: PASS.",
+          "created_at": "2026-10-18T03:31:53Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "7db8c5eb-1906-46c8-a369-e8327815c933",
+          "kind": "",
+          "text": "**2026-10-18** — Ready for review: the relay board ended line now places its cells with _place(ordered=True), so once the outcome/status cell does not fit, no later elapsed or count cell shows (docs/tui.md: a narrow line drops cells from the right, whole). The default _place is unchanged, so lane headers and step lines keep skip-and-continue. New tests: RelayBoardLinesTests test_BoardLines_EndedNarrowWidth_NoElapsedWithoutOutcome (red before the fix: AssertionError 10m00s shown beside the head at width 30), test_BoardLines_EndedWideWidth_KeepsAllCells (wide layout pin), and PlaceCellsTests for the default and ordered _place. CHANGELOG Fixed entry added. Full suite: Ran 2564 tests, OK (skipped=1), run twice; affected 199 OK; slicer check passes; mutations each went red for their stated reason; gate PASS per the orchestrator.",
+          "created_at": "2026-10-18T03:31:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -12838,7 +12861,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
