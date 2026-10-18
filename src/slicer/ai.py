@@ -144,15 +144,17 @@ def handoff_policy_text(kind: str) -> str:
 
 # The version of the relay contract, printed as the first line of `ai relay` and
 # `ai relay-orchestrator` and carried in their `--json`. The agents repo's
-# `relay-orchestrator` role says the same number, so a mismatch between slicer and
-# the role files shows. Bump it when a rule an outer session, orchestrator or role
+# `relay-orchestrator` role carries an `Expects:` line that its doctor checks against this
+# marker. Bump it when a rule an outer session, orchestrator or role
 # follows changes (order, gate, tracking order, waiting, report shape), not for a
 # rewording. 5: Setup resolves the role lineup, orchestrator included, with
 # `relay-roles recommend` and the owner accepts it as a whole or overrides rows; a role
 # runs as a native subagent on the orchestrator's harness and as a headless session on another.
 # 6: A failed review is recorded with `slicer note ID --text "Review FAIL: ..." --render`
 # on the started item, not `reject`.
-RELAY_CONTRACT = 6
+# 7: A small fix round is reviewed and gated in one pass; a role's slicer step that a harness
+# permission check denies stops the run before the commit instead of being worked around.
+RELAY_CONTRACT = 7
 
 
 def contract_line() -> str:
@@ -495,6 +497,12 @@ return one run report.
   reviewer only when that agent is gone or the fixes rewrote much of the diff.
 - After `VERDICT: PASS` and the finish step, commit on the slice branch if your
   brief allows it.
+- A small fix round (accepted findings only, no new files) is reviewed and gated in
+  one pass: resume the reviewer, who checks the new diff and gives the VERDICT.
+  Anything larger gets a review round, then a gate round.
+- A role's slicer step that a harness permission check denies: do not run it yourself
+  and do not work around it. Stop before the commit with OUTCOME stopped and put the
+  denial's exact text under owner needed.
 - Stop and return without asking the owner when the same slice fails its gate three
   times, the spec is ambiguous or wrong, or an owner decision is needed. A design
   choice the reviewer marks as the owner's goes under "Owner needed" in the report.

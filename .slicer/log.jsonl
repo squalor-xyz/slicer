@@ -2112,3 +2112,7 @@
 {"when": "2026-10-18T14:32:30Z", "item": "s373", "action": "add", "from": "", "to": "open", "note": "Relay contract v7 takes the agents role's last two rules, and this repo sets its relay brief"}
 {"when": "2026-10-18T14:32:30Z", "item": "s374", "action": "add", "from": "", "to": "open", "note": "Find why fresh worktrees found no affected map to borrow"}
 {"when": "2026-10-18T14:32:35Z", "item": "s373", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-18T14:44:00Z", "item": "s373", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T14:45:03Z", "item": "template.relay-brief.md", "action": "template", "from": "missing", "to": "custom", "note": ""}
+{"when": "2026-10-18T14:57:15Z", "item": "s373", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v7 (small fix round reviewe", "by": "Jon Robbins"}
+{"when": "2026-10-18T14:57:15Z", "item": "s373", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

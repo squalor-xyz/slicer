@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-361 items · — 9 · done 344 · retired 8
+361 items · — 8 · done 344 · retired 8 · review 1
 
 ## v1.16
 
@@ -38,7 +38,7 @@
 | 3 | [s370](slices/s370.md) | Lazy loading follow-ups | S | 1 | slicer | s361 relay 2026-10-18: `vcs.move` in move_slice/commit_stage raises a raw OS error when the source file is gone; the `expects_body` closure keeps the load-time Index after apply_outline publish or a TUI reload; tests/test_store_lazy.py:150 comment is stale; Index.get is a linear scan per miss | — |
 | 4 | [s371](slices/s371.md) | Queue prose rows align past 999 | S | 1 | slicer | s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long "left out:" notice has no cap | — |
 | 5 | [s372](slices/s372.md) | Docs mutating-command lists complete | S | 1 | slicer | s359 relay 2026-10-18: the docs/commands.md "Every command that changes state" list omits config, template, catalog, id-prefix, issues-pull, note-verify and relay-roles; docs/agents.md's "every mutating command takes --render ... except land" does not account for relay-run, feedback or init; s366 relay: docs/agents.md:370 says "backticked repo paths" for --disjoint where configuration.md says project paths | — |
-| 6 | [s373](slices/s373.md) | Relay contract v7 | S | 1 | slicer | 2026-10-18 owner: unify the relay on slicer's contract; the agents-repo orchestrator role was a full v4 copy whose small-fix-round and permission-denial rules exist nowhere in slicer; this repo has no relay-brief.md, so every v1.15 brief was assembled by hand | — |
+| 6 | [s373](slices/s373.md) | Relay contract v7 | S | 1 | slicer | 2026-10-18 owner: unify the relay on slicer's contract; the agents-repo orchestrator role was a full v4 copy whose small-fix-round and permission-denial rules exist nowhere in slicer; this repo has no relay-brief.md, so every v1.15 brief was assembled by hand | review |
 | 7 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | — |
 
 ---
