@@ -2050,3 +2050,9 @@
 {"when": "2026-10-18T02:33:10Z", "item": "s365", "action": "note", "from": "", "to": "", "note": "Owner decisions 2026-10-17: no_slice; missing built-in templ", "by": "Jon Robbins"}
 {"when": "2026-10-18T02:33:10Z", "item": "s366", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: --disjoint leaves out a dependent", "by": "Jon Robbins"}
 {"when": "2026-10-18T02:33:10Z", "item": "s362", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: land takes --owner, passed throug", "by": "Jon Robbins"}
+{"when": "2026-10-18T02:34:49Z", "item": "s361", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:35:53Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Review FAIL: blocker - the lookup-miss full load (store.py L", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:37:53Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Owner decision 2026-10-17: lookup-miss full load only for ha", "by": "Jon Robbins"}
+{"when": "2026-10-18T03:37:54Z", "item": "s361", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-18T04:03:15Z", "item": "s361", "action": "note", "from": "", "to": "", "note": "Ready for review: a slice file moved or removed after load m", "by": "Jon Robbins"}
+{"when": "2026-10-18T04:03:16Z", "item": "s361", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

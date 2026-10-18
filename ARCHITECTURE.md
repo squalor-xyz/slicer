@@ -55,7 +55,12 @@ file and caches its parsed body. `State.slice_files` shares the same discovered
 paths and lazily records paths by contained id. Enumeration, length, keys, values,
 items and `dict(...)` load all bodies in folder order and use contained ids, as
 an eager dict does. An id/filename mismatch on lookup forces that full load so
-verification still reports the mismatch. Draft `copy()` copies the discovered
+verification still reports the mismatch. A lookup that misses does one full
+load before it reports the id as absent only when the index marks that id
+`has_slice` but no file has its stem, so an id held only by a misnamed file is
+found. A row-only item and an id the index does not know stay lazy: they miss
+without reading any body, so a corrupt historical body never blocks `next` or
+`show`. Draft `copy()` copies the discovered
 paths with independent caches and edits, without forcing reads. TUI reload
 replaces both mappings together.
 
@@ -209,7 +214,11 @@ state and templates did not also change; a legacy banner with no format is
 slice paths; parsing uses the same error codes and file diagnostics on first
 access. A corrupt historical body no longer prevents `next` from selecting open
 work. Moving a slice file does not parse its body; even a corrupt body can
-move with its item, and the lazy path map follows each completed rename.
+move with its item, and the lazy path map follows each completed rename. So
+`done`, `remove`, `start` and `park` succeed on an item whose body is corrupt
+(an owner decision, 2026-10-17); `show ID`, `render`, `check` and `verify` still
+report it. A file moved or removed after load maps to `corrupt`, not a raw
+`FileNotFoundError`.
 An explicit batch `set` reads all target bodies before changing anything, because
 it synchronizes duplicated fields; a corrupt target refuses the whole batch.
 Staged moves keep the old path until the rename is flushed. `render`,

@@ -6,6 +6,15 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `done`, `remove`, `start` and `park` now succeed on an item whose slice body is corrupt. Slice bodies load on first access, and these commands change the index and move the file without parsing the body, where they once refused the whole load. `show ID`, `render`, `check` and `verify` still report the corrupt body with `corrupt` and its filename.
+
+### Fixed
+
+- A lookup by slice id that misses does one full load before it reports the id as not found when the index marks the id `has_slice` but no file has that stem, so an id that lives only in a misnamed slice file is found; `verify` still reports the mismatch. A row-only item or an id the index does not know stays lazy, so a corrupt historical body still never blocks `next` or `show`.
+- A slice file moved or removed after the roadmap loaded is reported as `corrupt` with its path, not as a raw `FileNotFoundError`.
+
 ## [1.14.0] - 2026-10-17
 
 ### Added

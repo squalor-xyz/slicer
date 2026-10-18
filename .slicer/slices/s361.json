@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Owner decisions 2026-10-17: keep mutating commands working on a corrupt body (document done, remove, start and park in CHANGELOG and ARCHITECTURE.md); a lookup that misses before a full load does one full load before reporting not_found; a slice file moved after load maps to SlicerError code `corrupt`.\n2. Write the failing tests (moved file is corrupt; misnamed-file id is found by lookup); watch them go red.\n3. Implement the fallback full load and the error mapping; name the affected commands in the CHANGELOG entry.\n4. Mutation-check each new test."
+      "body": "1. Owner decisions 2026-10-17: keep mutating commands working on a corrupt body (document done, remove, start and park in CHANGELOG and ARCHITECTURE.md); a lookup that misses before a full load does one full load before reporting not_found, but only for an id the index marks `has_slice` that has no file of that stem; a row-only id (`has_slice` false) stays lazy, so a corrupt historical body never blocks `next` or `show`; a slice file moved after load maps to SlicerError code `corrupt`.\n2. Write the failing tests (moved file is corrupt; misnamed-file id is found by lookup; a corrupt done body plus a row-only open item leaves `next` and `show <row id>` exiting 0); watch them go red.\n3. Implement the scoped fallback full load and the error mapping; name the affected commands in the CHANGELOG entry; keep ARCHITECTURE.md's \"a corrupt historical body no longer prevents `next`\" true.\n4. Mutation-check each new test."
     },
     {
       "heading": "Check",
