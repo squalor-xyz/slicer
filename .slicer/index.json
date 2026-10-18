@@ -12982,7 +12982,7 @@
       "id": "s360",
       "title": "affected.py record() keeps its clean probe before discover",
       "short_title": "affected.py record probe order is tested",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
