@@ -1989,6 +1989,159 @@ def next_batch(
   )
 
 
+@dataclass
+class ParallelPlan:
+  """Waves of items that can run side by side, plus the skip lists `next` reports.
+
+  Each wave is a list of `{id, title, reason}` rows; `reason` is empty for an
+  item that was ready from the start. `in_flight` is the started work whose
+  paths hold wave 1.
+  """
+
+  width: int
+  waves: list[list[dict[str, str]]]
+  in_flight: list[dict[str, str]]
+  unplaced: list[dict[str, str]]
+  blocked: list[tuple[str, list[str]]]
+  held: list[dict[str, object]] = field(default_factory=list)
+  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
+  capped: list[dict[str, int | str]] = field(default_factory=list)
+  claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
+
+  def to_dict(self) -> dict[str, object]:
+    return {
+      "width": self.width,
+      "waves": [
+        {"wave": at, "items": [dict(row) for row in rows]}
+        for at, rows in enumerate(self.waves, start=1)
+      ],
+      "in_flight": [dict(row) for row in self.in_flight],
+      "unplaced": [dict(row) for row in self.unplaced],
+      "blocked": [{"id": item_id, "waiting_on": waiting} for item_id, waiting in self.blocked],
+    }
+
+
+def plan_parallel(
+  state: State, width: int,
+  elsewhere: Mapping[str, list[dict[str, str]]] | None = None,
+  *, tree: str | None = None, size: str | None = None,
+  max_attempts: int | None = None,
+  flags: list[str] | None = None, no_flags: list[str] | None = None,
+) -> ParallelPlan:
+  """Lay the open work out in waves of at most `width` items that can run in parallel.
+
+  Started items are in flight: their paths count as taken for wave 1 only. Each
+  wave then fills greedily in `next` order with items not yet placed whose
+  pending dependencies are done or in an earlier wave and whose paths (less
+  `overlap_ignore`) miss every path already taken in that wave. A wave's paths
+  are released for the next one. If in-flight paths hold back every candidate,
+  the first wave is the first one that can place something.
+
+  An item placed after the first pass carries the reason it was held back in the
+  pass before: `after: ID` (a dependency in that wave), `shares: ID PATH` (a
+  path another item in that wave holds, or in-flight work for wave 1) or
+  `width` (the wave was full). An item whose files section names no path is
+  `unplaced` with reason `no_files`. An item still waiting on a dependency that
+  is never placed is `blocked`. Held, unspecified, capped and sibling-held items
+  are reported as `next` reports them. Read-only.
+  """
+  if isinstance(width, bool) or not isinstance(width, int) or width < 1:
+    raise StateError("plan-parallel --width must be an integer >= 1", code="usage")
+  cfg = state.config
+  _require_files_section(cfg, "plan-parallel")
+  top_level = {entry.name for entry in state.root.iterdir()}
+  pool = _ranked_pool(
+    state, elsewhere, tree=tree, size=size, include_blocked=True,
+    max_attempts=max_attempts, flags=flags, no_flags=no_flags,
+  )
+  in_flight_items = [
+    item for item in state.index.items if cfg.started_status and item.status == cfg.started_status
+  ]
+  wave_of = {item.id: 0 for item in in_flight_items}
+  taken_by_flight: dict[str, str] = {}
+  for item in in_flight_items:
+    for path in counted_paths(cfg, item_paths(state, item.id, top_level=top_level)):
+      taken_by_flight.setdefault(path, item.id)
+  unplaced: list[dict[str, str]] = []
+  counted: dict[str, list[str]] = {}
+  remaining: list[Item] = []
+  for item in pool.items:
+    if item.id in wave_of:
+      continue
+    named = item_paths(state, item.id, top_level=top_level)
+    if not named:
+      unplaced.append({"id": item.id, "title": item.title, "reason": "no_files"})
+      continue
+    counted[item.id] = counted_paths(cfg, named)
+    remaining.append(item)
+  waves: list[list[dict[str, str]]] = []
+  held_back: dict[str, str] = {}
+  first = True
+  while remaining:
+    taken = dict(taken_by_flight) if first else {}
+    placed: list[Item] = []
+    later: list[Item] = []
+    for item in remaining:
+      unmet = [dep for dep in graph.pending(state.index, item, cfg) if dep not in wave_of]
+      if unmet:
+        held_back[item.id] = f"after: {unmet[0]}"
+        later.append(item)
+        continue
+      clash = next(((taken[path], path) for path in counted[item.id] if path in taken), None)
+      if clash is not None:
+        held_back[item.id] = f"shares: {clash[0]} {clash[1]}"
+        later.append(item)
+        continue
+      if len(placed) >= width:
+        held_back[item.id] = "width"
+        later.append(item)
+        continue
+      placed.append(item)
+      for path in counted[item.id]:
+        taken.setdefault(path, item.id)
+    if not placed:
+      if first and taken_by_flight:
+        first = False
+        continue
+      break
+    rows: list[dict[str, str]] = []
+    for item in placed:
+      reason = held_back.get(item.id, "")
+      if not reason:
+        flying = [dep for dep in item.depends_on if wave_of.get(dep) == 0]
+        reason = f"after: {flying[0]}" if flying else ""
+      rows.append({"id": item.id, "title": item.title, "reason": reason})
+    waves.append(rows)
+    for item in placed:
+      wave_of[item.id] = len(waves)
+    remaining = later
+    first = False
+  # Items left over after the last wave wait on what was never placed. A blocked
+  # item the pool dropped (held by a sibling worktree, capped, unspecified) is
+  # not in `remaining`; it keeps every dependency it was waiting on.
+  left = {item.id for item in remaining}
+  settled = {row["id"] for row in unplaced} | set(wave_of)
+  blocked: list[tuple[str, list[str]]] = []
+  for item_id, pending in pool.blocked:
+    if item_id in settled:
+      continue
+    unmet = [dep for dep in pending if dep not in wave_of] if item_id in left else pending
+    if unmet:
+      blocked.append((item_id, unmet))
+  return ParallelPlan(
+    width=width,
+    waves=waves,
+    in_flight=[{"id": item.id, "title": item.title} for item in in_flight_items],
+    unplaced=unplaced,
+    blocked=blocked,
+    held=pool.held,
+    unspecified=pool.unspecified,
+    elsewhere=pool.elsewhere,
+    capped=pool.capped,
+  )
+
+
 def _require_files_section(cfg: Config, what: str) -> None:
   if not cfg.files_section:
     raise StateError(

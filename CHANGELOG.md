@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer plan-parallel [--width N]` plans a parallel run in waves. Started items are in flight and hold their `files_section` paths for wave 1; each wave then fills in `next` order, up to N items (default 4), with items whose dependencies are done or in an earlier wave and whose paths do not meet the wave's. Every item after wave 1 names its reason (`after: ID`, `shares: ID PATH` or `width`); items with no path in their files section are `unplaced` (`no_files`) and items waiting on something never placed are `blocked`. It takes `--tree`, `--size`, `--max-attempts`, `--flag` and `--no-flag` like `next`, needs `files_section`, and does not lock or write. See [commands.md](docs/commands.md) and [agents.md](docs/agents.md).
+
 ### Changed
 
 - Relay contract v7: `slicer ai relay-orchestrator` gains two rules from the agents repo's role. A small fix round (accepted findings only, no new files) is reviewed and gated in one pass, by resuming the reviewer. A role's slicer step that a harness permission check denies is not run by the orchestrator and not worked around: it stops before the commit with `OUTCOME stopped` and the denial's exact text under `owner needed`. `ai.RELAY_CONTRACT` is 7. The agents repo's `relay-orchestrator` role carries an `Expects:` line that its doctor checks against the marker. See [agents.md](docs/agents.md).

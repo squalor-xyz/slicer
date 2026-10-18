@@ -2119,3 +2119,7 @@
 {"when": "2026-10-18T15:05:16Z", "item": "s373", "action": "status", "from": "review", "to": "done", "note": "Landed on main: relay contract v7 (small fix round reviewed and gated in one pass; a denied slicer step stops before the commit) and this repo's relay-brief template with its ENVIRONMENT lines. Suite 2600 OK on main after the merge.", "by": "Jon Robbins"}
 {"when": "2026-10-18T19:07:55Z", "item": "s375", "action": "add", "from": "", "to": "open", "note": "The orchestrator's Order names the one-pass fix round"}
 {"when": "2026-10-18T19:10:41Z", "item": "s376", "action": "add", "from": "", "to": "open", "note": "plan-parallel recommends a wave plan for running slices in parallel"}
+{"when": "2026-10-18T19:18:57Z", "item": "s376", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-18T19:59:31Z", "item": "s376", "action": "note", "from": "", "to": "", "note": "plan-parallel wave plan: 21 tests, full suite 2621 OK, revie", "by": "Jon Robbins"}
+{"when": "2026-10-18T19:59:31Z", "item": "s376", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-18T20:09:46Z", "item": "s376", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}

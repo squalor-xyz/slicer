@@ -1328,11 +1328,11 @@ def cmd_id_prefix(args: argparse.Namespace) -> int:
   return OK
 
 
-def _unspecified_payload(result: ops.NextResult | ops.BatchResult) -> list[dict[str, object]]:
+def _unspecified_payload(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[dict[str, object]]:
   return [{"id": item_id, "missing": missing} for item_id, missing in result.unspecified]
 
 
-def _unspecified_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
+def _unspecified_lines(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[str]:
   lines: list[str] = []
   for item_id, missing in result.unspecified:
     names = " and ".join(missing)
@@ -1344,12 +1344,12 @@ def _unspecified_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
   return lines
 
 
-def _elsewhere_payload(result: ops.NextResult | ops.BatchResult) -> list[dict[str, str]]:
+def _elsewhere_payload(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[dict[str, str]]:
   """Skipped items, one row per sibling, in list's `{worktree, owner, status}` shape plus the id."""
   return [{"id": item_id} | entry for item_id, entries in result.elsewhere for entry in entries]
 
 
-def _elsewhere_lines(result: ops.NextResult | ops.BatchResult) -> list[str]:
+def _elsewhere_lines(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[str]:
   return [
     f"skipped {item_id} (in work in {', '.join('wt:' + e['worktree'] for e in entries)})"
     for item_id, entries in result.elsewhere
@@ -1367,7 +1367,10 @@ def _sibling_only_lines(rows: list[dict[str, str]]) -> list[str]:
   )]
 
 
-def _note_skips(payload: dict, lines: list[str], result: ops.NextResult | ops.BatchResult) -> None:
+def _note_skips(
+  payload: dict, lines: list[str],
+  result: ops.NextResult | ops.BatchResult | ops.ParallelPlan,
+) -> None:
   """Expose why candidates were skipped, each category only when non-empty."""
   if result.held:
     payload["held"] = result.held
@@ -1750,6 +1753,43 @@ def _cmd_next_batch(
   _note_skips(payload, lines, result)
   _emit(args, payload, "\n".join(lines))
   return OK
+
+
+def cmd_plan_parallel(args: argparse.Namespace) -> int:
+  """The waves of work that can run side by side. Read-only, like `next`."""
+  state = _state(args)
+  elsewhere = store.in_work_elsewhere(state.root, state.index)
+  plan = ops.plan_parallel(
+    state, args.width, elsewhere, tree=args.tree, size=args.size,
+    max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
+  )
+  _warn_files_section(state)
+  payload = plan.to_dict()
+  short = {item.id: item.display_title() for item in state.index.items}
+
+  def block(heading: str, rows: list[dict[str, str]]) -> list[str]:
+    id_w = max(len(row["id"]) for row in rows)
+    titles = [short.get(row["id"], row["title"]) for row in rows]
+    title_w = max(len(title) for title in titles)
+    return [heading, *(
+      f"  {row['id']:<{id_w}}  {title:<{title_w}}  {row.get('reason', '')}".rstrip()
+      for row, title in zip(rows, titles)
+    )]
+
+  lines: list[str] = []
+  if plan.in_flight:
+    lines.extend(block("in flight", plan.in_flight))
+  for at, rows in enumerate(plan.waves, start=1):
+    lines.extend(block(f"wave {at}", rows))
+  if plan.unplaced:
+    lines.extend(block("unplaced", plan.unplaced))
+  blocked = _blocked_payload(plan.blocked)
+  if blocked:
+    _append_blocked(lines, blocked)
+  _note_skips(payload, lines, plan)
+  _emit(args, payload, "\n".join(lines) or "nothing to plan",
+        keep_empty=("waves", "in_flight", "unplaced", "blocked"))
+  return OK if plan.waves else USAGE
 
 
 def _claim_width(
@@ -3669,6 +3709,19 @@ def build_parser() -> argparse.ArgumentParser:
                   help="with --start and a custom --status, move the claimed item to this status")
   sp.add_argument("--path", action="store_true",
                   help="also print the slice file path (text only; JSON is unchanged)")
+
+  sp = add("plan-parallel", cmd_plan_parallel,
+           "waves of items that can run in parallel, from dependencies and files_section paths")
+  sp.add_argument("--width", type=_positive_int, default=4, metavar="N",
+                  help="at most N items per wave (default 4)")
+  sp.add_argument("--max-attempts", type=_positive_int, default=None, metavar="N",
+                  help="skip fresh implementation pickups at N attempts; started work stays in flight")
+  sp.add_argument("--tree", help="only items in this tree (one tree; not repeatable)")
+  sp.add_argument("--size", help="only items of this exact size")
+  sp.add_argument("--flag", action="append", metavar="PATTERN",
+                  help="include any matching flag (repeatable, case-sensitive); quote patterns: --flag 'risk-*'")
+  sp.add_argument("--no-flag", action="append", metavar="PATTERN",
+                  help="exclude any matching flag, overriding --flag (repeatable); quote patterns: --no-flag 'risk-*'")
 
   sp = add("next-id", cmd_next_id, "the id the next add would take, without allocating it")
 
