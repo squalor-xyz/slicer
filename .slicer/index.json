@@ -12952,7 +12952,7 @@
       "id": "s359",
       "title": "Docs and hints catch up with v1.14's commands",
       "short_title": "Docs name retire, land hint and note --render",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
