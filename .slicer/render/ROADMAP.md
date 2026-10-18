@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-354 items · — 14 · done 332 · retired 8
+354 items · — 13 · done 332 · retired 8 · review 1
 
 ## v1.15
 
@@ -44,7 +44,7 @@
 | 9 | [s364](slices/s364.md) | Merge hint only for content drift | S | 1 | slicer | s325 relay 2026-10-17, reviewer finding 1: the roadmap-only hint also prints when the roadmap render is stale with cause `missing`, or `renderer_format` in a project with no slice renders | — |
 | 10 | [s365](slices/s365.md) | relay-brief follow-ups | S | 1 | slicer | s322 relay 2026-10-17: relay-brief returns `unspecified` for an item with no slice; projects created before s322 list relay-brief.md as missing until `template reset`; ai.py calls the private `ops._missing_spec` and now imports ops, render, roles, store and templates | — |
 | 11 | [s366](slices/s366.md) | Overlap paths ignore prose tokens | S | 1 | slicer | s324 relay 2026-10-17: paths.extract accepts `and/or`, `os.path`, `os.fsync` and `Config.load` as paths (s313's Files yields `os.fsync`); a files_section naming no existing heading puts every item in unknown_files without a word | — |
-| 12 | [s367](slices/s367.md) | affected.py handles new repo files | S | 1 | tests | s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with "src/slicer/templates/relay-brief.md is not in the map", because the borrowed map predates s322's template | — |
+| 12 | [s367](slices/s367.md) | affected.py handles new repo files | S | 1 | tests | s324 and s326 relays 2026-10-17: `affected.py --run` refused in fresh worktrees with "src/slicer/templates/relay-brief.md is not in the map", because the borrowed map predates s322's template | review |
 
 ---
 

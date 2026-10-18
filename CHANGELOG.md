@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `tests/affected.py` no longer refuses a changed non-Python file that the map does not name, such as a template added after a borrowed map was recorded. It selects the tests that read a file in that file's directory and says so on stderr. A new Python file, or a file whose directory no test reads, still refuses.
+
 ## [1.14.0] - 2026-10-17
 
 ### Added

@@ -48,9 +48,13 @@ commit that map was recorded at, and names both on stderr. Without one, run the
 full discover once first, on a clean checkout: a successful run writes
 `.venv/affected-map.json` for that HEAD (with `"clean": false` if the tree was dirty),
 holding the lines each test ran and the non-Python repo files it read, so
-a changed Markdown file or template selects the tests that read it. Run the
-full discover once before done. The exception is a diff that touches nothing
-under `src/` or `tests/`:
+a changed Markdown file or template selects the tests that read it. A changed
+non-Python file that no map entry names, such as a template added after a
+borrowed map was recorded, selects the tests that read a file in its
+directory and says so on stderr. A Python file the map does not name still
+refuses, as does one whose directory no test reads.
+Run the full discover once before done. The exception is a diff that touches
+nothing under `src/` or `tests/`:
 `python3 tests/affected.py --run`, `slicer check` and `git diff --check` replace it.
 
 The temporary directory does not require creating a virtual environment. Tests
