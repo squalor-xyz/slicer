@@ -2142,3 +2142,6 @@
 {"when": "2026-10-19T03:27:27Z", "item": "s379", "action": "set", "from": "", "to": "", "note": "size -→S; pass_key -→v1.16; urgency 2→1; effort -→1"}
 {"when": "2026-10-19T03:27:27Z", "item": "s380", "action": "set", "from": "", "to": "", "note": "size -→S; pass_key -→v1.16; importance 2→1; effort -→1"}
 {"when": "2026-10-19T03:27:27Z", "item": "s382", "action": "set", "from": "", "to": "", "note": "depends_on -→s378"}
+{"when": "2026-10-19T04:05:09Z", "item": "s383", "action": "add", "from": "", "to": "open", "note": "slicer snapshot --json returns a dashboard's reads in one process, for one or several --root projects"}
+{"when": "2026-10-19T04:05:09Z", "item": "s384", "action": "add", "from": "", "to": "open", "note": "Render files are regenerated, or reported stale, after a plain git merge, not only after slicer land"}
+{"when": "2026-10-19T04:05:18Z", "item": "s378", "action": "note", "from": "", "to": "", "note": "ork integration review 2026-10-19 (R5): ork now accepts a li", "by": "Jon Robbins"}
