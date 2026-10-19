@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 385,
+  "next_id": 386,
   "preamble": "",
   "passes": [
     {
@@ -13928,7 +13928,7 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [
-        "s378"
+        "s385"
       ],
       "note_records": [],
       "claim": null,
@@ -14010,6 +14010,36 @@
         "importance": 2,
         "urgency": 2,
         "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s385",
+      "title": "ai relay --json lists what each relay contract version changed",
+      "short_title": "Relay contract change list",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "ork integration review 2026-10-19 (R5), noted on s378",
+        "discovered_from": "s378",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }
