@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import shlex
 
+from slicer.relayrun import OUTCOMES
+
 
 # The implement loop and the exit-code rules. The instructions and the agent
 # skill both use these sentences, so a wording change cannot land in only one.
@@ -162,6 +164,141 @@ def contract_line() -> str:
   return f"relay v{RELAY_CONTRACT}"
 
 
+RELAY_SETUP = (
+  ('roles', """\
+which roles run. The architect is optional: the owner decides."""),
+  ('split', """\
+whether the implementation splits into parts. The default is one implementer.
+  A split needs parts with disjoint files and their own tests; a slice too big
+  for one implementer is two slices or a slivered slice."""),
+  ('sliver', """\
+whether to sliver the slice. The default is no. Propose slivers only when the
+  slice's effort and the cut allow it (see Slivers) and when that costs less than
+  one implementer. The outer session confirms the sliver list and which slivers
+  run in parallel with the owner."""),
+  ('role_models', """\
+the agent, vendor, model and reasoning effort for each role. A role on the
+  orchestrator's own harness runs as a native subagent; a role on another harness
+  runs as a headless session in the slice worktree with the same brief."""),
+  ('orchestrator', """\
+the orchestrator's agent, model and reasoning effort, set explicitly on every
+  spawn. It runs as the agent type `relay-orchestrator` where the harness has one
+  installed, otherwise as a general-purpose agent briefed with
+  `slicer ai relay-orchestrator`."""),
+  ('environment', """\
+the environment lines every brief carries: the interpreter, the shell limits
+  and the scratch directory, taken from the project's own instructions."""),
+  ('end_point', """\
+where the run ends:
+  - after the finish step,
+  - after a commit on the slice branch, or
+  - landed. Land only when the owner asks."""),
+)
+
+RELAY_END_OPTIONS = ("finish", "commit", "landed")
+
+RELAY_STEPS = (
+  (1, """\
+Create the worktree, then start the run and record the orchestrator's step,
+   with the role `orchestrator` (see Record the run below)."""),
+  (2, """\
+Spawn the orchestrator with a brief that starts "First run
+   `slicer ai relay-orchestrator` and follow it.", then the environment lines, the
+   slice, the worktree and branch, the roles with agent, vendor, model and
+   reasoning effort, the end point, a temp directory per role, RUN and the
+   orchestrator's step id."""),
+  (3, """\
+Wait for its run report. One slice runs in the foreground."""),
+  (4, """\
+Check the report's first line, the contract marker, and its last line,
+   `nothing left running: yes`. Without that last line, stop the orchestrator
+   first."""),
+  (5, """\
+End the run with `--close-steps done`, which marks the orchestrator step, file the
+   report's later notes as one more commit on the slice branch, then land when the
+   owner authorizes it."""),
+)
+
+ORCHESTRATOR_STEPS = (
+  (1, """\
+The implementer runs `slicer start ID --render --strict`, red tests and implementation."""),
+  (2, """\
+Review, then accepted findings back to the implementer for each fix round,
+   then the architect, when the owner chose one, then the gate."""),
+  (3, """\
+Only after `VERDICT: PASS`, the implementer runs the closing note and finish step:
+   {finish_step}"""),
+  (4, """\
+After the finish step, commit on the slice branch only when your brief allows it."""),
+)
+
+RELAY_REPORT_MAX_LINES = 30
+
+RELAY_REPORT_LINES = (
+  ('contract', """\
+Contract: {contract}"""),
+  ('slice', """\
+SLICE ID OUTCOME {outcomes} BRANCH NAME @ SHA"""),
+  ('worktree', """\
+worktree: PATH"""),
+  ('rounds', """\
+rounds: N, last verdict: VERDICT LINE"""),
+  ('tests', """\
+tests: COUNTS"""),
+  ('diff_stat', """\
+diff stat: STAT"""),
+  ('deviations', """\
+deviations accepted: LIST OR none"""),
+  ('later_notes', """\
+later notes: LIST OR none"""),
+  ('owner_needed', """\
+owner needed: LIST OR none"""),
+  ('role_steps', """\
+role steps: STEP IDS"""),
+  ('nothing_left_running', """\
+nothing left running: yes"""),
+)
+
+RELAY_STOP = (
+  "the same slice fails its gate three times",
+  "the spec turns out ambiguous or wrong",
+  "an owner decision is needed",
+)
+
+
+def _relay_steps_text(steps: tuple[tuple[int, str], ...]) -> str:
+  """Keep the contract's existing wraps while rendering its numbered data."""
+  return "\n".join(f"{number}. {text}" for number, text in steps)
+
+
+def relay_contract(finish: str = "done", *, orchestrator: bool = False) -> dict:
+  """Expose the same contract data as the prose, with single-line JSON text."""
+  def flat(text: str) -> str:
+    return " ".join(text.split())
+
+  payload = {}
+  if not orchestrator:
+    payload["setup"] = [
+      {"key": key, "text": flat(text), **({"options": list(RELAY_END_OPTIONS)} if key == "end_point" else {})}
+      for key, text in RELAY_SETUP
+    ]
+  steps = ORCHESTRATOR_STEPS if orchestrator else RELAY_STEPS
+  payload["order"] = [
+    {"step": number, "text": flat(text.format(finish_step=_relay_finish_step(finish)))}
+    for number, text in steps
+  ]
+  payload["report"] = {
+    "max_lines": RELAY_REPORT_MAX_LINES,
+    "lines": [
+      {"key": key, "template": template.format(contract=contract_line(), outcomes="|".join(OUTCOMES))}
+      for key, template in RELAY_REPORT_LINES
+    ],
+  }
+  payload["outcomes"] = list(OUTCOMES)
+  payload["stop"] = list(RELAY_STOP)
+  return payload
+
+
 # The slice relay, shared by both finish modes. The close is appended separately
 # so the handoff text can avoid naming the other finish command. It is two constants
 # so the owner's role matrix can sit between Setup and Order (see relay_text).
@@ -213,51 +350,18 @@ The owner chooses the models.
 Before the worktree exists, the outer session reads the slice's size with
 `slicer show ID --json --lean` and confirms these with the owner:
 
-- which roles run. The architect is optional: the owner decides.
-- whether the implementation splits into parts. The default is one implementer.
-  A split needs parts with disjoint files and their own tests; a slice too big
-  for one implementer is two slices or a slivered slice.
-- whether to sliver the slice. The default is no. Propose slivers only when the
-  slice's effort and the cut allow it (see Slivers) and when that costs less than
-  one implementer. The outer session confirms the sliver list and which slivers
-  run in parallel with the owner.
-- the agent, vendor, model and reasoning effort for each role. A role on the
-  orchestrator's own harness runs as a native subagent; a role on another harness
-  runs as a headless session in the slice worktree with the same brief.
-- the orchestrator's agent, model and reasoning effort, set explicitly on every
-  spawn. It runs as the agent type `relay-orchestrator` where the harness has one
-  installed, otherwise as a general-purpose agent briefed with
-  `slicer ai relay-orchestrator`.
-- the environment lines every brief carries: the interpreter, the shell limits
-  and the scratch directory, taken from the project's own instructions.
-- where the run ends:
-  - after the finish step,
-  - after a commit on the slice branch, or
-  - landed. Land only when the owner asks.
+{setup}
 
 Wait for the owner's answers before creating the worktree.
 
-"""
+""".replace("{setup}", "\n".join(f"- {text}" for _key, text in RELAY_SETUP))
 
 RELAY_ORDER = """\
 ## Order
 
 The outer session, for each slice:
 
-1. Create the worktree, then start the run and record the orchestrator's step,
-   with the role `orchestrator` (see Record the run below).
-2. Spawn the orchestrator with a brief that starts "First run
-   `slicer ai relay-orchestrator` and follow it.", then the environment lines, the
-   slice, the worktree and branch, the roles with agent, vendor, model and
-   reasoning effort, the end point, a temp directory per role, RUN and the
-   orchestrator's step id.
-3. Wait for its run report. One slice runs in the foreground.
-4. Check the report's first line, the contract marker, and its last line,
-   `nothing left running: yes`. Without that last line, stop the orchestrator
-   first.
-5. End the run with `--close-steps done`, which marks the orchestrator step, file the
-   report's later notes as one more commit on the slice branch, then land when the
-   owner authorizes it.
+{order}
 
 Each slice gets a fresh orchestrator, so no orchestrator carries one slice's
 context into the next.
@@ -308,7 +412,7 @@ starts their orchestrators together and waits for the reports without polling.
 Review and land them one at a time, and rerun the suite on the slice branch merged
 with the new main when main moved.
 
-"""
+""".replace("{order}", _relay_steps_text(RELAY_STEPS))
 
 RELAY_SLIVERS = """\
 ## Slivers
@@ -380,8 +484,7 @@ def relay_shared_sections(required_note_kind: str = "") -> str:
     + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
     + "`slicer list --json --lean`.\n\n"
     + "## Stop\n\n"
-    + "Stop when the same slice fails its gate three times, the spec turns out "
-    + "ambiguous or wrong, or an owner decision is needed.\n\n"
+    + "Stop when " + ", ".join(RELAY_STOP[:-1]) + ", or " + RELAY_STOP[-1] + ".\n\n"
     + handoff_policy_text(required_note_kind)
   )
 
@@ -511,12 +614,7 @@ return one run report.
 
 Run your one slice in the worktree you were given, with the roles your brief lists:
 
-1. The implementer runs `slicer start ID --render --strict`, red tests and implementation.
-2. Review, then accepted findings back to the implementer for each fix round,
-   then the architect, when the owner chose one, then the gate.
-3. Only after `VERDICT: PASS`, the implementer runs the closing note and finish step:
-   {finish_step}
-4. After the finish step, commit on the slice branch only when your brief allows it.
+{order}
 
 Recording is advisory: a failed `relay-run` call never stops the relay.
 
@@ -533,24 +631,28 @@ main moved.
 {shared_sections}\
 ## Run report
 
-At most 30 lines, in this order, and nothing else:
+At most {max_lines} lines, in this order, and nothing else:
 
 ```
-Contract: {contract}
-SLICE ID OUTCOME pass|fail|stopped BRANCH NAME @ SHA
-worktree: PATH
-rounds: N, last verdict: VERDICT LINE
-tests: COUNTS
-diff stat: STAT
-deviations accepted: LIST OR none
-later notes: LIST OR none
-owner needed: LIST OR none
-role steps: STEP IDS
-nothing left running: yes
+{report}
 ```
 
 Write the last line only after you check that nothing you started still runs.
 """
+
+
+def _relay_finish_step(finish: str) -> str:
+  """Share the finish wording between Tracking order and structured Order."""
+  if finish == "handoff":
+    return (
+      "`slicer note ID --text \"Describe the verified outcome\" --render`\n"
+      "  and then the finish step, `slicer handoff ID --render --check`."
+    )
+  else:
+    return (
+      "the finish step,\n"
+      "  `slicer done ID --note \"Describe the verified outcome\" --render --check`."
+    )
 
 
 def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str:
@@ -559,16 +661,7 @@ def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str
   It follows the project's finish step and report kind the way `relay_text` does, and
   opens with the same marker line.
   """
-  if finish == "handoff":
-    step = (
-      "`slicer note ID --text \"Describe the verified outcome\" --render`\n"
-      "  and then the finish step, `slicer handoff ID --render --check`."
-    )
-  else:
-    step = (
-      "the finish step,\n"
-      "  `slicer done ID --note \"Describe the verified outcome\" --render --check`."
-    )
+  step = _relay_finish_step(finish)
   # The handoff note is too long to follow "They are " on a line of 88 columns, so it wraps.
   lead = "\n  " if finish == "handoff" else " "
   tracking = (
@@ -577,7 +670,10 @@ def orchestrator_text(finish: str = "done", required_note_kind: str = "") -> str
     "  Every implementer brief says so; before review the implementer runs neither.\n"
   )
   body = ORCHESTRATOR_RULES.format(
-    tracking=tracking, contract=contract_line(), finish_step=step,
+    tracking=tracking,
+    order=_relay_steps_text(ORCHESTRATOR_STEPS).format(finish_step=step),
+    max_lines=RELAY_REPORT_MAX_LINES,
+    report="\n".join(line["template"] for line in relay_contract(finish)["report"]["lines"]),
     shared_sections=relay_shared_sections(required_note_kind),
   )
   return f"Contract: {contract_line()}\n\n" + body

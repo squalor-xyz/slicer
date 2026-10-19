@@ -12,6 +12,7 @@ import os
 import re
 import shlex
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
@@ -1915,6 +1916,105 @@ class AiRelayContractTests(RelayRolesCase):
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     self.assertEqual(orchestrator["contract"], "relay v7")
 
+  def golden(self, command, finish="done", matrix=False):
+    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v7.json").read_text())[
+      f"{command}-{finish}-{matrix}"
+    ]
+
+  def numbered_steps(self, text):
+    order = text.split("## Order\n\n", 1)[1]
+    return [
+      {"step": int(number), "text": self.flat(body)}
+      for number, body in re.findall(r"(?m)^(\d+)\. (.*(?:\n {2,}[^\n]+)*)", order)
+    ]
+
+  def test_AiRelay_Json_CarriesStructuredContract(self):
+    repo = self.project()
+    payload = json.loads(self.ok(repo, "ai", "relay", "--json"))
+    self.assertEqual(list(payload), ["contract", "relay", "setup", "order", "report", "outcomes", "stop"])
+    setup = self.golden("relay").split("## Setup\n\n", 1)[1].split("Wait for", 1)[0]
+    bullets = re.findall(r"(?m)^- (.*(?:\n  [^\n]+)*)", setup)
+    expected = [dict(key=key, text=self.flat(text)) for key, text in zip(
+      ("roles", "split", "sliver", "role_models", "orchestrator", "environment", "end_point"), bullets
+    )]
+    expected[-1]["options"] = ["finish", "commit", "landed"]
+    self.assertEqual(payload["setup"], expected)
+    self.assertEqual(payload["order"], self.numbered_steps(self.golden("relay")))
+    self.assertEqual(payload["outcomes"], ["pass", "fail", "stopped"])
+    self.assertEqual(payload["stop"], [
+      "the same slice fails its gate three times", "the spec turns out ambiguous or wrong",
+      "an owner decision is needed",
+    ])
+
+  def test_AiRelayOrchestrator_Json_CarriesStructuredContract(self):
+    repo = self.project()
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.ok(repo, "config", "implement_finish", finish)
+        payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
+        self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop"])
+        self.assertEqual(payload["order"], self.numbered_steps(self.golden("relay-orchestrator", finish)))
+        relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
+        for key in ("report", "outcomes", "stop"):
+          self.assertEqual(payload[key], relay[key])
+
+  def test_AiRelay_JsonReport_NamesEachReportLine(self):
+    repo = self.project()
+    templates = self.golden("relay-orchestrator").split("## Run report", 1)[1].split("```", 2)[1].strip().splitlines()
+    keys = ["contract", "slice", "worktree", "rounds", "tests", "diff_stat", "deviations",
+            "later_notes", "owner_needed", "role_steps", "nothing_left_running"]
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        payload = json.loads(self.ok(repo, "ai", command, "--json"))
+        self.assertEqual(payload["report"], {"max_lines": 30, "lines": [
+          {"key": key, "template": line} for key, line in zip(keys, templates)
+        ]})
+
+  def test_AiRelay_JsonText_IsOneLine(self):
+    repo = self.project()
+    for command in ("relay", "relay-orchestrator"):
+      payload = json.loads(self.ok(repo, "ai", command, "--json"))
+      for key in ("setup", "order", "stop"):
+        if key == "setup" and command == "relay-orchestrator":
+          continue
+        for entry in payload[key]:
+          text = entry if isinstance(entry, str) else entry["text"]
+          with self.subTest(command=command, key=key, text=text):
+            self.assertEqual(text, self.flat(text))
+            self.assertIn(text, self.flat(self.golden(command)))
+
+  def test_AiRelay_JsonOutcomes_MatchRelayRunEnd(self):
+    repo = self.project()
+    self.ok(repo, "add", "Example", "--importance", "2", "--urgency", "2", "--effort", "1")
+    payload = json.loads(self.ok(repo, "ai", "relay", "--json"))
+    self.assertEqual(payload["outcomes"], ["pass", "fail", "stopped"])
+    for outcome in payload["outcomes"]:
+      run = json.loads(self.ok(repo, "relay-run", "begin", "S01", "--json"))["run"]["id"]
+      ended = json.loads(self.ok(repo, "relay-run", "end", run, "--outcome", outcome, "--json"))
+      self.assertEqual(ended["run"]["outcome"], outcome)
+    self.refuse(repo, "relay-run", "end", run, "--outcome", "invalid", code=2, error="bad_run_field")
+
+  def test_AiRelay_Lean_KeepsContractLists(self):
+    repo = self.project()
+    for command in ("relay", "relay-orchestrator"):
+      payload = json.loads(self.ok(repo, "ai", command, "--json"))
+      self.assertIn("order", payload)
+      self.assertEqual(json.loads(self.ok(repo, "ai", command, "--json", "--lean")), payload)
+      # Simulate an empty contract list at the presentation boundary.
+      empty_contract = {"order": [], "report": {"max_lines": 30, "lines": []}, "outcomes": [], "stop": []}
+      if command == "relay":
+        empty_contract = {"setup": [], **empty_contract}
+      with patch("slicer.ai.relay_contract", return_value=empty_contract):
+        empty = json.loads(self.ok(repo, "ai", command, "--json", "--lean"))
+      for key in ("order", "outcomes", "stop"):
+        self.assertEqual(empty[key], [])
+      self.assertEqual(empty["report"]["lines"], [])
+      if command == "relay":
+        self.assertEqual(empty["setup"], [])
+        with patch("slicer.ai.RELAY_END_OPTIONS", ()):
+          no_options = json.loads(self.ok(repo, "ai", command, "--json", "--lean"))
+        self.assertEqual(no_options["setup"][-1]["options"], [])
+
   def test_AiRelay_Setup_NamesOrchestratorAgentType(self) -> None:
     setup = self.section(ai.relay_text(), "## Setup", "## Order")
     self.assertIn("agent type `relay-orchestrator`", setup)
@@ -2059,7 +2159,7 @@ class AiRelayContractTests(RelayRolesCase):
     repo = self.project()
     text = self.orchestrator(repo)
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(list(payload), ["contract", "orchestrator"])
+    self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop"])
     self.assertEqual(payload["contract"], "relay v7")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))

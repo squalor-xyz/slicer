@@ -995,7 +995,8 @@ class AiRelayTests(unittest.TestCase):
       code, out, err = repo.run("ai", "relay", "--json")
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
-      self.assertEqual(json.loads(out), {"contract": "relay v7", "relay": text})
+      self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
+                       {"contract": "relay v7", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -1821,3 +1822,28 @@ class AiRelayBriefTests(unittest.TestCase):
     repo = self.project()
     with patch.object(ai, "contract_line", return_value="relay v999-test"):
       self.assertEqual(self.payload(repo)["contract"], "relay v999-test")
+
+
+class RelayGoldenTests(unittest.TestCase):
+  """Pin the pre-s378 CLI bytes independently of the live contract data."""
+
+  def check_golden(self, command):
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v7.json").read_text())
+    for finish in ("done", "handoff"):
+      for matrix in (False, True):
+        with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:
+          for argv in (("init",), ("config", "implement_finish", finish)):
+            code, out, err = repo.run(*argv)
+            self.assertEqual((code, err), (0, ""), out)
+          if matrix:
+            code, out, err = repo.run("relay-roles", "init", "--render")
+            self.assertEqual((code, err), (0, ""), out)
+          code, out, err = repo.run("ai", command)
+          self.assertEqual((code, err), (0, ""), out)
+          self.assertEqual(out, golden[f"{command}-{finish}-{matrix}"])
+
+  def test_AiRelay_Text_UnchangedByteForByte(self):
+    self.check_golden("relay")
+
+  def test_AiRelayOrchestrator_Text_UnchangedByteForByte(self):
+    self.check_golden("relay-orchestrator")

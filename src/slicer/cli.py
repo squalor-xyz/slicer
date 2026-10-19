@@ -97,6 +97,7 @@ def _recursive_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 def _emit(
   args: argparse.Namespace, payload: object, text: str, *, keep_empty: tuple[str, ...] = (),
+  keep_fields: tuple[str, ...] = (),
 ) -> None:
   collected = getattr(args, "_collect", None)
   if getattr(args, "json", False):
@@ -110,6 +111,10 @@ def _emit(
           for key, value in payload.items()
           if key in shaped or key in keep_empty
         }
+    if keep_fields and isinstance(payload, dict) and isinstance(shaped, dict):
+      # Fixed machine contracts retain nested lists even when lean would prune them.
+      shaped = {key: value if key in keep_fields else shaped[key]
+                for key, value in payload.items() if key in shaped or key in keep_fields}
     if collected is not None:
       # `-r` gathers each project's result instead of printing it.
       collected.append(shaped)
@@ -413,7 +418,8 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       # The section sits under `## Roles matrix`, so its headings start one level down.
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
-  _emit(args, {"contract": ai.contract_line(), "relay": text}, text.rstrip("\n"))
+  _emit(args, {"contract": ai.contract_line(), "relay": text, **ai.relay_contract(finish)}, text.rstrip("\n"),
+        keep_fields=("setup", "order", "report", "outcomes", "stop"))
   return OK
 
 
@@ -422,7 +428,8 @@ def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   report kind the way `ai relay` reads them; outside a project it is the generic text."""
   finish, required = _ai_policy(args)
   text = ai.orchestrator_text(finish, required)
-  _emit(args, {"contract": ai.contract_line(), "orchestrator": text}, text.rstrip("\n"))
+  _emit(args, {"contract": ai.contract_line(), "orchestrator": text, **ai.relay_contract(finish, orchestrator=True)},
+        text.rstrip("\n"), keep_fields=("order", "report", "outcomes", "stop"))
   return OK
 
 
