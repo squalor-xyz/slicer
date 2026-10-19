@@ -13476,7 +13476,7 @@
       "id": "s369",
       "title": "set takes --discovered-from, and the promote refusal names the right command",
       "short_title": "set --discovered-from",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13492,10 +13492,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-19T03:09:03Z"
-      },
+      "claim": null,
       "fields": {
         "size": "S",
         "flags": [],
