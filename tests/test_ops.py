@@ -250,6 +250,7 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(code, 2, err)
       self.assertIn("field_in_promote_source", out + err)
       self.assertIn("cannot set 'parent'", err)
+      self.assertIn("set --parent", err)
       self.assertEqual(repo.read(".slicer/index.json"), before)
       self.assertEqual(repo.state().index.require("S05").parent, "")
       self.assertFalse(repo.state().index.require("S05").has_slice)
@@ -265,6 +266,24 @@ class OpsTests(unittest.TestCase):
       self.assertIn("cannot set 'discovered_from'", err)
       self.assertEqual(repo.read(".slicer/index.json"), before)
       self.assertEqual(repo.state().index.require("S05").discovered_from, "")
+      self.assertFalse(repo.state().index.require("S05").has_slice)
+
+  def test_Promote_SourceWithDiscoveredFrom_MessageNamesSet(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\ndiscovered_from: S01\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2, err)
+      self.assertIn("set it with `set --discovered-from`", err)
+      self.assertNotIn("`add`", err)
+
+  def test_Promote_SourceWithKey_MessageSaysKeyIsFixedOnceFiled(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.write("draft.md", "## a new idea\nkey: idea-one\n\n### Why\nBecause.\n")
+      code, _, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 2, err)
+      self.assertIn("its key is fixed once filed", err)
       self.assertFalse(repo.state().index.require("S05").has_slice)
 
   def test_Promote_SourceWithDepends_RefusesAndWritesNothing(self) -> None:
@@ -958,6 +977,23 @@ class SetFlagGroupTests(unittest.TestCase):
     repo.run("init")
     repo.run("add", "a thing")
     return repo
+
+  def test_Set_DiscoveredFrom_SetsAndClears(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "another")
+      code, _, err = repo.run("set", "S02", "--discovered-from", "S01", "--render")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").discovered_from, "S01")
+      self.assertIn("discovered from S01", repo.read(".slicer/render/ROADMAP.md"))
+      code, _, err = repo.run("set", "S02", "--discovered-from", "", "--render")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.state().index.require("S02").discovered_from, "")
+      self.assertNotIn("discovered from", repo.read(".slicer/render/ROADMAP.md"))
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("set", "S02", "--discovered-from", "S99", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(json.loads(out)["error"]["code"], "no_such_item")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
 
   def test_Set_Flag_IsStored(self) -> None:
     with self.repo() as repo:

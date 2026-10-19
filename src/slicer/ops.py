@@ -713,7 +713,7 @@ def _slice_from_source(source: str, item: Item, cfg: object, path: str) -> Slice
   sections -- so there is no second slice format to learn or maintain. The item
   already owns its title and fields, so the source is sections and lead only:
   its `##` title is ignored, and any item-level key is refused rather than
-  silently dropped, pointing the writer at `add`/`set` where those belong.
+  silently dropped, naming the command that changes it.
   """
   parsed = outline.parse(source, path=path)
   if parsed.preamble:
@@ -761,12 +761,34 @@ _SOURCE_FIELD_DEFAULTS = {
 }
 
 
+# The `set` flag that changes each source key on an item that already exists.
+# `key` has none: only `add --key` sets it, on a new item, so its refusal says
+# the key is fixed once filed instead.
+_SOURCE_FIELD_COMMANDS = {
+  "short_title": "set --short-title",
+  "size": "set --size",
+  "trees": "set --tree",
+  "findings": "set --findings",
+  "pass_key": "set --pass",
+  "group": "set --group",
+  "status": "set --status",
+  "depends": "set --depends-on",
+  "discovered_from": "set --discovered-from",
+  "parent": "set --parent",
+  "importance": "set --importance",
+  "urgency": "set --urgency",
+  "effort": "set --effort",
+}
+
+
 def _reject_promote_source_keys(spec: object, path: str) -> None:
   for name, default in _SOURCE_FIELD_DEFAULTS.items():
     if getattr(spec, name) != default:
+      command = _SOURCE_FIELD_COMMANDS.get(name)
+      fix = f"set it with `{command}`" if command else "its key is fixed once filed"
       raise StateError(
         f"{path}: a promote source cannot set {name!r}; the item already owns "
-        "its fields -- set them with `add` or `set`",
+        f"its fields -- {fix}",
         code="field_in_promote_source",
       )
 
@@ -1209,7 +1231,7 @@ def set_fields_many(
   add_flags = list(_clean(add_flags or []))
   remove_flags = list(_clean(remove_flags or []))
   items = _batch_items(state, item_ids)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "parent", "importance", "urgency", "effort", "attempts"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "parent", "discovered_from", "importance", "urgency", "effort", "attempts"}
   _reject_bad_text(**fields)
   values = {}
   for key, value in fields.items():
@@ -1229,6 +1251,9 @@ def set_fields_many(
   if "parent" in values:
     for item in items:
       _check_parent(state, item.id, values["parent"])
+  # The same check `add` makes: an empty source clears it, any other must exist.
+  if values.get("discovered_from"):
+    state.index.require(values["discovered_from"])
 
   # Every explicit set syncs duplicated slice fields. Refuse unreadable targets
   # before changing any status or moving any file in the batch.

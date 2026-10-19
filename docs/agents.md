@@ -621,7 +621,8 @@ character for character (case and Unicode form matter; no PATTERN or `--in`).
 `slicer add "Implement the new loader" --short-title "New loader" --importance 3 --urgency 2 --effort 2 --depends-on S01 --render`.
 Score what you file rather than leaving the 2/2 defaults, and say why in your reply.
 `add --discovered-from ID` records an existing source item in
-`fields.discovered_from`, with any status allowed. `list --discovered-from ID`
+`fields.discovered_from`, with any status allowed. `set ID --discovered-from ID`
+sets it on a filed item and `--discovered-from ''` clears it. `list --discovered-from ID`
 filters by exact source and combines with other filters; an unknown ID is
 `no_such_item`, and zero matches succeeds. Outline input uses the single-value
 `discovered_from: ID` key and refuses unknown or prospective sources before
