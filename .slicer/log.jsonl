@@ -2152,3 +2152,8 @@
 {"when": "2026-10-19T12:02:04Z", "item": "s378", "action": "status", "from": "reviewing", "to": "done", "note": "ai relay and ai relay-orchestrator --json carry setup, order, report, outcomes and stop, built from the same data as the unchanged prose; gate PASS after one fix round; full suite 2632 OK on merged main", "by": "Jon Robbins"}
 {"when": "2026-10-19T12:02:19Z", "item": "s385", "action": "add", "from": "", "to": "open", "note": "ai relay --json lists what each relay contract version changed"}
 {"when": "2026-10-19T12:02:19Z", "item": "s382", "action": "set", "from": "", "to": "", "note": "depends_on s378→s385"}
+{"when": "2026-10-19T12:03:52Z", "item": "s383", "action": "set", "from": "", "to": "", "note": "size -→M; effort -→2"}
+{"when": "2026-10-19T12:03:52Z", "item": "s384", "action": "set", "from": "", "to": "", "note": "size -→M; effort -→2"}
+{"when": "2026-10-19T13:16:39Z", "item": "s383", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-19T13:16:39Z", "item": "s384", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-19T13:16:48Z", "item": "s384", "action": "promote", "from": "", "to": "", "note": ""}

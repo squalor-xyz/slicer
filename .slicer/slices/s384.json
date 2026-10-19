@@ -1,0 +1,39 @@
+{
+  "id": "s384",
+  "title": "Render files are regenerated, or reported stale, after a plain git merge, not only after slicer land",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R8: the slicer-generated merge driver keeps one side, so render/ is stale after git merge until slicer render runs (seen on adjudicate 2026-10-18); s325 reports it, this asks to fix it or say how.",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** slicer installing the hook or running any git command (it prints the hook, as `setup-git` prints the driver config), a change to the `slicer-generated` merge driver, committing the re-rendered files, and `snapshot`'s `health` part (s383).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The `slicer-generated` merge driver keeps the current branch's render files, so conflict markers never reach `render/` (`.slicer/.gitattributes`, `ops.py` near line 45). As a result, every plain `git merge` of two branches that both rendered leaves `ROADMAP.md` and `ROADMAP.html` stale. `slicer check` then fails until someone runs `slicer render` (ork integration review 2026-10-19, R8; seen on adjudicate 2026-10-18). s325 made `check` name that case (`stale_render_kind` `roadmap_only` in `check.py`), and `land` re-renders. A plain merge, a `git pull` or ork's own merge still leaves the tree stale.\n\nOwner decision, 2026-10-19: `setup-git` gets a new `--hook` flag that prints a git `post-merge` hook. After a merge it runs `slicer render`, but only when `check` reports the roadmap-only stale render. It leaves the re-rendered files for the person to commit. slicer does not install the hook, because its git allowlist stays closed and it writes nothing under the git dir for this.\n\nGit does not run `post-merge` when a merge stops on a conflict, so the person who commits the resolution still runs `slicer render` by hand. The docs say so."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`: `cmd_setup_git` and its parser (`--hook`), with the hook text next to `_render_driver_commands`.\n- `tests/test_cli.py`, next to the existing `setup-git` tests.\n- `docs/commands.md` (the `setup-git` row), `docs/landing.md` (after a plain merge), the merge-driver section of `docs/configuration.md` if it describes the stale render, `CHANGELOG.md` under Added."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_SetupGit_Hook_PrintsPostMergeScript`: the output starts with `#!/bin/sh` and has a comment line with the install command (`git rev-parse --git-path hooks/post-merge`, so `core.hooksPath` is respected). It runs `slicer render` only on `roadmap_only`, and tells the person to commit the files it rewrote.\n- `test_SetupGit_HookJson_ReturnsScriptAndInstallCommand`: `--json` returns `{hook, install}`.\n- `test_SetupGit_Hook_NeedsNoProjectAndWritesNothing`: it runs outside a project, like plain `setup-git`. `--hook` with `--attributes` is `usage`.\n- `test_PostMergeHook_AfterPlainMerge_LeavesCheckPassing`: in a fixture that is its own git repo, with the drivers configured, the printed hook installed and `slicer` on PATH running this checkout's code, two branches each file an item with `--render`. After `git merge --no-ff`, `slicer check` passes.\n- `test_PostMergeHook_RenderCurrent_ChangesNothing`: a merge that leaves the render current runs no render, and `git status` stays clean.\n- `test_PostMergeHook_OtherStaleness_DoesNotRender`: when `check` fails for any reason other than `roadmap_only`, the hook renders nothing and says to run `slicer check`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Write the hook text. It needs only `sh` and `slicer`, reads the `check --json` result without a JSON tool slicer cannot assume, and always exits 0, since git ignores its status.\n3. Add `--hook` to `setup-git`. Update the docs, including the conflicted-merge case, and the CHANGELOG.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

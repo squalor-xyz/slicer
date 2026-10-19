@@ -13958,12 +13958,12 @@
       "title": "slicer snapshot --json returns a dashboard's reads in one process, for one or several --root projects",
       "short_title": "snapshot --json for dashboards",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "",
+        "size": "M",
         "flags": [],
         "trees": [
           "slicer"
@@ -13979,7 +13979,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
-        "effort": null,
+        "effort": 2,
         "attempts": 0
       }
     },
@@ -13988,12 +13988,12 @@
       "title": "Render files are regenerated, or reported stale, after a plain git merge, not only after slicer land",
       "short_title": "Render after a plain git merge",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "",
+        "size": "M",
         "flags": [],
         "trees": [
           "slicer"
@@ -14009,7 +14009,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
-        "effort": null,
+        "effort": 2,
         "attempts": 0
       }
     },
