@@ -2132,3 +2132,4 @@
 {"when": "2026-10-19T01:49:11Z", "item": "s369", "action": "note", "from": "", "to": "", "note": "set --discovered-from added; promote refusal names the set f", "by": "Jon Robbins"}
 {"when": "2026-10-19T01:49:14Z", "item": "s369", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-19T03:09:03Z", "item": "s369", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-19T03:09:32Z", "item": "s381", "action": "add", "from": "", "to": "open", "note": "set refuses an item as its own discovery source"}

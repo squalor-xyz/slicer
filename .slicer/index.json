@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 381,
+  "next_id": 382,
   "preamble": "",
   "passes": [
     {
@@ -13868,6 +13868,36 @@
         "importance": 2,
         "urgency": 2,
         "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s381",
+      "title": "set refuses an item as its own discovery source",
+      "short_title": "set --discovered-from self",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed",
+        "discovered_from": "s369",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }
