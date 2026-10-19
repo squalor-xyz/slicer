@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-369 items · — 13 · done 347 · retired 8 · review 1
+369 items · — 13 · done 347 · retired 8 · reviewing 1
 
 ## v1.16
 
@@ -43,7 +43,7 @@
 | 8 | [s375](slices/s375.md) | Order names one-pass fix round | S | 1 | slicer | s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained "a small fix round is reviewed and gated in one pass", but Order step 2 still reads "review, then accepted findings back to the implementer for each fix round, ... then the gate" with no pointer to that exception | — |
 | 9 | [s376](slices/s376.md) | plan-parallel wave plan | M | 2 | slicer | owner 2026-10-18: recommend a parallel implementation path, like `next` for parallel work; the v1.14 and v1.15 relay runs planned their waves by hand from each slice's Files and dependencies | done |
 | 10 | [s377](slices/s377.md) | plan-parallel blocked waiting_on | S | 1 | slicer | s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies "never placed", but a capped, unspecified or sibling-held item keeps its full pending list · discovered from s376 | — |
-| 11 | [s378](slices/s378.md) | Machine-readable relay contract | M | 2 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | review |
+| 11 | [s378](slices/s378.md) | Machine-readable relay contract | M | 2 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | reviewing |
 | 12 | [s379](slices/s379.md) | check_command config key | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | — |
 | 13 | [s380](slices/s380.md) | goals output with catalog-only goals | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | — |
 | 14 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | — |
