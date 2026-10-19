@@ -13782,10 +13782,22 @@
       "id": "s378",
       "title": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules",
       "short_title": "Machine-readable relay contract",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "f3f346d2-20c4-443a-9a2c-f2ad1b43239a",
+          "kind": "",
+          "text": "**2026-10-19** — Ready for review: ai relay --json and ai relay-orchestrator --json now carry setup (relay only), order, report, outcomes and stop, built from the same data in ai.py as the prose. Golden fixture tests/fixtures/relay-contract-v7.json pins both texts byte for byte (8 cases, verified against main d3544fd). Full suite 2632 OK (skipped=1); slicer check passes. Reviewer and gate PASS.",
+          "created_at": "2026-10-19T04:23:01Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -13805,7 +13817,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
