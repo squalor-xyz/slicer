@@ -13783,12 +13783,12 @@
       "title": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules",
       "short_title": "Machine-readable relay contract",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "",
+        "size": "M",
         "flags": [],
         "trees": [
           "slicer"
@@ -13799,12 +13799,12 @@
         "parent": "",
         "cites": [],
         "key": "ork.contract-json",
-        "pass": "",
+        "pass": "v1.16",
         "group": "",
         "reason": "",
         "importance": 2,
         "urgency": 2,
-        "effort": null,
+        "effort": 2,
         "attempts": 0
       }
     },
@@ -13813,12 +13813,12 @@
       "title": "A project check_command config key that scripted orchestrators run before review",
       "short_title": "check_command config key",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "",
+        "size": "S",
         "flags": [],
         "trees": [
           "slicer"
@@ -13829,12 +13829,12 @@
         "parent": "",
         "cites": [],
         "key": "ork.check-command",
-        "pass": "",
+        "pass": "v1.16",
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 2,
-        "effort": null,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     },
@@ -13843,12 +13843,12 @@
       "title": "slicer goals prints '(none set)' and a Python list literal when only catalog goal records exist",
       "short_title": "goals output with catalog-only goals",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "",
+        "size": "S",
         "flags": [],
         "trees": [
           "slicer"
@@ -13859,12 +13859,12 @@
         "parent": "",
         "cites": [],
         "key": "ork.goals-output",
-        "pass": "",
+        "pass": "v1.16",
         "group": "",
         "reason": "",
-        "importance": 2,
+        "importance": 1,
         "urgency": 2,
-        "effort": null,
+        "effort": 1,
         "attempts": 0
       }
     },
@@ -13904,7 +13904,9 @@
       "short_title": "Relay hand-back while a role runs",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
+      "depends_on": [
+        "s378"
+      ],
       "note_records": [],
       "claim": null,
       "fields": {

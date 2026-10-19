@@ -1,0 +1,39 @@
+{
+  "id": "s378",
+  "title": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** any change to a relay rule or a `RELAY_CONTRACT` bump (the prose stays byte for byte), s382's rewrite of Order steps 3 and 4, the `ai relay-brief` payload, and anything on ork's side.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork is a Go program that implements the outer-session half of the relay (ork review 2026-10-18, finding 14, resolved as `boundary.contract`). Today it can only pin the version: `ai relay --json` is `{contract, relay}` and `ai relay-orchestrator --json` is `{contract, orchestrator}` (`cmd_ai_relay` and `cmd_ai_relay_orchestrator` in `src/slicer/cli.py`). Everything else lives as prose in `RELAY_HEAD`, `RELAY_ORDER`, `ORCHESTRATOR_RULES` and the Stop paragraph in `relay_shared_sections` (`src/slicer/ai.py`), so each contract bump needs an ork release that re-reads a prose rule. ork asked for the Setup fields, the Order steps as an array, the report line names and the `OUTCOME` values; the stop rules go with them.\n\nOwner decision, 2026-10-18: the data drives the text. Each of those parts becomes Python data in `ai.py`, and both the prose and the new JSON keys are built from it, so they cannot drift. Both commands carry it. The change is additive, so the contract stays at its current version."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: the Setup bullets, the outer session's Order steps 1 to 5, the orchestrator's Order steps 1 to 4, the run-report lines, the outcomes and the Stop conditions as data; `relay_text`, `orchestrator_text` and `relay_shared_sections` build their prose from it. Reuse `relayrun.OUTCOMES` (`src/slicer/relayrun.py:51`) for the outcomes instead of a second tuple.\n- `src/slicer/cli.py`: `cmd_ai_relay` and `cmd_ai_relay_orchestrator` add the keys to their payloads.\n- `tests/test_ai.py`, `tests/test_relay_roles.py` (next to `test_AiRelay_Json_CarriesContract`).\n- `docs/agents.md` (the `ai relay` and `ai relay-orchestrator` rows), `docs/commands.md` (the same two rows), `CHANGELOG.md` under Added."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelay_Text_UnchangedByteForByte` and `test_AiRelayOrchestrator_Text_UnchangedByteForByte`: the text of both commands, done and handoff finish, with and without a role matrix, equals what main prints before this slice. Capture the golden output first, in the test or as fixtures under `tests/fixtures/`.\n- `test_AiRelay_Json_CarriesStructuredContract`: the payload keys are, in order, `contract`, `relay`, `setup`, `order`, `report`, `outcomes`, `stop`. `setup` is a list of `{key, text}`, one per Setup bullet, and the end-point bullet carries `options` (`finish`, `commit`, `landed`). `order` is a list of `{step, text}` for steps 1 to 5. `outcomes` is `[\"pass\", \"fail\", \"stopped\"]`. `stop` is a list of the three stop conditions.\n- `test_AiRelayOrchestrator_Json_CarriesStructuredContract`: the keys are `contract`, `orchestrator`, `order` (its own steps 1 to 4), `report`, `outcomes`, `stop`.\n- `test_AiRelay_JsonReport_NamesEachReportLine`: `report` is `{max_lines: 30, lines: [{key, template}]}` with keys `contract`, `slice`, `worktree`, `rounds`, `tests`, `diff_stat`, `deviations`, `later_notes`, `owner_needed`, `role_steps`, `nothing_left_running`, in order. The templates equal the lines of the Run report code block in the orchestrator text.\n- `test_AiRelay_JsonText_IsOneLine`: every `text` in `setup`, `order` and `stop` has no newline and no doubled space; it is the prose with its line breaks joined by single spaces.\n- `test_AiRelay_JsonOutcomes_MatchRelayRunEnd`: `outcomes` equals the choices `relay-run end --outcome` accepts.\n- `--lean` keeps every new list, empty or not."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Capture the golden texts on main, write the tests and watch the structured ones go red.\n2. Move each part into data in `ai.py` and build the prose from it. The byte-for-byte tests must stay green through every step of the refactor.\n3. Add the keys to both payloads, in the order above.\n4. Document both JSON shapes in `docs/agents.md` and `docs/commands.md`. Add a CHANGELOG entry under Added.\n5. Mutation-check each new test: change one step's text in the data and confirm both a text test and a JSON test fail."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes. `slicer ai relay --json` and `slicer ai relay-orchestrator --json` parse and carry the keys."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

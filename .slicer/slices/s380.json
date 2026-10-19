@@ -1,0 +1,39 @@
+{
+  "id": "s380",
+  "title": "slicer goals prints '(none set)' and a Python list literal when only catalog goal records exist",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the JSON shape of `goals`, or how `catalog list` prints records.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "In a project with goal records but no goals prose, `slicer goals` prints this:\n\n```\nGoals:\n  (none set)\n\n['  C01  Ship it', '    Ship the thing.']\n```\n\n(Reproduced on a fresh `init` with `catalog add --kind goal` and `--kind non_goal`. Found in the ork repo, ork review 2026-10-18 finding 22.) `cmd_goals` (`src/slicer/cli.py`, near line 2990) interpolates the list from `_catalog_lines` straight into an f-string. It also prints `(none set)` whenever the prose is empty, even when records follow. The same list literal appears when there is prose and records. `test_Goals_IncludesGoalRecords_AndNotRequirements` (`tests/test_catalog.py`) only uses `assertIn`, so it passes on the broken output."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_goals`).\n- `tests/test_goals.py`.\n- `CHANGELOG.md` under Fixed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Goals_RecordsOnly_ListsRecordsWithoutNoneSet`: with records and no prose, the text is exactly `Goals:\\n  C01  Ship it\\n    Ship the thing.\\n\\nNon-goals:\\n  C02  No cloud\\n`, with no `(none set)` and no `[`.\n- `test_Goals_ProseAndRecords_PrintsRecordLinesNotAList`: with prose and records, the record lines follow the prose after one blank line, one per line.\n- `test_Goals_Unset_ReportsNoneSetInTextAndEmptyInJson` stays as it is: no prose and no records still prints `(none set)`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Join the record lines with newlines, and print `(none set)` only when a block has neither prose nor records.\n3. CHANGELOG entry under Fixed.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

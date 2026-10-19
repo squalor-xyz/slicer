@@ -1,0 +1,39 @@
+{
+  "id": "s379",
+  "title": "A project check_command config key that scripted orchestrators run before review",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** slicer running the command (it never executes it), a `relay-brief.md` placeholder for it, and setting a value for this repository.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork launches every role itself (ork review 2026-10-18, resolved as `launch.mode`), so it needs the project's check command to run before review. Today that command exists only as prose: in a project's AGENTS.md and in the ENVIRONMENT lines of its `relay-brief.md` template. A script cannot read it from either one.\n\nOwner decision, 2026-10-18: `check_command` is a shell string, default `\"\"`. slicer stores it and validates its type, `slicer config` reads and sets it, and `ai relay --json` and `ai relay-brief --json` expose it. slicer itself never runs it."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py`: the field, the string check in `validate`, `to_dict` (after `issues_repo`) and `from_dict`, following the `issues_repo` pattern.\n- `src/slicer/cli.py` (`cmd_ai_relay`) and `src/slicer/ops.py` (`relay_brief`): add `check_command` to the payloads.\n- `tests/test_config.py`, `tests/test_config_command.py`, `tests/test_ai.py`.\n- `docs/configuration.md` (a row next to `issues_repo`), `docs/agents.md` (the `ai relay` and `ai relay-brief` rows), `CHANGELOG.md` under Added."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Config_CheckCommand_DefaultsEmptyAndRoundTrips`: a config without the key loads as `\"\"`, and a set value survives `to_dict` and `from_dict`.\n- `test_Config_CheckCommandNotString_IsConfigError`: a non-string value is a config error that names the key.\n- `test_ConfigCommand_CheckCommand_SetsAndReads`: `slicer config check_command \"make test\"`, then `slicer config check_command` prints `make test`.\n- `test_AiRelay_Json_CarriesCheckCommand`: `ai relay --json` carries `check_command` with the project's value, and `\"\"` outside a project or when the key is unset.\n- `test_AiRelayBrief_Json_CarriesCheckCommand`: `ai relay-brief --json` carries the same value."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Add the field, its check and its serialization, then the two payload keys.\n3. Document the key in `docs/configuration.md`, including that slicer never runs it. Update `docs/agents.md` and CHANGELOG.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

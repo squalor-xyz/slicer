@@ -2135,3 +2135,10 @@
 {"when": "2026-10-19T03:09:32Z", "item": "s381", "action": "add", "from": "", "to": "open", "note": "set refuses an item as its own discovery source"}
 {"when": "2026-10-19T03:15:33Z", "item": "s369", "action": "status", "from": "reviewing", "to": "done", "note": "set --discovered-from sets and clears the discovery source; the promote refusal names the set flag per key. Relay gate PASS; full suite on merge ba7f751: 2624 OK (skipped=1)", "by": "Jon Robbins"}
 {"when": "2026-10-19T03:17:37Z", "item": "s382", "action": "add", "from": "", "to": "open", "note": "The relay outer session relays a role's report to a waiting orchestrator"}
+{"when": "2026-10-19T03:27:22Z", "item": "s378", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-19T03:27:23Z", "item": "s379", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-19T03:27:23Z", "item": "s380", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-19T03:27:27Z", "item": "s378", "action": "set", "from": "", "to": "", "note": "size -→M; pass_key -→v1.16; effort -→2"}
+{"when": "2026-10-19T03:27:27Z", "item": "s379", "action": "set", "from": "", "to": "", "note": "size -→S; pass_key -→v1.16; urgency 2→1; effort -→1"}
+{"when": "2026-10-19T03:27:27Z", "item": "s380", "action": "set", "from": "", "to": "", "note": "size -→S; pass_key -→v1.16; importance 2→1; effort -→1"}
+{"when": "2026-10-19T03:27:27Z", "item": "s382", "action": "set", "from": "", "to": "", "note": "depends_on -→s378"}
