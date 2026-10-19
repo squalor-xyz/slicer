@@ -2128,3 +2128,8 @@
 {"when": "2026-10-18T21:21:00Z", "item": "s378", "action": "add", "from": "", "to": "open", "note": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules"}
 {"when": "2026-10-18T21:21:00Z", "item": "s379", "action": "add", "from": "", "to": "open", "note": "A project check_command config key that scripted orchestrators run before review"}
 {"when": "2026-10-18T21:21:00Z", "item": "s380", "action": "add", "from": "", "to": "open", "note": "slicer goals prints '(none set)' and a Python list literal when only catalog goal records exist"}
+{"when": "2026-10-19T00:46:19Z", "item": "s369", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-19T01:49:11Z", "item": "s369", "action": "note", "from": "", "to": "", "note": "set --discovered-from added; promote refusal names the set f", "by": "Jon Robbins"}
+{"when": "2026-10-19T01:49:14Z", "item": "s369", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-19T03:09:03Z", "item": "s369", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-19T03:09:32Z", "item": "s381", "action": "add", "from": "", "to": "open", "note": "set refuses an item as its own discovery source"}

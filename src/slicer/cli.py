@@ -2340,6 +2340,7 @@ def cmd_set(args: argparse.Namespace) -> int:
     title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
     pass_key=args.pass_key, flags=flags, group=args.group, parent=args.parent,
+    discovered_from=args.discovered_from,
     importance=args.importance, urgency=args.urgency,
     effort=args.effort, attempts=args.attempts,
   )
@@ -3856,6 +3857,7 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--no-flags", dest="no_flags", action="store_true", help="clear all flags")
   sp.add_argument("--group", help="the phase-label group; --group '' clears it")
   sp.add_argument("--parent", help="existing item ID this item is a sliver of; --parent '' clears it")
+  sp.add_argument("--discovered-from", help="existing item ID that discovered this work; --discovered-from '' clears it")
   sp.add_argument("--importance", type=int, help="1-3")
   sp.add_argument("--urgency", type=int, help="1-3")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate")
