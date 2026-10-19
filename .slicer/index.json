@@ -13782,7 +13782,7 @@
       "id": "s378",
       "title": "ai relay --json carries the machine-readable contract: Order steps, report fields, outcomes, stop rules",
       "short_title": "Machine-readable relay contract",
-      "status": "reviewing",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -13809,10 +13809,7 @@
           "stale_after": ""
         }
       ],
-      "claim": {
-        "owner": "Jon Robbins",
-        "at": "2026-10-19T11:48:10Z"
-      },
+      "claim": null,
       "fields": {
         "size": "M",
         "flags": [],
