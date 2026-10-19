@@ -1,0 +1,39 @@
+{
+  "id": "s382",
+  "title": "The relay outer session relays a role's report to a waiting orchestrator",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s369 relay 2026-10-19: the orchestrator handed back three times while its implementer still ran, the implementer's report came to the outer session rather than to the orchestrator, and Order step 4 says to stop an orchestrator whose report lacks `nothing left running: yes`",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the agents repo's `relay-orchestrator` role and its doctor's `Expects:` line, or any change to how a harness launches subagents.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "In Claude Code, a role agent that an orchestrator spawns runs in the background. The orchestrator's Waiting rule (`ORCHESTRATOR_RULES` in `src/slicer/ai.py`) says to end the turn and let the role's report wake it. That is not what happened: each ended turn came back to the outer session as a hand-back with `nothing left running: no`. The role's own report went to the outer session too, and the orchestrator only saw it when the outer session resumed the orchestrator and pasted it in. In s369 that took three hand-backs before review started, and each resume re-read the orchestrator's context.\n\nOrder step 4 in `ai relay` says: \"Without that last line, stop the orchestrator first.\" Taken literally, it kills a run that is only waiting. Nothing says what the outer session does with a role report that arrives while its orchestrator is idle, so the outer session had to improvise."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: Order steps 3 and 4 of `ai relay`, the Waiting rule in `ORCHESTRATOR_RULES`, and `RELAY_CONTRACT` (7 to 8, with a comment line on what changed).\n- `tests/test_relay_roles.py` (the step 4 assertion near line 1860) and `tests/test_ai.py` (the contract marker tests).\n- `docs/agents.md` (the relay paragraph near line 48), `docs/commands.md` (the `ai relay` and `ai relay-orchestrator` rows, if they name the step or the version), `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayText_HandBackWithoutLastLine_SaysToRelayTheWaitedRole`: `ai relay` Order says that a hand-back whose last line is not `nothing left running: yes`, and which names the role it waits on, is a wait. The outer session waits for that role's report and resumes the orchestrator with it. It does not stop the orchestrator.\n- `test_RelayText_StopOrchestrator_OnlyWhenNothingIsWaited`: stopping the orchestrator stays the rule for a hand-back that names no running role, or one whose named role has already finished.\n- `test_OrchestratorText_Waiting_NamesTheRoleWaitedOn`: the Waiting rule says that when the turn ends before the final report, the hand-back's last line is `waiting on: ROLE AGENT-ID`, or the closest thing the harness gives, so the outer session can route the report. It also says a resumed orchestrator takes a pasted role report as that role's report.\n- The contract marker tests expect `relay v8`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Rewrite Order steps 3 and 4 and the Waiting rule as the tests describe. Keep \"Send the final report once\" and \"nothing you started still runs when you report\" for the final report.\n3. Bump `RELAY_CONTRACT` to 8, with its comment line. Update docs and CHANGELOG. Say in the CHANGELOG that the agents repo's `Expects:` line has to follow.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

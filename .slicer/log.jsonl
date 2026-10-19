@@ -2134,3 +2134,4 @@
 {"when": "2026-10-19T03:09:03Z", "item": "s369", "action": "status", "from": "review", "to": "reviewing", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-19T03:09:32Z", "item": "s381", "action": "add", "from": "", "to": "open", "note": "set refuses an item as its own discovery source"}
 {"when": "2026-10-19T03:15:33Z", "item": "s369", "action": "status", "from": "reviewing", "to": "done", "note": "set --discovered-from sets and clears the discovery source; the promote refusal names the set flag per key. Relay gate PASS; full suite on merge ba7f751: 2624 OK (skipped=1)", "by": "Jon Robbins"}
+{"when": "2026-10-19T03:17:37Z", "item": "s382", "action": "add", "from": "", "to": "open", "note": "The relay outer session relays a role's report to a waiting orchestrator"}
