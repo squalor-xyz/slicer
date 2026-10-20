@@ -1,0 +1,39 @@
+{
+  "id": "s386",
+  "title": "slicer list: explain the ! dependency marker in its output",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "owner filing 2026-10-20",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the `^` score marker, the TUI queue, the agent text in `src/slicer/ai.py` (s339 covered it), `deps` (its rows never carry `!`), and any JSON shape.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer list` and `slicer find` mark a row with `!` after the row number when the item waits on a dependency not yet met. Today's main shows `17! s382 ... Relay hand-back while a role runs`, which waits on s385. Nothing on screen says what the mark means. Only `docs/commands.md` (near lines 266 and 856) explains it, and since s339 the agent text does too (`src/slicer/ai.py:79`). A person reading the list has to know the docs or run `show` on each marked row. The fix is a legend line that appears only when a printed row carries the mark, so a list with no marked rows doesn't change."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py`:\n  - `_item_rows` (near line 1839) sets the mark from `graph.pending` (`src/slicer/graph.py:105`), which returns the unmet ids.\n  - `cmd_list` (near line 1911) builds the lines and the `N items hidden` footer (near line 1979).\n  - `_emit_find` (near line 2091) prints `find`'s rows.\n  - Add one helper that builds the legend from `graph.pending` for the printed items, and call it from both commands.\n- `tests/test_cli.py`, next to `test_List_Text_BlockedRow_MarkedWithBang` (near line 912), reusing that class's `repo()` fixture (S01 waits on S02).\n- `docs/commands.md` (the `list` paragraph near line 266 and the example near line 856).\n- `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_List_Text_BlockedRow_EndsWithLegend`: with S01 waiting on S02, the text output has the line `! waits on a dependency not yet met: S01 (S02)` once, after the last row.\n- `test_List_Text_NoBlockedRow_NoLegend`: once S02 is done, no line starts with `! `.\n- `test_List_Text_Legend_BeforeHiddenCount`: with a done item hidden, the legend comes directly before the `N item hidden` line.\n- `test_List_Text_Legend_SeveralBlocked_InRowOrder`: two marked rows with two unmet dependencies on one of them read `! waits on a dependency not yet met: S01 (S02, S04), S03 (S02)`, in printed row order with each item's unmet ids in `depends_on` order.\n- `test_Find_Text_BlockedRow_EndsWithLegend`: `find waiting` ends with the same legend line, after the last `matched in` line.\n- `test_List_Json_Unchanged_ByBlockedMarker` and `test_Find_...` JSON stay green; `--json` output carries no legend."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Add the helper and append its line in `cmd_list` (before the hidden count and the sibling-only block) and in `_emit_find`. Print nothing when no printed row is pending.\n3. Update `docs/commands.md` and CHANGELOG.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "s387",
+  "title": "A project pins its relay contract version and slicer refuses to serve another",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S44 (adj-json contract version and pin), ork S24 (ork sets and checks the pins).",
+  "size": "M",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** serving an older contract's text (slicer only ever prints `RELAY_CONTRACT`'s), a contract bump, a pin for any other slicer JSON shape, and anything on ork's or adjudicate's side (their own items set and read the pin).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "slicer prints one relay contract, `RELAY_CONTRACT` (`src/slicer/ai.py:159`), as `Contract: relay vN` at the top of `ai relay` and `ai relay-orchestrator`. ork accepts a hard-coded set of versions (`ork/internal/roles/roles.go:55`, decision `ork/decisions/0067`, `boundary.contract`), and the agents repo's `relay-orchestrator` role has an `Expects:` line its doctor checks. Nothing in a project records which version that project's toolchain agreed on. Upgrading slicer changes the contract every relay in the project gets. The only signal is a consumer refusing later, or not refusing at all when it doesn't check.\n\nOwner decisions, 2026-10-20:\n\n- **Pin and refuse.** A project can pin a version in its committed config. slicer never serves older text. On a mismatch it refuses where the contract is served and warns in `check`.\n- **Per-contract pins.** This pin covers the relay contract only. adjudicate gets its own JSON contract version, with an independent number.\n- **Each tool keeps its own pin; ork sets and checks them.** ork pins a project with `slicer config relay_contract N` and reads the pin back from `ai relay --json`. slicer knows nothing about ork.\n- Accept any positive integer at set time. \"Pinned 7, running 8\" is the upgrade case the pin exists to catch, so it is reported at use, not refused when set.\n\nThis depends on s382 (v7 to v8, which depends on s385). All three edit `RELAY_CONTRACT`, the `relay_contract` JSON and the s378 golden fixture. Landing this last avoids conflicts, and v8 is the first version anyone pins."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/config.py`: a `relay_contract: int | None = None` field. It goes in `to_dict` in a fixed position, is omitted from `to_dict` while unset (so existing `config.json` files stay byte for byte), and is validated in `from_dict` as a positive int. Find out whether an older slicer reading a config that has the key ignores it or refuses it. If a newer reader's key would be silently dropped by an older writer, bump `SCHEMA_VERSION` (now 5, line 124) per its comment and follow the schema-bump steps in `docs/landing.md`. Record the finding in the handoff note either way.\n- `src/slicer/ai.py`: one function such as `pin_mismatch(pinned) -> str | None` that returns the message, or None when unset or equal.\n- `src/slicer/cli.py`:\n  - `cmd_ai_relay` (near line 402), `cmd_ai_relay_orchestrator` (near line 426) and `cmd_ai_relay_brief` (near line 436) refuse on a mismatch. Outside a project, with no config, nothing is pinned.\n  - The `ai relay` and `ai relay-orchestrator` JSON gains `pinned` (int or null) after `contract`.\n  - `ai relay --init-roles` is a write, not a contract read, so it is not refused.\n- `src/slicer/check.py`: one warning on a mismatch.\n- `src/slicer/errors.py` (or wherever codes are listed): `contract_mismatch`.\n- `docs/configuration.md` (the key), `docs/agents.md` (the three ai rows, the `pinned` key, the new code), `CHANGELOG.md` under Added.\n- Tests: next to the s378 structured-contract tests (`tests/test_ai.py` or `tests/test_relay_roles.py`), plus the config tests."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelay_NoPin_PinnedNullAndTextUnchanged`: with no key, `ai relay --json` has `\"pinned\": null` and the text output is byte for byte what it is today (the s378 golden tests stay green).\n- `test_AiRelay_PinEqual_ServesAndReportsPinned`: with `relay_contract` equal to `RELAY_CONTRACT`, `ai relay`, `ai relay-orchestrator` and `ai relay-brief` exit 0, and both relay JSONs carry `\"pinned\": N`.\n- `test_AiRelay_PinDiffers_RefusesWithContractMismatch`: with a pin of `RELAY_CONTRACT - 1`, each of the three commands exits 2. The `--json` error code is `contract_mismatch`, stdout has no contract text, and the message names the pinned version, the running version, `slicer config relay_contract N` and installing a matching slicer.\n- `test_AiRelayInitRoles_PinDiffers_StillWrites`: `ai relay --init-roles` is not refused.\n- `test_Check_PinDiffers_WarnsAndPasses`: `check --json` exits 0 with one warning naming both versions; with no pin or an equal pin, there is no such warning.\n- `test_Config_RelayContract_RoundTripsAndRefusesNonPositiveInt`: `slicer config relay_contract 8` then a read returns 8. `0`, `-1`, `v8` and `8.5` are refused with the usage code and nothing is written. `--unset` removes the key and `config.json` returns to its prior bytes.\n- `test_Config_RelayContractUnset_ConfigBytesUnchanged`: a project without the key writes `config.json` exactly as before."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Add the config field, then the mismatch helper, the three refusals, the `pinned` key and the check warning.\n3. Decide the schema-version question from what the loader does, and record it.\n4. Update `docs/configuration.md`, `docs/agents.md` and CHANGELOG.\n5. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes.\n- By hand, in a scratch project: pin `RELAY_CONTRACT - 1`; `ai relay` exits 2 naming both versions; `check` warns and exits 0; `--unset` restores both."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it. If `SCHEMA_VERSION` is bumped, landing follows the schema-bump steps in `docs/landing.md`."
+    }
+  ],
+  "notes": []
+}

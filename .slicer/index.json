@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 386,
+  "next_id": 388,
   "preamble": "",
   "passes": [
     {
@@ -14040,6 +14040,68 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s386",
+      "title": "slicer list: explain the ! dependency marker in its output",
+      "short_title": "slicer list: explain the ! dependency marker in its output",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner filing 2026-10-20",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s387",
+      "title": "A project pins its relay contract version and slicer refuses to serve another",
+      "short_title": "Pin the relay contract version",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s382"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S44 (adj-json contract version and pin), ork S24 (ork sets and checks the pins).",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "contract.pin",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
         "attempts": 0
       }
     }

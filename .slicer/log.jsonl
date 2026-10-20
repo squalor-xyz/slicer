@@ -2157,3 +2157,7 @@
 {"when": "2026-10-19T13:16:39Z", "item": "s383", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-19T13:16:39Z", "item": "s384", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-19T13:16:48Z", "item": "s384", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-20T11:03:42Z", "item": "s386", "action": "add", "from": "", "to": "open", "note": "slicer list: explain the ! dependency marker in its output"}
+{"when": "2026-10-20T11:21:33Z", "item": "s386", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-20T11:21:33Z", "item": "s386", "action": "set", "from": "", "to": "", "note": "trees -→slicer; findings -→owner filing 2026-10-20"}
+{"when": "2026-10-20T11:21:34Z", "item": "s387", "action": "add", "from": "", "to": "open", "note": "A project pins its relay contract version and slicer refuses to serve another"}
