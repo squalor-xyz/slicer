@@ -52,7 +52,7 @@
 | 17 | [s384](slices/s384.md) | Render after a plain git merge | M | 2 | slicer | ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R8: the slicer-generated merge driver keeps one side, so render/ is stale after git merge until slicer render runs (seen on adjudicate 2026-10-18); s325 reports it, this asks to fix it or say how. | — |
 | 18 | [s385](slices/s385.md) | Relay contract change list | S | 1 | slicer | ork integration review 2026-10-19 (R5), noted on s378 · discovered from s378 | — |
 | 19 | [s386](slices/s386.md) | slicer list: explain the ! dependency marker in its output | S | 1 | slicer | owner filing 2026-10-20 | — |
-| 20 | [s387](slices/s387.md) | Pin the relay contract version | M | 2 | slicer | owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S44 (adj-json contract version and pin), ork S24 (ork sets and checks the pins). | — |
+| 20 | [s387](slices/s387.md) | Pin the relay contract version | M | 2 | slicer | owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S45 (adj-json contract version and pin), ork S24 (ork sets and checks the pins). | — |
 
 ---
 

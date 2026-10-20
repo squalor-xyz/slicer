@@ -14091,7 +14091,7 @@
           "slicer"
         ],
         "trees_literal": false,
-        "findings": "owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S44 (adj-json contract version and pin), ork S24 (ork sets and checks the pins).",
+        "findings": "owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S45 (adj-json contract version and pin), ork S24 (ork sets and checks the pins).",
         "discovered_from": "",
         "parent": "",
         "cites": [],
