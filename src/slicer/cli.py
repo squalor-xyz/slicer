@@ -420,7 +420,7 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
   _emit(args, {"contract": ai.contract_line(), "relay": text, **ai.relay_contract(finish)}, text.rstrip("\n"),
-        keep_fields=("setup", "order", "report", "outcomes", "stop"))
+        keep_fields=("setup", "order", "report", "outcomes", "stop", "changes"))
   return OK
 
 
@@ -430,7 +430,7 @@ def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   finish, required = _ai_policy(args)
   text = ai.orchestrator_text(finish, required)
   _emit(args, {"contract": ai.contract_line(), "orchestrator": text, **ai.relay_contract(finish, orchestrator=True)},
-        text.rstrip("\n"), keep_fields=("order", "report", "outcomes", "stop"))
+        text.rstrip("\n"), keep_fields=("order", "report", "outcomes", "stop", "changes"))
   return OK
 
 
