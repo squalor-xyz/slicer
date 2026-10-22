@@ -13957,7 +13957,7 @@
       "id": "s383",
       "title": "slicer snapshot --json returns a dashboard's reads in one process, for one or several --root projects",
       "short_title": "snapshot --json for dashboards",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
