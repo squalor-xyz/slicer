@@ -5,6 +5,9 @@ from __future__ import annotations
 import io
 import json
 import os
+import shlex
+import subprocess
+import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -1922,3 +1925,137 @@ class GitignoreLinesTests(unittest.TestCase):
       repo.read(".slicer/.gitignore").splitlines(),
       ["scratch", "lock", "feedback.md", "feedback-reported.json", "relay-runs.jsonl"],
     )
+
+
+class PostMergeHookTests(unittest.TestCase):
+  """Printed hooks repair only the safe merge leftover, without staging files."""
+
+  def _hook(self, repo: support.TempRepo) -> str:
+    with support.isolated_discovery(repo.root):
+      code, out, err = repo.run("setup-git", "--hook")
+    self.assertEqual(code, 0, err)
+    return out
+
+  def _shim(self, repo: support.TempRepo) -> dict[str, str]:
+    shim = repo.write("bin/slicer", "#!/bin/sh\n"
+      'printf "%s\\n" "$*" >> "$SLICER_TEST_CALLS"\n'
+      f"PYTHONPATH={shlex.quote(str(support.SRC))} exec {shlex.quote(sys.executable)} -m slicer \"$@\"\n")
+    shim.chmod(0o755)
+    return dict(os.environ, PATH=str(shim.parent) + os.pathsep + os.environ["PATH"],
+                SLICER_TEST_CALLS=str(repo.root / "calls"), SLICER_NO_CODE_WARNING="1")
+
+  def _shell(self, repo: support.TempRepo, script: str, env: dict[str, str]):
+    return subprocess.run(["sh"], input=script, cwd=repo.root, env=env,
+                          capture_output=True, text=True)
+
+  def _merge_fixture(self, repo: support.TempRepo, hook: str, env: dict[str, str],
+                     rendered: bool = True) -> subprocess.CompletedProcess[str]:
+    repo.run("init")
+    self.assertEqual(repo.run("render")[0], 0)
+    proc = self._shell(repo, repo.run("setup-git")[1], env)
+    self.assertEqual(proc.returncode, 0, proc.stderr)
+    # Exercise core.hooksPath as well as the default-independent install command.
+    self.assertEqual(repo._git("config", "core.hooksPath", "hooks").returncode, 0)
+    path = repo.write("hooks/post-merge", hook)
+    path.chmod(0o755)
+    repo.commit("base")
+    self.assertEqual(repo._git("checkout", "-b", "other").returncode, 0)
+    if rendered:
+      self.assertEqual(repo.run("add", "Other", "--id", "S02", "--render")[0], 0)
+    else:
+      repo.write("other.txt", "other\n")
+    repo.commit("other")
+    self.assertEqual(repo._git("checkout", "-b", "ours", "HEAD~1").returncode, 0)
+    if rendered:
+      self.assertEqual(repo.run("add", "Ours", "--render")[0], 0)
+    else:
+      repo.write("ours.txt", "ours\n")
+    repo.commit("ours")
+    (repo.root / "calls").unlink(missing_ok=True)
+    return subprocess.run(["git", "merge", "--no-ff", "other", "-m", "merge"],
+                          cwd=repo.root, env=env, capture_output=True, text=True)
+
+  def test_SetupGit_Hook_PrintsPostMergeScript(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      hook = self._hook(repo)
+      self.assertTrue(hook.startswith("#!/bin/sh\n"))
+      self.assertTrue(any(line.startswith("#") and
+        "git rev-parse --git-path hooks/post-merge" in line for line in hook.splitlines()))
+      self.assertIn("roadmap_only", hook)
+      self.assertIn("slicer render", hook)
+      self.assertIn("commit", hook)
+
+  def test_SetupGit_HookJson_ReturnsScriptAndInstallCommand(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, err = repo.run("setup-git", "--hook", "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(set(payload), {"hook", "install"})
+      self.assertEqual(payload["hook"], self._hook(repo))
+      self.assertIn('"$(git rev-parse --git-path hooks/post-merge)"', payload["install"])
+      self.assertIn("slicer setup-git --hook", payload["install"])
+      self.assertIn("chmod +x", payload["install"])
+
+  def test_SetupGit_Hook_NeedsNoProjectAndWritesNothing(self) -> None:
+    with support.TempRepo(git=True) as repo, support.isolated_discovery(repo.root):
+      before = {p: p.read_bytes() for p in repo.root.rglob("*") if p.is_file()}
+      with patch("slicer.store.load", side_effect=AssertionError("loads state")), \
+           patch("slicer.store.project_lock", side_effect=AssertionError("locks state")):
+        self._hook(repo)
+      self.assertEqual(before, {p: p.read_bytes() for p in repo.root.rglob("*") if p.is_file()})
+      code, out, _ = repo.run("setup-git", "--hook", "--attributes", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(json.loads(out)["error"]["code"], "usage")
+
+  def test_PostMergeHook_AfterPlainMerge_LeavesCheckPassing(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      env = self._shim(repo)
+      result = self._merge_fixture(repo, self._hook(repo), env)
+      self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+      code, out, err = repo.run("check")
+      self.assertEqual(code, 0, out + err)
+      self.assertIn("render", repo.read("calls").splitlines())
+      self.assertIn("commit", result.stdout + result.stderr)
+      status = repo._git("status", "--porcelain").stdout
+      self.assertIn(" M .slicer/render/ROADMAP.md", status)
+      self.assertIn(" M .slicer/render/ROADMAP.html", status)
+
+  def test_PostMergeHook_RenderCurrent_ChangesNothing(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      env = self._shim(repo)
+      # Keep the call log ignored, so the clean-tree assertion covers the hook.
+      repo.write(".gitignore", "calls\n")
+      result = self._merge_fixture(repo, self._hook(repo), env, rendered=False)
+      self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+      self.assertEqual(repo.read("calls").splitlines(), ["check --json"])
+      self.assertEqual(repo._git("status", "--porcelain").stdout, "")
+
+  def test_PostMergeHook_OtherStaleness_DoesNotRender(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      env = self._shim(repo)
+      hook = self._hook(repo)
+      repo.run("init")
+      repo.run("render")
+      for kind in ("missing", "orphan", "corrupt"):
+        with self.subTest(kind=kind):
+          roadmap = repo.root / ".slicer/render/ROADMAP.md"
+          original = roadmap.read_bytes()
+          orphan = repo.root / ".slicer/render/orphan.md"
+          index = repo.root / ".slicer/index.json"
+          index_bytes = index.read_bytes()
+          if kind == "missing":
+            roadmap.unlink()
+          elif kind == "orphan":
+            orphan.write_bytes(original)
+          elif kind == "corrupt":
+            index.write_text("broken")
+          before = {p: p.read_bytes() for p in (repo.root / ".slicer/render").rglob("*") if p.is_file()}
+          (repo.root / "calls").unlink(missing_ok=True)
+          result = self._shell(repo, hook, env)
+          self.assertEqual(result.returncode, 0, result.stderr)
+          self.assertIn("slicer check", result.stdout + result.stderr)
+          self.assertEqual(repo.read("calls").splitlines(), ["check --json"])
+          self.assertEqual(before, {p: p.read_bytes() for p in (repo.root / ".slicer/render").rglob("*") if p.is_file()})
+          roadmap.write_bytes(original)
+          orphan.unlink(missing_ok=True)
+          index.write_bytes(index_bytes)

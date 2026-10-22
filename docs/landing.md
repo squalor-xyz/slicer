@@ -24,7 +24,18 @@ PYTHONPATH=src python3 -m slicer land <ID> --branch feature/<id>-<slug> --note "
 
 `land` refuses (`not_merged`) unless the branch's tip is reachable from `HEAD`, and refuses (`run_active`) while a relay run on the slice is neither ended nor stale; either way nothing is written. Then it runs `done --render --check` and prints the git commands left: the commit of `.slicer`, `git worktree remove` for the branch's worktree, and `git branch -d`. Each printed git command uses `git -C ROOT`, with the absolute project root shell-quoted, so it works when `slicer --root OTHER land` runs from elsewhere. slicer runs none of them. It does not run the suite or merge.
 
-Until `done --render` runs, `check` on `main` fails on the stale `ROADMAP.md` and `ROADMAP.html`, which a merge leaves behind because the `slicer-generated` driver keeps `main`'s roadmap render, and `check` names that case.
+Without the optional hook below, until `done --render` runs, `check` on `main` fails on the stale `ROADMAP.md` and `ROADMAP.html`, which a merge leaves behind because the `slicer-generated` driver keeps `main`'s roadmap render, and `check` names that case.
+
+After a plain merge, run `slicer render` and `slicer check`, then review and commit
+any rewritten render files. To automate the roadmap-only case, `slicer setup-git --hook`
+prints an optional `post-merge` script and its install command (also returned as
+`{hook, install}` with `--json`). See [Git merge drivers](commands.md#git-merge-drivers)
+for installation that respects `core.hooksPath` and existing hooks. slicer installs
+nothing. The hook leaves rewritten files for you to commit and reports other check
+failures for manual attention. Git does not run `post-merge` when a merge stops on
+conflicts; run `slicer render` and `slicer check` by hand after resolving those.
+Git also skips `post-merge` for `git merge --no-commit`; after committing the merge,
+run `slicer render` and `slicer check` by hand, then review and commit the rewritten files.
 
 A slice with slivers lands once: its slivers run in the parent's worktree and
 branch. Merge that branch with `git merge --no-ff`, then on `main` run `done` on each
