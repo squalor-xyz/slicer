@@ -3037,9 +3037,11 @@ def cmd_goals(args: argparse.Namespace) -> int:
     ("Goals", state.index.goals, "goal"),
     ("Non-goals", state.index.non_goals, "non_goal"),
   ):
-    body = text.rstrip("\n") if text.strip() else "  (none set)"
-    extra = _catalog_lines(grouped[kind], heading=False)
-    blocks.append(f"{title}:\n{body}" + (f"\n\n{extra}" if extra else ""))
+    prose_text = text.rstrip("\n") if text.strip() else ""
+    records_text = "\n".join(_catalog_lines(grouped[kind], heading=False))
+    parts = [part for part in (prose_text, records_text) if part]
+    body = "\n\n".join(parts) if parts else "  (none set)"
+    blocks.append(f"{title}:\n{body}")
   payload = {
     "goals": state.index.goals,
     "non_goals": state.index.non_goals,

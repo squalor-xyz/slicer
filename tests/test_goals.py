@@ -55,6 +55,29 @@ class GoalsCommandTests(unittest.TestCase):
         "records": {"goal": [], "non_goal": []},
       })
 
+  def test_Goals_RecordsOnly_ListsRecordsWithoutNoneSet(self) -> None:
+    with self.repo() as repo:
+      repo.run("catalog", "add", "--kind", "goal", "Ship it", "--body", "Ship the thing.")
+      repo.run("catalog", "add", "--kind", "non_goal", "No cloud")
+      code, text, err = repo.run("goals")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(
+        text,
+        "Goals:\n  C01  Ship it\n    Ship the thing.\n\nNon-goals:\n  C02  No cloud\n",
+      )
+
+  def test_Goals_ProseAndRecords_PrintsRecordLinesNotAList(self) -> None:
+    with self.repo() as repo:
+      repo.write("g.md", "- a goal\n")
+      repo.run("prose", "edit", "goals", "--file", str(repo.root / "g.md"))
+      repo.run("catalog", "add", "--kind", "goal", "Ship it", "--body", "Ship the thing.")
+      code, text, err = repo.run("goals")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual(
+        text,
+        "Goals:\n- a goal\n\n  C01  Ship it\n    Ship the thing.\n\nNon-goals:\n  (none set)\n",
+      )
+
 
 if __name__ == "__main__":
   unittest.main()
