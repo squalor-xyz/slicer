@@ -2166,3 +2166,6 @@
 {"when": "2026-10-22T14:31:35Z", "item": "s383", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer snapshot --json reads items, goals,", "by": "Jon Robbins"}
 {"when": "2026-10-22T14:31:39Z", "item": "s383", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-22T16:01:13Z", "item": "s383", "action": "status", "from": "review", "to": "done", "note": "snapshot --json lands: five parts (items, goals, runs, status, health) with per-part and project revisions, repeated --root and -r, errors per project. Gate PASS; 13 snapshot tests, full suite 2644 OK on merged main. Owner decision 2026-10-22: the project revision hashes the ordered {part: revision} object, not a bare list of revisions; docs/agents.md describes it.", "by": "Jon Robbins"}
+{"when": "2026-10-22T16:08:29Z", "item": "s384", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-22T16:34:26Z", "item": "s384", "action": "note", "from": "", "to": "", "note": "Ready for review: setup-git --hook prints a post-merge hook ", "by": "Jon Robbins"}
+{"when": "2026-10-22T16:34:30Z", "item": "s384", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

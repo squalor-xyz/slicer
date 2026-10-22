@@ -822,6 +822,41 @@ def _render_driver_commands() -> list[str]:
   ]
 
 
+def _post_merge_hook() -> tuple[str, str]:
+  """Print an opt-in repair for the merge driver's roadmap-only leftover.
+
+  Match a whole top-level line of check's indented JSON, never a substring of
+  a JSON string (which escapes quotes and newlines). Only sh and slicer are needed.
+  """
+  install = ('slicer setup-git --hook > "$(git rev-parse --git-path hooks/post-merge)"'
+             ' && chmod +x "$(git rev-parse --git-path hooks/post-merge)"')
+  hook = r'''#!/bin/sh
+# Install (replaces an existing hook; integrate it by hand if needed): {install}
+# Git does not run post-merge after a conflicted merge; run slicer render by hand.
+report=$(slicer check --json)
+status=$?
+if [ "$status" -eq 0 ]; then
+  exit 0
+fi
+case "$status:$report" in
+  1:*'
+  "stale_render_kind": "roadmap_only",
+'*)
+    if slicer render; then
+      printf '%s\n' 'slicer: regenerated roadmap render; review and commit the rewritten files.'
+    else
+      printf '%s\n' 'slicer: render failed; run slicer check and repair it.' >&2
+    fi
+    ;;
+  *)
+    printf '%s\n' 'slicer: merge check needs attention; run slicer check.' >&2
+    ;;
+esac
+exit 0
+'''.replace("{install}", install)
+  return hook, install
+
+
 def _render_driver_setup() -> str:
   """The `init` hint: why the drivers exist, plus the commands to enable them."""
   indented = "\n".join("  " + command for command in _render_driver_commands())
@@ -907,6 +942,9 @@ def cmd_setup_git(args: argparse.Namespace) -> int:
   prints the commands -- run them, or `slicer setup-git | sh`. `--json` returns them
   as a list.
 
+  `--hook` prints an optional post-merge script instead, with an install command
+  in its comment; JSON returns {hook, install}. It writes nothing and needs no project.
+
   `--attributes` is the one write: it refreshes `.slicer/.gitattributes` from the
   template under the project lock, so an existing project picks up new lines, and adds
   any line `init` writes that `.slicer/.gitignore` lacks (`check` warns about those).
@@ -914,6 +952,10 @@ def cmd_setup_git(args: argparse.Namespace) -> int:
   `attributes` object under `--json`; the lines added to `.slicer/.gitignore` are named
   on stderr only.
   """
+  if args.hook:
+    hook, install = _post_merge_hook()
+    _emit(args, {"hook": hook, "install": install}, hook.rstrip("\n"))
+    return OK
   commands = _render_driver_commands()
   if not getattr(args, "attributes", False):
     _emit(args, commands, "\n".join(commands))
@@ -3705,7 +3747,10 @@ def build_parser() -> argparse.ArgumentParser:
 
   sp = add("setup-git", cmd_setup_git,
       "print the git config that turns on the merge drivers (run once per clone)")
-  sp.add_argument("--attributes", action="store_true",
+  modes = sp.add_mutually_exclusive_group()
+  modes.add_argument("--hook", action="store_true",
+      help="print an optional post-merge hook and its install command; writes nothing")
+  modes.add_argument("--attributes", action="store_true",
       help="also refresh .slicer/.gitattributes from the current template and add any "
            "missing .slicer/.gitignore lines")
 

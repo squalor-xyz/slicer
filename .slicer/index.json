@@ -13999,10 +13999,22 @@
       "id": "s384",
       "title": "Render files are regenerated, or reported stale, after a plain git merge, not only after slicer land",
       "short_title": "Render after a plain git merge",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "ca45dcd4-7667-4e70-b0a2-b63ac6ada4b2",
+          "kind": "",
+          "text": "**2026-10-22** — Ready for review: setup-git --hook prints a post-merge hook that renders only on roadmap_only and leaves the files to commit; --json returns {hook, install}, and docs cover conflicted and --no-commit merges. Six new tests pass; the final full suite ran 2650 tests OK with 1 skipped, and slicer check passes.",
+          "created_at": "2026-10-22T16:34:26Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -14022,7 +14034,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
