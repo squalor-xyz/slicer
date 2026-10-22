@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer ai relay --json` and `ai relay-orchestrator --json` add `changes`, an ascending list of `{version, text}` describing each relay contract version from 5 through the current version. Relay v7 and both commands' prose bytes are unchanged. See [agents.md](docs/agents.md).
 - `slicer setup-git --hook` prints an optional post-merge hook and install command (`--json`: `{hook, install}`). It renders only the roadmap-only stale state after a plain merge, leaves the files for you to commit, and reports other failures for manual attention. Installation is manual and respects `core.hooksPath`; conflicted merges still need `slicer render` by hand.
 - `snapshot --json` combines compact items, goals, active relay runs, status and health reads for one or several repeated `--root` projects. `--parts` selects views, each with a canonical content revision; `-r` reuses recursive discovery. Per-project errors preserve other results, and the command reads without taking the writer lock. See [agents.md](docs/agents.md#dashboard-snapshot).
 - `slicer ai relay --json` adds `setup`, `order`, `report`, `outcomes` and `stop`; `ai relay-orchestrator --json` adds its own `order` and the same report, outcomes and stop conditions. The data builds both prose and JSON. All contract lists survive `--lean`; relay v7 and the prose bytes are unchanged. See [agents.md](docs/agents.md).

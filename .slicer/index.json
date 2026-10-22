@@ -14041,10 +14041,22 @@
       "id": "s385",
       "title": "ai relay --json lists what each relay contract version changed",
       "short_title": "Relay contract change list",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "de99d400-97e5-4c07-a31a-b4db94ea2f5f",
+          "kind": "",
+          "text": "**2026-10-22** — Ready for review: ai relay --json and ai relay-orchestrator --json carry changes, the {version, text} list for relay contract versions 5 to 7 from ai.RELAY_CHANGES (moved from the comment above RELAY_CONTRACT, same wording); --lean keeps it; prose output unchanged. Three new tests, mutation-checked; full suite 2653 OK; review and gate PASS.",
+          "created_at": "2026-10-22T17:09:45Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14064,7 +14076,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

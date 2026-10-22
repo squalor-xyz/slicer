@@ -149,14 +149,18 @@ def handoff_policy_text(kind: str) -> str:
 # `relay-orchestrator` role carries an `Expects:` line that its doctor checks against this
 # marker. Bump it when a rule an outer session, orchestrator or role
 # follows changes (order, gate, tracking order, waiting, report shape), not for a
-# rewording. 5: Setup resolves the role lineup, orchestrator included, with
-# `relay-roles recommend` and the owner accepts it as a whole or overrides rows; a role
-# runs as a native subagent on the orchestrator's harness and as a headless session on another.
-# 6: A failed review is recorded with `slicer note ID --text "Review FAIL: ..." --render`
-# on the started item, not `reject`.
-# 7: A small fix round is reviewed and gated in one pass; a role's slicer step that a harness
-# permission check denies stops the run before the commit instead of being worked around.
+# rewording. Record each version's change in RELAY_CHANGES.
 RELAY_CONTRACT = 7
+
+RELAY_CHANGES = (
+  (5, "Setup resolves the role lineup, orchestrator included, with "
+   "`relay-roles recommend` and the owner accepts it as a whole or overrides rows; a role "
+   "runs as a native subagent on the orchestrator's harness and as a headless session on another."),
+  (6, 'A failed review is recorded with `slicer note ID --text "Review FAIL: ..." --render` '
+   "on the started item, not `reject`."),
+  (7, "A small fix round is reviewed and gated in one pass; a role's slicer step that a harness "
+   "permission check denies stops the run before the commit instead of being worked around."),
+)
 
 
 def contract_line() -> str:
@@ -296,6 +300,7 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False) -> dict:
   }
   payload["outcomes"] = list(OUTCOMES)
   payload["stop"] = list(RELAY_STOP)
+  payload["changes"] = [{"version": version, "text": text} for version, text in RELAY_CHANGES]
   return payload
 
 
