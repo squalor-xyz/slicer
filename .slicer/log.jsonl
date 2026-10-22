@@ -2157,3 +2157,6 @@
 {"when": "2026-10-19T13:16:39Z", "item": "s383", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-19T13:16:39Z", "item": "s384", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-19T13:16:48Z", "item": "s384", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-19T13:40:46Z", "item": "s383", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-22T14:31:35Z", "item": "s383", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer snapshot --json reads items, goals,", "by": "Jon Robbins"}
+{"when": "2026-10-22T14:31:39Z", "item": "s383", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

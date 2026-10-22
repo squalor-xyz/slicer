@@ -47,6 +47,7 @@ from slicer import (
   relayrun,
   render,
   roles as role_matrix,
+  snapshot,
   store,
   sync,
   templates,
@@ -3390,6 +3391,56 @@ def cmd_stats(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_snapshot(args: argparse.Namespace) -> int:
+  if not args.json:
+    raise StateError("snapshot requires --json", code="usage")
+  parts = args.parts.split(",")
+  unknown = [name for name in parts if name not in snapshot.PARTS]
+  if unknown:
+    print("slicer: usage: unknown snapshot part(s) " + ",".join(unknown)
+          + "; choose " + ",".join(snapshot.PARTS), file=sys.stderr)
+    return USAGE
+  roots = ([args.root] if args.root else []) + (args.snapshot_roots or [])
+  if not roots:
+    roots = [None]
+  projects = []
+  exit_code = OK
+  for root in roots:
+    start = (Path(root) if root else Path.cwd()).resolve()
+    if args.recursive:
+      found, unreadable = store.discover_all(start)
+      slots = sorted([(path, None) for path in found] + unreadable,
+                     key=store.by_relative_parts(start))
+      if not slots:
+        slots = [(start, StateError(f"no project at or below {start}", code="no_project"))]
+    else:
+      slots = [(start, None)]
+    for path, failure in slots:
+      try:
+        if failure is not None:
+          raise failure
+        if not path.is_dir():
+          raise StateError(f"no project directory: {path}", code="no_project")
+        state = store.load(path)
+
+        def read(command):
+          sub = _cached_parser().parse_args([command, "--json"])
+          sub._state = state
+          sub._collect = []
+          sub.func(sub)
+          return sub._collect[-1]
+
+        projects.append(snapshot.build(state, parts, read))
+      except (SlicerError, OSError) as exc:
+        code = exc.code if isinstance(exc, SlicerError) else "io"
+        exit_code = max(exit_code, _exit_for(code))
+        projects.append({"root": str(path), "revision": None, "parts": {},
+                         "error": {"code": code, "message": str(exc), "command": "snapshot"}})
+  _dump_json(args, {"snapshot": 1, "slicer": __version__, "contract": ai.RELAY_CONTRACT,
+                    "projects": projects})
+  return exit_code
+
+
 def cmd_status(args: argparse.Namespace) -> int:
   """The one-call front door: what is next, how far along, and what is blocked."""
   state = _state(args)
@@ -4271,6 +4322,15 @@ def build_parser() -> argparse.ArgumentParser:
 
   _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))
 
+  sp = sub.add_parser("snapshot", help="compact dashboard reads across projects")
+  sp.set_defaults(func=cmd_snapshot)
+  sp.add_argument("--root", dest="snapshot_roots", action="append",
+                  help="project root; repeat to read several projects in order")
+  _json_flags(sp)
+  _recursive_flag(sp)
+  sp.add_argument("--parts", default=",".join(snapshot.PARTS),
+                  help="comma-separated dashboard parts: " + ",".join(snapshot.PARTS))
+
   _recursive_flag(add("status", cmd_status, "next item, progress, and blockers in one view"))
 
   sp = add("log", cmd_log, "recent history, newest first")
@@ -4443,6 +4503,8 @@ def main(argv: list[str] | None = None) -> int:
       }, f"slicer {__version__}\n{_DESCRIPTION}\nSource: {__url__}\nIssues: {_ISSUES_URL}")
       return OK
     parser.parse_args(argv, namespace=args)
+    if args.command == "snapshot":
+      return cmd_snapshot(args)
     root = Path(args.root) if args.root else Path.cwd()
     if getattr(args, "recursive", False):
       return _recursive(args)

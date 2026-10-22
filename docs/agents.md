@@ -462,6 +462,67 @@ $ slicer check -r --json --lean
   `"error": {"code": "io", ...}`. No command runs there, and the other projects still run.
 - No project at or below the start directory is exit 2 with the error envelope, code `no_project`.
 
+## Dashboard snapshot
+
+`slicer snapshot --json [--root PATH]... [-r] [--parts items,goals,runs,status,health]`
+combines dashboard reads in one process. It loads each project once, reads only, and takes
+no writer lock. With no root, it discovers the current project. Repeated roots retain their
+argument order (a root before `snapshot` also participates). `-r` walks each root using the
+same discovery, exclusions and sorted path order described above; it never walks upward.
+
+```json
+{
+  "snapshot": 1,
+  "slicer": "VERSION",
+  "contract": 7,
+  "projects": [{
+    "root": "ABS_PATH",
+    "revision": "0123456789ab",
+    "parts": {
+      "items": {"revision": "0123456789ab", "value": []},
+      "goals": {"revision": "0123456789ab", "value": {"goals": "", "non_goals": "", "records": []}},
+      "runs": {"revision": "0123456789ab", "value": []},
+      "status": {"revision": "0123456789ab", "value": {"next": null, "blocked": [], "held": []}},
+      "health": {"revision": "0123456789ab", "value": {"render_stale": false, "merge_in_progress": false}}
+    },
+    "error": null
+  }]
+}
+```
+
+`slicer` is the running package version; `contract` is the running `ai.RELAY_CONTRACT`.
+The default part order is `items`, `goals`, `runs`, `status`, `health`. `--parts` selects only
+its comma-separated names, in that order. Unknown or empty names are `usage` (exit 2),
+with a diagnostic on stderr and no stdout. Without `--json`, snapshot is `usage` too.
+The fixed schema retains nulls and empty containers even with `--lean`.
+
+- `items`: default `list` rows in the same order, excluding done and retired. Each row has
+  `id`, `short_title`, `status`, `claim` (owner string or null), `pass`, `size`, `effort`,
+  `score` (base importance/urgency score), `quadrant`, `held`, `blocked`. Hold flags and
+  unmet dependencies use the existing configured rules.
+- `goals`: the goals and non-goals prose plus a flat `records` array of `{id, kind, title}`,
+  using the active records from `goals` in goal/non-goal order.
+- `runs`: only active relay runs, in `relay-run list` order. Each has `id`, `items`,
+  `worktree`, `state`, `updated_at`, and `steps`. Each step has `id`, `role`, `phase`, `task`,
+  `model`. Ended and stale runs are omitted.
+- `status`: `next` is the id `next` would offer, or null; `blocked` and `held` are arrays of
+  ids from the existing status reader's skipped candidates.
+- `health`: `render_stale` covers missing, differing or orphan render files from `check`;
+  `merge_in_progress` comes from the checkout's Git merge state.
+
+Each part's revision is the first 12 hexadecimal digits of SHA-256 over its `value` encoded
+as UTF-8 using canonical `jsonio.dumps` (two-space indent, Unicode unescaped, trailing
+newline). The project revision hashes the ordered object mapping part names to their
+revisions in the same way. Unchanged reads print identical bytes while the values stay
+unchanged, including the active-run view.
+
+A project that fails has `revision: null`, `parts: {}` and
+`error: {code, message, command: "snapshot"}`. Unreadable recursive directories also get an
+error entry. Other projects still print; the process exit is the highest error exit among
+them (2 for usage/validation, 3 for internal/state errors), or 0 with no errors. Recursive
+roots containing no project produce a `no_project` entry. There is no text form,
+`--if-changed` or persistent server mode.
+
 ## Failures are JSON too
 
 With `--json`, a failure puts an envelope on **stdout** and still writes the human line

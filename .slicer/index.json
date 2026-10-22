@@ -13957,10 +13957,22 @@
       "id": "s383",
       "title": "slicer snapshot --json returns a dashboard's reads in one process, for one or several --root projects",
       "short_title": "snapshot --json for dashboards",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e4e0b3ed-1efa-43ee-95b4-6af4ac751bae",
+          "kind": "",
+          "text": "**2026-10-22** — Ready for review: slicer snapshot --json reads items, goals, runs, status and health for one or several --root projects (and -r) in one process, with a 12-hex sha256 revision per part and per project, read-only and lock-free; a bad root gets parts {} and an error, exit is the highest. Reuses cmd_list, cmd_goals, cmd_status, ops.held_flags, graph.pending, relayrun.list_runs, check.run and vcs.merge_in_progress. 13 snapshot tests, each mutation-checked; full suite 2644 ran, 0 failures, 1 skipped; slicer check ok. Gate VERDICT: PASS (relay run-20261022-132021-295b).",
+          "created_at": "2026-10-22T14:31:35Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -13980,7 +13992,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
