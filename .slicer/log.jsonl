@@ -2177,3 +2177,4 @@
 {"when": "2026-10-22T16:51:28Z", "item": "s385", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-22T17:09:45Z", "item": "s385", "action": "note", "from": "", "to": "", "note": "Ready for review: ai relay --json and ai relay-orchestrator ", "by": "Jon Robbins"}
 {"when": "2026-10-22T17:09:48Z", "item": "s385", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-22T17:16:01Z", "item": "s385", "action": "status", "from": "review", "to": "done", "note": "Landed: ai relay --json and ai relay-orchestrator --json carry changes (version, text) from 5 to the current contract. Gate PASS; full suite on merged main 2653 OK (1 skipped); slicer check passes.", "by": "Jon Robbins"}

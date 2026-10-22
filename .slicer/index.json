@@ -14041,7 +14041,7 @@
       "id": "s385",
       "title": "ai relay --json lists what each relay contract version changed",
       "short_title": "Relay contract change list",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
