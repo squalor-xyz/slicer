@@ -13865,7 +13865,7 @@
       "id": "s380",
       "title": "slicer goals prints '(none set)' and a Python list literal when only catalog goal records exist",
       "short_title": "goals output with catalog-only goals",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

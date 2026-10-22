@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-378 items · — 19 · done 351 · retired 8
+378 items · — 18 · done 352 · retired 8
 
 ## v1.16
 
@@ -45,7 +45,7 @@
 | 10 | [s377](slices/s377.md) | plan-parallel blocked waiting_on | S | 1 | slicer | s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies "never placed", but a capped, unspecified or sibling-held item keeps its full pending list · discovered from s376 | — |
 | 11 | [s378](slices/s378.md) | Machine-readable relay contract | M | 2 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | done |
 | 12 | [s379](slices/s379.md) | check_command config key | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | — |
-| 13 | [s380](slices/s380.md) | goals output with catalog-only goals | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | — |
+| 13 | [s380](slices/s380.md) | goals output with catalog-only goals | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | done |
 | 14 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | — |
 | 15 | [s382](slices/s382.md) | Relay hand-back while a role runs | M | 2 | slicer | s369 relay 2026-10-19: the orchestrator handed back three times while its implementer still ran, the implementer's report came to the outer session rather than to the orchestrator, and Order step 4 says to stop an orchestrator whose report lacks `nothing left running: yes` · discovered from s369 | — |
 | 16 | [s383](slices/s383.md) | snapshot --json for dashboards | M | 2 | slicer | ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R4: each slicer call costs about 0.4 s of Python startup under load; ork polls list, goals and relay-run list per project. Shape proposed in the report: chosen parts (items, goals, runs, held), several roots, a revision per part. | done |
