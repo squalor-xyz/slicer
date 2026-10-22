@@ -13999,7 +13999,7 @@
       "id": "s384",
       "title": "Render files are regenerated, or reported stale, after a plain git merge, not only after slicer land",
       "short_title": "Render after a plain git merge",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
