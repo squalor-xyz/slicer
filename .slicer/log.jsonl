@@ -2170,3 +2170,7 @@
 {"when": "2026-10-22T16:34:26Z", "item": "s384", "action": "note", "from": "", "to": "", "note": "Ready for review: setup-git --hook prints a post-merge hook ", "by": "Jon Robbins"}
 {"when": "2026-10-22T16:34:30Z", "item": "s384", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-22T16:41:40Z", "item": "s384", "action": "status", "from": "review", "to": "done", "note": "Landed: setup-git --hook prints a post-merge hook that renders only on roadmap_only staleness. Gate PASS; full suite on merged main 2650 OK (1 skipped); slicer check passes.", "by": "Jon Robbins"}
+{"when": "2026-10-22T16:44:10Z", "item": "s388", "action": "add", "from": "", "to": "open", "note": "snapshot --parts refuses an empty or repeated part name"}
+{"when": "2026-10-22T16:44:10Z", "item": "s389", "action": "add", "from": "", "to": "open", "note": "snapshot warns when the running code is another worktree's"}
+{"when": "2026-10-22T16:44:10Z", "item": "s390", "action": "add", "from": "", "to": "open", "note": "The post-merge hook says when slicer is missing, and a test runs its install command"}
+{"when": "2026-10-22T16:44:10Z", "item": "s391", "action": "add", "from": "", "to": "open", "note": "Relay briefs pin a resumed headless role to the slice worktree and repeat the no-cd rule"}

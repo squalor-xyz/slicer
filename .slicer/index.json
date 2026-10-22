@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 388,
+  "next_id": 392,
   "preamble": "",
   "passes": [
     {
@@ -14126,6 +14126,126 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s388",
+      "title": "snapshot --parts refuses an empty or repeated part name",
+      "short_title": "snapshot --parts validation",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s383 relay report 2026-10-22, later note: `--parts ''` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently",
+        "discovered_from": "s383",
+        "parent": "",
+        "cites": [],
+        "key": "s383.parts-validation",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s389",
+      "title": "snapshot warns when the running code is another worktree's",
+      "short_title": "snapshot code-mismatch warning",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s383 relay report 2026-10-22, later note: `snapshot` dispatches before `_warn_code_mismatch`, so the editable-install warning every other command prints is skipped",
+        "discovered_from": "s383",
+        "parent": "",
+        "cites": [],
+        "key": "s383.code-mismatch-warning",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s390",
+      "title": "The post-merge hook says when slicer is missing, and a test runs its install command",
+      "short_title": "Post-merge hook polish",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only \"run slicer check\", and no test runs the printed install command",
+        "discovered_from": "s384",
+        "parent": "",
+        "cites": [],
+        "key": "s384.hook-missing-slicer",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s391",
+      "title": "Relay briefs pin a resumed headless role to the slice worktree and repeat the no-cd rule",
+      "short_title": "Relay resume workdir, no cd",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s384 relay report 2026-10-22, later notes 4 and 5: a reviewer used `cd` twice in read-only commands, and a resumed Codex implementer started in the main checkout, not the worktree (main was left clean)",
+        "discovered_from": "s384",
+        "parent": "",
+        "cites": [],
+        "key": "s384.relay-workdir-nocd",
+        "pass": "v1.16",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }

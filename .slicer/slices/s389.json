@@ -1,0 +1,39 @@
+{
+  "id": "s389",
+  "title": "snapshot warns when the running code is another worktree's",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s383 relay report 2026-10-22, later note: `snapshot` dispatches before `_warn_code_mismatch`, so the editable-install warning every other command prints is skipped",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the warning's wording or its detection (`vcs.foreign_worktree`), and the other commands' order of checks.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`main()` in `src/slicer/cli.py` returns `cmd_snapshot(args)` straight after parsing, so it runs before `_warn_code_mismatch(args)`. Every other command warns on stderr when an editable install points at one checkout and runs against another worktree's `.slicer/`. A dashboard calling `snapshot` from the wrong checkout reads that project through the other checkout's code and gets no warning. The warning only goes to stderr, so the JSON on stdout and the exit code are unaffected. `snapshot` takes several roots, so it must decide which root the check uses; the spec proposes each root once, silenced by `SLICER_NO_CODE_WARNING` as before. Confirm at claim."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_snapshot`, `_warn_code_mismatch`).\n- `tests/test_snapshot.py`, plus the existing code-warning tests in `tests/test_cli.py` for the fixture to reuse.\n- `docs/commands.md` or `docs/agents.md` where the warning is described, `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Snapshot_ForeignWorktreeCode_WarnsOnStderr`: with the foreign-worktree probe reporting a mismatch, `snapshot --json` prints the warning on stderr, the same JSON on stdout, and exits as before.\n- `test_Snapshot_CodeWarningEnv_StaysSilent`: with `SLICER_NO_CODE_WARNING=1` it prints nothing on stderr.\n- `test_Snapshot_SeveralRoots_WarnsOncePerMismatch`: two roots with a mismatch each print one warning apiece, never one per part."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Make the warning run for each snapshot root without taking a lock or touching stdout; reuse `_warn_code_mismatch`, passing the root, rather than copying it.\n3. Update the docs and the CHANGELOG.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "s388",
+  "title": "snapshot --parts refuses an empty or repeated part name",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s383 relay report 2026-10-22, later note: `--parts ''` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the part list itself, the revision hash, and the other `snapshot` options.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`cmd_snapshot` (`src/slicer/cli.py`) splits `--parts` on commas and refuses a name that is not in `snapshot.PARTS`. An empty value or a trailing comma yields an empty name, so the usage line reads \"unknown snapshot part(s) \" with nothing after it and the person cannot tell what was wrong. A repeated name (`--parts items,items`) is accepted and the part is built once, so the request and the answer differ without a word. A dashboard script that builds the list by joining names gets either result with no hint."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`cmd_snapshot`, where `args.parts` is split).\n- `tests/test_snapshot.py`, next to the existing unknown-part test.\n- `docs/agents.md` (the `snapshot` contract, if it describes `--parts` errors), `CHANGELOG.md` under Changed."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Snapshot_EmptyPartName_UsageNamesIt`: `snapshot --json --parts ''` and `--parts items,` exit 2 with a usage message that says the part name is empty, and print nothing on stdout.\n- `test_Snapshot_RepeatedPart_Usage`: `--parts items,items` exits 2 with a usage message naming `items` as repeated, and prints nothing on stdout. (Owner may prefer to accept repeats and collapse them; the spec proposes refusing, to match the empty-name case. Settle at claim.)"
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. In `cmd_snapshot`, refuse an empty name and a repeated name before any project is read, as exit 2 with `usage`, in the same stderr form as the unknown-part message.\n3. Update `docs/agents.md` and the CHANGELOG.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

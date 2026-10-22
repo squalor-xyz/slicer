@@ -1,0 +1,39 @@
+{
+  "id": "s390",
+  "title": "The post-merge hook says when slicer is missing, and a test runs its install command",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only \"run slicer check\", and no test runs the printed install command",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** installing the hook for the person, the roadmap-only detection, and a change to the merge driver.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`_post_merge_hook` in `src/slicer/cli.py` captures `slicer check --json` and, for any status other than the roadmap-only case, prints \"merge check needs attention; run slicer check.\" When `slicer` is not on PATH the shell status is 127, so the person is told to run a command that is the very thing missing. The s384 tests assert the install command's text but none runs it, so a quoting mistake in the `git rev-parse --git-path` form would pass the suite."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (`_post_merge_hook`).\n- `tests/test_cli.py`, next to the s384 post-merge hook tests.\n- `docs/commands.md` (the `setup-git` row) and `CHANGELOG.md` under Changed, if the hook text is described there."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_PostMergeHook_SlicerNotOnPath_NamesTheMissingCommand`: run the printed hook with a PATH that has no `slicer`; it prints a line that says slicer was not found, exits 0 and renders nothing.\n- `test_SetupGit_HookInstall_CommandInstallsExecutableHook`: in a fixture git repo, run the printed install command through `sh`; `git rev-parse --git-path hooks/post-merge` names an executable file with the hook text, and a `core.hooksPath` setting is honoured."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. In the hook, test for status 127 before the other cases and print a line that says slicer was not found on PATH. The status stays 0.\n3. Update the docs and CHANGELOG if they describe the hook text.\n4. Mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
