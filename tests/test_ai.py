@@ -996,7 +996,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
       self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
-                       {"contract": "relay v7", "relay": text})
+                       {"contract": "relay v8", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -1825,10 +1825,10 @@ class AiRelayBriefTests(unittest.TestCase):
 
 
 class RelayGoldenTests(unittest.TestCase):
-  """Pin the pre-s378 CLI bytes independently of the live contract data."""
+  """Pin the CLI bytes of the current contract version independently of the live contract data."""
 
   def check_golden(self, command):
-    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v7.json").read_text())
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v8.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
         with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:

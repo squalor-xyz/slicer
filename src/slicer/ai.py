@@ -150,7 +150,7 @@ def handoff_policy_text(kind: str) -> str:
 # marker. Bump it when a rule an outer session, orchestrator or role
 # follows changes (order, gate, tracking order, waiting, report shape), not for a
 # rewording. Record each version's change in RELAY_CHANGES.
-RELAY_CONTRACT = 7
+RELAY_CONTRACT = 8
 
 RELAY_CHANGES = (
   (5, "Setup resolves the role lineup, orchestrator included, with "
@@ -160,6 +160,8 @@ RELAY_CHANGES = (
    "on the started item, not `reject`."),
   (7, "A small fix round is reviewed and gated in one pass; a role's slicer step that a harness "
    "permission check denies stops the run before the commit instead of being worked around."),
+  (8, "A hand-back that names the role it waits on (`waiting on: ROLE AGENT-ID`) is a wait: the outer "
+   "session relays that role's report to the orchestrator and stops it only when nothing is waited on."),
 )
 
 
@@ -212,11 +214,15 @@ Spawn the orchestrator with a brief that starts "First run
    reasoning effort, the end point, a temp directory per role, RUN and the
    orchestrator's step id."""),
   (3, """\
-Wait for its run report. One slice runs in the foreground."""),
+Wait for its run report. One slice runs in the foreground. A hand-back whose last
+   line is not `nothing left running: yes`, and which names the role it waits on (a last
+   line `waiting on: ROLE AGENT-ID`), is a wait, not a report. Wait for that role's report, then resume the orchestrator with
+   the report pasted in. Do not stop the orchestrator for it."""),
   (4, """\
 Check the report's first line, the contract marker, and its last line,
-   `nothing left running: yes`. Without that last line, stop the orchestrator
-   first."""),
+   `nothing left running: yes`. Stop the orchestrator first when a hand-back lacks that
+   last line and names no running role, or names a role that has already finished and
+   whose report the orchestrator already has."""),
   (5, """\
 End the run with `--close-steps done`, which marks the orchestrator step, file the
    report's later notes as one more commit on the slice branch, then land when the
@@ -588,8 +594,10 @@ return one run report.
   report while a role you started still runs is not a reason to report. A role
   that reports while a command of its own still runs, or that stops waiting on its
   own background work, has not finished its round: resume it and tell it to
-  finish. Send the final report once, never an interim one; before ending a turn
-  without it, send the outer session one line saying what you wait on. Run no
+  finish. Send the final report once, never an interim one. When the turn ends before
+  the final report, the last line of the hand-back is `waiting on: ROLE AGENT-ID`, or
+  the closest thing the harness gives, so the outer session can route the report. A
+  role report pasted in by the outer session on resume is that role's report. Run no
   sleep loop, no monitor keepalive and no background shell job; nothing you
   started still runs when you report. Every role brief says to run long commands
   such as the full suite in the foreground with a long timeout.

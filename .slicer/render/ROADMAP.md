@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-378 items · — 18 · done 352 · retired 8
+378 items · — 17 · done 352 · retired 8 · review 1
 
 ## v1.16
 
@@ -47,7 +47,7 @@
 | 12 | [s379](slices/s379.md) | check_command config key | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | — |
 | 13 | [s380](slices/s380.md) | goals output with catalog-only goals | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | done |
 | 14 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | — |
-| 15 | [s382](slices/s382.md) | Relay hand-back while a role runs | M | 2 | slicer | s369 relay 2026-10-19: the orchestrator handed back three times while its implementer still ran, the implementer's report came to the outer session rather than to the orchestrator, and Order step 4 says to stop an orchestrator whose report lacks `nothing left running: yes` · discovered from s369 | — |
+| 15 | [s382](slices/s382.md) | Relay hand-back while a role runs | M | 2 | slicer | s369 relay 2026-10-19: the orchestrator handed back three times while its implementer still ran, the implementer's report came to the outer session rather than to the orchestrator, and Order step 4 says to stop an orchestrator whose report lacks `nothing left running: yes` · discovered from s369 | review |
 | 16 | [s383](slices/s383.md) | snapshot --json for dashboards | M | 2 | slicer | ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R4: each slicer call costs about 0.4 s of Python startup under load; ork polls list, goals and relay-run list per project. Shape proposed in the report: chosen parts (items, goals, runs, held), several roots, a revision per part. | done |
 | 17 | [s384](slices/s384.md) | Render after a plain git merge | M | 2 | slicer | ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R8: the slicer-generated merge driver keeps one side, so render/ is stale after git merge until slicer render runs (seen on adjudicate 2026-10-18); s325 reports it, this asks to fix it or say how. | done |
 | 18 | [s385](slices/s385.md) | Relay contract change list | S | 1 | slicer | ork integration review 2026-10-19 (R5), noted on s378 · discovered from s378 | done |

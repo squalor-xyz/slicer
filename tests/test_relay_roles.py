@@ -1830,7 +1830,7 @@ class AiRelayContractTests(RelayRolesCase):
   """The nested relay: `ai relay` is the outer session's contract and
   `ai relay-orchestrator` the orchestrator's, both carrying one version marker."""
 
-  MARKER = "Contract: relay v7"
+  MARKER = "Contract: relay v8"
 
   def flat(self, text: str) -> str:
     return " ".join(text.split())
@@ -1858,13 +1858,45 @@ class AiRelayContractTests(RelayRolesCase):
     order = self.section(ai.relay_text(), "## Order", "## Slivers")
     for phrase in (
       "Check the report's first line, the contract marker, and its last line, "
-      "`nothing left running: yes`. Without that last line, stop the orchestrator first.",
+      "`nothing left running: yes`.",
       "file the report's later notes as one more commit on the slice branch",
       "waits for the reports without polling",
       "with the role `orchestrator`",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, order)
+
+  def test_RelayText_HandBackWithoutLastLine_SaysToRelayTheWaitedRole(self) -> None:
+    order = self.section(ai.relay_text(), "## Order", "## Slivers")
+    for phrase in (
+      "A hand-back whose last line is not `nothing left running: yes`, and which names "
+      "the role it waits on (a last line `waiting on: ROLE AGENT-ID`), is a wait, not a report.",
+      "Wait for that role's report, then resume the orchestrator with the report pasted in.",
+      "Do not stop the orchestrator for it.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+
+  def test_RelayText_StopOrchestrator_OnlyWhenNothingIsWaited(self) -> None:
+    order = self.section(ai.relay_text(), "## Order", "## Slivers")
+    self.assertIn(
+      "Stop the orchestrator first when a hand-back lacks that last line and names no running "
+      "role, or names a role that has already finished and whose report the orchestrator already "
+      "has.", order)
+    self.assertNotIn("Without that last line, stop the orchestrator first", order)
+
+  def test_OrchestratorText_Waiting_NamesTheRoleWaitedOn(self) -> None:
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    for phrase in (
+      "When the turn ends before the final report, the last line of the hand-back is "
+      "`waiting on: ROLE AGENT-ID`, or the closest thing the harness gives, so the outer "
+      "session can route the report.",
+      "A role report pasted in by the outer session on resume is that role's report.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, waiting)
 
   def test_AiRelay_Roles_OrchestratorReadsAsItsContractSays(self) -> None:
     roles_section = self.section(ai.relay_text(), "## Roles", "## Setup")
@@ -1911,13 +1943,13 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelay_Json_CarriesContract(self) -> None:
     repo = self.project()
     relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(relay["contract"], "relay v7")
+    self.assertEqual(relay["contract"], "relay v8")
     self.assertEqual(relay["relay"].rstrip("\n"), self.ok(repo, "ai", "relay").rstrip("\n"))
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(orchestrator["contract"], "relay v7")
+    self.assertEqual(orchestrator["contract"], "relay v8")
 
   def golden(self, command, finish="done", matrix=False):
-    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v7.json").read_text())[
+    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v8.json").read_text())[
       f"{command}-{finish}-{matrix}"
     ]
 
@@ -2091,11 +2123,11 @@ class AiRelayContractTests(RelayRolesCase):
 
   def test_AiRelay_ContractMarker_AgreesAcrossBothCommandsAndTheConstant(self) -> None:
     repo = self.project()
-    self.assertEqual(ai.RELAY_CONTRACT, 7)
+    self.assertEqual(ai.RELAY_CONTRACT, 8)
     texts = [self.ok(repo, "ai", "relay"), self.orchestrator(repo)]
-    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v7"})
+    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v8"})
     payloads = [json.loads(self.ok(repo, "ai", c, "--json")) for c in ("relay", "relay-orchestrator")]
-    self.assertEqual({p["contract"] for p in payloads}, {"relay v7"})
+    self.assertEqual({p["contract"] for p in payloads}, {"relay v8"})
 
   def test_AiRelayOrchestrator_Waiting_NoForegroundAssumed(self) -> None:
     repo = self.project()
@@ -2183,7 +2215,7 @@ class AiRelayContractTests(RelayRolesCase):
     text = self.orchestrator(repo)
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop", "changes"])
-    self.assertEqual(payload["contract"], "relay v7")
+    self.assertEqual(payload["contract"], "relay v8")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))
     self.assertEqual(lean, payload)

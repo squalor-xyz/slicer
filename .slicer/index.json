@@ -13937,12 +13937,24 @@
       "id": "s382",
       "title": "The relay outer session relays a role's report to a waiting orchestrator",
       "short_title": "Relay hand-back while a role runs",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s385"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "6df7cd60-34e5-402b-9fba-e4a0937fc541",
+          "kind": "",
+          "text": "**2026-10-23** — Ready for review: relay contract v8 adds the step 3/4 rule that a hand-back naming the role it waits on is relayed rather than stopped, and the Waiting rule's 'waiting on: ROLE AGENT-ID' last line. Full suite 2658 OK (1 skipped), slicer check passes, gate PASS.",
+          "created_at": "2026-10-23T12:58:56Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -13962,7 +13974,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

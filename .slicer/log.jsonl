@@ -2182,3 +2182,6 @@
 {"when": "2026-10-22T17:02:53Z", "item": "s380", "action": "note", "from": "", "to": "", "note": "Ready for review: slicer goals now prints catalog goal and n", "by": "Jon Robbins"}
 {"when": "2026-10-22T17:02:58Z", "item": "s380", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-22T17:21:38Z", "item": "s380", "action": "status", "from": "review", "to": "done", "note": "Landed: slicer goals prints record lines one per line and (none set) only when a block has neither prose nor records. Gate PASS; full suite on merged main 2655 OK (1 skipped); slicer check passes.", "by": "Jon Robbins"}
+{"when": "2026-10-23T12:28:32Z", "item": "s382", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-23T12:58:56Z", "item": "s382", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v8 adds the step 3/4 rule t", "by": "Jon Robbins"}
+{"when": "2026-10-23T12:58:56Z", "item": "s382", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
