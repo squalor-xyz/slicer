@@ -13937,7 +13937,7 @@
       "id": "s382",
       "title": "The relay outer session relays a role's report to a waiting orchestrator",
       "short_title": "Relay hand-back while a role runs",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s385"

@@ -2186,3 +2186,4 @@
 {"when": "2026-10-23T12:58:56Z", "item": "s382", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v8 adds the step 3/4 rule t", "by": "Jon Robbins"}
 {"when": "2026-10-23T12:58:56Z", "item": "s382", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-23T12:59:50Z", "item": "s382", "action": "note", "from": "", "to": "", "note": "Later notes from the relay run: docs/commands.md ai relay an", "by": "Jon Robbins"}
+{"when": "2026-10-23T13:05:46Z", "item": "s382", "action": "status", "from": "review", "to": "done", "note": "Relay contract v8: a hand-back naming a running role is a wait; the outer session relays that role's report. Three new tests mutation-checked, full suite 2658 OK on branch and merged main, gate PASS.", "by": "Jon Robbins"}
