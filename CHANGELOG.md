@@ -17,6 +17,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- Relay contract v8: a hand-back from an orchestrator whose last line is not `nothing left running: yes` but names the role it waits on is a wait, not a report. `slicer ai relay` tells the outer session to wait for that role's report and resume the orchestrator with it pasted in, and to stop the orchestrator only when the hand-back names no running role, or a finished role whose report the orchestrator already has. `ai relay-orchestrator` tells an orchestrator that ends a turn before its final report to make the hand-back's last line `waiting on: ROLE AGENT-ID`. `ai.RELAY_CONTRACT` is 8. The agents repo's `relay-orchestrator` role and its `Expects:` line have to follow. See [agents.md](docs/agents.md).
 - Relay contract v7: `slicer ai relay-orchestrator` gains two rules from the agents repo's role. A small fix round (accepted findings only, no new files) is reviewed and gated in one pass, by resuming the reviewer. A role's slicer step that a harness permission check denies is not run by the orchestrator and not worked around: it stops before the commit with `OUTCOME stopped` and the denial's exact text under `owner needed`. `ai.RELAY_CONTRACT` is 7. The agents repo's `relay-orchestrator` role carries an `Expects:` line that its doctor checks against the marker. See [agents.md](docs/agents.md).
 
 ### Fixed
