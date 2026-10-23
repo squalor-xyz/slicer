@@ -13953,6 +13953,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "e125ab8d-2c4b-40e2-94a3-124479fb2eea",
+          "kind": "",
+          "text": "**2026-10-23** — Later notes from the relay run: docs/commands.md ai relay and ai relay-orchestrator --json shapes omit the changes key from s385; CHANGELOG Unreleased lines 11 and 14 say relay v7 unchanged beside the new v8 entry, reword at release; one ~127-char source line in ai.py step 3 (cosmetic); the agents repo's relay-orchestrator Expects: line has to follow v8.",
+          "created_at": "2026-10-23T12:59:50Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
