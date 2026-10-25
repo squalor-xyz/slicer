@@ -1,0 +1,39 @@
+{
+  "id": "s393",
+  "title": "Retract a note that turned out wrong",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork S65 relay, 2026-10-25",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "A relay orchestrator recorded `Review FAIL: none (reviewer: no blockers)` on ork's S65 because a fix round ran for UI suggestions. It is not a failure, but a note cannot be withdrawn, so the slice history shows a false FAIL. `slicer note` (src/slicer/cli.py:2422) has kinds and `--stale-after` but no retraction."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py:2422` (cmd_note) and the note record model.\n- The render of notes and the note packing used by `next --ready`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- A retracted note stays in history with who, when and why, renders struck or dim, and is skipped by `next --ready` note packing.\n- Retracting an unknown note names the item and the note reference and says what to do next."
+    },
+    {
+      "heading": "Implement",
+      "body": "Proposed form: slicer note gains a retract option that takes the note reference and a reason (flag names to be decided in the slice). Never delete the note."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 tests/affected.py --run`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

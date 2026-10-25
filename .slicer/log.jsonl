@@ -2187,3 +2187,9 @@
 {"when": "2026-10-23T12:58:56Z", "item": "s382", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-23T12:59:50Z", "item": "s382", "action": "note", "from": "", "to": "", "note": "Later notes from the relay run: docs/commands.md ai relay an", "by": "Jon Robbins"}
 {"when": "2026-10-23T13:05:46Z", "item": "s382", "action": "status", "from": "review", "to": "done", "note": "Relay contract v8: a hand-back naming a running role is a wait; the outer session relays that role's report. Three new tests mutation-checked, full suite 2658 OK on branch and merged main, gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-25T17:28:10Z", "item": "s392", "action": "add", "from": "", "to": "open", "note": "relay-run step accepts a ui role and a spec-check role"}
+{"when": "2026-10-25T17:28:10Z", "item": "s393", "action": "add", "from": "", "to": "open", "note": "Retract a note that turned out wrong"}
+{"when": "2026-10-25T17:28:10Z", "item": "s394", "action": "add", "from": "", "to": "open", "note": "foreign_worktree warns falsely when GIT_DIR is set, as in a merge driver"}
+{"when": "2026-10-25T17:28:10Z", "item": "s395", "action": "add", "from": "", "to": "open", "note": "Print an item's Files paths in show --json or a paths command"}
+{"when": "2026-10-25T17:28:10Z", "item": "s396", "action": "add", "from": "", "to": "open", "note": "relay-run ask and relay-run answer: a run can ask the owner a question and read the answer"}
+{"when": "2026-10-25T17:28:16Z", "item": "s393", "action": "edit", "from": "", "to": "", "note": "Implement"}

@@ -1,0 +1,39 @@
+{
+  "id": "s392",
+  "title": "relay-run step accepts a ui role and a spec-check role",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork 2026-10-25 relay retrospective",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`slicer relay-run step --role` accepts only implementer, reviewer, gate, architect or orchestrator (`ROLE_NAMES`, src/slicer/roles.py:31; checked at src/slicer/ops.py:3107). ork's relays run a read-only UI pass on UI slices, in parallel with the reviewer (its matrix row r14, rule u10), and plan a batched read-only spec check before a wave (ork adj 164). Both are recorded today as `reviewer` with a task suffix, so `relay-run list` and the TUI cannot tell them apart. Seen on every UI slice of ork's 2026-10-23..25 run (S33, S84, S65 and more)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/roles.py:31` (ROLE_NAMES) or a separate ledger role set, so the role matrix is not forced to grow rows for these roles.\n- `src/slicer/ops.py:3107` (the step role check).\n- `src/slicer/cli.py:674` (cmd_relay_run_step help text).\n- `src/slicer/tui.py:1530` (RELAY_PIPELINE, if the TUI shows the new roles).\n- Relay contract text in `src/slicer/ai.py`, if the UI pass is described there."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `relay-run step --role ui` and `--role spec-check` are accepted and listed under `counts.roles` in `relay-run list --json`.\n- An unknown role is still refused with the list of accepted roles."
+    },
+    {
+      "heading": "Implement",
+      "body": "Decide whether the new names join ROLE_NAMES (and so the matrix) or form a ledger-only set; the ledger-only set keeps `relay-roles recommend` unchanged. Keep `relay-run list --json` backward compatible."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 tests/affected.py --run`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

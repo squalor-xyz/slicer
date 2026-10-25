@@ -1,0 +1,39 @@
+{
+  "id": "s395",
+  "title": "Print an item's Files paths in show --json or a paths command",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork S50",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork wants to check a slice's diff against its Files list (ork S50) and warn about files outside it. slicer already extracts the paths for `plan-parallel`, `next --batch --disjoint` and `deps --overlap` (`item_paths()` at src/slicer/ops.py:2194, using the rule in src/slicer/paths.py), but no command prints one item's paths. `show --json` gives the Files section as prose (its keys on 2026-10-25: citations, claim, depends_on, fields, has_slice, id, note_records, notes, short_title, slice, slivers, status, title), `plan-parallel --json` gives only wave, id, title and reason, and `deps --overlap` gives only paths two items share."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py:2194` (item_paths).\n- `src/slicer/cli.py` (show, or a new `paths` command)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `slicer show ID --json` carries `paths: [...]`, the extracted spans, with directories keeping their trailing slash (or `slicer paths ID --json` prints the same list)."
+    },
+    {
+      "heading": "Implement",
+      "body": "One definition of a path, so ork carries no parser of its own. Not in this item: any ork change."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 tests/affected.py --run`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

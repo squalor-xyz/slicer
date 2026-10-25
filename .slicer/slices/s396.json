@@ -1,0 +1,39 @@
+{
+  "id": "s396",
+  "title": "relay-run ask and relay-run answer: a run can ask the owner a question and read the answer",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork adj 161 relay.answer-channel; ork S112",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork (the owner's dashboard) wants to show a question raised by a role, sub-orchestrator or orchestrator of a slice relay, let the owner pick one of the provided options (or type free text), and send the answer back so the run continues. Today an orchestrator's owner-needed question reaches only its outer agent session; the ledger carries steps and phases but no question. ork may use slicer only through its CLI and JSON."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py:674-714` (relay-run step and list) and the ledger record model.\n- The relay contract text in `src/slicer/ai.py` (`ai relay-orchestrator`)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `slicer relay-run ask RUN --step STEP --title T --option LABEL:SUMMARY ... [--recommend LABEL --reasoning TEXT] [--key area.topic]` records an open question on a step, and the step shows phase `ask`.\n- `slicer relay-run list --json` carries `question: {id, title, options[], recommend, key, asked_at, answered_at?, answer?}` on the step.\n- `slicer relay-run answer RUN QUESTION_ID (--option LABEL | --text TEXT) [--why TEXT] [--by NAME]` records the answer; `--get` (or `--wait`) lets the orchestrator read it."
+    },
+    {
+      "heading": "Implement",
+      "body": "The relay contract tells an orchestrator that must stop for the owner to `ask` and then poll for the answer, instead of ending with a hand-back (a contract version bump; ork then adds the new version to its accepted set). Not in this item: any ork change or TUI."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 tests/affected.py --run`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
