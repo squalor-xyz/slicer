@@ -1998,7 +1998,7 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertEqual(payload["outcomes"], ["pass", "fail", "stopped"])
     self.assertEqual(payload["stop"], [
       "the same slice fails its gate three times", "the spec turns out ambiguous or wrong",
-      "an owner decision is needed",
+      "an owner decision marked `blocker` is needed",
     ])
 
   def test_AiRelayOrchestrator_Json_CarriesStructuredContract(self):

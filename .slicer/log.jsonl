@@ -2254,6 +2254,10 @@
 {"when": "2026-10-26T15:25:10Z", "item": "s400", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-26T15:25:10Z", "item": "s403", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-10-26T15:25:10Z", "item": "s397", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-26T15:26:37Z", "item": "s398", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-26T15:48:27Z", "item": "s398", "action": "note", "from": "", "to": "", "note": "Review FAIL: stop rule (RELAY_STOP[2] and orchestrator rule)", "by": "Jon Robbins"}
+{"when": "2026-10-26T16:08:09Z", "item": "s398", "action": "note", "from": "", "to": "", "note": "Ready for review: every reviewer, UI pass and gate finding i", "by": "Jon Robbins"}
+{"when": "2026-10-26T16:08:09Z", "item": "s398", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-26T15:26:37Z", "item": "s394", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-26T16:00:45Z", "item": "s394", "action": "note", "from": "", "to": "", "note": "Ready for review: foreign_worktree probes slicer's code dir ", "by": "Jon Robbins"}
 {"when": "2026-10-26T16:00:47Z", "item": "s394", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

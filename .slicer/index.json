@@ -14540,10 +14540,33 @@
       "id": "s398",
       "title": "Findings carry a kind (fix, owner, later); owner questions are structured; only a real FAIL writes Review FAIL",
       "short_title": "Finding kinds and structured owner questions",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "058a5517-1efc-4475-830e-9766b81cf608",
+          "kind": "",
+          "text": "**2026-10-26** — Review FAIL: stop rule (RELAY_STOP[2] and orchestrator rule) still stops on any owner decision, contradicting the non-blocker owner rule; low: denial rule vs structured owner-needed, report line field separators, gate criteria do not name finding kinds.",
+          "created_at": "2026-10-26T15:48:27Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "0155bbe9-e35f-4d4e-bd5a-e19da70ae162",
+          "kind": "",
+          "text": "**2026-10-26** — Ready for review: every reviewer, UI pass and gate finding in the Gate and Every brief sections of ai relay and ai relay-orchestrator is tagged fix, owner (2 to 4 options and a preferred one; blocks only when marked blocker) or later (one-line title). The run report's owner needed entries are numbered one-line questions (N. TITLE | options: LABEL:SUMMARY; ... | recommend: LABEL | blocker (optional) | key: AREA.TOPIC (optional) | reasoning: TEXT), with no | in any value but reasoning and no ; in a SUMMARY, and the line is owner needed: none when there are no questions. The Gate criteria and the Stop condition name blocker, and a Review FAIL note is written only after VERDICT: FAIL. The contract marker stays v8 until s397 bumps it; golden fixture regenerated, full suite 2666 tests OK (1 skipped), slicer check and git diff --check clean.",
+          "created_at": "2026-10-26T16:08:09Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -14561,7 +14584,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
