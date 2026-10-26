@@ -78,6 +78,12 @@
       "outro": ""
     },
     {
+      "key": "v1.17",
+      "heading": "v1.17.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
       "key": "later",
       "heading": "Later (revisit after orchestrator use)",
       "intro": "",
@@ -13463,7 +13469,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13535,7 +13541,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13565,7 +13571,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13595,7 +13601,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13667,7 +13673,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13697,7 +13703,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13769,7 +13775,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -13852,7 +13858,7 @@
         "parent": "",
         "cites": [],
         "key": "ork.check-command",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 2,
@@ -13924,7 +13930,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -14135,7 +14141,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -14170,8 +14176,8 @@
         "pass": "v1.16",
         "group": "",
         "reason": "",
-        "importance": 2,
-        "urgency": 1,
+        "importance": 3,
+        "urgency": 3,
         "effort": 2,
         "attempts": 0
       }
@@ -14197,7 +14203,7 @@
         "parent": "",
         "cites": [],
         "key": "s383.parts-validation",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -14227,7 +14233,7 @@
         "parent": "",
         "cites": [],
         "key": "s383.code-mismatch-warning",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -14257,7 +14263,7 @@
         "parent": "",
         "cites": [],
         "key": "s384.hook-missing-slicer",
-        "pass": "v1.16",
+        "pass": "later",
         "group": "",
         "reason": "",
         "importance": 1,
@@ -14299,7 +14305,7 @@
         "parent": "",
         "cites": [],
         "key": "s384.relay-workdir-nocd",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 2,
@@ -14314,7 +14320,10 @@
       "short_title": "relay-run ui and spec-check roles",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
+      "depends_on": [
+        "s401",
+        "s399"
+      ],
       "note_records": [
         {
           "id": "33add23d-3cb9-4687-a910-dd18d5feac09",
@@ -14342,8 +14351,8 @@
         "pass": "v1.16",
         "group": "",
         "reason": "",
-        "importance": 2,
-        "urgency": 2,
+        "importance": 3,
+        "urgency": 3,
         "effort": 1,
         "attempts": 0
       }
@@ -14367,7 +14376,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 2,
@@ -14399,7 +14408,7 @@
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 1,
         "attempts": 0
       }
@@ -14427,7 +14436,7 @@
         "group": "",
         "reason": "",
         "importance": 2,
-        "urgency": 1,
+        "urgency": 3,
         "effort": 1,
         "attempts": 0
       }
@@ -14438,7 +14447,9 @@
       "short_title": "relay-run ask and answer",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
+      "depends_on": [
+        "s398"
+      ],
       "note_records": [
         {
           "id": "f868b031-889a-4ca6-878c-365bc5b3e78a",
@@ -14466,8 +14477,8 @@
         "pass": "v1.16",
         "group": "",
         "reason": "",
-        "importance": 2,
-        "urgency": 2,
+        "importance": 3,
+        "urgency": 3,
         "effort": 2,
         "attempts": 0
       }
@@ -14479,16 +14490,18 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [
+        "s387",
+        "s406",
         "s398",
         "s399",
         "s401",
-        "s402",
         "s403",
-        "s405",
-        "s406",
-        "s407",
-        "s387",
-        "s391"
+        "s404",
+        "s396",
+        "s392",
+        "s400",
+        "s394",
+        "s395"
       ],
       "note_records": [],
       "claim": null,
@@ -14573,7 +14586,9 @@
       "short_title": "Readiness record with spec digest",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
+      "depends_on": [
+        "s399"
+      ],
       "note_records": [
         {
           "id": "0ad5cbb8-6554-424a-909f-c3bf30a0bbbb",
@@ -14602,7 +14617,7 @@
         "group": "",
         "reason": "",
         "importance": 3,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 2,
         "attempts": 0
       }
@@ -14666,7 +14681,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 3,
@@ -14726,7 +14741,7 @@
         "group": "",
         "reason": "",
         "importance": 3,
-        "urgency": 2,
+        "urgency": 3,
         "effort": 1,
         "attempts": 0
       }
@@ -14750,7 +14765,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 3,
@@ -14765,7 +14780,13 @@
       "short_title": "Scripted orchestrator conformance",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
+      "depends_on": [
+        "s398",
+        "s399",
+        "s401",
+        "s403",
+        "s404"
+      ],
       "note_records": [],
       "claim": null,
       "fields": {
@@ -14806,7 +14827,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 2,
@@ -14834,7 +14855,7 @@
         "parent": "",
         "cites": [],
         "key": "",
-        "pass": "v1.16",
+        "pass": "v1.17",
         "group": "",
         "reason": "",
         "importance": 2,

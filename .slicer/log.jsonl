@@ -2211,3 +2211,41 @@
 {"when": "2026-10-26T13:06:05Z", "item": "s397", "action": "edit", "from": "", "to": "", "note": "Check"}
 {"when": "2026-10-26T13:06:39Z", "item": "s400", "action": "note", "from": "", "to": "", "note": "Readiness needs the open adj records that reference a slice:", "by": "Jon Robbins"}
 {"when": "2026-10-26T14:36:22Z", "item": "s401", "action": "note", "from": "", "to": "", "note": "From ork (owner, 2026-10-26): the project declares its UI pa", "by": "Jon Robbins"}
+{"when": "2026-10-26T15:09:03Z", "item": "s387", "action": "set", "from": "", "to": "", "note": "importance 2→3; urgency 1→3"}
+{"when": "2026-10-26T15:09:03Z", "item": "s406", "action": "set", "from": "", "to": "", "note": "importance,pass_key,urgency"}
+{"when": "2026-10-26T15:09:03Z", "item": "s398", "action": "set", "from": "", "to": "", "note": "importance,pass_key,urgency"}
+{"when": "2026-10-26T15:09:03Z", "item": "s399", "action": "set", "from": "", "to": "", "note": "importance,pass_key,urgency"}
+{"when": "2026-10-26T15:09:03Z", "item": "s401", "action": "set", "from": "", "to": "", "note": "importance,pass_key,urgency"}
+{"when": "2026-10-26T15:09:03Z", "item": "s403", "action": "set", "from": "", "to": "", "note": "importance,pass_key,urgency"}
+{"when": "2026-10-26T15:09:03Z", "item": "s404", "action": "set", "from": "", "to": "", "note": "urgency 2→3"}
+{"when": "2026-10-26T15:09:03Z", "item": "s396", "action": "set", "from": "", "to": "", "note": "importance 2→3; urgency 2→3"}
+{"when": "2026-10-26T15:09:03Z", "item": "s392", "action": "set", "from": "", "to": "", "note": "importance 2→3; urgency 2→3"}
+{"when": "2026-10-26T15:09:03Z", "item": "s400", "action": "set", "from": "", "to": "", "note": "urgency 2→3"}
+{"when": "2026-10-26T15:09:03Z", "item": "s397", "action": "set", "from": "", "to": "", "note": "importance,pass_key,urgency"}
+{"when": "2026-10-26T15:09:04Z", "item": "s394", "action": "set", "from": "", "to": "", "note": "urgency 2→3"}
+{"when": "2026-10-26T15:09:04Z", "item": "s395", "action": "set", "from": "", "to": "", "note": "urgency 1→3"}
+{"when": "2026-10-26T15:09:04Z", "item": "s396", "action": "set", "from": "", "to": "", "note": "depends_on -→s398"}
+{"when": "2026-10-26T15:09:04Z", "item": "s392", "action": "set", "from": "", "to": "", "note": "depends_on -→s401,s399"}
+{"when": "2026-10-26T15:09:04Z", "item": "s400", "action": "set", "from": "", "to": "", "note": "depends_on -→s399"}
+{"when": "2026-10-26T15:09:04Z", "item": "s406", "action": "set", "from": "", "to": "", "note": "depends_on -→s398,s399,s401,s403,s404"}
+{"when": "2026-10-26T15:09:04Z", "item": "s397", "action": "set", "from": "", "to": "", "note": "depends_on s398,s399,s401,s402,s403,s405,s406,s407,s387,s391→s387,s406,s398,s399,s401,s403,s404,s396,s392,s400,s394,s395"}
+{"when": "2026-10-26T15:09:04Z", "item": "s379", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s408", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s393", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s402", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s391", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s407", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s405", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→v1.17"}
+{"when": "2026-10-26T15:09:04Z", "item": "s368", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s370", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s371", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s372", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s374", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s375", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s377", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s381", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s386", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s388", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s389", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:04Z", "item": "s390", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
+{"when": "2026-10-26T15:09:12Z", "item": "pass.v1.17", "action": "prose", "from": "", "to": "v1.17", "note": "add-pass"}
