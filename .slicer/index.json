@@ -14429,7 +14429,7 @@
       "id": "s395",
       "title": "Print an item's Files paths in show --json or a paths command",
       "short_title": "Item Files paths in JSON",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
