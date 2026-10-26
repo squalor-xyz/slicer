@@ -14540,7 +14540,7 @@
       "id": "s398",
       "title": "Findings carry a kind (fix, owner, later); owner questions are structured; only a real FAIL writes Review FAIL",
       "short_title": "Finding kinds and structured owner questions",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
