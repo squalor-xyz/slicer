@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-395 items · — 32 · done 354 · retired 8 · review 1
+395 items · — 31 · done 355 · retired 8 · review 1
 
 v1.17.0 release
 
@@ -62,7 +62,7 @@ v1.17.0 release
 | 20 | [s395](slices/s395.md) | Item Files paths in JSON | S | 1 |  | ork S50 | review |
 | 21 | [s396](slices/s396.md) | relay-run ask and answer | M | 2 |  | ork adj 161 relay.answer-channel; ork S112 | — |
 | 22 | [s397](slices/s397.md) | Relay contract v9 | M | 2 |  |  | — |
-| 23 | [s398](slices/s398.md) | Finding kinds and structured owner questions | M | 2 |  |  | — |
+| 23 | [s398](slices/s398.md) | Finding kinds and structured owner questions | M | 2 |  |  | done |
 | 24 | [s399](slices/s399.md) | Spec check and owner answers path | M | 2 |  |  | — |
 | 25 | [s400](slices/s400.md) | Readiness record with spec digest | M | 2 |  |  | — |
 | 26 | [s401](slices/s401.md) | UI pass role in the contract | S | 1 |  |  | — |

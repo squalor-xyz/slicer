@@ -262,7 +262,7 @@ deviations accepted: LIST OR none"""),
   ('later_notes', """\
 later notes: LIST OR none"""),
   ('owner_needed', """\
-owner needed: LIST OR none"""),
+owner needed: N. TITLE | options: LABEL:SUMMARY; LABEL:SUMMARY | recommend: LABEL | blocker (optional) | key: AREA.TOPIC (optional) | reasoning: TEXT"""),
   ('role_steps', """\
 role steps: STEP IDS"""),
   ('nothing_left_running', """\
@@ -272,7 +272,7 @@ nothing left running: yes"""),
 RELAY_STOP = (
   "the same slice fails its gate three times",
   "the spec turns out ambiguous or wrong",
-  "an owner decision is needed",
+  "an owner decision marked `blocker` is needed",
 )
 
 
@@ -456,13 +456,23 @@ RELAY_GATE = """\
 ## Gate
 
 Name the diff under review. The criteria are: earlier blockers resolved with a
-proving test, no new issue of medium severity or worse, tests green, and
-docs matching the code. The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`.
+proving test, no new `fix` finding of medium severity or worse, no `blocker` owner
+finding, tests green, and docs matching the code. The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`.
 FAIL goes back to the implementer and then the gate again.
+Write a `Review FAIL` note only after `VERDICT: FAIL`.
 Record a failed review on the started item with
 `slicer note ID --text "Review FAIL: ..." --render`.
+A gate that passed writes none, even when a fix round follows it (UI edits, say).
 Add `--kind` only when `note_kinds` configures a kind for reviews.
 Any implementer change after a review needs another gate.
+
+Findings: every reviewer, UI pass and gate finding is tagged with one kind.
+
+- `fix`: goes to the fix round.
+- `owner`: a design call for the owner, with 2 to 4 options and a preferred one.
+  It goes in the run report as an owner-needed question and does not block the gate
+  unless it is marked `blocker`.
+- `later`: a follow-up item with a one-line title. It goes in the report's later notes.
 
 """
 
@@ -475,8 +485,10 @@ read or write outside it. The report is a diff stat, red lines, test counts, a
 mutation table and deviations. Every brief names the role's own temp directory,
 and no two agents share one. Every brief carries the environment lines verbatim.
 Reviewer, architect and gate briefs forbid git writes; a needed write stops and
-goes to the owner. A part brief names the part's own files and the files it must
-not touch.
+goes to the owner. Reviewer, UI pass and gate briefs tell the agent to tag each
+finding `fix`, `owner` or `later` as Gate defines, and to give an `owner` finding its
+2 to 4 options and a preferred one. A part brief names the part's own files and the
+files it must not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
@@ -618,10 +630,13 @@ return one run report.
   Anything larger gets a review round, then a gate round.
 - A role's slicer step that a harness permission check denies: do not run it yourself
   and do not work around it. Stop before the commit with OUTCOME stopped and put the
-  denial's exact text under owner needed.
+  denial's exact text under owner needed, as a `blocker` question whose reasoning is
+  that exact text, with options such as `grant:` and `skip:`.
 - Stop and return without asking the owner when the same slice fails its gate three
-  times, the spec is ambiguous or wrong, or an owner decision is needed. A design
-  choice the reviewer marks as the owner's goes under "Owner needed" in the report.
+  times, the spec is ambiguous or wrong, or an owner decision marked `blocker` is
+  needed. An `owner` finding that is not a `blocker` does not stop the relay: it goes in the report as a
+  numbered owner-needed question and the slice goes on to the gate. A `blocker` owner
+  finding stops the relay with OUTCOME stopped.
 
 ## Order
 
@@ -650,6 +665,10 @@ At most {max_lines} lines, in this order, and nothing else:
 {report}
 ```
 
+Each owner question is one line and counts toward the line limit. Number the
+questions from 1 and give each 2 to 4 options. Use no `|` in any value but `reasoning`,
+and no `;` in a SUMMARY. `reasoning` is the last field and takes the rest of the line.
+With no question, the line is `owner needed: none`.
 Write the last line only after you check that nothing you started still runs.
 """
 

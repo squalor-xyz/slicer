@@ -110,6 +110,12 @@ allows the closing note and configured finish step. The outer session receives
 the report and carries out only the endpoint you authorized. The contract also
 defines when repeated failures or a missing owner decision stop the relay.
 
+Every review, UI pass and gate finding is a `fix` (back to the implementer), an
+`owner` question (a design call for you, with 2 to 4 options and a recommendation;
+it blocks the gate only when marked `blocker`) or a `later` follow-up with a one-line
+title. The run report lists your questions as numbered lines you can answer by
+number. A `Review FAIL` note appears only after a `VERDICT: FAIL`.
+
 ## Inspect progress
 
 Run these from the project or slice worktree you want to inspect. Different
