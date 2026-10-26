@@ -14673,7 +14673,7 @@
       "id": "s401",
       "title": "The UI pass is a contract role beside the reviewer",
       "short_title": "UI pass role in the contract",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
