@@ -14346,6 +14346,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "99ed77d6-e012-4cec-9980-907d7bf22fbc",
+          "kind": "",
+          "text": "**2026-10-26** — From the s406 review (2026-10-26): ai relay --json roles uses keys outer_session, ui_pass, spec_check and has no gate entry, while relay-run step --role accepts implementer, reviewer, gate, architect, orchestrator. When this slice adds the ledger ui and spec-check roles, make the roles JSON keys and the --role names line up (or document the mapping).",
+          "created_at": "2026-10-26T18:16:24Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
