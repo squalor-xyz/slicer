@@ -1,0 +1,3 @@
+# Parallel slices each add CHANGELOG lines under the same heading; union-merge keeps
+# both sides' lines instead of conflicting. Check the order of entries after a merge.
+CHANGELOG.md merge=union
