@@ -1954,7 +1954,7 @@ class AiRelayContractTests(RelayRolesCase):
     ]
 
   def numbered_steps(self, text):
-    order = text.split("## Order\n\n", 1)[1]
+    order = text.split("## Order\n\n", 1)[1].split("\n## ", 1)[0]
     return [
       {"step": int(number), "text": self.flat(body)}
       for number, body in re.findall(r"(?m)^(\d+)\. (.*(?:\n {2,}[^\n]+)*)", order)
@@ -1986,7 +1986,7 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelay_Json_CarriesStructuredContract(self):
     repo = self.project()
     payload = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(list(payload), ["contract", "relay", "setup", "order", "report", "outcomes", "stop", "changes"])
+    self.assertEqual(list(payload), ["contract", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"])
     setup = self.golden("relay").split("## Setup\n\n", 1)[1].split("Wait for", 1)[0]
     bullets = re.findall(r"(?m)^- (.*(?:\n  [^\n]+)*)", setup)
     expected = [dict(key=key, text=self.flat(text)) for key, text in zip(
