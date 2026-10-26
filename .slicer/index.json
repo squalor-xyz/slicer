@@ -14513,7 +14513,7 @@
       "id": "s396",
       "title": "relay-run ask and relay-run answer: a run can ask the owner a question and read the answer",
       "short_title": "relay-run ask and answer",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s398"
