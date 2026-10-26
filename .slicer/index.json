@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 409,
+  "next_id": 410,
   "preamble": "",
   "passes": [
     {
@@ -14951,6 +14951,34 @@
         "group": "",
         "reason": "",
         "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s409",
+      "title": "A merge leaves the render current without a per-clone setup or a hand-run render",
+      "short_title": "Merges re-render automatically",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.17",
+        "group": "",
+        "reason": "",
+        "importance": 3,
         "urgency": 2,
         "effort": 2,
         "attempts": 0
