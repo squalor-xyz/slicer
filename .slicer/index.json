@@ -14614,7 +14614,7 @@
       "id": "s399",
       "title": "A batched spec check before the worktree, and a path for owner answers into the run",
       "short_title": "Spec check and owner answers path",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
