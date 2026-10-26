@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import dataclasses
 import io
 import json
 import re
@@ -13,7 +14,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import ai, cli, ops, roles, store, templates
+from slicer import ai, cli, config, ops, roles, store, templates
 
 
 class AiInstructionsTests(unittest.TestCase):
@@ -1735,7 +1736,7 @@ class AiRelayTests(unittest.TestCase):
     for sentence in (
       "`slicer relay-run step RUN --step STEP --phase start` re-records a long-running step "
       "as a heartbeat, so its run does not go stale after 30 minutes.",
-      "After the finish step, or when the relay stops, end the run with "
+      "End the run when its end point is reached, or when the relay or the owner stops it, with "
       "`slicer relay-run end RUN --outcome pass --close-steps done` (or `--outcome fail` or "
       "`stopped`, and `--close-steps fail` when the steps failed). It first marks each step "
       "still running, the orchestrator's own included, and without `--close-steps` it names "
@@ -2189,3 +2190,364 @@ class RelayGoldenTests(unittest.TestCase):
 
   def test_AiRelayOrchestrator_Text_UnchangedByteForByte(self):
     self.check_golden("relay-orchestrator")
+
+
+class RelayApproveLandTests(unittest.TestCase):
+  """The outer session's Approve and Land steps (s403) and the human checks recorded at approval."""
+
+  WAIT_APPROVAL = "`slicer relay-run step RUN --step STEP --phase wait --waiting-on approval`"
+  NOTE_KIND = "Add `--kind human-check` only when `note_kinds` configures that kind."
+  END_RUN = "`slicer relay-run end RUN --outcome pass --close-steps done`"
+  LAND = '`slicer land ID --branch BRANCH --note "Describe the verified outcome"`'
+
+  def outer_step(self, number: int) -> str:
+    return next(step["text"] for step in ai.relay_contract()["order"] if step["step"] == number)
+
+  def land_steps(self, finish: str = "done") -> list[dict]:
+    land = ai.relay_text(finish).split("## Land\n\n", 1)[1].split("\n## ", 1)[0]
+    return [
+      {"step": int(number), "text": " ".join(body.split())}
+      for number, body in re.findall(r"(?m)^(\d+)\. (.*(?:\n {2,}[^\n]+)*)", land)
+    ]
+
+  def land_text(self, number: int, finish: str = "done") -> str:
+    return next(step["text"] for step in self.land_steps(finish) if step["step"] == number)
+
+  def land_section(self, finish: str = "done") -> str:
+    return " ".join(ai.relay_text(finish).split("## Land\n\n", 1)[1].split("\n## ", 1)[0].split())
+
+  def test_RelayOrder_ApproveStep_RecordsApprovalWaitAndOwnerWait(self) -> None:
+    step = self.outer_step(5)
+    self.assertTrue(step.startswith("Approve"), step)
+    for phrase in (
+      "Nothing is merged or landed before the owner approves; the only commit before it is the "
+      "slice commit the orchestrator's brief allows.",
+      "While the owner decides, record the wait on the orchestrator's step with " + self.WAIT_APPROVAL,
+      "or with `--waiting-on owner` while the owner answers an owner-needed question or a `blocker`",
+      "Do not end the run while it waits: a waiting step never makes its run stale.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+
+  def test_RelayOrder_ApproveStep_ShowsVerdictTestsDiffStatOwnerFindingsAndHumanChecks(self) -> None:
+    step = self.outer_step(5)
+    for phrase in (
+      "Show the owner the gate verdict, the tests, the diff stat, each owner-needed question, "
+      "and each `[HUMAN CHECK]` line of the slice's Check section.",
+      "The owner approves, or sends a fix note.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+
+  def test_RelayOrder_ApproveStep_FixNoteGoesToFixRoundThenApprovesAgain(self) -> None:
+    step = self.outer_step(5)
+    for phrase in (
+      "Record a fix note as a note on the item in the worktree",
+      "record `--phase start` on the step to end the wait",
+      "resume the orchestrator with the note for a fix round",
+      "which is reviewed and gated again before Approve repeats",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+
+  def test_RelayOrder_ApproveStep_OnApprovalRecordsStartToEndTheWait(self) -> None:
+    step = self.outer_step(5)
+    self.assertIn(
+      "On approval, record `slicer relay-run step RUN --step STEP --phase start` to end the wait.",
+      step,
+    )
+    self.assertLess(step.index("On approval, record"), step.index("Record a fix note"))
+
+  def test_RelayOrder_ApproveStep_FinishAlreadyRan_SetsItemBackToStartedStatus(self) -> None:
+    step = self.outer_step(5)
+    for phrase in (
+      "When the finish step already ran, send the item back to the project's started status with "
+      "`slicer set ID --status STATUS --render` (`slicer config started_status` names it) "
+      "before the fix round;",
+      "after its PASS, the closing note and the finish step run again.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+    # `started_status` is a real config key and `set --status` a real flag.
+    self.assertIn("started_status", {f.name for f in dataclasses.fields(config.Config)})
+
+  def test_RelayOrder_EndPointFinishEndsTheRunHere(self) -> None:
+    step = self.outer_step(5)
+    self.assertIn(
+      "Approve, unless the end point is `finish`: end the run there with "
+      "`slicer relay-run end RUN --outcome pass --close-steps done`.",
+      step,
+    )
+    self.assertNotIn("Nothing is committed", step)
+
+  def test_RelayOrder_HumanCheck_RecordedAsNoteWarnsAndDoesNotBlock(self) -> None:
+    step = self.outer_step(5)
+    for phrase in (
+      "Record each human check the owner confirms as a note on the item in the worktree with "
+      '`slicer note ID --text "Human check: ..." --render`.',
+      self.NOTE_KIND,
+      "A human check the owner has not confirmed is shown with a warning and does not block landing.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+    note_lines = [
+      line for line in ai.relay_text().splitlines() if "Human check:" in line and "slicer note" in line
+    ]
+    self.assertTrue(note_lines)
+    for line in note_lines:
+      self.assertIn("--render", line)
+
+  def test_RelayOrder_LandStep_FollowsTheLandSection(self) -> None:
+    step = self.outer_step(6)
+    self.assertTrue(step.startswith("Land"), step)
+    for phrase in (
+      "when the end point is `commit` or `landed` and the owner approved",
+      "follow the Land section",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+    self.assertNotIn("close-steps", step)
+    self.assertEqual([item["step"] for item in ai.relay_contract()["order"]], [1, 2, 3, 4, 5, 6])
+
+  def test_RelayLand_Section_SitsBetweenOrderAndSlivers(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = ai.relay_text(finish)
+        self.assertEqual(text.count("## Land\n\n"), 1)
+        self.assertLess(text.index("## Order"), text.index("## Land"))
+        self.assertLess(text.index("## Land"), text.index("## Slivers"))
+
+  def test_RelayLand_SlicerRunsNoGit_OuterSessionRunsEachGitStep(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertIn(
+          "slicer runs no git command: the outer session runs the merge, commit, push and "
+          "worktree removal itself.",
+          self.land_section(finish),
+        )
+
+  def test_RelayLand_Steps_AreInTheRelayLandingOrder(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        steps = self.land_steps(finish)
+        self.assertEqual([step["step"] for step in steps], list(range(1, 11)))
+        for number, phrase in (
+          (1, "Rerun the slice's Check commands in the worktree."),
+          (2, "Commit on the slice branch"),
+          (3, "When main moved, merge main into the slice branch in the worktree"),
+          (4, "Run `slicer render` in the worktree and commit any rewritten render files."),
+          (5, "Run `slicer check`"),
+          (6, "Rerun the full suite on the merged branch."),
+          (7, "`git merge --ff-only BRANCH`"),
+          (8, self.END_RUN),
+          (9, self.LAND),
+          (10, "push only when the owner authorizes it"),
+        ):
+          self.assertIn(phrase, self.land_text(number, finish))
+
+  def test_RelayLand_Commit_CarriesHumanCheckNotesAndLaterNotes(self) -> None:
+    text = self.land_text(2)
+    for phrase in (
+      "Commit on the slice branch what the worktree still holds: the human-check notes, and the "
+      "finish step's state when the orchestrator did not commit it.",
+      "Then file the report's later notes as one more commit on the slice branch.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+
+  def test_RelayLand_MergeMain_UsesMergeDriversAndRebaselinesGoldens(self) -> None:
+    text = self.land_text(3)
+    for phrase in (
+      "slicer's merge drivers (`slicer setup-git` configures them)",
+      "a conflict a driver leaves goes to the owner",
+      "A merge can make a golden stale: rebaseline it and commit the result.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+
+  def test_RelayLand_CheckAndSuite_RepeatAfterDrift(self) -> None:
+    self.assertIn("exit 1 means drift: fix it, then render and check again", self.land_text(5))
+    self.assertIn("A failure goes back to the orchestrator as a fix round.", self.land_text(6))
+
+  def test_RelayLand_FfOnly_IsTheContractDefault(self) -> None:
+    text = self.land_text(7)
+    for phrase in (
+      "On main, merge the branch with `git merge --ff-only BRANCH`",
+      "ff-only is the contract's default",
+      "When main moved after step 3, go back to Land step 3.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+    self.assertNotIn("--no-ff", self.land_section())
+
+  def test_RelayLand_EndRun_ComesBeforeSlicerLand(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        section = self.land_section(finish)
+        self.assertLess(section.index(self.END_RUN), section.index(self.LAND))
+        end_text = self.land_text(8, finish)
+        self.assertIn("before the `land` command", end_text)
+        self.assertIn("refuses (`run_active`) while a run on the slice is not ended", end_text)
+
+  def test_RelayLand_SlicerLand_NamesItsRefusalsAndPrintedCommands(self) -> None:
+    text = self.land_text(9)
+    for phrase in (
+      "On main, run " + self.LAND,
+      "It refuses (`not_merged`) unless the branch tip is reachable from HEAD.",
+      "It marks the slice done, renders and checks, and prints the git commands left.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+
+  def test_RelayLand_Finish_CommitPushOnlyWhenAuthorizedThenRemoveWorktreeAndBranch(self) -> None:
+    text = self.land_text(10)
+    for phrase in (
+      "Commit `.slicer` on main with the command `land` printed",
+      "push only when the owner authorizes it",
+      "then remove the worktree and the branch with the commands `land` printed.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+    self.assertLess(text.index("push only"), text.index("remove the worktree"))
+
+  def test_RelayLand_Intro_EndPointCommitStopsAfterCommit(self) -> None:
+    section = self.land_section()
+    self.assertIn(
+      "The end point `commit` stops after step 2 and then ends the run as in step 8; "
+      "`landed` runs every step.",
+      section,
+    )
+
+  def test_RelayRecord_EndRun_AtTheEndPointNeverWhileAStepWaits(self) -> None:
+    flat = " ".join(ai.relay_text().split())
+    for phrase in (
+      "End the run when its end point is reached, or when the relay or the owner stops it, with "
+      "`slicer relay-run end RUN --outcome pass --close-steps done` (or `--outcome fail` or "
+      "`stopped`, and `--close-steps fail` when the steps failed).",
+      "For `landed`, that is after the ff-only merge and before the `land` command; see Land. "
+      "For `commit`, after the commit on the slice branch.",
+      "Never end a run while a step waits for the owner or for approval.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertEqual(flat.count(phrase), 1)
+    self.assertNotIn("After the finish step, or when the relay stops, end the run", flat)
+
+  def test_RelayRoles_OuterSession_LandsOnlyAfterApproval(self) -> None:
+    roles_section = " ".join(ai.relay_text().split("## Roles", 1)[1].split("## Setup", 1)[0].split())
+    self.assertIn("lands branches one at a time when the owner authorizes it", roles_section)
+
+  def test_OrchestratorText_HasNoApproveOrLandSteps(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = " ".join(ai.orchestrator_text(finish).split())
+        self.assertNotIn("## Land", text)
+        for token in ("ff-only", "--waiting-on", "[HUMAN CHECK]", "slicer land"):
+          self.assertNotIn(token, text)
+        steps = ai.relay_contract(orchestrator=True)["order"]
+        self.assertEqual([step["step"] for step in steps], [1, 2, 3, 4])
+
+  def test_AiRelay_Json_LandFollowsOrderAndMatchesTheText(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      self.assertEqual(repo.run("init")[0], 0)
+      code, out, err = repo.run("ai", "relay", "--json")
+      self.assertEqual((code, err), (0, ""))
+      payload = json.loads(out)
+      self.assertEqual(
+        list(payload),
+        ["contract", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"],
+      )
+      self.assertEqual(payload["land"], self.land_steps())
+      self.assertEqual(list(payload["land"][0]), ["step", "text"])
+      code, out, err = repo.run("ai", "relay-orchestrator", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertNotIn("land", json.loads(out))
+      code, out, err = repo.run("ai", "relay", "--json", "--lean")
+      self.assertEqual(json.loads(out)["land"], payload["land"])
+
+  def test_RelayLand_Commands_NamedInFullAndAcceptedByTheParser(self) -> None:
+    flat = " ".join(ai.relay_text().split())
+    parser = cli.build_parser()
+    for command in (
+      self.WAIT_APPROVAL, self.END_RUN, self.LAND, "`slicer render`", "`slicer check`",
+      "`slicer setup-git`",
+    ):
+      with self.subTest(command=command):
+        self.assertIn(command, flat)
+        parser.parse_args(shlex.split(command.strip("`"))[1:])
+
+  def test_RelayContract_ApproveAndLand_StayAtV8AndNameNoProject(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 8)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8])
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        flat = " ".join(ai.relay_text(finish).split())
+        self.assertTrue(flat.startswith("Contract: relay v8"))
+        for token in ("ork", "adj", "s118", "s119", "landing.in-ork"):
+          self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
+        if finish == "handoff":
+          self.assertNotIn("slicer done", flat)
+          self.assertNotIn("run done", flat.casefold())
+
+
+class RelayLandingDocsTests(unittest.TestCase):
+  """docs/landing.md puts the relay flow beside the manual one (s403)."""
+
+  def landing(self) -> str:
+    return (Path(__file__).resolve().parents[1] / "docs" / "landing.md").read_text(encoding="utf-8")
+
+  def test_LandingDocs_RelayFlow_FfOnlyDefaultBesideManualNoFf(self) -> None:
+    text = " ".join(self.landing().split())
+    self.assertIn("## Landing a relay slice", self.landing())
+    for phrase in (
+      "`git merge --ff-only feature/<id>-<slug>`",
+      "ff-only is the relay default",
+      "`--no-ff` stays valid for the manual flow above",
+      "slicer runs no git command",
+      "`slicer relay-run end RUN --outcome pass --close-steps done`, before `slicer land`",
+      "`relay-run step RUN --step STEP --phase wait --waiting-on approval`",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+
+  def test_LandingDocs_RelayFlow_EndPointsEndTheRunAndOnlyBriefedCommitBeforeApproval(self) -> None:
+    text = " ".join(self.landing().split())
+    for phrase in (
+      "`commit` stops after step 2 and then ends the run as in step 8",
+      "With the end point `finish`, the run ends at the finish step with `relay-run end`",
+      "Before anything is merged or landed, the owner approves; the only commit before that is the slice "
+      "commit the orchestrator's brief allows.",
+      "Commit on the slice branch what the worktree still holds: the human-check notes, and the finish "
+      "step's state when the orchestrator did not commit it.",
+      "On approval, the outer session records `relay-run step RUN --step STEP --phase start` to end the wait.",
+      "`slicer config started_status` names it",
+      "go back to Land step 3",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)
+    self.assertNotIn("before anything is committed", text)
+
+  def test_AgentsDocs_And_WorkingWithAgents_ApprovalMatchesTheContract(self) -> None:
+    docs = Path(__file__).resolve().parents[1] / "docs"
+    agents = " ".join((docs / "agents.md").read_text(encoding="utf-8").split())
+    working = " ".join((docs / "working-with-agents.md").read_text(encoding="utf-8").split())
+    self.assertIn("before anything is merged or landed (the only commit before it is the slice commit", agents)
+    self.assertIn("goes back to `started_status`", agents)
+    self.assertIn("before anything is merged or landed (the orchestrator's own slice commit comes before it)", working)
+    self.assertIn("lands, as far as your end point allows, in the order of", working)
+    self.assertNotIn("before anything is committed or landed", agents + working)
+
+  def test_LandingDocs_ManualFlow_StillMergesNoFf(self) -> None:
+    text = self.landing()
+    self.assertIn("merge into `main` with `git merge --no-ff`", " ".join(text.split()))
+    self.assertIn("A failed review is `slicer reject <ID>", text)
+
+  def test_LandingDocs_RelayFlow_HumanChecksWarnAndDoNotBlock(self) -> None:
+    text = " ".join(self.landing().split())
+    for phrase in (
+      "`[HUMAN CHECK]`",
+      "`--kind human-check`",
+      "`note_kinds`",
+      "does not block landing",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, text)

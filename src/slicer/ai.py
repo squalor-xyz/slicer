@@ -239,9 +239,73 @@ Check the report's first line, the contract marker, and its last line,
    last line and names no running role, or names a role that has already finished and
    whose report the orchestrator already has."""),
   (5, """\
-End the run with `--close-steps done`, which marks the orchestrator step, file the
-   report's later notes as one more commit on the slice branch, then land when the
-   owner authorizes it."""),
+Approve, unless the end point is `finish`: end the run there with
+   `slicer relay-run end RUN --outcome pass --close-steps done`. Nothing is merged or
+   landed before the owner approves; the only commit before it is the slice commit the
+   orchestrator's brief allows. While the owner decides, record the wait on the
+   orchestrator's step with
+   `slicer relay-run step RUN --step STEP --phase wait --waiting-on approval`,
+   or with `--waiting-on owner` while the owner answers an owner-needed question or a
+   `blocker`. Do not end the run while it waits: a waiting step never makes its run
+   stale. Show the owner the gate verdict, the tests, the diff stat, each owner-needed
+   question, and each `[HUMAN CHECK]` line of the slice's Check section. Record each
+   human check the owner confirms as a note on the item in the worktree with
+   `slicer note ID --text "Human check: ..." --render`.
+   Add `--kind human-check` only when `note_kinds` configures that kind.
+   A human check the owner has not confirmed is shown with a warning and does not
+   block landing. The owner approves, or sends a fix note. On approval, record
+   `slicer relay-run step RUN --step STEP --phase start` to end the wait. Record a fix
+   note as a note on the item in the worktree, record `--phase start` on the step to
+   end the wait, and resume the orchestrator with the note for a fix round, which is
+   reviewed and gated again before Approve repeats. When the finish step already ran,
+   send the item back to the project's started status with
+   `slicer set ID --status STATUS --render` (`slicer config started_status` names it)
+   before the fix round; after its PASS, the closing note and the finish step run
+   again."""),
+  (6, """\
+Land when the end point is `commit` or `landed` and the owner approved: follow
+   the Land section."""),
+)
+
+RELAY_LAND_INTRO = """\
+Land follows Approve and covers only what the owner's end point and authorization
+allow. slicer runs no git command: the outer session runs the merge, commit, push and
+worktree removal itself. The end point `commit` stops after step 2 and then ends the run
+as in step 8; `landed` runs every step."""
+
+RELAY_LAND = (
+  (1, """\
+Rerun the slice's Check commands in the worktree."""),
+  (2, """\
+Commit on the slice branch what the worktree still holds: the human-check notes,
+   and the finish step's state when the orchestrator did not commit it. Then file the
+   report's later notes as one more commit on the slice branch."""),
+  (3, """\
+When main moved, merge main into the slice branch in the worktree with slicer's
+   merge drivers (`slicer setup-git` configures them); a conflict a driver leaves goes
+   to the owner. A merge can make a golden stale: rebaseline it and commit the result."""),
+  (4, """\
+Run `slicer render` in the worktree and commit any rewritten render files."""),
+  (5, """\
+Run `slicer check`; exit 1 means drift: fix it, then render and check again."""),
+  (6, """\
+Rerun the full suite on the merged branch. A failure goes back to the orchestrator as
+   a fix round."""),
+  (7, """\
+On main, merge the branch with `git merge --ff-only BRANCH`; ff-only is the
+   contract's default. When main moved after step 3, go back to Land step 3."""),
+  (8, """\
+End the run with `slicer relay-run end RUN --outcome pass --close-steps done`,
+   before the `land` command, which refuses (`run_active`) while a run on the slice is
+   not ended."""),
+  (9, """\
+On main, run `slicer land ID --branch BRANCH --note "Describe the verified outcome"`.
+   It refuses (`not_merged`) unless the branch tip is reachable from HEAD. It marks the
+   slice done, renders and checks, and prints the git commands left."""),
+  (10, """\
+Commit `.slicer` on main with the command `land` printed, push only when the owner
+   authorizes it, then remove the worktree and the branch with the commands `land`
+   printed."""),
 )
 
 ORCHESTRATOR_STEPS = (
@@ -313,6 +377,8 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False) -> dict:
     {"step": number, "text": flat(text.format(finish_step=_relay_finish_step(finish)))}
     for number, text in steps
   ]
+  if not orchestrator:
+    payload["land"] = [{"step": number, "text": flat(text)} for number, text in RELAY_LAND]
   payload["report"] = {
     "max_lines": RELAY_REPORT_MAX_LINES,
     "lines": [
@@ -428,11 +494,13 @@ A subagent adds `--parent STEP` for the step that spawned it.
 re-records a long-running step as a heartbeat, so its run does not go stale
 after 30 minutes. A heartbeat passes no `--task`, so the step keeps the task it
 was recorded with; each round records its own step, without `--step`.
-After the finish step, or when the relay stops, end the run with
+End the run when its end point is reached, or when the relay or the owner stops it, with
 `slicer relay-run end RUN --outcome pass --close-steps done` (or `--outcome fail` or
 `stopped`, and `--close-steps fail` when the steps failed). It first marks each step
 still running, the orchestrator's own included, and without `--close-steps` it names
-those steps on stderr.
+those steps on stderr. For `landed`, that is after the ff-only merge and before the
+`land` command; see Land. For `commit`, after the commit on the slice branch. Never end
+a run while a step waits for the owner or for approval.
 Recording is advisory: a failed `relay-run` call never stops the relay.
 A role whose sandbox may write only inside its worktree still records: when the
 shared ledger is unwritable, `relay-run` writes the worktree's own
@@ -463,6 +531,10 @@ Review and land them one at a time, and rerun the suite on the slice branch merg
 with the new main when main moved.
 
 """.replace("{order}", _relay_steps_text(RELAY_STEPS))
+
+RELAY_LAND_SECTION = (
+  "## Land\n\n" + RELAY_LAND_INTRO + "\n\n" + _relay_steps_text(RELAY_LAND) + "\n\n"
+)
 
 RELAY_SLIVERS = """\
 ## Slivers
@@ -619,7 +691,7 @@ def relay_text(
     )
   return (
     f"Contract: {contract_line()}\n\n"
-    + RELAY_HEAD + matrix + RELAY_ORDER + RELAY_SLIVERS
+    + RELAY_HEAD + matrix + RELAY_ORDER + RELAY_LAND_SECTION + RELAY_SLIVERS
     + relay_shared_sections(required_note_kind)
     + "## Close\n\n"
     + close

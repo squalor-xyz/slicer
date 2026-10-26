@@ -14797,7 +14797,7 @@
       "id": "s403",
       "title": "Approval and landing steps in the contract, with human checks recorded at approval",
       "short_title": "Approval and landing steps",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -14807,6 +14807,28 @@
           "text": "**2026-10-26** — From the s399 review (2026-10-26): the contract's mid-run owner answer path has no ledger state. s404 (on main) added relay-run step --phase wait --waiting-on owner|approval; this slice's Approve step should tell the outer session to record a waiting step (--waiting-on approval at approval, --waiting-on owner for an owner question) and not end the run while it waits.",
           "created_at": "2026-10-26T17:04:55Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "c5e141fe-07e4-4a6e-aa6e-e0a035d508c7",
+          "kind": "",
+          "text": "**2026-10-26** — Review FAIL: commit and finish end points never end the run, so an approval wait blocks land for good; 'nothing is committed before approval' contradicts the default brief's slice commit; low: fix round after the finish step undefined, approval does not end the wait, working-with-agents overview assumes landed.",
+          "created_at": "2026-10-26T17:39:15Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "36f8648a-48ee-485a-9f7a-ffc1be55ea7d",
+          "kind": "",
+          "text": "**2026-10-26** — Ready for review: the relay contract gains an Approve step (waits recorded with relay-run --phase wait, human checks recorded as notes that warn and do not block landing, a fix-note path that sends the item back to the started status) and a Land section (ff-only default, the run ended before slicer land, slicer runs no git). The finish, commit and landed end points each end the run. docs/landing.md carries the relay flow beside the manual one, the contract marker stays v8, and the full suite passed (2751 tests, OK).",
+          "created_at": "2026-10-26T17:48:13Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -14830,7 +14852,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

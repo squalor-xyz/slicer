@@ -135,6 +135,28 @@ it blocks the gate only when marked `blocker`) or a `later` follow-up with a one
 title. The run report lists your questions as numbered lines you can answer by
 number. A `Review FAIL` note appears only after a `VERDICT: FAIL`.
 
+### Approval and landing
+
+Unless you stopped the run at the project's finish step, the outer session asks you to approve
+before anything is merged or landed (the orchestrator's own slice commit comes before it). It shows the gate verdict, the tests, the diff stat, each
+question for you and each `[HUMAN CHECK]` line of the slice's Check section. While it waits for
+you, it records the wait with `relay-run step RUN --step STEP --phase wait --waiting-on approval`
+(`--waiting-on owner` while a question of yours waits), so the run is never marked stale and is not
+ended. You approve, or send a fix note that goes back to the orchestrator as a fix round, then
+through review, the gate and approval again. If the finish step already ran, the item first goes
+back to the project's started status, and the closing note and finish step run again after the
+round passes.
+
+A human check you confirm is recorded as a slicer note on the item in the worktree, with
+`--kind human-check` when the project's `note_kinds` configures that kind (add it to the list
+if you want them separate). A check you have not confirmed is shown with a warning and does not
+block landing.
+
+Once you approve, the outer session lands, as far as your end point allows, in the order of [Landing a relay slice](landing.md#landing-a-relay-slice):
+merge main into the branch when it moved, re-render, check, rerun the suite, `git merge --ff-only`,
+end the run, `slicer land`, then commit and clean up. Slicer runs none of the git commands, and a
+push waits until you ask.
+
 ## Inspect progress
 
 Run these from the project or slice worktree you want to inspect. Different

@@ -51,6 +51,54 @@ PYTHONPATH=src python3 -m slicer done <SLIVER> [<SLIVER> ...] <PARENT> --note "D
 Commit that, remove the worktree and branch, and leave `main` clean. Pushing and
 publishing wait until the owner asks.
 
+## Landing a relay slice
+
+A slice that ran through the relay (`slicer ai relay`) lands in the order the contract's Land
+section gives. The manual flow above stays as it is: ff-only is the relay default, and `--no-ff`
+stays valid for the manual flow above. slicer runs no git command in either flow; the outer
+session runs the merge, commit, push and worktree removal itself. Only the owner's end point and
+authorization decide how far it goes: `commit` stops after step 2 and then ends the run as in step 8,
+`landed` runs every step, and a push waits until the owner asks. With the end point `finish`, the
+run ends at the finish step with `relay-run end` and nothing below applies.
+
+Before anything is merged or landed, the owner approves; the only commit before that is the slice
+commit the orchestrator's brief allows. While it waits, the outer session records
+`relay-run step RUN --step STEP --phase wait --waiting-on approval` on the orchestrator's step
+(`--waiting-on owner` while an owner question waits). A waiting step never makes its run stale, so
+the run stays open and is not ended while it waits. The approval shows the gate verdict, the
+tests, the diff stat, each owner-needed question and each `[HUMAN CHECK]` line of the slice's
+Check section. On approval, the outer session records `relay-run step RUN --step STEP --phase start`
+to end the wait. A fix note goes back to the orchestrator as a fix round, then through review, the
+gate and approval again. When the finish step already ran, the item first goes back to the
+project's started status (`slicer set <ID> --status STATUS --render`;
+`slicer config started_status` names it), and after the round's PASS the closing note and the finish step run again.
+
+Each human check the owner confirms is recorded as a note on the item in the worktree,
+`slicer note ID --text "Human check: ..." --render`, with `--kind human-check` only when the
+project's `note_kinds` configures that kind (the default `note_kinds` is empty and permits any
+kind, so a project can also add `human-check` to its own list). A human check the owner has not
+confirmed is shown with a warning and does not block landing.
+
+1. Rerun the slice's Check commands in the worktree.
+2. Commit on the slice branch what the worktree still holds: the human-check notes, and the finish
+   step's state when the orchestrator did not commit it. Then the report's later notes as one more
+   commit.
+3. When main moved, merge main into the slice branch in the worktree. The merge drivers from
+   `slicer setup-git` keep the index and the render files mergeable. A merge can make a golden
+   stale: rebaseline it and commit the result.
+4. `slicer render` in the worktree, then commit any rewritten render files.
+5. `slicer check`; exit 1 means drift.
+6. Rerun the full suite on the merged branch.
+7. On main, `git merge --ff-only feature/<id>-<slug>`. It refuses when main moved after step 3; go
+   back to Land step 3.
+8. `slicer relay-run end RUN --outcome pass --close-steps done`, before `slicer land`: `land`
+   refuses (`run_active`) while a run on the slice is not ended.
+9. On main, `slicer land <ID> --branch feature/<id>-<slug> --note "Describe the verified outcome"`.
+   An ff-only merge satisfies its `not_merged` check, because the branch tip is reachable from
+   `HEAD`.
+10. Commit `.slicer` on main with the command `land` printed, push only when the owner authorizes
+    it, then remove the worktree and the branch with the commands `land` printed.
+
 ## Schema bumps
 
 A slice bumps the index schema when its CHANGELOG entry names a new index schema or its
