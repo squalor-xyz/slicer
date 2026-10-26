@@ -14614,7 +14614,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "4417af53-c6c2-44f7-8d8b-4baad5d49574",
+          "kind": "",
+          "text": "**2026-10-26** — From ork (owner, 2026-10-26): the project declares its UI pass skills in its role matrix (ork's rule u10 names tui-design:tui-design and frontend-design:frontend-design), and the contract tells the UI pass to load the skills the project names. It also says what a vendor that cannot load skills gets: the project's vendor-neutral UI prompt (ork keeps one; internal/roles/roles_test.go:496 forbids skill names in it). Also let the project fold the UI pass into the reviewer by slice size: ork's owner chose the reviewer doing it on size S, and a separate role on M and L.",
+          "created_at": "2026-10-26T14:36:22Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
