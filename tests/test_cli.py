@@ -941,7 +941,7 @@ class ListBlockedMarkerTests(unittest.TestCase):
 
   def test_List_Json_Unchanged_ByBlockedMarker(self) -> None:
     keys = ["id", "title", "short_title", "status", "has_slice", "depends_on", "notes",
-            "note_records", "claim", "fields", "in_work_elsewhere"]
+            "note_records", "claim", "fields", "ready", "in_work_elsewhere"]
     with self.repo() as repo:
       rows = json.loads(repo.run("list", "--json")[1])
       # Blocked and unblocked rows alike carry these keys, in this order.
