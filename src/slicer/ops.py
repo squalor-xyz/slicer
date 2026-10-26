@@ -2204,6 +2204,18 @@ def item_paths(state: State, item_id: str, *, top_level: Collection[str]) -> lis
   return paths.extract(section.body, top_level=top_level)
 
 
+def item_file_paths(state: State, item_id: str) -> list[str]:
+  """An item's `files_section` paths as `show --json` reports them.
+
+  The same spans `item_paths` gives `deps --overlap`, before `overlap_ignore` removes
+  any, so a consumer checking a diff sees every path the Files list names. Unlike
+  `path_overlap`, a missing `files_section` is not `usage`: `show` answers for every
+  item, so that item has no paths.
+  """
+  top_level = {entry.name for entry in state.root.iterdir()}
+  return item_paths(state, item_id, top_level=top_level)
+
+
 def counted_paths(cfg: Config, named: list[str]) -> list[str]:
   """The paths that can overlap: those not listed in `overlap_ignore`."""
   return [path for path in named if path not in cfg.overlap_ignore]

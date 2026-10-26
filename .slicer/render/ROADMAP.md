@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-395 items · — 32 · done 355 · retired 8
+395 items · — 31 · done 355 · retired 8 · review 1
 
 v1.17.0 release
 
@@ -59,7 +59,7 @@ v1.17.0 release
 | 17 | [s387](slices/s387.md) | Pin the relay contract version | M | 2 | slicer | owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S45 (adj-json contract version and pin), ork S24 (ork sets and checks the pins). | — |
 | 18 | [s392](slices/s392.md) | relay-run ui and spec-check roles | S | 1 |  | ork 2026-10-25 relay retrospective | — |
 | 19 | [s394](slices/s394.md) | False foreign-worktree warning under GIT_DIR | S | 1 |  | ork S87 landing, 2026-10-25 | done |
-| 20 | [s395](slices/s395.md) | Item Files paths in JSON | S | 1 |  | ork S50 | — |
+| 20 | [s395](slices/s395.md) | Item Files paths in JSON | S | 1 |  | ork S50 | review |
 | 21 | [s396](slices/s396.md) | relay-run ask and answer | M | 2 |  | ork adj 161 relay.answer-channel; ork S112 | — |
 | 22 | [s397](slices/s397.md) | Relay contract v9 | M | 2 |  |  | — |
 | 23 | [s398](slices/s398.md) | Finding kinds and structured owner questions | M | 2 |  |  | done |
