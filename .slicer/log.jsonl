@@ -2307,3 +2307,7 @@
 {"when": "2026-10-26T19:19:29Z", "item": "s392", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-26T19:19:44Z", "item": "s392", "action": "status", "from": "review", "to": "done", "note": "relay-run step --role accepts ledger-only ui and spec-check (matrix and recommend unchanged) and refuses any other role with bad_run_field (previously unchecked; ork's roles verified accepted); ai relay --json roles gain ledger_role; contract text names the ui round and the spec-check batch run with its end. Full suite 2838 OK.", "by": "Jon Robbins"}
 {"when": "2026-10-26T19:21:12Z", "item": "s396", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-26T19:21:49Z", "item": "s396", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-26T20:45:42Z", "item": "s396", "action": "note", "from": "", "to": "", "note": "Review FAIL: outer Step 4 stops an orchestrator whose questi", "by": "Jon Robbins"}
+{"when": "2026-10-26T20:58:10Z", "item": "s396", "action": "note", "from": "", "to": "", "note": "relay-run ask records a structured owner question (s398 fiel", "by": "Jon Robbins"}
+{"when": "2026-10-26T20:58:11Z", "item": "s396", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

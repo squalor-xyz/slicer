@@ -141,13 +141,21 @@ it blocks the gate only when marked `blocker`) or a `later` follow-up with a one
 title. The run report lists your questions as numbered lines you can answer by
 number. A `Review FAIL` note appears only after a `VERDICT: FAIL`.
 
+A question the slice cannot go on without (a `blocker`) does not wait for the report. The
+orchestrator records it in the run ledger with `relay-run ask` and ends its turn with
+`waiting on: owner QUESTION_ID`; `slicer relay-run list RUN` shows the question, its options and
+its recommendation, and the run waits for you as long as it takes. You pick an option or write
+an answer, and the outer session (or a tool built on `relay-run list --json`) records it with
+`relay-run answer RUN QUESTION_ID --option LABEL` or `--text TEXT`, then resumes the
+orchestrator with your answer.
+
 ### Approval and landing
 
 Unless you stopped the run at the project's finish step, the outer session asks you to approve
 before anything is merged or landed (the orchestrator's own slice commit comes before it). It shows the gate verdict, the tests, the diff stat, each
 question for you and each `[HUMAN CHECK]` line of the slice's Check section. While it waits for
 you, it records the wait with `relay-run step RUN --step STEP --phase wait --waiting-on approval`
-(`--waiting-on owner` while a question of yours waits), so the run is never marked stale and is not
+(`--waiting-on owner` while a question from the report waits for you), so the run is never marked stale and is not
 ended. You approve, or send a fix note that goes back to the orchestrator as a fix round, then
 through review, the gate and approval again. If the finish step already ran, the item first goes
 back to the project's started status, and the closing note and finish step run again after the

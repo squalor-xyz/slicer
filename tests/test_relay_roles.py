@@ -1920,8 +1920,10 @@ class AiRelayContractTests(RelayRolesCase):
     order = self.section(ai.relay_text(), "## Order", "## Slivers")
     self.assertIn(
       "Stop the orchestrator first when a hand-back lacks that last line and names no running "
-      "role, or names a role that has already finished and whose report the orchestrator already "
-      "has.", order)
+      "role and no unanswered owner question, or names a role that has already finished and "
+      "whose report the orchestrator already has, or a question whose answer the orchestrator "
+      "was already resumed with.",
+      order)
     self.assertNotIn("Without that last line, stop the orchestrator first", order)
 
   def test_OrchestratorText_Waiting_NamesTheRoleWaitedOn(self) -> None:
@@ -2039,7 +2041,7 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertEqual(payload["outcomes"], ["pass", "fail", "stopped"])
     self.assertEqual(payload["stop"], [
       "the same slice fails its gate three times", "the spec turns out ambiguous or wrong",
-      "an owner decision marked `blocker` is needed",
+      "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)",
     ])
 
   def test_AiRelayOrchestrator_Json_CarriesStructuredContract(self):

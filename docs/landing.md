@@ -64,7 +64,9 @@ run ends at the finish step with `relay-run end` and nothing below applies.
 Before anything is merged or landed, the owner approves; the only commit before that is the slice
 commit the orchestrator's brief allows. While it waits, the outer session records
 `relay-run step RUN --step STEP --phase wait --waiting-on approval` on the orchestrator's step
-(`--waiting-on owner` while an owner question waits). A waiting step never makes its run stale, so
+(`--waiting-on owner` while an owner question from the report waits; a `blocker` the orchestrator
+asked with `relay-run ask` already holds its step in that wait, and `relay-run answer` ends it).
+A waiting step never makes its run stale, so
 the run stays open and is not ended while it waits. The approval shows the gate verdict, the
 tests, the diff stat, each owner-needed question and each `[HUMAN CHECK]` line of the slice's
 Check section. On approval, the outer session records `relay-run step RUN --step STEP --phase start`

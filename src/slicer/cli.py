@@ -630,6 +630,16 @@ def _step_line(step: relayrun.Step) -> str:
   return ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
 
 
+def _question_line(step: relayrun.Step) -> str | None:
+  """The step's latest question under its line in the text list: its id, whether it is still
+  open, and its title."""
+  question = step.question
+  if question is None:
+    return None
+  state = "open" if question.answer is None else "answered"
+  return f"      question {question.id} {state}  {question.title}"
+
+
 def _say_fallback(report: ops.LedgerReport) -> None:
   """One stderr line when a write went to the checkout's own file: the caller's sandbox
   refused the shared ledger, and the line says where the events are and how they get there."""
@@ -684,6 +694,55 @@ def cmd_relay_run_step(args: argparse.Namespace) -> int:
   _say_skipped(report)
   _say_orphaned(report)
   _emit_run(args, {"run": run.to_dict(), "step": step.to_dict()}, step.id)
+  return OK
+
+
+def cmd_relay_run_ask(args: argparse.Namespace) -> int:
+  report = ops.LedgerReport()
+  run, step, question = ops.relay_run_ask(
+    _run_root(args), args.run, step=args.step, title=args.title, options=args.option or [],
+    recommend=args.recommend or "", blocker=args.blocker, key=args.key or "",
+    reasoning=args.reasoning or "", report=report,
+  )
+  _say_fallback(report)
+  _say_skipped(report)
+  _say_orphaned(report)
+  _emit_run(
+    args, {"run": run.to_dict(), "step": step.to_dict(), "question": question.to_dict()},
+    question.id,
+  )
+  return OK
+
+
+def cmd_relay_run_answer(args: argparse.Namespace) -> int:
+  root = _run_root(args)
+  if args.get:
+    given = [flag for flag, value in (
+      ("--option", args.option), ("--text", args.text), ("--why", args.why), ("--by", args.by),
+    ) if value is not None]
+    if given:
+      raise StateError(f"--get reads an answer and takes no {', '.join(given)}", code="usage")
+    run, step, question = ops.relay_run_question(root, args.run, args.question)
+    answer = question.answer
+    if answer is None:
+      text = "unanswered"
+    else:
+      text = answer["option"] or answer["text"]
+      if answer["why"]:
+        text += f"\nwhy: {answer['why']}"
+  else:
+    report = ops.LedgerReport()
+    run, step, question = ops.relay_run_answer(
+      root, args.run, args.question, option=args.option, text=args.text,
+      why=args.why or "", by=args.by or "", report=report,
+    )
+    _say_fallback(report)
+    _say_skipped(report)
+    _say_orphaned(report)
+    text = question.id
+  _emit_run(
+    args, {"run": run.to_dict(), "step": step.to_dict(), "question": question.to_dict()}, text,
+  )
   return OK
 
 
@@ -742,7 +801,11 @@ def cmd_relay_run_list(args: argparse.Namespace) -> int:
       f"{_count_of(counts['steps'], 'step')}, {running}, "
       f"{_count_of(counts['subagents'], 'subagent')}"
     )
-    lines.extend(_step_line(step) for step in run.steps)
+    for step in run.steps:
+      lines.append(_step_line(step))
+      question = _question_line(step)
+      if question:
+        lines.append(question)
   _emit_run(args, {"runs": [run.to_dict() for run in runs]}, "\n".join(lines) or "no relay runs")
   return OK
 
@@ -4388,6 +4451,37 @@ def build_parser() -> argparse.ArgumentParser:
   )
   inner.add_argument("--task", help="one line on what the step is doing")
   inner.add_argument("--parent", metavar="STEP", help="the step that spawned this subagent")
+
+  inner = uadd(
+    "ask", cmd_relay_run_ask,
+    "ask the owner a question on a step, which then waits on the owner; prints the question id",
+  )
+  inner.add_argument("run")
+  inner.add_argument("--step", required=True, metavar="STEP", help="the step that asks and waits")
+  inner.add_argument("--title", required=True, help="the question, on one line")
+  inner.add_argument(
+    "--option", action="append", metavar="LABEL:SUMMARY",
+    help="an answer the owner may pick; give 2 to 4, with distinct labels; no `|` or `;`",
+  )
+  inner.add_argument("--recommend", metavar="LABEL", help="the option you recommend")
+  inner.add_argument("--blocker", action="store_true", help="the slice cannot go on without it")
+  inner.add_argument("--key", metavar="AREA.TOPIC", help="a key the owner's answers can be filed under")
+  inner.add_argument("--reasoning", metavar="TEXT", help="why; may hold a `|`")
+
+  inner = uadd(
+    "answer", cmd_relay_run_answer,
+    "record the owner's answer to a question, or with --get read it",
+  )
+  inner.add_argument("run")
+  inner.add_argument("question", metavar="QUESTION_ID")
+  inner.add_argument("--option", metavar="LABEL", help="the option the owner picked")
+  inner.add_argument("--text", help="a free-text answer, in place of an option")
+  inner.add_argument("--why", help="the owner's reason")
+  inner.add_argument("--by", metavar="NAME", help="who answered")
+  inner.add_argument(
+    "--get", action="store_true",
+    help="read the question and its answer instead; no lock, no write, and no other flag",
+  )
 
   inner = uadd("end", cmd_relay_run_end, "close a run with its outcome")
   inner.add_argument("run")

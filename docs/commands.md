@@ -70,6 +70,8 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `relay-roles rule-remove ID` | drop a rule |
 | `relay-run begin ID [ID ...] [--worktree PATH]` | start a slice-relay run on these items and print its id (`run-YYYYMMDD-HHMMSS-xxxx`). `--worktree` is recorded by its directory name; the default is the checkout whose ledger the run goes in. Appends to the local ledger only, under the project lock; no roadmap state, history or render changes. A blank item, or one with whitespace, exits 2 with code `bad_run_field`. See [Relay run ledger](#relay-run-ledger) |
 | `relay-run step RUN --role R --agent A [--vendor V] [--model M] [--reasoning E] --phase start\|done\|fail\|wait [--waiting-on owner\|approval] [--task TEXT] [--parent STEP] [--step STEP]` | record an agent's step in a run and print its step id (`1`, `2`, ...; a step the fallback records in the checkout's own file gets a prefixed id, see [Sandboxes](#sandboxes)). A new step needs `--role` and `--agent`. `--role` is one of implementer, reviewer, gate, architect, orchestrator, `ui` (the UI pass) or `spec-check` (the spec check); the last two have no matrix row, and `relay-roles` refuses them. `--parent` nests a subagent under the step that spawned it, and counts it as a subagent. `--step STEP` updates a step already in the run instead (for example `--step 1 --phase done`): only the fields given change, and `--parent` is refused there. A `--task` on an update must match the task the step was recorded with, except that a step recorded without one can be given its first; a different one is refused, and a new task needs a new step without `--step`. An unknown `RUN` exits 2 with code `unknown_run`, an ended one with `run_ended`; a phase outside the four, a `--waiting-on` other than `owner` or `approval`, a role outside those seven, a role or agent missing on a new step, a `--parent` or `--step` not in the run, a `--task` on an update that differs from the task its step was recorded with, or a value with a newline is `bad_run_field`. Nothing is appended when it refuses. `relay-run step RUN --step N --phase start` re-records a step that is still running and acts as a heartbeat, so a step that takes longer than 30 minutes does not make its run go stale. A heartbeat passes no `--task`, so the step keeps the task it was recorded with. `--phase wait` says the step waits on the owner, for an approval or an answer: `--waiting-on` names which (`owner`, the default, or `approval`), and a run with a waiting step is never stale, however long it waits. Any later `--phase start`, `done` or `fail` on that step ends the wait; the run's 30 minutes then count from that event. `--waiting-on` with another phase exits 2 with code `usage`, and writes nothing. See [Waiting](#waiting-on-the-owner) |
+| `relay-run ask RUN --step STEP --title TITLE --option LABEL:SUMMARY --option LABEL:SUMMARY [--option ...] [--recommend LABEL] [--blocker] [--key AREA.TOPIC] [--reasoning TEXT]` | ask the owner a question on a step of the run, and print its id (`q1`, `q2`, ...). The step goes into the owner wait (phase `wait`, `waiting_on` `owner`), so the run is never stale while it waits, and the orchestrator ends its turn with `waiting on: owner QUESTION_ID`. The fields are those of the run report's `owner needed` line, in its order: 2 to 4 options with distinct labels (the label ends at the first `:`), `--recommend` naming one of them, `--blocker` when the slice cannot go on without the answer, an `AREA.TOPIC` key without whitespace, and `--reasoning`. No value but `--reasoning` holds a `|`, no label or summary holds a `;`, and every value is one line. `--step` must be a step of the run that is still running or waiting on the owner (a step waiting on an `approval` is `bad_run_field`: end that wait first); a step already waiting on the owner with an unanswered latest question is `question_open`. Any other refusal of a value is `bad_run_field`, an unknown run `unknown_run`, an ended one `run_ended`; nothing is appended when it refuses. See [Asking the owner](#asking-the-owner) |
+| `relay-run answer RUN QUESTION_ID (--option LABEL \| --text TEXT) [--why TEXT] [--by NAME]` | record the owner's answer: one of the question's options, or free text, never both (`usage`, exit 2). The first answer stands: an answered question is `question_answered`, an id the run never asked is `unknown_question`, an `--option` that is not one of its labels or a blank `--text` is `bad_run_field`, an ended run `run_ended`. The answer ends the step's owner wait (a step waiting on an `approval`, or on a newer unanswered question, keeps that wait, and a step already done or failed keeps its phase), and the run's 30 minutes count from it. Prints the question id. `relay-run answer RUN QUESTION_ID --get` reads the question instead, with no lock and no write, on a run that has ended too, and takes no other flag (`usage`): the text is the chosen label or the free text, then `why: ...` when there is one, or `unanswered`; `--json` gives `{run, step, question}`. See [Asking the owner](#asking-the-owner) |
 | `relay-run end RUN --outcome pass\|fail\|stopped [--close-steps done\|fail]` | close a run. The same refusals as `step`: `unknown_run`, `run_ended`, and `bad_run_field` for another outcome or another `--close-steps` phase. `--close-steps done` (or `fail`) first marks every step still running or waiting with that phase, one step event each that names only the phase, then writes the end event, all under the one ledger lock; the text then ends `; closed steps: 1, 4`. A write that fails stops before the end event, so the run is not ended. Without it, a run that ends with steps still running or waiting prints `slicer: ended RUN with running steps: 1, 4` on stderr and leaves them as they are. Steps of other runs are never touched. When the shared ledger is writable it first copies the run's events from the local ledgers into it and its text then reads `ended RUN OUTCOME; absorbed N events from local ledgers` (see [Sandboxes](#sandboxes)); a write the sandbox refuses goes to this checkout's `.slicer/relay-runs.jsonl` with one stderr line |
 | `relay-run list [RUN] [--active]` | the runs in the shared ledger and in this checkout's and each sibling worktree's own `.slicer/relay-runs.jsonl`, folded together, oldest first. `RUN` keeps only that run; an unknown id exits 2 with code `unknown_run`, naming the ledger paths searched. A run is `active`, `stale` (no event for more than 30 minutes, not ended and with no step waiting) or `ended`; `--active` keeps only the first, so it keeps a waiting run; with `RUN`, a known ended or stale run gives an empty list and exit 0. Reads only: no lock, no write. A damaged shared ledger here is exit 3 with code `corrupt` naming the file and line; a damaged local `.slicer/relay-runs.jsonl`, this checkout's or a sibling's, is skipped. A last line with no newline yet is an append in progress and is ignored. `--json` returns `{"runs": [...]}`, and `--lean` only compacts it (empty fields stay) |
 | `start ID [ID ...] [--note TEXT] [--owner NAME]` | mark an item in progress and claim it (owner and time). The owner is `--owner`, otherwise `SLICER_CLAIM_OWNER`, otherwise `claim_owner` in config, otherwise the git user name, otherwise the worktree name; a blank value falls through and one with a newline is `usage`. A second start does not refresh the claim. The owner is also recorded as `by` on the history entry |
@@ -613,6 +615,50 @@ slicer refuses a phase it does not know as `corrupt`, which would stop it listin
 It ignores the extra field instead, so it shows a waiting step as running and the run goes
 stale after 30 minutes, as before. A newer slicer's `waiting_on` value that this one does not
 know still counts as a wait.
+
+### Asking the owner
+
+An orchestrator that needs a decision it cannot go on without, a `blocker` owner question, asks
+it in the ledger instead of only in its report, so the owner, the outer session or a program
+reading `relay-run list --json` can answer it:
+
+```sh
+Q=$(slicer relay-run ask "$RUN" --step "$STEP" --title "Which store?" \
+  --option file:"A JSON file" --option db:"A database" --recommend db --blocker \
+  --key store.engine --reasoning "scales past one writer")
+# the orchestrator ends its turn with:  waiting on: owner q1
+slicer relay-run answer "$RUN" "$Q" --option db --why "scales" --by jon   # the outer session
+slicer relay-run answer "$RUN" "$Q" --get                                # read it again
+```
+
+`ask` puts its step in the owner wait of [Waiting](#waiting-on-the-owner) and answering it ends
+that wait, so the step is `start` again and the run's 30 minutes count from the answer: an
+orchestrator that is never resumed shows as stale instead of as waiting for good. There is no
+`--wait` and nothing to poll: the orchestrator ends its turn, and the outer session resumes it
+with the answer pasted in. A step that moves on without an answer (a later `--phase start`, `done`
+or `fail`) ends the wait too and leaves the question open.
+
+In `list --json` a step's `question` is its latest question, or `null`: `{id, title, options,
+recommend, blocker, key, reasoning, asked_at, answered_at, answer}`. `options` is a list of
+`{label, summary}`; `recommend`, `key` and `reasoning` are `""` when not given. `asked_at` and
+`answered_at` are the UTC stamps of the ask and the answer events; while the question is open
+`answered_at` is `""` and `answer` is `null`, afterwards `answer` is `{option, text, why, by}`
+with `option` the picked label and `text` `""`, or `text` the free text and `option` `""`. A
+question is open while `answered_at` is `""`, whatever phase its step is in. Its id is `q` and a
+number, one past the largest in the run; a question asked from the checkout's own file (see
+[Sandboxes](#sandboxes)) carries that file's prefix like a step id, `cXXXXXXXX-q1`. The text list
+shows a step's latest question on a line of its own under the step:
+`      question q1 open  TITLE`, or `answered` once it is.
+
+Both events are step events an older slicer folds as heartbeats. The ask is a `start` event with
+`waiting_on` `owner` and a `question` object; the answer is a step event with no `waiting_on` and an
+`answer` object naming the question (`{question, option, text, why, by}`). Neither adds an event
+kind or a phase, so an older slicer reading the shared ledger lists it as before; it ignores
+the objects and shows the step as running. A newer slicer's extra keys in either object are
+ignored here. A `question` object without a string `id`, a string `title` and a list `options`,
+or an `answer` object without a string `question`, is skipped (the event still folds as a
+heartbeat) rather than refused, so one odd line cannot blank the board; an answer that names no
+question this ledger holds, or one already answered, changes nothing.
 
 A step is added to a run in the shared ledger, so in a git repo from any of its worktrees.
 `list` also reads the `.slicer/relay-runs.jsonl` of this checkout and of each sibling
