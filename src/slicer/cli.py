@@ -625,7 +625,8 @@ def _emit_run(args: argparse.Namespace, payload: dict[str, object], text: str) -
 
 
 def _step_line(step: relayrun.Step) -> str:
-  cells = [step.role, step.agent, step.model, step.reasoning, step.phase, step.task]
+  phase = f"{step.phase}:{step.waiting_on}" if step.waiting_on else step.phase
+  cells = [step.role, step.agent, step.model, step.reasoning, phase, step.task]
   return ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
 
 
@@ -677,7 +678,7 @@ def cmd_relay_run_step(args: argparse.Namespace) -> int:
     _run_root(args), args.run, phase=args.phase, step=args.step, role=args.role or "",
     agent=args.agent or "", vendor=args.vendor or "", model=args.model or "",
     reasoning=args.reasoning or "", task=args.task or "", parent=args.parent or "",
-    report=report,
+    waiting_on=args.waiting_on or "", report=report,
   )
   _say_fallback(report)
   _say_skipped(report)
@@ -694,7 +695,7 @@ def cmd_relay_run_end(args: argparse.Namespace) -> int:
   _say_fallback(report)
   _say_skipped(report)
   _say_orphaned(report)
-  running = [step.id for step in run.steps if step.phase == "start"]
+  running = [step.id for step in run.unfinished_steps()]
   if running:  # `--close-steps` leaves none, so this names the steps a plain `end` left behind
     print(f"slicer: ended {run.id} with running steps: {', '.join(running)}", file=sys.stderr)
   text = f"ended {run.id} {run.outcome}"
@@ -730,10 +731,15 @@ def cmd_relay_run_list(args: argparse.Namespace) -> int:
   lines = []
   for run in runs:
     counts = run.counts()
+    waiting = sorted({step.waiting_on for step in run.steps if step.waiting} if run.waiting else ())
+    running = f"{counts['running']} running"
+    if counts["waiting"]:
+      running += f", {counts['waiting']} waiting"
     lines.append(
-      f"{run.id}  {run.state}{'  ' + run.outcome if run.outcome else ''}  "
+      f"{run.id}  {run.state}{'  ' + run.outcome if run.outcome else ''}"
+      f"{'  waiting ' + ','.join(waiting) if waiting else ''}  "
       f"items {','.join(run.items)}  wt {run.worktree}  "
-      f"{_count_of(counts['steps'], 'step')}, {counts['running']} running, "
+      f"{_count_of(counts['steps'], 'step')}, {running}, "
       f"{_count_of(counts['subagents'], 'subagent')}"
     )
     lines.extend(_step_line(step) for step in run.steps)
@@ -4342,8 +4348,13 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("--model", help="the model")
   inner.add_argument("--reasoning", help="reasoning effort such as low, medium, high or xhigh")
   inner.add_argument(
-    "--phase", required=True, metavar="start|done|fail",
-    help="where the step stands",
+    "--phase", required=True, metavar="start|done|fail|wait",
+    help="where the step stands; wait says it waits on the owner, so its run is never stale "
+    "until a later start, done or fail of the step",
+  )
+  inner.add_argument(
+    "--waiting-on", metavar="owner|approval",
+    help="with --phase wait, what the step waits on (default owner); refused with another phase",
   )
   inner.add_argument("--task", help="one line on what the step is doing")
   inner.add_argument("--parent", metavar="STEP", help="the step that spawned this subagent")
@@ -4366,7 +4377,8 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("run", nargs="?", metavar="RUN", help="show only this run")
   inner.add_argument(
     "--active", action="store_true",
-    help="only runs that have not ended and have had an event in the last 30 minutes",
+    help="only runs that have not ended and have had an event in the last 30 minutes "
+    "or have a step waiting",
   )
 
   _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))

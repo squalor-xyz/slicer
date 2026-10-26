@@ -151,7 +151,8 @@ slicer relay-run list RUN --json --lean
 ```
 
 The [run ledger](commands.md#relay-run-ledger) shows recorded roles, steps and
-outcomes. `--active` keeps unended runs with an event in the last 30 minutes.
+outcomes. `--active` keeps unended runs with an event in the last 30 minutes, and runs
+waiting on the owner (a step in phase `wait`), which never go stale.
 Use the unfiltered list to find ended or stale runs too. Stale means no recent
 recorded event, not a confirmed crash. A role marked done means its step ended;
 read its report to learn what it established.
