@@ -110,6 +110,12 @@ allows the closing note and configured finish step. The outer session receives
 the report and carries out only the endpoint you authorized. The contract also
 defines when repeated failures or a missing owner decision stop the relay.
 
+The orchestrator does not have to be an LLM agent. A program that spawns the roles, records
+the run and applies the stop rules in code conforms to the same contract: its Conformance
+section lists what any orchestrator owes, and `slicer ai relay --json` carries the roles,
+order, gate criteria, finding kinds, report fields and stop rules as data, so a program
+reads them from slicer rather than restating them in its own docs.
+
 On a slice the project marks as UI, a UI pass runs in parallel with the reviewer. It
 is read-only and edits nothing, and it returns suggestions as findings and, where the
 project can render, the changed views. It does not decide: the gate does. The project
