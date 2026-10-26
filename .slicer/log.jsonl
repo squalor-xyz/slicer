@@ -2193,3 +2193,20 @@
 {"when": "2026-10-25T17:28:10Z", "item": "s395", "action": "add", "from": "", "to": "open", "note": "Print an item's Files paths in show --json or a paths command"}
 {"when": "2026-10-25T17:28:10Z", "item": "s396", "action": "add", "from": "", "to": "open", "note": "relay-run ask and relay-run answer: a run can ask the owner a question and read the answer"}
 {"when": "2026-10-25T17:28:16Z", "item": "s393", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-10-26T13:05:54Z", "item": "s397", "action": "add", "from": "", "to": "open", "note": "Relay contract v9: fold in ork's 2026-10-23..26 relay run and retrospective"}
+{"when": "2026-10-26T13:05:54Z", "item": "s398", "action": "add", "from": "", "to": "open", "note": "Findings carry a kind (fix, owner, later); owner questions are structured; only a real FAIL writes Review FAIL"}
+{"when": "2026-10-26T13:05:54Z", "item": "s399", "action": "add", "from": "", "to": "open", "note": "A batched spec check before the worktree, and a path for owner answers into the run"}
+{"when": "2026-10-26T13:05:54Z", "item": "s400", "action": "add", "from": "", "to": "open", "note": "A durable readiness record: the spec check's verdict, tied to a digest of the spec"}
+{"when": "2026-10-26T13:05:54Z", "item": "s401", "action": "add", "from": "", "to": "open", "note": "The UI pass is a contract role beside the reviewer"}
+{"when": "2026-10-26T13:05:54Z", "item": "s402", "action": "add", "from": "", "to": "open", "note": "Roles wait in the foreground; an interim hand-back only for an owner question, a denial or a failure"}
+{"when": "2026-10-26T13:05:54Z", "item": "s403", "action": "add", "from": "", "to": "open", "note": "Approval and landing steps in the contract, with human checks recorded at approval"}
+{"when": "2026-10-26T13:05:54Z", "item": "s404", "action": "add", "from": "", "to": "open", "note": "The relay ledger has a waiting phase, so a run waiting on the owner is not stale"}
+{"when": "2026-10-26T13:05:54Z", "item": "s405", "action": "add", "from": "", "to": "open", "note": "Fall back to the next matching row when a role hits a vendor limit"}
+{"when": "2026-10-26T13:05:54Z", "item": "s406", "action": "add", "from": "", "to": "open", "note": "A scripted orchestrator conforms to the contract; ai relay --json carries the machine-readable parts"}
+{"when": "2026-10-26T13:05:54Z", "item": "s407", "action": "add", "from": "", "to": "open", "note": "The implementer brief re-anchors first and runs a defect self-check"}
+{"when": "2026-10-26T13:05:54Z", "item": "s408", "action": "add", "from": "", "to": "open", "note": "relay-run stats: fix-round rate, role times and owner wait per run"}
+{"when": "2026-10-26T13:05:54Z", "item": "s391", "action": "note", "from": "", "to": "", "note": "More evidence from ork's relays, 2026-10-26: an implementer ", "by": "Jon Robbins"}
+{"when": "2026-10-26T13:05:54Z", "item": "s392", "action": "note", "from": "", "to": "", "note": "ork now runs a spec-check role (matrix row r16, rule u11, or", "by": "Jon Robbins"}
+{"when": "2026-10-26T13:05:54Z", "item": "s396", "action": "note", "from": "", "to": "", "note": "Use the structured question fields of s398 (title, 2-4 optio", "by": "Jon Robbins"}
+{"when": "2026-10-26T13:06:05Z", "item": "s397", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-10-26T13:06:39Z", "item": "s400", "action": "note", "from": "", "to": "", "note": "Readiness needs the open adj records that reference a slice:", "by": "Jon Robbins"}

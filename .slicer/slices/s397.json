@@ -1,0 +1,39 @@
+{
+  "id": "s397",
+  "title": "Relay contract v9: fold in ork's 2026-10-23..26 relay run and retrospective",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork (`../ork`) ran 40+ slices as slice relays under contract v8 from 2026-10-23 to 2026-10-26, wrote a retrospective (`ork/docs/review-2026-10-25-relay-retrospective.md`) and built the lessons into its engine (ork adj 162-170, slices S114-S121). The contract text still describes the pre-retrospective flow, so ork's engine and a hand-run relay now follow different rules. The owner asked on 2026-10-26 to unify them through one contract version, as soon as possible.\n\nThis item bumps `RELAY_CONTRACT` to 9 once the items it depends on land, so consumers move once, not once per change. s387 (pin) lands with it, so v9 is the first version a project pins. ork then adds 9 to its accepted set (`ork/internal/roles/roles.go`, `boundary.contract`).\n\nOwner decision needed: one v9 bundle (recommended) or a version per change."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "After the dependencies land: bump `RELAY_CONTRACT` to 9, update the contract golden fixture (s378), the CHANGELOG, and the docs that name the version. File an ork item to accept v9."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`; the first line of `slicer ai relay` is `Contract: relay v9`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

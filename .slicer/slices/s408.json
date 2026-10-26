@@ -1,0 +1,39 @@
+{
+  "id": "s408",
+  "title": "relay-run stats: fix-round rate, role times and owner wait per run",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The retrospective's numbers (median run about 20 min, 23 of 28 runs with a fix round, owner waits up to 19 h) were computed by hand from `relay-run list --json`. Measuring whether the spec check, finding kinds and self-check work needs the same numbers each time. The ledger is slicer's, so the stats belong here; ork's S123 would read them instead of computing its own."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/relayrun.py`, `src/slicer/cli.py`; `docs/commands.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "`relay-run stats [--since DATE] [--json]`: runs by outcome, median wall time, fix rounds per run, gate FAILs, time per role, and owner wait (from waiting phases, see the ledger waiting-phase item)."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "s400",
+  "title": "A durable readiness record: the spec check's verdict, tied to a digest of the spec",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork's spec check (S116) keeps its verdicts in daemon memory, because ork may not keep tracking state of its own (ork non-goal C06). The owner decided on 2026-10-26 to keep that cache for now and asked for both: a durable readiness record in slicer as well. u4 already defines \"well specified\" (files, failing tests, steps, checks, no open owner decision), and `slicer next` skips items with an empty Implement or Check, but nothing records that a spec check passed, or invalidates that when the spec changes."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`, `src/slicer/cli.py`: a readiness command or field.\n- `src/slicer/model.py`: the stored verdict and its spec digest.\n- `docs/commands.md`, `docs/agents.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Proposed, for the owner: `slicer ready ID --by NAME [--note TEXT]` records a verdict with a digest of the slice's sections. `show --json` and `list --json` report `ready: true|false|stale`; any section edit makes it `stale`. `next --ready` may prefer ready items. Owner decisions needed: the command name, and whether `next` filters or only sorts."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

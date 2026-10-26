@@ -1,0 +1,39 @@
+{
+  "id": "s404",
+  "title": "The relay ledger has a waiting phase, so a run waiting on the owner is not stale",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "`relay-run` marks a run stale 30 minutes after the last step event (`STALE_AFTER`, `src/slicer/relayrun.py:49`). A run that waits for owner approval or an owner answer is not stale. ork's S78 waited at awaiting-approval and showed as \"stale ... 23m\", so it looked dead (ork S138, 2026-10-26). `slicer land` also refuses `run_active` only while a run is not stale, so staleness carries meaning."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/relayrun.py`; `src/slicer/ops.py` (the phase check); `src/slicer/cli.py` (`--phase` help).\n- `docs/commands.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Add `--phase wait` (with an optional `--waiting-on owner|approval`) to `relay-run step`. A waiting step never makes its run stale, and `relay-run list` shows it as waiting. Align with s396's ask and answer."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

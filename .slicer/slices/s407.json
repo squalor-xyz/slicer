@@ -1,0 +1,39 @@
+{
+  "id": "s407",
+  "title": "The implementer brief re-anchors first and runs a defect self-check",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Line anchors in slice specs drift as other slices land; re-anchoring at spec time was repeated per slice and wasted. The review FAIL notes in ork's run fell into a few categories: races and handle lifetime (S15, S25, S36, S52), daemon lifecycle (S13, S17, S46), wiring that never reached its caller (S47), and docs out of step with the code (S47, S48, S49). ork's S115 made the implementer re-anchor Files and Failing tests from the current code first, and check its diff against those categories before review."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: Every brief, the implementer part.\n- The contract golden fixture."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "The implementer brief says: re-anchor the spec's line references from the current code before writing tests, and before review check the diff for concurrency and handle lifetime, docs updated with the code, and a test that fails when the wiring is removed."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

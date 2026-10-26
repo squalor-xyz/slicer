@@ -1,0 +1,39 @@
+{
+  "id": "s405",
+  "title": "Fall back to the next matching row when a role hits a vendor limit",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On 2026-10-26 Codex ran out of credits in the middle of two ork relays (S125 fix round, S127 first round). Nothing in the contract said what to do; the owner picked a Claude row by hand and the partial diffs were finished by it. ork decided (adj 156) to fall back only on a classified limit (rate limit, out of credits) to the role's next matching matrix row, and S133 classifies Codex out-of-credits. `relay-roles recommend` already lists alternatives."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: Stop and Rules in both contract texts.\n- `src/slicer/cli.py`, `src/slicer/ops.py`: a reason on `relay-run step`, if missing.\n- The contract golden fixture."
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "On a classified vendor limit, the orchestrator records the failed step with the reason, starts the same round on the role's next matching row (the alternatives `recommend` lists) with the partial diff, and names the switch in the run report. Any other failure still stops."
+    },
+    {
+      "heading": "Check",
+      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
