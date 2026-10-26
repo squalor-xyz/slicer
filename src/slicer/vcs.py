@@ -54,7 +54,9 @@ SHAPED = {
 STDOUT_ONLY = {"merge-file": "-p"}
 
 
-def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def _run(
+  root: Path, *args: str, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
   if not args or args[0] not in ALLOWED:
     raise StateError(
       f"git {args[0] if args else ''!r} is not permitted; slicer never writes history"
@@ -74,7 +76,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
       f"git {' '.join(args)} is not permitted; slicer never writes history"
     )
   return subprocess.run(
-    ["git", *args], cwd=str(root), capture_output=True, text=True, check=False
+    ["git", *args], cwd=str(root), capture_output=True, text=True, check=False, env=env
   )
 
 
@@ -86,6 +88,10 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 # outlives its commands (the TUI, the test suite) calls `clear_cache` where it reloads
 # state, so a repository that went away or a path that is reused is not remembered.
 _DISCOVERY_ENV = ("GIT_CEILING_DIRECTORIES", "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
+# The variables that point git at a repo other than the one its working directory is
+# in. A merge driver runs with them set to the project's repo, so slicer's own code
+# dir is probed without them (S394).
+_REPO_POINTER_ENV = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
 _Key = tuple[Path, tuple[str | None, ...]]
 _IS_REPO: set[_Key] = set()
 _WORKTREE: dict[_Key, Path] = {}
@@ -97,12 +103,19 @@ def clear_cache() -> None:
   _WORKTREE.clear()
 
 
-def _key(root: Path) -> _Key:
+def _key(root: Path, env: dict[str, str] | None = None) -> _Key:
   try:
     resolved = Path(root).resolve()
   except OSError:
     resolved = Path(root)
-  return resolved, tuple(os.environ.get(name) for name in _DISCOVERY_ENV)
+  source = os.environ if env is None else env
+  return resolved, tuple(source.get(name) for name in _DISCOVERY_ENV)
+
+
+def _code_probe_env() -> dict[str, str]:
+  """The caller's environment without the repo pointers, so git answers for the
+  repo that slicer's code dir is in rather than the project's."""
+  return {name: value for name, value in os.environ.items() if name not in _REPO_POINTER_ENV}
 
 
 def is_repo(root: Path) -> bool:
@@ -381,12 +394,12 @@ def elsewhere(root: Path, item_id: str) -> list[str]:
   return sorted(dict.fromkeys(names))
 
 
-def _current_worktree(root: Path) -> Path | None:
+def _current_worktree(root: Path, env: dict[str, str] | None = None) -> Path | None:
   """The git worktree that contains `root`, which may sit below the toplevel."""
-  key = _key(root)
+  key = _key(root, env)
   if key in _WORKTREE:
     return _WORKTREE[key]
-  done = _run(root, "rev-parse", "--show-toplevel")
+  done = _run(root, "rev-parse", "--show-toplevel", env=env)
   if done.returncode != 0:
     return None
   text = done.stdout.strip()
@@ -493,13 +506,13 @@ def _other_ref(ref: str, current: str | None) -> str | None:
   return None
 
 
-def git_common_dir(path: Path) -> Path | None:
+def git_common_dir(path: Path, env: dict[str, str] | None = None) -> Path | None:
   """The repo's shared git directory as seen from `path`, or None when `path`
   is not in a git repo. Two worktrees of one repo report the same common dir,
   which is how `foreign_worktree` tells same-repo siblings from an unrelated
-  install."""
+  install. `env` replaces the environment git runs in; None keeps the caller's."""
   try:
-    done = _run(path, "rev-parse", "--git-common-dir")
+    done = _run(path, "rev-parse", "--git-common-dir", env=env)
   except (FileNotFoundError, OSError):
     return None
   out = done.stdout.strip()
@@ -553,14 +566,17 @@ def foreign_worktree(root: Path, code_dir: Path) -> str | None:
     return None
   if code_dir == root or code_dir.is_relative_to(root):
     return None
-  code_common = git_common_dir(code_dir)
+  # The code dir is probed without the caller's repo pointers (S394); the project
+  # keeps them, since that is the repo the caller means.
+  code_env = _code_probe_env()
+  code_common = git_common_dir(code_dir, env=code_env)
   if code_common is None or code_common != git_common_dir(root):
     return None
   # Same repo is not enough: a project nested in the code's own worktree (a
   # subproject, or a test fixture under an ignored scratch dir) runs this
   # worktree's code, so only differing worktree toplevels are the trap.
   try:
-    code_tree = _current_worktree(code_dir)
+    code_tree = _current_worktree(code_dir, env=code_env)
     if code_tree is None or code_tree == _current_worktree(root):
       return None
   except OSError:

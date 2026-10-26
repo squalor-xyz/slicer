@@ -48,6 +48,29 @@ class ForeignWorktreeTests(unittest.TestCase):
       self.assertIn(str(sibling.resolve()), message)
       self.assertIn("PYTHONPATH=src", message)
 
+  def test_GitDirSetForAnotherRepo_NoWarning(self) -> None:
+    # A merge driver runs with GIT_DIR (or GIT_COMMON_DIR) pointing at the
+    # project's repo. Git would then answer for that repo from slicer's code dir
+    # too, so the two looked like worktrees of one repo (S394).
+    with support.TempRepo(git=True) as project, support.TempRepo(git=True) as code:
+      for name in ("GIT_DIR", "GIT_COMMON_DIR"):
+        with self.subTest(name=name), patch.dict(os.environ, {name: str(project.root / ".git")}):
+          self.assertIsNone(vcs.foreign_worktree(project.root, code.root))
+
+  def test_SiblingWorktreeGitEnvSet_Warns(self) -> None:
+    # The same sibling-worktree trap with the merge driver's variables set to the
+    # shared repo. Stripping them from the code probe must not hide a real trap.
+    with support.TempRepo(git=True) as repo:
+      repo.write("README.md", "base\n")
+      repo.commit("base")  # `git worktree add` needs a commit
+      sibling = repo.root / "sib"
+      repo._git("worktree", "add", str(sibling), "-b", "sib")
+      for name, value in (("GIT_DIR", repo.root / ".git"), ("GIT_WORK_TREE", sibling)):
+        with self.subTest(name=name), patch.dict(os.environ, {name: str(value)}):
+          message = vcs.foreign_worktree(sibling, repo.root)
+          self.assertIsNotNone(message)
+          self.assertIn(str(repo.root.resolve()), message)
+
 
 class CodeMismatchWarningTests(unittest.TestCase):
   def _repo(self) -> support.TempRepo:
