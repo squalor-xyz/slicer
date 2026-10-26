@@ -14318,7 +14318,7 @@
       "id": "s392",
       "title": "relay-run step accepts a ui role and a spec-check role",
       "short_title": "relay-run ui and spec-check roles",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s401",
