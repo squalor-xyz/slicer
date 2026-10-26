@@ -171,6 +171,14 @@ def contract_line() -> str:
 
 
 RELAY_SETUP = (
+  ('spec_check', """\
+whether to run a spec check on a batch of slices before any worktree exists (see
+  Roles). It is optional. The owner answers the whole batch in one sitting. The outer
+  session records each answer in its slice as an `Owner decisions` paragraph with
+  `slicer edit ID --section SECTION --append --text "Owner decisions: ..." --render`
+  (SECTION being the section the question concerns), and commits those filings on main before the worktree is cut, because a worktree
+  starts at HEAD and an uncommitted filing never reaches it; the owner authorizes that
+  commit. The brief carries the same paragraph."""),
   ('roles', """\
 which roles run. The architect is optional: the owner decides. On a slice the
   project marks as UI, a UI pass runs beside the reviewer, or the reviewer carries it
@@ -215,13 +223,16 @@ Spawn the orchestrator with a brief that starts "First run
    slice, the worktree and branch, the roles with agent, vendor, model and
    reasoning effort, whether the slice is a UI slice and whether the reviewer carries
    the UI pass, for a separate UI pass the skills the project's role matrix names for
-   the UI pass or its vendor-neutral UI prompt, the end point, a temp directory per role, RUN and the
+   the UI pass or its vendor-neutral UI prompt, the slice's `Owner decisions` paragraph
+   and any owner answer since, the end point, a temp directory per role, RUN and the
    orchestrator's step id."""),
   (3, """\
 Wait for its run report. One slice runs in the foreground. A hand-back whose last
    line is not `nothing left running: yes`, and which names the role it waits on (a last
    line `waiting on: ROLE AGENT-ID`), is a wait, not a report. Wait for that role's report, then resume the orchestrator with
-   the report pasted in. Do not stop the orchestrator for it."""),
+   the report pasted in. Do not stop the orchestrator for it. An owner answer given
+   while the run waits goes in a note on the item in the worktree and in the resumed
+   role's brief, not in the slice on main."""),
   (4, """\
 Check the report's first line, the contract marker, and its last line,
    `nothing left running: yes`. Stop the orchestrator first when a hand-back lacks that
@@ -345,7 +356,9 @@ session between slices.
 
 The implementer owns one slice. It runs `slicer start ID --render --strict`,
 writes the failing tests and watches them go red, implements, mutation-checks
-each new test, and closes the slice.
+each new test, and closes the slice. Line numbers a slice cites may have moved since
+its spec was written; at start the implementer re-anchors them against the code in
+the worktree.
 
 In a split, one lead implementer owns the slice. It runs
 `slicer start ID --render --strict`, the note and the finish step. Part
@@ -362,6 +375,14 @@ The UI pass is read-only and edits nothing. It runs beside the reviewer on a sli
 the project marks as UI; the project says what counts as a UI slice. It returns
 triaged suggestions, each tagged with a finding kind, and, where the project can
 render, the changed views. The gate still decides.
+
+The spec check is optional, read-only and edits nothing. It runs before any worktree
+exists, on a batch of slices the owner picks. For each slice it returns `ready` or
+questions in the shape of the run report's `owner needed` line, each with 2 to 4
+options, a preferred one, and `blocker` where the slice cannot go on without the
+answer. The outer session spawns it and reads its report. It has no matrix row, so the
+owner names its agent, model and reasoning effort at Setup like any role. It does not
+re-anchor the line numbers a slice cites: the implementer does that late.
 
 A reviewer never wrote code in this slice. In a split, that holds for every part.
 The owner chooses the models.
@@ -429,6 +450,13 @@ their own tests and the orchestrator's run on the combined diff is the one full
 run. The orchestrator reruns the suite only if the diff changed after that run or
 main moved.
 
+Owner answers: an answer the owner gives after the worktree exists never reaches it
+through the slice on main. The outer session records it against the slice worktree with
+`slicer note ID --text "Owner answer: ..." --render`, then resumes the orchestrator
+with the answer pasted in, and the orchestrator carries it into the resumed role's brief.
+A project that keeps a decision log also records there a design answer the owner
+explicitly picked, not a default an agent assumed.
+
 Run slices in parallel only when their files are disjoint. The outer session
 starts their orchestrators together and waits for the reports without polling.
 Review and land them one at a time, and rerun the suite on the slice branch merged
@@ -492,9 +520,11 @@ RELAY_BRIEF = """\
 
 Include the slice from `slicer show ID --json --lean`, the tracking rule below,
 and the workspace limit: stay inside the workspace the owner named and do not
-read or write outside it. The report is a diff stat, red lines, test counts, a
-mutation table and deviations. Every brief names the role's own temp directory,
-and no two agents share one. Every brief carries the environment lines verbatim.
+read or write outside it. Every brief carries the slice's `Owner decisions` paragraph,
+when it has one, and each owner answer recorded in a note since, verbatim. The report
+is a diff stat, red lines, test counts, a mutation table and deviations. Every brief
+names the role's own temp directory, and no two agents share one. Every brief carries
+the environment lines verbatim.
 Reviewer, architect and gate briefs forbid git writes; a needed write stops and
 goes to the owner. Reviewer, UI pass and gate briefs tell the agent to tag each
 finding `fix`, `owner` or `later` as Gate defines, and to give an `owner` finding its
@@ -505,8 +535,10 @@ vendor-neutral UI prompt instead. It asks for each finding's kind and, where the
 project can render, the changed views. The project may fold the UI pass into the
 reviewer by slice size, such as the reviewer on a small slice and a separate role on a
 larger one; where it does, the reviewer's brief also carries the UI pass brief, and
-no separate UI pass runs. A part brief names the part's own files and the
-files it must not touch.
+no separate UI pass runs. The implementer brief says cited line numbers may have
+moved and to re-anchor them at start. The spec-check brief says the agent is read-only,
+edits nothing and makes no git writes, and asks for `ready` or `owner needed` lines for
+each slice. A part brief names the part's own files and the files it must not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
@@ -622,6 +654,10 @@ return one run report.
   heartbeat, `slicer relay-run step RUN --step STEP --phase start`, passes no new
   `--task`.
 {tracking}\
+- Owner answers: an answer the outer session pastes in on resume is the owner's, not a
+  role's report. Carry it verbatim, with the slice's `Owner decisions` paragraph, into
+  the brief of the role you resume or start. The outer session has already recorded it
+  as a note on the item in the worktree.
 - Waiting: a spawn may run in the background with no foreground option. When a
   role's result is needed, end the turn and let its report wake you. A nudge to
   report while a role you started still runs is not a reason to report. A role

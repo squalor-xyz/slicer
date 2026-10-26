@@ -14614,7 +14614,7 @@
       "id": "s399",
       "title": "A batched spec check before the worktree, and a path for owner answers into the run",
       "short_title": "Spec check and owner answers path",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -14624,6 +14624,17 @@
           "text": "**2026-10-26** — Orchestrator, 2026-10-26: per the owner-approved s392 decision (ledger-only ui/spec-check set; ROLE_NAMES, matrix and recommend unchanged), this slice names the spec-check role in contract text only and does not add it to roles.py ROLE_NAMES or the matrix.",
           "created_at": "2026-10-26T16:41:32Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "0679dffa-e6e2-4823-bb87-900420388313",
+          "kind": "",
+          "text": "**2026-10-26** — Setup in slicer ai relay gains an optional, read-only spec check on a batch of slices before any worktree exists. Owner answers are filed in each slice as an Owner decisions paragraph and committed on main before the worktree is cut, and every brief carries that paragraph. An answer given mid-run goes in a slicer note on the item in the worktree and in the resumed role's brief; the implementer re-anchors cited line references at start, and a generic sentence says a project's decision log records answers the owner explicitly picked. The contract stays v8, the golden is regenerated, and the full suite passed (2692 tests OK, 1 skipped).",
+          "created_at": "2026-10-26T17:06:13Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -14647,7 +14658,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
