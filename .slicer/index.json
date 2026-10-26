@@ -14797,7 +14797,7 @@
       "id": "s403",
       "title": "Approval and landing steps in the contract, with human checks recorded at approval",
       "short_title": "Approval and landing steps",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
