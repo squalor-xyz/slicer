@@ -13,11 +13,12 @@ import shlex
 import subprocess
 import tempfile
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
-from slicer import vcs
+from slicer import relayrun, vcs
 
 BRANCH = "feature/s1-thing"
 NOTE = "Verified outcome"
@@ -96,6 +97,26 @@ class LandTests(LandCase):
     self.merge(repo)
     run = json.loads(repo.run("relay-run", "begin", "S01", "--json")[1])["run"]["id"]
     payload = self.refused(repo, 2, "run_active")
+    self.assertIn(run, payload["message"])
+    self.assertEqual(self.status(repo), "open")
+
+  def test_Land_RunWaitingOnTheOwner_RunActive(self) -> None:
+    """A waiting run is never stale, so it is active and `land` refuses while it waits (s404)."""
+    repo = self.repo()
+    self.worktree(repo)
+    self.merge(repo)
+    run = json.loads(repo.run("relay-run", "begin", "S01", "--json")[1])["run"]["id"]
+    step = json.loads(repo.run(
+      "relay-run", "step", run, "--role", "orchestrator", "--agent", "A", "--phase", "start",
+      "--json",
+    )[1])["step"]["id"]
+    self.assertEqual(
+      repo.run("relay-run", "step", run, "--step", step, "--phase", "wait", "--json")[0], 0,
+    )
+    # Hours later the run would be stale if it were not waiting.
+    later = relayrun.utcnow() + timedelta(hours=5)
+    with patch.object(relayrun, "utcnow", return_value=later):
+      payload = self.refused(repo, 2, "run_active")
     self.assertIn(run, payload["message"])
     self.assertEqual(self.status(repo), "open")
 

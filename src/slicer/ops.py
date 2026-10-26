@@ -3546,7 +3546,8 @@ def relay_run_begin(
 def relay_run_step(
   root: Path, run_id: str, *, phase: str, step: str | None = None, role: str = "",
   agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", task: str = "",
-  parent: str = "", now: datetime | None = None, report: LedgerReport | None = None,
+  parent: str = "", waiting_on: str = "", now: datetime | None = None,
+  report: LedgerReport | None = None,
 ) -> tuple[relayrun.Run, relayrun.Step]:
   """Record an agent's step, or with `step` a later phase of one already recorded.
 
@@ -3556,9 +3557,22 @@ def relay_run_step(
   without one may take its first: a new task is a new step. A new step's id is a plain
   number in the shared ledger and carries `relayrun.fallback_step_prefix` in the checkout's
   own file, so the two writers never issue the same id.
+
+  Phase `wait` says the step waits on the owner (`waiting_on` `owner`, the default, or
+  `approval`), and a run with a waiting step is never stale. It is written as a `start` event
+  that carries `waiting_on`, which an older slicer folds as a heartbeat (see `relayrun`). Any
+  later event of the step, `start`, `done` or `fail`, ends the wait. `waiting_on` with another
+  phase is `usage`: it would be dropped, and the caller meant a wait.
   """
   now = now or relayrun.utcnow()
-  relayrun.choice("phase", phase, relayrun.PHASES)
+  relayrun.choice("phase", phase, relayrun.STEP_PHASES)
+  waiting_on = waiting_on.strip()
+  if phase == "wait":
+    waiting_on = relayrun.choice(
+      "waiting_on", waiting_on or relayrun.DEFAULT_WAITING_ON, relayrun.WAITING_ON,
+    )
+  elif waiting_on:
+    raise StateError("--waiting-on needs --phase wait", code="usage")
   fields = {
     "role": relayrun.one_line("role", role), "agent": relayrun.one_line("agent", agent),
     "vendor": relayrun.one_line("vendor", vendor), "model": relayrun.one_line("model", model),
@@ -3588,7 +3602,8 @@ def relay_run_step(
           "Record a new step without --step for another task, or leave out --task to keep this one"
         )
       step_id = step
-    return relayrun.step_event(run_id, now, step_id, phase, parent, **fields)
+    wire = "start" if phase == "wait" else phase
+    return relayrun.step_event(run_id, now, step_id, wire, parent, waiting_on, **fields)
 
   with ledger_lock(root, report) as ledger:
     written = ledger.append_planned(plan)
@@ -3604,7 +3619,7 @@ def relay_run_end(
 
   When the shared ledger can be written, the run's events from the local ledgers are copied
   into it first, so removing a worktree afterwards loses none of them. With `close_steps`
-  (`done` or `fail`), each step still running then gets one step event with that phase, and
+  (`done` or `fail`), each step still running or waiting then gets one step event with that phase, and
   no other field, before the end event. They are all written under the one ledger lock; a
   refused write stops the call before the end event, so the run is not ended.
   """
@@ -3620,7 +3635,7 @@ def relay_run_end(
     if close_steps is not None:
       # The fold reads the local files too, and `append` copies a local-only step before it
       # updates it, so a step recorded in a sandbox's file is closed in the shared ledger.
-      running = [s.id for s in _open_run(root, run_id, now).steps if s.phase == "start"]
+      running = [s.id for s in _open_run(root, run_id, now).unfinished_steps()]
       for step_id in running:
         ledger.append(relayrun.step_event(run_id, now, step_id, close_steps))
         closed.append(step_id)

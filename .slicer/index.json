@@ -2,7 +2,7 @@
   "version": 9,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 409,
+  "next_id": 410,
   "preamble": "",
   "passes": [
     {
@@ -14800,7 +14800,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "6927c878-b3d1-4f13-b1d3-68a7581daa30",
+          "kind": "",
+          "text": "**2026-10-26** — From the s399 review (2026-10-26): the contract's mid-run owner answer path has no ledger state. s404 (on main) added relay-run step --phase wait --waiting-on owner|approval; this slice's Approve step should tell the outer session to record a waiting step (--waiting-on approval at approval, --waiting-on owner for an owner question) and not end the run while it waits.",
+          "created_at": "2026-10-26T17:04:55Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -14825,10 +14837,22 @@
       "id": "s404",
       "title": "The relay ledger has a waiting phase, so a run waiting on the owner is not stale",
       "short_title": "Ledger waiting phase",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2bcea60e-0786-4e3c-b295-76fc0f5be45b",
+          "kind": "",
+          "text": "**2026-10-26** — Verified: relay-run step --phase wait [--waiting-on owner|approval] is written as a start event carrying waiting_on, so older slicers fold it as a heartbeat instead of refusing the ledger as corrupt. A run with a waiting step is never stale, relay-run list shows it (text 'waiting owner', 1 waiting; JSON step.waiting_on and counts.waiting, additive), and land refuses it with run_active. A later start, done or fail ends the wait; --waiting-on without --phase wait is usage. Full suite 2701 tests OK, slicer check passes.",
+          "created_at": "2026-10-26T16:45:18Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14846,7 +14870,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -14962,6 +14986,34 @@
         "group": "",
         "reason": "",
         "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s409",
+      "title": "A merge leaves the render current without a per-clone setup or a hand-run render",
+      "short_title": "Merges re-render automatically",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.17",
+        "group": "",
+        "reason": "",
+        "importance": 3,
         "urgency": 2,
         "effort": 2,
         "attempts": 0
