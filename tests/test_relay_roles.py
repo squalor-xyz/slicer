@@ -1986,7 +1986,8 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelay_Json_CarriesStructuredContract(self):
     repo = self.project()
     payload = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(list(payload), ["contract", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"])
+    self.assertEqual(list(payload), ["contract", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
+      "roles", "gate", "finding_kinds", "conformance"])
     setup = self.golden("relay").split("## Setup\n\n", 1)[1].split("Wait for", 1)[0]
     bullets = re.findall(r"(?m)^- (.*(?:\n  [^\n]+)*)", setup)
     expected = [dict(key=key, text=self.flat(text)) for key, text in zip(
@@ -2008,7 +2009,8 @@ class AiRelayContractTests(RelayRolesCase):
       with self.subTest(finish=finish):
         self.ok(repo, "config", "implement_finish", finish)
         payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-        self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop", "changes"])
+        self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop", "changes",
+      "gate", "finding_kinds", "conformance"])
         self.assertEqual(payload["order"], self.numbered_steps(self.golden("relay-orchestrator", finish)))
         relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
         for key in ("report", "outcomes", "stop"):
@@ -2183,7 +2185,8 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertIn("At most 30 lines", self.flat(report))
 
   def test_AiRelayOrchestrator_LeavesOutOuterSteps(self) -> None:
-    text = ai.orchestrator_text()
+    # The Conformance section forbids merge, land and push too, so it is not a rule that names them.
+    text = ai.orchestrator_text().split("\n## Conformance\n", 1)[0]
     bullets = re.split(r"\n(?=- )", text)
     hits = [b for b in bullets
             if any(token in b for token in ("relay-run begin", "relay-run end", "push"))]
@@ -2215,7 +2218,8 @@ class AiRelayContractTests(RelayRolesCase):
     repo = self.project()
     text = self.orchestrator(repo)
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop", "changes"])
+    self.assertEqual(list(payload), ["contract", "orchestrator", "order", "report", "outcomes", "stop", "changes",
+      "gate", "finding_kinds", "conformance"])
     self.assertEqual(payload["contract"], "relay v8")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))

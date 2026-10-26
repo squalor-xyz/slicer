@@ -14927,7 +14927,7 @@
       "id": "s406",
       "title": "A scripted orchestrator conforms to the contract; ai relay --json carries the machine-readable parts",
       "short_title": "Scripted orchestrator conformance",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s398",
@@ -14936,7 +14936,30 @@
         "s403",
         "s404"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "aa24f4f2-2a13-403d-a099-aa96367f57b3",
+          "kind": "",
+          "text": "**2026-10-26** — Review FAIL: the stop obligation misses the orchestrator's permission-denial stop; low: gate_rule restates verdict text instead of building it from data; contract_marker obligation overlaps s387 (dropped).",
+          "created_at": "2026-10-26T18:16:24Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "a79a3e0e-1f97-4e2a-b2ae-2431aa0ffe58",
+          "kind": "",
+          "text": "**2026-10-26** — Added a Conformance section to both relay contracts with nine obligations that bind an LLM agent or a program alike (role order, gate rule, finding kinds, stop rules including the permission denial, ledger, finish only after PASS, run report sent once, worktree scope, commit scope). ai relay --json adds roles, gate, finding_kinds and conformance after changes; ai relay-orchestrator --json adds gate, finding_kinds and conformance (no roles). Each is built from the data that renders the prose, and tests read the prose back to compare. check_command and pinned are not in the payload yet and the contract stays v8. Full suite 2769 OK (1 skipped), slicer check passes.",
+          "created_at": "2026-10-26T18:25:14Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -14954,7 +14977,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

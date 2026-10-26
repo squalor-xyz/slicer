@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shlex
+import textwrap
 
 from slicer.relayrun import OUTCOMES
 
@@ -355,6 +356,93 @@ RELAY_STOP = (
   "an owner decision marked `blocker` is needed",
 )
 
+# The gate's criteria and verdict lines, as data: `RELAY_GATE` renders them and
+# `relay_contract` carries the same lists in `--json`.
+RELAY_GATE_CRITERIA = (
+  "earlier blockers resolved with a proving test",
+  "no new `fix` finding of medium severity or worse",
+  "no `blocker` owner finding",
+  "tests green",
+  "docs matching the code",
+)
+
+RELAY_GATE_VERDICTS = ("VERDICT: PASS", "VERDICT: FAIL")
+
+# Each finding kind and what happens to it. The text continues the bullet after the kind;
+# its wraps are kept in the prose and joined with single spaces in `--json`.
+RELAY_FINDING_KINDS = (
+  ('fix', """\
+goes to the fix round."""),
+  ('owner', """\
+a design call for the owner, with 2 to 4 options and a preferred one.
+  It goes in the run report as an owner-needed question and does not block the gate
+  unless it is marked `blocker`."""),
+  ('later', """\
+a follow-up item with a one-line title. It goes in the report's later notes."""),
+)
+
+# What any orchestrator owes the contract, an LLM agent or a program. Each entry is a
+# bullet of the Conformance section and an item of `conformance` in `--json`. It points at
+# Order, Gate, Stop and Run report rather than restating their data, and the two literals
+# it must name (the passing verdict and the report's last line) come from the data that
+# renders those sections, through `_relay_conformance`, so those cannot drift.
+RELAY_CONFORMANCE_INTRO = """\
+These obligations bind any orchestrator, whether an LLM agent briefed with this text
+or a program that spawns the roles, records the ledger and applies the rules in code.
+The rest of this contract is worded for an agent; a program meets each obligation in its
+own code. `slicer ai relay --json` and `slicer ai relay-orchestrator --json` carry the
+order, the gate, the finding kinds, the run report, the outcomes, the stop rules and
+these obligations as data, so a program reads them there instead of restating them;
+`slicer ai relay --json` also carries the roles."""
+
+
+def _relay_conformance(pass_verdict: str, last_line: str) -> tuple[tuple[str, str], ...]:
+  """The obligations, with the passing verdict and the report's last line filled in."""
+  items = (
+    ('role_order', """\
+Run the roles in Order's sequence: the implementer, the reviewer (with the UI pass
+  beside it on a UI slice), the architect when the owner chose one, then the gate.
+  Accepted findings go back to the implementer before the next review or gate."""),
+    ('gate_rule', """\
+Decide the gate on the criteria in Gate, with its verdict as the first line as Gate
+  says. A FAIL, or an implementer change after a review, needs another gate."""),
+    ('finding_kinds', """\
+Tag every reviewer, UI pass and gate finding `fix`, `owner` or `later`, and route
+  each as Gate says."""),
+    ('stop_rules', """\
+Stop when a stop condition in Stop holds, or when a harness permission check denies a
+  role's slicer step (stop before the commit, with the denial's exact text as a `blocker`
+  owner-needed question), with OUTCOME stopped, and return the run report. Do not go on
+  past it and do not ask the owner."""),
+    ('ledger', """\
+Record each role's round in the run ledger with `relay-run step`: a new step for every
+  round, a parent step for a spawned role, and done or fail when the round ends. The
+  outer session begins and ends the run. A failed record never stops the relay."""),
+    ('finish_after_pass', """\
+Run the closing note and the finish step only after `{pass_verdict}`. A fix round that
+  follows runs them again only after its own PASS."""),
+    ('run_report', """\
+Return one run report, in the line order of Run report and within its line limit. Send
+  it once, never an interim one. Its first line is the contract marker and its last is
+  `{last_line}`, written only after nothing the run started still runs."""),
+    ('worktree_scope', """\
+Work only in the worktree the brief names, with absolute paths and no change of
+  directory, and write no product code."""),
+    ('commit_scope', """\
+Commit on the slice branch only when the brief allows it. Never merge, land, push or
+  rebase onto main: the outer session owns those."""),
+  )
+  return tuple(
+    (key, text.replace("{pass_verdict}", pass_verdict).replace("{last_line}", last_line))
+    for key, text in items
+  )
+
+
+RELAY_CONFORMANCE = _relay_conformance(
+  RELAY_GATE_VERDICTS[0],
+  next(template for key, template in RELAY_REPORT_LINES if key == "nothing_left_running"),
+)
+
 
 def _relay_steps_text(steps: tuple[tuple[int, str], ...]) -> str:
   """Keep the contract's existing wraps while rendering its numbered data."""
@@ -389,8 +477,54 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False) -> dict:
   payload["outcomes"] = list(OUTCOMES)
   payload["stop"] = list(RELAY_STOP)
   payload["changes"] = [{"version": version, "text": text} for version, text in RELAY_CHANGES]
+  # New keys go after `changes`, so every earlier key keeps its position.
+  if not orchestrator:
+    payload["roles"] = [{"role": role, "text": flat(text)} for role, text in RELAY_ROLES]
+  payload["gate"] = {"criteria": list(RELAY_GATE_CRITERIA), "verdicts": list(RELAY_GATE_VERDICTS)}
+  payload["finding_kinds"] = [{"kind": kind, "text": flat(text)} for kind, text in RELAY_FINDING_KINDS]
+  payload["conformance"] = [{"key": key, "text": flat(text)} for key, text in RELAY_CONFORMANCE]
   return payload
 
+
+# The outer session's and each role's part, as data. `RELAY_HEAD` renders each entry into
+# the Roles section, and `relay_contract` carries the same text in `--json`.
+RELAY_ROLES = (
+  ('outer_session', """\
+The outer session is the session the owner talks to. It runs Setup with the
+owner, owns the relay run, spawns one orchestrator per slice, reads only that
+orchestrator's run report, lands branches one at a time when the owner
+authorizes it, files the report's later notes, and writes no product code."""),
+  ('orchestrator', """\
+The orchestrator runs one slice under the contract that
+`slicer ai relay-orchestrator` prints. It briefs every agent, reads the reports
+and reads diffs as `slicer ai relay-orchestrator` says, reruns the tests only as
+Order says, and writes no product code."""),
+  ('implementer', """\
+The implementer owns one slice. It runs `slicer start ID --render --strict`,
+writes the failing tests and watches them go red, implements, mutation-checks
+each new test, and closes the slice. Line numbers a slice cites may have moved since
+its spec was written; at start the implementer re-anchors them against the code in
+the worktree."""),
+  ('reviewer', """\
+The reviewer is read-only. It reviews correctness, test strength and direction
+against `slicer goals`."""),
+  ('architect', """\
+The architect is read-only. It confirms each finding was fixed and reviews the
+shape."""),
+  ('ui_pass', """\
+The UI pass is read-only and edits nothing. It runs beside the reviewer on a slice
+the project marks as UI; the project says what counts as a UI slice. It returns
+triaged suggestions, each tagged with a finding kind, and, where the project can
+render, the changed views. The gate still decides."""),
+  ('spec_check', """\
+The spec check is optional, read-only and edits nothing. It runs before any worktree
+exists, on a batch of slices the owner picks. For each slice it returns `ready` or
+questions in the shape of the run report's `owner needed` line, each with 2 to 4
+options, a preferred one, and `blocker` where the slice cannot go on without the
+answer. The outer session spawns it and reads its report. It has no matrix row, so the
+owner names its agent, model and reasoning effort at Setup like any role. It does not
+re-anchor the line numbers a slice cites: the implementer does that late."""),
+)
 
 # The slice relay, shared by both finish modes. The close is appended separately
 # so the handoff text can avoid naming the other finish command. It is two constants
@@ -406,49 +540,28 @@ relay uses slicer's own commands.
 
 ## Roles
 
-The outer session is the session the owner talks to. It runs Setup with the
-owner, owns the relay run, spawns one orchestrator per slice, reads only that
-orchestrator's run report, lands branches one at a time when the owner
-authorizes it, files the report's later notes, and writes no product code.
+{role.outer_session}
 
-The orchestrator runs one slice under the contract that
-`slicer ai relay-orchestrator` prints. It briefs every agent, reads the reports
-and reads diffs as `slicer ai relay-orchestrator` says, reruns the tests only as
-Order says, and writes no product code.
+{role.orchestrator}
 
 Where the agent cannot nest subagents, the outer session is also the
 orchestrator: it follows that contract itself and compacts or starts a fresh
 session between slices.
 
-The implementer owns one slice. It runs `slicer start ID --render --strict`,
-writes the failing tests and watches them go red, implements, mutation-checks
-each new test, and closes the slice. Line numbers a slice cites may have moved since
-its spec was written; at start the implementer re-anchors them against the code in
-the worktree.
+{role.implementer}
 
 In a split, one lead implementer owns the slice. It runs
 `slicer start ID --render --strict`, the note and the finish step. Part
 implementers change only their own files, write and run their own tests, and
 run no slicer command that writes.
 
-The reviewer is read-only. It reviews correctness, test strength and direction
-against `slicer goals`.
+{role.reviewer}
 
-The architect is read-only. It confirms each finding was fixed and reviews the
-shape.
+{role.architect}
 
-The UI pass is read-only and edits nothing. It runs beside the reviewer on a slice
-the project marks as UI; the project says what counts as a UI slice. It returns
-triaged suggestions, each tagged with a finding kind, and, where the project can
-render, the changed views. The gate still decides.
+{role.ui_pass}
 
-The spec check is optional, read-only and edits nothing. It runs before any worktree
-exists, on a batch of slices the owner picks. For each slice it returns `ready` or
-questions in the shape of the run report's `owner needed` line, each with 2 to 4
-options, a preferred one, and `blocker` where the slice cannot go on without the
-answer. The outer session spawns it and reads its report. It has no matrix row, so the
-owner names its agent, model and reasoning effort at Setup like any role. It does not
-re-anchor the line numbers a slice cites: the implementer does that late.
+{role.spec_check}
 
 A reviewer never wrote code in this slice. In a split, that holds for every part.
 The owner chooses the models.
@@ -463,6 +576,9 @@ Before the worktree exists, the outer session reads the slice's size with
 Wait for the owner's answers before creating the worktree.
 
 """.replace("{setup}", "\n".join(f"- {text}" for _key, text in RELAY_SETUP))
+for _key, _text in RELAY_ROLES:
+  RELAY_HEAD = RELAY_HEAD.replace("{role." + _key + "}", _text)
+del _key, _text
 
 RELAY_ORDER = """\
 ## Order
@@ -566,9 +682,8 @@ owner confirms the sliver plan at Setup.
 RELAY_GATE = """\
 ## Gate
 
-Name the diff under review. The criteria are: earlier blockers resolved with a
-proving test, no new `fix` finding of medium severity or worse, no `blocker` owner
-finding, tests green, and docs matching the code. The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`.
+{criteria}
+The first line is exactly {verdicts}.
 FAIL goes back to the implementer and then the gate again.
 Write a `Review FAIL` note only after `VERDICT: FAIL`.
 Record a failed review on the started item with
@@ -579,13 +694,19 @@ Any implementer change after a review needs another gate.
 
 Findings: every reviewer, UI pass and gate finding is tagged with one kind.
 
-- `fix`: goes to the fix round.
-- `owner`: a design call for the owner, with 2 to 4 options and a preferred one.
-  It goes in the run report as an owner-needed question and does not block the gate
-  unless it is marked `blocker`.
-- `later`: a follow-up item with a one-line title. It goes in the report's later notes.
+{kinds}
 
-"""
+""".replace(
+  "{criteria}", textwrap.fill(
+    "Name the diff under review. The criteria are: "
+    + ", ".join(RELAY_GATE_CRITERIA[:-1]) + ", and " + RELAY_GATE_CRITERIA[-1] + ".",
+    width=84, break_long_words=False, break_on_hyphens=False,
+  )
+).replace(
+  "{verdicts}", " or ".join(f"`{verdict}`" for verdict in RELAY_GATE_VERDICTS)
+).replace(
+  "{kinds}", "\n".join(f"- `{kind}`: {text}" for kind, text in RELAY_FINDING_KINDS)
+)
 
 RELAY_BRIEF = """\
 ## Every brief
@@ -622,8 +743,14 @@ as the `--task` line of `relay-run step`.
 """
 
 
+RELAY_CONFORMANCE_SECTION = (
+  "## Conformance\n\n" + RELAY_CONFORMANCE_INTRO + "\n\n"
+  + "\n".join(f"- {text}" for _key, text in RELAY_CONFORMANCE) + "\n\n"
+)
+
+
 def relay_shared_sections(required_note_kind: str = "") -> str:
-  """Keep the gate, briefs and stop rules identical in both relay contracts."""
+  """Keep the gate, briefs, stop rules and conformance identical in both relay contracts."""
   return (
     RELAY_GATE + RELAY_BRIEF + TRACKING_RULE + "\n\n"
     + "Reviewers get the direction sources: `slicer goals --json --lean` and the queue, "
@@ -631,6 +758,7 @@ def relay_shared_sections(required_note_kind: str = "") -> str:
     + "## Stop\n\n"
     + "Stop when " + ", ".join(RELAY_STOP[:-1]) + ", or " + RELAY_STOP[-1] + ".\n\n"
     + handoff_policy_text(required_note_kind)
+    + RELAY_CONFORMANCE_SECTION
   )
 
 
