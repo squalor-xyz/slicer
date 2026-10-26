@@ -26,3 +26,6 @@ venv/
 /.slicer/lock
 /.slicer/feedback.md
 /.slicer/feedback-reported.json
+
+# Slice worktrees
+/.worktrees/

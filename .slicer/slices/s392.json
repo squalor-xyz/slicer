@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Decide whether the new names join ROLE_NAMES (and so the matrix) or form a ledger-only set; the ledger-only set keeps `relay-roles recommend` unchanged. Keep `relay-run list --json` backward compatible."
+      "body": "Decide whether the new names join ROLE_NAMES (and so the matrix) or form a ledger-only set; the ledger-only set keeps `relay-roles recommend` unchanged. Keep `relay-run list --json` backward compatible.\n\nOwner decisions, 2026-10-26: `ui` and `spec-check` form a ledger-only role set accepted by `relay-run step --role`; `ROLE_NAMES`, the role matrix and `relay-roles recommend` stay unchanged."
     },
     {
       "heading": "Check",

@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "Proposed, for the owner: `slicer ready ID --by NAME [--note TEXT]` records a verdict with a digest of the slice's sections. `show --json` and `list --json` report `ready: true|false|stale`; any section edit makes it `stale`. `next --ready` may prefer ready items. Owner decisions needed: the command name, and whether `next` filters or only sorts."
+      "body": "Proposed, for the owner: `slicer ready ID --by NAME [--note TEXT]` records a verdict with a digest of the slice's sections. `show --json` and `list --json` report `ready: true|false|stale`; any section edit makes it `stale`. `next --ready` may prefer ready items. Owner decisions needed: the command name, and whether `next` filters or only sorts.\n\nOwner decisions, 2026-10-26: the command is `slicer ready ID --by NAME [--note TEXT]`. `next --ready` sorts items whose readiness is `true` first and does not filter on readiness."
     },
     {
       "heading": "Check",

@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "After the dependencies land: bump `RELAY_CONTRACT` to 9, update the contract golden fixture (s378), the CHANGELOG, and the docs that name the version. File an ork item to accept v9."
+      "body": "After the dependencies land: bump `RELAY_CONTRACT` to 9, update the contract golden fixture (s378), the CHANGELOG, and the docs that name the version. File an ork item to accept v9.\n\nOwner decisions, 2026-10-26: one v9 bundle. The dependency slices change the contract text under v8; this item alone bumps `RELAY_CONTRACT` to 9."
     },
     {
       "heading": "Check",

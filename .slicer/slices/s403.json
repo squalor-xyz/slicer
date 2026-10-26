@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. An Approve step after the finish step: the owner sees the gate verdict, tests, diff stat, owner findings and human checks, and approves, or sends a fix note to a fix round.\n2. Each human check is recorded as a note (`--kind human-check` where configured).\n3. A Land step lists the order above and names `slicer land`.\nOwner decisions needed: ff-only or `--no-ff` as the contract default; whether an unmarked human check blocks landing."
+      "body": "1. An Approve step after the finish step: the owner sees the gate verdict, tests, diff stat, owner findings and human checks, and approves, or sends a fix note to a fix round.\n2. Each human check is recorded as a note (`--kind human-check` where configured).\n3. A Land step lists the order above and names `slicer land`.\nOwner decisions needed: ff-only or `--no-ff` as the contract default; whether an unmarked human check blocks landing.\n\nOwner decisions, 2026-10-26: the contract's default landing is ff-only (merge main into the branch when main moved, re-render, check, rerun the suite, then `git merge --ff-only`). An unrecorded human check is shown at approval and warns; it does not block landing."
     },
     {
       "heading": "Check",

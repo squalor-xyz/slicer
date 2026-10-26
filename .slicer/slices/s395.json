@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "One definition of a path, so ork carries no parser of its own. Not in this item: any ork change."
+      "body": "One definition of a path, so ork carries no parser of its own. Not in this item: any ork change.\n\nOwner decisions, 2026-10-26: `show --json` gains a `paths` list (the `item_paths()` spans, directories keeping their trailing slash), placed in a fixed key position; no new `paths` command. Document the key in `docs/agents.md`."
     },
     {
       "heading": "Check",
