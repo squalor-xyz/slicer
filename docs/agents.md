@@ -74,9 +74,26 @@ closes with handoff, and that text does not name done. `--json` returns
 is `relay-roles init --render` under the project lock.
 
 A failed relay review is recorded on the started item with
-`slicer note ID --text "Review FAIL: ..." --render`. Add `--kind` only when
-`note_kinds` configures a kind for reviews. The closing note and finish step
-still wait for `VERDICT: PASS`.
+`slicer note ID --text "Review FAIL: ..." --render`, and only after `VERDICT: FAIL`: a
+gate that passed writes no `Review FAIL` note, even when a fix round follows it (for UI
+edits, say). Add `--kind` only when `note_kinds` configures a kind for reviews. The
+closing note and finish step still wait for `VERDICT: PASS`.
+
+Every reviewer, UI pass and gate finding carries one kind, set out in the Gate section
+and in every brief for those roles. A `fix` finding goes to the fix round. An `owner`
+finding is a design call with 2 to 4 options and a recommendation; it does not block the
+gate unless it is marked `blocker`. A `later` finding is a follow-up item with a one-line
+title. The gate passes only with no new `fix` finding of medium severity or worse and no
+`blocker` owner finding. The run report's `owner needed` entries are numbered questions, one
+line each: `owner needed: N. TITLE | options: LABEL:SUMMARY; LABEL:SUMMARY | recommend: LABEL |
+blocker (optional) | key: AREA.TOPIC (optional) | reasoning: TEXT`, or `owner needed: none`.
+Each question has 2 to 4 options, no value but `reasoning` holds a `|`, no SUMMARY holds a
+`;`, and `reasoning` is last so it takes the rest of the line. The fields are the ones the planned
+`relay-run ask` takes, so a consumer parses one shape. Each question counts toward the
+report's 30 lines. A non-blocker `owner` finding does not stop the orchestrator; a `blocker`
+one stops it with `OUTCOME stopped`, and the Stop condition is an owner decision marked
+`blocker`. A permission denial stops the run as a `blocker` question whose reasoning is the
+denial's exact text.
 
 The role matrix is `.slicer/relay-roles.json`, versioned state that only `slicer relay-roles`
 changes (see [commands.md](commands.md#relay-roles)); agents and people never open the JSON

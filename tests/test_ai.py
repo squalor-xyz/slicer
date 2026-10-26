@@ -941,6 +941,8 @@ class AiRelayTests(unittest.TestCase):
           "do not run it yourself and do not work around it",
           "Stop before the commit with OUTCOME stopped",
           "put the denial's exact text under owner needed",
+          "as a `blocker` question whose reasoning is that exact text",
+          "with options such as `grant:` and `skip:`",
         ):
           self.assertIn(phrase, rule)
 
@@ -968,6 +970,115 @@ class AiRelayTests(unittest.TestCase):
               self.assertIn(phrase, text)
             else:
               self.assertNotIn(phrase, text)
+
+  def contract_texts(self):
+    """Both relay contracts in each finish mode, as (label, flattened text)."""
+    for finish in ("done", "handoff"):
+      for label, text in (("relay", ai.relay_text(finish)), ("orchestrator", ai.orchestrator_text(finish))):
+        yield f"{label}-{finish}", " ".join(text.split())
+
+  def test_RelayGate_Findings_EachCarriesFixOwnerOrLaterKind(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for phrase in (
+          "every reviewer, UI pass and gate finding is tagged with one kind",
+          "`fix`: goes to the fix round.",
+          "`owner`: a design call for the owner, with 2 to 4 options and a preferred one.",
+          "does not block the gate unless it is marked `blocker`.",
+          "`later`: a follow-up item with a one-line title.",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RelayGate_ReviewFail_WrittenOnlyAfterVerdictFail(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for phrase in (
+          "Write a `Review FAIL` note only after `VERDICT: FAIL`.",
+          "A gate that passed writes none, even when a fix round follows it (UI edits, say).",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RelayEveryBrief_ReviewerUiPassGate_TagFindingsByKind(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        self.assertIn(
+          "Reviewer, UI pass and gate briefs tell the agent to tag each finding `fix`, `owner` or "
+          "`later` as Gate defines, and to give an `owner` finding its 2 to 4 options and a preferred one.",
+          flat,
+        )
+
+  def test_OrchestratorText_OwnerFinding_BlocksOnlyWhenBlocker(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Stop and return without asking the owner")
+        for phrase in (
+          "An `owner` finding that is not a `blocker` does not stop the relay",
+          "goes in the report as a numbered owner-needed question",
+          "A `blocker` owner finding stops the relay with OUTCOME stopped.",
+        ):
+          self.assertIn(phrase, rule)
+        self.assertNotIn('goes under "Owner needed"', rule)
+
+  def test_RunReport_OwnerNeeded_NumberedQuestionWithS396Fields(self) -> None:
+    template = next(
+      line["template"] for line in ai.relay_contract()["report"]["lines"] if line["key"] == "owner_needed"
+    )
+    for field in (
+      "owner needed: N. TITLE",
+      "options: LABEL:SUMMARY; LABEL:SUMMARY",
+      "recommend: LABEL",
+      "blocker (optional)",
+      "key: AREA.TOPIC (optional)",
+      "reasoning: TEXT",
+    ):
+      with self.subTest(field=field):
+        self.assertIn(field, template)
+    self.assertNotIn("LIST", template)
+    # Free text can hold `;` and `|`, so the free-text field is last and the template is format only.
+    self.assertTrue(template.endswith(" | reasoning: TEXT"), template)
+    self.assertNotIn("OR none", template)
+    self.assertNotIn("one line per question", template)
+    self.assertNotIn("(2 to 4)", template)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertIn(template, ai.orchestrator_text(finish).split("## Run report", 1)[1])
+
+  def test_RunReport_OwnerNeeded_QuestionsCountTowardLineLimit(self) -> None:
+    self.assertEqual(ai.relay_contract()["report"]["max_lines"], 30)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        flat = " ".join(ai.orchestrator_text(finish).split("## Run report", 1)[1].split())
+        for phrase in (
+          "At most 30 lines",
+          "Each owner question is one line and counts toward the line limit.",
+          "Number the questions from 1 and give each 2 to 4 options.",
+          "Use no `|` in any value but `reasoning`, and no `;` in a SUMMARY.",
+          "With no question, the line is `owner needed: none`.",
+          "`reasoning` is the last field and takes the rest of the line.",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RelayStop_OwnerDecision_NamesBlockerInJsonAndText(self) -> None:
+    phrase = "an owner decision marked `blocker` is needed"
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command, part="json"):
+        self.assertIn(phrase, ai.relay_contract(orchestrator=command == "relay-orchestrator")["stop"])
+    for label, text in (("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text())):
+      with self.subTest(command=label, part="text"):
+        stop = " ".join(text.split("## Stop\n\n", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn(phrase, stop)
+        self.assertNotIn("or an owner decision is needed", stop)
+    rule = self.rule("done", "Stop and return without asking the owner")
+    self.assertIn("or an owner decision marked `blocker` is needed.", rule)
+
+  def test_RelayGate_Criteria_FixFindingsAndBlockerOwnerOnly(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        self.assertIn(
+          "no new `fix` finding of medium severity or worse, no `blocker` owner finding, tests green",
+          flat,
+        )
+        self.assertNotIn("no new issue of medium severity", flat)
 
   def test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
