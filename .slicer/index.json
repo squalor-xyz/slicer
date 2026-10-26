@@ -14389,7 +14389,7 @@
       "id": "s394",
       "title": "foreign_worktree warns falsely when GIT_DIR is set, as in a merge driver",
       "short_title": "False foreign-worktree warning under GIT_DIR",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
