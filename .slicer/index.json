@@ -14389,10 +14389,22 @@
       "id": "s394",
       "title": "foreign_worktree warns falsely when GIT_DIR is set, as in a merge driver",
       "short_title": "False foreign-worktree warning under GIT_DIR",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "7cc55bf1-3f65-443d-b4d1-f8ba9042f90c",
+          "kind": "",
+          "text": "**2026-10-26** — Ready for review: foreign_worktree probes slicer's code dir without GIT_DIR, GIT_WORK_TREE and GIT_COMMON_DIR (vcs._code_probe_env, threaded through git_common_dir and _current_worktree via an optional env); the project probe keeps the caller's env. Tests: test_GitDirSetForAnotherRepo_NoWarning, test_SiblingWorktreeGitEnvSet_Warns; full suite OK; reviewer confirmed with a real merge driver in a linked worktree.",
+          "created_at": "2026-10-26T16:00:45Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14410,7 +14422,7 @@
         "importance": 2,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
