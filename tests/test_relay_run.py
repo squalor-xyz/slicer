@@ -397,7 +397,7 @@ class FoldTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at"],
+       "parent", "begun_at", "updated_at", "question"],
     )
     self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -887,7 +887,7 @@ class CommonLedgerTests(GitLedgerCase):
     self.assertEqual(len({event["run"] for _, event in events}), 12)
 
 
-class SandboxTests(GitLedgerCase):
+class SandboxCase(GitLedgerCase):
   """A role that may write only inside its slice worktree still records its steps (s332).
 
   The sandbox is simulated on the fixture's own `<common>/slicer`: the directory and the
@@ -934,6 +934,8 @@ class SandboxTests(GitLedgerCase):
     wt = self.linked(repo, "wt")
     return wt, ops.relay_run_begin(wt, ["s1"], now=minutes(0)).id
 
+
+class SandboxTests(SandboxCase):
   def test_RelayRunStep_SharedLedgerReadOnly_FallsBackToLocalAndWarns(self) -> None:
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)
@@ -2027,7 +2029,7 @@ class WaitTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at"],
+       "parent", "begun_at", "updated_at", "question"],
     )
     self.assertEqual((data["state"], data["counts"]["waiting"]), ("active", 1))
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2098,6 +2100,669 @@ class WaitTests(RelayRunCase):
     code, out, err = repo.run("relay-run", "end", run, "--outcome", "stopped")
     self.assertEqual(code, 0, out)
     self.assertEqual(err.splitlines(), [f"slicer: ended {run} with running steps: {step}"])
+
+
+class AskAnswerTests(RelayRunCase):
+  """`relay-run ask` records an owner question on a step and the step waits; `relay-run answer`
+  records the answer and ends that wait (s396). The wire is a step event an older slicer folds
+  as a heartbeat, so neither writes a kind of line or a phase the strict reader refuses."""
+
+  OLDER_STEP_KEYS = (
+    "v", "event", "run", "at", "step", "phase", "role", "agent", "vendor", "model", "reasoning",
+    "task", "parent",
+  )
+
+  def started(self, repo: support.TempRepo, at: int = 0) -> tuple[str, str]:
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(at)).id
+    _, step = ops.relay_run_step(
+      repo.root, run, role="orchestrator", agent="A", phase="start", task="relay",
+      now=minutes(at),
+    )
+    return run, step.id
+
+  def ask(self, repo: support.TempRepo, run: str, step: str, *extra: str) -> dict:
+    argv = ["relay-run", "ask", run, "--step", step, "--title", "Which store?"]
+    if "--option" not in extra:
+      argv += ["--option", "file:A JSON file", "--option", "db:A database"]
+    return self.ok(repo, *argv, *extra)
+
+  def events(self, repo: support.TempRepo) -> list[dict]:
+    return [event for _, event in relayrun.read_events(repo.root / LEDGER)]
+
+  def ledger_bytes(self, repo: support.TempRepo) -> bytes:
+    return (repo.root / LEDGER).read_bytes()
+
+  def refused(self, repo: support.TempRepo, *argv: str, error: str, code: int = 2) -> dict:
+    """The call is refused with `error` and the ledger is as it was."""
+    before = self.ledger_bytes(repo)
+    payload = self.refuse(repo, *argv, code=code, error=error)
+    self.assertEqual(self.ledger_bytes(repo), before)
+    return payload
+
+  def test_Ask_OnAStep_RecordsTheQuestionAndTheStepWaitsOnTheOwner(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    got = self.ask(repo, run, step)
+    question = got["step"]["question"]
+    self.assertEqual(question["id"], "q1")
+    self.assertEqual(question["title"], "Which store?")
+    self.assertEqual(
+      question["options"],
+      [{"label": "file", "summary": "A JSON file"}, {"label": "db", "summary": "A database"}],
+    )
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"))
+    self.assertEqual(got["question"], question)
+    listed = self.runs(repo)[0]["steps"][0]
+    self.assertEqual(listed["question"], question)
+    self.assertEqual(self.ok(repo, "relay-run", "list", run)["runs"][0]["counts"]["waiting"], 1)
+
+  def test_Ask_Question_KeysFollowTheOwnerQuestionFieldOrder(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    question = self.ask(
+      repo, run, step, "--option", "file:A JSON file", "--option", "db:A database",
+      "--recommend", "db", "--blocker", "--key", "store.engine", "--reasoning", "one | two",
+    )["question"]
+    self.assertEqual(
+      list(question),
+      ["id", "title", "options", "recommend", "blocker", "key", "reasoning", "asked_at",
+       "answered_at", "answer"],
+    )
+    self.assertEqual(
+      (question["recommend"], question["blocker"], question["key"], question["reasoning"]),
+      ("db", True, "store.engine", "one | two"),
+    )
+    self.assertEqual((question["answered_at"], question["answer"]), ("", None))
+
+  def test_Ask_WithoutOptionalFields_LeavesThemEmpty(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    question = self.ask(repo, run, step)["question"]
+    self.assertEqual(
+      (question["recommend"], question["blocker"], question["key"], question["reasoning"]),
+      ("", False, "", ""),
+    )
+
+  def test_Ask_Run_StaysActiveForHoursAndIsNotStale(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    ops.relay_run_ask(
+      repo.root, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(1),
+    )
+    got = relayrun.list_runs(repo.root, now=minutes(600), siblings=False)[0]
+    self.assertEqual((got.state, got.steps[0].phase, got.waiting), ("active", "wait", True))
+    self.assertEqual(got.counts()["waiting"], 1)
+
+  def test_Ask_AskedAt_IsTheEventStamp(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    _, _, question = ops.relay_run_ask(
+      repo.root, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(7),
+    )
+    self.assertEqual(question.asked_at, relayrun.stamp(minutes(7)))
+    self.assertEqual(self.events(repo)[-1]["at"], question.asked_at)
+
+  def test_Ask_Ids_AreOnePastTheLargestInTheRunAcrossSteps(self) -> None:
+    repo = self.project()
+    run, first = self.started(repo)
+    second = ops.relay_run_step(repo.root, run, role="gate", agent="B", phase="start")[1].id
+    self.assertEqual(self.ask(repo, run, first)["question"]["id"], "q1")
+    self.assertEqual(self.ask(repo, run, second)["question"]["id"], "q2")
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.assertEqual(self.ask(repo, run, first)["question"]["id"], "q3")
+    other = self.begin(repo, "s2")
+    step = self.step(repo, other)["step"]["id"]
+    self.assertEqual(self.ask(repo, other, step)["question"]["id"], "q1")
+
+  def test_Ask_Event_IsAStartHeartbeatAnOlderReaderFolds(self) -> None:
+    """An older slicer refuses an unknown event kind or phase as `corrupt`, so the question rides
+    on a `start` step event, beside the `waiting_on` an older slicer ignores."""
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    event = self.events(repo)[-1]
+    self.assertEqual((event["event"], event["phase"], event["waiting_on"]), ("step", "start", "owner"))
+    self.assertTrue(all(isinstance(event[key], str) for key in self.OLDER_STEP_KEYS[2:]), event)
+    self.assertEqual(event["v"], relayrun.VERSION)
+    self.assertTrue(relayrun.valid_event(event))
+    self.assertEqual(list(event["question"])[:3], ["id", "title", "options"])
+    # What an older reader keeps of it: the same event without the keys it does not know.
+    older = {key: event[key] for key in self.OLDER_STEP_KEYS}
+    self.assertEqual(set(event) - set(older), {"waiting_on", "question"})
+    self.assertTrue(relayrun.valid_event(older))
+    self.assertEqual(older["phase"], "start")
+
+  def test_Ask_Validation_RefusedAsBadRunFieldAndNothingWritten(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    base = ["relay-run", "ask", run, "--step", step]
+    two = ["--option", "a:A", "--option", "b:B"]
+    cases = {
+      "blank title": [*base, "--title", " ", *two],
+      "title with newline": [*base, "--title", "a\nb", *two],
+      "title with a pipe": [*base, "--title", "a | b", *two],
+      "no option": [*base, "--title", "T"],
+      "one option": [*base, "--title", "T", "--option", "a:A"],
+      "five options": [
+        *base, "--title", "T",
+        *[arg for n in "abcde" for arg in ("--option", f"{n}:{n.upper()}")],
+      ],
+      "option without a summary": [*base, "--title", "T", "--option", "a", "--option", "b:B"],
+      "option with a blank summary": [*base, "--title", "T", "--option", "a: ", "--option", "b:B"],
+      "option with a blank label": [*base, "--title", "T", "--option", ":A", "--option", "b:B"],
+      "duplicate labels": [*base, "--title", "T", "--option", "a:A", "--option", "a:Again"],
+      "summary with a semicolon": [*base, "--title", "T", "--option", "a:A; B", "--option", "b:B"],
+      "summary with a pipe": [*base, "--title", "T", "--option", "a:A | B", "--option", "b:B"],
+      "label with a semicolon": [*base, "--title", "T", "--option", "a;c:A", "--option", "b:B"],
+      "label with a pipe": [*base, "--title", "T", "--option", "a|c:A", "--option", "b:B"],
+      "recommend names no option": [*base, "--title", "T", *two, "--recommend", "c"],
+      "key with a pipe": [*base, "--title", "T", *two, "--key", "a|b"],
+      "key with a space": [*base, "--title", "T", *two, "--key", "a b"],
+      "reasoning with a newline": [*base, "--title", "T", *two, "--reasoning", "a\nb"],
+    }
+    for name, argv in cases.items():
+      with self.subTest(name):
+        self.refused(repo, *argv, error="bad_run_field")
+    # A colon in a summary belongs to the summary: the label ends at the first one.
+    got = self.ask(repo, run, step, "--option", "a:Use b: it is faster", "--option", "b:B")
+    self.assertEqual(got["question"]["options"][0], {"label": "a", "summary": "Use b: it is faster"})
+
+  def test_Ask_Reasoning_MayHoldAPipe(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    got = self.ask(repo, run, step, "--option", "a:A", "--option", "b:B", "--reasoning", "x | y; z")
+    self.assertEqual(got["question"]["reasoning"], "x | y; z")
+
+  def test_Ask_StepNotInRun_BadRunField(self) -> None:
+    repo = self.project()
+    run, _ = self.started(repo)
+    self.refused(
+      repo, "relay-run", "ask", run, "--step", "9", "--title", "T", "--option", "a:A",
+      "--option", "b:B", error="bad_run_field",
+    )
+
+  def test_Ask_WithoutStep_IsUsage(self) -> None:
+    repo = self.project()
+    run, _ = self.started(repo)
+    code, out, err = repo.run(
+      "relay-run", "ask", run, "--title", "T", "--option", "a:A", "--option", "b:B",
+    )
+    self.assertEqual((code, out), (2, ""))
+    self.assertIn("--step", err)
+
+  def test_Ask_StepAlreadyDoneOrFailed_BadRunField(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    for phase in ("done", "fail"):
+      with self.subTest(phase=phase):
+        self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", phase)
+        self.refused(
+          repo, "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
+          "--option", "b:B", error="bad_run_field",
+        )
+
+  def test_Ask_StepWithAnOpenQuestion_QuestionOpenUntilAnswered(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    again = ["relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
+             "--option", "b:B"]
+    payload = self.refused(repo, *again, error="question_open")
+    self.assertIn("q1", payload["message"])
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    self.assertEqual(self.ok(repo, *again)["question"]["id"], "q2")
+
+  def test_Ask_UnknownRun_UnknownRun(self) -> None:
+    repo = self.project()
+    self.refuse(
+      repo, "relay-run", "ask", "run-nope", "--step", "1", "--title", "T", "--option", "a:A",
+      "--option", "b:B", code=2, error="unknown_run",
+    )
+
+  def test_Ask_EndedRun_RunEnded(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ok(repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "done")
+    self.refused(
+      repo, "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
+      "--option", "b:B", error="run_ended",
+    )
+
+  def test_Ask_Text_PrintsOnlyTheQuestionId(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    code, out, err = repo.run(
+      "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
+      "--option", "b:B",
+    )
+    self.assertEqual((code, out, err), (0, "q1\n", ""))
+
+  def test_Answer_Option_RecordsItAndEndsTheOwnerWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    got = self.ok(
+      repo, "relay-run", "answer", run, "q1", "--option", "db", "--why", "scales", "--by", "jon",
+    )
+    question = got["question"]
+    self.assertEqual(question["answer"], {"option": "db", "text": "", "why": "scales", "by": "jon"})
+    self.assertRegex(question["answered_at"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("start", ""))
+    self.assertEqual(got["step"]["question"], question)
+    listed = self.runs(repo)[0]
+    self.assertEqual(listed["counts"]["waiting"], 0)
+    self.assertEqual(listed["steps"][0]["question"], question)
+
+  def test_Answer_Text_RecordsFreeTextWithNoOption(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--text", "Neither.\nUse sqlite.")
+    self.assertEqual(
+      got["question"]["answer"],
+      {"option": "", "text": "Neither.\nUse sqlite.", "why": "", "by": ""},
+    )
+
+  def test_Answer_AnsweredAt_IsTheEventStampAndTheClockRestartsFromIt(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    ops.relay_run_ask(repo.root, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(1))
+    _, _, question = ops.relay_run_answer(repo.root, run, "q1", option="a", now=minutes(500))
+    self.assertEqual(question.answered_at, relayrun.stamp(minutes(500)))
+    self.assertEqual(
+      relayrun.list_runs(repo.root, now=minutes(520), siblings=False)[0].state, "active",
+    )
+    self.assertEqual(
+      relayrun.list_runs(repo.root, now=minutes(531), siblings=False)[0].state, "stale",
+    )
+
+  def test_Answer_Event_IsAStartHeartbeatAnOlderReaderFolds(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    event = self.events(repo)[-1]
+    self.assertEqual((event["event"], event["phase"]), ("step", "start"))
+    self.assertNotIn("waiting_on", event)
+    self.assertEqual(event["answer"]["question"], "q1")
+    self.assertTrue(all(isinstance(event[key], str) for key in self.OLDER_STEP_KEYS[2:]), event)
+    self.assertEqual(set(event) - set(self.OLDER_STEP_KEYS), {"answer"})
+    self.assertTrue(relayrun.valid_event(event))
+
+  def test_Answer_StepAlreadyDone_StaysDoneAndTheAnswerIsKept(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "done")
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.assertEqual(got["step"]["phase"], "done")
+    self.assertEqual(got["question"]["answer"]["option"], "file")
+
+  def test_Answer_StepWaitingOnApproval_KeepsThatWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "approval")
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "approval"))
+
+  def test_Answer_OptionAndText_IsUsageAndNeitherIsUsage(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    for argv in (
+      ["--option", "db", "--text", "x"], [], ["--why", "because"],
+    ):
+      with self.subTest(argv=argv):
+        self.refused(repo, "relay-run", "answer", run, "q1", *argv, error="usage")
+
+  def test_Answer_OptionNotAmongTheQuestions_BadRunField(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    payload = self.refused(
+      repo, "relay-run", "answer", run, "q1", "--option", "nope", error="bad_run_field",
+    )
+    self.assertIn("file", payload["message"])
+    self.assertIn("db", payload["message"])
+
+  def test_Answer_BlankTextOrNewlineInBy_BadRunField(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    for argv in (["--text", "  "], ["--option", "db", "--by", "a\nb"]):
+      with self.subTest(argv=argv):
+        self.refused(repo, "relay-run", "answer", run, "q1", *argv, error="bad_run_field")
+
+  def test_Answer_UnknownQuestion_UnknownQuestion(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    payload = self.refused(
+      repo, "relay-run", "answer", run, "q9", "--option", "db", error="unknown_question",
+    )
+    self.assertIn("q9", payload["message"])
+
+  def test_Answer_QuestionOfAnotherRun_UnknownQuestion(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    other = self.begin(repo, "s2")
+    self.refused(
+      repo, "relay-run", "answer", other, "q1", "--option", "db", error="unknown_question",
+    )
+
+  def test_Answer_AlreadyAnswered_QuestionAnsweredAndTheFirstAnswerStands(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.refused(
+      repo, "relay-run", "answer", run, "q1", "--option", "db", error="question_answered",
+    )
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--get")
+    self.assertEqual(got["question"]["answer"]["option"], "file")
+
+  def test_Answer_UnknownRunAndEndedRun_UnknownRunAndRunEnded(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.refuse(repo, "relay-run", "answer", "run-nope", "q1", "--option", "db", code=2, error="unknown_run")
+    self.ok(repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "done")
+    self.refused(repo, "relay-run", "answer", run, "q1", "--option", "db", error="run_ended")
+
+  def test_Answer_Text_PrintsOnlyTheQuestionId(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    code, out, err = repo.run("relay-run", "answer", run, "q1", "--option", "db")
+    self.assertEqual((code, out, err), (0, "q1\n", ""))
+
+  def test_AnswerGet_Answered_PrintsTheAnswerAndJsonCarriesTheQuestion(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db", "--why", "scales")
+    code, out, err = repo.run("relay-run", "answer", run, "q1", "--get")
+    self.assertEqual((code, out, err), (0, "db\nwhy: scales\n", ""))
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--get")
+    self.assertEqual(list(got), ["run", "step", "question"])
+    self.assertEqual(got["question"]["answer"]["option"], "db")
+    self.assertEqual(got["step"]["id"], step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--get", "--lean")
+
+  def test_AnswerGet_FreeText_PrintsTheText(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--text", "sqlite")
+    code, out, err = repo.run("relay-run", "answer", run, "q1", "--get")
+    self.assertEqual((code, out, err), (0, "sqlite\n", ""))
+
+  def test_AnswerGet_Unanswered_ExitsZeroWithNoAnswer(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--get")
+    self.assertEqual((got["question"]["answered_at"], got["question"]["answer"]), ("", None))
+    code, out, err = repo.run("relay-run", "answer", run, "q1", "--get")
+    self.assertEqual((code, out, err), (0, "unanswered\n", ""))
+
+  def test_AnswerGet_WritesNothingAndWorksOnAnEndedRun(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    self.ok(repo, "relay-run", "end", run, "--outcome", "pass", "--close-steps", "done")
+    before = self.ledger_bytes(repo)
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--get")
+    self.assertEqual(got["question"]["answer"]["option"], "db")
+    self.assertEqual(self.ledger_bytes(repo), before)
+
+  def test_AnswerGet_UnknownQuestionOrRun_Refused(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.refused(repo, "relay-run", "answer", run, "q9", "--get", error="unknown_question")
+    self.refused(repo, "relay-run", "answer", "run-nope", "q1", "--get", error="unknown_run")
+
+  def test_AnswerGet_WithAnAnswerFlag_IsUsage(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    for flag in (["--option", "db"], ["--text", "x"], ["--why", "w"], ["--by", "jon"]):
+      with self.subTest(flag=flag):
+        self.refused(repo, "relay-run", "answer", run, "q1", "--get", *flag, error="usage")
+
+  def test_List_Json_StepWithoutAQuestion_HasNullQuestionLast(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    self.step(repo, run)
+    data = self.runs(repo)[0]
+    self.assertEqual(
+      list(data["steps"][0]),
+      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
+       "parent", "begun_at", "updated_at", "question"],
+    )
+    self.assertIsNone(data["steps"][0]["question"])
+    self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
+
+  def test_List_Json_OpenAndAnsweredQuestion_RoundTripThroughFromDict(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    open_data = self.runs(repo)[0]
+    self.assertEqual(relayrun.Run.from_dict(open_data).to_dict(), open_data)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--text", "x", "--by", "jon")
+    done_data = self.runs(repo)[0]
+    self.assertEqual(relayrun.Run.from_dict(done_data).to_dict(), done_data)
+
+  def test_List_StepWithSeveralQuestions_ShowsTheLatestAndKeepsEachByIdForAnswers(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.ask(repo, run, step)
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["question"]["id"], "q2")
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--get")
+    self.assertEqual(got["question"]["answer"]["option"], "file")
+
+  def test_List_Text_OpenQuestion_ShowsUnderItsStep(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    code, out, err = repo.run("relay-run", "list")
+    self.assertEqual((code, err), (0, ""))
+    lines = out.splitlines()
+    self.assertEqual(len(lines), 3, out)
+    self.assertIn("wait:owner", lines[1])
+    self.assertEqual(lines[2], "      question q1 open  Which store?")
+    self.assertIn("active  waiting owner", lines[0])
+
+  def test_List_Text_AnsweredQuestion_ShowsAnsweredStateUnderItsStep(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    lines = repo.run("relay-run", "list")[1].splitlines()
+    self.assertEqual(lines[2], "      question q1 answered  Which store?")
+    self.assertNotIn("waiting", lines[0])
+
+  def test_List_Text_StepWithoutAQuestion_IsUnchanged(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    self.step(repo, run)
+    self.assertEqual(len(repo.run("relay-run", "list")[1].splitlines()), 2)
+
+  def test_EndCloseSteps_StepWithAnOpenQuestion_ClosesIt(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    got = self.ok(repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "fail")
+    self.assertEqual(got["closed_steps"], [step])
+    self.assertEqual(got["run"]["steps"][0]["phase"], "fail")
+
+  def test_Fold_AnswerInALaterFileAtTheSecondOfItsQuestion_AnswersIt(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    step = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    ask = relayrun.step_event(
+      "r", minutes(2), "1", "start", waiting_on="owner",
+      question={"id": "q1", "title": "T", "options": [{"label": "a", "summary": "A"}]},
+    )
+    answer = relayrun.step_event("r", minutes(2), "1", "start", answer={"question": "q1", "option": "a"})
+    shared, local = Path("shared.jsonl"), Path("local.jsonl")
+    got = relayrun.fold(
+      [(shared, [(1, begin), (2, step), (3, ask)]), (local, [(1, answer)])], minutes(3), strict=2,
+    )
+    question = got[0].steps[0].question
+    self.assertEqual((question.id, question.answer["option"]), ("q1", "a"))
+    self.assertEqual(got[0].steps[0].phase, "start")
+
+  def test_Fold_AnswerForAQuestionNoFileHolds_IsIgnoredNotCorrupt(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    step = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    answer = relayrun.step_event("r", minutes(2), "1", "start", answer={"question": "q4", "option": "a"})
+    got = relayrun.fold([(Path("x.jsonl"), [(1, begin), (2, step), (3, answer)])], minutes(3))
+    self.assertEqual((got[0].steps[0].phase, got[0].steps[0].question), ("start", None))
+
+  def test_Fold_SecondAnswerOfOneQuestion_FirstStands(self) -> None:
+    begin = relayrun.begin_event("r", minutes(0), ["s1"], "wt")
+    step = relayrun.step_event("r", minutes(1), "1", "start", role="a", agent="A")
+    ask = relayrun.step_event(
+      "r", minutes(2), "1", "start", waiting_on="owner",
+      question={"id": "q1", "title": "T", "options": []},
+    )
+    first = relayrun.step_event("r", minutes(3), "1", "start", answer={"question": "q1", "option": "a"})
+    second = relayrun.step_event("r", minutes(4), "1", "start", answer={"question": "q1", "option": "b"})
+    events = [(n, e) for n, e in enumerate([begin, step, ask, first, second], 1)]
+    got = relayrun.fold([(Path("x.jsonl"), events)], minutes(5))
+    answer = got[0].steps[0].question.answer
+    self.assertEqual((answer["option"], got[0].steps[0].question.answered_at), ("a", relayrun.stamp(minutes(3))))
+
+  def test_Ledger_MalformedQuestionOrAnswer_IsSkippedAndTheEventStillFolds(self) -> None:
+    """One odd line must not blank every board: the fold skips the object, not the ledger."""
+    questions = (
+      "text", ["q1"], {"id": 3, "title": "T", "options": []}, {"id": "q1", "title": 3, "options": []},
+      {"id": "q1", "title": "T", "options": "a"}, {"title": "T", "options": []}, {},
+    )
+    answers = ("text", ["q1"], {"option": "a"}, {"question": 4}, {})
+    cases = [("question", value) for value in questions] + [("answer", value) for value in answers]
+    for key, value in cases:
+      with self.subTest(key=key, value=value):
+        repo = self.project()
+        run, step = self.started(repo)
+        self.ask(repo, run, step)
+        later = relayrun.utcnow() + timedelta(minutes=5)  # the CLI wrote the ask at the real time
+        event = relayrun.step_event(run, later, step, "start")
+        event[key] = value
+        with (repo.root / LEDGER).open("a", encoding="utf-8") as fh:
+          fh.write(json.dumps(event) + "\n")
+        got = self.runs(repo)[0]["steps"][0]
+        self.assertEqual(got["phase"], "start")  # the event still folded, as a heartbeat
+        self.assertEqual(got["question"]["id"], "q1")
+        self.assertIsNone(got["question"]["answer"])
+        # And the ledger still takes writes.
+        self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+
+  def test_Ledger_QuestionMissingOptionalKeys_FoldsWithEmptyDefaults(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    event = relayrun.step_event(
+      run, minutes(1), step, "start", waiting_on="owner",
+      question={"id": "q1", "title": "T", "options": [{"label": "a"}, {"summary": "S"}, "junk"]},
+    )
+    with (repo.root / LEDGER).open("a", encoding="utf-8") as fh:
+      fh.write(json.dumps(event) + "\n")
+    question = relayrun.list_runs(repo.root, now=minutes(2), siblings=False)[0].steps[0].question
+    self.assertEqual(question.options, [{"label": "a", "summary": ""}, {"label": "", "summary": "S"}])
+    self.assertEqual((question.recommend, question.blocker, question.key, question.reasoning), ("", False, "", ""))
+
+  def test_QuestionFromEvent_MissingKeys_DoesNotRaise(self) -> None:
+    for data in ({}, {"options": None}, {"id": "q1", "options": "a"}):
+      with self.subTest(data=data):
+        question = relayrun.Question.from_event(data, "2026-10-14T12:00:00Z")
+        self.assertEqual((question.options, question.asked_at), ([], "2026-10-14T12:00:00Z"))
+
+  def test_Answer_OlderOpenQuestion_KeepsTheWaitOfANewerOne(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "start")  # moves on, q1 open
+    self.ask(repo, run, step)
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"))
+    self.assertEqual(got["step"]["question"]["id"], "q2")
+    got = self.ok(repo, "relay-run", "answer", run, "q2", "--option", "db")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("start", ""))
+
+  def test_Ask_StepWaitingOnApproval_BadRunFieldNamingTheApprovalAndNothingWritten(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "approval")
+    payload = self.refused(
+      repo, "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
+      "--option", "b:B", error="bad_run_field",
+    )
+    self.assertIn("approval", payload["message"])
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["waiting_on"], "approval")
+
+  def test_Ask_QuestionOpenMessage_NamesTheOwnerWaitAndTheUnansweredQuestion(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    payload = self.refused(
+      repo, "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
+      "--option", "b:B", error="question_open",
+    )
+    self.assertIn("waits on the owner", payload["message"])
+    self.assertIn("q1 is not answered", payload["message"])
+    self.assertNotIn("approval", payload["message"])
+
+  def test_Ledger_QuestionWithExtraKeysFromANewerSlicer_StillFolds(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    event = relayrun.step_event(
+      run, minutes(1), step, "start", waiting_on="owner",
+      question={"id": "q1", "title": "T", "options": [{"label": "a", "summary": "A", "extra": 1}],
+                "deadline": "soon"},
+    )
+    with (repo.root / LEDGER).open("a", encoding="utf-8") as fh:
+      fh.write(json.dumps(event) + "\n")
+    got = relayrun.list_runs(repo.root, now=minutes(500), siblings=False)[0]
+    self.assertEqual((got.state, got.steps[0].question.id), ("active", "q1"))
+
+
+class AskAnswerSandboxTests(SandboxCase):
+  """A question asked from a sandbox that cannot write the shared ledger (s396)."""
+
+  def test_Ask_SandboxedFallbackFile_PrefixesTheQuestionIdLikeAStepId(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    step = ops.relay_run_step(wt, run, role="orchestrator", agent="A", phase="start", now=minutes(1))[1].id
+    first = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(2))[2]
+    self.assertEqual(first.id, "q1")
+    self.sandbox(repo)
+    ops.relay_run_answer(wt, run, "q1", option="a", now=minutes(3))
+    asked = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(4))[2]
+    self.assertRegex(asked.id, r"^c[0-9a-f]{8}-q1$")
+    self.assertEqual(self.local(wt)[-1]["question"]["id"], asked.id)
+    answered = ops.relay_run_answer(wt, run, asked.id, text="x", now=minutes(5))[2]
+    self.assertEqual(answered.answer["text"], "x")
+    self.assertEqual(self.listed(repo.root)[0]["steps"][0]["question"]["id"], asked.id)
+
+  def test_Answer_QuestionHeldOnlyInTheFallbackFile_AbsorbsItIntoTheSharedLedgerFirst(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    step = ops.relay_run_step(wt, run, role="orchestrator", agent="A", phase="start", now=minutes(1))[1].id
+    lift = self.sandbox(repo)
+    asked = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(2))[2]
+    lift()
+    ops.relay_run_answer(repo.root, run, asked.id, option="a", now=minutes(3))
+    shared = [e for _, e in relayrun.read_events(self.common(repo))]
+    self.assertEqual(
+      [("question" in e, "answer" in e) for e in shared if e["event"] == "step"][-2:],
+      [(True, False), (False, True)],
+    )
 
 
 if __name__ == "__main__":

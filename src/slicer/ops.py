@@ -3469,13 +3469,20 @@ class Ledger:
       held = [e for _, e in relayrun.read_events(shared) if e["run"] == run_id]
       parent = str(event.get("parent") or "")
       parent_held = not parent or any(e["event"] == "step" and e["step"] == parent for e in held)
+      # An answer for a question only a local file holds would dangle once that file is gone.
+      answer = event.get("answer")
+      question_held = not isinstance(answer, dict) or any(
+        isinstance(e.get("question"), dict) and e["question"].get("id") == answer.get("question")
+        for e in held
+      )
       local_step = False
       if event["event"] == "step" and not any(
         e["event"] == "step" and e["step"] == event["step"] for e in held
       ):
         local, _, _ = relayrun.local_run_events(self.root, run_id)
         local_step = any(e["event"] == "step" and e["step"] == event["step"] for e in local)
-      if not any(e["event"] == "begin" for e in held) or not parent_held or local_step:
+      if not any(e["event"] == "begin" for e in held) or not parent_held or local_step \
+          or not question_held:
         _absorb(self.root, self, run_id)
         if self.fallback:
           return False
@@ -3535,9 +3542,15 @@ def ledger_lock(root: Path, report: LedgerReport | None = None) -> Iterator[Ledg
     yield ledger
 
 
-def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
-  """The run, in any ledger `root` reads, that a step or end may extend."""
-  run = next((r for r in relayrun.load_all(root, now) if r.id == run_id), None)
+def _open_run(
+  root: Path, run_id: str, now: datetime, *, reading: bool = False,
+) -> relayrun.Run:
+  """The run, in any ledger `root` reads, that a step or end may extend.
+
+  With `reading` the run may have ended and a torn last line is an append in progress: what a
+  read that takes no lock needs."""
+  runs = relayrun.load_all(root, now, tolerate_torn_tail=reading)
+  run = next((r for r in runs if r.id == run_id), None)
   if run is None:
     raise StateError(
       f"no relay run {run_id!r} in {relayrun.ledger_path(root)} or the checkouts' own "
@@ -3545,7 +3558,7 @@ def _open_run(root: Path, run_id: str, now: datetime) -> relayrun.Run:
       "In a git repo every worktree shares that ledger",
       code="unknown_run",
     )
-  if run.state == "ended":
+  if run.state == "ended" and not reading:
     raise StateError(
       f"relay run {run_id} ended with outcome {run.outcome}; begin a new run instead",
       code="run_ended",
@@ -3678,6 +3691,137 @@ def relay_run_step(
     written = ledger.append_planned(plan)
     run = _open_run(root, run_id, now)
     return run, run.step(str(written["step"]))
+
+
+def _located(run: relayrun.Run, question_id: str) -> tuple[relayrun.Step, relayrun.Question]:
+  found = run.find_question(question_id)
+  if found is None:
+    known = [q.id for s in run.steps for q in s.questions]
+    raise StateError(
+      f"relay run {run.id} has no question {question_id!r}"
+      + (f"; its questions are {', '.join(known)}" if known else "; it has asked none")
+      + ". `relay-run ask` asks one and `relay-run list` shows them",
+      code="unknown_question",
+    )
+  return found
+
+
+def relay_run_ask(
+  root: Path, run_id: str, *, step: str, title: str, options: list[str], recommend: str = "",
+  blocker: bool = False, key: str = "", reasoning: str = "", now: datetime | None = None,
+  report: LedgerReport | None = None,
+) -> tuple[relayrun.Run, relayrun.Step, relayrun.Question]:
+  """Ask the owner a question on a step of the run, and put the step in the owner wait.
+
+  The fields are those of the run report's `owner needed` line (`relayrun.question_fields`
+  checks them). The event is a `start` step event with `waiting_on` `owner` and a `question`
+  object, so an older slicer folds it as a heartbeat (see `relayrun`). The question's id is
+  `q` and a number, run-wide; a fallback file's carries its checkout prefix, as a step id does.
+  A step that is done or failed asks nothing (`bad_run_field`), and a step that already waits on
+  an unanswered question asks no second one (`question_open`): answer the first.
+  """
+  now = now or relayrun.utcnow()
+  title, parsed, recommend, key, reasoning = relayrun.question_fields(
+    title, options, recommend, key, reasoning,
+  )
+  step = relayrun.one_line("step", step, required=True)
+
+  def plan(prefix: str) -> dict[str, object]:
+    run = _open_run(root, run_id, now)
+    recorded = run.step(step)
+    if recorded is None:
+      raise relayrun.bad_field(f"step {step!r} is not in run {run_id}")
+    if recorded.phase not in ("start", "wait"):
+      raise relayrun.bad_field(f"step {step} is {recorded.phase}; a question needs a step in progress")
+    if recorded.waiting and recorded.waiting_on != relayrun.DEFAULT_WAITING_ON:
+      raise relayrun.bad_field(
+        f"step {step} waits on {recorded.waiting_on}, which a question would replace; "
+        "end that wait with `relay-run step --phase start` first"
+      )
+    latest = recorded.question
+    if recorded.waiting and latest is not None and latest.answer is None:
+      raise StateError(
+        f"step {step} already waits on the owner and its latest question {latest.id} is not "
+        "answered; `relay-run answer` answers it, or `relay-run step --phase start` ends the wait",
+        code="question_open",
+      )
+    payload = relayrun.question_payload(
+      relayrun.next_question_id(run, prefix), title, parsed, recommend, blocker, key, reasoning,
+    )
+    return relayrun.step_event(
+      run_id, now, step, "start", "", relayrun.DEFAULT_WAITING_ON, question=payload,
+    )
+
+  with ledger_lock(root, report) as ledger:
+    written = ledger.append_planned(plan)
+    run = _open_run(root, run_id, now)
+    question_id = str(written["question"]["id"])  # type: ignore[index]
+    asked, question = _located(run, question_id)
+    return run, asked, question
+
+
+def relay_run_answer(
+  root: Path, run_id: str, question_id: str, *, option: str | None = None,
+  text: str | None = None, why: str = "", by: str = "", now: datetime | None = None,
+  report: LedgerReport | None = None,
+) -> tuple[relayrun.Run, relayrun.Step, relayrun.Question]:
+  """Record the owner's answer to a question: one of its options, or free text.
+
+  Exactly one of `option` and `text` (`usage` otherwise). `why` and `by` are optional notes.
+  The first answer stands: a question already answered is `question_answered`, an id the run
+  never asked is `unknown_question`, and an ended run is `run_ended`. The event is a step event
+  without `waiting_on`, so it ends the owner wait on the step, and the run's 30 minutes count
+  from it again (an orchestrator that is never resumed shows as stale, not as waiting forever).
+  A step that waits on something else, an approval, keeps that wait, and a step that is done or
+  failed keeps its phase.
+  """
+  now = now or relayrun.utcnow()
+  if (option is None) == (text is None):
+    raise StateError("an answer takes --option LABEL or --text TEXT, not both and not neither", code="usage")
+  if text is not None:
+    text = text.strip()
+    if not text:
+      raise relayrun.bad_field("--text may not be blank")
+  why = why.strip()
+  by = relayrun.one_line("by", by)
+
+  def plan(prefix: str) -> dict[str, object]:
+    run = _open_run(root, run_id, now)
+    asked, question = _located(run, question_id)
+    if question.answer is not None:
+      raise StateError(
+        f"question {question_id} was answered at {question.answered_at}; the first answer stands",
+        code="question_answered",
+      )
+    if option is not None and option not in [o["label"] for o in question.options]:
+      raise relayrun.bad_field(
+        f"--option {option!r} is not an option of question {question_id}: "
+        f"{', '.join(o['label'] for o in question.options)}"
+      )
+    latest = asked.question
+    # Another wait stays: an approval, or the owner wait of a newer question still open.
+    newer_open = latest is not None and latest is not question and latest.answer is None
+    keep = ""
+    if asked.waiting and (asked.waiting_on != relayrun.DEFAULT_WAITING_ON or newer_open):
+      keep = asked.waiting_on
+    wire = "start" if asked.phase in ("start", "wait") else asked.phase
+    payload = relayrun.answer_payload(question_id, option or "", text or "", why, by)
+    return relayrun.step_event(run_id, now, asked.id, wire, "", keep, answer=payload)
+
+  with ledger_lock(root, report) as ledger:
+    ledger.append_planned(plan)
+    run = _open_run(root, run_id, now)
+    answered, question = _located(run, question_id)
+    return run, answered, question
+
+
+def relay_run_question(
+  root: Path, run_id: str, question_id: str, *, now: datetime | None = None,
+) -> tuple[relayrun.Run, relayrun.Step, relayrun.Question]:
+  """Read a question and its answer, if any. No lock and no write; the run may have ended."""
+  run = _open_run(root, run_id, now or relayrun.utcnow(), reading=True)
+  step, question = _located(run, question_id)
+  return run, step, question
 
 
 def relay_run_end(

@@ -1113,7 +1113,8 @@ class AiRelayTests(unittest.TestCase):
         for phrase in (
           "An `owner` finding that is not a `blocker` does not stop the relay",
           "goes in the report as a numbered owner-needed question",
-          "A `blocker` owner finding stops the relay with OUTCOME stopped.",
+          "A `blocker` owner finding stops the relay: ask it as Owner questions says",
+          "return the report with OUTCOME stopped only when you cannot wait for the answer",
         ):
           self.assertIn(phrase, rule)
         self.assertNotIn('goes under "Owner needed"', rule)
@@ -1158,7 +1159,7 @@ class AiRelayTests(unittest.TestCase):
           self.assertIn(phrase, flat)
 
   def test_RelayStop_OwnerDecision_NamesBlockerInJsonAndText(self) -> None:
-    phrase = "an owner decision marked `blocker` is needed"
+    phrase = "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)"
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command, part="json"):
         self.assertIn(phrase, ai.relay_contract(orchestrator=command == "relay-orchestrator")["stop"])
@@ -1167,8 +1168,9 @@ class AiRelayTests(unittest.TestCase):
         stop = " ".join(text.split("## Stop\n\n", 1)[1].split("\n## ", 1)[0].split())
         self.assertIn(phrase, stop)
         self.assertNotIn("or an owner decision is needed", stop)
+    self.assertEqual(len(ai.RELAY_STOP), 3)
     rule = self.rule("done", "Stop and return without asking the owner")
-    self.assertIn("or an owner decision marked `blocker` is needed.", rule)
+    self.assertNotIn("or an owner decision marked `blocker` is needed", rule)
 
   def test_RelayGate_Criteria_FixFindingsAndBlockerOwnerOnly(self) -> None:
     for label, flat in self.contract_texts():
@@ -2234,7 +2236,9 @@ class RelayApproveLandTests(unittest.TestCase):
       "Nothing is merged or landed before the owner approves; the only commit before it is the "
       "slice commit the orchestrator's brief allows.",
       "While the owner decides, record the wait on the orchestrator's step with " + self.WAIT_APPROVAL,
-      "or with `--waiting-on owner` while the owner answers an owner-needed question or a `blocker`",
+      "or with `--waiting-on owner` while the owner answers an owner-needed question from the "
+      "report. A `blocker` question the orchestrator asked with `relay-run ask` already holds "
+      "its step in that wait.",
       "Do not end the run while it waits: a waiting step never makes its run stale.",
     ):
       with self.subTest(phrase=phrase):
@@ -2563,3 +2567,157 @@ class RelayLandingDocsTests(unittest.TestCase):
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, text)
+
+
+class RelayOwnerQuestionContractTests(unittest.TestCase):
+  """The contract text for an owner question that waits in the ledger (s396). The marker stays
+  v8: s397 bumps it for the whole bundle."""
+
+  ASK = (
+    "`slicer relay-run ask RUN --step STEP --title TITLE --option LABEL:SUMMARY "
+    "--option LABEL:SUMMARY --recommend LABEL --blocker --key AREA.TOPIC --reasoning TEXT`"
+  )
+  ANSWER = "`slicer relay-run answer RUN QUESTION_ID --option LABEL --why TEXT --by NAME`"
+  ANSWER_TEXT = "`slicer relay-run answer RUN QUESTION_ID --text TEXT`"
+  GET = "`slicer relay-run answer RUN QUESTION_ID --get`"
+  WAITING = "`waiting on: owner QUESTION_ID`"
+
+  def rule(self, finish: str, name: str) -> str:
+    rules = ai.orchestrator_text(finish).split("## Rules\n\n", 1)[1].split("\n## ", 1)[0]
+    bullet = next((b for b in rules.split("\n- ") if b.lstrip("- ").startswith(name)), "")
+    self.assertTrue(bullet, f"no rule starting {name!r}")
+    return " ".join(bullet.split())
+
+  def outer_step(self, number: int) -> str:
+    return next(step["text"] for step in ai.relay_contract()["order"] if step["step"] == number)
+
+  def test_OrchestratorRules_OwnerQuestions_AskWaitAndResumeOnTheAnswer(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Owner questions")
+        for phrase in (
+          "an owner decision marked `blocker` that you cannot go on without is asked in the ledger",
+          self.ASK,
+          "STEP is your own step id",
+          "the fields are those of the run report's `owner needed` line",
+          "End your turn with the last line " + self.WAITING,
+          "The outer session records the answer with "
+          "`slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`) and resumes you with it",
+          "to read it again, run " + self.GET,
+          "A non-blocker owner question stays in the run report",
+          "Do not poll the ledger for the answer",
+        ):
+          self.assertIn(phrase, rule)
+
+  def test_OrchestratorRules_StopForBlocker_AsksUnlessItCannotWait(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Stop and return without asking the owner")
+        for phrase in (
+          "A `blocker` owner finding stops the relay: ask it as Owner questions says",
+          "return the report with OUTCOME stopped only when you cannot wait for the answer",
+        ):
+          self.assertIn(phrase, rule)
+        self.assertTrue(
+          rule.startswith(
+            "Stop and return without asking the owner when the same slice fails its gate three "
+            "times or the spec is ambiguous or wrong. An `owner` finding"
+          ),
+          rule,
+        )
+        self.assertNotIn("an owner decision marked `blocker` is needed", rule)
+
+  def test_OrchestratorRules_Waiting_NamesTheOwnerHandBack(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Waiting")
+        self.assertIn("`waiting on: ROLE AGENT-ID`", rule)
+        self.assertIn(
+          "When you wait for the owner's answer to a question you asked, it is "
+          "`waiting on: owner QUESTION_ID`.", rule,
+        )
+
+  def test_OrchestratorRules_OwnerAnswers_CoverAnAnswerToItsOwnQuestion(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Owner answers")
+        self.assertIn("an answer the outer session pastes in on resume is the owner's", rule)
+        self.assertIn("That includes the answer to a question you asked with `relay-run ask`.", rule)
+
+  def test_RelayOrder_Step3_OwnerHandBackIsAWaitTheOuterSessionAnswers(self) -> None:
+    step = self.outer_step(3)
+    for phrase in (
+      "A hand-back whose last line is " + self.WAITING + " is a wait for the owner",
+      "a question the orchestrator asked with `relay-run ask`",
+      "`slicer relay-run list RUN` shows the question",
+      "record the answer with " + self.ANSWER,
+      "(" + self.ANSWER_TEXT + " for a free-text answer)",
+      "If the question is already answered (a dashboard recorded it), read it with " + self.GET
+      + " and resume the orchestrator with it.",
+      "which ends the step's owner wait",
+      "then record the note in the worktree and resume the orchestrator with the answer pasted in",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, step)
+    self.assertIn("An owner answer given while the run waits goes in a note on the item in the worktree", step)
+
+  def test_RelayOrder_Step4_DoesNotStopAnOrchestratorThatWaitsOnTheOwner(self) -> None:
+    step = self.outer_step(4)
+    self.assertIn("names no running role and no unanswered owner question", step)
+    self.assertIn("a question whose answer the orchestrator was already resumed with", step)
+    self.assertNotIn("has already answered", step)
+
+  def test_RelayOrder_OwnerAnswersParagraph_RecordsTheAnswerInTheLedgerToo(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn(
+          "When the orchestrator waits on a question of its own (`waiting on: owner QUESTION_ID`), "
+          "the outer session also records the answer in the ledger with " + self.ANSWER,
+          order,
+        )
+
+  def test_RelayConformance_StopRules_NameTheAskWaitResumeException(self) -> None:
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        item = next(
+          item["text"] for item in ai.relay_contract(orchestrator=command != "relay")["conformance"]
+          if item["key"] == "stop_rules"
+        )
+        for phrase in (
+          "do not ask the owner",
+          "A `blocker` owner question that can wait for its answer is the exception",
+          "record it with `relay-run ask`",
+          "end the turn with `waiting on: owner QUESTION_ID`",
+          "go on only from the answer the outer session records and resumes you with",
+        ):
+          self.assertIn(phrase, item)
+
+  def test_RelayContract_Commands_AreNamedInFullAndAcceptedByTheParser(self) -> None:
+    parser = cli._cached_parser()
+    texts = {
+      "orchestrator": " ".join(ai.orchestrator_text().split()),
+      "relay": " ".join(ai.relay_text().split()),
+    }
+    wanted = {
+      "orchestrator": (self.ASK, self.GET, "`slicer relay-run answer RUN QUESTION_ID --option LABEL`"),
+      "relay": (self.ANSWER, self.ANSWER_TEXT, "`slicer relay-run list RUN`"),
+    }
+    for label, commands in wanted.items():
+      for command in commands:
+        with self.subTest(label=label, command=command):
+          self.assertIn(command, texts[label])
+          argv = shlex.split(command.strip("`"))[1:]
+          parser.parse_args(argv)
+          self.assertEqual(cli._unknown_flags(parser, argv), [])
+
+  def test_RelayContract_OwnerQuestion_StaysAtV8WithNoNewChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 8)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8])
+    self.assertEqual(ai.contract_line(), "relay v8")
+
+  def test_RelayContract_OwnerQuestion_NamesNoProject(self) -> None:
+    for text in (ai.relay_text(), ai.orchestrator_text()):
+      flat = " ".join(text.split()).casefold()
+      for token in ("ork", "adj 165"):
+        self.assertNotRegex(flat, r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")

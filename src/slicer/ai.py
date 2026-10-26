@@ -233,12 +233,22 @@ Wait for its run report. One slice runs in the foreground. A hand-back whose las
    line `waiting on: ROLE AGENT-ID`), is a wait, not a report. Wait for that role's report, then resume the orchestrator with
    the report pasted in. Do not stop the orchestrator for it. An owner answer given
    while the run waits goes in a note on the item in the worktree and in the resumed
-   role's brief, not in the slice on main."""),
+   role's brief, not in the slice on main. A hand-back whose last line is
+   `waiting on: owner QUESTION_ID` is a wait for the owner's answer to a question the
+   orchestrator asked with `relay-run ask`, not a report: `slicer relay-run list RUN` shows the
+   question. If the question is already answered (a dashboard recorded it), read it with
+   `slicer relay-run answer RUN QUESTION_ID --get` and resume the orchestrator with it.
+   Otherwise put it to the owner, record the answer with
+   `slicer relay-run answer RUN QUESTION_ID --option LABEL --why TEXT --by NAME`
+   (`slicer relay-run answer RUN QUESTION_ID --text TEXT` for a free-text answer), which
+   ends the step's owner wait, then record the note in the worktree and resume the
+   orchestrator with the answer pasted in."""),
   (4, """\
 Check the report's first line, the contract marker, and its last line,
    `nothing left running: yes`. Stop the orchestrator first when a hand-back lacks that
-   last line and names no running role, or names a role that has already finished and
-   whose report the orchestrator already has."""),
+   last line and names no running role and no unanswered owner question, or names a role
+   that has already finished and whose report the orchestrator already has, or a question
+   whose answer the orchestrator was already resumed with."""),
   (5, """\
 Approve, unless the end point is `finish`: end the run there with
    `slicer relay-run end RUN --outcome pass --close-steps done`. Nothing is merged or
@@ -246,8 +256,9 @@ Approve, unless the end point is `finish`: end the run there with
    orchestrator's brief allows. While the owner decides, record the wait on the
    orchestrator's step with
    `slicer relay-run step RUN --step STEP --phase wait --waiting-on approval`,
-   or with `--waiting-on owner` while the owner answers an owner-needed question or a
-   `blocker`. Do not end the run while it waits: a waiting step never makes its run
+   or with `--waiting-on owner` while the owner answers an owner-needed question from the
+   report. A `blocker` question the orchestrator asked with `relay-run ask` already holds
+   its step in that wait. Do not end the run while it waits: a waiting step never makes its run
    stale. Show the owner the gate verdict, the tests, the diff stat, each owner-needed
    question, and each `[HUMAN CHECK]` line of the slice's Check section. Record each
    human check the owner confirms as a note on the item in the worktree with
@@ -353,7 +364,7 @@ nothing left running: yes"""),
 RELAY_STOP = (
   "the same slice fails its gate three times",
   "the spec turns out ambiguous or wrong",
-  "an owner decision marked `blocker` is needed",
+  "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)",
 )
 
 # The gate's criteria and verdict lines, as data: `RELAY_GATE` renders them and
@@ -413,7 +424,10 @@ Tag every reviewer, UI pass and gate finding `fix`, `owner` or `later`, and rout
 Stop when a stop condition in Stop holds, or when a harness permission check denies a
   role's slicer step (stop before the commit, with the denial's exact text as a `blocker`
   owner-needed question), with OUTCOME stopped, and return the run report. Do not go on
-  past it and do not ask the owner."""),
+  past it and do not ask the owner. A `blocker` owner question that can wait for its answer
+  is the exception: record it with `relay-run ask`, end the turn with
+  `waiting on: owner QUESTION_ID`, and go on only from the answer the outer session records
+  and resumes you with."""),
     ('ledger', """\
 Record each role's round in the run ledger with `relay-run step`: a new step for every
   round, a parent step for a spawned role, and done or fail when the round ends. The
@@ -648,6 +662,10 @@ Owner answers: an answer the owner gives after the worktree exists never reaches
 through the slice on main. The outer session records it against the slice worktree with
 `slicer note ID --text "Owner answer: ..." --render`, then resumes the orchestrator
 with the answer pasted in, and the orchestrator carries it into the resumed role's brief.
+When the orchestrator waits on a question of its own (`waiting on: owner QUESTION_ID`),
+the outer session also records the answer in the ledger with
+`slicer relay-run answer RUN QUESTION_ID --option LABEL --why TEXT --by NAME`, or
+`--text TEXT` for a free-text answer, before it resumes the orchestrator.
 A project that keeps a decision log also records there a design answer the owner
 explicitly picked, not a default an agent assumed.
 
@@ -867,7 +885,17 @@ return one run report.
 - Owner answers: an answer the outer session pastes in on resume is the owner's, not a
   role's report. Carry it verbatim, with the slice's `Owner decisions` paragraph, into
   the brief of the role you resume or start. The outer session has already recorded it
-  as a note on the item in the worktree.
+  as a note on the item in the worktree. That includes the answer to a question you asked
+  with `relay-run ask`.
+- Owner questions: an owner decision marked `blocker` that you cannot go on without is
+  asked in the ledger, where the owner or a dashboard can answer it:
+  `slicer relay-run ask RUN --step STEP --title TITLE --option LABEL:SUMMARY --option LABEL:SUMMARY --recommend LABEL --blocker --key AREA.TOPIC --reasoning TEXT`,
+  where STEP is your own step id and the fields are those of the run report's `owner needed`
+  line (`--recommend`, `--key` and `--reasoning` are optional). It prints the question id and
+  puts your step in the owner wait. End your turn with the last line
+  `waiting on: owner QUESTION_ID`. The outer session records the answer with
+  `slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`) and resumes you
+  with it pasted in; to read it again, run `slicer relay-run answer RUN QUESTION_ID --get`. Do not poll the ledger for the answer. A non-blocker owner question stays in the run report.
 - Waiting: a spawn may run in the background with no foreground option. When a
   role's result is needed, end the turn and let its report wake you. A nudge to
   report while a role you started still runs is not a reason to report. A role
@@ -875,7 +903,8 @@ return one run report.
   own background work, has not finished its round: resume it and tell it to
   finish. Send the final report once, never an interim one. When the turn ends before
   the final report, the last line of the hand-back is `waiting on: ROLE AGENT-ID`, or
-  the closest thing the harness gives, so the outer session can route the report. A
+  the closest thing the harness gives, so the outer session can route the report. When you
+  wait for the owner's answer to a question you asked, it is `waiting on: owner QUESTION_ID`. A
   role report pasted in by the outer session on resume is that role's report. Run no
   sleep loop, no monitor keepalive and no background shell job; nothing you
   started still runs when you report. Every role brief says to run long commands
@@ -900,10 +929,11 @@ return one run report.
   denial's exact text under owner needed, as a `blocker` question whose reasoning is
   that exact text, with options such as `grant:` and `skip:`.
 - Stop and return without asking the owner when the same slice fails its gate three
-  times, the spec is ambiguous or wrong, or an owner decision marked `blocker` is
-  needed. An `owner` finding that is not a `blocker` does not stop the relay: it goes in the report as a
+  times or the spec is ambiguous or wrong. An `owner` finding that is not a `blocker` does not stop the relay: it goes in the report as a
   numbered owner-needed question and the slice goes on to the gate. A `blocker` owner
-  finding stops the relay with OUTCOME stopped.
+  finding stops the relay: ask it as Owner questions says and wait for the answer; return
+  the report with OUTCOME stopped only when you cannot wait for the answer (the harness cannot
+  resume you, or the `relay-run ask` fails) or when the denial rule above applies.
 
 ## Order
 

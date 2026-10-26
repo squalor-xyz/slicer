@@ -14513,7 +14513,7 @@
       "id": "s396",
       "title": "relay-run ask and relay-run answer: a run can ask the owner a question and read the answer",
       "short_title": "relay-run ask and answer",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s398"
@@ -14525,6 +14525,28 @@
           "text": "**2026-10-26** — Use the structured question fields of s398 (title, 2-4 options, recommendation, blocker) so the run report and relay-run ask share one shape.",
           "created_at": "2026-10-26T13:05:54Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "0da2e147-c47c-4a02-a293-8c8d47437a43",
+          "kind": "",
+          "text": "**2026-10-26** — Review FAIL: outer Step 4 stops an orchestrator whose question a dashboard already answered (should resume with answer --get); an orchestrator Rules bullet still says stop on a blocker; low: answering an older question ends a newer wait; ask overwrites an approval wait; Stop list lacks the ask exception.",
+          "created_at": "2026-10-26T20:45:42Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "6a3822fe-2ccb-464b-b620-17d56315ea74",
+          "kind": "",
+          "text": "**2026-10-26** — relay-run ask records a structured owner question (s398 fields: title, 2 to 4 LABEL:SUMMARY options, recommend, blocker, key, reasoning) on a step and puts the step in the owner wait; relay-run answer records an option or free text and ends that wait, and answer --get reads it without writing. Both are step events an older slicer folds as heartbeats, and malformed question or answer objects are skipped rather than refused. The relay contract now routes a blocker through ask, wait on 'waiting on: owner QUESTION_ID' and resume instead of stopping, and stays at v8. Full suite 2904 tests OK, slicer check and git diff --check clean.",
+          "created_at": "2026-10-26T20:58:10Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -14548,7 +14570,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -32,6 +32,12 @@ older readers ignore (they show the step as running and the run goes stale after
 as it did before). The fold turns that into the phase `wait`. Any later event of the step
 without `waiting_on` (a `start`, `done` or `fail`) ends the wait.
 
+A question to the owner (`relay-run ask`) and its answer (`relay-run answer`) ride the same
+way, for the same reason. The ask is a `start` step event with `waiting_on` `owner` and a
+`question` object; the answer is a step event without `waiting_on`, so it ends the wait, with an
+`answer` object naming the question. Both carry every key of any step event, so an older slicer
+folds them as heartbeats and ignores the objects. A question lives on the step it was asked on.
+
 This module reads, folds and appends. Validation of user input and the lock around an
 append live in `ops`, which is where every mutation goes.
 """
@@ -64,6 +70,9 @@ STEP_PHASES = PHASES + ("wait",)
 # still counts as a wait here.
 WAITING_ON = ("owner", "approval")
 DEFAULT_WAITING_ON = "owner"
+# An owner question has 2 to 4 options, as the run report's `owner needed` line does.
+OPTIONS_MIN = 2
+OPTIONS_MAX = 4
 OUTCOMES = ("pass", "fail", "stopped")
 STATES = ("active", "stale", "ended")
 _STAMP = "%Y-%m-%dT%H:%M:%SZ"
@@ -97,6 +106,9 @@ def legacy_ledger_path(root: Path) -> Path:
 # A step id is a plain number, which the shared ledger issues, or a checkout's prefix and a
 # number, which its own file issues (`fallback_step_prefix`).
 _STEP_ID = re.compile(r"c[0-9a-f]{8}-[0-9]+|[0-9]+")
+# A question id is `q` and a number, which the shared ledger issues, or a checkout's prefix first,
+# which its own file issues, as for a step.
+_QUESTION_ID = re.compile(r"(?P<prefix>c[0-9a-f]{8}-)?q(?P<number>[0-9]+)")
 
 
 def fallback_step_prefix(root: Path) -> str:
@@ -127,6 +139,18 @@ def next_step_id(run: Run, prefix: str = "") -> str:
     if rest.isascii() and rest.isdigit():
       taken.append(int(rest))
   return f"{prefix}{max(taken, default=0) + 1}"
+
+
+def next_question_id(run: Run, prefix: str = "") -> str:
+  """The id for a new question of `run`: `q` and one past the largest number among the run's
+  questions that carry `prefix`, like `next_step_id`."""
+  taken = []
+  for step in run.steps:
+    for question in step.questions:
+      found = _QUESTION_ID.fullmatch(question.id)
+      if found and (found["prefix"] or "") == prefix:
+        taken.append(int(found["number"]))
+  return f"{prefix}q{max(taken, default=0) + 1}"
 
 
 def common_ledger_path(root: Path) -> Path | None:
@@ -166,6 +190,105 @@ def choice(name: str, value: str, allowed: tuple[str, ...]) -> str:
   return value
 
 
+def _plain(name: str, value: str, *, required: bool = False, spaces: bool = True) -> str:
+  """A question value that sits in a `|`-separated report line: one line, no `|`."""
+  text = one_line(name, value, required=required)
+  if "|" in text:
+    raise bad_field(f"{name} may not contain `|`, which separates the fields of the report line")
+  if not spaces and re.search(r"\s", text):
+    raise bad_field(f"{name} may not contain whitespace")
+  return text
+
+
+def question_fields(
+  title: str, options: list[str], recommend: str = "", key: str = "", reasoning: str = "",
+) -> tuple[str, list[dict[str, str]], str, str, str]:
+  """The checked fields of an owner question, in the shape of the run report's `owner needed`
+  line: a title, 2 to 4 `LABEL:SUMMARY` options with distinct labels, the label of the preferred
+  one, an `AREA.TOPIC` key and the reasoning. No value but the reasoning holds a `|`, and no label
+  or summary holds a `;`, so the report line parses back; the label ends at the first `:`."""
+  title = _plain("title", title, required=True)
+  if not OPTIONS_MIN <= len(options) <= OPTIONS_MAX:
+    raise bad_field(
+      f"a question takes {OPTIONS_MIN} to {OPTIONS_MAX} --option LABEL:SUMMARY, not {len(options)}"
+    )
+  parsed: list[dict[str, str]] = []
+  for raw in options:
+    label, colon, summary = raw.partition(":")
+    if not colon:
+      raise bad_field(f"option {raw!r} is not LABEL:SUMMARY")
+    label = _plain("option label", label, required=True)
+    summary = _plain("option summary", summary, required=True)
+    if ";" in label or ";" in summary:
+      raise bad_field(f"option {raw!r} may not contain `;`, which separates the options")
+    if any(option["label"] == label for option in parsed):
+      raise bad_field(f"option label {label!r} is used twice")
+    parsed.append({"label": label, "summary": summary})
+  recommend = _plain("recommend", recommend)
+  if recommend and recommend not in [option["label"] for option in parsed]:
+    raise bad_field(
+      f"--recommend {recommend!r} is not an option label: "
+      f"{', '.join(option['label'] for option in parsed)}"
+    )
+  key = _plain("key", key, spaces=False)
+  return title, parsed, recommend, key, one_line("reasoning", reasoning)
+
+
+@dataclass
+class Question:
+  """An owner question asked on a step, and its answer once there is one.
+
+  `asked_at` and `answered_at` are the stamps of the events that wrote them; `answered_at` is
+  `""` and `answer` is None while the question is open. The answer is `{option, text, why, by}`:
+  `option` names one of the options and `text` is `""`, or `text` is free text and `option` is
+  `""`.
+  """
+
+  id: str
+  title: str
+  options: list[dict[str, str]]
+  recommend: str
+  blocker: bool
+  key: str
+  reasoning: str
+  asked_at: str
+  answered_at: str = ""
+  answer: dict[str, str] | None = None
+
+  def to_dict(self) -> dict[str, object]:
+    return {
+      "id": self.id, "title": self.title, "options": [dict(o) for o in self.options],
+      "recommend": self.recommend, "blocker": self.blocker, "key": self.key,
+      "reasoning": self.reasoning, "asked_at": self.asked_at,
+      "answered_at": self.answered_at,
+      "answer": None if self.answer is None else dict(self.answer),
+    }
+
+  @classmethod
+  def from_dict(cls, data: dict) -> "Question":
+    return cls(
+      id=data["id"], title=data["title"], options=[dict(o) for o in data["options"]],
+      recommend=data["recommend"], blocker=data["blocker"], key=data["key"],
+      reasoning=data["reasoning"], asked_at=data["asked_at"],
+      answered_at=data["answered_at"],
+      answer=None if data["answer"] is None else dict(data["answer"]),
+    )
+
+  @classmethod
+  def from_event(cls, data: dict, at: str) -> "Question":
+    """The question a `question` object on an event asks. Only what `_is_question` checks is
+    required; a field a newer slicer adds is ignored, one it lacks is empty."""
+    return cls(
+      id=str(data.get("id", "")), title=str(data.get("title", "")),
+      options=[
+        {"label": str(o.get("label", "")), "summary": str(o.get("summary", ""))}
+        for o in data.get("options") or [] if isinstance(o, dict)
+      ],
+      recommend=str(data.get("recommend", "")), blocker=bool(data.get("blocker", False)),
+      key=str(data.get("key", "")), reasoning=str(data.get("reasoning", "")), asked_at=at,
+    )
+
+
 @dataclass
 class Step:
   """One agent's turn in a run. `parent` names the step that spawned it, if any."""
@@ -183,22 +306,31 @@ class Step:
   updated_at: str
   # What the step waits on while its phase is `wait`, else "".
   waiting_on: str = ""
+  # The questions asked on the step, oldest first. `question` is the latest.
+  questions: list[Question] = field(default_factory=list)
 
   @property
   def waiting(self) -> bool:
     """Whether the step is waiting on someone else, so its run is not stale.
 
-    The one place that says so: a later kind of wait (an open question to the owner) joins
-    here and every reader follows.
+    The one place that says so: a later kind of wait joins here and every reader follows. An
+    open question to the owner is already one, since `relay-run ask` writes the wait with it.
     """
     return self.phase == "wait"
 
-  def to_dict(self) -> dict[str, str]:
+  @property
+  def question(self) -> Question | None:
+    """The latest question asked on the step, open or answered."""
+    return self.questions[-1] if self.questions else None
+
+  def to_dict(self) -> dict[str, object]:
+    question = self.question
     return {
       "id": self.id, "role": self.role, "agent": self.agent, "vendor": self.vendor,
       "model": self.model, "reasoning": self.reasoning, "phase": self.phase,
       "waiting_on": self.waiting_on, "task": self.task, "parent": self.parent,
       "begun_at": self.begun_at, "updated_at": self.updated_at,
+      "question": None if question is None else question.to_dict(),
     }
 
   @classmethod
@@ -209,6 +341,7 @@ class Step:
       task=data["task"], parent=data["parent"],
       begun_at=data["begun_at"], updated_at=data["updated_at"],
       waiting_on=data.get("waiting_on", ""),
+      questions=[Question.from_dict(data["question"])] if data.get("question") else [],
     )
 
 
@@ -269,6 +402,14 @@ class Run:
   def step(self, step_id: str) -> Step | None:
     return next((step for step in self.steps if step.id == step_id), None)
 
+  def find_question(self, question_id: str) -> tuple[Step, Question] | None:
+    """The step and the question with this id, whichever step it was asked on."""
+    for step in self.steps:
+      for question in step.questions:
+        if question.id == question_id:
+          return step, question
+    return None
+
   def subagents_of(self, step_id: str) -> list[Step]:
     """The steps spawned directly by this one, in the order they were added."""
     return [step for step in self.steps if step.parent == step_id]
@@ -281,12 +422,30 @@ def begin_event(run: str, at: datetime, items: list[str], worktree: str) -> dict
   }
 
 
+def question_payload(
+  question_id: str, title: str, options: list[dict[str, str]], recommend: str, blocker: bool,
+  key: str, reasoning: str,
+) -> dict[str, object]:
+  """The `question` object of an ask event, keys in the order of the run report's line."""
+  return {
+    "id": question_id, "title": title, "options": options, "recommend": recommend,
+    "blocker": blocker, "key": key, "reasoning": reasoning,
+  }
+
+
+def answer_payload(question_id: str, option: str, text: str, why: str, by: str) -> dict[str, object]:
+  """The `answer` object of an answer event."""
+  return {"question": question_id, "option": option, "text": text, "why": why, "by": by}
+
+
 def step_event(
   run: str, at: datetime, step: str, phase: str, parent: str = "", waiting_on: str = "",
+  question: dict[str, object] | None = None, answer: dict[str, object] | None = None,
   **fields: str,
 ) -> dict[str, object]:
-  """A step event. `waiting_on` marks a `start` event as a wait; it is left out otherwise, so
-  every other event is the line an older slicer wrote."""
+  """A step event. `waiting_on` marks a `start` event as a wait, `question` says what it asks
+  and `answer` what it answers; each is left out when not given, so every other event is the
+  line an older slicer wrote."""
   event: dict[str, object] = {
     "v": VERSION, "event": "step", "run": run, "at": stamp(at), "step": step, "phase": phase,
   }
@@ -294,6 +453,10 @@ def step_event(
   event["parent"] = parent
   if waiting_on:
     event["waiting_on"] = waiting_on
+  if question is not None:
+    event["question"] = question
+  if answer is not None:
+    event["answer"] = answer
   return event
 
 
@@ -510,6 +673,39 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
   for name in _FIELDS:
     if event[name]:  # an update names only what changes
       setattr(step, name, str(event[name]))
+  # A `question` or `answer` that is malformed is skipped, not refused: the event is still a
+  # heartbeat, and one odd line must not blank the board of every slicer that reads the ledger.
+  if _is_question(event.get("question")):
+    step.questions.append(Question.from_event(event["question"], at))
+  if _is_answer(event.get("answer")):
+    _answer(run, event["answer"], at)
+
+
+def _is_question(value: object) -> bool:
+  """Whether a `question` object has what a reader needs: a string id, a string title and a
+  list of options."""
+  return (
+    isinstance(value, dict) and isinstance(value.get("id"), str)
+    and isinstance(value.get("title"), str) and isinstance(value.get("options"), list)
+  )
+
+
+def _is_answer(value: object) -> bool:
+  return isinstance(value, dict) and isinstance(value.get("question"), str)
+
+
+def _answer(run: Run, answer: dict, at: str) -> None:
+  """Record an answer on its question. One that names no question of the run, or one already
+  answered, changes nothing: the first answer stands, and an answer the fold cannot place is
+  not worth refusing a ledger that every other slicer reads."""
+  found = run.find_question(str(answer["question"]))
+  if found is None or found[1].answer is not None:
+    return
+  question = found[1]
+  question.answered_at = at
+  question.answer = {
+    name: str(answer.get(name, "")) for name in ("option", "text", "why", "by")
+  }
 
 
 def state_of(run: Run, now: datetime) -> str:
