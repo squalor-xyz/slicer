@@ -1720,6 +1720,18 @@ class RelayBoardLinesTests(unittest.TestCase):
     self.assertIn("implementer > reviewer > gate", text)
     self.assertIn("orchestrator", text)
 
+  def test_BoardLines_UiAndSpecCheckSteps_NameTheirRoleInTheOtherLine(self) -> None:
+    run = board_run(
+      board_step("1", "orchestrator", begun="2026-10-14T12:00:00Z"),
+      board_step("2", "ui", "done"),
+      board_step("3", "spec-check", "done"),
+    )
+    lines = tui.board_lines([run], 0, NOW, 100)
+    other = [line.text for line in lines if line.text.lstrip().startswith("other")]
+    self.assertEqual(len(other), 1)
+    self.assertIn("ui [", other[0])
+    self.assertIn("spec-check [", other[0])
+
   def test_BoardLines_NarrowWidth_ClipsWithoutSplittingCells(self) -> None:
     long_model = "claude-sonnet-5-5-with-a-very-long-suffix"
     run = board_run(

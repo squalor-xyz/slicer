@@ -12,7 +12,7 @@ import re
 import unittest
 
 import support
-from slicer import ai, cli
+from slicer import ai, cli, roles
 
 NEW_RELAY_KEYS = ["roles", "gate", "finding_kinds", "conformance"]
 NEW_ORCHESTRATOR_KEYS = ["gate", "finding_kinds", "conformance"]
@@ -207,7 +207,7 @@ class ConformanceJsonTests(RelayConformanceCase):
     last = -1
     for item in roles:
       with self.subTest(role=item["role"]):
-        self.assertEqual(list(item), ["role", "text"])
+        self.assertEqual(list(item), ["role", "text", "ledger_role"])
         self.assertEqual(item["text"], flat(item["text"]))
         position = prose.find(item["text"])
         self.assertGreater(position, last)
@@ -217,6 +217,20 @@ class ConformanceJsonTests(RelayConformanceCase):
     role_texts = {item["text"] for item in roles}
     self.assertEqual(len([part for part in paragraphs if part in role_texts]), len(roles))
     self.assertEqual(len([part for part in paragraphs if part not in role_texts]), 3)
+
+  def test_AiRelayJson_Roles_LedgerRoleNamesTheStepEachRoleRecords(self) -> None:
+    roles_json = self.payload("relay")["roles"]
+    self.assertEqual([(item["role"], item["ledger_role"]) for item in roles_json], [
+      ("outer_session", None), ("orchestrator", "orchestrator"),
+      ("implementer", "implementer"), ("reviewer", "reviewer"), ("architect", "architect"),
+      ("ui_pass", "ui"), ("spec_check", "spec-check"),
+    ])
+    for item in roles_json:
+      with self.subTest(role=item["role"]):
+        if item["ledger_role"] is not None:
+          self.assertIn(item["ledger_role"], roles.LEDGER_ROLE_NAMES)
+    # `--lean` drops nulls elsewhere, so the outer session's null must survive it.
+    self.assertEqual(self.payload("relay", "--lean")["roles"], roles_json)
 
   def test_AiRelayJson_Gate_CriteriaAndVerdictsAgreeWithTheProse(self) -> None:
     for command, text in (("relay", ai.relay_text()), ("relay-orchestrator", ai.orchestrator_text())):

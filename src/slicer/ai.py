@@ -479,7 +479,13 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False) -> dict:
   payload["changes"] = [{"version": version, "text": text} for version, text in RELAY_CHANGES]
   # New keys go after `changes`, so every earlier key keeps its position.
   if not orchestrator:
-    payload["roles"] = [{"role": role, "text": flat(text)} for role, text in RELAY_ROLES]
+    # `ledger_role` is the `relay-run step --role` name a role records under, or null for the
+    # outer session, which records no step of its own. It comes after `text`, so the keys
+    # `role` and `text` keep their positions.
+    payload["roles"] = [
+      {"role": role, "text": flat(text), "ledger_role": ledger}
+      for role, ledger, text in RELAY_ROLES
+    ]
   payload["gate"] = {"criteria": list(RELAY_GATE_CRITERIA), "verdicts": list(RELAY_GATE_VERDICTS)}
   payload["finding_kinds"] = [{"kind": kind, "text": flat(text)} for kind, text in RELAY_FINDING_KINDS]
   payload["conformance"] = [{"key": key, "text": flat(text)} for key, text in RELAY_CONFORMANCE]
@@ -489,34 +495,34 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False) -> dict:
 # The outer session's and each role's part, as data. `RELAY_HEAD` renders each entry into
 # the Roles section, and `relay_contract` carries the same text in `--json`.
 RELAY_ROLES = (
-  ('outer_session', """\
+  ('outer_session', None, """\
 The outer session is the session the owner talks to. It runs Setup with the
 owner, owns the relay run, spawns one orchestrator per slice, reads only that
 orchestrator's run report, lands branches one at a time when the owner
 authorizes it, files the report's later notes, and writes no product code."""),
-  ('orchestrator', """\
+  ('orchestrator', 'orchestrator', """\
 The orchestrator runs one slice under the contract that
 `slicer ai relay-orchestrator` prints. It briefs every agent, reads the reports
 and reads diffs as `slicer ai relay-orchestrator` says, reruns the tests only as
 Order says, and writes no product code."""),
-  ('implementer', """\
+  ('implementer', 'implementer', """\
 The implementer owns one slice. It runs `slicer start ID --render --strict`,
 writes the failing tests and watches them go red, implements, mutation-checks
 each new test, and closes the slice. Line numbers a slice cites may have moved since
 its spec was written; at start the implementer re-anchors them against the code in
 the worktree."""),
-  ('reviewer', """\
+  ('reviewer', 'reviewer', """\
 The reviewer is read-only. It reviews correctness, test strength and direction
 against `slicer goals`."""),
-  ('architect', """\
+  ('architect', 'architect', """\
 The architect is read-only. It confirms each finding was fixed and reviews the
 shape."""),
-  ('ui_pass', """\
+  ('ui_pass', 'ui', """\
 The UI pass is read-only and edits nothing. It runs beside the reviewer on a slice
 the project marks as UI; the project says what counts as a UI slice. It returns
 triaged suggestions, each tagged with a finding kind, and, where the project can
 render, the changed views. The gate still decides."""),
-  ('spec_check', """\
+  ('spec_check', 'spec-check', """\
 The spec check is optional, read-only and edits nothing. It runs before any worktree
 exists, on a batch of slices the owner picks. For each slice it returns `ready` or
 questions in the shape of the run report's `owner needed` line, each with 2 to 4
@@ -576,9 +582,9 @@ Before the worktree exists, the outer session reads the slice's size with
 Wait for the owner's answers before creating the worktree.
 
 """.replace("{setup}", "\n".join(f"- {text}" for _key, text in RELAY_SETUP))
-for _key, _text in RELAY_ROLES:
+for _key, _ledger, _text in RELAY_ROLES:
   RELAY_HEAD = RELAY_HEAD.replace("{role." + _key + "}", _text)
-del _key, _text
+del _key, _ledger, _text
 
 RELAY_ORDER = """\
 ## Order
@@ -605,7 +611,11 @@ It prints the run id; keep that id as RUN. Record each role when it starts with
 `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --phase start --task TASK`,
 which prints the step id. When the step ends, record it with
 `slicer relay-run step RUN --step STEP --phase done` or `--phase fail`.
-A subagent adds `--parent STEP` for the step that spawned it.
+A subagent adds `--parent STEP` for the step that spawned it. The spec check runs
+before any orchestrator, so the outer session records its round too, with
+`--role spec-check` and no `--parent`, in a run it begins on the batch's slices, and
+ends that run with `slicer relay-run end RUN --outcome pass --close-steps done` once it
+has read the spec check's report (`--outcome stopped` if the owner stops it).
 `slicer relay-run step RUN --step STEP --phase start`
 re-records a long-running step as a heartbeat, so its run does not go stale
 after 30 minutes. A heartbeat passes no `--task`, so the step keeps the task it
@@ -848,7 +858,7 @@ return one run report.
 - Never run `relay-run begin` or `relay-run end`, mark your own step done, land, merge,
   rebase onto main or push. The outer session owns those.
 - Relay run: record a new step for every round (implement, each fix round, review,
-  gate) with
+  the UI pass as role `ui`, gate) with
   `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`,
   where STEP is your own step id, and mark it done or failed when the round ends. A
   heartbeat, `slicer relay-run step RUN --step STEP --phase start`, passes no new

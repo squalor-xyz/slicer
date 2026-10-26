@@ -61,6 +61,21 @@ class RelayRolesCase(unittest.TestCase):
     return [e for e in repo.state().history() if e.action == "relay-roles"]
 
 
+class LedgerRoleNamesTests(unittest.TestCase):
+  def test_RoleNames_MatrixRolesUnchanged_LedgerOnlyRolesAppendedToTheLedgerSet(self) -> None:
+    self.assertEqual(roles.ROLE_NAMES, ("implementer", "reviewer", "gate", "architect", "orchestrator"))
+    self.assertEqual(roles.LEDGER_ONLY_ROLES, ("ui", "spec-check"))
+    self.assertEqual(roles.LEDGER_ROLE_NAMES, roles.ROLE_NAMES + roles.LEDGER_ONLY_ROLES)
+
+  def test_RoleFromDict_LedgerOnlyRole_IsRefused(self) -> None:
+    for role in ("ui", "spec-check"):
+      with self.subTest(role=role), self.assertRaises(ValueError):
+        roles.RoleRow.from_dict({
+          "id": "r1", "role": role, "when": roles.RoleWhen().to_dict(), "agent": "", "vendor": "",
+          "model": "", "reasoning": "", "note": "",
+        })
+
+
 class RoleModelTests(unittest.TestCase):
   def test_RoleMatrix_RoundTrip_IsIdentityWithFixedKeyOrder(self) -> None:
     matrix = roles.skeleton()
@@ -921,6 +936,22 @@ class RelayRolesAddTests(RelayRolesCase):
     repo = self.project()
     self.refuse(repo, "relay-roles", "add", "--role", "gate", code=2, error="no_relay_roles")
 
+  def test_Add_LedgerOnlyRole_RefusedAndMatrixUnchanged(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    for role in ("ui", "spec-check"):
+      with self.subTest(role=role):
+        payload = self.refuse(repo, "relay-roles", "add", "--role", role, code=2, error="bad_role_field")
+        self.assertIn(", ".join(roles.ROLE_NAMES), payload["message"])
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_Set_LedgerOnlyRole_RefusedAndRowKept(self) -> None:
+    repo = self.with_matrix()
+    for role in ("ui", "spec-check"):
+      with self.subTest(role=role):
+        self.refuse(repo, "relay-roles", "set", "r1", "--role", role, code=2, error="bad_role_field")
+    self.assertEqual(self.matrix(repo)["rows"][0]["role"], "implementer")
+
 
 class RelayRolesEditTests(RelayRolesCase):
   def test_Set_ChangesOnlyTheGivenFields(self) -> None:
@@ -1324,6 +1355,14 @@ class RelayRolesRecommendTests(RelayRolesCase):
     return json.loads(self.ok(
       repo, "relay-roles", "recommend", item, "--well-specified", ws, "--split", split, "--json",
     ))
+
+  def test_Recommend_LedgerOnlyRoles_NeverProposed(self) -> None:
+    repo = self.with_matrix()
+    item = self.item(repo, "--size", "S", "--effort", "1")
+    payload = self.recommend(repo, item)
+    self.assertEqual([r["role"] for r in payload["roles"]], list(roles.ROLE_NAMES))
+    for role in ("ui", "spec-check"):
+      self.assertNotIn(role, payload["unmatched"])
 
   def test_Recommend_Json_ReturnsRoleOrderedRowsAndUnmatched(self) -> None:
     repo = self.with_matrix()
