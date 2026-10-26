@@ -110,6 +110,14 @@ allows the closing note and configured finish step. The outer session receives
 the report and carries out only the endpoint you authorized. The contract also
 defines when repeated failures or a missing owner decision stop the relay.
 
+On a slice the project marks as UI, a UI pass runs in parallel with the reviewer. It
+is read-only and edits nothing, and it returns suggestions as findings and, where the
+project can render, the changed views. It does not decide: the gate does. The project
+says what counts as a UI slice and names the UI pass skills in its role matrix; an agent that
+cannot load skills gets the project's vendor-neutral UI prompt. The project may also
+fold the UI pass into the reviewer by slice size, for example the reviewer on a small
+slice and a separate role on a larger one.
+
 Every review, UI pass and gate finding is a `fix` (back to the implementer), an
 `owner` question (a design call for you, with 2 to 4 options and a recommendation;
 it blocks the gate only when marked `blocker`) or a `later` follow-up with a one-line

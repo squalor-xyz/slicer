@@ -1007,6 +1007,104 @@ class AiRelayTests(unittest.TestCase):
           flat,
         )
 
+  def test_RelayRoles_UiPass_ReadOnlyBesideReviewerProjectMarksUiSlices(self) -> None:
+    flat = " ".join(ai.relay_text().split("## Roles", 1)[1].split("## Setup", 1)[0].split())
+    for phrase in (
+      "The UI pass is read-only and edits nothing.",
+      "It runs beside the reviewer on a slice the project marks as UI;",
+      "the project says what counts as a UI slice.",
+      "It returns triaged suggestions, each tagged with a finding kind, and, where the project "
+      "can render, the changed views.",
+      "The gate still decides.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, flat)
+
+  def test_RelayOrder_UiPass_ParallelWithReviewerGateStillDecides(self) -> None:
+    for finish in ("done", "handoff"):
+      for label, text in (
+        ("relay", ai.relay_text(finish)),
+        ("orchestrator", ai.orchestrator_text(finish)),
+      ):
+        with self.subTest(label=label, finish=finish):
+          order = " ".join(text.split("## Order\n\n", 1)[1].split("\n## ", 1)[0].split())
+          for phrase in (
+            "on a slice the project marks as UI, the UI pass runs in parallel with the reviewer",
+            "the gate, which still decides",
+          ):
+            self.assertIn(phrase, order)
+
+  def test_RelayContract_OrchestratorOrderJson_NamesUiPassInParallel(self) -> None:
+    steps = ai.relay_contract(orchestrator=True)["order"]
+    review = next(step["text"] for step in steps if step["step"] == 2)
+    self.assertIn("the UI pass runs in parallel with the reviewer", review)
+    self.assertIn("the gate, which still decides", review)
+
+  def test_RelayEveryBrief_UiPass_SkillsThenVendorNeutralPromptAndRenders(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for phrase in (
+          "The UI pass brief says the agent is read-only, edits nothing and makes no git writes, and "
+          "tells it to load the skills the project's role matrix names for the UI pass;",
+          "a vendor that cannot load skills gets the project's vendor-neutral UI prompt instead.",
+          "It asks for each finding's kind and, where the project can render, the changed views.",
+        ):
+          self.assertIn(phrase, flat)
+
+  UI_BRIEF_ITEM = (
+    "whether the slice is a UI slice and whether the reviewer carries the UI pass, for a "
+    "separate UI pass the skills the project's role matrix names for the UI pass or its "
+    "vendor-neutral UI prompt"
+  )
+
+  def test_RelayHead_UiPass_NamedBesideTheReviewer(self) -> None:
+    flat = " ".join(ai.relay_text().split("## Roles", 1)[0].split())
+    self.assertIn("a reviewer (and, on a UI slice, a UI pass), an architect and a gate.", flat)
+
+  def test_RelaySetup_RolesBullet_NamesUiPassBesideOrFoldedIntoReviewer(self) -> None:
+    phrase = (
+      "On a slice the project marks as UI, a UI pass runs beside the reviewer, or the reviewer "
+      "carries it where the project folds it in by slice size."
+    )
+    bullet = next(item["text"] for item in ai.relay_contract()["setup"] if item["key"] == "roles")
+    self.assertIn(phrase, bullet)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        setup = " ".join(ai.relay_text(finish).split("## Setup", 1)[1].split("Wait for", 1)[0].split())
+        self.assertIn(phrase, setup)
+
+  def test_RelayOrder_OrchestratorBrief_NamesUiSliceFoldAndSkills(self) -> None:
+    steps = ai.relay_contract()["order"]
+    spawn = next(step["text"] for step in steps if step["step"] == 2)
+    self.assertIn(self.UI_BRIEF_ITEM, spawn)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn(self.UI_BRIEF_ITEM, order)
+
+  def test_OrchestratorText_Opening_BriefNamesUiSliceFoldAndSkills(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        opening = " ".join(ai.orchestrator_text(finish).split("## Rules", 1)[0].split())
+        self.assertIn("Your brief names the slice, the worktree and branch,", opening)
+        self.assertIn(self.UI_BRIEF_ITEM, opening)
+
+  def test_RelayEveryBrief_UiPass_ProjectMayFoldItIntoReviewerBySize(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for phrase in (
+          "The project may fold the UI pass into the reviewer by slice size,",
+          "such as the reviewer on a small slice and a separate role on a larger one;",
+          "where it does, the reviewer's brief also carries the UI pass brief, and no separate UI pass runs.",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RelayText_UiPass_NamesNoProjectSkillPathOrRule(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for token in ("tui-design", "frontend-design", "u10", "ork", "adj 165", "roles.ui-pass"):
+          self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
+
   def test_OrchestratorText_OwnerFinding_BlocksOnlyWhenBlocker(self) -> None:
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
