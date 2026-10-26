@@ -1704,7 +1704,7 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   result = ops.next_item(
     state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
-    queue=queue, owner=args.owner, start_to=args.start_to,
+    queue=queue, owner=args.owner, start_to=args.start_to, prefer_ready=bool(args.ready),
   )
   if result.item is None:
     payload = {"item": None, "blocked": _blocked_payload(result.blocked)}
@@ -1765,7 +1765,7 @@ def _cmd_next_batch(
   result = ops.next_batch(
     state, args.batch, elsewhere, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
-    disjoint=args.disjoint,
+    disjoint=args.disjoint, prefer_ready=bool(args.ready),
   )
   if args.disjoint:
     _warn_files_section(state)
@@ -2028,7 +2028,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
   lines.extend(_sibling_only_lines(only_sibling))
   rows = [
-    i.to_dict() | {"in_work_elsewhere": elsewhere.get(i.id, [])} for i in items
+    i.to_dict() | {"ready": ops.ready_state(state, i), "in_work_elsewhere": elsewhere.get(i.id, [])}
+    for i in items
   ]
   if args.envelope:
     _emit(args, {"items": rows, "only_in_sibling": only_sibling}, "\n".join(lines),
@@ -2298,17 +2299,20 @@ def cmd_show(args: argparse.Namespace) -> int:
       lines.append(header)
     lines.append(f"(no slice yet; run `slicer promote {item.id}`)")
     _emit(args, item.to_dict() | _note_fields(item, manifest) | {
-            "paths": ops.item_file_paths(state, item.id),
+            "ready": ops.ready_state(state, item), "paths": ops.item_file_paths(state, item.id),
             "citations": resolved, "slivers": sliver_rows},
-          "\n".join(lines + sliver_lines + _pack_text(item, sl, manifest, notes=False)))
+          "\n".join(lines + sliver_lines + _ready_line(state, item)
+                    + _pack_text(item, sl, manifest, notes=False)))
     return OK
   text = render.render_slice(
     sl, state.config, state.template("slice.md"), item.rendered_notes, header,
   ).decode("utf-8")
   _emit(args, item.to_dict() | _note_fields(item, manifest) | {
+    "ready": ops.ready_state(state, item),
     "slice": sl.to_dict(), "paths": ops.item_file_paths(state, item.id),
     "citations": resolved, "slivers": sliver_rows,
-  }, "\n".join([text, *sliver_lines, *_pack_text(item, sl, manifest, notes=False)]))
+  }, "\n".join([text, *sliver_lines, *_ready_line(state, item),
+                *_pack_text(item, sl, manifest, notes=False)]))
   return OK
 
 
@@ -2425,6 +2429,23 @@ def cmd_decide(args: argparse.Namespace) -> int:
   hint = _render_hint(args)
   _emit(args, item.to_dict(), f"recorded decision for {item.id}" + (f"; {hint}" if hint else ""))
   return OK
+
+
+def cmd_ready(args: argparse.Namespace) -> int:
+  state = _state(args)
+  with _item_lookup(state, [args.id]):
+    item = ops.mark_ready(state, args.id, by=args.by, note=args.note or "")
+  _emit(args, item.to_dict() | {"ready": True}, f"{item.id} ready, recorded by {item.readiness.by}")
+  return OK
+
+
+def _ready_line(state: store.State, item: model.Item) -> list[str]:
+  """The one text line `show` adds once a check is recorded; none before that."""
+  if item.readiness is None:
+    return []
+  record = item.readiness
+  verdict = "true" if ops.ready_state(state, item) is True else "stale"
+  return [f"Ready: {verdict} ({record.by}, {record.at})"]
 
 
 def cmd_note(args: argparse.Namespace) -> int:
@@ -3814,7 +3835,8 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--notes-budget", type=int,
                   help="pack whole current notes within this nonnegative character budget")
   sp.add_argument("--ready", action="store_true",
-                  help="bounded pickup: item identity, its slice, and blocked ids")
+                  help="bounded pickup: item identity, its slice, and blocked ids; "
+                       "ready-checked items come first, within their pass")
   sp.add_argument("--section", action="append",
                   help="with --ready, return only this section (repeatable)")
   sp.add_argument("--owner", help="with --start, who to claim as (overrides SLICER_CLAIM_OWNER and claim_owner)")
@@ -3997,6 +4019,11 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--text", help="inline answer; cannot combine with --file/--stdin")
   sp.add_argument("--file", help="read the answer from this file; cannot combine with --text/--stdin")
   sp.add_argument("--stdin", action="store_true", help="read the answer from stdin; cannot combine with --text/--file")
+
+  sp = add("ready", _mutating(cmd_ready), "record that a slice's spec check passed")
+  sp.add_argument("id")
+  sp.add_argument("--by", required=True, help="who ran the spec check, one line")
+  sp.add_argument("--note", help="one line kept with the verdict")
 
   sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")

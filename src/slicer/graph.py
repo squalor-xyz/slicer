@@ -167,6 +167,34 @@ def effective_scores(index: Index) -> dict[str, int]:
   return eff
 
 
+def tier(index: Index, cfg: Config, item: Item) -> int:
+  """The group `ranked_order` files an item under: 0 in work, 1 open, 2 blocked or
+  any other status, 3 parked."""
+  if cfg.parked_status and item.status == cfg.parked_status:
+    return 3
+  if pending(index, item, cfg):
+    return 2
+  if item.status in cfg.in_work():
+    return 0
+  if item.status == cfg.open_status:
+    return 1
+  return 2
+
+
+def pass_rank(index: Index, item: Item) -> int:
+  """Where `ranked_order` files an item's pass: its declared position, one past
+  the last for a named pass nobody declared, -1 for no pass. With no declared
+  passes the ranking ignores pass keys, so every item shares rank 0."""
+  if not index.passes:
+    return 0
+  if not item.pass_key:
+    return -1
+  for at, info in enumerate(index.passes):
+    if info.key == item.pass_key:
+      return at
+  return len(index.passes)
+
+
 def ranked_order(
   index: Index, cfg: Config, items: list[Item], *, descending: bool = True,
   by_pass: bool = True,
@@ -180,21 +208,11 @@ def ranked_order(
   Ascending reverses groups, passes and scores. Ties keep stored queue order.
   """
   eff = effective_scores(index)
-  in_work = cfg.in_work()
-  parked = cfg.parked_status
   place = {it.id: n for n, it in enumerate(index.items)}
   passes = {p.key: n for n, p in enumerate(index.passes)} if by_pass else {}
 
-  def tier(item: Item) -> int:
-    if parked and item.status == parked:
-      return 3
-    if pending(index, item, cfg):
-      return 2
-    if item.status in in_work:
-      return 0
-    if item.status == cfg.open_status:
-      return 1
-    return 2
+  def tier_of(item: Item) -> int:
+    return tier(index, cfg, item)
 
   def score_key(item: Item) -> tuple[int, int]:
     return (-eff[item.id] if descending else eff[item.id], place[item.id])
@@ -204,8 +222,8 @@ def ranked_order(
     return (rank if descending else -rank, *score_key(item))
 
   out: list[Item] = []
-  for group in sorted({tier(it) for it in items}, reverse=not descending):
-    rows = [it for it in items if tier(it) == group]
+  for group in sorted({tier_of(it) for it in items}, reverse=not descending):
+    rows = [it for it in items if tier_of(it) == group]
     if not passes:
       out.extend(sorted(rows, key=score_key))
       continue

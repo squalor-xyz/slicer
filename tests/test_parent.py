@@ -54,7 +54,7 @@ class ParentTests(unittest.TestCase):
         jsonio.dumps(item.to_dict()),
       )
       self.assertEqual(model.Item.from_dict(item.to_dict()).parent, "S01")
-      self.assertEqual(json.loads(repo.read(".slicer/index.json"))["version"], 9)
+      self.assertEqual(json.loads(repo.read(".slicer/index.json"))["version"], model.SCHEMA_VERSION)
 
   def test_Add_ParentAnyStatus_Accepted(self) -> None:
     for status in ("open", "done", "retired"):
@@ -224,7 +224,7 @@ class ParentTests(unittest.TestCase):
         "merge-index", *(str(repo.root / name) for name in ("base", "ours", "theirs")))
       self.assertEqual((code, out, err), (0, "", ""))
       merged = json.loads(repo.read("ours"))
-      self.assertEqual(merged["version"], 9)
+      self.assertEqual(merged["version"], model.SCHEMA_VERSION)
       self.assertEqual([(i["id"], i["status"], i["fields"].get("parent", ""))
                         for i in merged["items"]],
                        [("s01", "open", ""), ("s02", "open", "s01"), ("s03", "done", "")])
@@ -484,7 +484,7 @@ class ParentTests(unittest.TestCase):
       self.assertEqual(repo.state().index.require("S01").parent, "")
       self.assertEqual(self.snapshot(repo), before)
       repo.run("add", "Sliver", "--parent", "S01")
-      self.assertEqual(json.loads(path.read_text())["version"], 9)
+      self.assertEqual(json.loads(path.read_text())["version"], model.SCHEMA_VERSION)
       old["items"][0]["fields"]["parent"] = ["S01"]
       with self.assertRaises(StateError) as exc:
         model.Item.from_dict(old["items"][0])
@@ -494,12 +494,12 @@ class ParentTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("add", "Sliver", "--parent", "S01")
       path = repo.root / ".slicer/index.json"
-      self.assertEqual(json.loads(path.read_text())["version"], 9)
+      self.assertEqual(json.loads(path.read_text())["version"], model.SCHEMA_VERSION)
       with patch.object(model, "SCHEMA_VERSION", 8), self.assertRaises(StateError) as exc:
         model.Index.from_dict(json.loads(path.read_text()))
       self.assertEqual(exc.exception.code, "schema_too_new")
       data = json.loads(path.read_text())
-      data["version"] = 10
+      data["version"] = model.SCHEMA_VERSION + 1
       path.write_text(json.dumps(data))
       code, out, _ = repo.run("list", "--json")
       self.assertEqual(code, 3)

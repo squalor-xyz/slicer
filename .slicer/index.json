@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "id_prefix": "s",
   "id_width": 2,
   "next_id": 410,
@@ -14665,7 +14665,7 @@
       "id": "s400",
       "title": "A durable readiness record: the spec check's verdict, tied to a digest of the spec",
       "short_title": "Readiness record with spec digest",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s399"
@@ -14677,6 +14677,39 @@
           "text": "**2026-10-26** — Readiness needs the open adj records that reference a slice: adjudicate S53 (list and inbox --ref). Owner-picked answers recorded by an agent: adjudicate S52.",
           "created_at": "2026-10-26T13:06:39Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "3772210d-48ec-4f0d-8cde-5c75fd335d8f",
+          "kind": "",
+          "text": "**2026-10-26** — Owner answer, 2026-10-26: keep the SCHEMA_VERSION 9 to 10 bump (Item.readiness); ship it with v1.16 and land with the schema-bump shim. next --ready sorts ready-true first only within each declared pass, never across passes.",
+          "created_at": "2026-10-26T17:40:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "1993a19e-eb70-4e5c-ab3b-4d8575fd85ac",
+          "kind": "",
+          "text": "**2026-10-26** — Review FAIL: blocker owner question on the schema bump (now answered: keep it); ready-first crosses declared pass order (answered: within pass); low: --ready help text stale, next --status QUEUE --ready grouping branch untested.",
+          "created_at": "2026-10-26T17:43:13Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "109b8766-0e87-44ce-a302-a3d87086bd5d",
+          "kind": "",
+          "text": "**2026-10-26** — Ready for review: slicer ready ID --by NAME [--note] records a SHA-256 digest of the slice title, lead, boundary and sections on the item as an optional readiness record. show and list --json report ready true|false|stale, and any spec edit makes it stale while notes and scheduling fields do not. next --ready puts ready items first within their tier and declared pass, without filtering. SCHEMA_VERSION goes 9 to 10 (owner-approved, needs the landing shim); full suite 2778 OK, slicer check and git diff --check clean.",
+          "created_at": "2026-10-26T18:17:35Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -14700,7 +14733,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

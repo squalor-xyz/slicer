@@ -7,12 +7,14 @@ key order wandered would make that check lie.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 # Project knowledge, the same six kinds in every project. Not items, and not
 # a project's review vocabulary: an agent can rely on these names.
@@ -215,6 +217,61 @@ class NoteRecord:
     return NoteRecord(d["id"], d["kind"], d["text"], d["created_at"], attempt, **metadata)
 
 
+def spec_digest(sl: Slice) -> str:
+  """A digest of what a spec check read: title, lead, boundary, ordered sections.
+
+  The canonical form is the compact UTF-8 JSON of `[title, lead, boundary,
+  [[heading, body], ...]]`, hashed with SHA-256. JSON strings are length-framed
+  by their quotes, so no two different slices share a form. Notes and the
+  scheduling fields a slice mirrors (size, flags, trees, findings, dependency
+  note) stay out: they are not the spec, and editing them must not undo a check.
+  """
+  canonical = [
+    sl.title, list(sl.lead), sl.boundary, [[s.heading, s.body] for s in sl.sections],
+  ]
+  text = json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
+  return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+@dataclass
+class Readiness:
+  """One recorded spec-check verdict: who passed it, when, and the spec it judged.
+
+  The verdict is only a record. Whether it still holds is derived by comparing
+  `digest` with the slice as it is now (`readiness_of`), so no edit has to
+  remember to invalidate anything.
+  """
+
+  by: str
+  at: str
+  note: str
+  digest: str
+
+  def to_dict(self) -> dict[str, Any]:
+    return {"by": self.by, "at": self.at, "note": self.note, "digest": self.digest}
+
+  @staticmethod
+  def from_dict(d: object) -> "Readiness":
+    if not isinstance(d, Mapping):
+      raise StateError(f"readiness must be an object, not {d!r}", code="corrupt")
+    values = {key: d.get(key, "") for key in ("by", "at", "note", "digest")}
+    if any(not isinstance(v, str) for v in values.values()):
+      raise StateError("readiness by, at, note and digest must be strings", code="corrupt")
+    if not values["by"] or not values["digest"]:
+      raise StateError("readiness needs a by and a digest", code="corrupt")
+    return Readiness(**values)
+
+
+def readiness_of(item: "Item", sl: Slice | None) -> bool | str:
+  """`True` when the recorded check still matches the slice, `"stale"` when the
+  slice changed (or went missing) since, `False` when it was never checked."""
+  if item.readiness is None:
+    return False
+  if sl is None:
+    return "stale"
+  return True if item.readiness.digest == spec_digest(sl) else "stale"
+
+
 @dataclass
 class Item:
   """One roadmap entry. May exist with no slice file (`has_slice=False`).
@@ -258,6 +315,8 @@ class Item:
   claim_at: str = ""
   # Catalog ids this item cites. A reference, not a dependency.
   cites: list[str] = field(default_factory=list)
+  # The latest spec-check verdict, or None. Absent from the JSON while unset.
+  readiness: Readiness | None = None
 
   @property
   def notes(self) -> list[str]:
@@ -307,7 +366,7 @@ class Item:
     return "drop"
 
   def to_dict(self) -> dict[str, Any]:
-    return {
+    out: dict[str, Any] = {
       "id": self.id,
       "title": self.title,
       "short_title": self.short_title,
@@ -319,25 +378,28 @@ class Item:
       "claim": (
         {"owner": self.claim_owner, "at": self.claim_at} if self.claim_owner else None
       ),
-      "fields": {
-        "size": self.size,
-        "flags": list(self.flags),
-        "trees": list(self.trees),
-        "trees_literal": self.trees_literal,
-        "findings": self.findings,
-        "discovered_from": self.discovered_from,
-        "parent": self.parent,
-        "cites": list(self.cites),
-        "key": self.key,
-        "pass": self.pass_key,
-        "group": self.group,
-        "reason": self.reason,
-        "importance": self.importance,
-        "urgency": self.urgency,
-        "effort": self.effort,
-        "attempts": self.attempts,
-      },
     }
+    if self.readiness is not None:
+      out["readiness"] = self.readiness.to_dict()
+    out["fields"] = {
+      "size": self.size,
+      "flags": list(self.flags),
+      "trees": list(self.trees),
+      "trees_literal": self.trees_literal,
+      "findings": self.findings,
+      "discovered_from": self.discovered_from,
+      "parent": self.parent,
+      "cites": list(self.cites),
+      "key": self.key,
+      "pass": self.pass_key,
+      "group": self.group,
+      "reason": self.reason,
+      "importance": self.importance,
+      "urgency": self.urgency,
+      "effort": self.effort,
+      "attempts": self.attempts,
+    }
+    return out
 
   @staticmethod
   def from_dict(d: Mapping[str, Any]) -> "Item":
@@ -356,6 +418,7 @@ class Item:
       ),
       claim_owner=_claim_owner(d.get("claim")),
       claim_at=_claim_at(d.get("claim")),
+      readiness=Readiness.from_dict(d["readiness"]) if "readiness" in d else None,
       size=f.get("size", ""),
       flags=list(f.get("flags", [])),
       trees=list(f.get("trees", [])),

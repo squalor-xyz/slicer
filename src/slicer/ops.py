@@ -29,8 +29,8 @@ from slicer.config import CONFIG_NAME, Config
 from slicer.errors import ConfigError, RenderError, StateError
 from slicer.model import (
   CATALOG_ACTIVE, CATALOG_RETIRED, CatalogRecord, Index, Item, LogEntry, NoteRecord,
-  PassInfo, Section, Slice, canonical_kind, effort_rank, extract_boundary, is_unscored,
-  successor_would_cycle,
+  PassInfo, Readiness, Section, Slice, canonical_kind, effort_rank, extract_boundary,
+  is_unscored, readiness_of, spec_digest, successor_would_cycle,
 )
 from slicer.roles import RoleMatrix, RoleRow, RoleRule, RoleWhen
 from slicer.store import LazySlices, SliceFiles, State
@@ -1770,6 +1770,7 @@ def _ranked_pool(
   queue: str | None = None,
   holder: str = "",
   cap_queue: bool = False,
+  prefer_ready: bool = False,
 ) -> _NextPool:
   """Open or started work in next's order, after tree, size, and skip rules.
 
@@ -1797,6 +1798,12 @@ def _ranked_pool(
   another owner claimed is skipped and reported as claimed elsewhere. The
   attempt cap applies there only when `cap_queue` says the pickup will start
   an implementation attempt.
+
+  With `prefer_ready`, items whose readiness is `True` move ahead of the rest
+  within their group: the same tier (started before open) and the same pass, or
+  for a custom `queue` the same claimed-or-not side. It never moves an item across
+  passes. It only reorders: no item enters or leaves the pool, and a stale or
+  missing record counts as not ready.
   """
   if max_attempts is not None and (isinstance(max_attempts, bool)
       or not isinstance(max_attempts, int) or max_attempts < 1):
@@ -1876,10 +1883,39 @@ def _ranked_pool(
     # Rank before eligibility exclusions: removing an unspecified or sibling-held
     # named row must not relocate empty-pass rows in the default list order.
     ranked = [it for it in graph.ranked_order(state.index, cfg, visible) if it.id in eligible]
+  if prefer_ready:
+    if queue is not None:
+      def group(item: Item) -> tuple[int, int]:
+        return (0 if item.claim_owner else 1, 0)
+    else:
+      def group(item: Item) -> tuple[int, int]:
+        return (graph.tier(state.index, cfg, item), graph.pass_rank(state.index, item))
+    ranked = _ready_first(state, ranked, group)
   return _NextPool(
     items=ranked, blocked=blocked, held=held, unspecified=unspecified,
     elsewhere=skipped, capped=capped, claimed_elsewhere=claimed_elsewhere,
   )
+
+
+def _ready_first(
+  state: State, ranked: list[Item], group: Callable[[Item], tuple[int, int]],
+) -> list[Item]:
+  """Reorder `ranked` so ready items lead inside each group, and nothing else moves.
+
+  The members of one group keep the slots they already occupy; only who fills
+  those slots changes, ready items first and each side in its old order. An item
+  therefore never crosses a group, and an item of another group never shifts.
+  """
+  slots: dict[tuple[int, int], list[int]] = {}
+  for at, item in enumerate(ranked):
+    slots.setdefault(group(item), []).append(at)
+  verdict = {item.id: ready_state(state, item) is True for item in ranked}
+  out = list(ranked)
+  for positions in slots.values():
+    members = sorted((ranked[at] for at in positions), key=lambda it: not verdict[it.id])
+    for at, item in zip(positions, members):
+      out[at] = item
+  return out
 
 
 def next_item(
@@ -1890,6 +1926,7 @@ def next_item(
   flags: list[str] | None = None, no_flags: list[str] | None = None,
   queue: str | None = None,
   owner: str | None = None, start_to: str | None = None,
+  prefer_ready: bool = False,
 ) -> NextResult:
   """The first eligible item in the shared list priority order.
 
@@ -1924,7 +1961,7 @@ def next_item(
   pool = _ranked_pool(
     state, elsewhere, review=review, tree=tree, size=size, max_attempts=max_attempts,
     flags=flags, no_flags=no_flags,
-    queue=queue, holder=holder, cap_queue=cap_queue,
+    queue=queue, holder=holder, cap_queue=cap_queue, prefer_ready=prefer_ready,
   )
   return NextResult(
     item=pool.items[offset] if offset < len(pool.items) else None,
@@ -1943,7 +1980,7 @@ def next_batch(
   *, tree: str | None = None, size: str | None = None,
   max_attempts: int | None = None,
   flags: list[str] | None = None, no_flags: list[str] | None = None,
-  disjoint: bool = False,
+  disjoint: bool = False, prefer_ready: bool = False,
 ) -> BatchResult:
   """Up to `count` items from the next pool, dependencies before dependents.
 
@@ -1966,7 +2003,7 @@ def next_batch(
   top_level = {entry.name for entry in state.root.iterdir()} if disjoint else set()
   pool = _ranked_pool(
     state, elsewhere, tree=tree, size=size, include_blocked=True,
-    max_attempts=max_attempts, flags=flags, no_flags=no_flags,
+    max_attempts=max_attempts, flags=flags, no_flags=no_flags, prefer_ready=prefer_ready,
   )
   chosen: list[Item] = []
   chosen_ids: set[str] = set()
@@ -2271,6 +2308,36 @@ def edit_section(state: State, item_id: str, heading: str, body: str, *, append:
   state.save_slice(sl)
   _record(state, item_id, "edit", note=heading)
   return sl
+
+
+def mark_ready(state: State, item_id: str, *, by: str, note: str = "") -> Item:
+  """Record that a spec check passed, tied to a digest of the slice as it is now.
+
+  The record is a verdict, not a gate: nothing refuses an item for lacking one.
+  Running it again refreshes the record, which is also how a stale one is renewed.
+  `by` and `note` are one line each, so the history entry stays one line.
+  """
+  item = state.index.require(item_id)
+  by, note = (by or "").strip(), (note or "").strip()
+  if not by:
+    raise StateError("ready needs --by NAME, the one who ran the spec check", code="usage")
+  if "\n" in by or "\n" in note:
+    raise StateError("--by and --note must each be one line", code="newline_in_field")
+  sl = state.slices.get(item_id)
+  if sl is None:
+    raise StateError(f"{item_id} has no slice; run `slicer promote {item_id}` first", code="no_slice")
+  item.readiness = Readiness(by=by, at=_now(), note=note, digest=spec_digest(sl))
+  state.save_index()
+  _record(state, item_id, "ready", note=note, by=by)
+  return item
+
+
+def ready_state(state: State, item: Item) -> bool | str:
+  """`item`'s readiness now: `True`, `False` or `"stale"`. Loads the slice only
+  when a record exists, so an unchecked item costs no file read."""
+  if item.readiness is None:
+    return False
+  return readiness_of(item, state.slices.get(item.id))
 
 
 def _dated(text: str) -> str:
