@@ -514,6 +514,54 @@ class DisjointTests(unittest.TestCase):
       code, out, _ = repo.run("deps", "--overlap", "S01", "S02", "--json")
       self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "usage"))
 
+  def test_Show_FilesSection_ListsPathSpansInJson(self) -> None:
+    with self.repo(ignore='["CHANGELOG.md"]') as repo:
+      item = self.file_item(
+        repo, "one", "- `src/a.py`\n- `docs/x.md:3`\n- `tests/`\n- `CHANGELOG.md`",
+      )
+      code, out, err = repo.run("show", item, "--json")
+      self.assertEqual(code, 0, err)
+      payload = json.loads(out)
+      self.assertEqual(payload["paths"], ["src/a.py", "docs/x.md", "tests/", "CHANGELOG.md"])
+      lean = json.loads(repo.run("show", item, "--json", "--lean")[1])
+      self.assertEqual(lean["paths"], payload["paths"])
+
+  def test_Show_OverlapIgnore_KeepsPathsThatDepsOverlapDrops(self) -> None:
+    with self.repo(ignore='["CHANGELOG.md"]') as repo:
+      one = self.file_item(repo, "one", "- `src/a.py`\n- `CHANGELOG.md`")
+      two = self.file_item(repo, "two", "- `CHANGELOG.md`")
+      payload = json.loads(repo.run("show", one, "--json")[1])
+      self.assertEqual(payload["paths"], ["src/a.py", "CHANGELOG.md"])
+      overlap = json.loads(repo.run("deps", "--overlap", one, two, "--json")[1])
+      self.assertEqual(overlap["overlap"], [{"a": one, "b": two, "shared": []}])
+
+  def test_Show_NoSliceOrNoFilesSection_EmptyPathsAndLeanDropsIt(self) -> None:
+    with self.repo() as repo:
+      bare = self.file_item(repo, "no slice", None)
+      no_files = json.loads(repo.run("add", "no files", "--json")[1])["id"]
+      repo.run("promote", no_files)
+      repo.run("edit", no_files, "--section", "Implement", "--text", "Do it.")
+      repo.run("edit", no_files, "--section", "Check", "--text", "It works.")
+      for item in (bare, no_files):
+        with self.subTest(item=item):
+          self.assertEqual(json.loads(repo.run("show", item, "--json")[1])["paths"], [])
+          lean = json.loads(repo.run("show", item, "--json", "--lean")[1])
+          self.assertNotIn("paths", lean)
+      with_files = self.file_item(repo, "with files", "- `src/a.py`")
+      self.assertEqual(json.loads(repo.run("show", with_files, "--json")[1])["paths"],
+                       ["src/a.py"])
+      repo.run("config", "files_section", "")
+      self.assertEqual(json.loads(repo.run("show", with_files, "--json")[1])["paths"], [])
+
+  def test_Show_PathsKey_SitsAfterSliceBeforeCitations(self) -> None:
+    with self.repo() as repo:
+      item = self.file_item(repo, "one", "- `src/a.py`")
+      keys = list(json.loads(repo.run("show", item, "--json")[1]))
+      self.assertEqual(keys[-4:], ["slice", "paths", "citations", "slivers"])
+      bare = self.file_item(repo, "bare", None)
+      keys = list(json.loads(repo.run("show", bare, "--json")[1]))
+      self.assertEqual(keys[-3:], ["paths", "citations", "slivers"])
+
 
 if __name__ == "__main__":
   unittest.main()
