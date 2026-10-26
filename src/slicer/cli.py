@@ -2292,6 +2292,7 @@ def cmd_show(args: argparse.Namespace) -> int:
       lines.append(header)
     lines.append(f"(no slice yet; run `slicer promote {item.id}`)")
     _emit(args, item.to_dict() | _note_fields(item, manifest) | {
+            "paths": ops.item_file_paths(state, item.id),
             "citations": resolved, "slivers": sliver_rows},
           "\n".join(lines + sliver_lines + _pack_text(item, sl, manifest, notes=False)))
     return OK
@@ -2299,7 +2300,8 @@ def cmd_show(args: argparse.Namespace) -> int:
     sl, state.config, state.template("slice.md"), item.rendered_notes, header,
   ).decode("utf-8")
   _emit(args, item.to_dict() | _note_fields(item, manifest) | {
-    "slice": sl.to_dict(), "citations": resolved, "slivers": sliver_rows,
+    "slice": sl.to_dict(), "paths": ops.item_file_paths(state, item.id),
+    "citations": resolved, "slivers": sliver_rows,
   }, "\n".join([text, *sliver_lines, *_pack_text(item, sl, manifest, notes=False)]))
   return OK
 

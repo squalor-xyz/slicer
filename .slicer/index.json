@@ -14429,10 +14429,22 @@
       "id": "s395",
       "title": "Print an item's Files paths in show --json or a paths command",
       "short_title": "Item Files paths in JSON",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "d11564fe-00e8-48d2-b9a8-b6120bdd7e9b",
+          "kind": "",
+          "text": "**2026-10-26** — Ready for review: show --json adds paths, the item_paths() spans of files_section (unfiltered by overlap_ignore), via ops.item_file_paths; fixed key position after slice, [] when absent, dropped by --lean when empty; docs/agents.md states the extraction rules. 4 tests in test_next DisjointTests; full suite OK.",
+          "created_at": "2026-10-26T16:15:29Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14450,7 +14462,7 @@
         "importance": 2,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
