@@ -14971,7 +14971,7 @@
       "id": "s406",
       "title": "A scripted orchestrator conforms to the contract; ai relay --json carries the machine-readable parts",
       "short_title": "Scripted orchestrator conformance",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s398",
