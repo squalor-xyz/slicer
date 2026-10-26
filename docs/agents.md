@@ -760,7 +760,7 @@ filters by exact source and combines with other filters; an unknown ID is
 writing the batch. Provenance neither blocks pickup nor changes scores.
 Missing historical fields load empty; `--lean` omits empty provenance. Source
 retirement keeps references valid; purge needs `--force` when referenced and
-then integrity validation reports the dangling source. Index saves stamp schema 9 (provenance arrived in 5, filing keys in 6)
+then integrity validation reports the dangling source. Index saves stamp schema 10 (provenance arrived in 5, filing keys in 6)
 so older readers refuse rather than lose provenance.
 
 **Slivers.** A sliver is a small item carved out of a larger slice. `add --parent ID` and
@@ -789,7 +789,19 @@ finish guards it skips.
 purged parent's ID is not reclaimed while a sliver names it. In an outline, `parent:` takes
 a title (of another entry in the same file, filed earlier or later, or of an existing
 item) as `depends:` does, else an existing item ID; `check` and `verify` report an unknown parent, a nested parent and a self-parent as
-errors. Index saves stamp schema 9 so older readers refuse rather than lose the link.
+errors. Index saves stamp schema 10 so older readers refuse rather than lose the link.
+
+**Readiness.** `slicer ready ID --by NAME [--note TEXT]` records that a spec check passed, with a
+digest (`sha256:...`) of the slice's title, lead, boundary and ordered sections. `show --json` and
+`list --json` add `ready`: `true`, `false` (never checked, or no slice) or `"stale"` (checked, then the
+spec changed). Only the spec invalidates: a section, lead, boundary or title edit makes it stale; a
+note, size, pass, effort, tree, flag or dependency change does not. A stale item is made `true` again
+by running `ready` again after the check, or by restoring the text. `readiness` (`by`, `at`, `note`,
+`digest`) appears on the item JSON once recorded and is absent before. `next --ready` (and
+`--batch`) lists `ready: true` items first within their tier and declared pass, never moves an
+item across passes, and drops nothing. A record is not a
+gate and does not replace reading the slice. It does not know about open decision-log records that
+reference the slice. Index saves stamp schema 10 so older readers refuse rather than drop records.
 
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)

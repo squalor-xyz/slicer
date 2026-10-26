@@ -123,7 +123,7 @@ Config schema is `5` (`src/slicer/config.py`), protecting the optional `issues_r
 destination for `feedback-report`; schema 4 added `satisfies_dependencies`, schema 3
 `handoff_requires_note_kind`, and schema 2 the `note_kinds` whitelist. Older configs still
 load with the historical defaults (no report requirement, `done_status` alone satisfying
-dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `9`
+dependencies, no issues repo) and are not restamped on read; config saves stamp 5. Index schema is `10`
 (`SCHEMA_VERSION` in `src/slicer/model.py`). Schema 7 gave items structured `note_records`.
 Schema 5 adds optional `fields.discovered_from`, an existing item ID independent
 of dependency and priority edges. Missing fields load empty without writes;
@@ -171,6 +171,11 @@ unsettled slivers after its unmet dependencies, and `handoff` and `done` refuse
 a parent with unfinished slivers (`slivers_open`).
 `remove` refuses an item with slivers unless forced, and a purge does not
 reclaim an ID a sliver names.
+Schema 10 adds an optional item-level `readiness` record (`by`, `at`, `note`, `digest`), written only
+once `slicer ready` runs. The digest (`model.spec_digest`) covers the slice's title, lead, boundary and
+ordered sections; whether the record still holds is derived on read (`model.readiness_of`), never
+stored, so no edit has to invalidate it. An older reader would drop the key on its next save, so it
+refuses schema 10 like every earlier bump. `mergeindex` merges the record field by field.
 
 The relay-roles schema is `3` (`ROLES_VERSION` in `src/slicer/roles.py`). Schema 2 added
 `when.sliver`; schema 3 adds the `orchestrator` role, so the matrix can hold the
