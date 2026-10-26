@@ -172,7 +172,9 @@ def contract_line() -> str:
 
 RELAY_SETUP = (
   ('roles', """\
-which roles run. The architect is optional: the owner decides."""),
+which roles run. The architect is optional: the owner decides. On a slice the
+  project marks as UI, a UI pass runs beside the reviewer, or the reviewer carries it
+  where the project folds it in by slice size."""),
   ('split', """\
 whether the implementation splits into parts. The default is one implementer.
   A split needs parts with disjoint files and their own tests; a slice too big
@@ -211,7 +213,9 @@ Create the worktree, then start the run and record the orchestrator's step,
 Spawn the orchestrator with a brief that starts "First run
    `slicer ai relay-orchestrator` and follow it.", then the environment lines, the
    slice, the worktree and branch, the roles with agent, vendor, model and
-   reasoning effort, the end point, a temp directory per role, RUN and the
+   reasoning effort, whether the slice is a UI slice and whether the reviewer carries
+   the UI pass, for a separate UI pass the skills the project's role matrix names for
+   the UI pass or its vendor-neutral UI prompt, the end point, a temp directory per role, RUN and the
    orchestrator's step id."""),
   (3, """\
 Wait for its run report. One slice runs in the foreground. A hand-back whose last
@@ -233,8 +237,9 @@ ORCHESTRATOR_STEPS = (
   (1, """\
 The implementer runs `slicer start ID --render --strict`, red tests and implementation."""),
   (2, """\
-Review, then accepted findings back to the implementer for each fix round,
-   then the architect, when the owner chose one, then the gate."""),
+Review; on a slice the project marks as UI, the UI pass runs in parallel with the
+   reviewer. Then accepted findings back to the implementer for each fix round,
+   then the architect, when the owner chose one, then the gate, which still decides."""),
   (3, """\
 Only after `VERDICT: PASS`, the implementer runs the closing note and finish step:
    {finish_step}"""),
@@ -319,7 +324,7 @@ RELAY_HEAD = """\
 # Slice relay
 
 An outer session runs the relay. For each slice it spawns one orchestrator, which
-runs the slice through an implementer, a reviewer, an architect and a gate. The
+runs the slice through an implementer, a reviewer (and, on a UI slice, a UI pass), an architect and a gate. The
 relay uses slicer's own commands.
 
 ## Roles
@@ -353,6 +358,11 @@ against `slicer goals`.
 The architect is read-only. It confirms each finding was fixed and reviews the
 shape.
 
+The UI pass is read-only and edits nothing. It runs beside the reviewer on a slice
+the project marks as UI; the project says what counts as a UI slice. It returns
+triaged suggestions, each tagged with a finding kind, and, where the project can
+render, the changed views. The gate still decides.
+
 A reviewer never wrote code in this slice. In a split, that holds for every part.
 The owner chooses the models.
 
@@ -378,9 +388,10 @@ Each slice gets a fresh orchestrator, so no orchestrator carries one slice's
 context into the next.
 
 The orchestrator runs its one slice in the worktree it was given:
-`slicer start ID --render --strict`, red tests, implementation, review,
+`slicer start ID --render --strict`, red tests, implementation, review (on a slice
+the project marks as UI, the UI pass runs in parallel with the reviewer),
 accepted findings back to the implementer, then
-the architect, when the owner chose one, then the gate. Close with
+the architect, when the owner chose one, then the gate, which still decides. Close with
 `slicer note ID --text "Describe the verified outcome" --render` plus the finish step.
 The orchestrator commits on the slice branch only when its brief allows it; merge
 and push are the outer session's, when the owner authorizes them.
@@ -487,7 +498,14 @@ and no two agents share one. Every brief carries the environment lines verbatim.
 Reviewer, architect and gate briefs forbid git writes; a needed write stops and
 goes to the owner. Reviewer, UI pass and gate briefs tell the agent to tag each
 finding `fix`, `owner` or `later` as Gate defines, and to give an `owner` finding its
-2 to 4 options and a preferred one. A part brief names the part's own files and the
+2 to 4 options and a preferred one. The UI pass brief says the agent is read-only,
+edits nothing and makes no git writes, and tells it to load the skills the project's
+role matrix names for the UI pass; a vendor that cannot load skills gets the project's
+vendor-neutral UI prompt instead. It asks for each finding's kind and, where the
+project can render, the changed views. The project may fold the UI pass into the
+reviewer by slice size, such as the reviewer on a small slice and a separate role on a
+larger one; where it does, the reviewer's brief also carries the UI pass brief, and
+no separate UI pass runs. A part brief names the part's own files and the
 files it must not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
@@ -584,6 +602,9 @@ ORCHESTRATOR_RULES = """\
 You run one slice for the outer session that spawned you. This text is your whole
 contract for one slice. Your brief names the slice, the
 worktree and branch, your roles with their agent, vendor, model and reasoning effort,
+whether the slice is a UI slice and whether the reviewer carries the UI pass, for a
+separate UI pass the skills the project's role matrix names for the UI pass or its
+vendor-neutral UI prompt,
 where the run ends, RUN and your own step id. When the slice is done or stopped,
 return one run report.
 

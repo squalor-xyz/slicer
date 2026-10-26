@@ -41,7 +41,7 @@ contract version (`ai.RELAY_CONTRACT`, bumped when a rule an outer session, orch
 follows changes). The agents repo's `relay-orchestrator` role carries an `Expects:` line that its
 doctor checks against that marker. The text describes an
 outer session, the one the owner talks to, that spawns one orchestrator per slice; the
-orchestrator runs the slice through an implementer, a reviewer, an architect and a gate. The
+orchestrator runs the slice through an implementer, a reviewer (and, on a UI slice, a UI pass), an architect and a gate. The
 orchestrator's own contract and run report come from `slicer ai relay-orchestrator`, which
 opens with the same marker line; the outer session starts the orchestrator's brief with "First
 run `slicer ai relay-orchestrator` and follow it." and checks the report's first line and its
@@ -49,7 +49,7 @@ last line, `nothing left running: yes`. A hand-back without that line that names
 waits on (`waiting on: ROLE AGENT-ID`) is a wait: the outer session waits for that role's report
 and resumes the orchestrator with it pasted in, and stops the orchestrator only when the hand-back names
 no running role, or a finished role whose report the orchestrator already has. Its Setup section, before Order,
-asks the owner which roles run (the architect is optional), the agent, vendor, model and
+asks the owner which roles run (the architect is optional; on a UI slice a UI pass runs beside the reviewer, or the reviewer carries it), the agent, vendor, model and
 reasoning effort per role, the orchestrator's agent, model and reasoning effort (agent type
 `relay-orchestrator` where the harness has one, otherwise a general-purpose agent briefed with
 `slicer ai relay-orchestrator`), the environment lines every brief carries, whether the implementation splits into parts, whether to sliver
@@ -78,6 +78,18 @@ A failed relay review is recorded on the started item with
 gate that passed writes no `Review FAIL` note, even when a fix round follows it (for UI
 edits, say). Add `--kind` only when `note_kinds` configures a kind for reviews. The
 closing note and finish step still wait for `VERDICT: PASS`.
+
+The UI pass is a contract role beside the reviewer. The Roles section of `slicer ai relay`
+defines it: read-only, edits nothing, runs in parallel with the reviewer on a slice the
+project marks as UI, and returns triaged findings and, where the project can render, the
+changed views. Step 2 of the orchestrator's `order` (text and `--json`) and the Every brief
+section of both contracts carry the rest: the brief tells the agent to load the skills the
+project's role matrix names for the UI pass, gives a vendor that cannot load skills the
+project's vendor-neutral UI prompt, and lets the project fold the UI pass into the reviewer
+by slice size. The Setup `roles` bullet (text and `--json`) names the UI pass, and the
+orchestrator's brief carries whether the slice is a UI slice, whether the reviewer carries
+the UI pass, and the skills or vendor-neutral prompt for a separate UI pass (relay Order
+step 2 and the orchestrator's opening paragraph). The gate still decides. The contract names no project's skills or rules.
 
 Every reviewer, UI pass and gate finding carries one kind, set out in the Gate section
 and in every brief for those roles. A `fix` finding goes to the fix round. An `owner`
