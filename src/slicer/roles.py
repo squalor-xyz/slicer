@@ -29,6 +29,12 @@ ROLES_VERSION = 3
 # the order of `relay-roles recommend`: new roles go last so earlier positions keep their
 # meaning.
 ROLE_NAMES = ("implementer", "reviewer", "gate", "architect", "orchestrator")
+# Roles the relay ledger records that no matrix row runs: a read-only UI pass on a UI slice
+# and the read-only spec check before a wave. `relay-run step --role` accepts them, so the
+# steps are told apart in `relay-run list`; the matrix and `relay-roles recommend` keep
+# ROLE_NAMES alone.
+LEDGER_ONLY_ROLES = ("ui", "spec-check")
+LEDGER_ROLE_NAMES = ROLE_NAMES + LEDGER_ONLY_ROLES
 # Why a row was selected for a role, in the order the choice is tried.
 SELECTED_BY = ("override", "preferred_agent", "matrix_order", "unmatched")
 # Sizes are free text, but the conventional ones read in size order, not alphabetically.

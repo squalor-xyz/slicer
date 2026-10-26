@@ -420,7 +420,7 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
   _emit(args, {"contract": ai.contract_line(), "relay": text, **ai.relay_contract(finish)}, text.rstrip("\n"),
-        keep_fields=("setup", "order", "report", "outcomes", "stop", "changes"))
+        keep_fields=("setup", "order", "report", "outcomes", "stop", "changes", "roles"))
   return OK
 
 
@@ -4369,7 +4369,10 @@ def build_parser() -> argparse.ArgumentParser:
     "--step", metavar="STEP",
     help="update this step of the run instead of adding one; only the fields given change",
   )
-  inner.add_argument("--role", help="implementer, reviewer, gate, architect or orchestrator")
+  inner.add_argument(
+    "--role", help="implementer, reviewer, gate, architect, orchestrator, ui or spec-check; "
+    "ui and spec-check have no matrix row",
+  )
   inner.add_argument("--agent", help="the harness that runs the role, such as Claude Code")
   inner.add_argument("--vendor", help="the model vendor")
   inner.add_argument("--model", help="the model")

@@ -1428,6 +1428,17 @@ class AiRelayTests(unittest.TestCase):
       with self.subTest(command=command):
         parser.parse_args(shlex.split(command)[1:])
 
+  def test_Relay_UiPassAndSpecCheckNameTheirLedgerRoles(self) -> None:
+    orchestrator = " ".join(ai.orchestrator_text().split())
+    self.assertIn("the UI pass as role `ui`", orchestrator)
+    relay = " ".join(ai.relay_text().split())
+    self.assertIn("The spec check runs before any orchestrator", relay)
+    self.assertIn("with `--role spec-check` and no `--parent`", relay)
+    self.assertIn(
+      "ends that run with `slicer relay-run end RUN --outcome pass --close-steps done`", relay,
+    )
+    self.assertIn("(`--outcome stopped` if the owner stops it)", relay)
+
   def test_Relay_NamesNoVendorModelOrOutsidePath(self) -> None:
     blob = "\n".join((
       ai.relay_text("done"),

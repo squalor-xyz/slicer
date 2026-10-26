@@ -3646,6 +3646,8 @@ def relay_run_step(
     "reasoning": relayrun.one_line("reasoning", reasoning), "task": relayrun.one_line("task", task),
   }
   parent = relayrun.one_line("parent", parent)
+  if fields["role"]:
+    relayrun.choice("role", fields["role"], roles.LEDGER_ROLE_NAMES)
 
   def plan(prefix: str) -> dict[str, object]:
     """The event for this call, numbered with `prefix` and checked against the run as it is."""

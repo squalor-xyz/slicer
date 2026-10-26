@@ -24,7 +24,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import support  # noqa: F401 -- puts src/ on sys.path
-from slicer import ops, relayrun, store
+from slicer import ai, ops, relayrun, store
 from slicer.cli import main
 from slicer.errors import SlicerError
 
@@ -154,6 +154,54 @@ class FoldTests(RelayRunCase):
       "--phase", "running", code=2, error="bad_run_field",
     )
     self.assertEqual(self.runs(repo)[0]["steps"], [])
+
+  def test_Step_UnknownRole_RefusedWithTheAcceptedRoles(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    payload = self.refuse(
+      repo, "relay-run", "step", run, "--role", "tester", "--agent", "A", "--phase", "start",
+      code=2, error="bad_run_field",
+    )
+    self.assertIn(
+      "implementer, reviewer, gate, architect, orchestrator, ui, spec-check", payload["message"],
+    )
+    self.assertEqual(self.runs(repo)[0]["steps"], [])
+
+  def test_Step_UnknownRoleOnUpdate_RefusedAndKeepsTheRole(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.refuse(
+      repo, "relay-run", "step", run, "--step", step, "--role", "tester", "--phase", "done",
+      code=2, error="bad_run_field",
+    )
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["role"], "implementer")
+
+  def test_Step_UiAndSpecCheckRoles_AcceptedAndCountedByRole(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    self.ok(repo, "relay-run", "step", run, "--role", "ui", "--agent", "Codex CLI",
+            "--phase", "start", "--task", "UI pass on the board")
+    self.ok(repo, "relay-run", "step", run, "--role", "spec-check", "--agent", "Codex CLI",
+            "--phase", "done")
+    got = self.runs(repo)[0]
+    self.assertEqual([s["role"] for s in got["steps"]], ["ui", "spec-check"])
+    self.assertEqual(got["counts"]["roles"], {"ui": 1, "spec-check": 1})
+    code, out, err = repo.run("relay-run", "list")
+    self.assertEqual((code, err), (0, ""), out)
+    self.assertIn("spec-check", out)
+
+  def test_Step_EveryLedgerRoleOfTheRolesJson_Accepted(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    ledger = [item["ledger_role"] for item in ai.relay_contract()["roles"] if item["ledger_role"]]
+    self.assertEqual(
+      ledger, ["orchestrator", "implementer", "reviewer", "architect", "ui", "spec-check"],
+    )
+    for role in ledger:
+      with self.subTest(role=role):
+        _, step = ops.relay_run_step(repo.root, run, phase="start", role=role, agent="A")
+        self.assertEqual(step.role, role)
 
   def test_End_BadOutcome_Refused(self) -> None:
     repo = self.project()
@@ -1181,7 +1229,7 @@ class SandboxTests(GitLedgerCase):
       fh.write("not json\n")
     lift()
     code, out, err = self.cli(
-      repo.root, "relay-run", "step", run, "--role", "tester", "--agent", "D", "--phase", "start",
+      repo.root, "relay-run", "step", run, "--role", "gate", "--agent", "D", "--phase", "start",
       "--json",
     )
     self.assertEqual(code, 0, out + err)
@@ -1208,7 +1256,7 @@ class SandboxTests(GitLedgerCase):
     # The new step names `parent`, which only wt's file holds, so `parent` must reach the shared
     # ledger with the new step, and the orphan beside it must not stop that.
     code, out, err = self.cli(
-      repo.root, "relay-run", "step", run, "--role", "tester", "--agent", "D", "--phase", "start",
+      repo.root, "relay-run", "step", run, "--role", "gate", "--agent", "D", "--phase", "start",
       "--parent", parent.id, "--json",
     )
     self.assertEqual(code, 0, out + err)
