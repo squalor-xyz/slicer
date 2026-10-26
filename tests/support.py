@@ -173,9 +173,9 @@ def count_git_calls() -> Iterator[list[tuple[str, ...]]]:
   calls: list[tuple[str, ...]] = []
   original = vcs._run
 
-  def counting(root: Path, *args: str):
+  def counting(root: Path, *args: str, **kwargs):
     calls.append(args)
-    return original(root, *args)
+    return original(root, *args, **kwargs)
 
   vcs.clear_cache()
   with patch.object(vcs, "_run", counting):
