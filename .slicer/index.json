@@ -14676,7 +14676,7 @@
       "id": "s400",
       "title": "A durable readiness record: the spec check's verdict, tied to a digest of the spec",
       "short_title": "Readiness record with spec digest",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s399"
