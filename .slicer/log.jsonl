@@ -2279,3 +2279,4 @@
 {"when": "2026-10-26T16:41:32Z", "item": "s399", "action": "note", "from": "", "to": "", "note": "Orchestrator, 2026-10-26: per the owner-approved s392 decisi", "by": "Jon Robbins"}
 {"when": "2026-10-26T16:43:23Z", "item": "s409", "action": "add", "from": "", "to": "open", "note": "A merge leaves the render current without a per-clone setup or a hand-run render"}
 {"when": "2026-10-26T16:53:41Z", "item": "s404", "action": "status", "from": "review", "to": "done", "note": "relay-run step --phase wait [--waiting-on owner|approval], encoded as a start event plus waiting_on so older readers see a heartbeat; a waiting step never goes stale, list shows it, land refuses run_active; additive JSON. Full suite OK on the branch merged with main.", "by": "Jon Robbins"}
+{"when": "2026-10-26T17:04:55Z", "item": "s403", "action": "note", "from": "", "to": "", "note": "From the s399 review (2026-10-26): the contract's mid-run ow", "by": "Jon Robbins"}

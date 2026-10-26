@@ -14789,7 +14789,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "6927c878-b3d1-4f13-b1d3-68a7581daa30",
+          "kind": "",
+          "text": "**2026-10-26** — From the s399 review (2026-10-26): the contract's mid-run owner answer path has no ledger state. s404 (on main) added relay-run step --phase wait --waiting-on owner|approval; this slice's Approve step should tell the outer session to record a waiting step (--waiting-on approval at approval, --waiting-on owner for an owner question) and not end the run while it waits.",
+          "created_at": "2026-10-26T17:04:55Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
