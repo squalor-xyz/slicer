@@ -1990,7 +1990,8 @@ class AiRelayContractTests(RelayRolesCase):
     setup = self.golden("relay").split("## Setup\n\n", 1)[1].split("Wait for", 1)[0]
     bullets = re.findall(r"(?m)^- (.*(?:\n  [^\n]+)*)", setup)
     expected = [dict(key=key, text=self.flat(text)) for key, text in zip(
-      ("roles", "split", "sliver", "role_models", "orchestrator", "environment", "end_point"), bullets
+      ("spec_check", "roles", "split", "sliver", "role_models", "orchestrator", "environment", "end_point"),
+      bullets
     )]
     expected[-1]["options"] = ["finish", "commit", "landed"]
     self.assertEqual(payload["setup"], expected)

@@ -118,6 +118,17 @@ cannot load skills gets the project's vendor-neutral UI prompt. The project may 
 fold the UI pass into the reviewer by slice size, for example the reviewer on a small
 slice and a separate role on a larger one.
 
+For a batch of slices you can first have an optional, read-only spec check read them
+and return, for each, `ready` or numbered questions with options and a recommendation.
+You answer them in one sitting before any worktree exists, rather than one at a time while a
+relay runs. The outer session records each answer in its slice as an `Owner decisions`
+paragraph and commits that filing on main (with your authorization) before cutting the
+worktree: a worktree starts at the committed HEAD, so an uncommitted answer never reaches it.
+The paragraph also goes into every role's brief. An answer you give once the run is under way
+goes in a slicer note on the item in the worktree and in the resumed role's brief, not in the
+slice on main. If your project keeps a decision log, an option you explicitly picked belongs
+there too. The implementer re-checks cited line numbers at start, since they may have moved.
+
 Every review, UI pass and gate finding is a `fix` (back to the implementer), an
 `owner` question (a design call for you, with 2 to 4 options and a recommendation;
 it blocks the gate only when marked `blocker`) or a `later` follow-up with a one-line

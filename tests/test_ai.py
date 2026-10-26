@@ -1178,6 +1178,139 @@ class AiRelayTests(unittest.TestCase):
         )
         self.assertNotIn("no new issue of medium severity", flat)
 
+  def setup_text(self, finish: str) -> str:
+    return " ".join(ai.relay_text(finish).split("## Setup", 1)[1].split("Wait for", 1)[0].split())
+
+  def test_RelaySetup_SpecCheckBullet_OptionalReadOnlyBatchBeforeWorktree(self) -> None:
+    items = ai.relay_contract()["setup"]
+    self.assertEqual(items[0]["key"], "spec_check")
+    for finish in ("done", "handoff"):
+      for label, flat in (
+        ("json", items[0]["text"]),
+        ("text", self.setup_text(finish)),
+      ):
+        with self.subTest(finish=finish, label=label):
+          for phrase in (
+            "whether to run a spec check on a batch of slices before any worktree exists",
+            "It is optional.",
+            "The owner answers the whole batch in one sitting.",
+          ):
+            self.assertIn(phrase, flat)
+
+  def test_RelaySetup_SpecCheckBullet_AnswersFiledAsOwnerDecisionsAndCommittedOnMain(self) -> None:
+    items = ai.relay_contract()["setup"]
+    for finish in ("done", "handoff"):
+      for label, flat in (
+        ("json", items[0]["text"]),
+        ("text", self.setup_text(finish)),
+      ):
+        with self.subTest(finish=finish, label=label):
+          for phrase in (
+            "records each answer in its slice as an `Owner decisions` paragraph with "
+            '`slicer edit ID --section SECTION --append --text "Owner decisions: ..." --render`',
+            "commits those filings on main before the worktree is cut",
+            "a worktree starts at HEAD and an uncommitted filing never reaches it",
+            "(SECTION being the section the question concerns)",
+            "the owner authorizes that commit",
+            "The brief carries the same paragraph.",
+          ):
+            self.assertIn(phrase, flat)
+
+  def test_RelayRoles_SpecCheck_ReadOnlyReturnsReadyOrOwnerQuestions(self) -> None:
+    flat = " ".join(ai.relay_text().split("## Roles", 1)[1].split("## Setup", 1)[0].split())
+    for phrase in (
+      "The spec check is optional, read-only and edits nothing.",
+      "It runs before any worktree exists, on a batch of slices the owner picks.",
+      "For each slice it returns `ready` or questions in the shape of the run report's "
+      "`owner needed` line, each with 2 to 4 options, a preferred one, and `blocker` where "
+      "the slice cannot go on without the answer.",
+      "The outer session spawns it and reads its report. It has no matrix row, so the owner names "
+      "its agent, model and reasoning effort at Setup like any role.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, flat)
+
+  def test_RelayRoles_Implementer_ReAnchorsLineReferencesLateAtStart(self) -> None:
+    flat = " ".join(ai.relay_text().split("## Roles", 1)[1].split("## Setup", 1)[0].split())
+    self.assertIn(
+      "Line numbers a slice cites may have moved since its spec was written; at start the "
+      "implementer re-anchors them against the code in the worktree.",
+      flat,
+    )
+    self.assertIn(
+      "It does not re-anchor the line numbers a slice cites: the implementer does that late.", flat
+    )
+
+  def test_RelayOrder_OwnerAnswerMidRun_NoteInWorktreeAndResumedRoleBrief(self) -> None:
+    step3 = next(step["text"] for step in ai.relay_contract()["order"] if step["step"] == 3)
+    self.assertIn(
+      "An owner answer given while the run waits goes in a note on the item in the worktree "
+      "and in the resumed role's brief, not in the slice on main.",
+      step3,
+    )
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
+        for phrase in (
+          "Owner answers: an answer the owner gives after the worktree exists never reaches it "
+          "through the slice on main.",
+          "The outer session records it against the slice worktree with "
+          '`slicer note ID --text "Owner answer: ..." --render`, then resumes the orchestrator '
+          "with the answer pasted in, and the orchestrator carries it into the resumed role's brief.",
+        ):
+          self.assertIn(phrase, order)
+
+  def test_RelayOrder_OrchestratorBrief_NamesOwnerDecisionsAndAnswersSince(self) -> None:
+    phrase = "the slice's `Owner decisions` paragraph and any owner answer since"
+    spawn = next(step["text"] for step in ai.relay_contract()["order"] if step["step"] == 2)
+    self.assertIn(phrase, spawn)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn(phrase, order)
+
+  def test_RelayOrder_DecisionLog_ProjectRecordsExplicitlyPickedAnswersGenerically(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn(
+          "A project that keeps a decision log also records there a design answer the owner "
+          "explicitly picked, not a default an agent assumed.",
+          order,
+        )
+
+  def test_OrchestratorRules_OwnerAnswer_CarriedVerbatimIntoResumedRoleBrief(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Owner answers")
+        for phrase in (
+          "an answer the outer session pastes in on resume is the owner's, not a role's report.",
+          "Carry it verbatim, with the slice's `Owner decisions` paragraph, into the brief of "
+          "the role you resume or start.",
+          "The outer session has already recorded it as a note on the item in the worktree.",
+        ):
+          self.assertIn(phrase, rule)
+
+  def test_RelayEveryBrief_OwnerDecisionsSpecCheckAndReAnchor_Carried(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for phrase in (
+          "Every brief carries the slice's `Owner decisions` paragraph, when it has one, and "
+          "each owner answer recorded in a note since, verbatim.",
+          "The implementer brief says cited line numbers may have moved and to re-anchor them at start.",
+          "The spec-check brief says the agent is read-only, edits nothing and makes no git "
+          "writes, and asks for `ready` or `owner needed` lines for each slice.",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RelaySpecCheck_Text_NamesNoProjectAndKeepsMarkerAtV8(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 8)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 8)
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for token in ("ork", "adj", "s116", "s115", "roles.spec-check"):
+          self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
+
   def test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, _ = repo.run("ai", "relay-orchestrator")
