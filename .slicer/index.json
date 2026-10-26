@@ -14335,6 +14335,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "c421b966-5332-4d69-a373-f57d6fad5ee6",
+          "kind": "",
+          "text": "**2026-10-26** — From the s401 review (2026-10-26): when the ledger accepts ui and spec-check, update the relay-run round list in the orchestrator Rules (src/slicer/ai.py, the bullet listing 'implement, each fix round, review, gate') to name the UI pass and spec-check rounds and their step roles.",
+          "created_at": "2026-10-26T16:41:32Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,
@@ -14606,7 +14617,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "0a9cd3b3-c157-4ace-b49e-9128d2e12805",
+          "kind": "",
+          "text": "**2026-10-26** — Orchestrator, 2026-10-26: per the owner-approved s392 decision (ledger-only ui/spec-check set; ROLE_NAMES, matrix and recommend unchanged), this slice names the spec-check role in contract text only and does not add it to roles.py ROLE_NAMES or the matrix.",
+          "created_at": "2026-10-26T16:41:32Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
