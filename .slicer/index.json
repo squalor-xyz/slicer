@@ -14814,7 +14814,7 @@
       "id": "s404",
       "title": "The relay ledger has a waiting phase, so a run waiting on the owner is not stale",
       "short_title": "Ledger waiting phase",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
