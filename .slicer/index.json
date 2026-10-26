@@ -14651,6 +14651,17 @@
           "verified_by": "",
           "verified_at": "",
           "stale_after": ""
+        },
+        {
+          "id": "2c069448-a9fb-483f-b0c9-6bd2a70d6083",
+          "kind": "",
+          "text": "**2026-10-26** — Correction from ork (owner, 2026-10-26, later): folding the UI pass into the reviewer on size S did not work. Claude Code's relay-reviewer agent has no Skill tool, so it could not load the skills. ork now runs the UI pass as its own role (a general-purpose subagent) on every size. So the contract's UI pass role needs a harness agent that can load skills; drop fold-by-size from the earlier note.",
+          "created_at": "2026-10-26T17:38:31Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
         }
       ],
       "claim": null,

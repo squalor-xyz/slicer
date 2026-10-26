@@ -2250,3 +2250,4 @@
 {"when": "2026-10-26T15:09:04Z", "item": "s390", "action": "set", "from": "", "to": "", "note": "pass_key v1.16→later"}
 {"when": "2026-10-26T15:09:12Z", "item": "pass.v1.17", "action": "prose", "from": "", "to": "v1.17", "note": "add-pass"}
 {"when": "2026-10-26T15:29:00Z", "item": "s392", "action": "note", "from": "", "to": "", "note": "From ork S145 (owner, 2026-10-26): ork counts fix rounds on ", "by": "Jon Robbins"}
+{"when": "2026-10-26T17:38:31Z", "item": "s401", "action": "note", "from": "", "to": "", "note": "Correction from ork (owner, 2026-10-26, later): folding the ", "by": "Jon Robbins"}
