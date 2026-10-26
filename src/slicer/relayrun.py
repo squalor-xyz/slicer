@@ -23,6 +23,15 @@ Events are appended and never rewritten; a run, its steps and their states exist
 the fold of those events. Whether a run is `active`, `stale` or `ended` is computed at
 read time from a clock the caller passes in, so it is never stored and tests can fix it.
 
+A run that waits on the owner (for an approval or an answer) is not stale however long it
+waits, so a step can be in the `wait` phase. That phase is the fold's, not the wire's: an
+older slicer reading the same shared ledger refuses an event with a phase it does not know as
+`corrupt`, which would blank its board and stop its writers. So the event for a wait is a
+`start` step event, which every reader folds as a heartbeat, carrying a `waiting_on` field the
+older readers ignore (they show the step as running and the run goes stale after 30 minutes,
+as it did before). The fold turns that into the phase `wait`. Any later event of the step
+without `waiting_on` (a `start`, `done` or `fail`) ends the wait.
+
 This module reads, folds and appends. Validation of user input and the lock around an
 append live in `ops`, which is where every mutation goes.
 """
@@ -47,7 +56,14 @@ COMMON_LOCK_NAME = "relay-runs.lock"
 VERSION = 1
 # A run with no event for longer than this is stale: the orchestrator probably died.
 STALE_AFTER = timedelta(minutes=30)
+# The phases an event carries on the wire, and so the phases every slicer can fold.
 PHASES = ("start", "done", "fail")
+# What `relay-run step --phase` takes: `wait` is recorded as a `start` event with `waiting_on`.
+STEP_PHASES = PHASES + ("wait",)
+# What a step may wait on. The fold takes any non-empty string, so a newer slicer's value
+# still counts as a wait here.
+WAITING_ON = ("owner", "approval")
+DEFAULT_WAITING_ON = "owner"
 OUTCOMES = ("pass", "fail", "stopped")
 STATES = ("active", "stale", "ended")
 _STAMP = "%Y-%m-%dT%H:%M:%SZ"
@@ -165,12 +181,23 @@ class Step:
   parent: str
   begun_at: str
   updated_at: str
+  # What the step waits on while its phase is `wait`, else "".
+  waiting_on: str = ""
+
+  @property
+  def waiting(self) -> bool:
+    """Whether the step is waiting on someone else, so its run is not stale.
+
+    The one place that says so: a later kind of wait (an open question to the owner) joins
+    here and every reader follows.
+    """
+    return self.phase == "wait"
 
   def to_dict(self) -> dict[str, str]:
     return {
       "id": self.id, "role": self.role, "agent": self.agent, "vendor": self.vendor,
       "model": self.model, "reasoning": self.reasoning, "phase": self.phase,
-      "task": self.task, "parent": self.parent,
+      "waiting_on": self.waiting_on, "task": self.task, "parent": self.parent,
       "begun_at": self.begun_at, "updated_at": self.updated_at,
     }
 
@@ -181,6 +208,7 @@ class Step:
       model=data["model"], reasoning=data["reasoning"], phase=data["phase"],
       task=data["task"], parent=data["parent"],
       begun_at=data["begun_at"], updated_at=data["updated_at"],
+      waiting_on=data.get("waiting_on", ""),
     )
 
 
@@ -206,6 +234,7 @@ class Run:
       "steps": len(self.steps),
       # An ended run runs nothing, whatever phase its last events left its steps in.
       "running": 0 if self.outcome else sum(1 for step in self.steps if step.phase == "start"),
+      "waiting": 0 if self.outcome else sum(1 for step in self.steps if step.waiting),
       "subagents": sum(1 for step in self.steps if step.parent),
       "roles": roles,
     }
@@ -228,6 +257,15 @@ class Run:
       steps=[Step.from_dict(step) for step in data["steps"]],
     )
 
+  @property
+  def waiting(self) -> bool:
+    """Whether a step of the run waits on someone else and the run has not ended."""
+    return not self.outcome and any(step.waiting for step in self.steps)
+
+  def unfinished_steps(self) -> list[Step]:
+    """The steps neither done nor failed: the ones running and the ones waiting."""
+    return [step for step in self.steps if step.phase in ("start", "wait")]
+
   def step(self, step_id: str) -> Step | None:
     return next((step for step in self.steps if step.id == step_id), None)
 
@@ -244,13 +282,18 @@ def begin_event(run: str, at: datetime, items: list[str], worktree: str) -> dict
 
 
 def step_event(
-  run: str, at: datetime, step: str, phase: str, parent: str = "", **fields: str,
+  run: str, at: datetime, step: str, phase: str, parent: str = "", waiting_on: str = "",
+  **fields: str,
 ) -> dict[str, object]:
+  """A step event. `waiting_on` marks a `start` event as a wait; it is left out otherwise, so
+  every other event is the line an older slicer wrote."""
   event: dict[str, object] = {
     "v": VERSION, "event": "step", "run": run, "at": stamp(at), "step": step, "phase": phase,
   }
   event.update({name: fields.get(name, "") for name in _FIELDS})
   event["parent"] = parent
+  if waiting_on:
+    event["waiting_on"] = waiting_on
   return event
 
 
@@ -305,6 +348,8 @@ def read_events(path: Path, *, tolerate_torn_tail: bool = False) -> list[tuple[i
           raise _corrupt(path, number, "begin event items is not a list of strings")
       elif not isinstance(event[key], str):
         raise _corrupt(path, number, f"{kind} event {key} is not a string")
+    if kind == "step" and not isinstance(event.get("waiting_on", ""), str):
+      raise _corrupt(path, number, "step event waiting_on is not a string")
     if kind == "step" and not valid_step_id(event["step"]):
       raise _corrupt(
         path, number,
@@ -458,6 +503,10 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
   run.updated_at = at
   step.updated_at = at
   step.phase = event["phase"]
+  step.waiting_on = ""
+  if event["phase"] == "start" and event.get("waiting_on"):
+    step.phase = "wait"
+    step.waiting_on = str(event["waiting_on"])
   for name in _FIELDS:
     if event[name]:  # an update names only what changes
       setattr(step, name, str(event[name]))
@@ -466,6 +515,8 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
 def state_of(run: Run, now: datetime) -> str:
   if run.outcome:
     return "ended"
+  if run.waiting:
+    return "active"  # it waits on someone else, however long that takes
   if now - _parse_stamp(run.updated_at) > STALE_AFTER:
     return "stale"
   return "active"

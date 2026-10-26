@@ -109,7 +109,8 @@ class FoldTests(RelayRunCase):
     self.assertEqual((reviewer["agent"], reviewer["phase"]), ("Codex CLI", "start"))
     self.assertEqual(
       got["counts"],
-      {"steps": 2, "running": 0, "subagents": 0, "roles": {"implementer": 1, "reviewer": 1}},
+      {"steps": 2, "running": 0, "waiting": 0, "subagents": 0,
+       "roles": {"implementer": 1, "reviewer": 1}},
     )
 
   def test_Begin_NoWorktree_NamesTheCheckoutItRanIn(self) -> None:
@@ -347,10 +348,10 @@ class FoldTests(RelayRunCase):
     )
     self.assertEqual(
       list(data["steps"][0]),
-      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "task", "parent",
-       "begun_at", "updated_at"],
+      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
+       "parent", "begun_at", "updated_at"],
     )
-    self.assertEqual(list(data["counts"]), ["steps", "running", "subagents", "roles"])
+    self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
     # A recorded run comes back from `list --json` whole.
     self.assertEqual(self.ok(repo, "relay-run", "list")["runs"], [data])
@@ -1340,6 +1341,23 @@ class SandboxTests(GitLedgerCase):
     self.assertEqual([(r["id"], r["outcome"]) for r in got], [(run, "pass")])
     self.assertEqual([s["task"] for s in got[0]["steps"]], ["write tests", "review"])
 
+  def test_RelayRunStep_WaitInFallbackFile_SurvivesAbsorbAndKeepsRunActive(self) -> None:
+    repo = self.repo()
+    wt, run = self.worktree_with_run(repo)
+    lift = self.sandbox(repo)
+    step = ops.relay_run_step(wt, run, phase="start", role="orchestrator", agent="A", now=minutes(1))[1]
+    ops.relay_run_step(wt, run, step=step.id, phase="wait", waiting_on="approval", now=minutes(2))
+    self.assertEqual(self.local(wt)[-1]["waiting_on"], "approval")
+    lift()
+    got = relayrun.list_runs(repo.root, now=minutes(600))[0]
+    self.assertEqual((got.state, got.steps[0].waiting_on), ("active", "approval"))
+    code, out, err = self.cli(repo.root, "relay-run", "end", run, "--outcome", "stopped")
+    self.assertEqual(code, 0, out + err)
+    shared = [e for _, e in relayrun.read_events(self.common(repo))]
+    self.assertEqual(
+      [e.get("waiting_on") for e in shared if e["event"] == "step"], [None, "approval"],
+    )
+
   def test_RelayRunEnd_SharedStillReadOnly_EndsLocallyWithoutAbsorbing(self) -> None:
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)
@@ -1741,6 +1759,297 @@ class LedgerTests(RelayRunCase):
       [(s["id"], s["phase"], s["parent"]) for s in steps], [("1", "start", ""), ("2", "done", "1")],
     )
     self.assertEqual(self.step(repo, run)["step"]["id"], "3")
+
+
+class WaitTests(RelayRunCase):
+  """A step in the `wait` phase is a run waiting on the owner, so the run is never stale (s404)."""
+
+  def started(self, repo: support.TempRepo, at: int = 0) -> tuple[str, str]:
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(at)).id
+    _, step = ops.relay_run_step(
+      repo.root, run, role="orchestrator", agent="A", phase="start", task="relay",
+      now=minutes(at),
+    )
+    return run, step.id
+
+  def state(self, repo: support.TempRepo, at: int) -> str:
+    return relayrun.list_runs(repo.root, now=minutes(at), siblings=False)[0].state
+
+  def events(self, repo: support.TempRepo) -> list[dict]:
+    return [event for _, event in relayrun.read_events(repo.root / LEDGER)]
+
+  def wait(self, repo: support.TempRepo, run: str, step: str, at: int, **extra: str) -> None:
+    ops.relay_run_step(repo.root, run, step=step, phase="wait", now=minutes(at), **extra)
+
+  def test_Wait_RunWaitingForHours_IsNeverStale(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 5)
+    self.assertEqual(self.state(repo, 35), "active")
+    self.assertEqual(self.state(repo, 24 * 60), "active")
+    active = relayrun.list_runs(repo.root, now=minutes(600), siblings=False, active=True)
+    self.assertEqual([r.id for r in active], [run])
+
+  def test_Wait_WithoutIt_RunStillGoesStale(self) -> None:
+    repo = self.project()
+    self.started(repo)
+    self.assertEqual(self.state(repo, 31), "stale")
+
+  def test_Wait_StartAfterWait_EndsItAndStalenessResumesFromThen(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 5)
+    ops.relay_run_step(repo.root, run, step=step, phase="start", now=minutes(100))
+    self.assertEqual(self.state(repo, 130), "active")
+    self.assertEqual(self.state(repo, 131), "stale")
+
+  def test_Wait_DoneAfterWait_EndsItAndStalenessResumesFromThen(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 5)
+    ops.relay_run_step(repo.root, run, step=step, phase="done", now=minutes(100))
+    self.assertEqual(self.state(repo, 130), "active")
+    self.assertEqual(self.state(repo, 131), "stale")
+
+  def test_Wait_FailAfterWait_EndsIt(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 5)
+    ops.relay_run_step(repo.root, run, step=step, phase="fail", now=minutes(100))
+    self.assertEqual(self.state(repo, 131), "stale")
+
+  def test_Wait_OneStepWaitingAmongOthers_KeepsTheRunActive(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 1)
+    ops.relay_run_step(
+      repo.root, run, role="gate", agent="B", phase="done", now=minutes(2),
+    )
+    self.assertEqual(self.state(repo, 300), "active")
+
+  def test_Wait_EndedRun_IsEndedNotWaiting(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 1)
+    ops.relay_run_end(repo.root, run, "stopped", now=minutes(2))
+    got = relayrun.list_runs(repo.root, now=minutes(300), siblings=False)[0]
+    self.assertEqual(got.state, "ended")
+    self.assertEqual(got.counts()["waiting"], 0)
+
+  def test_Wait_WaitingOnDefaultsToOwner(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    got = self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    self.assertEqual(
+      (got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"),
+    )
+
+  def test_Wait_WaitingOnApproval_IsRecorded(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    got = self.ok(
+      repo, "relay-run", "step", run, "--step", step, "--phase", "wait",
+      "--waiting-on", "approval",
+    )
+    self.assertEqual(got["step"]["waiting_on"], "approval")
+    self.assertEqual(got["run"]["steps"][0]["waiting_on"], "approval")
+
+  def test_Wait_NewStepInWaitPhase_IsCreatedWaiting(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    got = self.ok(
+      repo, "relay-run", "step", run, "--role", "orchestrator", "--agent", "A",
+      "--phase", "wait", "--waiting-on", "owner", "--task", "awaiting-approval",
+    )
+    self.assertEqual((got["step"]["phase"], got["step"]["task"]), ("wait", "awaiting-approval"))
+
+  def test_Wait_UnknownWaitingOn_BadRunFieldAndNothingWritten(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    before = repo.read(LEDGER)
+    self.refuse(
+      repo, "relay-run", "step", run, "--step", step, "--phase", "wait",
+      "--waiting-on", "nobody", code=2, error="bad_run_field",
+    )
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_Wait_WaitingOnWithoutWaitPhase_UsageAndNothingWritten(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    before = repo.read(LEDGER)
+    for phase in ("start", "done", "fail"):
+      with self.subTest(phase=phase):
+        payload = self.refuse(
+          repo, "relay-run", "step", run, "--step", step, "--phase", phase,
+          "--waiting-on", "owner", code=2, error="usage",
+        )
+        self.assertIn("--phase wait", payload["message"])
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_Wait_OtherPhaseWordsStayRefused(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.refuse(
+      repo, "relay-run", "step", run, "--step", step, "--phase", "waiting",
+      code=2, error="bad_run_field",
+    )
+
+  def test_Wait_Event_IsAStartHeartbeatAnOlderReaderFolds(self) -> None:
+    """An older slicer refuses a phase it does not know as `corrupt`, so the event on the wire
+    uses a phase it knows and carries the wait in a field it ignores."""
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    event = self.events(repo)[-1]
+    self.assertEqual((event["event"], event["phase"], event["waiting_on"]), ("step", "start", "owner"))
+    older_required = ("run", "at", "step", "phase", "role", "agent", "vendor", "model",
+                      "reasoning", "task", "parent")
+    self.assertTrue(all(key in event for key in older_required))
+    self.assertIn(event["phase"], ("start", "done", "fail"))
+    self.assertTrue(relayrun.valid_event(event))
+
+  def test_Wait_OtherStepEvents_CarryNoWaitingOnKey(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "start")
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "done")
+    keys = ["waiting_on" in event for event in self.events(repo)]
+    self.assertEqual(keys, [False, False, True, False, False])
+
+  def test_Wait_UnknownWaitingOnInLedger_StillFoldsAsWaiting(self) -> None:
+    """A newer slicer may name another thing to wait on; this one still treats it as a wait."""
+    repo = self.project()
+    run, step = self.started(repo)
+    event = relayrun.step_event(run, minutes(1), step, "start", waiting_on="answer")
+    with (repo.root / LEDGER).open("a", encoding="utf-8") as fh:
+      fh.write(json.dumps(event) + "\n")
+    got = relayrun.list_runs(repo.root, now=minutes(500), siblings=False)[0]
+    self.assertEqual(got.state, "active")
+    self.assertEqual(got.steps[0].waiting_on, "answer")
+
+  def test_Wait_WaitingOnNotAString_IsCorrupt(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    event = relayrun.step_event(run, minutes(1), step, "start")
+    event["waiting_on"] = 3
+    with (repo.root / LEDGER).open("a", encoding="utf-8") as fh:
+      fh.write(json.dumps(event) + "\n")
+    payload = self.refuse(repo, "relay-run", "list", code=3, error="corrupt")
+    self.assertIn("waiting_on", payload["message"])
+
+  def test_Wait_WaitingOnWithDonePhaseInLedger_DoesNotWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    event = relayrun.step_event(run, minutes(1), step, "done", waiting_on="owner")
+    with (repo.root / LEDGER).open("a", encoding="utf-8") as fh:
+      fh.write(json.dumps(event) + "\n")
+    got = relayrun.list_runs(repo.root, now=minutes(500), siblings=False)[0]
+    self.assertEqual((got.state, got.steps[0].phase, got.steps[0].waiting_on), ("stale", "done", ""))
+
+  def test_Wait_Counts_SeparateWaitingFromRunning(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    ops.relay_run_step(repo.root, run, role="gate", agent="B", phase="start", now=minutes(1))
+    self.assertEqual(
+      relayrun.list_runs(repo.root, now=minutes(2), siblings=False)[0].counts()["running"], 2,
+    )
+    self.wait(repo, run, step, 2)
+    counts = relayrun.list_runs(repo.root, now=minutes(3), siblings=False)[0].counts()
+    self.assertEqual((counts["running"], counts["waiting"]), (1, 1))
+
+  def test_Wait_ListJson_KeysAreTheOldOnesPlusWaiting(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    data = self.runs(repo)[0]
+    self.assertEqual(
+      list(data),
+      ["id", "items", "worktree", "begun_at", "updated_at", "state", "outcome", "counts", "steps"],
+    )
+    self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
+    self.assertEqual(
+      list(data["steps"][0]),
+      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
+       "parent", "begun_at", "updated_at"],
+    )
+    self.assertEqual((data["state"], data["counts"]["waiting"]), ("active", 1))
+    self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
+
+  def test_Wait_StepFromDictWithoutWaitingOn_ReadsAsNotWaiting(self) -> None:
+    """A step dict from before s404 has no `waiting_on`."""
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    self.step(repo, run)
+    data = self.runs(repo)[0]
+    for step in data["steps"]:
+      del step["waiting_on"]
+    self.assertEqual(relayrun.Run.from_dict(data).steps[0].waiting_on, "")
+
+  def test_Wait_ListText_ShowsTheWaitingRunAndStep(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run, "--task", "relay")["step"]["id"]
+    self.ok(
+      repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "approval",
+    )
+    code, out, err = repo.run("relay-run", "list")
+    self.assertEqual((code, err), (0, ""))
+    header, line = out.splitlines()
+    self.assertIn(f"{run}  active  waiting approval  items s1", header)
+    self.assertTrue(header.endswith("1 step, 0 running, 1 waiting, 0 subagents"), header)
+    self.assertIn("  wait:approval  relay", line)
+
+  def test_Wait_ListText_NotWaiting_IsUnchanged(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    self.step(repo, run)
+    header = repo.run("relay-run", "list")[1].splitlines()[0]
+    self.assertNotIn("waiting", header)
+    self.assertTrue(header.endswith("1 step, 1 running, 0 subagents"), header)
+
+  def test_Wait_ListText_AfterTheWaitEnds_ShowsNothingWaiting(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "start")
+    out = repo.run("relay-run", "list")[1]
+    self.assertNotIn("waiting", out)
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["waiting_on"], "")
+
+  def test_Wait_ListActive_KeepsTheWaitingRun(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo, at=-600)
+    self.wait(repo, run, step, -590)
+    self.assertEqual([r["id"] for r in self.runs(repo, "--active")], [run])
+
+  def test_Wait_EndCloseSteps_ClosesTheWaitingStep(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    got = self.ok(repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "fail")
+    self.assertEqual(got["closed_steps"], [step])
+    final = got["run"]["steps"][0]
+    self.assertEqual((final["phase"], final["waiting_on"]), ("fail", ""))
+
+  def test_Wait_EndWithoutCloseSteps_NamesTheWaitingStep(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    code, out, err = repo.run("relay-run", "end", run, "--outcome", "stopped")
+    self.assertEqual(code, 0, out)
+    self.assertEqual(err.splitlines(), [f"slicer: ended {run} with running steps: {step}"])
 
 
 if __name__ == "__main__":

@@ -14769,10 +14769,22 @@
       "id": "s404",
       "title": "The relay ledger has a waiting phase, so a run waiting on the owner is not stale",
       "short_title": "Ledger waiting phase",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2bcea60e-0786-4e3c-b295-76fc0f5be45b",
+          "kind": "",
+          "text": "**2026-10-26** — Verified: relay-run step --phase wait [--waiting-on owner|approval] is written as a start event carrying waiting_on, so older slicers fold it as a heartbeat instead of refusing the ledger as corrupt. A run with a waiting step is never stale, relay-run list shows it (text 'waiting owner', 1 waiting; JSON step.waiting_on and counts.waiting, additive), and land refuses it with run_active. A later start, done or fail ends the wait; --waiting-on without --phase wait is usage. Full suite 2701 tests OK, slicer check passes.",
+          "created_at": "2026-10-26T16:45:18Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14790,7 +14802,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
