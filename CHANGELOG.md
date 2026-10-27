@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-10-27
+
 ### Added
 
 - A project can pin its relay contract version and slicer refuses to serve another. `slicer config relay_contract N` writes the pin to `.slicer/config.json` (any positive whole number; `--unset` removes it; an unpinned config is byte for byte unchanged, and the config schema stays at 5 because an older reader ignores the key and every writer either patches the raw file or writes a fresh config). With a pin that differs from `ai.RELAY_CONTRACT`, `slicer ai relay`, `ai relay-orchestrator` and `ai relay-brief` exit 2 with the new code `contract_mismatch` and print no contract text, the message names both versions and the two ways out, and `slicer check` warns and still exits 0. `ai relay --init-roles` is a write and is not refused. A pin that fails validation does not unpin the project: when the config cannot be loaded, those three commands read `relay_contract` from the raw JSON, and a key that is present and not a positive whole number is refused with `contract_mismatch`, saying the pin could not be read and to fix `config.json` by hand (a config with no such key behaves as before). A slicer older than this keeps the key and ignores it, so a payload without `pinned` means a slicer too old to enforce the pin. `ai relay --json` and `ai relay-orchestrator --json` gain `pinned` (the pin or `null`) right after `contract`; the keys after it move one place. slicer never serves an older contract's text. See [agents.md](docs/agents.md) and [configuration.md](docs/configuration.md).
