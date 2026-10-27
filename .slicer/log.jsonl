@@ -2348,3 +2348,6 @@
 {"when": "2026-10-27T20:39:46Z", "item": "s405", "action": "note", "from": "", "to": "", "note": "Owner answer: (1) an orchestrator that hits a vendor limit g", "by": "Jon Robbins"}
 {"when": "2026-10-27T20:52:28Z", "item": "s405", "action": "note", "from": "", "to": "", "note": "Ready for review: added relay-run step --phase fail --reason", "by": "Jon Robbins"}
 {"when": "2026-10-27T20:52:28Z", "item": "s405", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-27T21:14:14Z", "item": "s421", "action": "add", "from": "", "to": "open", "note": "Relay Stop: say a project with no role matrix stops on a vendor limit"}
+{"when": "2026-10-27T21:14:14Z", "item": "s422", "action": "add", "from": "", "to": "open", "note": "Conformance vendor_limit wording matches Stop's independence list"}
+{"when": "2026-10-27T21:14:14Z", "item": "s423", "action": "add", "from": "", "to": "open", "note": "Allow --reason on relay-run end --close-steps fail"}
