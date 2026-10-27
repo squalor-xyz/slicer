@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-396 items · — 24 · done 364 · retired 8
+396 items · — 23 · done 364 · retired 8 · review 1
 
 v1.17.0 release
 
@@ -57,7 +57,7 @@ v1.17.0 release
 | 15 | [s383](slices/s383.md) | snapshot --json for dashboards | M | 2 | slicer | ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R4: each slicer call costs about 0.4 s of Python startup under load; ork polls list, goals and relay-run list per project. Shape proposed in the report: chosen parts (items, goals, runs, held), several roots, a revision per part. | done |
 | 16 | [s384](slices/s384.md) | Render after a plain git merge | M | 2 | slicer | ork integration review 2026-10-19 (squalor-xyz/ork docs/review-2026-10-19-integration.md), R8: the slicer-generated merge driver keeps one side, so render/ is stale after git merge until slicer render runs (seen on adjudicate 2026-10-18); s325 reports it, this asks to fix it or say how. | done |
 | 17 | [s385](slices/s385.md) | Relay contract change list | S | 1 | slicer | ork integration review 2026-10-19 (R5), noted on s378 · discovered from s378 | done |
-| 18 | [s387](slices/s387.md) | Pin the relay contract version | M | 2 | slicer | owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S45 (adj-json contract version and pin), ork S24 (ork sets and checks the pins). | — |
+| 18 | [s387](slices/s387.md) | Pin the relay contract version | M | 2 | slicer | owner session 2026-10-20: slicer, ork and adjudicate should lock to agreed contract versions so a tool upgrade cannot drift silently; per-contract pins, each tool keeps its own pin, ork sets and checks them. Companion items: adjudicate S45 (adj-json contract version and pin), ork S24 (ork sets and checks the pins). | review |
 | 19 | [s392](slices/s392.md) | relay-run ui and spec-check roles | S | 1 |  | ork 2026-10-25 relay retrospective | done |
 | 20 | [s394](slices/s394.md) | False foreign-worktree warning under GIT_DIR | S | 1 |  | ork S87 landing, 2026-10-25 | done |
 | 21 | [s395](slices/s395.md) | Item Files paths in JSON | S | 1 |  | ork S50 | done |

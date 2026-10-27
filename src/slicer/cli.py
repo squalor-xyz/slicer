@@ -363,13 +363,46 @@ def _state(args: argparse.Namespace) -> store.State:
   return state
 
 
-def _ai_project(args: argparse.Namespace, *, strict: bool = False) -> tuple[Path | None, str, str]:
-  """The project root, finish and report policy when config and index load.
+def _salvage_relay_pin(project: Path) -> int | None:
+  """The raw `relay_contract` of a project whose config does not load, best effort.
+
+  A pin that fails validation must not unpin the project, so where the contract is served
+  a config that cannot be loaded still has its pin read straight from the JSON, with
+  nothing but `json`. A usable pin is returned for the usual comparison. A key that is
+  there, not null and not a positive whole number is refused with `contract_mismatch`:
+  the pin was written and cannot be read, and `config --unset` cannot load the file
+  either, so the message says to fix it by hand. No key, a null, or a file that cannot be
+  read or parsed is None, as before.
+  """
+  try:
+    raw = json.loads((project / store.DIR_NAME / CONFIG_NAME).read_text(encoding="utf-8"))
+  except (OSError, ValueError):
+    return None
+  if not isinstance(raw, dict) or raw.get("relay_contract") is None:
+    return None
+  pinned = raw["relay_contract"]
+  if isinstance(pinned, int) and not isinstance(pinned, bool) and pinned >= 1:
+    return pinned
+  raise StateError(
+    f"this project's relay_contract pin in {store.DIR_NAME}/{CONFIG_NAME} could not be read "
+    f"({json.dumps(pinned)} is not a positive whole number, such as {ai.RELAY_CONTRACT}), so "
+    "slicer will not serve the relay contract. Fix the file by hand: "
+    "`slicer config relay_contract --unset` cannot load it either",
+    code="contract_mismatch",
+  )
+
+
+def _ai_project(
+  args: argparse.Namespace, *, strict: bool = False, relay: bool = False,
+) -> tuple[Path | None, str, str, int | None]:
+  """The project root, finish and report policy and relay pin when config and index load.
 
   Read-only: no lock and no write. A miss warns and keeps the generic text, and the
   root comes back None. `strict` is for callers that write the text somewhere: a project
   that is found but cannot be read raises instead, so a handoff project never gets the
-  generic `done` skill. Not finding a project still falls back.
+  generic `done` skill. Not finding a project still falls back. `relay` is for the
+  commands that serve the relay contract: when the config does not load they still
+  recover the pin (`_salvage_relay_pin`) instead of serving the generic text unpinned.
   """
   root = Path(args.root).resolve() if getattr(args, "root", None) else None
   project = None
@@ -382,15 +415,24 @@ def _ai_project(args: argparse.Namespace, *, strict: bool = False) -> tuple[Path
       if isinstance(exc, SlicerError):
         raise
       raise StateError(str(exc), code="io") from exc
-    print(f"{exc}; printing the generic guide", file=sys.stderr)
-    return None, "done", ""
-  return project, cfg.implement_finish, cfg.handoff_requires_note_kind
+    pinned = _salvage_relay_pin(project) if relay and project is not None else None
+    if ai.pin_mismatch(pinned) is None:  # else the caller refuses, and the guide is not printed
+      print(f"{exc}; printing the generic guide", file=sys.stderr)
+    return None, "done", "", pinned
+  return project, cfg.implement_finish, cfg.handoff_requires_note_kind, cfg.relay_contract
 
 
 def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, str]:
   """The finish and report policy that `_ai_project` reads, without the root."""
-  _project, finish, required = _ai_project(args, strict=strict)
+  _project, finish, required, _pinned = _ai_project(args, strict=strict)
   return finish, required
+
+
+def _require_relay_pin(pinned: int | None) -> None:
+  """Refuse to serve the relay contract to a project that pins another version."""
+  message = ai.pin_mismatch(pinned)
+  if message is not None:
+    raise StateError(message, code="contract_mismatch")
 
 
 def cmd_ai_instructions(args: argparse.Namespace) -> int:
@@ -407,7 +449,8 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
     raise StateError("--force needs --init-roles", code="usage")
   if args.init_roles:
     return _init_roles(args)
-  project, finish, required = _ai_project(args)
+  project, finish, required, pinned = _ai_project(args, relay=True)
+  _require_relay_pin(pinned)
   roles = None
   if project is not None:
     # Read first: an unreadable matrix must fail with its own error, not after the advice.
@@ -419,7 +462,8 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       # The section sits under `## Roles matrix`, so its headings start one level down.
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
-  _emit(args, {"contract": ai.contract_line(), "relay": text, **ai.relay_contract(finish)}, text.rstrip("\n"),
+  _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "relay": text, **ai.relay_contract(finish)},
+        text.rstrip("\n"), keep_empty=("pinned",),
         keep_fields=("setup", "order", "report", "outcomes", "stop", "changes", "roles"))
   return OK
 
@@ -427,16 +471,30 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
 def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   """Print the orchestrator's contract. Read-only, with the project's finish step and
   report kind the way `ai relay` reads them; outside a project it is the generic text."""
-  finish, required = _ai_policy(args)
+  _project, finish, required, pinned = _ai_project(args, relay=True)
+  _require_relay_pin(pinned)
   text = ai.orchestrator_text(finish, required)
-  _emit(args, {"contract": ai.contract_line(), "orchestrator": text, **ai.relay_contract(finish, orchestrator=True)},
-        text.rstrip("\n"), keep_fields=("order", "report", "outcomes", "stop", "changes"))
+  _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "orchestrator": text,
+               **ai.relay_contract(finish, orchestrator=True)},
+        text.rstrip("\n"), keep_empty=("pinned",),
+        keep_fields=("order", "report", "outcomes", "stop", "changes"))
   return OK
 
 
 def cmd_ai_relay_brief(args: argparse.Namespace) -> int:
+  try:
+    state = _state(args)
+  except SlicerError as exc:
+    # A config that does not load still carries its pin; the load error stands otherwise.
+    try:
+      root = store.discover(Path(args.root).resolve() if args.root else None)
+    except SlicerError:
+      raise exc from None
+    _require_relay_pin(_salvage_relay_pin(root))
+    raise
+  _require_relay_pin(state.config.relay_contract)
   payload = ops.relay_brief(
-    _state(args), args.id, worktree=args.worktree, branch=args.branch,
+    state, args.id, worktree=args.worktree, branch=args.branch,
     run=args.run, step=args.step, parallel=args.parallel or [],
     well_specified=ops.parse_yes_no("well-specified", args.well_specified),
     split=ops.parse_yes_no("split", args.split), prefer_agent=args.prefer_agent,
@@ -3768,7 +3826,9 @@ def build_parser() -> argparse.ArgumentParser:
       "Print the slice relay: an outer session spawns one orchestrator per slice, which "
       "runs the slice through an implementer, a reviewer, an architect and a gate. The text "
       "opens with the `Contract: relay vN` line; `ai relay-orchestrator` prints the "
-      "orchestrator's part. A project with implement_finish handoff "
+      "orchestrator's part. A project whose config pins a different relay contract "
+      "(`relay_contract`) is refused with code contract_mismatch (`--init-roles` is not). "
+      "A project with implement_finish handoff "
       "closes with handoff. A project whose .slicer/relay-roles.json exists gets a "
       "## Roles matrix section after Setup holding the matrix as Markdown, and Setup "
       "proposes roles from it; without the file, Setup names `slicer relay-roles init`. "
@@ -3808,8 +3868,10 @@ def build_parser() -> argparse.ArgumentParser:
       "brief. Both texts open with the same `Contract: relay vN` line. The finish step and "
       "the report kind follow the project's implement_finish and "
       "handoff_requires_note_kind, as for `ai relay`. No project, or a config or index that "
-      "cannot be read, prints the generic text and warns on stderr. Does not lock or write. "
-      "`--json` returns {contract, orchestrator}."
+      "cannot be read, prints the generic text and warns on stderr. A project whose config "
+      "pins a different relay contract (`relay_contract`) is refused with code "
+      "contract_mismatch. Does not lock or write. "
+      "`--json` returns {contract, pinned, orchestrator, ...}."
     ),
     parents=[common],
   )
@@ -3818,6 +3880,10 @@ def build_parser() -> argparse.ArgumentParser:
 
   inner = aisub.add_parser(
     "relay-brief", help="print a slice-specific orchestrator brief (no lock, no write)",
+    description=(
+      "Print a slice-specific orchestrator brief. A project whose config pins a different "
+      "relay contract (`relay_contract`) is refused with code contract_mismatch."
+    ),
     parents=[common],
   )
   inner.add_argument("id")

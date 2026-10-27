@@ -14154,12 +14154,24 @@
       "id": "s387",
       "title": "A project pins its relay contract version and slicer refuses to serve another",
       "short_title": "Pin the relay contract version",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s382"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "97eb312a-366f-496b-9232-f24387a8d073",
+          "kind": "",
+          "text": "**2026-10-27** — Ready for review: a project can pin its relay contract with relay_contract in config.json, and ai relay, ai relay-orchestrator and ai relay-brief refuse a mismatch with contract_mismatch (exit 2, nothing on stdout), while check warns and passes and --init-roles is not refused. Owner decisions: no config schema bump (an older slicer ignores the key, so an absent pinned in ai relay --json means the slicer is too old, and ork enforces that; docs/agents.md says so); a pin that fails validation or cannot be loaded is refused as unreadable (read raw from the JSON when the config does not load; no generic-guide warning before the refusal), not treated as unpinned; pinned sits directly after contract in both relay JSONs, so later keys move one place, and --lean keeps it. Deviation: set-time validation of 0, -1, v8 and 8.5 exits 2 with bad_config_value (the code config already uses), not usage. The Conformance obligations do not name the pin; that is left for s397, which bumps the contract to v9. RELAY_CONTRACT stays 8. Final test count: 2924 tests, OK (1 skipped), full suite.",
+          "created_at": "2026-10-27T14:03:24Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -14179,7 +14191,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -2312,3 +2312,6 @@
 {"when": "2026-10-26T20:58:10Z", "item": "s396", "action": "note", "from": "", "to": "", "note": "relay-run ask records a structured owner question (s398 fiel", "by": "Jon Robbins"}
 {"when": "2026-10-26T20:58:11Z", "item": "s396", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-26T21:02:56Z", "item": "s396", "action": "status", "from": "review", "to": "done", "note": "relay-run ask records a structured owner question (s398 fields) on a step and waits on the owner; relay-run answer records an option or free text and ends that wait; answer --get reads it; encoded so older readers fold it as a heartbeat, malformed objects skipped. Contract (still v8): ask-wait-resume replaces stopping on a blocker. Full suite OK.", "by": "Jon Robbins"}
+{"when": "2026-10-27T14:03:17Z", "item": "s387", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-27T14:03:24Z", "item": "s387", "action": "note", "from": "", "to": "", "note": "Ready for review: a project can pin its relay contract with ", "by": "Jon Robbins"}
+{"when": "2026-10-27T14:03:24Z", "item": "s387", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
