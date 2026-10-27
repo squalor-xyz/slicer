@@ -2316,3 +2316,9 @@
 {"when": "2026-10-27T14:03:24Z", "item": "s387", "action": "note", "from": "", "to": "", "note": "Ready for review: a project can pin its relay contract with ", "by": "Jon Robbins"}
 {"when": "2026-10-27T14:03:24Z", "item": "s387", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-27T14:04:07Z", "item": "s387", "action": "status", "from": "review", "to": "done", "note": "Landed: relay_contract pin in config; ai relay, relay-orchestrator and relay-brief refuse a mismatched or unreadable pin with contract_mismatch; pinned after contract in JSON; check warns. No config schema bump (owner). 2924 tests OK.", "by": "Jon Robbins"}
+{"when": "2026-10-27T14:05:34Z", "item": "s410", "action": "add", "from": "", "to": "open", "note": "Test suite: TMPDIR inside a git repo and affected.py on fixture JSON"}
+{"when": "2026-10-27T14:05:34Z", "item": "s411", "action": "add", "from": "", "to": "open", "note": "Relay-run ledger follow-ups from v1.16"}
+{"when": "2026-10-27T14:05:34Z", "item": "s412", "action": "add", "from": "", "to": "open", "note": "Relay contract text follow-ups from v1.16"}
+{"when": "2026-10-27T14:05:34Z", "item": "s413", "action": "add", "from": "", "to": "open", "note": "show --json paths edge cases"}
+{"when": "2026-10-27T14:05:34Z", "item": "s414", "action": "add", "from": "", "to": "open", "note": "Readiness follow-ups"}
+{"when": "2026-10-27T14:05:34Z", "item": "s415", "action": "add", "from": "", "to": "open", "note": "Relay contract pin follow-ups"}

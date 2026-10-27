@@ -1,0 +1,39 @@
+{
+  "id": "s415",
+  "title": "Relay contract pin follow-ups",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "config",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "From the s387 review."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "- `slicer config relay_contract` while unset fails with \"'relay_contract' is not a config key\"; reads of optional keys should fall back to the schema and print `(unset)` (same for `satisfies_dependencies`).\n- The pin is an unbounded int; cap it so a Go consumer decoding into int cannot overflow.\n- `slicer check` with an unloadable pin exits 3 with the config error; document or test it."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

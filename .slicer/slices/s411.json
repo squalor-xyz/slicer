@@ -1,0 +1,39 @@
+{
+  "id": "s411",
+  "title": "Relay-run ledger follow-ups from v1.16",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "relayrun",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Review findings left as later during the v1.16 relay (s404, s392, s396, s399)."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "- TUI shows a waiting step as a spinner; give `--phase wait` its own marker (s404).\n- `relay-run list` could show how long a step has waited; the heartbeat doc should say a heartbeat ends a wait (s404).\n- `counts.roles` misses `ui` when the step has `--parent` (s392).\n- Snapshot runs should carry `question` and `waiting_on`; `relay-run answer` should accept a multi-line answer (s396).\n- Decide whether the orchestrator's spec check is recorded as a ledger step, and say so in the orchestrator brief (s399)."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

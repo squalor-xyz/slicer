@@ -1,0 +1,39 @@
+{
+  "id": "s410",
+  "title": "Test suite: TMPDIR inside a git repo and affected.py on fixture JSON",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "tests",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Found during the v1.16 relay (s398, s387). `test_Verify_OutsideGitRepo_NoDriverWarning` fails when TMPDIR is inside a git repo, which is what AGENTS.md recommends (`.venv/test-tmp`). `tests/affected.py --run` refuses when a fixture JSON changes (\"not a test module\") instead of selecting the tests that read it."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": "Make the outside-repo test build its fixture with `support.isolated_discovery` (or skip when TMPDIR is inside a repo) and fix the AGENTS.md advice. Have affected.py treat a changed fixture under tests/ like other non-Python files the map names."
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
