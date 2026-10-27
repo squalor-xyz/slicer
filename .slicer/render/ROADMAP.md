@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-407 items · — 32 · done 367 · retired 8
+407 items · — 31 · done 367 · retired 8 · review 1
 
 v1.17.0 release
 
@@ -37,7 +37,7 @@ v1.17.0 release
 | 2 | [s391](slices/s391.md) | Relay resume workdir, no cd | S | 1 | slicer | s384 relay report 2026-10-22, later notes 4 and 5: a reviewer used `cd` twice in read-only commands, and a resumed Codex implementer started in the main checkout, not the worktree (main was left clean) · discovered from s384 | — |
 | 3 | [s393](slices/s393.md) | Note retraction | S | 1 |  | ork S65 relay, 2026-10-25 | — |
 | 4 | [s402](slices/s402.md) | Foreground waits, no empty hand-backs | S | 1 |  |  | done |
-| 5 | [s405](slices/s405.md) | Fallback on a vendor limit | S | 1 |  |  | — |
+| 5 | [s405](slices/s405.md) | Fallback on a vendor limit | S | 1 |  |  | review |
 | 6 | [s407](slices/s407.md) | Implementer re-anchor and self-check | S | 1 |  |  | — |
 | 7 | [s408](slices/s408.md) | relay-run stats | M | 2 |  |  | — |
 | 8 | s417 | Merges re-render automatically | M | 2 |  | owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer. | — |

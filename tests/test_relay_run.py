@@ -397,7 +397,7 @@ class FoldTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at", "question"],
+       "parent", "begun_at", "updated_at", "question", "reason"],
     )
     self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2029,7 +2029,7 @@ class WaitTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at", "question"],
+       "parent", "begun_at", "updated_at", "question", "reason"],
     )
     self.assertEqual((data["state"], data["counts"]["waiting"]), ("active", 1))
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2542,7 +2542,7 @@ class AskAnswerTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at", "question"],
+       "parent", "begun_at", "updated_at", "question", "reason"],
     )
     self.assertIsNone(data["steps"][0]["question"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2763,6 +2763,82 @@ class AskAnswerSandboxTests(SandboxCase):
       [("question" in e, "answer" in e) for e in shared if e["event"] == "step"][-2:],
       [(True, False), (False, True)],
     )
+
+
+class ReasonTests(RelayRunCase):
+  """`relay-run step --phase fail --reason` records why a step failed (s405)."""
+
+  def failed(self, repo, *extra):
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    got = self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "fail", *extra)
+    return run, step, got
+
+  def events_of(self, repo):
+    return [event for _, event in relayrun.read_events(repo.root / LEDGER)]
+
+  def test_Reason_OnFail_IsRecordedAndListed(self) -> None:
+    repo = self.project()
+    run, step, got = self.failed(repo, "--reason", "out of credits")
+    self.assertEqual((got["step"]["phase"], got["step"]["reason"]), ("fail", "out of credits"))
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["reason"], "out of credits")
+    self.assertEqual(list(got["step"])[-1], "reason")
+    code, out, err = repo.run("relay-run", "list")
+    self.assertEqual((code, err), (0, ""))
+    self.assertIn("out of credits", out)
+
+  def test_Reason_StepWithoutOne_IsEmptyString(self) -> None:
+    repo = self.project()
+    _, _, got = self.failed(repo)
+    self.assertEqual(got["step"]["reason"], "")
+
+  def test_Reason_LaterEvent_ClearsIt(self) -> None:
+    repo = self.project()
+    run, step, _ = self.failed(repo, "--reason", "rate limit")
+    got = self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "start")
+    self.assertEqual(got["step"]["reason"], "")
+
+  def test_Reason_WithoutFailPhase_UsageAndNothingWritten(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    before = repo.read(LEDGER)
+    for phase in ("start", "done", "wait"):
+      with self.subTest(phase=phase):
+        payload = self.refuse(
+          repo, "relay-run", "step", run, "--step", step, "--phase", phase,
+          "--reason", "rate limit", code=2, error="usage",
+        )
+        self.assertIn("--phase fail", payload["message"])
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_Reason_WithNewline_BadRunField(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.refuse(
+      repo, "relay-run", "step", run, "--step", step, "--phase", "fail",
+      "--reason", "a\nb", code=2, error="bad_run_field",
+    )
+
+  def test_Reason_Event_IsWrittenOnlyWhenGiven(self) -> None:
+    repo = self.project()
+    run, step, _ = self.failed(repo)
+    self.assertNotIn("reason", self.events_of(repo)[-1])
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "fail", "--reason", "x")
+    self.assertEqual(self.events_of(repo)[-1]["reason"], "x")
+
+  def test_Reason_NotAString_IsCorrupt(self) -> None:
+    repo = self.project()
+    self.failed(repo, "--reason", "x")
+    lines = repo.read(LEDGER).splitlines()
+    event = json.loads(lines[-1])
+    event["reason"] = 3
+    lines[-1] = json.dumps(event)
+    (repo.root / LEDGER).write_text("\n".join(lines) + "\n")
+    code, out, _ = repo.run("relay-run", "list", "--json")
+    self.assertEqual(code, 3)
+    self.assertIn("reason", json.loads(out)["error"]["message"])
 
 
 if __name__ == "__main__":

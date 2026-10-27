@@ -3627,8 +3627,8 @@ def relay_run_begin(
 def relay_run_step(
   root: Path, run_id: str, *, phase: str, step: str | None = None, role: str = "",
   agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", task: str = "",
-  parent: str = "", waiting_on: str = "", now: datetime | None = None,
-  report: LedgerReport | None = None,
+  parent: str = "", waiting_on: str = "", reason: str = "",
+  now: datetime | None = None, report: LedgerReport | None = None,
 ) -> tuple[relayrun.Run, relayrun.Step]:
   """Record an agent's step, or with `step` a later phase of one already recorded.
 
@@ -3644,6 +3644,10 @@ def relay_run_step(
   that carries `waiting_on`, which an older slicer folds as a heartbeat (see `relayrun`). Any
   later event of the step, `start`, `done` or `fail`, ends the wait. `waiting_on` with another
   phase is `usage`: it would be dropped, and the caller meant a wait.
+
+  `reason` says why a step failed, such as a classified vendor limit; it goes with phase
+  `fail` and is `usage` with another, for the same reason. The event carries it only when
+  given, so an older slicer reads the line as a plain `fail`.
   """
   now = now or relayrun.utcnow()
   relayrun.choice("phase", phase, relayrun.STEP_PHASES)
@@ -3654,6 +3658,9 @@ def relay_run_step(
     )
   elif waiting_on:
     raise StateError("--waiting-on needs --phase wait", code="usage")
+  reason = relayrun.one_line("reason", reason)
+  if reason and phase != "fail":
+    raise StateError("--reason needs --phase fail", code="usage")
   fields = {
     "role": relayrun.one_line("role", role), "agent": relayrun.one_line("agent", agent),
     "vendor": relayrun.one_line("vendor", vendor), "model": relayrun.one_line("model", model),
@@ -3686,7 +3693,9 @@ def relay_run_step(
         )
       step_id = step
     wire = "start" if phase == "wait" else phase
-    return relayrun.step_event(run_id, now, step_id, wire, parent, waiting_on, **fields)
+    return relayrun.step_event(
+      run_id, now, step_id, wire, parent, waiting_on, reason=reason, **fields,
+    )
 
   with ledger_lock(root, report) as ledger:
     written = ledger.append_planned(plan)

@@ -685,7 +685,8 @@ def _emit_run(args: argparse.Namespace, payload: dict[str, object], text: str) -
 def _step_line(step: relayrun.Step) -> str:
   phase = f"{step.phase}:{step.waiting_on}" if step.waiting_on else step.phase
   cells = [step.role, step.agent, step.model, step.reasoning, phase, step.task]
-  return ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
+  line = ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
+  return f"{line}  reason: {step.reason}" if step.reason else line
 
 
 def _question_line(step: relayrun.Step) -> str | None:
@@ -746,7 +747,7 @@ def cmd_relay_run_step(args: argparse.Namespace) -> int:
     _run_root(args), args.run, phase=args.phase, step=args.step, role=args.role or "",
     agent=args.agent or "", vendor=args.vendor or "", model=args.model or "",
     reasoning=args.reasoning or "", task=args.task or "", parent=args.parent or "",
-    waiting_on=args.waiting_on or "", report=report,
+    waiting_on=args.waiting_on or "", reason=args.reason or "", report=report,
   )
   _say_fallback(report)
   _say_skipped(report)
@@ -4514,6 +4515,11 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument(
     "--waiting-on", metavar="owner|approval",
     help="with --phase wait, what the step waits on (default owner); refused with another phase",
+  )
+  inner.add_argument(
+    "--reason", metavar="TEXT",
+    help="with --phase fail, why the step failed, such as a rate limit or out of credits; "
+    "refused with another phase",
   )
   inner.add_argument("--task", help="one line on what the step is doing")
   inner.add_argument("--parent", metavar="STEP", help="the step that spawned this subagent")

@@ -176,7 +176,12 @@ RELAY_CHANGES = (
    "only spawn in the background does not end the turn while a spawned role runs and waits for the "
    "completion notice. An early hand-back is sent only for an owner question, a permission denial or "
    "a failure; `waiting on: ROLE AGENT-ID` is only for a harness that forces the turn to end. Every "
-   "role runs its own shell commands in the foreground and backgrounds none, and every brief says so."),
+   "role runs its own shell commands in the foreground and backgrounds none, and every brief says so. "
+   "A vendor limit (a rate limit or out of credits) is not a stop: the failed step is recorded with its "
+   "reason (`relay-run step --phase fail --reason`) and the round reruns as a new step on a fresh agent on "
+   "the role's next matching row (never breaking the reviewer's independence), with the partial diff; the "
+   "outer session does the same for an orchestrator; the switch is named on the deviations line; any other "
+   "failure, or no eligible row, still stops."),
 )
 
 
@@ -401,6 +406,25 @@ RELAY_STOP = (
   "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)",
 )
 
+# What a classified vendor limit does. It is a sentence of the Stop section and is not a
+# fourth stop condition: `RELAY_STOP` stays the conditions that end the relay.
+RELAY_LIMIT_FALLBACK = (
+  "A vendor limit is not a stop condition. A role's round that ends because its vendor "
+  "refused more work (a rate limit or out of credits) and for no other reason is a limit; "
+  "classify it from the vendor's or harness's error, not from the role's own account. Record "
+  "the failed step with that error as its reason (`slicer relay-run step RUN --step STEP "
+  "--phase fail --reason TEXT`), then start the same round as a new `relay-run step` on a "
+  "fresh agent on the role's next matching matrix row, with the partial diff left in the "
+  "worktree. Rows only move forward: on out of credits skip later rows on the same vendor, on "
+  "a rate limit take the plain next matching row. The new row keeps the role for the rest of "
+  "the run. The fresh agent is never a resumed one; a reviewer or gate is never an agent that "
+  "wrote code in the slice, and an implementer never reuses the reviewer's or gate's agent. "
+  "Name the switch on the report's deviations line as `role switched: ROLE FROM to TO "
+  "(REASON)`, FROM and TO being row ids. With no eligible row left, or on any other failure, "
+  "stop. An orchestrator that hits a limit gets the same fallback from the outer session: a "
+  "new orchestrator on the next row resumes from the ledger and the worktree."
+)
+
 # The gate's criteria and verdict lines, as data: `RELAY_GATE` renders them and
 # `relay_contract` carries the same lists in `--json`.
 RELAY_GATE_CRITERIA = (
@@ -462,6 +486,13 @@ Stop when a stop condition in Stop holds, or when a harness permission check den
   is the exception: record it with `relay-run ask`, end the turn with
   `waiting on: owner QUESTION_ID`, and go on only from the answer the outer session records
   and resumes you with."""),
+    ('vendor_limit', """\
+On a classified vendor limit (a rate limit or out of credits), record the failed step
+  with its reason, rerun the same round as a new step on a fresh agent on the role's next
+  matching row (later rows on the same vendor skipped on out of credits, never an agent
+  that breaks the reviewer's independence) with the partial diff, and name the switch on
+  the run report's deviations line; the outer session does the same for an orchestrator
+  that hits a limit. With no eligible row left, or on any other failure, stop as Stop says."""),
     ('ledger', """\
 Record each role's round in the run ledger with `relay-run step`: a new step for every
   round, a parent step for a spawned role, and done or fail when the round ends. The
@@ -821,6 +852,7 @@ def relay_shared_sections(required_note_kind: str = "") -> str:
     + "`slicer list --json --lean`.\n\n"
     + "## Stop\n\n"
     + "Stop when " + ", ".join(RELAY_STOP[:-1]) + ", or " + RELAY_STOP[-1] + ".\n\n"
+    + RELAY_LIMIT_FALLBACK + "\n\n"
     + handoff_policy_text(required_note_kind)
     + RELAY_CONFORMANCE_SECTION
   )
@@ -969,6 +1001,10 @@ return one run report.
   and do not work around it. Stop before the commit with OUTCOME stopped and put the
   denial's exact text under owner needed, as a `blocker` question whose reasoning is
   that exact text, with options such as `grant:` and `skip:`.
+- A role that hits a classified vendor limit: record its step failed with `--reason`, start
+  the same round as a new step on a fresh agent on the next matching row and put
+  `role switched: ROLE FROM to TO (REASON)` on the deviations line. Stop says what counts,
+  how the next row is chosen and when to stop.
 - Stop and return without asking the owner when the same slice fails its gate three
   times or the spec is ambiguous or wrong. An `owner` finding that is not a `blocker` does not stop the relay: it goes in the report as a
   numbered owner-needed question and the slice goes on to the gate. A `blocker` owner
@@ -1007,6 +1043,8 @@ Each owner question is one line and counts toward the line limit. Number the
 questions from 1 and give each 2 to 4 options. Use no `|` in any value but `reasoning`,
 and no `;` in a SUMMARY. `reasoning` is the last field and takes the rest of the line.
 With no question, the line is `owner needed: none`.
+A role switched after a vendor limit goes on the deviations line as
+`role switched: ROLE FROM to TO (REASON)`, so the report names it without a line of its own.
 Write the last line only after you check that nothing you started still runs.
 """
 

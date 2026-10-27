@@ -15067,10 +15067,33 @@
       "id": "s405",
       "title": "Fall back to the next matching row when a role hits a vendor limit",
       "short_title": "Fallback on a vendor limit",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "fbbad90e-28a0-4884-8e6e-00034bd2b99e",
+          "kind": "",
+          "text": "**2026-10-27** — Owner answer: (1) an orchestrator that hits a vendor limit gets the same fallback, applied by the outer session; the new orchestrator resumes from the ledger and the worktree. (2) next row: on out of credits skip later rows on the same vendor; on a rate limit take the plain next matching row.",
+          "created_at": "2026-10-27T20:39:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "7b30c35d-6988-473a-aa12-fec14c2c1b8e",
+          "kind": "",
+          "text": "**2026-10-27** — Ready for review: added relay-run step --phase fail --reason (reason key on steps, usage error with other phases); relay v10 Stop and Conformance now carry the vendor-limit fallback (new step on a fresh agent on the next matching row, out of credits skips same-vendor rows, outer session covers orchestrators, switch named on the deviations line); golden fixture, docs and CHANGELOG updated. Full suite 2950 tests OK, 1 skipped; slicer check passes.",
+          "created_at": "2026-10-27T20:52:28Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -15088,7 +15111,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

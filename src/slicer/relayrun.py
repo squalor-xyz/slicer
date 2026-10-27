@@ -308,6 +308,8 @@ class Step:
   waiting_on: str = ""
   # The questions asked on the step, oldest first. `question` is the latest.
   questions: list[Question] = field(default_factory=list)
+  # Why the step failed, when its latest event is a `fail` that gave a reason, else "".
+  reason: str = ""
 
   @property
   def waiting(self) -> bool:
@@ -331,6 +333,7 @@ class Step:
       "waiting_on": self.waiting_on, "task": self.task, "parent": self.parent,
       "begun_at": self.begun_at, "updated_at": self.updated_at,
       "question": None if question is None else question.to_dict(),
+      "reason": self.reason,
     }
 
   @classmethod
@@ -340,7 +343,7 @@ class Step:
       model=data["model"], reasoning=data["reasoning"], phase=data["phase"],
       task=data["task"], parent=data["parent"],
       begun_at=data["begun_at"], updated_at=data["updated_at"],
-      waiting_on=data.get("waiting_on", ""),
+      waiting_on=data.get("waiting_on", ""), reason=data.get("reason", ""),
       questions=[Question.from_dict(data["question"])] if data.get("question") else [],
     )
 
@@ -441,11 +444,11 @@ def answer_payload(question_id: str, option: str, text: str, why: str, by: str) 
 def step_event(
   run: str, at: datetime, step: str, phase: str, parent: str = "", waiting_on: str = "",
   question: dict[str, object] | None = None, answer: dict[str, object] | None = None,
-  **fields: str,
+  reason: str = "", **fields: str,
 ) -> dict[str, object]:
   """A step event. `waiting_on` marks a `start` event as a wait, `question` says what it asks
-  and `answer` what it answers; each is left out when not given, so every other event is the
-  line an older slicer wrote."""
+  and `answer` what it answers, and `reason` says why a `fail` event failed; each is left out
+  when not given, so every other event is the line an older slicer wrote."""
   event: dict[str, object] = {
     "v": VERSION, "event": "step", "run": run, "at": stamp(at), "step": step, "phase": phase,
   }
@@ -457,6 +460,8 @@ def step_event(
     event["question"] = question
   if answer is not None:
     event["answer"] = answer
+  if reason:
+    event["reason"] = reason
   return event
 
 
@@ -513,6 +518,8 @@ def read_events(path: Path, *, tolerate_torn_tail: bool = False) -> list[tuple[i
         raise _corrupt(path, number, f"{kind} event {key} is not a string")
     if kind == "step" and not isinstance(event.get("waiting_on", ""), str):
       raise _corrupt(path, number, "step event waiting_on is not a string")
+    if kind == "step" and not isinstance(event.get("reason", ""), str):
+      raise _corrupt(path, number, "step event reason is not a string")
     if kind == "step" and not valid_step_id(event["step"]):
       raise _corrupt(
         path, number,
@@ -667,6 +674,7 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
   step.updated_at = at
   step.phase = event["phase"]
   step.waiting_on = ""
+  step.reason = str(event["reason"]) if event["phase"] == "fail" and event.get("reason") else ""
   if event["phase"] == "start" and event.get("waiting_on"):
     step.phase = "wait"
     step.waiting_on = str(event["waiting_on"])
