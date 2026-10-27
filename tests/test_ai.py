@@ -949,12 +949,12 @@ class AiRelayTests(unittest.TestCase):
 
   def test_AiRelay_Json_ContractFollowsContractLine(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
-      with patch.object(ai, "contract_line", return_value="relay v999-test"):
+      with patch.object(ai, "contract_line", return_value="relay v1099-test"):
         for command in ("relay", "relay-orchestrator"):
           with self.subTest(command=command):
             code, out, _ = repo.run("ai", command, "--json")
             self.assertEqual(code, 0)
-            self.assertEqual(json.loads(out)["contract"], "relay v999-test")
+            self.assertEqual(json.loads(out)["contract"], "relay v1099-test")
 
   def test_AiRelayOrchestrator_FailedReview_NoReject(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -1307,8 +1307,8 @@ class AiRelayTests(unittest.TestCase):
           self.assertIn(phrase, flat)
 
   def test_RelaySpecCheck_Text_NamesNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 9)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 9)
+    self.assertEqual(ai.RELAY_CONTRACT, 10)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 10)
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         for token in ("ork", "adj", "s116", "s115", "roles.spec-check"):
@@ -1341,7 +1341,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
       self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
-                       {"contract": "relay v9", "relay": text})
+                       {"contract": "relay v10", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -2176,15 +2176,15 @@ class AiRelayBriefTests(unittest.TestCase):
 
   def test_AiRelayBrief_Contract_UsesLiveMarker(self):
     repo = self.project()
-    with patch.object(ai, "contract_line", return_value="relay v999-test"):
-      self.assertEqual(self.payload(repo)["contract"], "relay v999-test")
+    with patch.object(ai, "contract_line", return_value="relay v1099-test"):
+      self.assertEqual(self.payload(repo)["contract"], "relay v1099-test")
 
 
 class RelayGoldenTests(unittest.TestCase):
   """Pin the CLI bytes of the current contract version independently of the live contract data."""
 
   def check_golden(self, command):
-    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v9.json").read_text())
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v10.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
         with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:
@@ -2492,11 +2492,11 @@ class RelayApproveLandTests(unittest.TestCase):
         parser.parse_args(shlex.split(command.strip("`"))[1:])
 
   def test_RelayContract_ApproveAndLand_NameNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 9)
+    self.assertEqual(ai.RELAY_CONTRACT, 10)
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         flat = " ".join(ai.relay_text(finish).split())
-        self.assertTrue(flat.startswith("Contract: relay v9"))
+        self.assertTrue(flat.startswith("Contract: relay v10"))
         for token in ("ork", "adj", "s118", "s119", "landing.in-ork"):
           self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
         if finish == "handoff":
@@ -2710,10 +2710,10 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           parser.parse_args(argv)
           self.assertEqual(cli._unknown_flags(parser, argv), [])
 
-  def test_RelayContract_Bundle_IsV9WithOneChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 9)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9])
-    self.assertEqual(ai.contract_line(), "relay v9")
+  def test_RelayContract_Bundle_IsV10WithItsChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 10)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10])
+    self.assertEqual(ai.contract_line(), "relay v10")
 
   def test_RelayContract_OwnerQuestion_NamesNoProject(self) -> None:
     for text in (ai.relay_text(), ai.orchestrator_text()):

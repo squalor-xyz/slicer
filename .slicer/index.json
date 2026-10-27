@@ -14914,10 +14914,33 @@
       "id": "s402",
       "title": "Roles wait in the foreground; an interim hand-back only for an owner question, a denial or a failure",
       "short_title": "Foreground waits, no empty hand-backs",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "62603c56-ea9f-490e-9cbc-16c681ab477d",
+          "kind": "",
+          "text": "**2026-10-27** — Owner answer: background-only fallback = do not end the turn or hand back while a spawned role runs; wait for its completion notice; 'waiting on:' only when the harness forces a turn end. Roles also must not background their own shell commands. s405 folds into the unreleased v10 rather than bumping to v11.",
+          "created_at": "2026-10-27T18:52:38Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "4becd61a-6583-4cb0-8395-43491b4be179",
+          "kind": "",
+          "text": "**2026-10-27** — Ready for review: relay contract v10. Roles wait in the foreground (outer session and orchestrator spawn in the foreground where the harness can and wait in the same turn; a headless role gets a foreground wait that is re-issued on timeout). A background-only harness waits for the completion notice; waiting on: ROLE AGENT-ID only when the harness forces the turn to end; early hand-back only for an owner question, a permission denial or a failure; every role runs shell commands in the foreground and every brief says so. Updated ai.py (Waiting rule, Order steps 2 and 3, Every brief, Conformance, RELAY_CHANGES 10), docs/agents.md, docs/commands.md, CHANGELOG, golden fixture renamed to relay-contract-v10.json. Full suite 2933 tests OK, 1 skipped; slicer check passed.",
+          "created_at": "2026-10-27T19:16:29Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14935,7 +14958,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

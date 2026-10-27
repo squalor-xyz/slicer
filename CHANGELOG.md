@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- Relay contract v10: `RELAY_CONTRACT` is 10. Roles wait in the foreground. The outer session spawns the orchestrator, and the orchestrator spawns each role, in the foreground where the harness can and waits for the report in the same turn; a headless role on another harness gets a foreground wait on its process. An interim hand-back is sent only for an owner question, a permission denial or a failure. A harness that can only spawn in the background does not end the turn while a spawned role runs and waits for its completion notice; a timed-out wait on a headless role is re-issued, never handed back; `waiting on: ROLE AGENT-ID` is only for a harness that forces the turn to end. Every role runs its own shell commands in the foreground and backgrounds none, and every brief says so. The Conformance and agents.md "never an interim one" now read "never an interim run report". This changes the `ai relay` Order step 3 text and the orchestrator's Waiting rule, and adds a `changes` entry for version 10. A project that pins `relay_contract` 9 is refused with `contract_mismatch` until it follows v10. See [agents.md](docs/agents.md).
+
 ## [1.16.0] - 2026-10-27
 
 ### Added

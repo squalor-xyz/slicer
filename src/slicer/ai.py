@@ -151,7 +151,7 @@ def handoff_policy_text(kind: str) -> str:
 # marker. Bump it when a rule an outer session, orchestrator or role
 # follows changes (order, gate, tracking order, waiting, report shape), not for a
 # rewording. Record each version's change in RELAY_CHANGES.
-RELAY_CONTRACT = 9
+RELAY_CONTRACT = 10
 
 RELAY_CHANGES = (
   (5, "Setup resolves the role lineup, orchestrator included, with "
@@ -170,6 +170,13 @@ RELAY_CHANGES = (
    "approval records `--phase wait` and never goes stale; the outer session adds Approve and Land steps "
    "with ff-only landing; the ledger records the `ui` and `spec-check` roles under their own names; and "
    "a Conformance section states what a scripted orchestrator owes."),
+  (10, "Roles wait in the foreground: the outer session and the orchestrator spawn in the foreground "
+   "where the harness can and wait for the report in the same turn, and wait on a headless role's "
+   "process in the foreground (a timed-out wait is re-issued, never a hand-back). A harness that can "
+   "only spawn in the background does not end the turn while a spawned role runs and waits for the "
+   "completion notice. An early hand-back is sent only for an owner question, a permission denial or "
+   "a failure; `waiting on: ROLE AGENT-ID` is only for a harness that forces the turn to end. Every "
+   "role runs its own shell commands in the foreground and backgrounds none, and every brief says so."),
 )
 
 
@@ -242,7 +249,7 @@ RELAY_STEPS = (
 Create the worktree, then start the run and record the orchestrator's step,
    with the role `orchestrator` (see Record the run below)."""),
   (2, """\
-Spawn the orchestrator with a brief that starts "First run
+Spawn the orchestrator in the foreground where the harness can, with a brief that starts "First run
    `slicer ai relay-orchestrator` and follow it.", then the environment lines, the
    slice, the worktree and branch, the roles with agent, vendor, model and
    reasoning effort, whether the slice is a UI slice and whether the reviewer carries
@@ -251,9 +258,13 @@ Spawn the orchestrator with a brief that starts "First run
    and any owner answer since, the end point, a temp directory per role, RUN and the
    orchestrator's step id."""),
   (3, """\
-Wait for its run report. One slice runs in the foreground. A hand-back whose last
-   line is not `nothing left running: yes`, and which names the role it waits on (a last
-   line `waiting on: ROLE AGENT-ID`), is a wait, not a report. Wait for that role's report, then resume the orchestrator with
+Wait for its run report in the same turn. A harness that can spawn only in the
+   background (its spawn notifies on completion) does not end the outer
+   turn while the orchestrator runs: wait for the completion notice. One slice runs at a
+   time. The orchestrator hands back early only for an owner question, a permission
+   denial or a failure, or with the last line `waiting on: ROLE AGENT-ID` when the
+   harness forces its turn to end while a role runs. That last-line hand-back is a wait,
+   not a report: wait for that role's report, then resume the orchestrator with
    the report pasted in. Do not stop the orchestrator for it. An owner answer given
    while the run waits goes in a note on the item in the worktree and in the resumed
    role's brief, not in the slice on main. A hand-back whose last line is
@@ -460,7 +471,7 @@ Run the closing note and the finish step only after `{pass_verdict}`. A fix roun
   follows runs them again only after its own PASS."""),
     ('run_report', """\
 Return one run report, in the line order of Run report and within its line limit. Send
-  it once, never an interim one. Its first line is the contract marker and its last is
+  it once, never an interim run report. Its first line is the contract marker and its last is
   `{last_line}`, written only after nothing the run started still runs."""),
     ('worktree_scope', """\
 Work only in the worktree the brief names, with absolute paths and no change of
@@ -768,7 +779,9 @@ read or write outside it. Every brief carries the slice's `Owner decisions` para
 when it has one, and each owner answer recorded in a note since, verbatim. The report
 is a diff stat, red lines, test counts, a mutation table and deviations. Every brief
 names the role's own temp directory, and no two agents share one. Every brief carries
-the environment lines verbatim.
+the environment lines verbatim. Every brief says the role runs its own shell commands in
+the foreground and backgrounds none, and runs long commands such as the full suite in
+the foreground with a long timeout.
 Reviewer, architect and gate briefs forbid git writes; a needed write stops and
 goes to the owner. Reviewer, UI pass and gate briefs tell the agent to tag each
 finding `fix`, `owner` or `later` as Gate defines, and to give an `owner` finding its
@@ -919,14 +932,19 @@ return one run report.
   `waiting on: owner QUESTION_ID`. The outer session records the answer with
   `slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`) and resumes you
   with it pasted in; to read it again, run `slicer relay-run answer RUN QUESTION_ID --get`. Do not poll the ledger for the answer. A non-blocker owner question stays in the run report.
-- Waiting: a spawn may run in the background with no foreground option. When a
-  role's result is needed, end the turn and let its report wake you. A nudge to
+- Waiting: Run each role in the foreground and wait for its report in the same turn: a
+  native subagent where the harness offers a foreground spawn, and a headless role with a
+  foreground wait on its process. That wait is one command with a long timeout; when it times out before the role ends, issue the
+  same foreground wait again, and a timed-out wait is never a reason to hand back. A harness that can spawn only in the background (its spawn notifies on
+  completion) does not end your turn while a spawned role runs: wait for its completion notice. End your turn before
+  the final report only to hand back an owner question, a harness permission denial or a
+  failure. A progress note or a bare "waiting on" is not one. `waiting on: ROLE AGENT-ID` is the last line of a hand-back only when the harness forces
+  the turn to end while a role still runs, so the outer session can route the report. A nudge to
   report while a role you started still runs is not a reason to report. A role
   that reports while a command of its own still runs, or that stops waiting on its
   own background work, has not finished its round: resume it and tell it to
-  finish. Send the final report once, never an interim one. When the turn ends before
-  the final report, the last line of the hand-back is `waiting on: ROLE AGENT-ID`, or
-  the closest thing the harness gives, so the outer session can route the report. When you
+  finish. Every role runs its own shell commands in the foreground and backgrounds none. Send the final run report once; an early hand-back for an owner question, a permission
+  denial or a failure is not a run report. When you
   wait for the owner's answer to a question you asked, it is `waiting on: owner QUESTION_ID`. A
   role report pasted in by the outer session on resume is that role's report. Run no
   sleep loop, no monitor keepalive and no background shell job; nothing you

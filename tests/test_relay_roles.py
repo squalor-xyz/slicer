@@ -1869,7 +1869,7 @@ class AiRelayContractTests(RelayRolesCase):
   """The nested relay: `ai relay` is the outer session's contract and
   `ai relay-orchestrator` the orchestrator's, both carrying one version marker."""
 
-  MARKER = "Contract: relay v9"
+  MARKER = "Contract: relay v10"
 
   def flat(self, text: str) -> str:
     return " ".join(text.split())
@@ -1908,9 +1908,9 @@ class AiRelayContractTests(RelayRolesCase):
   def test_RelayText_HandBackWithoutLastLine_SaysToRelayTheWaitedRole(self) -> None:
     order = self.section(ai.relay_text(), "## Order", "## Slivers")
     for phrase in (
-      "A hand-back whose last line is not `nothing left running: yes`, and which names "
-      "the role it waits on (a last line `waiting on: ROLE AGENT-ID`), is a wait, not a report.",
-      "Wait for that role's report, then resume the orchestrator with the report pasted in.",
+      "or with the last line `waiting on: ROLE AGENT-ID` when the harness forces its turn to "
+      "end while a role runs.",
+      "wait for that role's report, then resume the orchestrator with the report pasted in.",
       "Do not stop the orchestrator for it.",
     ):
       with self.subTest(phrase=phrase):
@@ -1931,13 +1931,122 @@ class AiRelayContractTests(RelayRolesCase):
     waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
                              if b.startswith("Waiting")))
     for phrase in (
-      "When the turn ends before the final report, the last line of the hand-back is "
-      "`waiting on: ROLE AGENT-ID`, or the closest thing the harness gives, so the outer "
-      "session can route the report.",
+      "the turn to end while a role still runs, so the outer session can route the report.",
       "A role report pasted in by the outer session on resume is that role's report.",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, waiting)
+
+  WAIT_FOREGROUND = (
+    "Run each role in the foreground and wait for its report in the same turn: a native "
+    "subagent where the harness offers a foreground spawn, and a headless role with a "
+    "foreground wait on its process."
+  )
+  WAIT_INTERIM = (
+    "End your turn before the final report only to hand back an owner question, a harness "
+    "permission denial or a failure."
+  )
+  WAIT_BACKGROUND_ONLY = (
+    "A harness that can spawn only in the background (its spawn notifies on "
+    "completion) does not end your turn while a spawned role runs: wait for its completion notice."
+  )
+  WAIT_FALLBACK = (
+    "`waiting on: ROLE AGENT-ID` is the last line of a hand-back only when the harness forces "
+    "the turn to end while a role still runs"
+  )
+  WAIT_TIMEOUT = (
+    "when it times out before the role ends, issue the same foreground wait again, and a "
+    "timed-out wait is never a reason to hand back."
+  )
+  WAIT_SHELL = (
+    "Every role runs its own shell commands in the foreground and backgrounds none."
+  )
+
+  def test_OrchestratorText_Waiting_RunsRolesInTheForeground(self) -> None:
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    self.assertTrue(waiting.startswith("Waiting: " + self.WAIT_FOREGROUND), waiting)
+    self.assertNotIn("a spawn may run in the background with no foreground option", waiting)
+
+  def test_OrchestratorText_Waiting_InterimHandBackOnlyForQuestionDenialOrFailure(self) -> None:
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    self.assertIn(self.WAIT_INTERIM, waiting)
+
+  def test_OrchestratorText_Waiting_WaitingOnIsTheBackgroundOnlyFallback(self) -> None:
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    self.assertIn(self.WAIT_FALLBACK, waiting)
+    self.assertNotIn("When the turn ends before the final report, the last line", waiting)
+
+  def test_OrchestratorText_Waiting_BackgroundOnlyHarnessWaitsForTheCompletionNotice(self) -> None:
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    self.assertIn(self.WAIT_BACKGROUND_ONLY, waiting)
+
+  def test_OrchestratorText_Waiting_TimedOutWaitIsReissued(self) -> None:
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    self.assertIn(self.WAIT_TIMEOUT, waiting)
+
+  def test_RelayText_EveryBrief_RolesBackgroundNoShellCommand(self) -> None:
+    for label, text in (("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text())):
+      with self.subTest(label=label):
+        brief = self.section(text, "## Every brief", ai.TRACKING_RULE.split()[0])
+        self.assertIn(
+          "Every brief says the role runs its own shell commands in the foreground and "
+          "backgrounds none, and runs long commands such as the full suite in the foreground "
+          "with a long timeout.", brief)
+    repo = self.project()
+    waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
+                             if b.startswith("Waiting")))
+    self.assertIn(self.WAIT_SHELL, waiting)
+
+  def test_RelayText_Order3_SpawnsOrchestratorInTheForeground(self) -> None:
+    order = self.section(ai.relay_text(), "## Order", "## Slivers")
+    for phrase in (
+      "Wait for its run report in the same turn.",
+      "A harness that can spawn only in the background (its spawn notifies on "
+      "completion) does not end the outer turn while the orchestrator runs: wait for the "
+      "completion notice.",
+      "The orchestrator hands back early only for an owner question, a permission denial or a failure, "
+      "or with the last line `waiting on: ROLE AGENT-ID` when the harness forces its turn to "
+      "end while a role runs.",
+      "That last-line hand-back is a wait, not a report: wait for that role's report, then "
+      "resume the orchestrator with the report pasted in.",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, order)
+
+  def test_RelayJson_WaitingRule_MatchesTheText(self) -> None:
+    repo = self.project()
+    relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
+    step3 = next(s["text"] for s in relay["order"] if s["step"] == 3)
+    self.assertIn("Wait for its run report in the same turn.", self.flat(step3))
+    step2 = next(s["text"] for s in relay["order"] if s["step"] == 2)
+    self.assertIn("Spawn the orchestrator in the foreground where the harness can",
+                  self.flat(step2))
+    orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
+    flat = self.flat(orchestrator["orchestrator"])
+    for phrase in (self.WAIT_FOREGROUND, self.WAIT_INTERIM, self.WAIT_FALLBACK,
+                   self.WAIT_BACKGROUND_ONLY, self.WAIT_TIMEOUT, self.WAIT_SHELL):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, flat)
+
+  def test_RelayChanges_V10_NamesTheForegroundWait(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 10)
+    version, text = ai.RELAY_CHANGES[-1]
+    self.assertEqual(version, 10)
+    self.assertIn("Roles wait in the foreground", text)
+    self.assertIn("`waiting on: ROLE AGENT-ID`", text)
+    self.assertIn("timed-out wait is re-issued", text)
+    self.assertIn("backgrounds none", text)
+    self.assertIn("completion notice", text)
 
   def test_AiRelay_Roles_OrchestratorReadsAsItsContractSays(self) -> None:
     roles_section = self.section(ai.relay_text(), "## Roles", "## Setup")
@@ -1977,20 +2086,20 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertEqual(first, self.MARKER)
     self.assertEqual(first, self.ok(repo, "ai", "relay").splitlines()[0])
     # Both texts build the line from the one constant: a bumped number shows in both.
-    with patch.object(ai, "RELAY_CONTRACT", 10):
-      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v10")
-      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v10")
+    with patch.object(ai, "RELAY_CONTRACT", 11):
+      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v11")
+      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v11")
 
   def test_AiRelay_Json_CarriesContract(self) -> None:
     repo = self.project()
     relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(relay["contract"], "relay v9")
+    self.assertEqual(relay["contract"], "relay v10")
     self.assertEqual(relay["relay"].rstrip("\n"), self.ok(repo, "ai", "relay").rstrip("\n"))
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(orchestrator["contract"], "relay v9")
+    self.assertEqual(orchestrator["contract"], "relay v10")
 
   def golden(self, command, finish="done", matrix=False):
-    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v9.json").read_text())[
+    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v10.json").read_text())[
       f"{command}-{finish}-{matrix}"
     ]
 
@@ -2167,27 +2276,25 @@ class AiRelayContractTests(RelayRolesCase):
 
   def test_AiRelay_ContractMarker_AgreesAcrossBothCommandsAndTheConstant(self) -> None:
     repo = self.project()
-    self.assertEqual(ai.RELAY_CONTRACT, 9)
+    self.assertEqual(ai.RELAY_CONTRACT, 10)
     texts = [self.ok(repo, "ai", "relay"), self.orchestrator(repo)]
-    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v9"})
+    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v10"})
     payloads = [json.loads(self.ok(repo, "ai", c, "--json")) for c in ("relay", "relay-orchestrator")]
-    self.assertEqual({p["contract"] for p in payloads}, {"relay v9"})
+    self.assertEqual({p["contract"] for p in payloads}, {"relay v10"})
 
-  def test_AiRelayOrchestrator_Waiting_NoForegroundAssumed(self) -> None:
+  def test_AiRelayOrchestrator_Waiting_KeepsTheRoundRules(self) -> None:
     repo = self.project()
     text = self.orchestrator(repo)
     waiting = next(b for b in text.split("\n- ") if b.startswith("Waiting"))
     waiting = self.flat(waiting)
     for phrase in (
-      "end the turn", "let its report wake you",
       "A nudge to report while a role you started still runs is not a reason to report",
-      "Send the final report once, never an interim one",
+      "Send the final run report once; an early hand-back for an owner question, a permission "
+      "denial or a failure is not a run report",
       "resume it and tell it to finish",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, waiting)
-    self.assertNotIn("run a role in the foreground", self.flat(text))
-    self.assertNotIn("a role in the foreground", waiting)
     # The foreground is for a role's own long commands, which the brief asks for.
     self.assertIn(
       "Every role brief says to run long commands such as the full suite in the foreground "
@@ -2261,7 +2368,7 @@ class AiRelayContractTests(RelayRolesCase):
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     self.assertEqual(list(payload), ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes",
       "gate", "finding_kinds", "conformance"])
-    self.assertEqual(payload["contract"], "relay v9")
+    self.assertEqual(payload["contract"], "relay v10")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))
     self.assertEqual(lean, payload)

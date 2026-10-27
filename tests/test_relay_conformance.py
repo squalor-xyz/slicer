@@ -126,7 +126,7 @@ class ConformanceSectionTests(RelayConformanceCase):
           "Commit on the slice branch only when the brief allows it. Never merge, land, push or "
           "rebase onto main: the outer session owns those.",
         )
-        self.assertIn("Send it once, never an interim one.", items["run_report"])
+        self.assertIn("Send it once, never an interim run report.", items["run_report"])
 
   def test_RelayConformance_Literals_ComeFromTheGateAndReportData(self) -> None:
     default = {item["key"]: item["text"] for item in ai.relay_contract()["conformance"]}
@@ -172,12 +172,12 @@ class ConformanceJsonTests(RelayConformanceCase):
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command):
         payload = self.payload(command)
-        self.assertEqual(payload["contract"], "relay v9")
+        self.assertEqual(payload["contract"], "relay v10")
         self.assertEqual(list(payload)[:2], ["contract", "pinned"])
         self.assertIsNone(payload["pinned"])
         self.assertNotIn("check_command", payload)
-    self.assertEqual(ai.RELAY_CONTRACT, 9)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 9)
+    self.assertEqual(ai.RELAY_CONTRACT, 10)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 10)
 
   def test_AiRelayJson_Conformance_ListsKeyAndTextForEachObligation(self) -> None:
     for command in ("relay", "relay-orchestrator"):

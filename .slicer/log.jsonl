@@ -2335,3 +2335,7 @@
 {"when": "2026-10-26T17:38:31Z", "item": "s401", "action": "note", "from": "", "to": "", "note": "Correction from ork (owner, 2026-10-26, later): folding the ", "by": "Jon Robbins"}
 {"when": "2026-10-26T19:35:54Z", "item": "s409", "action": "add", "from": "", "to": "open", "note": "Orchestrator text for a session that orchestrates every slice"}
 {"when": "2026-10-26T19:35:54Z", "item": "s409", "action": "note", "from": "", "to": "", "note": "From ork (2026-10-26 orchestration trial, ork docs/review-20", "by": "Jon Robbins"}
+{"when": "2026-10-27T18:18:41Z", "item": "s402", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-27T18:52:38Z", "item": "s402", "action": "note", "from": "", "to": "", "note": "Owner answer: background-only fallback = do not end the turn", "by": "Jon Robbins"}
+{"when": "2026-10-27T19:16:29Z", "item": "s402", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v10. Roles wait in the fore", "by": "Jon Robbins"}
+{"when": "2026-10-27T19:16:29Z", "item": "s402", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
