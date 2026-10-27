@@ -887,11 +887,12 @@ class ConfigChange:
 def _config_schema() -> dict:
   """Every settable key with its default, in config.json's own shape.
 
-  `satisfies_dependencies` is omitted from `to_dict()` while unset, so it is added
-  here as the list it takes.
+  `satisfies_dependencies` and `relay_contract` are omitted from `to_dict()` while
+  unset, so each is added here as the type it takes (a list, a whole number).
   """
   defaults = Config().to_dict()
   defaults["satisfies_dependencies"] = []
+  defaults["relay_contract"] = 0
   return defaults
 
 

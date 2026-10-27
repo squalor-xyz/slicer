@@ -183,6 +183,12 @@ class Config:
   # Which queue cells the TUI shows after the status, and in what order. An empty
   # list shows none. The narrow-pane rule still drops claim and size.
   tui_columns: list[str] = field(default_factory=lambda: list(TUI_COLUMNS))
+  # The relay contract version this project's toolchain agreed on. None (the key
+  # absent) pins nothing. Written only when set, so an unpinned config.json stays
+  # byte for byte what it was. No schema bump: an older reader ignores the key, and
+  # every writer either patches the raw file or writes a fresh config, so an existing
+  # key is never lost.
+  relay_contract: int | None = None
 
   def in_work(self) -> set[str]:
     """Statuses that mean someone is on an item: started, or reviewing."""
@@ -275,6 +281,12 @@ class Config:
       if name in seen_columns:
         raise ConfigError(f"tui.columns repeats {name!r}")
       seen_columns.add(name)
+    if self.relay_contract is not None and (
+      isinstance(self.relay_contract, bool)
+      or not isinstance(self.relay_contract, int)
+      or self.relay_contract < 1
+    ):
+      raise ConfigError("relay_contract must be a positive whole number, such as 8")
     if self.satisfies_dependencies is not None:
       listed = self.satisfies_dependencies
       if not isinstance(listed, list) or not listed or any(
@@ -365,6 +377,8 @@ class Config:
     out = self._base_dict()
     if self.satisfies_dependencies is not None:
       out["satisfies_dependencies"] = list(self.satisfies_dependencies)
+    if self.relay_contract is not None:
+      out["relay_contract"] = self.relay_contract
     return out
 
   def _base_dict(self) -> dict[str, Any]:
@@ -485,6 +499,7 @@ class Config:
       satisfies_dependencies=d.get("satisfies_dependencies"),
       issues_repo=d.get("issues_repo", ""),
       tui_columns=_tui_columns(d),
+      relay_contract=d.get("relay_contract"),
     )
     cfg.validate()
     return cfg

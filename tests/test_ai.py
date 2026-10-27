@@ -2469,7 +2469,7 @@ class RelayApproveLandTests(unittest.TestCase):
       payload = json.loads(out)
       self.assertEqual(
         list(payload),
-        ["contract", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
+        ["contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
       "roles", "gate", "finding_kinds", "conformance"],
       )
       self.assertEqual(payload["land"], self.land_steps())

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import feedback, ops, render, store, sync, vcs, verify
+from slicer import ai, feedback, ops, render, store, sync, vcs, verify
 from slicer.store import State
 
 
@@ -85,6 +85,9 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
   if legacy is not None:
     report.warnings.append(legacy)
   report.warnings.extend(_gitignore_lines(state))
+  pin = ai.pin_mismatch(state.config.relay_contract)
+  if pin is not None:
+    report.warnings.append(pin)
   return report, expected, diff
 
 

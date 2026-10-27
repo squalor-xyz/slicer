@@ -171,6 +171,22 @@ def contract_line() -> str:
   return f"relay v{RELAY_CONTRACT}"
 
 
+def pin_mismatch(pinned: int | None) -> str | None:
+  """The refusal message when a project pins a relay contract other than the running one.
+
+  None when nothing is pinned or the pin equals `RELAY_CONTRACT`. slicer never serves
+  an older contract's text, so a mismatch is always a refusal where the contract is
+  served, and a warning in `check`. The message names both versions and the two ways out.
+  """
+  if pinned is None or pinned == RELAY_CONTRACT:
+    return None
+  return (
+    f"this project pins relay v{pinned}, but this slicer serves relay v{RELAY_CONTRACT}. "
+    f"Install a slicer that serves relay v{pinned}, or, once the tools that consume the "
+    f"contract follow v{RELAY_CONTRACT}, run `slicer config relay_contract {RELAY_CONTRACT}`"
+  )
+
+
 RELAY_SETUP = (
   ('spec_check', """\
 whether to run a spec check on a batch of slices before any worktree exists (see

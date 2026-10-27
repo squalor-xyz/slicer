@@ -16,8 +16,8 @@ from slicer import ai, cli, roles
 
 NEW_RELAY_KEYS = ["roles", "gate", "finding_kinds", "conformance"]
 NEW_ORCHESTRATOR_KEYS = ["gate", "finding_kinds", "conformance"]
-RELAY_KEYS = ["contract", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"]
-ORCHESTRATOR_KEYS = ["contract", "orchestrator", "order", "report", "outcomes", "stop", "changes"]
+RELAY_KEYS = ["contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"]
+ORCHESTRATOR_KEYS = ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes"]
 OBLIGATIONS = [
   "role_order", "gate_rule", "finding_kinds", "stop_rules", "ledger",
   "finish_after_pass", "run_report", "worktree_scope", "commit_scope",
@@ -167,14 +167,15 @@ class ConformanceJsonTests(RelayConformanceCase):
     self.assertNotIn("roles", payload)
     self.assertEqual(self.payload("relay-orchestrator", "--lean"), payload)
 
-  def test_AiRelayJson_NotYetBuiltParts_AreAbsentAndContractIsStillV8(self) -> None:
-    # check_command (s379) and the pin (s387) land later; the marker is v8 until s397.
+  def test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsStillV8(self) -> None:
+    # The pin (s387) is built; check_command (s379) lands later. The marker is v8 until s397.
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command):
         payload = self.payload(command)
         self.assertEqual(payload["contract"], "relay v8")
-        for key in ("check_command", "pinned"):
-          self.assertNotIn(key, payload)
+        self.assertEqual(list(payload)[:2], ["contract", "pinned"])
+        self.assertIsNone(payload["pinned"])
+        self.assertNotIn("check_command", payload)
     self.assertEqual(ai.RELAY_CONTRACT, 8)
     self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 8)
 

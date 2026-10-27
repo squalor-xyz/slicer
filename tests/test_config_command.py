@@ -206,6 +206,42 @@ class ConfigSetTests(unittest.TestCase):
           self.assertEqual(value, want)
           self.assertIs(type(value), type(want))
 
+  def test_Config_RelayContract_RoundTripsAndRefusesNonPositiveInt(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/config.json")
+      code, out, err = repo.run("config", "relay_contract", "8")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("config", "relay_contract")[1], "8\n")
+      code, out, _ = repo.run("config", "relay_contract", "--json")
+      self.assertEqual(json.loads(out), {"key": "relay_contract", "value": 8})
+      self.assertEqual(_raw(repo)["relay_contract"], 8)
+      self.assertIs(type(_raw(repo)["relay_contract"]), int)
+      self.assertIn("relay_contract", json.loads(repo.run("config", "--json")[1]))
+      after_set = repo.read(".slicer/config.json")
+      for bad in ("0", "-1", "v8", "8.5", "", "true"):
+        with self.subTest(value=bad):
+          code, out, err = repo.run("config", "relay_contract", bad, "--json")
+          self.assertEqual(code, 2, (out, err))
+          self.assertEqual(json.loads(out)["error"]["code"], "bad_config_value")
+          self.assertEqual(repo.read(".slicer/config.json"), after_set)
+      code, out, err = repo.run("config", "relay_contract", "--unset")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.read(".slicer/config.json"), before)
+      code, out, _ = repo.run("config", "relay_contract", "--json")
+      self.assertEqual(code, 2)
+      self.assertEqual(repo.run("config", "relay_contract", "--unset")[0], 0)
+      self.assertEqual(repo.read(".slicer/config.json"), before)
+
+  def test_Config_RelayContractUnset_ConfigBytesUnchanged(self) -> None:
+    with self.repo() as repo:
+      raw = repo.read(".slicer/config.json")
+      self.assertNotIn("relay_contract", raw)
+      self.assertNotIn("relay_contract", Config.load(repo.root / ".slicer/config.json").to_dict())
+      self.assertEqual(repo.run("config", "claim_owner", "X")[0], 0)
+      self.assertNotIn("relay_contract", repo.read(".slicer/config.json"))
+      self.assertEqual(repo.run("config", "claim_owner", "")[0], 0)
+      self.assertEqual(repo.read(".slicer/config.json"), raw)
+
   def test_ConfigSet_ObjectValue_TakesJson(self) -> None:
     with self.repo() as repo:
       statuses = {"open": "—", "done": "done", "parked": "parked", "later": "later",

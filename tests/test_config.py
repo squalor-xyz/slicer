@@ -230,6 +230,25 @@ class IndexSchemeValidationTests(unittest.TestCase):
       self.assertIn("id_width", err)
 
 
+class RelayContractConfigTests(unittest.TestCase):
+  def test_Config_RelayContractNotAPositiveInt_Refused(self) -> None:
+    for bad in (0, -1, 8.5, "8", True, [8]):
+      with self.subTest(bad=bad), support.TempRepo() as repo:
+        repo.run("init")
+        poke(repo, "config.json", relay_contract=bad)
+        code, _, err = repo.run("list")
+        self.assertEqual(code, 3)
+        self.assertIn("relay_contract", err)
+
+  def test_Config_RelayContractSet_LoadsAndSurvivesAnUnrelatedWrite(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      poke(repo, "config.json", relay_contract=7)
+      self.assertEqual(repo.run("config", "relay_contract")[1], "7\n")
+      self.assertEqual(repo.run("config", "claim_owner", "X")[0], 0)
+      self.assertEqual(json.loads((repo.root / ".slicer/config.json").read_text())["relay_contract"], 7)
+
+
 class TuiColumnsConfigTests(unittest.TestCase):
   def repo(self) -> support.TempRepo:
     repo = support.TempRepo()
