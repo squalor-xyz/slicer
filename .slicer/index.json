@@ -14914,7 +14914,7 @@
       "id": "s402",
       "title": "Roles wait in the foreground; an interim hand-back only for an owner question, a denial or a failure",
       "short_title": "Foreground waits, no empty hand-backs",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
