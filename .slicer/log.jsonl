@@ -2326,3 +2326,4 @@
 {"when": "2026-10-27T14:05:34Z", "item": "s413", "action": "add", "from": "", "to": "open", "note": "show --json paths edge cases"}
 {"when": "2026-10-27T14:05:34Z", "item": "s414", "action": "add", "from": "", "to": "open", "note": "Readiness follow-ups"}
 {"when": "2026-10-27T14:05:34Z", "item": "s415", "action": "add", "from": "", "to": "open", "note": "Relay contract pin follow-ups"}
+{"when": "2026-10-27T15:14:21Z", "item": "s397", "action": "status", "from": "review", "to": "done", "note": "Landed: RELAY_CONTRACT 9 with a v9 RELAY_CHANGES entry; golden fixture relay-contract-v9.json; CHANGELOG v9 entry summarises the v1.16 bundle, the ask-wait-resume behaviour change and consumer steps (pin 9, ork S142, agents S79). 2924 tests OK.", "by": "Jon Robbins"}
