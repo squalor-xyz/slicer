@@ -15067,7 +15067,7 @@
       "id": "s405",
       "title": "Fall back to the next matching row when a role hits a vendor limit",
       "short_title": "Fallback on a vendor limit",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

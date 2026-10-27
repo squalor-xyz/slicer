@@ -2351,3 +2351,4 @@
 {"when": "2026-10-27T21:14:14Z", "item": "s421", "action": "add", "from": "", "to": "open", "note": "Relay Stop: say a project with no role matrix stops on a vendor limit"}
 {"when": "2026-10-27T21:14:14Z", "item": "s422", "action": "add", "from": "", "to": "open", "note": "Conformance vendor_limit wording matches Stop's independence list"}
 {"when": "2026-10-27T21:14:14Z", "item": "s423", "action": "add", "from": "", "to": "open", "note": "Allow --reason on relay-run end --close-steps fail"}
+{"when": "2026-10-27T21:38:11Z", "item": "s405", "action": "status", "from": "review", "to": "done", "note": "Relay contract v10: classified vendor limit (rate limit, out of credits) falls back to the role's next matching row on a fresh agent, skipping same-vendor rows on out of credits; outer session does the same for the orchestrator; relay-run step --reason. 2950 tests OK.", "by": "Jon Robbins"}
