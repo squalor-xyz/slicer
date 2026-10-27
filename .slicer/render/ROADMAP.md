@@ -40,7 +40,7 @@ v1.17.0 release
 | 5 | [s405](slices/s405.md) | Fallback on a vendor limit | S | 1 |  |  | — |
 | 6 | [s407](slices/s407.md) | Implementer re-anchor and self-check | S | 1 |  |  | — |
 | 7 | [s408](slices/s408.md) | relay-run stats | M | 2 |  |  | — |
-| 8 | s409 | Merges re-render automatically | M | 2 |  | owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer. | — |
+| 8 | s417 | Merges re-render automatically | M | 2 |  | owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer. | — |
 
 ---
 
