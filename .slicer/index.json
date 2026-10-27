@@ -2,7 +2,7 @@
   "version": 10,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 410,
+  "next_id": 416,
   "preamble": "",
   "passes": [
     {
@@ -15184,6 +15184,186 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s410",
+      "title": "Test suite: TMPDIR inside a git repo and affected.py on fixture JSON",
+      "short_title": "Test suite: TMPDIR inside a git repo and affected.py on fixture JSON",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "tests"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s411",
+      "title": "Relay-run ledger follow-ups from v1.16",
+      "short_title": "Relay-run ledger follow-ups from v1.16",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "relayrun"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s412",
+      "title": "Relay contract text follow-ups from v1.16",
+      "short_title": "Relay contract text follow-ups from v1.16",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "ai"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s413",
+      "title": "show --json paths edge cases",
+      "short_title": "show --json paths edge cases",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "ops"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "s395",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s414",
+      "title": "Readiness follow-ups",
+      "short_title": "Readiness follow-ups",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "ops"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "s400",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s415",
+      "title": "Relay contract pin follow-ups",
+      "short_title": "Relay contract pin follow-ups",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "config"
+        ],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "s387",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": null,
         "attempts": 0
       }
     }
