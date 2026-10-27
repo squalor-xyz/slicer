@@ -2316,3 +2316,7 @@
 {"when": "2026-10-27T14:03:24Z", "item": "s387", "action": "note", "from": "", "to": "", "note": "Ready for review: a project can pin its relay contract with ", "by": "Jon Robbins"}
 {"when": "2026-10-27T14:03:24Z", "item": "s387", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-27T14:04:07Z", "item": "s387", "action": "status", "from": "review", "to": "done", "note": "Landed: relay_contract pin in config; ai relay, relay-orchestrator and relay-brief refuse a mismatched or unreadable pin with contract_mismatch; pinned after contract in JSON; check warns. No config schema bump (owner). 2924 tests OK.", "by": "Jon Robbins"}
+{"when": "2026-10-27T14:04:59Z", "item": "s397", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-27T15:02:12Z", "item": "s397", "action": "note", "from": "", "to": "", "note": "Review FAIL: F1 (med) v9 CHANGELOG omits the agents repo rel", "by": "Jon Robbins"}
+{"when": "2026-10-27T15:09:02Z", "item": "s397", "action": "note", "from": "", "to": "", "note": "Ready for review: RELAY_CONTRACT is 9 in src/slicer/ai.py, w", "by": "Jon Robbins"}
+{"when": "2026-10-27T15:09:03Z", "item": "s397", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

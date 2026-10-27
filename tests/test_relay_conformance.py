@@ -167,17 +167,17 @@ class ConformanceJsonTests(RelayConformanceCase):
     self.assertNotIn("roles", payload)
     self.assertEqual(self.payload("relay-orchestrator", "--lean"), payload)
 
-  def test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsStillV8(self) -> None:
-    # The pin (s387) is built; check_command (s379) lands later. The marker is v8 until s397.
+  def test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsV9(self) -> None:
+    # The pin (s387) is built; check_command (s379) lands later.
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command):
         payload = self.payload(command)
-        self.assertEqual(payload["contract"], "relay v8")
+        self.assertEqual(payload["contract"], "relay v9")
         self.assertEqual(list(payload)[:2], ["contract", "pinned"])
         self.assertIsNone(payload["pinned"])
         self.assertNotIn("check_command", payload)
-    self.assertEqual(ai.RELAY_CONTRACT, 8)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 8)
+    self.assertEqual(ai.RELAY_CONTRACT, 9)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 9)
 
   def test_AiRelayJson_Conformance_ListsKeyAndTextForEachObligation(self) -> None:
     for command in ("relay", "relay-orchestrator"):

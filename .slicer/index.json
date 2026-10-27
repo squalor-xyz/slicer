@@ -14589,7 +14589,7 @@
       "id": "s397",
       "title": "Relay contract v9: fold in ork's 2026-10-23..26 relay run and retrospective",
       "short_title": "Relay contract v9",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s387",
@@ -14605,7 +14605,30 @@
         "s394",
         "s395"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "1e739a0a-ca2f-4151-8ce9-9c3d4707284f",
+          "kind": "",
+          "text": "**2026-10-27** — Review FAIL: F1 (med) v9 CHANGELOG omits the agents repo relay-orchestrator Expects: line; low: F2 gate rule wording, F3 land credited to s406, F4 split the long entry, F5 RELAY_CHANGES v9 misses ledger wait, ledger roles, Review FAIL rule, F6 commands.md relay-orchestrator keys lack pinned. F8 (pin this repo) decided: leave unpinned.",
+          "created_at": "2026-10-27T15:02:12Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "4a95da18-83e6-4f47-83ce-4165e855a71d",
+          "kind": "",
+          "text": "**2026-10-27** — Ready for review: RELAY_CONTRACT is 9 in src/slicer/ai.py, with a v9 entry in RELAY_CHANGES (JSON only; prose unchanged apart from the marker). The golden fixture is renamed to tests/fixtures/relay-contract-v9.json and regenerated; only the marker changed (relay v8 to relay v9). Four tests renamed from v8 wording: test_RelaySpecCheck_Text_NamesNoProject, test_RelayContract_ApproveAndLand_NameNoProject, test_RelayContract_Bundle_IsV9WithOneChangeEntry, and test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsV9. The v9 CHANGELOG entry is restructured as a lead with sub-bullets (per-slice text changes, supporting changes, behaviour change for s396, consumers incl. ork and the agents repo Expects line). Docs and tests that named v8 now name v9; docs/commands.md gains pinned in the relay-orchestrator JSON keys. This repo stays unpinned (owner decision). Full suite: 2924 tests OK (1 skipped); slicer check and git diff --check pass.",
+          "created_at": "2026-10-27T15:09:02Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -14623,7 +14646,7 @@
         "importance": 3,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
