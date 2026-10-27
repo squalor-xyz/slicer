@@ -151,7 +151,7 @@ def handoff_policy_text(kind: str) -> str:
 # marker. Bump it when a rule an outer session, orchestrator or role
 # follows changes (order, gate, tracking order, waiting, report shape), not for a
 # rewording. Record each version's change in RELAY_CHANGES.
-RELAY_CONTRACT = 8
+RELAY_CONTRACT = 9
 
 RELAY_CHANGES = (
   (5, "Setup resolves the role lineup, orchestrator included, with "
@@ -163,6 +163,13 @@ RELAY_CHANGES = (
    "permission check denies stops the run before the commit instead of being worked around."),
   (8, "A hand-back that names the role it waits on (`waiting on: ROLE AGENT-ID`) is a wait: the outer "
    "session relays that role's report to the orchestrator and stops it only when nothing is waited on."),
+  (9, "Findings carry a kind (`fix`, `owner`, `later`), and `Review FAIL` is written only after `VERDICT: "
+   "FAIL`; a UI pass role runs beside the reviewer; an optional spec check runs before any worktree "
+   "exists and owner answers reach the run; a `blocker` owner question waits in the ledger "
+   "(`relay-run ask`, `answer`) instead of stopping the relay, and a step waiting on the owner or on "
+   "approval records `--phase wait` and never goes stale; the outer session adds Approve and Land steps "
+   "with ff-only landing; the ledger records the `ui` and `spec-check` roles under their own names; and "
+   "a Conformance section states what a scripted orchestrator owes."),
 )
 
 

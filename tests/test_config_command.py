@@ -209,16 +209,16 @@ class ConfigSetTests(unittest.TestCase):
   def test_Config_RelayContract_RoundTripsAndRefusesNonPositiveInt(self) -> None:
     with self.repo() as repo:
       before = repo.read(".slicer/config.json")
-      code, out, err = repo.run("config", "relay_contract", "8")
+      code, out, err = repo.run("config", "relay_contract", "9")
       self.assertEqual(code, 0, err)
-      self.assertEqual(repo.run("config", "relay_contract")[1], "8\n")
+      self.assertEqual(repo.run("config", "relay_contract")[1], "9\n")
       code, out, _ = repo.run("config", "relay_contract", "--json")
-      self.assertEqual(json.loads(out), {"key": "relay_contract", "value": 8})
-      self.assertEqual(_raw(repo)["relay_contract"], 8)
+      self.assertEqual(json.loads(out), {"key": "relay_contract", "value": 9})
+      self.assertEqual(_raw(repo)["relay_contract"], 9)
       self.assertIs(type(_raw(repo)["relay_contract"]), int)
       self.assertIn("relay_contract", json.loads(repo.run("config", "--json")[1]))
       after_set = repo.read(".slicer/config.json")
-      for bad in ("0", "-1", "v8", "8.5", "", "true"):
+      for bad in ("0", "-1", "v9", "9.5", "", "true"):
         with self.subTest(value=bad):
           code, out, err = repo.run("config", "relay_contract", bad, "--json")
           self.assertEqual(code, 2, (out, err))

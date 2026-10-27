@@ -1306,9 +1306,9 @@ class AiRelayTests(unittest.TestCase):
         ):
           self.assertIn(phrase, flat)
 
-  def test_RelaySpecCheck_Text_NamesNoProjectAndKeepsMarkerAtV8(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 8)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 8)
+  def test_RelaySpecCheck_Text_NamesNoProject(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 9)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 9)
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         for token in ("ork", "adj", "s116", "s115", "roles.spec-check"):
@@ -1341,7 +1341,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
       self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
-                       {"contract": "relay v8", "relay": text})
+                       {"contract": "relay v9", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -2184,7 +2184,7 @@ class RelayGoldenTests(unittest.TestCase):
   """Pin the CLI bytes of the current contract version independently of the live contract data."""
 
   def check_golden(self, command):
-    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v8.json").read_text())
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v9.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
         with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:
@@ -2491,13 +2491,12 @@ class RelayApproveLandTests(unittest.TestCase):
         self.assertIn(command, flat)
         parser.parse_args(shlex.split(command.strip("`"))[1:])
 
-  def test_RelayContract_ApproveAndLand_StayAtV8AndNameNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 8)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8])
+  def test_RelayContract_ApproveAndLand_NameNoProject(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 9)
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         flat = " ".join(ai.relay_text(finish).split())
-        self.assertTrue(flat.startswith("Contract: relay v8"))
+        self.assertTrue(flat.startswith("Contract: relay v9"))
         for token in ("ork", "adj", "s118", "s119", "landing.in-ork"):
           self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
         if finish == "handoff":
@@ -2570,8 +2569,8 @@ class RelayLandingDocsTests(unittest.TestCase):
 
 
 class RelayOwnerQuestionContractTests(unittest.TestCase):
-  """The contract text for an owner question that waits in the ledger (s396). The marker stays
-  v8: s397 bumps it for the whole bundle."""
+  """The contract text for an owner question that waits in the ledger (s396). It is part of
+  the v9 bundle that s397 numbers."""
 
   ASK = (
     "`slicer relay-run ask RUN --step STEP --title TITLE --option LABEL:SUMMARY "
@@ -2711,10 +2710,10 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           parser.parse_args(argv)
           self.assertEqual(cli._unknown_flags(parser, argv), [])
 
-  def test_RelayContract_OwnerQuestion_StaysAtV8WithNoNewChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 8)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8])
-    self.assertEqual(ai.contract_line(), "relay v8")
+  def test_RelayContract_Bundle_IsV9WithOneChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 9)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9])
+    self.assertEqual(ai.contract_line(), "relay v9")
 
   def test_RelayContract_OwnerQuestion_NamesNoProject(self) -> None:
     for text in (ai.relay_text(), ai.orchestrator_text()):

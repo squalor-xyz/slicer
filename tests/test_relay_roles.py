@@ -1869,7 +1869,7 @@ class AiRelayContractTests(RelayRolesCase):
   """The nested relay: `ai relay` is the outer session's contract and
   `ai relay-orchestrator` the orchestrator's, both carrying one version marker."""
 
-  MARKER = "Contract: relay v8"
+  MARKER = "Contract: relay v9"
 
   def flat(self, text: str) -> str:
     return " ".join(text.split())
@@ -1977,20 +1977,20 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertEqual(first, self.MARKER)
     self.assertEqual(first, self.ok(repo, "ai", "relay").splitlines()[0])
     # Both texts build the line from the one constant: a bumped number shows in both.
-    with patch.object(ai, "RELAY_CONTRACT", 9):
-      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v9")
-      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v9")
+    with patch.object(ai, "RELAY_CONTRACT", 10):
+      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v10")
+      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v10")
 
   def test_AiRelay_Json_CarriesContract(self) -> None:
     repo = self.project()
     relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(relay["contract"], "relay v8")
+    self.assertEqual(relay["contract"], "relay v9")
     self.assertEqual(relay["relay"].rstrip("\n"), self.ok(repo, "ai", "relay").rstrip("\n"))
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(orchestrator["contract"], "relay v8")
+    self.assertEqual(orchestrator["contract"], "relay v9")
 
   def golden(self, command, finish="done", matrix=False):
-    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v8.json").read_text())[
+    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v9.json").read_text())[
       f"{command}-{finish}-{matrix}"
     ]
 
@@ -2167,11 +2167,11 @@ class AiRelayContractTests(RelayRolesCase):
 
   def test_AiRelay_ContractMarker_AgreesAcrossBothCommandsAndTheConstant(self) -> None:
     repo = self.project()
-    self.assertEqual(ai.RELAY_CONTRACT, 8)
+    self.assertEqual(ai.RELAY_CONTRACT, 9)
     texts = [self.ok(repo, "ai", "relay"), self.orchestrator(repo)]
-    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v8"})
+    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v9"})
     payloads = [json.loads(self.ok(repo, "ai", c, "--json")) for c in ("relay", "relay-orchestrator")]
-    self.assertEqual({p["contract"] for p in payloads}, {"relay v8"})
+    self.assertEqual({p["contract"] for p in payloads}, {"relay v9"})
 
   def test_AiRelayOrchestrator_Waiting_NoForegroundAssumed(self) -> None:
     repo = self.project()
@@ -2261,7 +2261,7 @@ class AiRelayContractTests(RelayRolesCase):
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     self.assertEqual(list(payload), ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes",
       "gate", "finding_kinds", "conformance"])
-    self.assertEqual(payload["contract"], "relay v8")
+    self.assertEqual(payload["contract"], "relay v9")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))
     self.assertEqual(lean, payload)

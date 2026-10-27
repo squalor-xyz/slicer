@@ -286,7 +286,7 @@ class Config:
       or not isinstance(self.relay_contract, int)
       or self.relay_contract < 1
     ):
-      raise ConfigError("relay_contract must be a positive whole number, such as 8")
+      raise ConfigError("relay_contract must be a positive whole number, such as 9")
     if self.satisfies_dependencies is not None:
       listed = self.satisfies_dependencies
       if not isinstance(listed, list) or not listed or any(
