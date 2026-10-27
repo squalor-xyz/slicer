@@ -2,7 +2,7 @@
   "version": 10,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 416,
+  "next_id": 417,
   "preamble": "",
   "passes": [
     {
@@ -15254,7 +15254,19 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9eee3969-d75b-40e7-8487-289e5cefc2b7",
+          "kind": "",
+          "text": "**2026-10-27** — From squalify relay log (2026-10-27): (1) the role matrix has no orchestrator row, so relay-roles recommend prints 'orchestrator (no matching row)' every time; add a row or say the outer session orchestrates when the harness cannot nest subagents. (2) A small fix round is re-checked by 'the reviewer'; allow whichever read-only role already holds the findings (in squalify, resuming the gate took 30-70 s against a 72 min reviewer). (3) Ask non-blocking owner questions as they arise (while the next role runs), so an answer after the finish step does not force set --status started, a fix round, a re-gate and done again. (4) A Check item that needs another slice landed first (e.g. a corpus run after a dependency merges) has no place: the finish step had to wait for land. (5) With parallel slices, gating once on the merged result (commit branch, merge main, combined fix round, one gate) beat gate-merge-regate.",
+          "created_at": "2026-10-27T16:35:39Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -15364,6 +15376,34 @@
         "importance": 1,
         "urgency": 1,
         "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s416",
+      "title": "slicer land should accept --render, and show --json ready should agree with next",
+      "short_title": "land --render, ready flag",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "squalify relay log 2026-10-27: 'slicer land' rejects --render unlike other mutations; 'slicer show ID --json' reported ready:false for a slice that list and next treated as ready (sq-16, 2026-10-26).",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "squalify-relay-land-render-ready",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }
