@@ -14154,7 +14154,7 @@
       "id": "s387",
       "title": "A project pins its relay contract version and slicer refuses to serve another",
       "short_title": "Pin the relay contract version",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s382"
