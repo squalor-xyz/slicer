@@ -2339,3 +2339,6 @@
 {"when": "2026-10-27T18:52:38Z", "item": "s402", "action": "note", "from": "", "to": "", "note": "Owner answer: background-only fallback = do not end the turn", "by": "Jon Robbins"}
 {"when": "2026-10-27T19:16:29Z", "item": "s402", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v10. Roles wait in the fore", "by": "Jon Robbins"}
 {"when": "2026-10-27T19:16:29Z", "item": "s402", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-27T19:31:56Z", "item": "s418", "action": "add", "from": "", "to": "open", "note": "Relay contract: drop the duplicated long-commands sentence between Every brief and Waiting"}
+{"when": "2026-10-27T19:31:56Z", "item": "s419", "action": "add", "from": "", "to": "open", "note": "relay-brief.md template states the no-background-shell rule"}
+{"when": "2026-10-27T19:31:56Z", "item": "s420", "action": "add", "from": "", "to": "open", "note": "config relay_contract read on an unset pin says 'is not a config key'"}
