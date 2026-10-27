@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "On a classified vendor limit, the orchestrator records the failed step with the reason, starts the same round on the role's next matching row (the alternatives `recommend` lists) with the partial diff, and names the switch in the run report. Any other failure still stops."
+      "body": "On a classified vendor limit, the orchestrator records the failed step with the reason, starts the same round on the role's next matching row (the alternatives `recommend` lists) with the partial diff, and names the switch in the run report. Any other failure still stops.\n\nOwner decisions: fold this change into the unreleased relay contract v10 (extend its RELAY_CHANGES entry and the v10 golden fixture); do not bump to v11."
     },
     {
       "heading": "Check",

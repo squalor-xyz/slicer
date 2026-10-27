@@ -2343,3 +2343,4 @@
 {"when": "2026-10-27T19:31:56Z", "item": "s419", "action": "add", "from": "", "to": "open", "note": "relay-brief.md template states the no-background-shell rule"}
 {"when": "2026-10-27T19:31:56Z", "item": "s420", "action": "add", "from": "", "to": "open", "note": "config relay_contract read on an unset pin says 'is not a config key'"}
 {"when": "2026-10-27T19:37:53Z", "item": "s402", "action": "status", "from": "review", "to": "done", "note": "Relay contract v10: roles wait in the foreground; background-only harnesses wait for the completion notice; waiting on: only on a forced turn end; roles background no shell command. 2933 tests OK.", "by": "Jon Robbins"}
+{"when": "2026-10-27T19:48:19Z", "item": "s405", "action": "edit", "from": "", "to": "", "note": "Implement"}
