@@ -159,6 +159,12 @@ class ConfigSetTests(unittest.TestCase):
       # Key order survives: the changed key stays where it was.
       self.assertEqual(list(_raw(repo)), list(json.loads(raw_before)))
 
+  def test_ConfigCommand_CheckCommand_SetsAndReads(self) -> None:
+    with self.repo() as repo:
+      code, _, err = repo.run("config", "check_command", "make test")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(repo.run("config", "check_command")[1], "make test\n")
+
   def test_ConfigSet_AbsentKey_IsNotBackfilledIntoOthers(self) -> None:
     with self.repo() as repo:
       path = repo.root / ".slicer/config.json"

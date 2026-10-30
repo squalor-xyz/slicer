@@ -1157,7 +1157,8 @@ def relay_brief(
   }
   template = templates.effective("relay-brief.md", state.template_exact("relay-brief.md"))
   text = render.expand(template, context)
-  return {"brief": text, "roles": [pick.to_dict() for pick in picks], "contract": contract}
+  return {"brief": text, "roles": [pick.to_dict() for pick in picks], "contract": contract,
+          "check_command": state.config.check_command}
 
 
 def _relocate_slice(state: State, item_id: str) -> None:

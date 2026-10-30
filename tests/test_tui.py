@@ -1696,6 +1696,32 @@ class RelayBoardLinesTests(unittest.TestCase):
     self.assertTrue(row.text.lstrip().startswith("[!]"), row.text)
     self.assertEqual(row.role, "error")
 
+  def test_BoardLines_WaitingStep_ShowsWaitMarkerAtEveryTick(self) -> None:
+    waiting = board_step("2", "reviewer", "wait", task="review the diff")
+    waiting.waiting_on = "owner"
+    run = board_run(board_step("1", "implementer", "done"), waiting)
+    for tick in range(5):
+      with self.subTest(tick=tick):
+        lines = tui.board_lines([run], tick, NOW, 100)
+        reviewer = row_for_role(lines, "reviewer")
+        self.assertTrue(reviewer.lstrip().startswith("[?]"), reviewer)
+        self.assertIn("wait:owner", reviewer)
+        self.assertEqual(line_with(lines, reviewer).role, "parked")
+
+  def test_BoardLines_WaitingOrchestrator_ShowsWaitMarkerAndTimeWaited(self) -> None:
+    orchestrator = board_step("1", "orchestrator", "wait", begun="2026-10-14T12:00:00Z")
+    orchestrator.waiting_on = "approval"
+    orchestrator.waiting_since = "2026-10-14T10:42:04Z"  # 90 minutes before NOW
+    run = board_run(orchestrator, board_step("2", "implementer", "done", parent="1"))
+    lines = tui.board_lines([run], 0, NOW, 100)
+    row = line_with(lines, "└ orchestrator")
+    self.assertIsNotNone(row)
+    self.assertTrue(row.text.lstrip().startswith("└ orchestrator"), row.text)
+    self.assertIn("[?]", row.text)
+    self.assertIn("wait:approval", row.text)
+    self.assertIn("waited 1h30m", row.text)
+    self.assertEqual(row.role, "parked")
+
   def test_BoardLines_RolesOutsideThePipeline_FollowItInOneOtherLine(self) -> None:
     run = board_run(
       board_step("1", "orchestrator", begun="2026-10-14T12:00:00Z"),

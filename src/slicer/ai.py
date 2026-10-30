@@ -701,7 +701,8 @@ no `--parent`, in a run it begins on the batch's slices, and ends that run with
 `slicer relay-run end RUN --outcome pass --close-steps done` once it has read the spec
 check's report (`--outcome stopped` if the owner stops it).
 `slicer relay-run step RUN --step STEP --phase start` re-records a long-running step as
-a heartbeat, so its run does not go stale after 30 minutes. A heartbeat passes no
+a heartbeat, so its run does not go stale after 30 minutes. A heartbeat on a waiting
+step ends its wait: do not heartbeat a step that waits. A heartbeat passes no
 `--task`, so the step keeps the task it was recorded with; each round records its own
 step, without `--step`. End the run when its end point is reached, or when the relay or
 the owner stops it, with `slicer relay-run end RUN --outcome pass --close-steps done`
@@ -963,7 +964,8 @@ return one run report.
   `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`,
   where STEP is your own step id, and mark it done or failed when the round ends. A
   heartbeat, `slicer relay-run step RUN --step STEP --phase start`, passes no new
-  `--task`.
+  `--task`. A heartbeat on a waiting step ends its wait: do not heartbeat a step
+  that waits.
 {tracking}\
 - Owner answers: an answer the outer session pastes in on resume is the owner's, not a
   role's report. Carry it verbatim, with the slice's `Owner decisions` paragraph, into

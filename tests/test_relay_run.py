@@ -257,6 +257,30 @@ class FoldTests(RelayRunCase):
     self.assertEqual(counts["roles"], {"implementer": 1})
     self.assertEqual((counts["steps"], counts["subagents"]), (3, 2))
 
+  def test_Counts_Roles_CountStepsUnderTheOrchestrator(self) -> None:
+    """The contract records each role round under the orchestrator's step, so `roles` counts
+    those lane steps. A subagent is counted under `subagents` only, whatever its role (s411)."""
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    lead = self.ok(
+      repo, "relay-run", "step", run, "--role", "orchestrator", "--agent", "A", "--phase", "start",
+    )["step"]["id"]
+    implementer = self.step(repo, run, "--parent", lead)["step"]["id"]
+    for role in ("ui", "reviewer", "gate"):
+      self.ok(
+        repo, "relay-run", "step", run, "--role", role, "--agent", "A", "--phase", "start",
+        "--parent", lead,
+      )
+    self.ok(
+      repo, "relay-run", "step", run, "--role", "reviewer", "--agent", "A", "--phase", "start",
+      "--parent", implementer,
+    )
+    counts = self.runs(repo)[0]["counts"]
+    self.assertEqual(
+      counts["roles"], {"orchestrator": 1, "implementer": 1, "ui": 1, "reviewer": 1, "gate": 1},
+    )
+    self.assertEqual(counts["subagents"], 5)
+
   def test_Counts_Running_IsZeroOnceTheRunEnded(self) -> None:
     repo = self.project()
     run = self.begin(repo, "s1")
@@ -396,8 +420,8 @@ class FoldTests(RelayRunCase):
     )
     self.assertEqual(
       list(data["steps"][0]),
-      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at", "question", "reason"],
+      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason"],
     )
     self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2015,6 +2039,27 @@ class WaitTests(RelayRunCase):
     counts = relayrun.list_runs(repo.root, now=minutes(3), siblings=False)[0].counts()
     self.assertEqual((counts["running"], counts["waiting"]), (1, 1))
 
+  def test_Wait_StepJson_WaitingSinceIsTheFirstWaitEvent(self) -> None:
+    """`waiting_since` is the stamp of the wait that started the current one: repeated waits keep
+    it, a `start` clears it, and a switch to another `waiting_on` starts a new one (s411)."""
+    repo = self.project()
+    run, step = self.started(repo)
+
+    def since() -> str:
+      return self.runs(repo)[0]["steps"][0]["waiting_since"]
+
+    self.wait(repo, run, step, 1)
+    self.assertEqual(since(), relayrun.stamp(minutes(1)))
+    self.wait(repo, run, step, 5)
+    self.assertEqual(since(), relayrun.stamp(minutes(1)))
+    ops.relay_run_step(repo.root, run, step=step, phase="start", now=minutes(7))
+    self.assertEqual(since(), "")
+    self.wait(repo, run, step, 8)
+    ops.relay_run_step(
+      repo.root, run, step=step, phase="wait", waiting_on="approval", now=minutes(9),
+    )
+    self.assertEqual(since(), relayrun.stamp(minutes(9)))
+
   def test_Wait_ListJson_KeysAreTheOldOnesPlusWaiting(self) -> None:
     repo = self.project()
     run = self.begin(repo, "s1")
@@ -2028,8 +2073,8 @@ class WaitTests(RelayRunCase):
     self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
     self.assertEqual(
       list(data["steps"][0]),
-      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at", "question", "reason"],
+      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason"],
     )
     self.assertEqual((data["state"], data["counts"]["waiting"]), ("active", 1))
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2044,6 +2089,26 @@ class WaitTests(RelayRunCase):
       del step["waiting_on"]
     self.assertEqual(relayrun.Run.from_dict(data).steps[0].waiting_on, "")
 
+  def test_Wait_StepFromDictWithoutWaitingSince_ReadsEmpty(self) -> None:
+    """A step dict from before s411 has no `waiting_since`."""
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    step = self.step(repo, run)["step"]["id"]
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait")
+    data = self.runs(repo)[0]
+    for entry in data["steps"]:
+      entry.pop("waiting_since", None)
+    self.assertEqual(relayrun.Run.from_dict(data).steps[0].waiting_since, "")
+
+  def test_Wait_ListText_ShowsHowLongTheStepHasWaited(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 0)
+    with patch("slicer.relayrun.utcnow", return_value=minutes(120)):
+      code, out, err = repo.run("relay-run", "list")
+    self.assertEqual((code, err), (0, ""))
+    self.assertIn("wait:owner 2h00m", out)
+
   def test_Wait_ListText_ShowsTheWaitingRunAndStep(self) -> None:
     repo = self.project()
     run = self.begin(repo, "s1")
@@ -2056,7 +2121,7 @@ class WaitTests(RelayRunCase):
     header, line = out.splitlines()
     self.assertIn(f"{run}  active  waiting approval  items s1", header)
     self.assertTrue(header.endswith("1 step, 0 running, 1 waiting, 0 subagents"), header)
-    self.assertIn("  wait:approval  relay", line)
+    self.assertRegex(line, r"  wait:approval \d+s  relay")
 
   def test_Wait_ListText_NotWaiting_IsUnchanged(self) -> None:
     repo = self.project()
@@ -2525,6 +2590,16 @@ class AskAnswerTests(RelayRunCase):
     code, out, err = repo.run("relay-run", "answer", run, "q1", "--get")
     self.assertEqual((code, out, err), (0, "sqlite\n", ""))
 
+  def test_AnswerGet_MultiLineTextAndWhy_PrintsEveryLine(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step)
+    self.ok(repo, "relay-run", "answer", run, "q1", "--text", "a\nb", "--why", "c\nd")
+    code, out, err = repo.run("relay-run", "answer", run, "q1", "--get")
+    self.assertEqual((code, out, err), (0, "a\nb\nwhy: c\nd\n", ""))
+    answer = self.ok(repo, "relay-run", "answer", run, "q1", "--get")["question"]["answer"]
+    self.assertEqual((answer["text"], answer["why"]), ("a\nb", "c\nd"))
+
   def test_AnswerGet_Unanswered_ExitsZeroWithNoAnswer(self) -> None:
     repo = self.project()
     run, step = self.started(repo)
@@ -2567,8 +2642,8 @@ class AskAnswerTests(RelayRunCase):
     data = self.runs(repo)[0]
     self.assertEqual(
       list(data["steps"][0]),
-      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on", "task",
-       "parent", "begun_at", "updated_at", "question", "reason"],
+      ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason"],
     )
     self.assertIsNone(data["steps"][0]["question"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)

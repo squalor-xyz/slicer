@@ -14,8 +14,8 @@ import support
 from slicer import ai
 
 RELAY_KEYS = [
-  "contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop",
-  "changes", "roles", "gate", "finding_kinds", "conformance",
+  "contract", "pinned", "check_command", "relay", "setup", "order", "land", "report",
+  "outcomes", "stop", "changes", "roles", "gate", "finding_kinds", "conformance",
 ]
 ORCHESTRATOR_KEYS = [
   "contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes",
