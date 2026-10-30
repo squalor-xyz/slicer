@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 428,
+  "next_id": 429,
   "preamble": "",
   "passes": [
     {
@@ -16153,7 +16153,10 @@
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
-          "stale_after": ""
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
@@ -16559,7 +16562,10 @@
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
-          "stale_after": ""
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
@@ -16665,6 +16671,36 @@
         "parent": "",
         "cites": [],
         "key": "s412.handoff-policy-wrap",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s428",
+      "title": "Merge-index keeps a pre-schema-11 note edit clean after the retraction restamp",
+      "short_title": "Merge-index churn after schema 11",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note",
+        "discovered_from": "s393",
+        "parent": "",
+        "cites": [],
+        "key": "s393.mergeindex-restamp-churn",
         "pass": "later",
         "group": "",
         "reason": "",
