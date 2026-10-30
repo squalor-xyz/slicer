@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 433,
+  "next_id": 434,
   "preamble": "",
   "passes": [
     {
@@ -17010,6 +17010,36 @@
         "parent": "",
         "cites": [],
         "key": "s415.stray-root-files",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s433",
+      "title": "relay-run stats counts a failed gate step with no verdict as a FAIL",
+      "short_title": "Stats: fail-phase gate is a FAIL",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s408 review 2026-10-30, later note: stats counts a gate FAIL by verdict, else by proxy (a fix round follows); a gate step closed with phase fail and no verdict is not counted unless a fix round follows",
+        "discovered_from": "s408",
+        "parent": "",
+        "cites": [],
+        "key": "s408.stats-gate-fail-phase",
         "pass": "later",
         "group": "",
         "reason": "",
