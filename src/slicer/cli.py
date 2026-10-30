@@ -844,7 +844,8 @@ def cmd_relay_run_answer(args: argparse.Namespace) -> int:
 def cmd_relay_run_end(args: argparse.Namespace) -> int:
   report = ops.LedgerReport()
   run, closed = ops.relay_run_end(
-    _run_root(args), args.run, args.outcome, close_steps=args.close_steps, report=report,
+    _run_root(args), args.run, args.outcome, close_steps=args.close_steps,
+    reason=args.reason or "", report=report,
   )
   _say_fallback(report)
   _say_skipped(report)
@@ -4633,6 +4634,11 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument(
     "--close-steps", metavar="done|fail",
     help="first mark every step still running with this phase",
+  )
+  inner.add_argument(
+    "--reason", metavar="TEXT",
+    help="with --close-steps fail, why each step it closes failed; refused with another "
+    "--close-steps or none",
   )
 
   inner = uadd(
