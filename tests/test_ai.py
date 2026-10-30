@@ -1347,6 +1347,31 @@ class AiRelayTests(unittest.TestCase):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, flat)
 
+  def test_AiRelay_EveryBrief_ForbidsCdForEachRole(self) -> None:
+    for finish in ("done", "handoff"):
+      for label, text in (
+        ("relay", ai.relay_text(finish)), ("orchestrator", ai.orchestrator_text(finish)),
+      ):
+        with self.subTest(label=label, finish=finish):
+          brief = " ".join(text.split("## Every brief", 1)[1].split("\n## ", 1)[0].split())
+          self.assertIn(
+            "Every brief says that every role, the read-only ones included, uses absolute paths "
+            "and `git -C` and never `cd`.", brief)
+
+  def test_AiRelayOrchestrator_Resume_PinsHeadlessWorkdir(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = ai.orchestrator_text(finish)
+        flat = " ".join(text.split())
+        for phrase in (
+          "A headless role you resume is given the slice worktree as its working directory, "
+          "and you ask it to name the directory it ran in.",
+          "Check that the directory it names is the slice worktree before you go on.",
+        ):
+          self.assertIn(phrase, flat)
+        waiting = next(b for b in text.split("\n- ") if b.startswith("Waiting"))
+        self.assertIn("in the slice worktree when it is headless, as the Gate rule below says", " ".join(waiting.split()))
+
   def test_Relay_OutsideProject_TextAndJsonHaveIdenticalContent(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       code, text, err = repo.run("ai", "relay")

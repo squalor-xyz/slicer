@@ -51,8 +51,11 @@ orchestrator does the same for each role (a headless role on another harness get
 on its process, re-issued when it times out), and a harness that can spawn only in the background
 does not end the turn while a spawned role runs but waits for its completion notice. An early
 hand-back is sent only for an owner question, a permission denial or a failure. Every role runs its
-own shell commands in the foreground and backgrounds none, and every brief says so. A hand-back
-without the last line `nothing left running: yes` that names the role it waits on
+own shell commands in the foreground and backgrounds none, and every brief says so. Every role,
+the read-only ones included, uses absolute paths and `git -C` and never `cd`, and every brief says
+that too. A headless role the orchestrator resumes is given the slice worktree as its working
+directory, and the orchestrator checks the directory the role names in its report before it goes
+on. A hand-back without the last line `nothing left running: yes` that names the role it waits on
 (`waiting on: ROLE AGENT-ID`) comes only from a harness that forces the turn to end; it is a wait: the outer session waits
 for that role's report and resumes the orchestrator with it pasted in, and stops the orchestrator only
 when the hand-back names no running role, or a finished role whose report the orchestrator already has. Its Setup section, before Order,

@@ -15011,7 +15011,7 @@
       "id": "s391",
       "title": "Relay briefs pin a resumed headless role to the slice worktree and repeat the no-cd rule",
       "short_title": "Relay resume workdir, no cd",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -15021,6 +15021,34 @@
           "text": "**2026-10-26** — More evidence from ork's relays, 2026-10-26: an implementer typed 'cd /dev/null' twice (S118), and earlier orchestrators broke the no-cd rule repeatedly (ork retrospective R3). Part of the v9 bundle (s397).",
           "created_at": "2026-10-26T13:05:54Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "f3ecff00-824e-40ae-85d6-012f9d096e4a",
+          "kind": "",
+          "text": "**2026-10-30** — For s424's v11 RELAY_CHANGES entry: Every brief requires that every role, read-only ones included, uses absolute paths and git -C and never cd; the orchestrator's Gate rule resumes a headless role with the slice worktree as its working directory and checks the directory it names (Waiting points to it). RELAY_CONTRACT stays 10 here.",
+          "created_at": "2026-10-30T16:53:14Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "f88b1d95-e062-4951-842f-02174880e71e",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: no-cd sentence in Every brief (relay and orchestrator texts), headless resume workdir rule in the orchestrator Gate rule with a Waiting pointer, golden rebaselined. Full suite 2998 OK; gate PASS.",
+          "created_at": "2026-10-30T16:53:14Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -15049,7 +15077,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
