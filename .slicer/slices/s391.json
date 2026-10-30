@@ -1,22 +1,24 @@
 {
   "id": "s391",
   "title": "Relay briefs pin a resumed headless role to the slice worktree and repeat the no-cd rule",
-  "lead": [],
+  "lead": [
+    "`slicer ai relay` and `slicer ai relay-orchestrator` say in Every brief that every role, the read-only ones included, uses absolute paths and `git -C` and never `cd`, and the orchestrator text says that a resumed headless role is given the slice worktree as its working directory and that the orchestrator checks the directory the role reports before it goes on."
+  ],
   "depends_note": null,
   "findings_note": "s384 relay report 2026-10-22, later notes 4 and 5: a reviewer used `cd` twice in read-only commands, and a resumed Codex implementer started in the main checkout, not the worktree (main was left clean)",
   "size": "S",
   "flags": [],
   "trees_note": "slicer",
   "trees_plural": false,
-  "boundary": "**Not in this slice:** the role matrix, a hook or harness setting that blocks `cd`, and any change to how `relay-run` records steps.",
+  "boundary": "**Not in this slice:** the role matrix, a hook or harness setting that blocks `cd`, any change to how `relay-run` records steps, and the contract bump (s424 bumps to v11 once for all of v1.17).",
   "sections": [
     {
       "heading": "Why",
-      "body": "The relay brief's environment lines already say \"No `cd`: absolute paths and `git -C`\", yet a read-only reviewer ran `cd` twice, which the owner's rules forbid. The relay text keeps the git-write ban in the contract (`src/slicer/ai.py`, the \"Every brief\" section) but not the no-`cd` rule, so a reviewer, architect or gate brief can omit it. Separately, `slicer ai relay-orchestrator` says to resume the role that raised the blockers but not that a headless role, resumed, must be given the slice worktree as its working directory. A Codex implementer resumed in the main checkout could write there. The orchestrator found `main` clean, so nothing was damaged this time."
+      "body": "The relay brief's environment lines already say \"No `cd`: absolute paths and `git -C`\", yet a read-only reviewer ran `cd` twice, which the owner's rules forbid. The relay text keeps the git-write ban in the contract (`src/slicer/ai.py`, the \"Every brief\" section) but not the no-`cd` rule, so a reviewer, architect or gate brief can omit it. Separately, `slicer ai relay-orchestrator` says to resume the role that raised the blockers but not that a headless role, resumed, must be given the slice worktree as its working directory. A Codex implementer resumed in the main checkout could write there. The orchestrator found `main` clean, so nothing was damaged this time.\n\nOwner decision 2026-10-30: every v1.17 rule change lands at v10 text and s424 bumps to v11 once, last. This slice does not touch `RELAY_CONTRACT` or `RELAY_CHANGES`."
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/ai.py` (the \"Every brief\" paragraph and the orchestrator's resume rules).\n- `tests/test_ai.py`, next to `test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume`.\n- `docs/agents.md` or the relay doc only where it quotes that text, `CHANGELOG.md` under Changed. A change to the relay text may need a contract version bump; settle that against s387 at claim."
+      "body": "- `src/slicer/ai.py`: `RELAY_BRIEF` (the \"Every brief\" paragraph, beside \"Reviewer, architect and gate briefs forbid git writes\") and `ORCHESTRATOR_RULES` (the Gate resume rule and the Waiting rule's \"resume it and tell it to finish\").\n- `tests/test_ai.py`, next to `test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume`; `tests/fixtures/relay-contract-v10.json` regenerated for the new text.\n- `docs/agents.md` or `docs/working-with-agents.md` only where it quotes that text; `CHANGELOG.md` under Changed."
     },
     {
       "heading": "Failing tests",
@@ -24,11 +26,11 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; watch them go red.\n2. Add the no-`cd` sentence beside the git-write ban, and the resume-workdir rule to the orchestrator's Gate/Waiting rules.\n3. Update the docs and CHANGELOG; decide the contract version question with the owner.\n4. Mutation-check each new test."
+      "body": "1. Write the tests; watch them go red.\n2. Add the no-`cd` sentence beside the git-write ban, and the resume-workdir rule to the orchestrator's Gate/Waiting rules. Keep Gate, Every brief, Stop and Conformance identical across both texts (`relay_shared_sections`).\n3. Regenerate the golden; update the docs and CHANGELOG. Leave `RELAY_CONTRACT` at 10; record the rule change in the closing note for s424's `RELAY_CHANGES` entry.\n4. Mutation-check each new test."
     },
     {
       "heading": "Check",
-      "body": "- `python3.12 tests/affected.py --run`, then the full suite. `slicer check` passes."
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
     },
     {
       "heading": "Git",

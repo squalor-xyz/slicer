@@ -1,0 +1,41 @@
+{
+  "id": "s425",
+  "title": "Relay rules from the squalify run: fix-round recheck, mid-run owner questions, after-land checks, merged-slice regate",
+  "lead": [
+    "A small fix round is rechecked by whichever read-only role already holds its findings; a non-blocker owner question is asked in the ledger as it arises and the run goes on; a Check line marked `[AFTER LAND]` is deferred from the finish step to Land; and when a parallel slice's branch takes a merge of main that needs no code fix, its regate is the one-pass small-fix check."
+  ],
+  "depends_note": null,
+  "findings_note": "squalify relay log 2026-10-27 (filed on s412)",
+  "size": "M",
+  "flags": [],
+  "trees_note": "ai",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** squalify item 1 (an unmatched orchestrator means the outer session orchestrates: s424 finding 11), the wording and test follow-ups (s412), a combined gate across several slices' diffs, a dashboard of slicer's own that answers questions, any ork or adj change, and the contract bump (s424 bumps to v11 once for all of v1.17).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "From the squalify relay log (2026-10-27), filed on s412:\n\n- (2) A small fix round is re-checked by \"the reviewer\" (`ORCHESTRATOR_RULES`, \"resume the reviewer, who checks the new diff and gives the VERDICT\"). In squalify, resuming the gate took 30 to 70 s against 72 min for the reviewer. Any read-only role that raised the findings never wrote code in the slice, so independence holds.\n- (3) A non-blocker owner question goes only in the run report (\"A non-blocker owner question stays in the run report\"). An answer that arrives after the finish step forces `set --status started`, a fix round, a re-gate and the finish step again. `relay-run ask` today always puts the step in the owner wait (`ops.relay_run_ask`), so asking early would stall the run.\n- (4) A Check item that needs another slice landed first (a corpus run after a dependency merges) has no place: the finish step had to wait for land. `[HUMAN CHECK]` lines already have a place at Approve; there is no marker for \"after land\".\n- (5) With parallel slices, gating once on the merged result (commit the branch, merge main, a combined fix round, one gate) beat gate, merge, regate. Today Order says \"Review and land them one at a time, and rerun the suite on the slice branch merged with the new main when main moved\", and Land step 6 sends a failure back as a fix round, which needs another gate.\n\nOwner decisions 2026-10-30: (3) a non-blocker `relay-run ask` never waits; (4) the `[AFTER LAND]` marker as below; (5) keep gate, merge, regate, but a regate after a merge that needed no code fix is the one-pass small-fix check, with no new hand-back state. Wording for (2) and (4) is proposed; the implementer may tighten it.\n\nWording:\n\n- (2) `ORCHESTRATOR_RULES`, the small-fix-round rule: \"A small fix round (accepted findings only, no new files) is checked and gated in one pass: resume the read-only role that raised those findings (the reviewer, the architect or the gate), which checks the new diff against them and gives the VERDICT. Anything larger gets a review round, then a gate round.\"\n- (3) `ORCHESTRATOR_RULES`, Owner questions, replacing \"A non-blocker owner question stays in the run report.\": \"Ask an owner question that does not block as soon as it arises, with the same command without `--blocker`. It records the question and leaves your step running: do not end your turn or wait for it. Before the closing note and the finish step, read each with `slicer relay-run answer RUN QUESTION_ID --get`; an answer that changes the slice goes to the implementer as a fix round first. A question still open then goes on the report's owner-needed line.\" `RELAY_ORDER`, Owner answers, adds: \"While the run goes on, the owner, or a dashboard that reads the ledger, may answer a non-blocker question with `relay-run answer`; the outer session does so only when its harness leaves it free while the orchestrator runs.\" `relay-run ask` without `--blocker` records the question without the owner wait; `relay-run answer` on such a question records the answer and leaves the step's phase alone.\n- (4) `RELAY_STEPS` step 5 (Approve) and `RELAY_LAND` step 6, plus one Every brief sentence: \"A Check line marked `[AFTER LAND]` needs something main does not have yet, such as another slice landed. The implementer and the gate do not run it, the finish step does not wait for it, and the orchestrator names it on the deviations line as `deferred to land: LINE`. The outer session shows it at Approve and runs it at Land step 6, after main is merged in; a failure goes back as a fix round. With end point `finish` or `commit`, it goes in the report's later notes instead.\"\n- (5) `RELAY_ORDER`, the parallel paragraph, and `RELAY_LAND` step 6: \"When main moved and the slice branch takes a merge of main (Land step 3), rerun the suite on the merged branch. If it passes and the merge needed no code change beyond the merge drivers' and a rebaselined golden, the regate is the one-pass small-fix check: resume the read-only role that gave the last VERDICT on the merge diff alone. A merge that needs a code fix gets a fix round and the usual gate.\" No new hand-back line or wait state."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: `ORCHESTRATOR_RULES` (small fix round, Owner questions, Waiting), `RELAY_STEPS` step 3 and 5, `RELAY_ORDER` (Owner answers, parallel slices), `RELAY_LAND` step 6, `RELAY_BRIEF` (the `[AFTER LAND]` sentence), `_relay_conformance` only if a gate obligation's wording changes.\n- `src/slicer/ops.py` `relay_run_ask` and `relay_run_answer`; `src/slicer/relayrun.py` where the step's wait is derived from a question event.\n- Tests: `tests/test_ai.py` (`AiRelayTests`, `RelayOwnerQuestionContractTests`, `RelayApproveLandTests`), `tests/test_relay_conformance.py`, `tests/test_relay_run.py` (the `Ask` and `Answer` tests); `tests/fixtures/relay-contract-v10.json` regenerated.\n- `docs/commands.md` (`relay-run ask`, `relay-run answer`, `ai relay` rows), `docs/agents.md`, `docs/working-with-agents.md`, `docs/landing.md` (Land step 6), `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_OrchestratorText_SmallFixRound_ResumesTheReadOnlyRoleHoldingTheFindings`; update `test_OrchestratorText_SmallFixRound_ReviewAndGateInOnePass` to the new wording.\n- `test_Ask_NotBlocker_RecordsQuestionAndLeavesStepRunning`: no `waiting_on`, phase stays `start`, the question is open in `relay-run list --json`.\n- `test_Ask_Blocker_StillPutsStepInOwnerWait`.\n- `test_Answer_NonBlockerQuestion_RecordsAnswerWithoutChangingPhase`.\n- `test_OrchestratorRules_NonBlockerQuestion_AskedAsItArisesAndReadBeforeFinish`.\n- `test_RelayOrder_NonBlockerQuestion_AnsweredInLedgerWhileRunGoesOn`.\n- `test_RelayCheck_AfterLandLine_DeferredFromFinishToLandStep6`: Every brief, Approve and Land step 6 name `[AFTER LAND]`; the deviations wording is `deferred to land:`; `finish` and `commit` end points send it to later notes.\n- `test_RelayText_MergedBranchNoCodeFix_RegateIsSmallFixPass`: Order and Land step 6 say a clean merge is regated by the one-pass check on the merge diff, and a merge that needs a code fix gets a fix round and a gate; update `test_RelayText_ParallelSlices_LandOneAtATime`.\n- `test_RelayText_NoWaitingOnMerge`: neither text names a `waiting on: merge` line.\n- The existing JSON-agrees-with-prose tests cover `order` and `land` without new assertions."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests and watch them go red.\n2. Change `relay-run ask`/`answer` for non-blocker questions; refusals stay all-or-nothing.\n3. Edit the texts; keep Gate, Every brief, Stop and Conformance identical across both texts.\n4. Regenerate the golden; update docs and CHANGELOG; mutation-check each new test.\n5. Leave `RELAY_CONTRACT` at 10; record each rule change in the closing note for s424's `RELAY_CHANGES` entry."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

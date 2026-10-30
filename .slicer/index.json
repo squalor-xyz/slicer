@@ -2,7 +2,7 @@
   "version": 10,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 425,
+  "next_id": 427,
   "preamble": "",
   "passes": [
     {
@@ -15173,8 +15173,8 @@
     },
     {
       "id": "s407",
-      "title": "The implementer brief re-anchors first and runs a defect self-check",
-      "short_title": "Implementer re-anchor and self-check",
+      "title": "The implementer brief runs a defect self-check before review",
+      "short_title": "Implementer self-check",
       "status": "open",
       "has_slice": true,
       "depends_on": [],
@@ -15183,7 +15183,9 @@
       "fields": {
         "size": "S",
         "flags": [],
-        "trees": [],
+        "trees": [
+          "ai"
+        ],
         "trees_literal": false,
         "findings": "",
         "discovered_from": "",
@@ -15205,7 +15207,9 @@
       "short_title": "relay-run stats",
       "status": "open",
       "has_slice": true,
-      "depends_on": [],
+      "depends_on": [
+        "s411"
+      ],
       "note_records": [],
       "claim": null,
       "fields": {
@@ -15253,7 +15257,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
-        "effort": null,
+        "effort": 1,
         "attempts": 0
       }
     },
@@ -15283,7 +15287,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 1,
-        "effort": null,
+        "effort": 2,
         "attempts": 0
       }
     },
@@ -15325,7 +15329,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 1,
-        "effort": null,
+        "effort": 1,
         "attempts": 0
       }
     },
@@ -15415,7 +15419,7 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
-        "effort": null,
+        "effort": 1,
         "attempts": 0
       }
     },
@@ -15693,7 +15697,9 @@
         "s391",
         "s407",
         "s409",
-        "s412"
+        "s412",
+        "s425",
+        "s408"
       ],
       "note_records": [],
       "claim": null,
@@ -15715,6 +15721,66 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s425",
+      "title": "Relay rules from the squalify run: fix-round recheck, mid-run owner questions, after-land checks, merged-slice regate",
+      "short_title": "Squalify relay rules",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s412"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "ai"
+        ],
+        "trees_literal": false,
+        "findings": "squalify relay log 2026-10-27 (filed on s412)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.17",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s426",
+      "title": "TUI note delete retracts instead of deleting",
+      "short_title": "TUI note delete retracts instead of deleting",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "s393",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
         "attempts": 0
       }
     }

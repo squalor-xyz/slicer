@@ -1,38 +1,40 @@
 {
   "id": "s407",
-  "title": "The implementer brief re-anchors first and runs a defect self-check",
-  "lead": [],
+  "title": "The implementer brief runs a defect self-check before review",
+  "lead": [
+    "Every brief in `slicer ai relay` and `slicer ai relay-orchestrator` has the implementer check its own diff before each review, fix rounds included, for concurrency and handle lifetime, docs updated with the code, and a test that fails when the new wiring is removed, fix what it finds, and give the result in its report; the existing re-anchor-at-start rule is unchanged and not restated."
+  ],
   "depends_note": null,
   "findings_note": "",
   "size": "S",
   "flags": [],
-  "trees_note": "",
+  "trees_note": "ai",
   "trees_plural": false,
-  "boundary": "**Not in this slice:**",
+  "boundary": "**Not in this slice:** re-anchoring itself (already in the Roles paragraph for the implementer and in Every brief), recording re-anchored references with `slicer edit` as ork's implementer does, a self-check for any other role, a daemon-lifecycle category (slicer's contract names no daemon; a project adds its own categories through its environment lines), and the contract bump (s424 bumps to v11 once for all of v1.17).",
   "sections": [
     {
       "heading": "Why",
-      "body": "Line anchors in slice specs drift as other slices land; re-anchoring at spec time was repeated per slice and wasted. The review FAIL notes in ork's run fell into a few categories: races and handle lifetime (S15, S25, S36, S52), daemon lifecycle (S13, S17, S46), wiring that never reached its caller (S47), and docs out of step with the code (S47, S48, S49). ork's S115 made the implementer re-anchor Files and Failing tests from the current code first, and check its diff against those categories before review."
+      "body": "Line anchors in slice specs drift as other slices land; re-anchoring at spec time was repeated per slice and wasted. That half has already landed: the implementer's Roles paragraph says \"at start the implementer re-anchors them against the code in the worktree\", and Every brief says \"The implementer brief says cited line numbers may have moved and to re-anchor them at start\" (pinned by `test_RelayRoles_Implementer_ReAnchorsLineReferencesLateAtStart` and `test_RelayEveryBrief_OwnerDecisionsSpecCheckAndReAnchor_Carried`). This slice adds only the self-check.\n\nThe review FAIL notes in ork's run fell into a few categories: races and handle lifetime (S15, S25, S36, S52), daemon lifecycle (S13, S17, S46), wiring that never reached its caller (S47), and docs out of step with the code (S47, S48, S49). ork's S115 added a Self-check section to its implementer prompt (`../ork/internal/roles/prompts/implementer.md`): review the diff for concurrency and handle lifetime, confirm docs updated with the code describe the behaviour that ships, confirm a test fails when the wiring is removed using the mutation-check evidence, fix and rerun before reporting. ork's report has no self-check part; here the result goes in the implementer's report so the reviewer sees what was checked (default accepted by the owner 2026-10-30).\n\nProposed wording for Every brief, after the re-anchor sentence (default accepted by the owner 2026-10-30): \"Before each review, fix rounds included, the implementer checks its own diff for concurrency and handle lifetime (locks, files and processes it opens are released on every path), for docs that describe the changed behaviour updated in the same diff, and for a test that fails when the new wiring is removed (a mutation that disconnects the call site), and fixes what it finds.\" The report sentence becomes: \"The report is a diff stat, red lines, test counts, a mutation table, the implementer's self-check (each of the three: what it checked, or `n/a`) and deviations.\"\n\nOwner decision 2026-10-30: every v1.17 rule change lands at v10 text and s424 bumps to v11 once, last."
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/ai.py`: Every brief, the implementer part.\n- The contract golden fixture."
+      "body": "- `src/slicer/ai.py`: `RELAY_BRIEF` (the implementer sentence and the report sentence). Shared by both texts through `relay_shared_sections`.\n- `tests/test_ai.py` (`AiRelayTests`, next to `test_RelayEveryBrief_OwnerDecisionsSpecCheckAndReAnchor_Carried`); `tests/fixtures/relay-contract-v10.json` regenerated.\n- `docs/agents.md` where it describes the implementer's part, `CHANGELOG.md` under Changed."
     },
     {
       "heading": "Failing tests",
-      "body": ""
+      "body": "- `test_RelayEveryBrief_Implementer_SelfChecksDiffBeforeEachReview`: in both texts, Every brief names concurrency and handle lifetime, docs updated in the same diff, and a test that fails when the wiring is removed, before each review including fix rounds.\n- `test_RelayEveryBrief_ImplementerReport_CarriesSelfCheck`: the report sentence names the self-check between the mutation table and deviations.\n- `test_RelayEveryBrief_ReAnchor_NotRestated`: \"re-anchor\" appears in each text exactly as often as before this slice (three times in `ai relay`: the implementer's Roles paragraph, the spec check's and Every brief; once in `ai relay-orchestrator`).\n- The existing re-anchor tests and `test_OrchestratorText_GateEveryBriefStop_SameAsRelayText` pass unchanged."
     },
     {
       "heading": "Implement",
-      "body": "The implementer brief says: re-anchor the spec's line references from the current code before writing tests, and before review check the diff for concurrency and handle lifetime, docs updated with the code, and a test that fails when the wiring is removed."
+      "body": "1. Write the tests; watch them go red.\n2. Edit `RELAY_BRIEF`; keep Gate, Every brief, Stop and Conformance identical across both texts.\n3. Regenerate the golden; update docs and CHANGELOG; mutation-check each new test.\n4. Leave `RELAY_CONTRACT` at 10; record the rule change in the closing note for s424's `RELAY_CHANGES` entry."
     },
     {
       "heading": "Check",
-      "body": "`python3 -m unittest discover -s tests -t tests`; `slicer check`."
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "One commit on the slice branch; the owner lands it."
     }
   ],
   "notes": []

@@ -2370,3 +2370,20 @@
 {"when": "2026-10-30T13:43:48Z", "item": "s409", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-10-30T13:43:48Z", "item": "s419", "action": "set", "from": "", "to": "", "note": "effort -→1"}
 {"when": "2026-10-30T13:43:48Z", "item": "s423", "action": "set", "from": "", "to": "", "note": "effort -→1"}
+{"when": "2026-10-30T14:02:45Z", "item": "s425", "action": "add", "from": "", "to": "open", "note": "Relay rules from the squalify run: fix-round recheck, mid-run owner questions, after-land checks, merged-slice regate"}
+{"when": "2026-10-30T14:02:45Z", "item": "s391", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s407", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s408", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s410", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s411", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s412", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s415", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s393", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T14:02:46Z", "item": "s424", "action": "set", "from": "", "to": "", "note": "depends_on s391,s407,s409,s412→s391,s407,s409,s412,s425,s408"}
+{"when": "2026-10-30T14:02:47Z", "item": "s408", "action": "set", "from": "", "to": "", "note": "depends_on -→s411"}
+{"when": "2026-10-30T14:02:47Z", "item": "s407", "action": "set", "from": "", "to": "", "note": "title The implementer brief re-anchors first and runs a defect self-check→The implementer brief runs a defect self-check before review; short_title Implementer re-anchor and self-check→Implementer self-check; trees -→ai"}
+{"when": "2026-10-30T14:02:47Z", "item": "s426", "action": "add", "from": "", "to": "open", "note": "TUI note delete retracts instead of deleting"}
+{"when": "2026-10-30T14:03:01Z", "item": "s410", "action": "set", "from": "", "to": "", "note": "effort -→1"}
+{"when": "2026-10-30T14:03:01Z", "item": "s412", "action": "set", "from": "", "to": "", "note": "effort -→1"}
+{"when": "2026-10-30T14:03:01Z", "item": "s415", "action": "set", "from": "", "to": "", "note": "effort -→1"}
+{"when": "2026-10-30T14:03:01Z", "item": "s411", "action": "set", "from": "", "to": "", "note": "effort -→2"}

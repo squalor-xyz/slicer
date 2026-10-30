@@ -1,38 +1,40 @@
 {
   "id": "s415",
   "title": "Relay contract pin follow-ups",
-  "lead": [],
+  "lead": [
+    "`slicer config relay_contract` and `slicer config satisfies_dependencies` print `(unset)` and exit 0 while unset (`--json`: `{\"key\": KEY, \"value\": null}`). A `relay_contract` above 9999 is a config error wherever the pin is read. A test pins down that `slicer check` on a config with an unreadable pin exits 3 with code `config`, and `docs/commands.md` says so."
+  ],
   "depends_note": null,
   "findings_note": "",
   "size": "S",
   "flags": [],
   "trees_note": "config",
   "trees_plural": false,
-  "boundary": "**Not in this slice:**",
+  "boundary": "**Not in this slice:** changing what an unset pin means, the `contract_mismatch` refusals in `ai relay`, `ai relay-orchestrator` and `ai relay-brief`, the whole-config read (`slicer config` with no KEY still lists only keys that are set or have a default), and ork's side of the pin (ork S24 and S198 read `pinned` from `ai relay --json` and write it with `slicer config relay_contract N`; neither changes).",
   "sections": [
     {
       "heading": "Why",
-      "body": "From the s387 review."
+      "body": "From the s387 review. s420 was retired as a duplicate of the first bullet.\n\n1. `Config.to_dict` leaves out `relay_contract` and `satisfies_dependencies` while they are unset, and `_config_read` in `src/slicer/cli.py` walks `to_dict()` only. So `slicer config relay_contract` on an unpinned project fails with `usage` and \"'relay_contract' is not a config key\", although `slicer config relay_contract 10` sets it and `--unset` clears it. The write path already knows both keys through `ops._config_schema`, and `ops._config_value_text` already prints `None` as `(unset)`. ork reads the pin through `ai relay --json` (`pinned`), so this is about people and scripts using `config`, but a read that says a settable key does not exist is wrong.\n2. `Config.validate` (`src/slicer/config.py`, the `relay_contract` check) and `cli._salvage_relay_pin` accept any positive int. Checked in a scratch project: a pin of 2**70 loads, `check` warns with the full number, `ai relay` refuses with it, and `slicer config relay_contract 99999999999999999999999` is accepted. A Go consumer decoding `pinned` into `int` overflows. The validate message also still says \"such as 9\" while `ai.RELAY_CONTRACT` is 10.\n3. Checked in a scratch project: `slicer check` on a config whose pin is `0` exits 3 with `{\"error\": {\"code\": \"config\", \"message\": \"relay_contract must be a positive whole number, such as 9\", \"command\": \"check\"}}`. `check` does not salvage the pin as `ai relay` does. That is right (a config that does not load fails the gate), but no test or doc says so."
     },
     {
       "heading": "Files",
-      "body": ""
+      "body": "- `src/slicer/config.py`: a module constant `RELAY_CONTRACT_MAX = 9999` (default accepted by the owner 2026-10-30), and the `relay_contract` check in `Config.validate` bounded by it. The message becomes \"relay_contract must be a whole number from 1 to 9999\", which drops the stale example.\n- `src/slicer/cli.py`: `_salvage_relay_pin` applies the same bound, importing the constant rather than repeating 9999, so an oversized pin is refused with `contract_mismatch` (\"could not be read\") like `0`. `_config_read`: when a dotted KEY is missing from `to_dict()` but present in `ops._config_schema()`, print `(unset)` and emit `{\"key\": KEY, \"value\": null}`. A key in neither still fails with `usage`. If calling the private helper from `cli.py` reads badly, rename it to `ops.config_schema`.\n- `tests/test_config_command.py`: the two existing reads after `--unset` (relay_contract's `code == 2` in `test_Config_RelayContract_RoundTripsAndRefusesNonPositiveInt` and satisfies_dependencies's in `test_ConfigUnset_Key_RemovesItSoTheDefaultApplies`) flip to exit 0 and `(unset)`.\n- `tests/test_config.py`, `tests/test_relay_pin.py`.\n- `docs/configuration.md` (the `relay_contract` row: the range, and that `config relay_contract` reads `(unset)`; the `satisfies_dependencies` row likewise), `docs/commands.md` (the `check` row: an unloadable config, an unreadable pin included, exits 3 with `config`), `docs/agents.md` (the pin paragraph near line 181: the range), `CHANGELOG.md` under Fixed."
     },
     {
       "heading": "Failing tests",
-      "body": ""
+      "body": "- `test_ConfigCommand_OptionalKeyUnset_ReadsUnset` (`tests/test_config_command.py`): on a fresh project, `config relay_contract` and `config satisfies_dependencies` each exit 0 and print `(unset)`, and with `--json` give `{\"key\": KEY, \"value\": null}`.\n- `test_ConfigCommand_UnknownKey_StillUsage` (`tests/test_config_command.py`): `config no_such_key` still exits 2 with code `usage` and the \"is not a config key\" message.\n- `test_Config_RelayContractAboveCap_IsConfigError` (`tests/test_config.py`): 9999 loads; 10000 and 2**63 are config errors whose message names `relay_contract` and the range.\n- `test_ConfigCommand_RelayContractAboveCap_IsBadConfigValue` (`tests/test_config_command.py`): `config relay_contract 10000` exits 2 with `bad_config_value` and leaves `config.json` byte-identical.\n- `test_AiRelay_PinAboveCap_RefusesAsUnreadable` (`tests/test_relay_pin.py`): a hand-written pin of 10000 makes `ai relay`, `ai relay-orchestrator` and `ai relay-brief` exit 2 with `contract_mismatch` and the \"could not be read\" message, as `BAD_PINS` do. Adding 10000 to `BAD_PINS` covers this if that reads better.\n- `test_Check_UnreadablePin_ExitsThreeWithConfigCode` (`tests/test_relay_pin.py`): a pin of `0`, and one of 10000, makes `check --json` exit 3 with code `config` and leaves every file untouched."
     },
     {
       "heading": "Implement",
-      "body": "- `slicer config relay_contract` while unset fails with \"'relay_contract' is not a config key\"; reads of optional keys should fall back to the schema and print `(unset)` (same for `satisfies_dependencies`).\n- The pin is an unbounded int; cap it so a Go consumer decoding into int cannot overflow.\n- `slicer check` with an unloadable pin exits 3 with the config error; document or test it."
+      "body": "1. Write the tests; watch them go red (the check-exit test passes today; it pins the current behaviour down).\n2. Add the cap to `validate` and `_salvage_relay_pin`.\n3. Teach `_config_read` the schema fallback.\n4. Update docs and CHANGELOG. Mutation-check each new test."
     },
     {
       "heading": "Check",
-      "body": ""
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "One commit on the slice branch; the owner lands it."
     }
   ],
   "notes": []

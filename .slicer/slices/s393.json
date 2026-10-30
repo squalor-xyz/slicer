@@ -1,38 +1,40 @@
 {
   "id": "s393",
   "title": "Retract a note that turned out wrong",
-  "lead": [],
+  "lead": [
+    "`slicer note-retract ID --note-id NOTE --reason TEXT [--owner ACTOR]` (default accepted by the owner 2026-10-30) marks one item note as retracted without deleting it. The record keeps its text and gains `retracted_by`, `retracted_at` and `retracted_reason`. The render shows it as retracted. `next --ready` note packing omits it with reason `retracted`, and it no longer satisfies `handoff_requires_note_kind`. History gets a `note-retract` line. An unknown note is refused with `usage` and nothing is written."
+  ],
   "depends_note": null,
   "findings_note": "ork S65 relay, 2026-10-25",
   "size": "S",
   "flags": [],
   "trees_note": "",
   "trees_plural": false,
-  "boundary": "**Not in this slice:**",
+  "boundary": "**Not in this slice:** deleting or editing note text (the TUI's existing edit and delete stay as they are), un-retracting, retracting legacy slice notes (`slice-legacy-N` has no record), counting or reporting review failures, and any change to ork, which writes `Review FAIL:` notes (`../ork` `internal/engine/states.go:573`) and keeps that logic.",
   "sections": [
     {
       "heading": "Why",
-      "body": "A relay orchestrator recorded `Review FAIL: none (reviewer: no blockers)` on ork's S65 because a fix round ran for UI suggestions. It is not a failure, but a note cannot be withdrawn, so the slice history shows a false FAIL. `slicer note` (src/slicer/cli.py:2422) has kinds and `--stale-after` but no retraction."
+      "body": "A relay orchestrator recorded `Review FAIL: none (reviewer: no blockers)` on ork's S65 because a fix round ran for UI suggestions. That was not a failure. A note cannot be withdrawn, so the slice history shows a false FAIL. `slicer note` (`cmd_note`, `src/slicer/cli.py`) has kinds and `--stale-after` but no retraction. Notes are an audit trail: `mergeindex` treats `note_records` as append-only records keyed by id. A retraction therefore adds fields to the record and never removes it.\n\nNothing in slicer counts `Review FAIL` notes. The string appears only in the relay contract text in `src/slicer/ai.py`. So retraction needs no counter changes in slicer, but a consumer reading `note_records` sees the new fields."
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/cli.py:2422` (cmd_note) and the note record model.\n- The render of notes and the note packing used by `next --ready`."
+      "body": "- `src/slicer/model.py`: `NoteRecord` gains `retracted_by`, `retracted_at` and `retracted_reason` (strings, default `\"\"`), placed after `stale_after` in `persisted_dict`, `to_dict` (before the derived `trust`) and `from_dict` (type-checked like the other metadata), plus a `retracted` property. `display()` puts a `[retracted]` label where the kind label goes, before it. `rendered()` adds the three fields to its metadata line. `SCHEMA_VERSION` goes from 10 to 11 so an older slicer refuses an index that may hold a retraction, as the note-metadata change did (CHANGELOG, schema 7). Without the bump, an older slicer would drop the fields on its next save.\n- `src/slicer/ops.py`: `retract_note(state, item_id, note_id, reason, *, owner)`, next to `verify_note`. It looks the record up the same way, refuses an unknown id with `verify_note`'s message and code (`usage`, \"has no item note ...; use show --json to find its ID\"), refuses a blank or multi-line reason (`usage`) and an already-retracted note (`usage`, naming when and by whom), sets the three fields with `_note_actor(actor(state, owner))` and `_now()`, saves the index and calls `_record(state, item_id, \"note-retract\", note=record.id, by=...)`. The reason is not put in the log `note` field; the record holds it.\n- `src/slicer/ops.py`: the `handoff_requires_note_kind` check in `handoff_many` skips retracted records.\n- `src/slicer/note_pack.py`: `select` omits a retracted record with reason `\"retracted\"`. It is checked first, ahead of `kind`, `expired`, `trust` and `budget`.\n- `src/slicer/cli.py`: a `note-retract` parser in the `note-verify`/`note-attest` loop's neighbourhood (`--note-id` required, `--reason` required, `--owner` optional, `--render`/`--strict`), `cmd_note_retract` wrapped in `_mutating`, emitting `{\"id\", \"note_record\"}` as `cmd_note_verify` does.\n- `src/slicer/tui.py`: the notes panel dims a retracted note (`PanelLine(..., role=\"dim\")`).\n- `tests/test_note_verification.py` (record shape, schema), `tests/test_note.py` (command, render), `tests/test_note_pack.py`, `tests/test_handoff.py`, `tests/test_merge_index.py`.\n- `docs/commands.md` (a `note-retract` row beside `note-verify`, and the note-record key list near line 144), `docs/agents.md` (the `note_records` key list near line 396 and the metadata paragraph near line 984), `CHANGELOG.md` under Added, noting index schema 11."
     },
     {
       "heading": "Failing tests",
-      "body": "- A retracted note stays in history with who, when and why, renders struck or dim, and is skipped by `next --ready` note packing.\n- Retracting an unknown note names the item and the note reference and says what to do next."
+      "body": "- `test_Retract_KnownNote_KeepsTextAndRecordsWhoWhenWhy` (`tests/test_note.py`): after `note-retract S01 --note-id N --reason \"not a failure\" --owner relay`, `show --json` still lists the note with its text unchanged, `retracted_by` `relay`, a `retracted_at` timestamp and `retracted_reason` `not a failure`. `log.jsonl` gains one `note-retract` line naming the note id.\n- `test_Retract_UnknownNote_IsUsageAndWritesNothing` (`tests/test_note.py`): a note id the item does not have exits 2 with `usage`, the message names the item and the id and points at `show --json`, and the index and log are byte-identical.\n- `test_Retract_BlankOrMultiLineReason_IsUsageAndWritesNothing` (`tests/test_note.py`).\n- `test_Retract_AlreadyRetracted_IsUsageAndWritesNothing` (`tests/test_note.py`).\n- `test_Render_RetractedNote_ShowsLabelAndRetraction` (`tests/test_note.py`): the rendered slice carries `[retracted]` in the note paragraph and `retracted_by`, `retracted_at` and `retracted_reason` in its metadata line, and two renders are byte-identical.\n- `test_NoteRecord_RetractionFields_FixedOrderAndRoundTrip` (`tests/test_note_verification.py`): `to_dict` keys are `id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, retracted_by, retracted_at, retracted_reason, trust`. A record without the fields loads with them empty. A non-string value is `corrupt`.\n- `test_Schema_RetractionFields_OlderReadersRefuse` (`tests/test_note_verification.py`): with `SCHEMA_VERSION` patched to 10, `show` exits 3 with `schema_too_new`.\n- `test_Pack_RetractedNote_OmittedWithReasonRetracted` (`tests/test_note_pack.py`): a retracted human-reviewed note is absent from the selection and listed in `omitted` with reason `retracted`, even with no budget and `min_trust` unverified.\n- `test_Handoff_RequiredKindOnlyRetracted_IsRefused` (`tests/test_handoff.py`): with `handoff_requires_note_kind` set, a current-attempt note of that kind that is retracted does not satisfy handoff.\n- `test_MergeIndex_RetractedOnOneSide_TakesTheRetraction` (`tests/test_merge_index.py`): base and theirs hold the note unretracted, ours retracted it; the merge keeps one note, retracted."
     },
     {
       "heading": "Implement",
-      "body": "Proposed form: slicer note gains a retract option that takes the note reference and a reason (flag names to be decided in the slice). Never delete the note."
+      "body": "1. Write the tests; watch them go red.\n2. Add the fields, label and schema bump in `model.py`; then `ops.retract_note`, the handoff filter, the pack reason, the CLI command and the TUI dim.\n3. Update docs and CHANGELOG. Mutation-check each new test."
     },
     {
       "heading": "Check",
-      "body": "`python3 tests/affected.py --run`; `slicer check`."
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "One commit on the slice branch; the owner lands it."
     }
   ],
   "notes": []
