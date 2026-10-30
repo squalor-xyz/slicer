@@ -1321,6 +1321,34 @@ class AiRelayTests(unittest.TestCase):
         ):
           self.assertIn(phrase, flat)
 
+  def test_RelayEveryBrief_Implementer_SelfChecksDiffBeforeEachReview(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        self.assertIn(
+          "Before each review, fix rounds included, the implementer checks its own diff for "
+          "concurrency and handle lifetime (locks, files and processes it opens are released on "
+          "every path), for docs that describe the changed behaviour updated in the same diff, "
+          "and for a test that fails when the new wiring is removed (a mutation that disconnects "
+          "the call site), and fixes what it finds.",
+          flat,
+        )
+
+  def test_RelayEveryBrief_ImplementerReport_CarriesSelfCheck(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        self.assertIn(
+          "The report is a diff stat, red lines, test counts, a mutation table, the implementer's "
+          "self-check (each of the three: what it checked, or `n/a`) and deviations.",
+          flat,
+        )
+        self.assertNotIn("a mutation table and deviations.", flat)
+
+  def test_RelayEveryBrief_ReAnchor_NotRestated(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        expected = 3 if label.startswith("relay-") else 1
+        self.assertEqual(flat.lower().count("re-anchor"), expected)
+
   def test_RelaySpecCheck_Text_NamesNoProject(self) -> None:
     self.assertEqual(ai.RELAY_CONTRACT, 10)
     self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 10)

@@ -119,6 +119,10 @@ the orchestrator carries it into the resumed role's brief (relay Order step 3 an
 answers paragraph, and the orchestrator's `Owner answers` rule). A project that keeps a decision
 log also records there a design answer the owner explicitly picked. The implementer re-anchors
 the line numbers a slice cites late, at start, since they may have moved; the spec check does not.
+Before each review, fix rounds included, the implementer checks its own diff for concurrency and
+handle lifetime, for docs updated in the same diff, and for a test that fails when the new wiring
+is removed, and fixes what it finds. Its report gives each check's result, or `n/a`, between the
+mutation table and deviations (the Every brief sentence of both contracts).
 The spec check is named in contract text only: it is not in the role matrix or in
 `relay-roles recommend`.
 

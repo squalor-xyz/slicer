@@ -16049,10 +16049,39 @@
       "id": "s407",
       "title": "The implementer brief runs a defect self-check before review",
       "short_title": "Implementer self-check",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "5c647dbe-1c49-41ec-b149-1cf388b538ce",
+          "kind": "",
+          "text": "**2026-10-30** — For s424's v11 RELAY_CHANGES entry: Every brief now has the implementer check its own diff before each review (concurrency and handle lifetime, docs updated in the same diff, a test that fails when the wiring is removed) and report each check or n/a. RELAY_CONTRACT stays 10 here.",
+          "created_at": "2026-10-30T17:24:50Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "5ddd2af2-f2e1-416f-a261-7159329f4a6b",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: implementer self-check sentence and report-shape sentence in the shared Every brief text, golden rebaselined, re-anchor not restated. Full suite 3006 OK; gate PASS.",
+          "created_at": "2026-10-30T17:24:51Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16072,7 +16101,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

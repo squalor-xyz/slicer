@@ -813,7 +813,8 @@ Include the slice from `slicer show ID --json --lean`, the tracking rule below,
 and the workspace limit: stay inside the workspace the owner named and do not
 read or write outside it. Every brief carries the slice's `Owner decisions` paragraph,
 when it has one, and each owner answer recorded in a note since, verbatim. The report
-is a diff stat, red lines, test counts, a mutation table and deviations. Every brief
+is a diff stat, red lines, test counts, a mutation table, the implementer's self-check
+(each of the three: what it checked, or `n/a`) and deviations. Every brief
 names the role's own temp directory, and no two agents share one. Every brief carries
 the environment lines verbatim. Every brief says the role runs its own shell commands in
 the foreground and backgrounds none, and runs long commands such as the full suite in
@@ -830,10 +831,14 @@ each finding's kind and, where the project can render, the changed views. The
 project may fold the UI pass into the reviewer by slice size, such as the reviewer
 on a small slice and a separate role on a larger one; where it does, the reviewer's
 brief also carries the UI pass brief, and no separate UI pass runs. The implementer
-brief says cited line numbers may have moved and to re-anchor them at start. The
-spec-check brief says the agent is read-only, edits nothing and makes no git writes,
-and asks for `ready` or `owner needed` lines for each slice. A part brief names the
-part's own files and the files it must not touch.
+brief says cited line numbers may have moved and to re-anchor them at start. Before
+each review, fix rounds included, the implementer checks its own diff for concurrency
+and handle lifetime (locks, files and processes it opens are released on every path),
+for docs that describe the changed behaviour updated in the same diff, and for a test
+that fails when the new wiring is removed (a mutation that disconnects the call site),
+and fixes what it finds. The spec-check brief says the agent is read-only, edits
+nothing and makes no git writes, and asks for `ready` or `owner needed` lines for each
+slice. A part brief names the part's own files and the files it must not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
