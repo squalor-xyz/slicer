@@ -16079,7 +16079,7 @@
       "id": "s408",
       "title": "relay-run stats: fix-round rate, role times and owner wait per run",
       "short_title": "relay-run stats",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s411"
