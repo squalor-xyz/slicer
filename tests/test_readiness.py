@@ -338,11 +338,11 @@ class RecordShapeTests(unittest.TestCase):
 
 
 class SchemaTests(unittest.TestCase):
-  def test_Schema_IsTenAndSavesStampIt(self) -> None:
-    self.assertEqual(model.SCHEMA_VERSION, 10)
+  def test_Schema_IsElevenAndSavesStampIt(self) -> None:
+    self.assertEqual(model.SCHEMA_VERSION, 11)
     with ReadinessTests().repo() as repo:
       ReadinessTests().mark(repo)
-      self.assertEqual(json.loads(repo.read(".slicer/index.json"))["version"], 10)
+      self.assertEqual(json.loads(repo.read(".slicer/index.json"))["version"], 11)
 
   def test_Schema_OlderBuild_RefusesAnIndexThatMayHoldARecord(self) -> None:
     with ReadinessTests().repo() as repo:

@@ -109,7 +109,7 @@ default applies again. `KEY` is a top-level key, or a dotted path one level into
 | Key | Default | What it affects | Safe to change later? |
 |---|---|---|---|
 | `note_kinds` | `[]` | Optional whitelist of nonempty strings for explicit `note --kind` values. Missing or empty permits any nonempty kind. Omitting `--kind` always creates an untyped note. `decide` writes its built-in `decision` kind even when the whitelist excludes it | **Yes** |
-| `handoff_requires_note_kind` | `""` | Nonempty requires an item note of this exact kind, with nonempty text and the current attempt, before started work can be handed off. Must belong to `note_kinds` when that whitelist is nonempty. Missing or empty keeps existing handoff behavior. Does not change `done` | **Yes**, changes handoff eligibility |
+| `handoff_requires_note_kind` | `""` | Nonempty requires an item note of this exact kind, with nonempty text, the current attempt and no retraction (`note-retract`), before started work can be handed off. Must belong to `note_kinds` when that whitelist is nonempty. Missing or empty keeps existing handoff behavior. Does not change `done` | **Yes**, changes handoff eligibility |
 | `id.prefix` | `"S"` | The id scheme | **Until the first item exists**, with `slicer init --force --id-prefix`; after that, only its case, with `slicer id-prefix`. `slicer config` does not set it. See below |
 | `id.width` | `2` → `S01` | As above | **Until the first item exists**, with `slicer config id.width`; after that `slicer config` refuses it |
 | `statuses` | see above | Maps status *key* → rendered *label*. Labels appear in the roadmap Status column, in `list`, and are what `migrate` parses back | Label: **yes**, re-render. Key: **no** |

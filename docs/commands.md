@@ -54,6 +54,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `issues-pull [--repo OWNER/REPO] [--limit N] [--dry-run] [--render [--strict]]` | file each open GitHub issue as one open roadmap row with no slice, through `gh issue list --repo OWNER/REPO --state open --limit N --json number,title,url`. The issue body is never requested. Each row's filing key is `github:OWNER/REPO#NUMBER` and its findings is the issue URL; it lands unscored (importance 2, urgency 2, no effort) with an empty pass, in ascending issue number. A rerun reuses a row with that key in any status and does not refresh its title; when nothing is new, nothing is written or rendered. The source is `--repo`, else config `issues_repo`; neither is `usage`. `--limit` defaults to 30 and must be 1-100; no further pages are read. `--dry-run` still calls `gh` but writes nothing and takes no lock. Every issue is checked before any row is added: a blank title is `blank_title`, a title with a newline is `newline_in_field`, and a number that is not a positive integer, a URL that is not this repo's issue URL, or a repeated number is `external`; nothing is written. `.slicer/lock` is not held while `gh` runs. A missing or failing `gh` is `external` (exit 2). `--render` and `--strict` behave as for `add` |
 | `note-verify ID --note-id NOTE [--owner ACTOR]` | verify an item note as a machine actor; supports `--render` and `--strict` |
 | `note-attest ID --note-id NOTE --owner NAME` | attest an item note as `human:NAME`; a workflow convention, not caller authentication; supports `--render` and `--strict` |
+| `note-retract ID --note-id NOTE --reason TEXT [--owner ACTOR]` | retract an item note as wrong without deleting it: its text stays and the record gains `retracted_by`, `retracted_at` and `retracted_reason`. The render shows `[retracted]`, the TUI dims the note, `next --ready` note packing omits it with reason `retracted`, and it no longer satisfies `handoff_requires_note_kind`. An unknown note, a blank or multi-line reason, and an already-retracted note are `usage` and write nothing. Logs a `note-retract` line; supports `--render` and `--strict` |
 | `prose list / show REF / edit REF` | read and edit the roadmap's own prose |
 | `prose add-pass KEY / drop-pass KEY` | open or close a pass group; `add-pass` reports how many existing items already use KEY |
 | `goals [--retired]` | print the project's goals and non-goals prose together, plus active goal and non-goal records; `--retired` includes retired ones. JSON keeps `goals` and `non_goals` and adds `records.goal` and `records.non_goal` |
@@ -141,10 +142,15 @@ Legacy unknown-attempt notes, wrong kinds, previous-attempt reports, and history
 `done` is unaffected. Manually changing `attempts` changes report association.
 
 Item notes keep their public `notes` array as display strings and add `note_records`
-with `{id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, trust}`; `trust` is derived and never stored. `note ID --kind KIND` labels the dated
+with `{id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, retracted_by, retracted_at, retracted_reason, trust}`; `trust` is derived and never stored. `note ID --kind KIND` labels the dated
 paragraph as `**DATE** — [KIND] text`; omitting `--kind` preserves the existing display.
 `note_kinds` optionally restricts explicit kinds. New notes store a UUID, UTC creation
 time, and the current implementation attempt. Editing preserves creation and authorship metadata but clears verification on text changes.
+`note-retract` marks a note wrong: it keeps the text, sets `retracted_by`, `retracted_at`
+and `retracted_reason` (one nonblank line), and the note stays in every read. A retracted
+note renders as `[retracted]` before any kind label, is left out of `next --ready` note
+packs with reason `retracted`, and does not satisfy `handoff_requires_note_kind`. No command
+undoes a retraction.
 
 Repeat `--notes-kind KIND` on `show ID` or `next --ready` (including batches) to select
 the union of exact kinds in stored order. `--notes-kind ''` selects untyped notes,
@@ -180,8 +186,8 @@ The requested `note_pack` accompanies item `notes` and `note_records`, including
 section/context projections and each ready batch entry's `item`. It contains
 `selected_ids` in selection order, `omitted` entries `{id, reason}` in original
 order (item notes followed by legacy slice notes), `characters`, `budget` (null
-for unlimited), and `min_trust`. Omission reasons have precedence `kind`,
-`expired`, `trust`, `budget`. Lean output preserves the entire manifest, including
+for unlimited), and `min_trust`. Omission reasons have precedence `retracted`,
+`kind`, `expired`, `trust`, `budget`. Lean output preserves the entire manifest, including
 empty arrays. Selected legacy text stays in `slice.notes`, or `slice_notes` on
 section-only show output. Text output also includes the manifest.
 
@@ -555,8 +561,9 @@ The index merge driver merges catalog records by id, the way it merges items,
 and takes the larger `catalog.next_id`. Record order follows the base unless
 exactly one side reordered it.
 
-Index schema is 10: schema 8 added `catalog`, schema 9 added `fields.parent` and schema 10 the
-item's `readiness` record. An index without `catalog`, `parent` or `readiness` still loads. The next save writes the object and the
+Index schema is 11: schema 8 added `catalog`, schema 9 added `fields.parent`, schema 10 the
+item's `readiness` record and schema 11 note retraction fields. An index without `catalog`, `parent`,
+`readiness` or the retraction fields still loads. The next save writes the object and the
 new schema, which an older slicer refuses.
 
 ## Relay run ledger

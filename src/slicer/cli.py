@@ -2780,6 +2780,13 @@ def cmd_note_verify(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_note_retract(args: argparse.Namespace) -> int:
+  record = ops.retract_note(_state(args), args.id, args.note_id, args.reason, owner=args.owner)
+  _emit(args, {"id": args.id, "note_record": record.to_dict()},
+    f"{args.id} note {record.id}: retracted by {record.retracted_by}")
+  return OK
+
+
 def cmd_edit(args: argparse.Namespace) -> int:
   if sum((args.section is not None, args.boundary, args.lead)) != 1:
     raise StateError("choose exactly one of --section, --boundary, or --lead", code="usage")
@@ -4197,6 +4204,13 @@ def build_parser() -> argparse.ArgumentParser:
       sp.add_argument("--owner", required=True, help="owner name; stored as human:NAME")
     else:
       sp.add_argument("--owner", help="verifying actor; uses the claim actor precedence; no human: prefix")
+
+  sp = _strict_flag(_render_flag(add("note-retract", _mutating(cmd_note_retract),
+    "retract an item note as wrong; its text and who, when and why stay on the record")))
+  sp.add_argument("id")
+  sp.add_argument("--note-id", required=True, help="stable item-note ID from show --json")
+  sp.add_argument("--reason", required=True, help="one line saying why the note is wrong")
+  sp.add_argument("--owner", help="retracting actor; uses the claim actor precedence; no human: prefix")
 
   sp = _check_flag(_render_flag(add("done", cmd_done, "mark an item finished")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")

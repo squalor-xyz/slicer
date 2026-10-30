@@ -393,7 +393,7 @@ $ slicer next --json
 ```
 
 Item `notes` remains a list of display strings. Additive `note_records` carries
-`{id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, trust}` in that key order (`trust` is derived, read-only, never stored); `text` is the complete dated
+`{id, kind, text, created_at, attempt, by, verified_by, verified_at, stale_after, retracted_by, retracted_at, retracted_reason, trust}` in that key order (`trust` is derived, read-only, never stored); `text` is the complete dated
 paragraph before adding the kind label. Historical strings retain their exact text,
 get stable item-local positional IDs, empty `created_at`, and null `attempt` on reads.
 The next index save persists those records under the current index schema (note records arrived in schema 4). New notes use stored UUIDs,
@@ -429,7 +429,7 @@ Requested packs always expose `note_pack` beside item `notes`/`note_records` (on
 {"selected_ids": [], "omitted": [], "characters": 0, "budget": null, "min_trust": "unverified"}
 ```
 
-`omitted` entries are `{id, reason}`; reason precedence is `kind`, `expired`,
+`omitted` entries are `{id, reason}`; reason precedence is `retracted`, `kind`, `expired`,
 `trust`, `budget`. Selected IDs follow ranking order; omissions follow original
 item-note then slice-note order. The budget covers display text only, excluding
 manifest/metadata/sections. Section/context projections expose the same manifest
@@ -517,6 +517,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 | `feedback-report` | `{repo, dry_run, issues, unmarked}`; each issue has `entry` (sha256 of the entry's header and body), `kind`, `at`, `item` only when stored, and `title`, plus `body` under `--dry-run` or `issue` and `url` after `--yes`. `unmarked` lists issues filed for entries that changed while they were sent, which are not recorded and may be filed again. Both lists stay present under `--lean`. Nothing to file is exit 0 with empty lists |
 | `issues-pull` | `{repo, dry_run, created, reused, items}`. `created` and `reused` are id lists; `created` is empty under `--dry-run`, which creates nothing. Each item has `number`, `title` (as stored for a reused row), `key` (`github:OWNER/REPO#NUMBER`), `id` (null for a new row under `--dry-run`), and `existing`. Both lists stay present under `--lean`. Nothing new is exit 0 |
 | `note-verify`, `note-attest` | `{id, note_record, trust}`; repeating the same verifier is a no-op (no write, no render) |
+| `note-retract` | `{id, note_record}`, the record with its `retracted_by`, `retracted_at` and `retracted_reason`; a repeat retraction is `usage` and writes nothing |
 | `find` | array of items with `match: {field, snippet}`; with `--lean`, each row is only `{id, title, status, has_slice, match}` |
 | `deps` | unblocked-item array; for `deps ID`, `{id, waits_on, blocked_by, dependents}`; mermaid format returns `{format, graph}`; `deps --overlap A B [C ...]` returns `{overlap: [{a, b, shared}]}` with one entry per pair in argument order and `shared` the paths both items name in `files_section`, less `overlap_ignore`. Fewer than two ids, an ID or `--format` alongside, or no `files_section` is `usage` |
 | `goals` | `{goals, non_goals, records}`. `records` is `{goal, non_goal}`, active records unless `--retired`. Requirements, constraints, decisions, and assumptions are read with `slicer catalog`, not here |
@@ -822,7 +823,7 @@ filters by exact source and combines with other filters; an unknown ID is
 writing the batch. Provenance neither blocks pickup nor changes scores.
 Missing historical fields load empty; `--lean` omits empty provenance. Source
 retirement keeps references valid; purge needs `--force` when referenced and
-then integrity validation reports the dangling source. Index saves stamp schema 10 (provenance arrived in 5, filing keys in 6)
+then integrity validation reports the dangling source. Index saves stamp schema 11 (provenance arrived in 5, filing keys in 6)
 so older readers refuse rather than lose provenance.
 
 **Slivers.** A sliver is a small item carved out of a larger slice. `add --parent ID` and
@@ -851,7 +852,7 @@ finish guards it skips.
 purged parent's ID is not reclaimed while a sliver names it. In an outline, `parent:` takes
 a title (of another entry in the same file, filed earlier or later, or of an existing
 item) as `depends:` does, else an existing item ID; `check` and `verify` report an unknown parent, a nested parent and a self-parent as
-errors. Index saves stamp schema 10 so older readers refuse rather than lose the link.
+errors. Index saves stamp schema 11 so older readers refuse rather than lose the link.
 
 **Readiness.** `slicer ready ID --by NAME [--note TEXT]` records that a spec check passed, with a
 digest (`sha256:...`) of the slice's title, lead, boundary and ordered sections. `show --json` and
@@ -863,7 +864,7 @@ by running `ready` again after the check, or by restoring the text. `readiness` 
 `--batch`) lists `ready: true` items first within their tier and declared pass, never moves an
 item across passes, and drops nothing. A record is not a
 gate and does not replace reading the slice. It does not know about open decision-log records that
-reference the slice. Index saves stamp schema 10 so older readers refuse rather than drop records.
+reference the slice. Index saves stamp schema 11 so older readers refuse rather than drop records.
 
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)
@@ -981,7 +982,7 @@ Flag open owner decisions with `slicer set ID --add-flag needs-owner`; resolve t
 `slicer decide ID --text "Answer" --render`. `list --held` finds flagged work.
 
 Item note records contain fixed-order `id`, `kind`, `text`, `created_at`, `attempt`,
-`by`, `verified_by`, `verified_at`, and `stale_after`; empty metadata means absent.
+`by`, `verified_by`, `verified_at`, `stale_after`, `retracted_by`, `retracted_at`, and `retracted_reason`; empty metadata means absent.
 `notes` remains the compatible display-string view. `note --owner ACTOR` uses the
 existing actor precedence to record authorship without verification.
 `--stale-after` takes timezone-aware ISO8601 and stores UTC; render does not
@@ -999,9 +1000,16 @@ verifier is a no-op; a different verifier replaces it. Actual text edits clear
 verification and log the previous verifier/time. Unknown note IDs fail with
 `usage` before writes; legacy slice notes cannot be attested.
 
+`note-retract ID --note-id NOTE --reason TEXT [--owner ACTOR]` marks a note wrong. The
+text stays, and the record gains `retracted_by`, `retracted_at` and `retracted_reason`
+(one nonblank line). A retracted note is shown as `[retracted]`, omitted from note packs
+with reason `retracted`, and no longer satisfies `handoff_requires_note_kind`. No command
+undoes a retraction. An unknown note, a blank or multi-line reason and a repeat retraction
+are `usage` and write nothing.
+
 Attestation is a workflow convention, not caller authentication. An agent can
 invoke the owner command; metadata alone does not establish an identity boundary.
-New index saves stamp the current schema (9; note metadata arrived in 7) so older readers refuse rather than erase metadata.
+New index saves stamp the current schema (11; note metadata arrived in 7, retraction fields in 11) so older readers refuse rather than erase metadata.
 
 To add to a section:
 

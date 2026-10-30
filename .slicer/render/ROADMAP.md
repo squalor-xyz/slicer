@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-413 items · — 33 · done 368 · retired 12
+413 items · — 32 · done 368 · retired 12 · review 1
 
 v1.17.0 release
 
@@ -35,7 +35,7 @@ v1.17.0 release
 |---|---|---|---|---|---|---|---|
 | 1 | [s379](slices/s379.md) | check_command config key | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | — |
 | 2 | [s391](slices/s391.md) | Relay resume workdir, no cd | S | 1 | slicer | s384 relay report 2026-10-22, later notes 4 and 5: a reviewer used `cd` twice in read-only commands, and a resumed Codex implementer started in the main checkout, not the worktree (main was left clean) · discovered from s384 | — |
-| 3 | [s393](slices/s393.md) | Note retraction | S | 1 |  | ork S65 relay, 2026-10-25 | — |
+| 3 | [s393](slices/s393.md) | Note retraction | S | 1 |  | ork S65 relay, 2026-10-25 | review |
 | 4 | [s402](slices/s402.md) | Foreground waits, no empty hand-backs | S | 1 |  |  | done |
 | 5 | [s405](slices/s405.md) | Fallback on a vendor limit | S | 1 |  |  | done |
 | 6 | [s407](slices/s407.md) | Implementer self-check | S | 1 | ai |  | — |

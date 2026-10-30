@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import support
 from slicer import model, ops, render, tui
+from slicer.errors import StateError
 import test_note
 
 
@@ -113,7 +114,8 @@ class VerificationTests(unittest.TestCase):
     with self.repo() as repo:
       original = self.note(repo)
       record = self.payload(repo, "show", "S01")["note_records"][0]
-      self.assertEqual(list(record)[-5:], ["by", "verified_by", "verified_at", "stale_after", "trust"])
+      self.assertEqual(list(record)[-8:], ["by", "verified_by", "verified_at", "stale_after",
+        "retracted_by", "retracted_at", "retracted_reason", "trust"])
       self.assertEqual(record["trust"], "unverified")
       lean = self.payload(repo, "show", "S01", "--lean")["note_records"][0]
       self.assertNotIn("verified_by", lean)
@@ -156,6 +158,37 @@ class VerificationTests(unittest.TestCase):
       self.assertNotIn("trust", data["items"][0]["note_records"][0])
       before = self.snapshot(repo)
       with patch("slicer.model.SCHEMA_VERSION", 6):
+        code, out, err = repo.run("show", "S01", "--json")
+      self.assertEqual(code, 3, err)
+      self.assertEqual(json.loads(out)["error"]["code"], "schema_too_new")
+      self.assertEqual(before, self.snapshot(repo))
+
+  def test_NoteRecord_RetractionFields_FixedOrderAndRoundTrip(self):
+    record = model.NoteRecord.from_dict({"id": "n1", "kind": "", "text": "x", "created_at": "", "attempt": None})
+    self.assertEqual((record.retracted_by, record.retracted_at, record.retracted_reason), ("", "", ""))
+    self.assertFalse(record.retracted)
+    record.retracted_by, record.retracted_at, record.retracted_reason = "relay", "2026-10-30T00:00:00Z", "wrong"
+    self.assertTrue(record.retracted)
+    persisted = ["id", "kind", "text", "created_at", "attempt", "by", "verified_by", "verified_at",
+      "stale_after", "retracted_by", "retracted_at", "retracted_reason"]
+    self.assertEqual(list(record.persisted_dict()), persisted)
+    self.assertEqual(list(record.to_dict()), persisted + ["trust"])
+    restored = model.NoteRecord.from_dict(record.persisted_dict())
+    self.assertEqual(restored.to_dict(), record.to_dict())
+    for key in ("retracted_by", "retracted_at", "retracted_reason"):
+      with self.subTest(key=key), self.assertRaises(StateError) as caught:
+        model.NoteRecord.from_dict(record.persisted_dict() | {key: 1})
+      self.assertEqual(caught.exception.code, "corrupt")
+
+  def test_Schema_RetractionFields_OlderReadersRefuse(self):
+    with self.repo() as repo:
+      original = self.note(repo)
+      self.payload(repo, "note-retract", "S01", "--note-id", original.id,
+        "--reason", "wrong", "--owner", "relay")
+      data = json.loads(repo.read(".slicer/index.json"))
+      self.assertGreater(data["version"], 10)  # a schema-10 reader must refuse this index
+      before = self.snapshot(repo)
+      with patch("slicer.model.SCHEMA_VERSION", 10):
         code, out, err = repo.run("show", "S01", "--json")
       self.assertEqual(code, 3, err)
       self.assertEqual(json.loads(out)["error"]["code"], "schema_too_new")

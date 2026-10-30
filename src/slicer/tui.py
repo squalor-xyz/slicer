@@ -442,8 +442,9 @@ def panel(
   out.append(PanelLine("Notes", role="heading"))
   for i, note in enumerate(item.rendered_notes):
     idx = note_base + i
+    role = "dim" if item.note_records[i].retracted else "normal"
     for line in note.split("\n"):
-      out.append(PanelLine(line, idx))
+      out.append(PanelLine(line, idx, role))
     out.append(PanelLine("", idx))
   out.append(PanelLine("+ add a note", note_base + len(item.notes)))
   return out

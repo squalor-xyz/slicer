@@ -96,6 +96,22 @@ class SelectionTests(unittest.TestCase):
       self.pack([record("bad", "x", expiry="invalid")])
     self.assertEqual(caught.exception.code, "corrupt")
 
+  def test_Pack_RetractedNote_OmittedWithReasonRetracted(self):
+    def retracted(identity, **kwargs):
+      note = record(identity, "wrong", **kwargs)
+      note.retracted_by, note.retracted_at = "relay", "2026-10-30T00:00:00Z"
+      note.retracted_reason = "not a failure"
+      return note
+    selected, _, manifest = self.pack([retracted("reviewed", kind="report", verifier="human:Owner"),
+      record("kept", "kept", verifier="human:Owner")])
+    self.assertEqual([n.id for n in selected], ["kept"])
+    self.assertEqual(manifest["selected_ids"], ["kept"])
+    self.assertEqual(manifest["omitted"], [{"id": "reviewed", "reason": "retracted"}])
+    # Retraction is checked first: it wins over kind, expiry, trust and budget.
+    _, _, manifest = self.pack([retracted("filtered", kind="other", expiry="2000-01-01T00:00:00Z")],
+      kinds=["report"], min_trust="human-reviewed", budget=0)
+    self.assertEqual(manifest["omitted"], [{"id": "filtered", "reason": "retracted"}])
+
 
 class PackCommandTests(unittest.TestCase):
   repo = test_note.StructuredNoteTests.repo
