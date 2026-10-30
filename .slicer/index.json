@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 431,
+  "next_id": 432,
   "preamble": "",
   "passes": [
     {
@@ -16503,10 +16503,25 @@
       "id": "s419",
       "title": "relay-brief.md template states the no-background-shell rule",
       "short_title": "relay-brief.md template states the no-background-shell rule",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "89b73821-80a6-4403-8e7b-8582811f3178",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: built-in relay-brief.md Rules tell the orchestrator that it and every role run their own shell commands in the foreground and background none, and run long commands such as the full suite in the foreground with a long timeout. Full suite 2983 OK; gate PASS.",
+          "created_at": "2026-10-30T16:12:16Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16524,7 +16539,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16615,10 +16630,25 @@
       "id": "s423",
       "title": "Allow --reason on relay-run end --close-steps fail",
       "short_title": "Allow --reason on relay-run end --close-steps fail",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "ee7ea2eb-7f21-4034-abd1-1ccd1a48ada0",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: relay-run end --close-steps fail --reason TEXT records the reason on each step it closes; refused with bad_run_field otherwise or when multi-line, before the ledger lock. Full suite 2991 OK; gate PASS.",
+          "created_at": "2026-10-30T16:27:03Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16636,7 +16666,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16866,6 +16896,36 @@
         "group": "",
         "reason": "",
         "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s431",
+      "title": "This repo's relay-brief override carries the built-in Rules bullets",
+      "short_title": "Sync relay-brief override",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s419 review 2026-10-30, owner question: the repo's customized relay-brief.md override lacks the s419 no-background bullet",
+        "discovered_from": "s419",
+        "parent": "",
+        "cites": [],
+        "key": "s419.override-sync",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 1,
         "effort": 1,
         "attempts": 0
