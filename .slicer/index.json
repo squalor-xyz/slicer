@@ -2,7 +2,7 @@
   "version": 10,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 427,
+  "next_id": 428,
   "preamble": "",
   "passes": [
     {
@@ -15712,7 +15712,19 @@
         "s425",
         "s408"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "5cb94592-8a6b-4a47-aa72-00ecef42807b",
+          "kind": "",
+          "text": "**2026-10-30** — From s412 review (2026-10-30): after removing the blocker item from RELAY_STOP and stop[], confirm the relay-brief Stop bullet (built-in and project copy) still matches; s412 changed it to say a blocker owner question is not a stop.",
+          "created_at": "2026-10-30T15:09:29Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -15792,6 +15804,36 @@
         "importance": 2,
         "urgency": 2,
         "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s427",
+      "title": "Relay texts wrap the handoff note-kind sentence at 88 columns",
+      "short_title": "Wrap handoff policy text",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s412 review 2026-10-30, later note: with handoff_requires_note_kind set, ai relay prints a ~394-430 column line from handoff_policy_text",
+        "discovered_from": "s412",
+        "parent": "",
+        "cites": [],
+        "key": "s412.handoff-policy-wrap",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }
