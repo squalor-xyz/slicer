@@ -2421,6 +2421,13 @@
 {"when": "2026-10-30T16:27:05Z", "item": "s423", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:09:06Z", "item": "s430", "action": "add", "from": "", "to": "open", "note": "Waited time stops at the end of an ended run"}
 {"when": "2026-10-30T16:17:46Z", "item": "s411", "action": "status", "from": "review", "to": "done", "note": "Relay-run ledger follow-ups: waiting_since derived in the fold, wait time on relay-run list and the TUI board ([?] marker), counts.roles over lane steps, snapshot run steps carry waiting_on and question, heartbeat-ends-wait sentence (contract stays 10). Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:18:36Z", "item": "s408", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:03:33Z", "item": "s408", "action": "note", "from": "", "to": "", "note": "For s424's v11 RELAY_CHANGES entry: a gate round is closed w", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:03:34Z", "item": "s408", "action": "note", "from": "", "to": "", "note": "Ready for review: relay-run stats [--since] (fix-round rate,", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:03:34Z", "item": "s408", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:28:06Z", "item": "s415", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:01:56Z", "item": "s415", "action": "note", "from": "", "to": "", "note": "Ready for review: config KEY reads an unset relay_contract o", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:02:00Z", "item": "s415", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:28:02Z", "item": "s391", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:53:14Z", "item": "s391", "action": "note", "from": "", "to": "", "note": "For s424's v11 RELAY_CHANGES entry: Every brief requires tha", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:53:14Z", "item": "s391", "action": "note", "from": "", "to": "", "note": "Ready for review: no-cd sentence in Every brief (relay and o", "by": "Jon Robbins"}
@@ -2434,3 +2441,7 @@
 {"when": "2026-10-30T17:24:50Z", "item": "s407", "action": "note", "from": "", "to": "", "note": "For s424's v11 RELAY_CHANGES entry: Every brief now has the ", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:24:51Z", "item": "s407", "action": "note", "from": "", "to": "", "note": "Ready for review: implementer self-check sentence and report", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:24:51Z", "item": "s407", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:04:01Z", "item": "s432", "action": "add", "from": "", "to": "open", "note": "Remove the stray tracked root files True and unspecified"}
+{"when": "2026-10-30T17:14:30Z", "item": "s415", "action": "status", "from": "review", "to": "done", "note": "Relay contract pin follow-ups: unset relay_contract and satisfies_dependencies read as (unset); RELAY_CONTRACT_MAX 9999 bounds the pin in validate and salvage; check with an unreadable pin exits 3 code config. Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:15:36Z", "item": "s433", "action": "add", "from": "", "to": "open", "note": "relay-run stats counts a failed gate step with no verdict as a FAIL"}
+{"when": "2026-10-30T17:29:33Z", "item": "s408", "action": "status", "from": "review", "to": "done", "note": "relay-run stats [--since] (fix rounds, gate fails by verdict then proxy, reruns, role times, owner-wait union, per-run JSON; read-only) and relay-run step --verdict pass|fail on a gate's done step. Gate PASS; merged suite green.", "by": "Jon Robbins"}

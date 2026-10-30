@@ -1,0 +1,41 @@
+{
+  "id": "s432",
+  "title": "Remove the stray tracked root files True and unspecified",
+  "lead": [
+    "The repository root tracks two files, `True` and `unspecified`, that commit 5716ab7 (\"s367 done\") added. They look like the output of a shell redirect gone wrong and belong to no feature."
+  ],
+  "depends_note": null,
+  "findings_note": "s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** finding which command wrote them, beyond a test that stops it happening again if it was slicer.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Stray tracked files at the root confuse readers and tools, and they may mean a command wrote to a path built from a Python value (`True`) or a placeholder (`unspecified`)."
+    },
+    {
+      "heading": "Files",
+      "body": "- `True` and `unspecified` at the repository root: remove them with `git rm`.\n- If `git log -p 5716ab7 -- True unspecified` shows slicer wrote them (a path built from a value), the module that did it and a regression test."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- None if the files came from a hand-run shell redirect. If slicer wrote them, a test that the command no longer writes a file named after a value."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Look at 5716ab7's diff for the two files to see what wrote them.\n2. `git rm` both files."
+    },
+    {
+      "heading": "Check",
+      "body": "- `git ls-files True unspecified` prints nothing. `slicer check` passes, and the full suite stays green."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}

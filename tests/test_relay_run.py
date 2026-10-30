@@ -14,6 +14,7 @@ import errno
 import io
 import json
 import os
+import re
 import threading
 import time
 import unittest
@@ -421,7 +422,8 @@ class FoldTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
-       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason"],
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason",
+       "verdict"],
     )
     self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2074,7 +2076,8 @@ class WaitTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
-       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason"],
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason",
+       "verdict"],
     )
     self.assertEqual((data["state"], data["counts"]["waiting"]), ("active", 1))
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2643,7 +2646,8 @@ class AskAnswerTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
-       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason"],
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason",
+       "verdict"],
     )
     self.assertIsNone(data["steps"][0]["question"])
     self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
@@ -2883,7 +2887,7 @@ class ReasonTests(RelayRunCase):
     run, step, got = self.failed(repo, "--reason", "out of credits")
     self.assertEqual((got["step"]["phase"], got["step"]["reason"]), ("fail", "out of credits"))
     self.assertEqual(self.runs(repo)[0]["steps"][0]["reason"], "out of credits")
-    self.assertEqual(list(got["step"])[-1], "reason")
+    self.assertEqual(list(got["step"])[-2:], ["reason", "verdict"])
     code, out, err = repo.run("relay-run", "list")
     self.assertEqual((code, err), (0, ""))
     self.assertIn("out of credits", out)
@@ -2940,6 +2944,495 @@ class ReasonTests(RelayRunCase):
     code, out, _ = repo.run("relay-run", "list", "--json")
     self.assertEqual(code, 3)
     self.assertIn("reason", json.loads(out)["error"]["message"])
+
+
+class VerdictTests(RelayRunCase):
+  """`relay-run step --phase done --verdict pass|fail` records a gate round's verdict (s408)."""
+
+  def gate(self, repo, role="gate"):
+    run = self.begin(repo, "s1")
+    argv = ["relay-run", "step", run, "--role", role, "--agent", "A", "--phase", "start"]
+    return run, self.ok(repo, *argv)["step"]["id"]
+
+  def test_RelayRunStep_Verdict_RecordedOnGateDone(self) -> None:
+    repo = self.project()
+    run, step = self.gate(repo)
+    got = self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "done",
+                  "--verdict", "fail")
+    self.assertEqual((got["step"]["phase"], got["step"]["verdict"]), ("done", "fail"))
+    self.assertEqual(list(got["step"])[-2:], ["reason", "verdict"])
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["verdict"], "fail")
+    again = self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "start")
+    self.assertEqual(again["step"]["verdict"], "")
+
+  def test_RelayRunStep_Verdict_NewGateStepDoneTakesIt(self) -> None:
+    repo = self.project()
+    run = self.begin(repo, "s1")
+    got = self.ok(repo, "relay-run", "step", run, "--role", "gate", "--agent", "A",
+                  "--phase", "done", "--verdict", "pass")
+    self.assertEqual(got["step"]["verdict"], "pass")
+
+  def test_RelayRunStep_Verdict_StepWithoutOne_IsEmptyString(self) -> None:
+    repo = self.project()
+    run, step = self.gate(repo)
+    got = self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "done")
+    self.assertEqual(got["step"]["verdict"], "")
+    events = [event for _, event in relayrun.read_events(repo.root / LEDGER)]
+    self.assertNotIn("verdict", events[-1])
+
+  def test_RelayRunStep_Verdict_RefusedOnNonGateOrStartOrBadValue(self) -> None:
+    repo = self.project()
+    run, gate = self.gate(repo)
+    impl = self.step(repo, run)["step"]["id"]
+    before = repo.read(LEDGER)
+    cases = {
+      "implementer step": (impl, "done", "pass"),
+      "start phase": (gate, "start", "pass"),
+      "wait phase": (gate, "wait", "pass"),
+      "fail phase": (gate, "fail", "pass"),
+      "bad value": (gate, "done", "maybe"),
+      "blank value": (gate, "done", ""),
+    }
+    for label, (step, phase, verdict) in cases.items():
+      with self.subTest(label):
+        self.refuse(repo, "relay-run", "step", run, "--step", step, "--phase", phase,
+                    "--verdict", verdict, code=2, error="bad_run_field")
+        self.assertEqual(repo.read(LEDGER), before)
+    with self.subTest("new non-gate step"):
+      self.refuse(repo, "relay-run", "step", run, "--role", "reviewer", "--agent", "A",
+                  "--phase", "done", "--verdict", "pass", code=2, error="bad_run_field")
+      self.assertEqual(repo.read(LEDGER), before)
+
+  def test_RelayRunStep_Verdict_NotAString_IsCorrupt(self) -> None:
+    repo = self.project()
+    run, step = self.gate(repo)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "done", "--verdict", "pass")
+    lines = repo.read(LEDGER).splitlines()
+    event = json.loads(lines[-1])
+    event["verdict"] = 3
+    lines[-1] = json.dumps(event)
+    (repo.root / LEDGER).write_text("\n".join(lines) + "\n")
+    code, out, _ = repo.run("relay-run", "list", "--json")
+    self.assertEqual(code, 3)
+    self.assertIn("verdict", json.loads(out)["error"]["message"])
+
+  def test_RelayRunStep_Verdict_SurvivesALateOwnerAnswer(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    _, gate = ops.relay_run_step(
+      repo.root, run, phase="start", role="gate", agent="A", task="gate", now=minutes(1),
+    )
+    ops.relay_run_ask(
+      repo.root, run, step=gate.id, title="Which?", options=["a:A", "b:B"], now=minutes(2),
+    )
+    ops.relay_run_step(repo.root, run, step=gate.id, phase="done", verdict="fail", now=minutes(3))
+    _, step, _ = ops.relay_run_answer(repo.root, run, "q1", option="a", now=minutes(4))
+    self.assertEqual((step.phase, step.verdict), ("done", "fail"))
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["verdict"], "fail")
+
+  def test_AiRelay_Recording_GateClosedWithVerdict(self) -> None:
+    def flat(text: str) -> str:
+      return " ".join(text.split())
+
+    repo = self.project()
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        code, out, err = repo.run("ai", command)
+        self.assertEqual((code, err), (0, ""))
+        text = flat(out)
+        self.assertIn("A gate round is closed with its verdict", text)
+        self.assertIn("--phase done --verdict pass", text)
+        self.assertIn("--verdict fail", text)
+        code, out, err = repo.run("ai", command, "--json")
+        self.assertEqual((code, err), (0, ""))
+        ledger = next(item["text"] for item in json.loads(out)["conformance"]
+                      if item["key"] == "ledger")
+        self.assertIn("gate", ledger)
+        self.assertIn("--verdict", ledger)
+
+
+class StatsTests(RelayRunCase):
+  """`relay-run stats` folds the ledger into rates and times, by rules the docs state (s408)."""
+
+  def add(self, repo, run, role, start, stop, *, phase="done", parent="", **extra) -> str:
+    _, step = ops.relay_run_step(
+      repo.root, run, phase="start", role=role, agent="A", parent=parent,
+      task=f"{role} {start}", now=minutes(start),
+    )
+    if stop is not None:
+      ops.relay_run_step(repo.root, run, step=step.id, phase=phase, now=minutes(stop), **extra)
+    return step.id
+
+  def chain(self, repo, base, rounds, outcome="pass", end=None) -> str:
+    """A run begun at minute `base` whose rounds follow each other, two minutes apiece."""
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(base)).id
+    for number, spec in enumerate(rounds):
+      role, extra = (spec, {}) if isinstance(spec, str) else spec
+      self.add(repo, run, role, base + 1 + 2 * number, base + 2 + 2 * number, **extra)
+    if outcome:
+      stop = end if end is not None else base + 2 + 2 * len(rounds)
+      ops.relay_run_end(repo.root, run, outcome, now=minutes(stop))
+    return run
+
+  def stats(self, repo, *extra) -> dict:
+    return self.ok(repo, "relay-run", "stats", *extra)
+
+  def row(self, payload, run) -> dict:
+    return next(row for row in payload["per_run"] if row["id"] == run)
+
+  def test_RelayRunStats_EmptyLedger_ZerosAndNulls(self) -> None:
+    repo = self.project()
+    self.assertEqual(self.stats(repo), {
+      "since": None,
+      "runs": {"total": 0, "pass": 0, "fail": 0, "stopped": 0, "unended": 0},
+      "measured": 0,
+      "wall_seconds": {"median": None, "max": None},
+      "fix_rounds": {"total": 0, "runs_with_any": 0, "runs_with_two_or_more": 0},
+      "gates": {"rounds": 0, "fails": 0, "with_verdict": 0, "by_proxy": 0},
+      "roles": {},
+      "owner_wait": {
+        "runs_with_wait": 0, "total_seconds": 0, "median_seconds": None, "max_seconds": None,
+        "by_waiting_on": {"approval": 0, "owner": 0},
+      },
+      "per_run": [],
+    })
+    code, out, err = repo.run("relay-run", "stats")
+    self.assertEqual((code, err), (0, ""))
+    self.assertTrue(out.rstrip().endswith("per run: --json"), out)
+
+  def test_RelayRunStats_RunsByOutcome_CountsEndedAndUnended(self) -> None:
+    repo = self.project()
+    done = self.chain(repo, 0, ["implementer"], "pass")
+    self.chain(repo, 10, ["implementer"], "fail")
+    self.chain(repo, 20, ["implementer"], "stopped")
+    open_run = self.chain(repo, 30, ["implementer"], None)
+    got = self.stats(repo)
+    self.assertEqual(
+      got["runs"], {"total": 4, "pass": 1, "fail": 1, "stopped": 1, "unended": 1},
+    )
+    self.assertEqual(got["measured"], 3)
+    self.assertEqual(len(got["per_run"]), 3)
+    self.assertNotIn(open_run, [row["id"] for row in got["per_run"]])
+    self.assertEqual(got["per_run"][0]["id"], done)
+    self.assertEqual([row["outcome"] for row in got["per_run"]], ["pass", "fail", "stopped"])
+
+  def test_RelayRunStats_WallTime_MedianLowAndMaxOfMeasuredRuns(self) -> None:
+    repo = self.project()
+    for base, wall in ((0, 10), (100, 20), (200, 40)):
+      self.chain(repo, base, ["implementer"], end=base + wall)
+    check = self.chain(repo, 300, ["spec-check"], end=300 + 500)
+    got = self.stats(repo)
+    self.assertEqual(got["runs"]["total"], 4)
+    self.assertEqual(got["measured"], 3)
+    self.assertEqual(got["wall_seconds"], {"median": 1200, "max": 2400})
+    self.assertEqual(self.row(got, check)["wall_seconds"], 500 * 60)
+    self.assertEqual(self.row(got, check)["implementer_rounds"], 0)
+
+  def test_RelayRunStats_WallTime_EvenCount_MedianIsTheLowerOne(self) -> None:
+    repo = self.project()
+    for base, wall in ((0, 10), (100, 20), (200, 30), (300, 40)):
+      self.chain(repo, base, ["implementer"], end=base + wall)
+    self.assertEqual(self.stats(repo)["wall_seconds"], {"median": 1200, "max": 2400})
+
+  def test_RelayRunStats_Measured_ImplementerSubagentOfAnotherRoleIsNotInTheLane(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    review = self.add(repo, run, "reviewer", 1, 5)
+    self.add(repo, run, "implementer", 2, 4, parent=review)
+    ops.relay_run_end(repo.root, run, "pass", now=minutes(6))
+    got = self.stats(repo)
+    self.assertEqual((got["runs"]["total"], got["measured"]), (1, 0))
+    self.assertEqual(self.row(got, run)["implementer_rounds"], 0)
+
+  def test_RelayRunStats_FixRounds_CountOnlyRoundsBetweenReviewsOrGates(self) -> None:
+    repo = self.project()
+    full = self.chain(
+      repo, 0, ["implementer", "reviewer", "implementer", "gate", "implementer", "gate",
+                "implementer"],
+    )
+    short = self.chain(repo, 100, ["implementer", "reviewer", "implementer"])
+    got = self.stats(repo)
+    first, second = self.row(got, full), self.row(got, short)
+    self.assertEqual((first["implementer_rounds"], first["fix_rounds"]), (4, 2))
+    self.assertEqual((first["gate_rounds"], first["gate_fails"]), (2, 1))
+    self.assertEqual((second["implementer_rounds"], second["fix_rounds"]), (2, 0))
+    self.assertEqual(got["fix_rounds"], {"total": 2, "runs_with_any": 1, "runs_with_two_or_more": 1})
+    self.assertEqual(got["gates"], {"rounds": 2, "fails": 1, "with_verdict": 0, "by_proxy": 2})
+
+  def test_RelayRunStats_GateFails_VerdictFirstThenProxy(self) -> None:
+    repo = self.project()
+    run = self.chain(repo, 0, [
+      "implementer", ("gate", {"verdict": "fail"}), "implementer", ("gate", {"verdict": "pass"}),
+      "implementer", "gate", "implementer", "reviewer", "implementer",
+    ])
+    got = self.stats(repo)
+    self.assertEqual(got["gates"], {"rounds": 3, "fails": 2, "with_verdict": 2, "by_proxy": 1})
+    row = self.row(got, run)
+    self.assertEqual((row["fix_rounds"], row["gate_rounds"], row["gate_fails"]), (3, 3, 2))
+
+  def test_RelayRunStats_VendorLimitRerun_IsTheSameRound(self) -> None:
+    repo = self.project()
+    limit = {"phase": "fail", "reason": "rate limit"}
+    run = self.chain(
+      repo, 0, ["implementer", "reviewer", ("implementer", limit), "implementer", "gate"],
+    )
+    row = self.row(self.stats(repo), run)
+    self.assertEqual((row["implementer_rounds"], row["fix_rounds"]), (2, 1))
+
+  def test_RelayRunStats_FailWithoutReason_IsANewRound(self) -> None:
+    repo = self.project()
+    run = self.chain(
+      repo, 0, ["implementer", "reviewer", ("implementer", {"phase": "fail"}), "implementer",
+                "gate"],
+    )
+    row = self.row(self.stats(repo), run)
+    self.assertEqual((row["implementer_rounds"], row["fix_rounds"]), (3, 2))
+
+  def test_RelayRunStats_RoleTime_ExcludesWaitsAndNestedSubagents(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    _, orch = ops.relay_run_step(
+      repo.root, run, phase="start", role="orchestrator", agent="A", task="relay", now=minutes(0),
+    )
+    impl = self.add(repo, run, "implementer", 5, 35, parent=orch.id)
+    self.add(repo, run, "reviewer", 10, 20, parent=impl)
+    ops.relay_run_step(repo.root, run, step=orch.id, phase="wait", waiting_on="approval",
+                       now=minutes(10))
+    ops.relay_run_step(repo.root, run, step=orch.id, phase="start", now=minutes(70))
+    ops.relay_run_step(repo.root, run, step=orch.id, phase="done", now=minutes(90))
+    ops.relay_run_end(repo.root, run, "pass", now=minutes(90))
+    got = self.stats(repo)
+    self.assertEqual(
+      got["roles"],
+      {"implementer": {"steps": 1, "total_seconds": 1800, "median_seconds": 1800},
+       "orchestrator": {"steps": 1, "total_seconds": 1800, "median_seconds": 1800}},
+    )
+    self.assertEqual(self.row(got, run)["role_seconds"], {"implementer": 1800, "orchestrator": 1800})
+    self.assertEqual(self.row(got, run)["wait_seconds"], 3600)
+
+  def test_RelayRunStats_OwnerWait_UnionOfWaitIntervalsByWaitingOn(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    _, orch = ops.relay_run_step(
+      repo.root, run, phase="start", role="orchestrator", agent="A", task="relay", now=minutes(0),
+    )
+    impl = self.add(repo, run, "implementer", 5, None, parent=orch.id)
+    ops.relay_run_ask(
+      repo.root, run, step=orch.id, title="Which?", options=["a:A", "b:B"], now=minutes(10),
+    )
+    part = self.add(repo, run, "reviewer", 12, None, parent=impl)  # a subagent's wait counts
+    ops.relay_run_step(repo.root, run, step=part, phase="wait", waiting_on="approval",
+                       now=minutes(15))
+    ops.relay_run_answer(repo.root, run, "q1", option="a", now=minutes(20))
+    ops.relay_run_step(repo.root, run, step=part, phase="done", now=minutes(40))
+    ops.relay_run_step(repo.root, run, step=impl, phase="done", now=minutes(40))
+    ops.relay_run_end(repo.root, run, "pass", close_steps="done", now=minutes(45))
+    got = self.stats(repo)
+    self.assertEqual(got["owner_wait"], {
+      "runs_with_wait": 1, "total_seconds": 1800, "median_seconds": 1800, "max_seconds": 1800,
+      "by_waiting_on": {"approval": 1500, "owner": 600},
+    })
+    self.assertEqual(self.row(got, run)["wait_seconds"], 1800)
+
+  def test_RelayRunStats_OwnerWait_RunEndedWhileWaiting_CountsToEnd(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    impl = self.add(repo, run, "implementer", 1, None)
+    ops.relay_run_step(repo.root, run, step=impl, phase="wait", waiting_on="approval",
+                       now=minutes(10))
+    ops.relay_run_end(repo.root, run, "stopped", now=minutes(25))
+    got = self.stats(repo)
+    self.assertEqual(got["owner_wait"]["total_seconds"], 900)
+    self.assertEqual(got["owner_wait"]["by_waiting_on"], {"approval": 900, "owner": 0})
+    self.assertEqual(self.row(got, run)["role_seconds"], {"implementer": 540})
+
+  def test_RelayRunStats_OwnerWait_NoWaitAnywhere_MediansAreNull(self) -> None:
+    repo = self.project()
+    self.chain(repo, 0, ["implementer"])
+    got = self.stats(repo)
+    self.assertEqual(got["owner_wait"]["runs_with_wait"], 0)
+    self.assertEqual((got["owner_wait"]["median_seconds"], got["owner_wait"]["max_seconds"]),
+                     (None, None))
+
+  def test_RelayRunStats_Since_KeepsRunsBegunAtOrAfter(self) -> None:
+    repo = self.project()
+    old = self.chain(repo, -24 * 60, ["implementer"])
+    first = self.chain(repo, 0, ["implementer"])
+    second = self.chain(repo, 5, ["implementer"])
+    third = self.chain(repo, 10, ["implementer"])
+    both = self.stats(repo, "--since", "2026-10-14")
+    self.assertEqual(both["since"], "2026-10-14T00:00:00Z")
+    self.assertEqual([r["id"] for r in both["per_run"]], [first, second, third])
+    self.assertEqual(both["runs"]["total"], 3)
+    late = self.stats(repo, "--since", "2026-10-14T12:05:00Z")
+    self.assertEqual(late["since"], "2026-10-14T12:05:00Z")
+    self.assertEqual([r["id"] for r in late["per_run"]], [second, third])
+    offset = self.stats(repo, "--since", "2026-10-14T14:05:00+02:00")
+    self.assertEqual([r["id"] for r in offset["per_run"]], [second, third])
+    self.assertEqual(offset["since"], "2026-10-14T12:05:00Z")
+    self.assertEqual(len(self.stats(repo)["per_run"]), 4)
+    self.assertIn(old, [r["id"] for r in self.stats(repo)["per_run"]])
+    for bad in ("yesterday", "2026-10-14T12:05:00", "2026-13-01"):
+      with self.subTest(bad=bad):
+        code, out, err = repo.run("relay-run", "stats", "--since", bad)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("--since", err)
+
+  def test_RelayRunStats_Text_RoleTableColumnsFitLongDurations(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    self.add(repo, run, "implementer", 1, 130 * 60 + 1)
+    self.add(repo, run, "reviewer", 130 * 60 + 2, 130 * 60 + 4)
+    ops.relay_run_end(repo.root, run, "pass", now=minutes(130 * 60 + 5))
+    code, out, err = repo.run("relay-run", "stats")
+    self.assertEqual((code, err), (0, ""))
+    table = [line for line in out.splitlines() if line.split()[:1] in (["role"], ["implementer"], ["reviewer"])]
+    self.assertEqual(len(table), 3, out)
+    self.assertIn("130h00m", out)
+    # Right-aligned numbers end in one column, so every row is as wide as the header's last cell.
+    self.assertEqual(len({len(line) for line in table}), 1, table)
+    ends = [[match.end() for match in re.finditer(r"\S+", line)] for line in table]
+    self.assertTrue(all(len(cells) == 4 for cells in ends), ends)
+    self.assertEqual(len({tuple(cells[1:]) for cells in ends}), 1, ends)  # every number column
+
+  def test_RelayRunStats_Since_FractionalSecondsAreTruncatedForFilterAndStamp(self) -> None:
+    repo = self.project()
+    self.chain(repo, 0, ["implementer"])
+    second = self.chain(repo, 5, ["implementer"])
+    got = self.stats(repo, "--since", "2026-10-14T12:05:00.500Z")
+    self.assertEqual(got["since"], "2026-10-14T12:05:00Z")
+    self.assertEqual([r["id"] for r in got["per_run"]], [second])
+
+  def test_RelayRunStats_Json_FixedKeyOrderAndDeterministic(self) -> None:
+    repo = self.project()
+    run = ops.relay_run_begin(repo.root, ["s1"], now=minutes(0)).id
+    impl = self.add(repo, run, "implementer", 1, None)
+    ops.relay_run_step(repo.root, run, step=impl, phase="wait", now=minutes(5))
+    ops.relay_run_step(repo.root, run, step=impl, phase="done", now=minutes(9))
+    self.add(repo, run, "gate", 10, 11, verdict="pass")
+    ops.relay_run_end(repo.root, run, "pass", now=minutes(12))
+    got = self.stats(repo)
+    self.assertEqual(list(got), [
+      "since", "runs", "measured", "wall_seconds", "fix_rounds", "gates", "roles", "owner_wait",
+      "per_run",
+    ])
+    self.assertEqual(list(got["runs"]), ["total", "pass", "fail", "stopped", "unended"])
+    self.assertEqual(list(got["wall_seconds"]), ["median", "max"])
+    self.assertEqual(list(got["fix_rounds"]), ["total", "runs_with_any", "runs_with_two_or_more"])
+    self.assertEqual(list(got["gates"]), ["rounds", "fails", "with_verdict", "by_proxy"])
+    self.assertEqual(list(got["roles"]), ["implementer", "gate"])
+    self.assertEqual(list(got["roles"]["gate"]), ["steps", "total_seconds", "median_seconds"])
+    self.assertEqual(list(got["owner_wait"]), [
+      "runs_with_wait", "total_seconds", "median_seconds", "max_seconds", "by_waiting_on",
+    ])
+    self.assertEqual(list(got["owner_wait"]["by_waiting_on"]), ["approval", "owner"])
+    self.assertEqual(list(got["per_run"][0]), [
+      "id", "items", "worktree", "outcome", "begun_at", "ended_at", "wall_seconds",
+      "implementer_rounds", "fix_rounds", "gate_rounds", "gate_fails", "wait_seconds",
+      "role_seconds",
+    ])
+    outputs = []
+    for clock in (T0, T0 + timedelta(days=400)):
+      with patch.object(relayrun, "utcnow", return_value=clock):
+        code, out, err = repo.run("relay-run", "stats", "--json")
+        text = repo.run("relay-run", "stats")[1]
+      self.assertEqual((code, err), (0, ""))
+      outputs.append((out, text))
+    self.assertEqual(outputs[0], outputs[1])
+
+  def test_RelayRunStats_RolesAreInLedgerRoleOrderThenSorted(self) -> None:
+    repo = self.project()
+    self.chain(repo, 0, ["ui", "gate", "spec-check", "implementer", "orchestrator", "reviewer",
+                         "architect"])
+    got = self.stats(repo)
+    self.assertEqual(list(got["roles"]), [
+      "implementer", "reviewer", "gate", "architect", "orchestrator", "ui", "spec-check",
+    ])
+
+  def test_RelayRunStats_UnknownRoles_FollowTheKnownOnesSorted(self) -> None:
+    # A newer slicer's role is not refused by the fold, so it is listed after the known ones.
+    def step(number: str, role: str) -> relayrun.Step:
+      return relayrun.Step(
+        id=number, role=role, agent="A", vendor="", model="", reasoning="", phase="done",
+        task="", parent="", begun_at="2026-10-14T12:00:00Z", updated_at="2026-10-14T12:01:00Z",
+        history=[("2026-10-14T12:00:00Z", "start", ""), ("2026-10-14T12:01:00Z", "done", "")],
+      )
+
+    run = relayrun.Run(
+      id="r", items=["s1"], worktree="w", begun_at="2026-10-14T12:00:00Z",
+      updated_at="2026-10-14T12:02:00Z", state="ended", outcome="pass",
+      ended_at="2026-10-14T12:02:00Z",
+      steps=[step("1", "zeta"), step("2", "gate"), step("3", "alpha"), step("4", "implementer")],
+    )
+    got = relayrun.stats([run], None)
+    self.assertEqual(list(got["roles"]), ["implementer", "gate", "alpha", "zeta"])
+    self.assertEqual(list(got["per_run"][0]["role_seconds"]), ["implementer", "gate", "alpha", "zeta"])
+
+  def test_RelayRunStats_Text_SummaryAndRoleTableEndWithPerRunHint(self) -> None:
+    repo = self.project()
+    self.chain(repo, 0, ["implementer", "reviewer", "implementer", "gate"])
+    code, out, err = repo.run("relay-run", "stats")
+    self.assertEqual((code, err), (0, ""))
+    lines = out.splitlines()
+    self.assertEqual(lines[-1], "per run: --json")
+    self.assertIn("1 measured", out)
+    self.assertIn("fix rounds", out)
+    self.assertTrue(any(line.split()[:1] == ["implementer"] for line in lines), out)
+
+
+class StatsLedgerTests(GitLedgerCase):
+  def seed(self, root: Path) -> str:
+    run = ops.relay_run_begin(root, ["s1"], now=minutes(0)).id
+    _, step = ops.relay_run_step(
+      root, run, phase="start", role="implementer", agent="A", task="t", now=minutes(1),
+    )
+    ops.relay_run_step(root, run, step=step.id, phase="done", now=minutes(4))
+    ops.relay_run_end(root, run, "pass", now=minutes(5))
+    return run
+
+  def test_RelayRunStats_ReadsSiblingWorktreeLedgers(self) -> None:
+    repo = self.repo()
+    wt = self.linked(repo, "wt")
+    events = [
+      relayrun.begin_event("run-sib", T0, ["s2"], "wt"),
+      relayrun.step_event("run-sib", minutes(1), "1", "start", role="implementer", agent="A"),
+      relayrun.step_event("run-sib", minutes(7), "1", "done"),
+      relayrun.end_event("run-sib", minutes(8), "pass"),
+    ]
+    (wt / LEDGER).write_text(
+      "".join(json.dumps(event) + "\n" for event in events), encoding="utf-8",
+    )
+    own = self.seed(repo.root)
+    got = self.ok(repo, "relay-run", "stats")
+    self.assertEqual(sorted(row["id"] for row in got["per_run"]), sorted([own, "run-sib"]))
+    row = next(row for row in got["per_run"] if row["id"] == "run-sib")
+    self.assertEqual((row["wall_seconds"], row["role_seconds"]), (480, {"implementer": 360}))
+    listed = [run["id"] for run in self.runs(repo)]
+    self.assertEqual(sorted(listed), sorted(row["id"] for row in got["per_run"]))
+
+  def test_RelayRunStats_TakesNoLockAndWritesNothing(self) -> None:
+    if store.fcntl is None:
+      self.skipTest("flock is unavailable")
+    repo = self.repo()
+    self.seed(repo.root)
+    shared = self.common(repo)
+
+    def snapshot() -> dict[str, bytes]:
+      return {
+        str(path): path.read_bytes()
+        for folder in (shared.parent, repo.root / ".slicer")
+        for path in sorted(folder.rglob("*")) if path.is_file()
+      }
+
+    with patch.dict(os.environ, {store.LOCK_TIMEOUT_ENV: "0"}), \
+        store.file_lock(repo.root / ".slicer" / store.LOCK_NAME), \
+        store.file_lock(shared.with_name(relayrun.COMMON_LOCK_NAME)):
+      before = snapshot()
+      code, out, err = repo.run("relay-run", "stats", "--json")
+      self.assertEqual((code, err), (0, ""), out)
+      self.assertEqual(json.loads(out)["runs"]["total"], 1)
+      self.assertEqual(snapshot(), before)
+      self.assertIn(str(shared), before)
 
 
 class EndReasonTests(RelayRunCase):

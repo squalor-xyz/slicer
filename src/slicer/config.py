@@ -18,6 +18,10 @@ from slicer.errors import ConfigError, reject_future_schema
 
 CONFIG_NAME = "config.json"
 
+# The largest `relay_contract` a config may pin. Every reader bounds the pin the same way,
+# so a typo cannot pin a number that a consumer of `pinned` cannot hold.
+RELAY_CONTRACT_MAX = 9999
+
 
 @dataclass
 class SyncTarget:
@@ -289,9 +293,9 @@ class Config:
     if self.relay_contract is not None and (
       isinstance(self.relay_contract, bool)
       or not isinstance(self.relay_contract, int)
-      or self.relay_contract < 1
+      or not 1 <= self.relay_contract <= RELAY_CONTRACT_MAX
     ):
-      raise ConfigError("relay_contract must be a positive whole number, such as 9")
+      raise ConfigError(f"relay_contract must be a whole number from 1 to {RELAY_CONTRACT_MAX}")
     if self.satisfies_dependencies is not None:
       listed = self.satisfies_dependencies
       if not isinstance(listed, list) or not listed or any(
