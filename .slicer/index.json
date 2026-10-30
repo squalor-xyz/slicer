@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 432,
+  "next_id": 433,
   "preamble": "",
   "passes": [
     {
@@ -16955,6 +16955,36 @@
         "group": "",
         "reason": "",
         "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s432",
+      "title": "Remove the stray tracked root files True and unspecified",
+      "short_title": "Remove stray root files",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done)",
+        "discovered_from": "s415",
+        "parent": "",
+        "cites": [],
+        "key": "s415.stray-root-files",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
         "urgency": 1,
         "effort": 1,
         "attempts": 0
