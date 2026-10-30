@@ -1,0 +1,41 @@
+{
+  "id": "s419",
+  "title": "relay-brief.md template states the no-background-shell rule",
+  "lead": [
+    "The built-in `relay-brief.md` template's Rules section tells the orchestrator that it and every role run their shell commands in the foreground and background none, matching relay v10's Waiting rule."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** the no-`cd` rule (s391 adds it to the contract and, if it wants, to this template), the template's Stop bullet wording (s412 item 1), a project's own override of the template, and any contract text change.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Found in the s402 review. v10 made \"every role runs its own shell commands in the foreground and backgrounds none\" part of Every brief and the orchestrator's Waiting rule (`src/slicer/ai.py`). The brief that `slicer ai relay-brief` prints from `src/slicer/templates/relay-brief.md` says to wait for every role and process, but not that no shell command is backgrounded, so an orchestrator started from that brief can miss it until it reads the contract."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/templates/relay-brief.md`: one bullet in Rules.\n- `tests/test_templates.py` or `tests/test_ai.py` (whichever holds the `ai relay-brief` text tests), and the golden for `ai relay-brief` if one exists.\n- `CHANGELOG.md` under Changed. `docs/` only where it quotes the template."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelayBrief_Rules_ForbidBackgroundShell`: `ai relay-brief ID` text says the orchestrator and every role run shell commands in the foreground and background none, and run long commands such as the full suite in the foreground with a long timeout."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the test; watch it go red.\n2. Add the bullet, worded as the contract words it.\n3. Mutation-check the test; update CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

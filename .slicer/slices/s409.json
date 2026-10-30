@@ -1,0 +1,41 @@
+{
+  "id": "s409",
+  "title": "Orchestrator text for a session that orchestrates every slice",
+  "lead": [
+    "`slicer ai relay-orchestrator --session` prints the orchestrator contract for a session that orchestrates every slice itself: it owns `relay-run begin` and `end`, its own step, Approve and Land, briefs roles directly, puts owner questions to the owner, and has no hand-back section."
+  ],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** ork (its engine is the orchestrator and does not need this), changes to the per-slice orchestrator text, a new role matrix row, and the contract bump (s424 bumps to v11 once for all of v1.17).",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "ork's 2026-10-26 orchestration trial (ork `docs/review-2026-10-26-orchestration-trial.md`, O3): five relays (S95, S138, S139, S92, S93) ran with the session the owner talks to as the one orchestrator for every slice. No stalls, owner questions asked directly, no landing conflicts; median 18 min against 24 for 49 earlier runs with a per-slice orchestrator subagent (small sample). Today `slicer ai relay-orchestrator` opens \"You run one slice for the outer session that spawned you\", its Rules forbid `relay-run begin`/`end`, marking its own step done, landing and pushing, and the Waiting and hand-back rules (s402) assume a parent session. `ai relay` says only that where the agent cannot nest subagents the outer session is also the orchestrator.\n\nOwner decision 2026-10-30: a flag on the existing command, `ai relay-orchestrator --session`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: `orchestrator_text` and `relay_contract(..., orchestrator=True)` gain `session: bool`. The session text keeps Gate, Every brief, Stop and Conformance identical (the shared-sections test still holds). It replaces the opening, the Rules that forbid begin, end, own step and landing, the owner-question hand-back (`waiting on: owner QUESTION_ID`) and the `waiting on: ROLE AGENT-ID` line with session rules: begin and end the run, record its own step, ask the owner directly (still `relay-run ask` for a `blocker`, so a dashboard can answer), and run Approve and Land from `ai relay`'s Order and Land sections by reference. A fresh context per slice becomes: compact or start a fresh session between slices.\n- `src/slicer/cli.py`: the `--session` flag on `ai relay-orchestrator` and its help; `--json` carries the same keys plus `\"session\": true`.\n- `ai relay`'s Roles paragraph \"Where the agent cannot nest subagents...\" points to `ai relay-orchestrator --session`.\n- `tests/test_ai.py`, `tests/test_relay_conformance.py`, a golden for the session text.\n- `docs/commands.md`, `docs/agents.md`, `docs/working-with-agents.md`, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_AiRelayOrchestratorSession_Text_OwnsBeginEndAndLand`: names `relay-run begin`, `relay-run end` and the Land section; does not say \"for the outer session that spawned you\" or forbid begin and end.\n- `test_AiRelayOrchestratorSession_Text_HasNoHandBack`: no `waiting on: ROLE AGENT-ID` or hand-back rule; a `blocker` question is still recorded with `relay-run ask`.\n- `test_AiRelayOrchestratorSession_SharedSections_MatchRelay`: Gate, Every brief, Stop and Conformance equal the other two texts byte for byte.\n- `test_AiRelayOrchestratorSession_Json_CarriesSessionFlag`: `--json` has the usual keys and `session: true`; without the flag, `session` is absent or false and the output is unchanged.\n- `test_AiRelay_Roles_PointsToSessionVariant`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the tests; watch them go red.\n2. Build the session text from the existing pieces; keep one source per shared section.\n3. Update docs and CHANGELOG; mutation-check each new test. Record the rule change for s424's `RELAY_CHANGES` entry in the closing note."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}

@@ -2352,3 +2352,21 @@
 {"when": "2026-10-27T21:14:14Z", "item": "s422", "action": "add", "from": "", "to": "open", "note": "Conformance vendor_limit wording matches Stop's independence list"}
 {"when": "2026-10-27T21:14:14Z", "item": "s423", "action": "add", "from": "", "to": "open", "note": "Allow --reason on relay-run end --close-steps fail"}
 {"when": "2026-10-27T21:38:11Z", "item": "s405", "action": "status", "from": "review", "to": "done", "note": "Relay contract v10: classified vendor limit (rate limit, out of credits) falls back to the role's next matching row on a fresh agent, skipping same-vendor rows on out of credits; outer session does the same for the orchestrator; relay-run step --reason. 2950 tests OK.", "by": "Jon Robbins"}
+{"when": "2026-10-30T13:21:09Z", "item": "s424", "action": "add", "from": "", "to": "open", "note": "Relay v11: contract cleanup and bump"}
+{"when": "2026-10-30T13:21:09Z", "item": "s418", "action": "retire", "from": "open", "to": "retired", "note": "Absorbed by s424 (relay v11 cleanup and bump)"}
+{"when": "2026-10-30T13:21:09Z", "item": "s421", "action": "retire", "from": "open", "to": "retired", "note": "Absorbed by s424 (relay v11 cleanup and bump)"}
+{"when": "2026-10-30T13:21:09Z", "item": "s422", "action": "retire", "from": "open", "to": "retired", "note": "Absorbed by s424 (relay v11 cleanup and bump)"}
+{"when": "2026-10-30T13:21:09Z", "item": "s420", "action": "retire", "from": "open", "to": "retired", "note": "Duplicate of s415 item 1"}
+{"when": "2026-10-30T13:21:10Z", "item": "s415", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.17"}
+{"when": "2026-10-30T13:21:10Z", "item": "s419", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.17"}
+{"when": "2026-10-30T13:21:10Z", "item": "s423", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.17"}
+{"when": "2026-10-30T13:21:10Z", "item": "s410", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.17"}
+{"when": "2026-10-30T13:21:10Z", "item": "s411", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.17"}
+{"when": "2026-10-30T13:21:14Z", "item": "s412", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.17"}
+{"when": "2026-10-30T13:42:59Z", "item": "s424", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T13:43:48Z", "item": "s423", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T13:43:48Z", "item": "s419", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T13:43:48Z", "item": "s417", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T13:43:48Z", "item": "s409", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-10-30T13:43:48Z", "item": "s419", "action": "set", "from": "", "to": "", "note": "effort -→1"}
+{"when": "2026-10-30T13:43:48Z", "item": "s423", "action": "set", "from": "", "to": "", "note": "effort -→1"}

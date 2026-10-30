@@ -1,0 +1,41 @@
+{
+  "id": "s417",
+  "title": "A merge leaves the render current without a per-clone setup or a hand-run render",
+  "lead": [
+    "After a merge, the next slicer write command finds `.slicer/render/` stale or holding conflict markers, regenerates it from `index.json` under the project lock before its own change, and says so on stderr, so no clone needs the `slicer-generated` driver or the post-merge hook to keep the render current."
+  ],
+  "depends_note": null,
+  "findings_note": "owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer.",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** running `git config` (the git allowlist in `vcs.py` stays closed), merging a conflicted `index.json` or `relay-roles.json` (their drivers stay the only way), making read-only commands write, and changing whether `.slicer/render/` is committed.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md and ROADMAP.html because the clone had no merge drivers, and even with `slicer-generated` the render stays stale until `slicer render` or the optional post-merge hook (`slicer setup-git --hook`). Both need per-clone setup.\n\nOwner decision 2026-10-30: self-heal. `render/` is generated output that is never parsed back (AGENTS.md), so whenever `index.json` loads cleanly slicer can regenerate it without losing anything. The drivers stay optional for render/ and still needed for `index.json`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py`: a `heal_render(state)` step that every locked write runs first, through the shared write path (`render_gated` and the other places that take `store.project_lock` for a write; find them all, and prefer one hook point). It compares the expected render with what is on disk, as `check` does (`src/slicer/check.py`), and rewrites only the stale or conflicted files.\n- `src/slicer/check.py`: treat a render file holding conflict markers as stale; report kind stays `roadmap_only` or the existing kinds.\n- `src/slicer/cli.py`: the stderr line, the `check` text that today says \"run slicer render, or done --render when landing\" (it now says any write command heals it), and `setup-git` help, which calls the `slicer-generated` driver optional.\n- `src/slicer/ops.py` `.gitattributes` template comment, `docs/how-it-works.md` (merges), `docs/landing.md`, `docs/configuration.md` if `render_driver_check` changes meaning, `AGENTS.md` only if a command changes, `CHANGELOG.md`.\n- `tests/` new `test_render_heal.py` with git fixtures built by `support.isolated_discovery`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RenderHeal_MergeConflictMarkersInRender_WriteRegeneratesAndSaysSo`: a fixture repo with no merge drivers merges two branches that both changed items; ROADMAP.md holds conflict markers and `index.json` merged cleanly. `slicer note ID --text x` succeeds, the render files equal a fresh `slicer render`, and stderr names the healed files once.\n- `test_RenderHeal_StaleRenderOnly_WriteWithoutRenderFlag_HealsPreexistingStaleness`: a stale ROADMAP.md before a write without `--render` is healed; the write's own change follows today's `--render` rules.\n- `test_RenderHeal_FreshRender_WritesNothingExtra`: with a current render, a write's stderr and file writes are as today (no heal line).\n- `test_RenderHeal_ConflictedIndex_RefusesAndNamesSetupGit`: `index.json` with conflict markers is refused as today, writes nothing, and the message names `slicer setup-git`.\n- `test_RenderHeal_DuringMerge_DoesNotHeal`: while a merge is in progress (`vcs.require_no_merge` would refuse), nothing is rewritten.\n- `test_RenderHeal_ReadOnlyCommands_NeverWrite`: `list`, `show`, `check` on a stale render write nothing.\n- `test_Check_ConflictMarkersInRender_AreStale`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Find every locked write path; pick one hook point, or the few that cover all writes, and say which in the note.\n2. Write the tests; watch them go red.\n3. Implement `heal_render`; keep output deterministic and keep the cost one render comparison per write (measure on this repo's 400+ items and report it).\n4. Update docs and CHANGELOG; mutation-check each new test."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes.\n- [HUMAN CHECK] In a scratch clone with no merge drivers, merge two branches that both filed items: the render conflicts, `slicer note` heals it, and `slicer check` passes after committing."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch; the owner lands it."
+    }
+  ],
+  "notes": []
+}
