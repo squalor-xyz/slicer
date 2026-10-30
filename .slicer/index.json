@@ -14528,7 +14528,7 @@
       "id": "s379",
       "title": "A project check_command config key that scripted orchestrators run before review",
       "short_title": "check_command config key",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
