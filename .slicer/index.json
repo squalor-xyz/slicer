@@ -16475,7 +16475,7 @@
       "id": "s419",
       "title": "relay-brief.md template states the no-background-shell rule",
       "short_title": "relay-brief.md template states the no-background-shell rule",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
