@@ -2213,6 +2213,18 @@ class AiRelayBriefTests(unittest.TestCase):
       stop,
     )
 
+  def test_AiRelayBrief_Rules_ForbidBackgroundShell(self):
+    repo = self.project()
+    rules = " ".join(self.payload(repo)["brief"].split()).split("## Rules", 1)[1]
+    self.assertIn(
+      "You and every role run their own shell commands in the foreground and background none.",
+      rules,
+    )
+    self.assertIn(
+      "Run long commands such as the full suite in the foreground with a long timeout.",
+      rules,
+    )
+
   def test_AiRelayBrief_MissingProjectTemplate_UsesBuiltIn(self):
     repo = self.project()
     before = self.brief(repo)[1]
