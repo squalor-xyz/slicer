@@ -2390,3 +2390,10 @@
 {"when": "2026-10-30T14:11:07Z", "item": "s393", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-30T15:04:03Z", "item": "s393", "action": "note", "from": "", "to": "", "note": "Ready for review: note-retract marks an item note wrong (who", "by": "Jon Robbins"}
 {"when": "2026-10-30T15:04:06Z", "item": "s393", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T14:11:02Z", "item": "s412", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T14:24:25Z", "item": "template.relay-brief.md", "action": "template", "from": "custom", "to": "custom", "note": ""}
+{"when": "2026-10-30T15:08:19Z", "item": "s412", "action": "note", "from": "", "to": "", "note": "Ready for review: relay texts rewrapped to 88 columns (word-", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:08:23Z", "item": "s412", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:09:29Z", "item": "s427", "action": "add", "from": "", "to": "open", "note": "Relay texts wrap the handoff note-kind sentence at 88 columns"}
+{"when": "2026-10-30T15:09:29Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s412 review (2026-10-30): after removing the blocker it", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:09:37Z", "item": "s412", "action": "status", "from": "review", "to": "done", "note": "Relay contract text follow-ups: 88-column rewrap (word-identical), QUESTION_VALUE_RULE from relayrun separators, brief Stop bullet, conformance pin, vcs comment. Gate PASS; suite 2957 OK.", "by": "Jon Robbins"}

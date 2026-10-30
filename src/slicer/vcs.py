@@ -89,8 +89,10 @@ def _run(
 # state, so a repository that went away or a path that is reused is not remembered.
 _DISCOVERY_ENV = ("GIT_CEILING_DIRECTORIES", "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
 # The variables that point git at a repo other than the one its working directory is
-# in. A merge driver runs with them set to the project's repo, so slicer's own code
-# dir is probed without them (S394).
+# in. A merge driver in a linked worktree runs with GIT_DIR set to that worktree's own
+# gitdir (`<common dir>/worktrees/NAME`), not the repo's `.git`; in the main checkout git
+# sets none (checked with a real merge). slicer's own code dir is probed without them
+# (S394).
 _REPO_POINTER_ENV = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")
 _Key = tuple[Path, tuple[str | None, ...]]
 _IS_REPO: set[_Key] = set()

@@ -143,7 +143,7 @@ title. The gate passes only with no new `fix` finding of medium severity or wors
 `blocker` owner finding. The run report's `owner needed` entries are numbered questions, one
 line each: `owner needed: N. TITLE | options: LABEL:SUMMARY; LABEL:SUMMARY | recommend: LABEL |
 blocker (optional) | key: AREA.TOPIC (optional) | reasoning: TEXT`, or `owner needed: none`.
-Each question has 2 to 4 options, no value but `reasoning` holds a `|`, no SUMMARY holds a
+Each question has 2 to 4 options, no value but `reasoning` holds a `|`, no label or summary holds a
 `;`, and `reasoning` is last so it takes the rest of the line. The fields are the ones
 `relay-run ask` takes (`--title`, `--option`, `--recommend`, `--blocker`, `--key`,
 `--reasoning`, in that order), so a consumer parses one shape. Each question counts toward the

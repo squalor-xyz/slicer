@@ -1,0 +1,41 @@
+{
+  "id": "s427",
+  "title": "Relay texts wrap the handoff note-kind sentence at 88 columns",
+  "lead": [
+    "s412 rewrapped the relay texts to 88 columns, but only for a project that leaves `handoff_requires_note_kind` unset. With the key set, `handoff_policy_text` still lands in both relay texts as one long line."
+  ],
+  "depends_note": null,
+  "findings_note": "s412 review 2026-10-30, later note: with handoff_requires_note_kind set, ai relay prints a ~394-430 column line from handoff_policy_text",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** rewording the policy sentence; changing the skill text or `ai instructions` beyond the wrap.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The s412 width test (`test_RelayTexts_ProseLines_FitIn88Columns`) covers the finish and matrix variants only. A project that sets a handoff note kind gets a 394-430 column line in `ai relay` and `ai relay-orchestrator` (the length depends on the kind name). The CHANGELOG entry for s412 says so."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`: `handoff_policy_text` (about lines 136-146) and its use in `relay_shared_sections`. It is also used by the skill text and `ai instructions` (about lines 1131 and 1304), so wrap only where it enters the relay texts, or wrap everywhere and update those goldens.\n- `tests/test_ai.py`: extend the 88-column test with a note-kind variant.\n- `tests/fixtures/relay-contract-v10.json` (or the current contract golden), only if a golden variant sets the key."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayTexts_NoteKindSet_ProseLinesFitIn88Columns`: with `handoff_requires_note_kind` set to `implementation report`, no prose line of `ai relay` or `ai relay-orchestrator` is over 88 columns. It fails today on the policy line."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Fill the policy sentence with the `_fill` helper from s412 where the relay texts include it.\n2. Keep the words identical; only line breaks change."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes.\n- With whitespace normalized, `ai relay` output with the key set is word-identical to main."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch."
+    }
+  ],
+  "notes": []
+}
