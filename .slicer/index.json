@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 435,
+  "next_id": 436,
   "preamble": "",
   "passes": [
     {
@@ -17165,7 +17165,22 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "d9a3d8b5-5b3b-4a0d-8f86-4ac5cb60de07",
+          "kind": "",
+          "text": "**2026-10-30** — From s424 review (later): also sync the built-in Rules bullet 'You and every role use absolute paths and git -C and never cd.' (src/slicer/templates/relay-brief.md) into the project override, alongside s419's no-background bullet.",
+          "created_at": "2026-10-30T19:41:54Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17275,6 +17290,36 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s435",
+      "title": "Relay gate role text stops repeating the Gate section's FAIL rule",
+      "short_title": "Gate role FAIL dedup",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "ai"
+        ],
+        "trees_literal": false,
+        "findings": "s424 review 2026-10-30, later nit: the new `gate` Roles text \"sends a FAIL back to the implementer\" repeats the Gate section's \"FAIL goes back to the implementer and then the gate again\"",
+        "discovered_from": "s424",
+        "parent": "",
+        "cites": [],
+        "key": "s424.gate-role-fail-dup",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }

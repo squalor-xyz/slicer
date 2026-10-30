@@ -2471,3 +2471,5 @@
 {"when": "2026-10-30T19:41:33Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v11 is implemented and the ", "by": "Jon Robbins"}
 {"when": "2026-10-30T19:41:34Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "ork companion slice and ork S198 (later): final v11 JSON sha", "by": "Jon Robbins"}
 {"when": "2026-10-30T19:41:34Z", "item": "s424", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T19:41:54Z", "item": "s435", "action": "add", "from": "", "to": "open", "note": "Relay gate role text stops repeating the Gate section's FAIL rule"}
+{"when": "2026-10-30T19:41:54Z", "item": "s431", "action": "note", "from": "", "to": "", "note": "From s424 review (later): also sync the built-in Rules bulle", "by": "Jon Robbins"}
