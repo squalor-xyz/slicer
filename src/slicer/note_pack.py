@@ -54,6 +54,9 @@ def select(
   reasons: dict[str, str] = {}
   eligible = []
   for candidate in candidates:
+    if candidate.record is not None and candidate.record.retracted:
+      reasons[candidate.id] = "retracted"
+      continue
     if kinds is not None and candidate.kind not in kinds:
       reasons[candidate.id] = "kind"
       continue

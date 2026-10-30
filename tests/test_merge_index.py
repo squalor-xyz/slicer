@@ -153,6 +153,29 @@ class MergeIndexCommandTests(unittest.TestCase):
       self.assertEqual((code, err), (0, ""))
       self.assertEqual(_note_ids(merged)["s01"], ["n2", "n3"])
 
+  def test_MergeIndex_RetractedOnOneSide_TakesTheRetraction(self) -> None:
+    # Ours retracts a note while theirs appends another one: both edits survive.
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      repo.run("add", "work")
+      repo.run("note", "S01", "--text", "Review FAIL: none")
+      base = repo.read(".slicer/index.json")
+      note_id = json.loads(base)["items"][0]["note_records"][0]["id"]
+      repo.run("note", "S01", "--text", "a second note")
+      theirs = repo.read(".slicer/index.json")
+      repo.write(".slicer/index.json", base)
+      code, _, err = repo.run("note-retract", "S01", "--note-id", note_id,
+        "--reason", "not a failure", "--owner", "relay")
+      self.assertEqual(code, 0, err)
+      ours = repo.read(".slicer/index.json")
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      records = json.loads(merged)["items"][0]["note_records"]
+      self.assertEqual([n["id"] for n in records][0], note_id)
+      self.assertEqual(len(records), 2)
+      self.assertEqual((records[0]["retracted_by"], records[0]["retracted_reason"]), ("relay", "not a failure"))
+      self.assertEqual(records[1]["retracted_by"], "")
+
   def test_MergeIndex_NoCounterLine_IsMergedAsItIs(self) -> None:
     with support.TempRepo(git=True) as repo:
       repo.run("init")

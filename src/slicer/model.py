@@ -14,7 +14,7 @@ from typing import Any, Iterable, Mapping
 
 from slicer.errors import StateError, reject_future_schema
 
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 11
 
 # Project knowledge, the same six kinds in every project. Not items, and not
 # a project's review vocabulary: an agent can rely on these names.
@@ -168,6 +168,10 @@ class NoteRecord:
   verified_by: str = ""
   verified_at: str = ""
   stale_after: str = ""
+  # Set together by `note-retract`: the text stays, and the record says it is wrong.
+  retracted_by: str = ""
+  retracted_at: str = ""
+  retracted_reason: str = ""
 
   @property
   def trust(self) -> str:
@@ -175,9 +179,14 @@ class NoteRecord:
       return "unverified"
     return "human-reviewed" if self.verified_by.startswith("human:") else "machine-confirmed"
 
+  @property
+  def retracted(self) -> bool:
+    return bool(self.retracted_at)
+
   def rendered(self) -> str:
     metadata = []
-    for key in ("by", "verified_by", "verified_at", "stale_after"):
+    for key in ("by", "verified_by", "verified_at", "stale_after",
+                "retracted_by", "retracted_at", "retracted_reason"):
       value = getattr(self, key)
       if value:
         metadata.append(f"{key}: {value}")
@@ -186,17 +195,21 @@ class NoteRecord:
     return self.display() + "\n\n" + "; ".join([f"trust: {self.trust}", *metadata])
 
   def display(self) -> str:
-    if not self.kind:
+    label = "[retracted] " if self.retracted else ""
+    if self.kind:
+      label += f"[{self.kind}] "
+    if not label:
       return self.text
     before, separator, after = self.text.partition(" — ")
-    label = f"[{self.kind}] "
     return before + separator + label + after if separator else label + self.text
 
   def persisted_dict(self) -> dict[str, Any]:
     return {"id": self.id, "kind": self.kind, "text": self.text,
             "created_at": self.created_at, "attempt": self.attempt,
             "by": self.by, "verified_by": self.verified_by,
-            "verified_at": self.verified_at, "stale_after": self.stale_after}
+            "verified_at": self.verified_at, "stale_after": self.stale_after,
+            "retracted_by": self.retracted_by, "retracted_at": self.retracted_at,
+            "retracted_reason": self.retracted_reason}
 
   def to_dict(self) -> dict[str, Any]:
     """Public shape: the stored fields plus the derived, never-stored trust tier."""
@@ -211,7 +224,8 @@ class NoteRecord:
     attempt = d.get("attempt")
     if attempt is not None:
       attempt = _attempts(attempt)
-    metadata = {k: d.get(k, "") for k in ("by", "verified_by", "verified_at", "stale_after")}
+    metadata = {k: d.get(k, "") for k in ("by", "verified_by", "verified_at", "stale_after",
+                                          "retracted_by", "retracted_at", "retracted_reason")}
     if any(not isinstance(v, str) for v in metadata.values()):
       raise StateError("note metadata must be strings", code="corrupt")
     return NoteRecord(d["id"], d["kind"], d["text"], d["created_at"], attempt, **metadata)

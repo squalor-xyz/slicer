@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import unittest
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import support
 from slicer import model, ops, render, tui
@@ -106,7 +107,7 @@ class StructuredNoteTests(unittest.TestCase):
       shown = self.payload(repo, "show", "S01")
       self.assertEqual(shown["notes"], [f"**{_today()}** — plain", f"**{_today()}** — [report] verified"])
       records = shown["note_records"]
-      self.assertEqual(list(records[1]), ["id", "kind", "text", "created_at", "attempt", "by", "verified_by", "verified_at", "stale_after", "trust"])
+      self.assertEqual(list(records[1]), ["id", "kind", "text", "created_at", "attempt", "by", "verified_by", "verified_at", "stale_after", "retracted_by", "retracted_at", "retracted_reason", "trust"])
       self.assertEqual(records[1]["attempt"], 1)
       self.assertEqual(records[1]["text"], f"**{_today()}** — verified")
       self.assertTrue(records[1]["created_at"].endswith("Z"))
@@ -247,6 +248,105 @@ class StructuredNoteTests(unittest.TestCase):
       repo.write(".slicer/config.json", json.dumps(config))
       self.assertEqual(repo.run("note", "S01", "--text", "plain")[0], 0)
       self.assertEqual(repo.run("note", "S01", "--kind", "report", "--text", "yes")[0], 0)
+
+  def snapshot(self, repo):
+    return {p: p.read_bytes() for p in (repo.root / ".slicer").rglob("*")
+      if p.is_file() and p.name != "lock"}
+
+  def first_note(self, repo):
+    repo.run("note", "S01", "--kind", "report", "--text", "Review FAIL: none")
+    return self.payload(repo, "show", "S01")["note_records"][0]
+
+  def test_Retract_KnownNote_KeepsTextAndRecordsWhoWhenWhy(self):
+    with self.repo() as repo:
+      note = self.first_note(repo)
+      with patch("slicer.ops._now", return_value="2026-10-30T12:00:00Z"):
+        result = self.payload(repo, "note-retract", "S01", "--note-id", note["id"],
+          "--reason", "not a failure", "--owner", "relay")
+      self.assertEqual(result["id"], "S01")
+      self.assertEqual(result["note_record"]["retracted_reason"], "not a failure")
+      records = self.payload(repo, "show", "S01")["note_records"]
+      self.assertEqual(len(records), 1)
+      self.assertEqual(records[0]["text"], note["text"])
+      self.assertEqual((records[0]["retracted_by"], records[0]["retracted_at"], records[0]["retracted_reason"]),
+        ("relay", "2026-10-30T12:00:00Z", "not a failure"))
+      entry = self.payload(repo, "log", "--action", "note-retract")[0]
+      self.assertEqual((entry["note"], entry["by"]), (note["id"], "relay"))
+
+  def test_Retract_UnknownNote_IsUsageAndWritesNothing(self):
+    with self.repo() as repo:
+      self.first_note(repo)
+      before = self.snapshot(repo)
+      code, out, err = repo.run("note-retract", "S01", "--note-id", "missing",
+        "--reason", "not a failure", "--owner", "relay", "--json")
+      self.assertEqual(code, 2, err)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "usage")
+      for detail in ("S01", "missing", "show --json"):
+        self.assertIn(detail, error["message"])
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Retract_BlankOrMultiLineReason_IsUsageAndWritesNothing(self):
+    with self.repo() as repo:
+      note = self.first_note(repo)
+      before = self.snapshot(repo)
+      for reason in ("", "   ", "two\nlines"):
+        with self.subTest(reason=reason):
+          code, out, err = repo.run("note-retract", "S01", "--note-id", note["id"],
+            "--reason", reason, "--owner", "relay", "--json")
+          self.assertEqual(code, 2, err)
+          error = json.loads(out)["error"]
+          self.assertEqual(error["code"], "usage")
+          self.assertIn("--reason", error["message"])  # not argparse's invalid-choice usage error
+          self.assertEqual(self.snapshot(repo), before)
+
+  def test_Retract_AlreadyRetracted_IsUsageAndWritesNothing(self):
+    with self.repo() as repo:
+      note = self.first_note(repo)
+      self.payload(repo, "note-retract", "S01", "--note-id", note["id"],
+        "--reason", "not a failure", "--owner", "relay")
+      first = self.payload(repo, "show", "S01")["note_records"][0]
+      before = self.snapshot(repo)
+      code, out, err = repo.run("note-retract", "S01", "--note-id", note["id"],
+        "--reason", "again", "--owner", "other", "--json")
+      self.assertEqual(code, 2, err)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "usage")
+      self.assertIn("relay", error["message"])
+      self.assertIn(first["retracted_at"], error["message"])
+      self.assertEqual(self.snapshot(repo), before)
+
+  def test_Render_RetractedNote_ShowsLabelAndRetraction(self):
+    with self.repo() as repo:
+      note = self.first_note(repo)
+      with patch("slicer.ops._now", return_value="2026-10-30T12:00:00Z"):
+        self.payload(repo, "note-retract", "S01", "--note-id", note["id"],
+          "--reason", "not a failure", "--owner", "relay", "--render")
+      rendered = repo.read(".slicer/render/slices/S01.md")
+      self.assertIn("[retracted] [report] Review FAIL: none", rendered)
+      for text in ("retracted_by: relay", "retracted_at: 2026-10-30T12:00:00Z",
+                   "retracted_reason: not a failure"):
+        self.assertIn(text, rendered)
+      state = repo.state()
+      with patch("slicer.ops._now", return_value="2000-01-01T00:00:00Z"):
+        first = render.plan(state)
+      with patch("slicer.ops._now", return_value="2040-01-01T00:00:00Z"):
+        second = render.plan(state)
+      self.assertEqual(first, second)
+
+  def test_Tui_RetractedNote_IsDimmed(self):
+    with self.repo() as repo:
+      note = self.first_note(repo)
+      repo.run("note", "S01", "--text", "kept note")
+      self.payload(repo, "note-retract", "S01", "--note-id", note["id"],
+        "--reason", "not a failure", "--owner", "relay")
+      lines = tui.panel(repo.state(), "S01")
+      retracted = [line for line in lines if "Review FAIL" in line.text or "retracted_reason" in line.text]
+      self.assertTrue(retracted)
+      self.assertEqual({line.role for line in retracted}, {"dim"})
+      kept = [line for line in lines if "kept note" in line.text]
+      self.assertTrue(kept)
+      self.assertEqual({line.role for line in kept}, {"normal"})
 
 
 if __name__ == "__main__":

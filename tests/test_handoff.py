@@ -189,6 +189,23 @@ class HandoffReportTests(unittest.TestCase):
       item = repo.state().index.require("S01")
       self.assertEqual((item.status, item.claim_owner), ("review", ""))
 
+  def test_Handoff_RequiredKindOnlyRetracted_IsRefused(self):
+    with self.repo() as repo:
+      self.require_report(repo)
+      repo.run("note", "S01", "--kind", "report", "--text", "Checks passed")
+      note_id = repo.state().index.require("S01").note_records[0].id
+      code, _, err = repo.run("note-retract", "S01", "--note-id", note_id,
+        "--reason", "not a failure", "--owner", "relay")
+      self.assertEqual(code, 0, err)
+      before = self.snapshot(repo)
+      code, out, err = repo.run("handoff", "S01", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(json.loads(out)["error"]["code"], "state")
+      self.assertEqual(self.snapshot(repo), before)
+      repo.run("note", "S01", "--kind", "report", "--text", "Checks passed again")
+      code, _, err = repo.run("handoff", "S01", "--json")
+      self.assertEqual(code, 0, err)
+
   def test_Handoff_InvalidRecord_DoesNotAuthorizeTransition(self):
     for kind, text, attempt in (("decision", "verified", 1),
                                ("report", "verified", None),

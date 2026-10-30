@@ -153,6 +153,19 @@ class ConformanceSectionTests(RelayConformanceCase):
         for command in re.findall(r"`(slicer [^`]+)`", body):
           parser.parse_args(command.split()[1:])
 
+  def test_RelayConformance_Section_NamesNoRelayRunBeginOrEnd(self) -> None:
+    # The outer session owns `relay-run begin` and `end`; an orchestrator is never told to run them.
+    for label, text in self.texts():
+      with self.subTest(label=label):
+        body = section(text, "Conformance")
+        self.assertNotIn("relay-run begin", body)
+        self.assertNotIn("relay-run end", body)
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        conformance = json.dumps(self.payload(command)["conformance"])
+        self.assertNotIn("relay-run begin", conformance)
+        self.assertNotIn("relay-run end", conformance)
+
 
 class ConformanceJsonTests(RelayConformanceCase):
   def test_AiRelayJson_NewKeys_AppendAfterChangesInFixedOrder(self) -> None:

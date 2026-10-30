@@ -1,0 +1,41 @@
+{
+  "id": "s428",
+  "title": "Merge-index keeps a pre-schema-11 note edit clean after the retraction restamp",
+  "lead": [
+    "s393 bumped the index schema to 11 and persists three empty retraction fields on every note record. The first save on main after landing rewrites every note record. A branch cut before s393 that only appends notes still merges cleanly, but one that edits or verifies an existing note now differs from main on that record and the `slicer-index` driver reports a conflict."
+  ],
+  "depends_note": null,
+  "findings_note": "s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing what schema 11 persists; omitting empty fields.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The same exposure followed the schema-7 metadata bump. It costs a hand-resolved conflict in `.slicer/index.json` for any long-lived branch, which the merge driver exists to avoid."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/mergeindex.py`: `_note_records` (about lines 125-160). Compare note records with absent retraction fields and empty ones as equal, so an older side that lacks the keys counts as unchanged on them.\n- `tests/test_merge_index.py`: a three-way case with a schema-10 base and ours, and a schema-11 theirs that only restamped."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_MergeIndex_OlderSideEditsNote_TheirsOnlyRestamped_MergesClean`: base and ours are schema 10, ours edits a note's text, theirs is the same note restamped with empty retraction fields. The merge takes ours' text with no conflict. It fails today."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Normalize each note record to the current field set (missing optional fields as their empty default) before the three-way compare in `_note_records`.\n2. Keep the output in the current schema and fixed key order."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch."
+    }
+  ],
+  "notes": []
+}

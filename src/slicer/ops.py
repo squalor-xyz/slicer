@@ -1639,6 +1639,7 @@ def handoff_many(
     if (item.status == cfg.started_status and cfg.handoff_requires_note_kind
         and not any(record.kind == cfg.handoff_requires_note_kind
                     and record.text.strip() and record.attempt == item.attempts
+                    and not record.retracted
                     for record in item.note_records)):
       problems.append(
         f"{item.id} needs a nonempty {cfg.handoff_requires_note_kind!r} note for "
@@ -2459,6 +2460,34 @@ def verify_note(state: State, item_id: str, note_id: str, *, owner: str | None,
   _record(state, item_id, "note-attest" if attest else "note-verify",
     frm=previous, to=verifier, note=record.id, by=verifier)
   return record, True
+
+
+def retract_note(state: State, item_id: str, note_id: str, reason: str, *,
+                 owner: str | None) -> NoteRecord:
+  """Mark one item note as wrong. The text stays; the record gains who, when and why.
+
+  A retraction is a correction, not a deletion, so the audit trail keeps the note.
+  Like `verify_note`, this does not authenticate the caller."""
+  item = state.index.require(item_id)
+  record = next((n for n in item.note_records if n.id == note_id), None)
+  if record is None:
+    raise StateError(f"{item_id} has no item note {note_id!r}; use show --json to find its ID", code="usage")
+  if owner is not None and not owner.strip():
+    raise StateError("--owner cannot be blank", code="usage")
+  reason = reason.strip()
+  if not reason or "\n" in reason or "\r" in reason:
+    raise StateError("--reason must be one nonblank line saying why the note is wrong", code="usage")
+  if record.retracted:
+    raise StateError(
+      f"{item_id} note {note_id!r} was already retracted by {record.retracted_by} at {record.retracted_at}",
+      code="usage")
+  by = _note_actor(actor(state, owner))
+  record.retracted_by = by
+  record.retracted_at = _now()
+  record.retracted_reason = reason
+  state.save_index()
+  _record(state, item_id, "note-retract", note=record.id, by=by)
+  return record
 
 
 def _note_index(item: Item, index: int) -> None:

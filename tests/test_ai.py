@@ -14,7 +14,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import ai, cli, config, ops, roles, store, templates
+from slicer import ai, cli, config, ops, relayrun, roles, store, templates
 
 
 class AiInstructionsTests(unittest.TestCase):
@@ -1152,7 +1152,8 @@ class AiRelayTests(unittest.TestCase):
           "At most 30 lines",
           "Each owner question is one line and counts toward the line limit.",
           "Number the questions from 1 and give each 2 to 4 options.",
-          "Use no `|` in any value but `reasoning`, and no `;` in a SUMMARY.",
+          "Use no `|` in any value but `reasoning`, no `;` in a label or summary, and the first "
+          "`:` ends the label.",
           "With no question, the line is `owner needed: none`.",
           "`reasoning` is the last field and takes the rest of the line.",
         ):
@@ -1793,6 +1794,51 @@ class AiRelayTests(unittest.TestCase):
                 if command == "relay" or (command == "relay-orchestrator" and finish == "handoff"):
                   self.assertIn(closing, text)
 
+  def test_RelayTexts_ProseLines_FitIn88Columns(self):
+    """Both texts, both finish modes, with and without a role matrix. Exempt: a line in a
+    fenced block, a line of `## Roles matrix` (the project's table and the rule bullets
+    `relay-roles` renders from its data, not contract prose), and a line that is one
+    backticked `slicer` command alone (a wrap would split it)."""
+    for finish in ("done", "handoff"):
+      for matrix in (False, True):
+        for command in ("relay", "relay-orchestrator"):
+          with self.subTest(command=command, finish=finish, matrix=matrix), support.TempRepo() as repo:
+            for argv in (("init",), ("config", "implement_finish", finish)):
+              code, out, err = repo.run(*argv)
+              self.assertEqual((code, err), (0, ""), out)
+            if matrix:
+              code, out, err = repo.run("relay-roles", "init", "--render")
+              self.assertEqual((code, err), (0, ""), out)
+            code, out, err = repo.run("ai", command)
+            self.assertEqual((code, err), (0, ""), out)
+            long, fenced, in_matrix = [], False, False
+            for number, line in enumerate(out.splitlines(), 1):
+              if line.startswith("## "):
+                in_matrix = line == "## Roles matrix"
+              if line.startswith("```"):
+                fenced = not fenced
+                continue
+              if fenced or in_matrix or re.fullmatch(r"\s*`slicer [^`]+`[,.;:]?", line):
+                continue
+              if len(line) > 88:
+                long.append(f"{number} ({len(line)}): {line}")
+            self.assertEqual(long, [])
+
+  def test_RunReport_QuestionValueRule_IsTheSentenceAskEnforces(self):
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        report = " ".join(ai.orchestrator_text(finish).split("## Run report", 1)[1].split())
+        self.assertNotIn("no `;` in a SUMMARY", report)
+        self.assertIn(" ".join(relayrun.QUESTION_VALUE_RULE.split()), report)
+    rule = " ".join(relayrun.QUESTION_VALUE_RULE.split())
+    for phrase in (
+      "Use no `|` in any value but `reasoning`",
+      "no `;` in a label or summary",
+      "the first `:` ends the label",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, rule)
+
 
 class AiRelayRolesTests(unittest.TestCase):
   """`ai relay --init-roles` writes the role matrix; `ai relay-roles` and `ai relay` read it.
@@ -1873,7 +1919,7 @@ class AiRelayRolesTests(unittest.TestCase):
     embedded = roles.render_markdown(roles.skeleton(), level=2)
     self.assertIn("## Roles matrix\n\n" + embedded.rstrip("\n") + "\n\n## Order", out)
     self.assertNotIn("# Relay roles", out)
-    setup = out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0]
+    setup = " ".join(out.split("## Setup", 1)[1].split("## Roles matrix", 1)[0].split())
     self.assertIn(
       "Propose the lineup (agent, vendor, model and reasoning effort for each role) from the matrix below.",
       setup,
@@ -2156,6 +2202,16 @@ class AiRelayBriefTests(unittest.TestCase):
     text = self.payload(repo)["brief"]
     self.assertNotIn("twice", text)
     self.assertIn("Stop section of `slicer ai relay-orchestrator`", text)
+
+  def test_AiRelayBrief_BuiltInTemplate_StopNamesNoOwnerDecision(self):
+    template = " ".join(templates.default("relay-brief.md").split())
+    stop = template.split("- Stop and report", 1)[1].split("- Hand back", 1)[0]
+    self.assertIn("(repeated gate failures or a wrong specification) instead of guessing.", stop)
+    self.assertNotIn("owner decision", stop)
+    self.assertIn(
+      "A `blocker` owner question is not a stop: ask it and wait as the Owner questions rule says.",
+      stop,
+    )
 
   def test_AiRelayBrief_MissingProjectTemplate_UsesBuiltIn(self):
     repo = self.project()
