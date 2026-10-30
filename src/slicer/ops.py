@@ -885,7 +885,7 @@ class ConfigChange:
   changed: bool
 
 
-def _config_schema() -> dict:
+def config_schema() -> dict:
   """Every settable key with its default, in config.json's own shape.
 
   `satisfies_dependencies` and `relay_contract` are omitted from `to_dict()` while
@@ -899,7 +899,7 @@ def _config_schema() -> dict:
 
 def _config_default(key: str) -> object:
   """The default at a dotted key, or a `usage` error naming the keys that exist."""
-  schema = _config_schema()
+  schema = config_schema()
   parts = key.split(".")
   if key == "version":
     raise StateError(
@@ -3905,21 +3905,28 @@ def relay_run_question(
 
 
 def relay_run_end(
-  root: Path, run_id: str, outcome: str, *, close_steps: str | None = None,
+  root: Path, run_id: str, outcome: str, *, close_steps: str | None = None, reason: str = "",
   now: datetime | None = None, report: LedgerReport | None = None,
 ) -> tuple[relayrun.Run, list[str]]:
   """Close the run, and return it with the ids of the steps this call closed.
 
   When the shared ledger can be written, the run's events from the local ledgers are copied
   into it first, so removing a worktree afterwards loses none of them. With `close_steps`
-  (`done` or `fail`), each step still running or waiting then gets one step event with that phase, and
+  (`done` or `fail`), each step still running or waiting then gets one step event with that phase (and `reason`, when given) and
   no other field, before the end event. They are all written under the one ledger lock; a
-  refused write stops the call before the end event, so the run is not ended.
+  refused write stops the call before the end event, so the run is not ended. `reason` says why
+  the closed steps failed, so it goes with `close_steps` `fail` only, as `relay_run_step` gives a
+  failed step its reason; it is checked before the lock, so a refusal writes nothing.
   """
   now = now or relayrun.utcnow()
   relayrun.choice("outcome", outcome, relayrun.OUTCOMES)
   if close_steps is not None:
     relayrun.choice("close_steps", close_steps, ("done", "fail"))
+  reason = relayrun.one_line("reason", reason)
+  if reason and close_steps != "fail":
+    raise relayrun.bad_field(
+      "--reason needs --close-steps fail; for one step, use relay-run step --phase fail --reason"
+    )
   with ledger_lock(root, report) as ledger:
     _open_run(root, run_id, now)
     if ledger.can_fall_back and not ledger.fallback:
@@ -3930,7 +3937,7 @@ def relay_run_end(
       # updates it, so a step recorded in a sandbox's file is closed in the shared ledger.
       running = [s.id for s in _open_run(root, run_id, now).unfinished_steps()]
       for step_id in running:
-        ledger.append(relayrun.step_event(run_id, now, step_id, close_steps))
+        ledger.append(relayrun.step_event(run_id, now, step_id, close_steps, reason=reason))
         closed.append(step_id)
     ledger.append(relayrun.end_event(run_id, now, outcome))
     return next(r for r in relayrun.load_all(root, now) if r.id == run_id), closed

@@ -823,19 +823,21 @@ the environment lines verbatim. Every brief says the role runs its own shell com
 the foreground and backgrounds none, and runs long commands such as the full suite in
 the foreground with a long timeout.
 Reviewer, architect and gate briefs forbid git writes; a needed write stops and
-goes to the owner. Reviewer, UI pass and gate briefs tell the agent to tag each
-finding `fix`, `owner` or `later` as Gate defines, and to give an `owner` finding its
-2 to 4 options and a preferred one. The UI pass brief says the agent is read-only,
-edits nothing and makes no git writes, and tells it to load the skills the project's
-role matrix names for the UI pass; a vendor that cannot load skills gets the project's
-vendor-neutral UI prompt instead. It asks for each finding's kind and, where the
-project can render, the changed views. The project may fold the UI pass into the
-reviewer by slice size, such as the reviewer on a small slice and a separate role on a
-larger one; where it does, the reviewer's brief also carries the UI pass brief, and
-no separate UI pass runs. The implementer brief says cited line numbers may have
-moved and to re-anchor them at start. The spec-check brief says the agent is read-only,
-edits nothing and makes no git writes, and asks for `ready` or `owner needed` lines for
-each slice. A part brief names the part's own files and the files it must not touch.
+goes to the owner. Every brief says that every role, the read-only ones included,
+uses absolute paths and `git -C` and never `cd`. Reviewer, UI pass and gate briefs
+tell the agent to tag each finding `fix`, `owner` or `later` as Gate defines, and to
+give an `owner` finding its 2 to 4 options and a preferred one. The UI pass brief
+says the agent is read-only, edits nothing and makes no git writes, and tells it to
+load the skills the project's role matrix names for the UI pass; a vendor that
+cannot load skills gets the project's vendor-neutral UI prompt instead. It asks for
+each finding's kind and, where the project can render, the changed views. The
+project may fold the UI pass into the reviewer by slice size, such as the reviewer
+on a small slice and a separate role on a larger one; where it does, the reviewer's
+brief also carries the UI pass brief, and no separate UI pass runs. The implementer
+brief says cited line numbers may have moved and to re-anchor them at start. The
+spec-check brief says the agent is read-only, edits nothing and makes no git writes,
+and asks for `ready` or `owner needed` lines for each slice. A part brief names the
+part's own files and the files it must not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
@@ -1001,7 +1003,8 @@ return one run report.
   so the outer session can route the report. A nudge to report while a role you started
   still runs is not a reason to report. A role that reports while a command of its own
   still runs, or that stops waiting on its own background work, has not finished its
-  round: resume it and tell it to finish. Every role runs its own shell commands in the
+  round: resume it and tell it to finish, in the slice worktree when it is headless, as
+  the Gate rule below says. Every role runs its own shell commands in the
   foreground and backgrounds none. Send the final run report once; an early hand-back
   for an owner question, a permission denial or a failure is not a run report. When you
   wait for the owner's answer to a question you asked, it is
@@ -1020,6 +1023,9 @@ return one run report.
   it goes in the report as a later note.
 - Gate: after FAIL, resume the agent that raised the blockers. Start a fresh
   reviewer only when that agent is gone or the fixes rewrote much of the diff.
+  A headless role you resume is given the slice worktree as its working directory,
+  and you ask it to name the directory it ran in. Check that the directory it names
+  is the slice worktree before you go on.
 - After `VERDICT: PASS` and the finish step, commit on the slice branch if your
   brief allows it.
 - A small fix round (accepted findings only, no new files) is reviewed and gated in
