@@ -31,15 +31,19 @@ class CheckReport:
     """`roadmap_only` for the merge's leftover, `mixed` for other stale renders, else None.
 
     `roadmap_only` needs every stale path to be a whole-roadmap render, every stale cause
-    to be `content` (a missing file, an older render format or an unstamped header is not
-    a merge), and no orphan, stale sync or problem. Any other stale render, including a
-    roadmap render beside one of those, is `mixed`, so the merge line does not claim the case.
+    to be `content` or `conflict_markers` (a missing file, an older render format or an
+    unstamped header is not a merge), and no orphan, stale sync or problem. Any other stale
+    render, including a roadmap render beside one of those, is `mixed`, so the merge line does
+    not claim the case.
     """
     if not self.stale_render:
       return None
     merge_shape = (
       set(self.stale_render) <= set(render.ROADMAP_RENDER_NAMES)
-      and all(detail["cause"] == "content" for detail in self.stale_render_details)
+      and all(
+        detail["cause"] in ("content", "conflict_markers")
+        for detail in self.stale_render_details
+      )
       and not (self.orphan_render or self.stale_sync or self.problems)
     )
     return "roadmap_only" if merge_shape else "mixed"

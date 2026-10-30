@@ -198,6 +198,7 @@ class EditInputTests(unittest.TestCase):
   def test_ProseEdit_IdenticalInlineText_DoesNotWriteOrLog(self) -> None:
     with self.repo() as repo:
       repo.run("prose", "edit", "preamble", "--text", "same\n")
+      repo.run("render")  # a write heals a stale render first; start from a current one
       before = self.snapshot(repo)
       code, out, err = repo.run("prose", "edit", "preamble", "--text", "same\n", "--json")
       self.assertEqual(code, 0, err)
@@ -246,6 +247,7 @@ class EditInputTests(unittest.TestCase):
         path = repo.write("empty.md", incoming)
         args = {"text": ("--text", incoming), "file": ("--file", str(path)),
                 "stdin": ("--stdin",)}[source]
+        repo.run("render")  # a write heals a stale render first; start from a current one
         before = self.snapshot(repo)
         with patch("slicer.cli.sys.stdin", io.StringIO(incoming)):
           code, _, err = repo.run("edit", "S01", "--section", heading, "--append", *args)

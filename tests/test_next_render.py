@@ -85,7 +85,9 @@ class NextRenderTests(unittest.TestCase):
       repo.run("render")
       render = repo.root / DIR_NAME / "render" / "ROADMAP.md"
       before = render.read_bytes()
-      with patch("slicer.cli.render.plan", side_effect=AssertionError("rendered")):
+      with patch("slicer.cli._heal_render"), patch(
+        "slicer.cli.render.plan", side_effect=AssertionError("rendered"),
+      ):
         code, out, _ = repo.run("next", "--start", "--render", "--json")
       self.assertEqual(code, 2)
       self.assertIsNone(json.loads(out)["item"])
@@ -96,7 +98,9 @@ class NextRenderTests(unittest.TestCase):
       repo.run("next", "--start", "--render")
       log = repo.root / DIR_NAME / "log.jsonl"
       before = log.read_bytes()
-      with patch("slicer.cli.render.plan", side_effect=AssertionError("rendered")):
+      with patch("slicer.cli._heal_render"), patch(
+        "slicer.cli.render.plan", side_effect=AssertionError("rendered"),
+      ):
         code, _, err = repo.run("next", "--start", "--render", "--strict", "--json")
       self.assertEqual(code, 0, err)
       self.assertEqual(log.read_bytes(), before)

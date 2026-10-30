@@ -604,7 +604,7 @@ class StaleDetail:
   """Why one generated file is stale; `rendered`/`running` are set only for a format mismatch."""
 
   file: str
-  cause: str  # missing | renderer_format | unknown_provenance | content
+  cause: str  # missing | renderer_format | unknown_provenance | conflict_markers | content
   rendered: int | None = None
   running: int | None = None
 
@@ -612,6 +612,11 @@ class StaleDetail:
   def detail(self) -> str:
     if self.cause == "missing":
       return "file is missing; run `slicer render`"
+    if self.cause == "conflict_markers":
+      return (
+        "holds merge conflict markers; any slicer write regenerates it, "
+        "or run `slicer render`"
+      )
     if self.cause == "renderer_format":
       return (
         f"rendered with render format {self.rendered}, running render format {self.running}; "
@@ -675,8 +680,20 @@ def plan(state) -> dict[str, bytes]:
   return out
 
 
+_CONFLICT_OPEN = re.compile(r"^<<<<<<< ", re.MULTILINE)
+_CONFLICT_CLOSE = re.compile(r"^>>>>>>> ", re.MULTILINE)
+
+
+def has_conflict_markers(text: str) -> bool:
+  """Whether `text` holds a Git conflict: an opening and a closing marker line."""
+  return bool(_CONFLICT_OPEN.search(text) and _CONFLICT_CLOSE.search(text))
+
+
 def _differing_detail(rel: str, got: bytes) -> StaleDetail:
-  head = got.decode("utf-8", errors="replace").split("\n", 1)[0]
+  text = got.decode("utf-8", errors="replace")
+  if has_conflict_markers(text):
+    return StaleDetail(rel, "conflict_markers")
+  head = text.split("\n", 1)[0]
   have = rendered_format(head)
   if have is None:
     return StaleDetail(rel, "unknown_provenance")

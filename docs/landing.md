@@ -24,10 +24,10 @@ PYTHONPATH=src python3 -m slicer land <ID> --branch feature/<id>-<slug> --note "
 
 `land` refuses (`not_merged`) unless the branch's tip is reachable from `HEAD`, and refuses (`run_active`) while a relay run on the slice is neither ended nor stale; either way nothing is written. Then it runs `done --render --check` and prints the git commands left: the commit of `.slicer`, `git worktree remove` for the branch's worktree, and `git branch -d`. Each printed git command uses `git -C ROOT`, with the absolute project root shell-quoted, so it works when `slicer --root OTHER land` runs from elsewhere. slicer runs none of them. It does not run the suite or merge.
 
-Without the optional hook below, until `done --render` runs, `check` on `main` fails on the stale `ROADMAP.md` and `ROADMAP.html`, which a merge leaves behind because the `slicer-generated` driver keeps `main`'s roadmap render, and `check` names that case.
+A merge leaves `.slicer/render/` stale, or holding conflict markers when the clone has no `slicer-generated` driver. Until something regenerates it, `check` on `main` fails on the stale `ROADMAP.md` and `ROADMAP.html`, and `check` names that case. The next slicer write (`done --render` when landing, or any other command that changes state) regenerates the stale render files first and names them on stderr, so no clone needs the driver or a hook to keep the render current. A committed merge that holds conflict markers heals the same way. The merge itself must be finished first: while Git has a merge in progress, writes are refused and nothing is regenerated. `slicer render` still works at that point. `index.json` is never healed; with conflict markers in it a write is refused and the message names `slicer setup-git`.
 
-After a plain merge, run `slicer render` and `slicer check`, then review and commit
-any rewritten render files. To automate the roadmap-only case, `slicer setup-git --hook`
+After a plain merge, run `slicer check`; if the render is stale, `slicer render` (or any slicer write) fixes
+it. Review and commit any rewritten render files. To regenerate it right at the merge, `slicer setup-git --hook`
 prints an optional `post-merge` script and its install command (also returned as
 `{hook, install}` with `--json`). See [Git merge drivers](commands.md#git-merge-drivers)
 for installation that respects `core.hooksPath` and existing hooks. slicer installs

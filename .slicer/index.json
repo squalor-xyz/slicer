@@ -15455,10 +15455,22 @@
       "id": "s417",
       "title": "A merge leaves the render current without a per-clone setup or a hand-run render",
       "short_title": "Merges re-render automatically",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9e844710-85d3-49d9-aa0d-48b495d43742",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: every locked roadmap write first regenerates a stale or conflicted render/ (one stderr line), skipped during a merge and when render/ is absent; check names a conflict_markers cause; conflicted state JSON names per-file advice (index by hand + setup-git, relay-roles keep one side). Full suite 2964 OK; gate PASS.",
+          "created_at": "2026-10-30T15:46:08Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -15476,7 +15488,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
