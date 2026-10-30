@@ -369,6 +369,65 @@ class AffectedTests(unittest.TestCase):
     self.assertIn("src/slicer/templates/new_helper.py is not in the map", err)
     self.assertIn(DISCOVER, err)
 
+  def test_Select_ChangedFixtureReadByATest_SelectsThatTest(self) -> None:
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_reader": [], "mod.T.test_other": []},
+      "reads": {
+        "mod.T.test_reader": ["tests/fixtures/relay-contract-v10.json"],
+        "mod.T.test_other": ["docs/other.md"],
+      },
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "tests/fixtures/relay-contract-v10.json:1-1",
+    ])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_reader"])
+
+  def test_Run_NewFixtureNotInMap_SelectsDirectoryReaders(self) -> None:
+    # A fixture added after the borrowed map was recorded is in no test's reads. Its
+    # sibling fixture is read by a test, which is selected in its place.
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_reader": ["src/slicer/ops.py:4"]},
+      "reads": {"mod.T.test_reader": ["tests/fixtures/legacy/sample.md"]},
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "tests/fixtures/legacy/new-fixture.json:1-1",
+    ])
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines(), ["mod.T.test_reader"])
+    self.assertIn("tests/fixtures/legacy/new-fixture.json is not in the map", err)
+    self.assertIn("the tests that read files in tests/fixtures/legacy/ were selected instead", err)
+    self.assertNotIn(DISCOVER, err)
+
+  def test_Select_NewFixtureNoNeighbour_StillRefuses(self) -> None:
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_a": ["src/slicer/ops.py:4"]},
+      "reads": {"mod.T.test_a": ["docs/other.md"]},
+    })
+    code, out, err = _run([
+      "--map", str(path), "--sha", SHA, "--lines", "tests/fixtures/legacy/new-fixture.json:1-1",
+    ])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("no test reads a file in tests/fixtures/legacy/", err)
+    self.assertIn(DISCOVER, err)
+
+  def test_Select_ChangedSupportModule_StillRefuses(self) -> None:
+    # The reads path is for non-Python files only: a support module still asks for the full suite.
+    path = self.raw_map({
+      "sha": SHA,
+      "tests": {"mod.T.test_reader": ["src/slicer/ops.py:4"]},
+      "reads": {"mod.T.test_reader": ["tests/fixtures/relay-contract-v10.json"]},
+    })
+    code, out, err = _run(["--map", str(path), "--sha", SHA, "--lines", "tests/support.py:10-10"])
+    self.assertEqual(code, 2)
+    self.assertEqual(out, "")
+    self.assertIn("tests/support.py is not a test module", err)
+    self.assertIn(DISCOVER, err)
+
   def test_Select_MissingMap_ExitsTwoAndNamesDiscover(self) -> None:
     missing = self.map_file({})
     missing.unlink()
@@ -422,7 +481,7 @@ class AffectedTests(unittest.TestCase):
     self.assertEqual(code, 0, err)
     self.assertEqual(out.splitlines(), ["mod.Class.test_a"])
 
-  def test_Select_SupportOrFixture_ExitsTwo(self) -> None:
+  def test_Select_SupportOrUnreadFixture_ExitsTwo(self) -> None:
     path = self.map_file({
       "test_affected._Pair.test_a": ["tests/support.py:10", "src/slicer/ops.py:4"],
     })

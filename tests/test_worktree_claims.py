@@ -236,7 +236,7 @@ class WorktreeClaimTests(unittest.TestCase):
         self.assertNotIn("in_work_elsewhere", payload)
 
   def test_List_OutsideGit_HasNoSiblingLookup(self) -> None:
-    with support.TempRepo() as repo:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       repo.run("init")
       repo.run("add", "one")
       code, out, err = repo.run("list", "--json")

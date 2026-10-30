@@ -507,9 +507,9 @@ def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   report kind the way `ai relay` reads them; outside a project it is the generic text."""
   _project, finish, required, pinned, _check = _ai_project(args, relay=True)
   _require_relay_pin(pinned)
-  text = ai.orchestrator_text(finish, required)
+  text = ai.orchestrator_text(finish, required, session=args.session)
   _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "orchestrator": text,
-               **ai.relay_contract(finish, orchestrator=True)},
+               **ai.relay_contract(finish, orchestrator=True, session=args.session)},
         text.rstrip("\n"), keep_empty=("pinned",),
         keep_fields=("order", "report", "outcomes", "stop", "changes"))
   return OK
@@ -783,7 +783,8 @@ def cmd_relay_run_step(args: argparse.Namespace) -> int:
     _run_root(args), args.run, phase=args.phase, step=args.step, role=args.role or "",
     agent=args.agent or "", vendor=args.vendor or "", model=args.model or "",
     reasoning=args.reasoning or "", task=args.task or "", parent=args.parent or "",
-    waiting_on=args.waiting_on or "", reason=args.reason or "", report=report,
+    waiting_on=args.waiting_on or "", reason=args.reason or "", verdict=args.verdict,
+    report=report,
   )
   _say_fallback(report)
   _say_skipped(report)
@@ -903,6 +904,54 @@ def cmd_relay_run_list(args: argparse.Namespace) -> int:
       if question:
         lines.append(question)
   _emit_run(args, {"runs": [run.to_dict() for run in runs]}, "\n".join(lines) or "no relay runs")
+  return OK
+
+
+def _seconds_text(seconds: int | None) -> str:
+  return "-" if seconds is None else relayrun.duration_text(seconds)
+
+
+def _stats_text(stats: dict) -> str:
+  """The short form of `relay-run stats`: a summary, a role table and where the rest is."""
+  runs, wall, fixes = stats["runs"], stats["wall_seconds"], stats["fix_rounds"]
+  gates, wait = stats["gates"], stats["owner_wait"]
+  lines = [
+    f"relay runs: {runs['total']} ({runs['pass']} pass, {runs['fail']} fail, "
+    f"{runs['stopped']} stopped, {runs['unended']} unended); {stats['measured']} measured",
+    f"wall time: median {_seconds_text(wall['median'])}, longest {_seconds_text(wall['max'])}",
+    f"fix rounds: {fixes['total']} ({fixes['runs_with_any']} runs with any, "
+    f"{fixes['runs_with_two_or_more']} with two or more)",
+    f"gates: {gates['rounds']} rounds, {gates['fails']} FAIL; {gates['with_verdict']} had a "
+    f"recorded verdict, {gates['by_proxy']} counted by proxy",
+    f"owner wait: {wait['runs_with_wait']} runs with a recorded wait, "
+    f"{_seconds_text(wait['total_seconds'])} in all, median {_seconds_text(wait['median_seconds'])}, "
+    f"longest {_seconds_text(wait['max_seconds'])}",
+  ]
+  if stats["roles"]:
+    table = [("role", "steps", "total", "median")] + [
+      (role, str(row["steps"]), _seconds_text(row["total_seconds"]),
+       _seconds_text(row["median_seconds"]))
+      for role, row in stats["roles"].items()
+    ]
+    widths = [max(len(cells[column]) for cells in table) for column in range(4)]
+    for cells in table:
+      lines.append("  ".join(
+        cell.ljust(width) if column == 0 else cell.rjust(width)
+        for column, (cell, width) in enumerate(zip(cells, widths))
+      ).rstrip())
+  lines.append("per run: --json")
+  return "\n".join(lines)
+
+
+def cmd_relay_run_stats(args: argparse.Namespace) -> int:
+  """Measure the ended runs. Reads the ledgers like `relay-run list`: no lock, no write."""
+  since = None
+  if args.since is not None:
+    text = f"{args.since}T00:00:00Z" if re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.since) else args.since
+    # Whole seconds, as the ledger's stamps are: the filter and the printed stamp then agree.
+    since = _log_timestamp(text, "--since", code="usage").replace(microsecond=0)
+  stats = relayrun.stats(relayrun.list_runs(_run_root(args)), since)
+  _emit_run(args, stats, _stats_text(stats))
   return OK
 
 
@@ -3935,9 +3984,16 @@ def build_parser() -> argparse.ArgumentParser:
       "cannot be read, prints the generic text and warns on stderr. A project whose config "
       "pins a different relay contract (`relay_contract`) is refused with code "
       "contract_mismatch. Does not lock or write. "
-      "`--json` returns {contract, pinned, orchestrator, ...}."
+      "`--session` prints the variant for a session the owner talks to that orchestrates "
+      "every slice itself: it begins and ends the run, records its own step, asks the owner "
+      "directly and runs Approve and Land, with no hand-back. `--json` returns "
+      "{contract, pinned, orchestrator, ...}, and with `--session` also `session: true`."
     ),
     parents=[common],
+  )
+  inner.add_argument(
+    "--session", action="store_true",
+    help="print the variant for a session that orchestrates every slice itself",
   )
   inner.set_defaults(func=cmd_ai_relay_orchestrator)
   _json_flags(inner, suppress=True)
@@ -4591,6 +4647,11 @@ def build_parser() -> argparse.ArgumentParser:
     help="with --phase fail, why the step failed, such as a rate limit or out of credits; "
     "refused with another phase",
   )
+  inner.add_argument(
+    "--verdict", metavar="pass|fail",
+    help="with --phase done on a gate step, the verdict that closes the gate round; "
+    "refused on any other step or phase",
+  )
   inner.add_argument("--task", help="one line on what the step is doing")
   inner.add_argument("--parent", metavar="STEP", help="the step that spawned this subagent")
 
@@ -4654,6 +4715,16 @@ def build_parser() -> argparse.ArgumentParser:
     "--active", action="store_true",
     help="only runs that have not ended and have had an event in the last 30 minutes "
     "or have a step waiting",
+  )
+
+  inner = uadd(
+    "stats", cmd_relay_run_stats,
+    "fix rounds, gate FAILs, role times and owner wait of ended runs (no lock, no write)",
+  )
+  inner.add_argument(
+    "--since", metavar="DATE",
+    help="only runs begun at or after this ISO8601 timestamp with a timezone, or a bare "
+    "YYYY-MM-DD, which means 00:00Z that day",
   )
 
   _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))

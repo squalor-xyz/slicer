@@ -43,6 +43,7 @@ class RelayConformanceCase(unittest.TestCase):
     for finish in ("done", "handoff"):
       yield f"relay-{finish}", ai.relay_text(finish)
       yield f"orchestrator-{finish}", ai.orchestrator_text(finish)
+      yield f"session-{finish}", ai.orchestrator_text(finish, session=True)
 
   def payload(self, command: str, *extra: str) -> dict:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):

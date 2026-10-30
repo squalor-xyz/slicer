@@ -530,7 +530,9 @@ def _emit(
   known = _mapped_paths(tests) | _read_paths(reads)
   neighbours: dict[str, list[str]] = {}
   for path in changed:
-    if path.startswith("src/slicer/") and path not in known:
+    if path.startswith("tests/") and path.endswith(".py") and not _is_test_module(path):
+      return _full_suite(f"{path} is not a test module")
+    if _needs_map_entry(path) and path not in known:
       # No test has read this file yet, so the readers of its directory stand in for it.
       # A Python file is mapped by line, and its neighbours say nothing about it: refuse.
       if path.endswith(".py"):
@@ -539,8 +541,6 @@ def _emit(
       if not readers:
         return _full_suite(f"{path} is not in the map, and no test reads a file in {_directory(path)}/")
       neighbours[path] = readers
-    if path.startswith("tests/") and not _is_test_module(path):
-      return _full_suite(f"{path} is not a test module")
   selected: set[str] = set()
   for test_id, locations in tests.items():
     for location in locations:
@@ -668,6 +668,18 @@ def _directory_readers(path: str, reads: dict[str, list[str]]) -> list[str]:
 def _is_test_module(path: str) -> bool:
   file = Path(path)
   return file.parent.as_posix() == "tests" and file.name.startswith("test_") and file.suffix == ".py"
+
+
+def _needs_map_entry(path: str) -> bool:
+  """Whether a changed file that no map entry names is read by tests, not mapped by line.
+
+  Every file under `src/slicer/` is, and so is a non-Python file under `tests/`, a fixture
+  that a test opens. A Python file under `tests/` is never one of these: a test module is
+  selected by its own name, and anything else is refused.
+  """
+  if path.startswith("src/slicer/"):
+    return True
+  return path.startswith("tests/") and not path.endswith(".py")
 
 
 def _add_whole_file(changed: dict[str, set[int]], root: Path, rel: str) -> None:

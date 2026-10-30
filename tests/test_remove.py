@@ -147,7 +147,7 @@ class PurgeTests(unittest.TestCase):
       self.assertIn("commit subject", out)
 
   def test_Purge_OutsideAGitRepo_SkipsTheHistoryCheckAndFreesTheId(self) -> None:
-    with self.repo(git=False) as repo:
+    with self.repo(git=False) as repo, support.isolated_discovery(repo.root):
       repo.run("add", "a typo")
       repo.run("remove", "S05", "--purge")
       self.assertEqual(repo.state().index.next_id, 5)

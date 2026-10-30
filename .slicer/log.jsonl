@@ -2421,6 +2421,10 @@
 {"when": "2026-10-30T16:27:05Z", "item": "s423", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:09:06Z", "item": "s430", "action": "add", "from": "", "to": "open", "note": "Waited time stops at the end of an ended run"}
 {"when": "2026-10-30T16:17:46Z", "item": "s411", "action": "status", "from": "review", "to": "done", "note": "Relay-run ledger follow-ups: waiting_since derived in the fold, wait time on relay-run list and the TUI board ([?] marker), counts.roles over lane steps, snapshot run steps carry waiting_on and question, heartbeat-ends-wait sentence (contract stays 10). Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:18:36Z", "item": "s408", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:03:33Z", "item": "s408", "action": "note", "from": "", "to": "", "note": "For s424's v11 RELAY_CHANGES entry: a gate round is closed w", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:03:34Z", "item": "s408", "action": "note", "from": "", "to": "", "note": "Ready for review: relay-run stats [--since] (fix-round rate,", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:03:34Z", "item": "s408", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:28:06Z", "item": "s415", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:01:56Z", "item": "s415", "action": "note", "from": "", "to": "", "note": "Ready for review: config KEY reads an unset relay_contract o", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:02:00Z", "item": "s415", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
@@ -2431,11 +2435,30 @@
 {"when": "2026-10-30T16:18:07Z", "item": "s431", "action": "add", "from": "", "to": "open", "note": "This repo's relay-brief override carries the built-in Rules bullets"}
 {"when": "2026-10-30T16:28:00Z", "item": "s419", "action": "status", "from": "review", "to": "done", "note": "Built-in relay-brief.md Rules state the no-background-shell rule for the orchestrator and every role. Gate PASS; merged suite 2997 OK. Repo override sync filed as s431.", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:38:06Z", "item": "s423", "action": "status", "from": "review", "to": "done", "note": "relay-run end --close-steps fail --reason TEXT records the reason on each closed step; refused otherwise with bad_run_field before the lock. Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:54:31Z", "item": "s410", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:33:45Z", "item": "s410", "action": "note", "from": "", "to": "", "note": "Ready for review: tests/affected.py routes a changed non-Pyt", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:33:48Z", "item": "s410", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:53:49Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s391 review (2026-10-30): the built-in relay-brief.md R", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:03:39Z", "item": "s391", "action": "status", "from": "review", "to": "done", "note": "Every brief requires every role to use absolute paths and git -C and never cd; the orchestrator resumes a headless role in the slice worktree and checks the directory it names. Golden rebaselined, contract stays 10. Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:05:32Z", "item": "s409", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:02:55Z", "item": "s409", "action": "note", "from": "", "to": "", "note": "Ready for review: s409 adds `ai relay-orchestrator --session", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:02:56Z", "item": "s409", "action": "note", "from": "", "to": "", "note": "Rule change for s424 v11 RELAY_CHANGES: `ai relay-orchestrat", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:02:56Z", "item": "s409", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:05:47Z", "item": "s407", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:24:50Z", "item": "s407", "action": "note", "from": "", "to": "", "note": "For s424's v11 RELAY_CHANGES entry: Every brief now has the ", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:24:51Z", "item": "s407", "action": "note", "from": "", "to": "", "note": "Ready for review: implementer self-check sentence and report", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:24:51Z", "item": "s407", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:04:01Z", "item": "s432", "action": "add", "from": "", "to": "open", "note": "Remove the stray tracked root files True and unspecified"}
 {"when": "2026-10-30T17:14:30Z", "item": "s415", "action": "status", "from": "review", "to": "done", "note": "Relay contract pin follow-ups: unset relay_contract and satisfies_dependencies read as (unset); RELAY_CONTRACT_MAX 9999 bounds the pin in validate and salvage; check with an unreadable pin exits 3 code config. Gate PASS; merged suite green.", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:25:36Z", "item": "s425", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-30T18:19:58Z", "item": "s425", "action": "note", "from": "", "to": "", "note": "Ready for review: s425 implemented. relay-run ask without --", "by": "Jon Robbins"}
 {"when": "2026-10-30T18:19:59Z", "item": "s425", "action": "note", "from": "", "to": "", "note": "Rule change for s424's v11 RELAY_CHANGES: small fix round re", "by": "Jon Robbins"}
 {"when": "2026-10-30T18:19:59Z", "item": "s425", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:15:36Z", "item": "s433", "action": "add", "from": "", "to": "open", "note": "relay-run stats counts a failed gate step with no verdict as a FAIL"}
+{"when": "2026-10-30T17:29:33Z", "item": "s408", "action": "status", "from": "review", "to": "done", "note": "relay-run stats [--since] (fix rounds, gate fails by verdict then proxy, reruns, role times, owner-wait union, per-run JSON; read-only) and relay-run step --verdict pass|fail on a gate's done step. Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:29:58Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s407 review (2026-10-30): the v1.17 CHANGELOG entries f", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:42:21Z", "item": "s407", "action": "status", "from": "review", "to": "done", "note": "Every brief has the implementer check its own diff before each review (concurrency and handle lifetime, docs in the same diff, a wiring-removal test) and report each check or n/a. Golden regenerated after merge; gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:53:23Z", "item": "s410", "action": "status", "from": "review", "to": "done", "note": "Landed: affected.py routes non-Python test files through reads; outside-git tests isolated; merged suite 3046 OK; gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:03:57Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s409 gate (later): Conformance stop_rules and Stop's or", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:03:58Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s409 gate (later): Relay Roles names --session only whe", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:12:44Z", "item": "s409", "action": "status", "from": "review", "to": "done", "note": "Landed: ai relay-orchestrator --session variant (session runs Approve/Land on main, outer-session sentence); merged suite 3055 OK; gate PASS.", "by": "Jon Robbins"}
