@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-419 items · — 30 · done 377 · retired 12
+419 items · — 29 · done 377 · retired 12 · review 1
 
 v1.17.0 release
 
@@ -49,7 +49,7 @@ v1.17.0 release
 | 14 | [s419](slices/s419.md) | relay-brief.md template states the no-background-shell rule | S | 1 |  | discovered from s402 | done |
 | 15 | [s423](slices/s423.md) | Allow --reason on relay-run end --close-steps fail | S | 1 |  | discovered from s405 | done |
 | 16 | [s424](slices/s424.md) | Relay v11 cleanup and bump | M | 2 | ai | owner contract review 2026-10-30 (slicer, adj, ork alignment) | — |
-| 17 | [s425](slices/s425.md) | Squalify relay rules | M | 2 | ai | squalify relay log 2026-10-27 (filed on s412) | — |
+| 17 | [s425](slices/s425.md) | Squalify relay rules | M | 2 | ai | squalify relay log 2026-10-27 (filed on s412) | review |
 
 ---
 

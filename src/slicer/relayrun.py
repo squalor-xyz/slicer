@@ -33,9 +33,11 @@ as it did before). The fold turns that into the phase `wait`. Any later event of
 without `waiting_on` (a `start`, `done` or `fail`) ends the wait.
 
 A question to the owner (`relay-run ask`) and its answer (`relay-run answer`) ride the same
-way, for the same reason. The ask is a `start` step event with `waiting_on` `owner` and a
-`question` object; the answer is a step event without `waiting_on`, so it ends the wait, with an
-`answer` object naming the question. Both carry every key of any step event, so an older slicer
+way, for the same reason. The ask of a `blocker` is a `start` step event with `waiting_on`
+`owner` and a `question` object; a question that is not a blocker is the same event without
+`waiting_on`, so the step keeps running. The answer is a step event without `waiting_on`, so it
+ends a blocker's wait (the answer to a question that is not a blocker leaves the step's wait
+alone), with an `answer` object naming the question. Both carry every key of any step event, so an older slicer
 folds them as heartbeats and ignores the objects. A question lives on the step it was asked on.
 
 This module reads, folds and appends. Validation of user input and the lock around an
@@ -345,7 +347,8 @@ class Step:
     """Whether the step is waiting on someone else, so its run is not stale.
 
     The one place that says so: a later kind of wait joins here and every reader follows. An
-    open question to the owner is already one, since `relay-run ask` writes the wait with it.
+    open `blocker` question to the owner is already one, since `relay-run ask --blocker` writes
+    the wait with it; a question that is not a blocker starts none.
     """
     return self.phase == "wait"
 

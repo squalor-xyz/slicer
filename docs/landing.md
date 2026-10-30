@@ -69,7 +69,7 @@ asked with `relay-run ask` already holds its step in that wait, and `relay-run a
 A waiting step never makes its run stale, so
 the run stays open and is not ended while it waits. The approval shows the gate verdict, the
 tests, the diff stat, each owner-needed question and each `[HUMAN CHECK]` line of the slice's
-Check section. On approval, the outer session records `relay-run step RUN --step STEP --phase start`
+Check section, and each `[AFTER LAND]` line the report names as `deferred to land:`. On approval, the outer session records `relay-run step RUN --step STEP --phase start`
 to end the wait. A fix note goes back to the orchestrator as a fix round, then through review, the
 gate and approval again. When the finish step already ran, the item first goes back to the
 project's started status (`slicer set <ID> --status STATUS --render`;
@@ -81,7 +81,7 @@ project's `note_kinds` configures that kind (the default `note_kinds` is empty a
 kind, so a project can also add `human-check` to its own list). A human check the owner has not
 confirmed is shown with a warning and does not block landing.
 
-1. Rerun the slice's Check commands in the worktree.
+1. Rerun the slice's Check commands in the worktree, except `[AFTER LAND]` lines, which step 6 runs.
 2. Commit on the slice branch what the worktree still holds: the human-check notes, and the finish
    step's state when the orchestrator did not commit it. Then the report's later notes as one more
    commit.
@@ -90,7 +90,12 @@ confirmed is shown with a warning and does not block landing.
    stale: rebaseline it and commit the result.
 4. `slicer render` in the worktree, then commit any rewritten render files.
 5. `slicer check`; exit 1 means drift.
-6. Rerun the full suite on the merged branch.
+6. Rerun the full suite on the merged branch, then run each `[AFTER LAND]` line shown at Approve,
+   now that main is merged in. A failure of either goes back to the orchestrator as a fix round.
+   When the suite passes and the merge needed no code change beyond the merge drivers' and a
+   rebaselined golden, the regate is the one-pass small-fix check on the merge diff alone: the
+   read-only role that gave the last `VERDICT` is resumed with the merge diff. A merge that needs a
+   code fix gets a fix round and the usual gate. No new hand-back line or wait state is involved.
 7. On main, `git merge --ff-only feature/<id>-<slug>`. It refuses when main moved after step 3; go
    back to Land step 3.
 8. `slicer relay-run end RUN --outcome pass --close-steps done`, before `slicer land`: `land`

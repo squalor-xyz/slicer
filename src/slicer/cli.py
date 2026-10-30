@@ -4596,17 +4596,21 @@ def build_parser() -> argparse.ArgumentParser:
 
   inner = uadd(
     "ask", cmd_relay_run_ask,
-    "ask the owner a question on a step, which then waits on the owner; prints the question id",
+    "ask the owner a question on a step; with --blocker the step waits on the owner; prints the question id",
   )
   inner.add_argument("run")
-  inner.add_argument("--step", required=True, metavar="STEP", help="the step that asks and waits")
+  inner.add_argument("--step", required=True, metavar="STEP", help="the step that asks")
   inner.add_argument("--title", required=True, help="the question, on one line")
   inner.add_argument(
     "--option", action="append", metavar="LABEL:SUMMARY",
     help="an answer the owner may pick; give 2 to 4, with distinct labels; no `|` or `;`",
   )
   inner.add_argument("--recommend", metavar="LABEL", help="the option you recommend")
-  inner.add_argument("--blocker", action="store_true", help="the slice cannot go on without it")
+  inner.add_argument(
+    "--blocker", action="store_true",
+    help="the slice cannot go on without it: the step waits on the owner until it is answered; "
+    "without it the question is recorded and the step keeps running",
+  )
   inner.add_argument("--key", metavar="AREA.TOPIC", help="a key the owner's answers can be filed under")
   inner.add_argument("--reasoning", metavar="TEXT", help="why; may hold a `|`")
 

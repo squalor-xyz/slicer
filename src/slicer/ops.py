@@ -3771,14 +3771,18 @@ def relay_run_ask(
   blocker: bool = False, key: str = "", reasoning: str = "", now: datetime | None = None,
   report: LedgerReport | None = None,
 ) -> tuple[relayrun.Run, relayrun.Step, relayrun.Question]:
-  """Ask the owner a question on a step of the run, and put the step in the owner wait.
+  """Ask the owner a question on a step of the run. A `blocker` puts the step in the owner wait.
 
   The fields are those of the run report's `owner needed` line (`relayrun.question_fields`
-  checks them). The event is a `start` step event with `waiting_on` `owner` and a `question`
-  object, so an older slicer folds it as a heartbeat (see `relayrun`). The question's id is
-  `q` and a number, run-wide; a fallback file's carries its checkout prefix, as a step id does.
-  A step that is done or failed asks nothing (`bad_run_field`), and a step that already waits on
-  an unanswered question asks no second one (`question_open`): answer the first.
+  checks them). The event is a `start` step event with a `question` object, and with
+  `waiting_on` `owner` for a blocker, so an older slicer folds it as a heartbeat (see
+  `relayrun`). A question that is not a blocker leaves the step running, so the orchestrator
+  asks it as it arises and goes on; it keeps a wait the step is already in (an approval, or
+  a blocker still open) and never starts one. The question's id is `q` and a number, run-wide;
+  a fallback file's carries its checkout prefix, as a step id does. A step that is done or
+  failed asks nothing (`bad_run_field`). A blocker asked on a step that waits on an approval is
+  `bad_run_field`, and one asked on a step that waits on an unanswered blocker is
+  `question_open`: answer the first.
   """
   now = now or relayrun.utcnow()
   title, parsed, recommend, key, reasoning = relayrun.question_fields(
@@ -3793,21 +3797,27 @@ def relay_run_ask(
       raise relayrun.bad_field(f"step {step!r} is not in run {run_id}")
     if recorded.phase not in ("start", "wait"):
       raise relayrun.bad_field(f"step {step} is {recorded.phase}; a question needs a step in progress")
+    payload = relayrun.question_payload(
+      relayrun.next_question_id(run, prefix), title, parsed, recommend, blocker, key, reasoning,
+    )
+    if not blocker:
+      # A heartbeat that keeps whatever wait the step is in and starts none.
+      return relayrun.step_event(
+        run_id, now, step, "start", "", recorded.waiting_on if recorded.waiting else "",
+        question=payload,
+      )
     if recorded.waiting and recorded.waiting_on != relayrun.DEFAULT_WAITING_ON:
       raise relayrun.bad_field(
         f"step {step} waits on {recorded.waiting_on}, which a question would replace; "
         "end that wait with `relay-run step --phase start` first"
       )
-    latest = recorded.question
-    if recorded.waiting and latest is not None and latest.answer is None:
+    held = _open_blockers(recorded)
+    if recorded.waiting and held:
       raise StateError(
-        f"step {step} already waits on the owner and its latest question {latest.id} is not "
+        f"step {step} already waits on the owner and its question {held[0].id} is not "
         "answered; `relay-run answer` answers it, or `relay-run step --phase start` ends the wait",
         code="question_open",
       )
-    payload = relayrun.question_payload(
-      relayrun.next_question_id(run, prefix), title, parsed, recommend, blocker, key, reasoning,
-    )
     return relayrun.step_event(
       run_id, now, step, "start", "", relayrun.DEFAULT_WAITING_ON, question=payload,
     )
@@ -3818,6 +3828,14 @@ def relay_run_ask(
     question_id = str(written["question"]["id"])  # type: ignore[index]
     asked, question = _located(run, question_id)
     return run, asked, question
+
+
+def _open_blockers(step: relayrun.Step, *, besides: str = "") -> list[relayrun.Question]:
+  """The unanswered blocker questions asked on the step, except the one named `besides`."""
+  return [
+    question for question in step.questions
+    if question.blocker and question.answer is None and question.id != besides
+  ]
 
 
 def relay_run_answer(
@@ -3832,8 +3850,9 @@ def relay_run_answer(
   never asked is `unknown_question`, and an ended run is `run_ended`. The event is a step event
   without `waiting_on`, so it ends the owner wait on the step, and the run's 30 minutes count
   from it again (an orchestrator that is never resumed shows as stale, not as waiting forever).
-  A step that waits on something else, an approval, keeps that wait, and a step that is done or
-  failed keeps its phase.
+  A step that waits on something else, an approval, keeps that wait, and so does one that still
+  has another blocker unanswered. An answer to a question that is not a blocker leaves the
+  step's phase and wait alone, and a step that is done or failed keeps its phase.
   """
   now = now or relayrun.utcnow()
   if (option is None) == (text is None):
@@ -3858,11 +3877,14 @@ def relay_run_answer(
         f"--option {option!r} is not an option of question {question_id}: "
         f"{', '.join(o['label'] for o in question.options)}"
       )
-    latest = asked.question
-    # Another wait stays: an approval, or the owner wait of a newer question still open.
-    newer_open = latest is not None and latest is not question and latest.answer is None
+    # Another wait stays: an approval, or the owner wait of another blocker still open. A
+    # question that is not a blocker never ended a wait, so its answer leaves the step as it is.
     keep = ""
-    if asked.waiting and (asked.waiting_on != relayrun.DEFAULT_WAITING_ON or newer_open):
+    if asked.waiting and (
+      not question.blocker
+      or asked.waiting_on != relayrun.DEFAULT_WAITING_ON
+      or _open_blockers(asked, besides=question.id)
+    ):
       keep = asked.waiting_on
     wire = "start" if asked.phase in ("start", "wait") else asked.phase
     payload = relayrun.answer_payload(question_id, option or "", text or "", why, by)

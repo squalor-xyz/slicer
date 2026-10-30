@@ -2185,10 +2185,15 @@ class AskAnswerTests(RelayRunCase):
     )
     return run, step.id
 
-  def ask(self, repo: support.TempRepo, run: str, step: str, *extra: str) -> dict:
+  def ask(
+    self, repo: support.TempRepo, run: str, step: str, *extra: str, blocker: bool = True,
+  ) -> dict:
+    """Ask a question. It is a blocker unless `blocker=False`: only a blocker holds the step."""
     argv = ["relay-run", "ask", run, "--step", step, "--title", "Which store?"]
     if "--option" not in extra:
       argv += ["--option", "file:A JSON file", "--option", "db:A database"]
+    if blocker:
+      argv.append("--blocker")
     return self.ok(repo, *argv, *extra)
 
   def events(self, repo: support.TempRepo) -> list[dict]:
@@ -2221,6 +2226,52 @@ class AskAnswerTests(RelayRunCase):
     self.assertEqual(listed["question"], question)
     self.assertEqual(self.ok(repo, "relay-run", "list", run)["runs"][0]["counts"]["waiting"], 1)
 
+  def test_Ask_NotBlocker_RecordsQuestionAndLeavesStepRunning(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    got = self.ask(repo, run, step, blocker=False)
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("start", ""))
+    self.assertFalse(got["question"]["blocker"])
+    self.assertNotIn("waiting_on", self.events(repo)[-1])
+    listed = self.ok(repo, "relay-run", "list", run)["runs"][0]
+    self.assertEqual(listed["counts"]["waiting"], 0)
+    open_question = listed["steps"][0]["question"]
+    self.assertEqual((open_question["id"], open_question["answer"]), ("q1", None))
+    self.assertEqual(listed["steps"][0]["phase"], "start")
+
+  def test_Ask_Blocker_StillPutsStepInOwnerWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    got = self.ask(repo, run, step, blocker=True)
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"))
+    self.assertTrue(got["question"]["blocker"])
+    self.assertEqual(self.events(repo)[-1]["waiting_on"], "owner")
+    self.assertEqual(self.ok(repo, "relay-run", "list", run)["runs"][0]["counts"]["waiting"], 1)
+
+  def test_Ask_NotBlockerWhileAnotherBlockerOpen_KeepsTheOwnerWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step, blocker=True)
+    got = self.ask(repo, run, step, blocker=False)
+    self.assertEqual(got["question"]["id"], "q2")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"))
+
+  def test_Ask_NotBlockerOnStepWaitingOnApproval_RecordsItAndKeepsThatWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "approval")
+    got = self.ask(repo, run, step, blocker=False)
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "approval"))
+    self.assertEqual(got["question"]["id"], "q1")
+
+  def test_Ask_SeveralNotBlockers_AreAllOpenAtOnce(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.assertEqual(self.ask(repo, run, step, blocker=False)["question"]["id"], "q1")
+    got = self.ask(repo, run, step, blocker=False)
+    self.assertEqual((got["question"]["id"], got["step"]["phase"]), ("q2", "start"))
+    self.assertEqual(self.ok(repo, "relay-run", "answer", run, "q1", "--get")["question"]["answer"], None)
+
   def test_Ask_Question_KeysFollowTheOwnerQuestionFieldOrder(self) -> None:
     repo = self.project()
     run, step = self.started(repo)
@@ -2242,7 +2293,7 @@ class AskAnswerTests(RelayRunCase):
   def test_Ask_WithoutOptionalFields_LeavesThemEmpty(self) -> None:
     repo = self.project()
     run, step = self.started(repo)
-    question = self.ask(repo, run, step)["question"]
+    question = self.ask(repo, run, step, blocker=False)["question"]
     self.assertEqual(
       (question["recommend"], question["blocker"], question["key"], question["reasoning"]),
       ("", False, "", ""),
@@ -2252,7 +2303,7 @@ class AskAnswerTests(RelayRunCase):
     repo = self.project()
     run, step = self.started(repo)
     ops.relay_run_ask(
-      repo.root, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(1),
+      repo.root, run, step=step, title="T", options=["a:A", "b:B"], blocker=True, now=minutes(1),
     )
     got = relayrun.list_runs(repo.root, now=minutes(600), siblings=False)[0]
     self.assertEqual((got.state, got.steps[0].phase, got.waiting), ("active", "wait", True))
@@ -2262,7 +2313,7 @@ class AskAnswerTests(RelayRunCase):
     repo = self.project()
     run, step = self.started(repo)
     _, _, question = ops.relay_run_ask(
-      repo.root, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(7),
+      repo.root, run, step=step, title="T", options=["a:A", "b:B"], blocker=True, now=minutes(7),
     )
     self.assertEqual(question.asked_at, relayrun.stamp(minutes(7)))
     self.assertEqual(self.events(repo)[-1]["at"], question.asked_at)
@@ -2397,7 +2448,7 @@ class AskAnswerTests(RelayRunCase):
     run, step = self.started(repo)
     self.ask(repo, run, step)
     again = ["relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
-             "--option", "b:B"]
+             "--option", "b:B", "--blocker"]
     payload = self.refused(repo, *again, error="question_open")
     self.assertIn("q1", payload["message"])
     self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
@@ -2444,6 +2495,49 @@ class AskAnswerTests(RelayRunCase):
     self.assertEqual(listed["counts"]["waiting"], 0)
     self.assertEqual(listed["steps"][0]["question"], question)
 
+  def test_Answer_NonBlockerQuestion_RecordsAnswerWithoutChangingPhase(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    asked = self.ask(repo, run, step, blocker=False)
+    self.assertEqual(asked["step"]["phase"], "start")
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db", "--by", "jon")
+    self.assertNotIn("waiting_on", self.events(repo)[-1])
+    self.assertEqual(got["question"]["answer"], {"option": "db", "text": "", "why": "", "by": "jon"})
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("start", ""))
+    self.assertEqual(self.ok(repo, "relay-run", "answer", run, "q1", "--get")["question"]["answer"]["option"], "db")
+
+  def test_Answer_NonBlockerQuestion_StepWaitingOnApprovalKeepsThatWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step, blocker=False)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "approval")
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "approval"))
+
+  def test_Answer_NonBlockerQuestion_LeavesTheOwnerWaitOfAnOpenBlocker(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step, blocker=True)
+    self.ask(repo, run, step, blocker=False)
+    got = self.ok(repo, "relay-run", "answer", run, "q2", "--option", "db")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"))
+
+  def test_Answer_NonBlockerQuestion_StepInAnOwnerWaitOfItsOwnKeepsIt(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step, blocker=False)
+    self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "owner")
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("wait", "owner"))
+
+  def test_Answer_BlockerWithOnlyANonBlockerOpen_EndsTheOwnerWait(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step, blocker=True)
+    self.ask(repo, run, step, blocker=False)
+    got = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "db")
+    self.assertEqual((got["step"]["phase"], got["step"]["waiting_on"]), ("start", ""))
+
   def test_Answer_Text_RecordsFreeTextWithNoOption(self) -> None:
     repo = self.project()
     run, step = self.started(repo)
@@ -2457,7 +2551,7 @@ class AskAnswerTests(RelayRunCase):
   def test_Answer_AnsweredAt_IsTheEventStampAndTheClockRestartsFromIt(self) -> None:
     repo = self.project()
     run, step = self.started(repo)
-    ops.relay_run_ask(repo.root, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(1))
+    ops.relay_run_ask(repo.root, run, step=step, title="T", options=["a:A", "b:B"], blocker=True, now=minutes(1))
     _, _, question = ops.relay_run_answer(repo.root, run, "q1", option="a", now=minutes(500))
     self.assertEqual(question.answered_at, relayrun.stamp(minutes(500)))
     self.assertEqual(
@@ -2802,7 +2896,7 @@ class AskAnswerTests(RelayRunCase):
     self.ok(repo, "relay-run", "step", run, "--step", step, "--phase", "wait", "--waiting-on", "approval")
     payload = self.refused(
       repo, "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
-      "--option", "b:B", error="bad_run_field",
+      "--option", "b:B", "--blocker", error="bad_run_field",
     )
     self.assertIn("approval", payload["message"])
     self.assertEqual(self.runs(repo)[0]["steps"][0]["waiting_on"], "approval")
@@ -2813,7 +2907,7 @@ class AskAnswerTests(RelayRunCase):
     self.ask(repo, run, step)
     payload = self.refused(
       repo, "relay-run", "ask", run, "--step", step, "--title", "T", "--option", "a:A",
-      "--option", "b:B", error="question_open",
+      "--option", "b:B", "--blocker", error="question_open",
     )
     self.assertIn("waits on the owner", payload["message"])
     self.assertIn("q1 is not answered", payload["message"])
@@ -2840,11 +2934,11 @@ class AskAnswerSandboxTests(SandboxCase):
     repo = self.repo()
     wt, run = self.worktree_with_run(repo)
     step = ops.relay_run_step(wt, run, role="orchestrator", agent="A", phase="start", now=minutes(1))[1].id
-    first = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(2))[2]
+    first = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], blocker=True, now=minutes(2))[2]
     self.assertEqual(first.id, "q1")
     self.sandbox(repo)
     ops.relay_run_answer(wt, run, "q1", option="a", now=minutes(3))
-    asked = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(4))[2]
+    asked = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], blocker=True, now=minutes(4))[2]
     self.assertRegex(asked.id, r"^c[0-9a-f]{8}-q1$")
     self.assertEqual(self.local(wt)[-1]["question"]["id"], asked.id)
     answered = ops.relay_run_answer(wt, run, asked.id, text="x", now=minutes(5))[2]
@@ -2856,7 +2950,7 @@ class AskAnswerSandboxTests(SandboxCase):
     wt, run = self.worktree_with_run(repo)
     step = ops.relay_run_step(wt, run, role="orchestrator", agent="A", phase="start", now=minutes(1))[1].id
     lift = self.sandbox(repo)
-    asked = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], now=minutes(2))[2]
+    asked = ops.relay_run_ask(wt, run, step=step, title="T", options=["a:A", "b:B"], blocker=True, now=minutes(2))[2]
     lift()
     ops.relay_run_answer(repo.root, run, asked.id, option="a", now=minutes(3))
     shared = [e for _, e in relayrun.read_events(self.common(repo))]

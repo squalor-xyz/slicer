@@ -16754,12 +16754,41 @@
       "id": "s425",
       "title": "Relay rules from the squalify run: fix-round recheck, mid-run owner questions, after-land checks, merged-slice regate",
       "short_title": "Squalify relay rules",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s412"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "50e70c03-9031-4bf8-8191-bdaa3e94b049",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: s425 implemented. relay-run ask without --blocker records the question and leaves the step running with no owner wait, relay-run answer on it leaves the step's phase and wait alone, and --blocker keeps the owner wait. The relay texts now say a small fix round is checked and gated in one pass by the read-only role that raised the findings, non-blocker owner questions are asked as they arise and read with relay-run answer --get before the finish step, a Check line marked [AFTER LAND] is deferred to Land step 6, and a clean merge of main is regated by the one-pass small-fix check. Golden relay-contract-v10.json rebaselined, RELAY_CONTRACT stays 10, docs and CHANGELOG updated. Full suite 3025 tests OK (1 skipped), slicer check and git diff --check clean, mutation checks done, gate VERDICT: PASS.",
+          "created_at": "2026-10-30T18:19:58Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "1a1d4c97-7f42-4017-b9f0-8c0f2cb90f11",
+          "kind": "",
+          "text": "**2026-10-30** — Rule change for s424's v11 RELAY_CHANGES: small fix round resumes the read-only role that raised the findings; non-blocker owner questions asked in the ledger without a wait and read with relay-run answer RUN QUESTION_ID --get before finish; [AFTER LAND] Check lines deferred to Land step 6; a clean merge of main is regated by the one-pass small-fix check.",
+          "created_at": "2026-10-30T18:19:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -16779,7 +16808,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -217,7 +217,8 @@ class SnapshotTests(unittest.TestCase):
     running = start("implementer")
     asked = start("reviewer")
     code, _, err = repo.run("relay-run", "ask", run, "--step", asked, "--title", "Which store?",
-                            "--option", "file:A JSON file", "--option", "db:A database")
+                            "--option", "file:A JSON file", "--option", "db:A database",
+                            "--blocker")
     self.assertEqual(code, 0, err)
     listed = {step["id"]: step for step in
               json.loads(repo.run("relay-run", "list", "--json")[1])["runs"][0]["steps"]}

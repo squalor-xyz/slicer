@@ -302,10 +302,12 @@ Approve, unless the end point is `finish`: end the run there with
    already holds its step in that wait. Do not end the run while it waits: a waiting
    step never makes its run stale. Show the owner the gate verdict, the tests, the
    diff stat, each owner-needed question, and each `[HUMAN CHECK]` line of the
-   slice's Check section. Record each human check the owner confirms as a note on the
-   item in the worktree with `slicer note ID --text "Human check: ..." --render`. Add
-   `--kind human-check` only when `note_kinds` configures that kind. A human check
-   the owner has not confirmed is shown with a warning and does not block landing.
+   slice's Check section. Show each `[AFTER LAND]` line the report names as
+   `deferred to land:` too; it runs at Land step 6, not here. Record each human check
+   the owner confirms as a note on the item in the worktree with
+   `slicer note ID --text "Human check: ..." --render`. Add `--kind human-check` only
+   when `note_kinds` configures that kind. A human check the owner has not confirmed is
+   shown with a warning and does not block landing.
    The owner approves, or sends a fix note. On approval, record
    `slicer relay-run step RUN --step STEP --phase start` to end the wait. Record a
    fix note as a note on the item in the worktree, record `--phase start` on the step
@@ -328,7 +330,8 @@ as in step 8; `landed` runs every step."""
 
 RELAY_LAND = (
   (1, """\
-Rerun the slice's Check commands in the worktree."""),
+Rerun the slice's Check commands in the worktree, except `[AFTER LAND]` lines, which
+   step 6 runs."""),
   (2, """\
 Commit on the slice branch what the worktree still holds: the human-check notes,
    and the finish step's state when the orchestrator did not commit it. Then file the
@@ -342,8 +345,12 @@ Run `slicer render` in the worktree and commit any rewritten render files."""),
   (5, """\
 Run `slicer check`; exit 1 means drift: fix it, then render and check again."""),
   (6, """\
-Rerun the full suite on the merged branch. A failure goes back to the orchestrator as
-   a fix round."""),
+Rerun the full suite on the merged branch, then run each `[AFTER LAND]` line shown
+   at Approve, now that main is merged in. A failure of either goes back to the
+   orchestrator as a fix round. When the suite passes and the merge needed no code
+   change beyond the merge drivers' and a rebaselined golden, the regate is the one-pass
+   small-fix check on the merge diff alone, as Order says; a merge that needs a code fix
+   gets a fix round and the usual gate."""),
   (7, """\
 On main, merge the branch with `git merge --ff-only BRANCH`; ff-only is the
    contract's default. When main moved after step 3, go back to Land step 3."""),
@@ -735,14 +742,19 @@ the answer pasted in, and the orchestrator carries it into the resumed role's br
 When the orchestrator waits on a question of its own (`waiting on: owner QUESTION_ID`),
 the outer session also records the answer in the ledger with
 `slicer relay-run answer RUN QUESTION_ID --option LABEL --why TEXT --by NAME`, or
-`--text TEXT` for a free-text answer, before it resumes the orchestrator. A project that
-keeps a decision log also records there a design answer the owner explicitly picked, not
-a default an agent assumed.
+`--text TEXT` for a free-text answer, before it resumes the orchestrator. While the run
+goes on, the owner, or a dashboard that reads the ledger, may answer a non-blocker
+question with `relay-run answer`; the outer session does so only when its harness leaves
+it free while the orchestrator runs. A project that keeps a decision log also records
+there a design answer the owner explicitly picked, not a default an agent assumed.
 
 Run slices in parallel only when their files are disjoint. The outer session
 starts their orchestrators together and waits for the reports without polling.
-Review and land them one at a time, and rerun the suite on the slice branch merged
-with the new main when main moved.
+Review and land them one at a time. When main moved and the slice branch takes a merge
+of main (Land step 3), rerun the suite on the merged branch. If it passes and the merge
+needed no code change beyond the merge drivers' and a rebaselined golden, the regate is
+the one-pass small-fix check: resume the read-only role that gave the last VERDICT on
+the merge diff alone. A merge that needs a code fix gets a fix round and the usual gate.
 
 """.replace("{order}", _relay_steps_text(RELAY_STEPS))
 
@@ -833,7 +845,13 @@ brief also carries the UI pass brief, and no separate UI pass runs. The implemen
 brief says cited line numbers may have moved and to re-anchor them at start. The
 spec-check brief says the agent is read-only, edits nothing and makes no git writes,
 and asks for `ready` or `owner needed` lines for each slice. A part brief names the
-part's own files and the files it must not touch.
+part's own files and the files it must not touch. A Check line marked `[AFTER LAND]`
+needs something main does not have yet, such as another slice landed. The implementer
+and the gate do not run it, the finish step does not wait for it, and the orchestrator
+names it on the deviations line as `deferred to land: LINE`. The outer session shows it
+at Approve and runs it at Land step 6, after main is merged in; a failure goes back as a
+fix round. With end point `finish` or `commit`, it goes in the report's later notes
+instead.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
@@ -984,7 +1002,12 @@ return one run report.
   `slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`) and
   resumes you with it pasted in; to read it again, run
   `slicer relay-run answer RUN QUESTION_ID --get`. Do not poll the ledger for the
-  answer. A non-blocker owner question stays in the run report.
+  answer. Ask an owner question that does not block as soon as it arises, with the same
+  command without `--blocker`. It records the question and leaves your step running: do
+  not end your turn or wait for it. Before the closing note and the finish step, read
+  each with `slicer relay-run answer RUN QUESTION_ID --get`; an answer that changes the
+  slice goes to the implementer as a fix round first. A question still open then goes on
+  the report's owner-needed line.
 - Waiting: Run each role in the foreground and wait for its report in the same turn: a
   native subagent where the harness offers a foreground spawn, and a headless role with
   a foreground wait on its process. That wait is one command with a long timeout; when
@@ -1023,8 +1046,9 @@ return one run report.
   is the slice worktree before you go on.
 - After `VERDICT: PASS` and the finish step, commit on the slice branch if your
   brief allows it.
-- A small fix round (accepted findings only, no new files) is reviewed and gated in
-  one pass: resume the reviewer, who checks the new diff and gives the VERDICT.
+- A small fix round (accepted findings only, no new files) is checked and gated in one
+  pass: resume the read-only role that raised those findings (the reviewer, the
+  architect or the gate), which checks the new diff against them and gives the VERDICT.
   Anything larger gets a review round, then a gate round.
 - A role's slicer step that a harness permission check denies: do not run it yourself
   and do not work around it. Stop before the commit with OUTCOME stopped and put the

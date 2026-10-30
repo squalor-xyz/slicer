@@ -927,9 +927,21 @@ class AiRelayTests(unittest.TestCase):
         rule = self.rule(finish, "A small fix round")
         for phrase in (
           "(accepted findings only, no new files)",
-          "reviewed and gated in one pass",
-          "resume the reviewer, who checks the new diff and gives the VERDICT",
+          "is checked and gated in one pass",
+          "gives the VERDICT",
           "Anything larger gets a review round, then a gate round.",
+        ):
+          self.assertIn(phrase, rule)
+        self.assertNotIn("resume the reviewer, who checks", rule)
+
+  def test_OrchestratorText_SmallFixRound_ResumesTheReadOnlyRoleHoldingTheFindings(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "A small fix round")
+        for phrase in (
+          "resume the read-only role that raised those findings "
+          "(the reviewer, the architect or the gate)",
+          "which checks the new diff against them and gives the VERDICT",
         ):
           self.assertIn(phrase, rule)
 
@@ -1729,11 +1741,45 @@ class AiRelayTests(unittest.TestCase):
     for phrase in (
       "Run slices in parallel only when their files are disjoint.",
       "Review and land them one at a time",
-      "rerun the suite on the slice branch merged with the new main when main moved",
+      "When main moved and the slice branch takes a merge of main (Land step 3), rerun the "
+      "suite on the merged branch.",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, order)
         self.assertEqual(flat.count(phrase), 1)
+
+  def test_RelayText_MergedBranchNoCodeFix_RegateIsSmallFixPass(self) -> None:
+    for finish in ("done", "handoff"):
+      text = ai.relay_text(finish)
+      order = " ".join(text.split("## Order", 1)[1].split("\n## ", 1)[0].split())
+      land = " ".join(text.split("## Land\n\n", 1)[1].split("\n## ", 1)[0].split())
+      step6 = re.search(r"6\. (.*?) 7\. ", land).group(1)
+      for label, body, phrases in (
+        ("order", order, (
+          "If it passes and the merge needed no code change beyond the merge drivers' and a "
+          "rebaselined golden, the regate is the one-pass small-fix check: resume the read-only "
+          "role that gave the last VERDICT on the merge diff alone.",
+          "A merge that needs a code fix gets a fix round and the usual gate.",
+        )),
+        ("land step 6", step6, (
+          "the regate is the one-pass small-fix check on the merge diff alone",
+          "a merge that needs a code fix gets a fix round and the usual gate",
+        )),
+      ):
+        for phrase in phrases:
+          with self.subTest(finish=finish, label=label, phrase=phrase):
+            self.assertIn(phrase, body)
+
+  def test_RelayText_NoWaitingOnMerge(self) -> None:
+    """The regate adds no hand-back line or wait state: every `waiting on:` the texts name
+    is one that already existed, and the merged-branch rule is there to be checked."""
+    for finish in ("done", "handoff"):
+      for label, text in (("relay", ai.relay_text(finish)), ("orchestrator", ai.orchestrator_text(finish))):
+        flat_text = " ".join(text.split())
+        with self.subTest(finish=finish, label=label):
+          self.assertLessEqual(set(re.findall(r"waiting on: (\S+)", flat_text)), {"ROLE", "owner"})
+          self.assertNotRegex(flat_text, r"(?i)waiting on:? (?:the )?(?:merge|regate)")
+      self.assertIn("the regate is the one-pass small-fix check", " ".join(ai.relay_text(finish).split()))
 
   def test_RelayText_FullSuite_RunsOncePerChange(self) -> None:
     text = ai.relay_text()
@@ -2431,6 +2477,39 @@ class RelayApproveLandTests(unittest.TestCase):
     for line in note_lines:
       self.assertIn("--render", line)
 
+  def test_RelayCheck_AfterLandLine_DeferredFromFinishToLandStep6(self) -> None:
+    for finish in ("done", "handoff"):
+      for label, text in (("relay", ai.relay_text(finish)), ("orchestrator", ai.orchestrator_text(finish))):
+        brief = " ".join(text.split("## Every brief\n\n", 1)[1].split("\n## ", 1)[0].split())
+        for phrase in (
+          "A Check line marked `[AFTER LAND]` needs something main does not have yet, such as "
+          "another slice landed.",
+          "The implementer and the gate do not run it, the finish step does not wait for it, and "
+          "the orchestrator names it on the deviations line as `deferred to land: LINE`.",
+          "The outer session shows it at Approve and runs it at Land step 6, after main is merged "
+          "in; a failure goes back as a fix round.",
+          "With end point `finish` or `commit`, it goes in the report's later notes instead.",
+        ):
+          with self.subTest(finish=finish, label=label, phrase=phrase):
+            self.assertIn(phrase, brief)
+            self.assertEqual(" ".join(text.split()).count(phrase), 1)
+    approve = self.outer_step(5)
+    self.assertIn("`[AFTER LAND]`", approve)
+    self.assertIn("`deferred to land:`", approve)
+    self.assertIn("runs at Land step 6", approve)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        step6 = self.land_text(6, finish)
+        for phrase in (
+          "run each `[AFTER LAND]` line shown at Approve",
+          "now that main is merged in",
+          "A failure of either goes back to the orchestrator as a fix round.",
+        ):
+          self.assertIn(phrase, step6)
+        self.assertIn("`[AFTER LAND]`", self.land_text(1, finish))
+    land = {item["step"]: item["text"] for item in ai.relay_contract()["land"]}
+    self.assertIn("`[AFTER LAND]`", land[6])
+
   def test_RelayOrder_LandStep_FollowsTheLandSection(self) -> None:
     step = self.outer_step(6)
     self.assertTrue(step.startswith("Land"), step)
@@ -2466,12 +2545,12 @@ class RelayApproveLandTests(unittest.TestCase):
         steps = self.land_steps(finish)
         self.assertEqual([step["step"] for step in steps], list(range(1, 11)))
         for number, phrase in (
-          (1, "Rerun the slice's Check commands in the worktree."),
+          (1, "Rerun the slice's Check commands in the worktree, except `[AFTER LAND]` lines"),
           (2, "Commit on the slice branch"),
           (3, "When main moved, merge main into the slice branch in the worktree"),
           (4, "Run `slicer render` in the worktree and commit any rewritten render files."),
           (5, "Run `slicer check`"),
-          (6, "Rerun the full suite on the merged branch."),
+          (6, "Rerun the full suite on the merged branch, then run each `[AFTER LAND]` line"),
           (7, "`git merge --ff-only BRANCH`"),
           (8, self.END_RUN),
           (9, self.LAND),
@@ -2501,7 +2580,7 @@ class RelayApproveLandTests(unittest.TestCase):
 
   def test_RelayLand_CheckAndSuite_RepeatAfterDrift(self) -> None:
     self.assertIn("exit 1 means drift: fix it, then render and check again", self.land_text(5))
-    self.assertIn("A failure goes back to the orchestrator as a fix round.", self.land_text(6))
+    self.assertIn("A failure of either goes back to the orchestrator as a fix round.", self.land_text(6))
 
   def test_RelayLand_FfOnly_IsTheContractDefault(self) -> None:
     text = self.land_text(7)
@@ -2722,10 +2801,36 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           "The outer session records the answer with "
           "`slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`) and resumes you with it",
           "to read it again, run " + self.GET,
-          "A non-blocker owner question stays in the run report",
           "Do not poll the ledger for the answer",
         ):
           self.assertIn(phrase, rule)
+        self.assertNotIn("stays in the run report", rule)
+
+  def test_OrchestratorRules_NonBlockerQuestion_AskedAsItArisesAndReadBeforeFinish(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rule = self.rule(finish, "Owner questions")
+        for phrase in (
+          "Ask an owner question that does not block as soon as it arises, with the same "
+          "command without `--blocker`.",
+          "It records the question and leaves your step running: do not end your turn or "
+          "wait for it.",
+          "Before the closing note and the finish step, read each with " + self.GET + ";",
+          "an answer that changes the slice goes to the implementer as a fix round first.",
+          "A question still open then goes on the report's owner-needed line.",
+        ):
+          self.assertIn(phrase, rule)
+
+  def test_RelayOrder_NonBlockerQuestion_AnsweredInLedgerWhileRunGoesOn(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
+        self.assertIn(
+          "While the run goes on, the owner, or a dashboard that reads the ledger, may answer a "
+          "non-blocker question with `relay-run answer`; the outer session does so only when its "
+          "harness leaves it free while the orchestrator runs.",
+          order,
+        )
 
   def test_OrchestratorRules_StopForBlocker_AsksUnlessItCannotWait(self) -> None:
     for finish in ("done", "handoff"):
