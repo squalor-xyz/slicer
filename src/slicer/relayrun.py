@@ -97,6 +97,17 @@ def _parse_stamp(text: str) -> datetime:
   return datetime.strptime(text, _STAMP).replace(tzinfo=timezone.utc)
 
 
+def elapsed_text(start: str, end: datetime) -> str:
+  """How long from the stamp `start` to `end`, as `5s`, `1m05s` or `1h02m`, never negative.
+  The board and `relay-run list` both show it, so it lives here, not in `tui`."""
+  seconds = max(0, int((end - _parse_stamp(start)).total_seconds()))
+  if seconds < 60:
+    return f"{seconds}s"
+  if seconds < 3600:
+    return f"{seconds // 60}m{seconds % 60:02d}s"
+  return f"{seconds // 3600}h{seconds % 3600 // 60:02d}m"
+
+
 def legacy_ledger_path(root: Path) -> Path:
   """The ledger inside a checkout's own `.slicer/`: the pre-s298 location, still the one
   outside git."""
@@ -321,6 +332,9 @@ class Step:
   updated_at: str
   # What the step waits on while its phase is `wait`, else "".
   waiting_on: str = ""
+  # The stamp of the event that began the current wait, else "". A repeat of the same wait keeps
+  # it; a `start`, `done` or `fail` clears it.
+  waiting_since: str = ""
   # The questions asked on the step, oldest first. `question` is the latest.
   questions: list[Question] = field(default_factory=list)
   # Why the step failed, when its latest event is a `fail` that gave a reason, else "".
@@ -345,7 +359,8 @@ class Step:
     return {
       "id": self.id, "role": self.role, "agent": self.agent, "vendor": self.vendor,
       "model": self.model, "reasoning": self.reasoning, "phase": self.phase,
-      "waiting_on": self.waiting_on, "task": self.task, "parent": self.parent,
+      "waiting_on": self.waiting_on, "waiting_since": self.waiting_since,
+      "task": self.task, "parent": self.parent,
       "begun_at": self.begun_at, "updated_at": self.updated_at,
       "question": None if question is None else question.to_dict(),
       "reason": self.reason,
@@ -358,7 +373,8 @@ class Step:
       model=data["model"], reasoning=data["reasoning"], phase=data["phase"],
       task=data["task"], parent=data["parent"],
       begun_at=data["begun_at"], updated_at=data["updated_at"],
-      waiting_on=data.get("waiting_on", ""), reason=data.get("reason", ""),
+      waiting_on=data.get("waiting_on", ""), waiting_since=data.get("waiting_since", ""),
+      reason=data.get("reason", ""),
       questions=[Question.from_dict(data["question"])] if data.get("question") else [],
     )
 
@@ -376,10 +392,19 @@ class Run:
   outcome: str = ""
   steps: list[Step] = field(default_factory=list)
 
+  def in_lane(self, step: Step) -> bool:
+    """Whether the step is drawn in the lane: nothing spawned it, or the orchestrator did. A step
+    that any other role spawned is that role's subagent, counted under its parent and not a lane
+    step of its own. The board and `counts.roles` both use this rule."""
+    if not step.parent:
+      return True
+    parent = self.step(step.parent)
+    return parent is not None and parent.role == "orchestrator"
+
   def counts(self) -> dict[str, object]:
     roles: dict[str, int] = {}
     for step in self.steps:
-      if not step.parent:  # a subagent is counted under `subagents`, not under its role
+      if self.in_lane(step):  # a subagent is counted under `subagents`, not under its role
         roles[step.role] = roles.get(step.role, 0) + 1
     return {
       "steps": len(self.steps),
@@ -687,12 +712,19 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
     run.steps.append(step)
   run.updated_at = at
   step.updated_at = at
+  before = (step.phase, step.waiting_on)
   step.phase = event["phase"]
   step.waiting_on = ""
   step.reason = str(event["reason"]) if event["phase"] == "fail" and event.get("reason") else ""
   if event["phase"] == "start" and event.get("waiting_on"):
     step.phase = "wait"
     step.waiting_on = str(event["waiting_on"])
+  # A wait takes the stamp of the event that began it: a repeat of the same wait keeps that
+  # stamp, a change of what it waits on starts a new one, and an event that is not a wait ends it.
+  if not step.waiting:
+    step.waiting_since = ""
+  elif (step.phase, step.waiting_on) != before:
+    step.waiting_since = at
   for name in _FIELDS:
     if event[name]:  # an update names only what changes
       setattr(step, name, str(event[name]))

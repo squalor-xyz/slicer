@@ -1,0 +1,41 @@
+{
+  "id": "s430",
+  "title": "Waited time stops at the end of an ended run",
+  "lead": [
+    "s411 shows how long a waiting step has waited, measured from `waiting_since` to now. A run ended without `--close-steps` can leave a step in `wait`, and the board and `relay-run list` keep counting that wait after the run ended."
+  ],
+  "depends_note": null,
+  "findings_note": "s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** closing waiting steps automatically at `end`; changing `waiting_since`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "On the board's recently ended runs, a wait that stopped when the run ended reads as still growing, which misleads the owner about what is waiting now."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: `_waiting_cells` (about lines 1608-1615) measures to the run's `updated_at` when the run is ended.\n- `src/slicer/cli.py`: `_step_line` (about lines 687-688) does the same.\n- `tests/test_relay_run.py`, `tests/test_tui.py`: an ended run with a waiting step."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Wait_EndedRun_WaitTimeStopsAtTheEnd`: a run ended without `--close-steps` with a step in `wait`; `relay-run list` text shows the wait up to the end stamp, not to now. It fails today."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Pass the end time (the run's last event stamp when the run is ended, else now) to `relayrun.elapsed_text` in both places."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch."
+    }
+  ],
+  "notes": []
+}

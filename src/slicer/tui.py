@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 
 from slicer import graph, model, ops, outline, prose, relayrun, render, roles, store, tui_style, tui_wizard, vcs
 from slicer.errors import SlicerError
+from slicer.relayrun import elapsed_text
 from slicer.store import State
 
 
@@ -1536,15 +1537,6 @@ def _parse_stamp(text: str) -> datetime:
   return datetime.fromisoformat(text)
 
 
-def elapsed_text(start: str, end: datetime) -> str:
-  seconds = max(0, int((end - _parse_stamp(start)).total_seconds()))
-  if seconds < 60:
-    return f"{seconds}s"
-  if seconds < 3600:
-    return f"{seconds // 60}m{seconds % 60:02d}s"
-  return f"{seconds // 3600}h{seconds % 3600 // 60:02d}m"
-
-
 def _fit(cells: list[str], width: int) -> str:
   """Join cells with two spaces. The first is clipped to fit; a later one that does not fit is dropped."""
   return _place(cells, width)[0]
@@ -1585,6 +1577,8 @@ def _marker(step: relayrun.Step, run: relayrun.Run, tick: int) -> tuple[str, str
   if step.phase == "fail":
     return "!", "error"
   if run.state == "active":
+    if step.waiting:  # it waits on someone else, so a spinner would say it works
+      return "?", "parked"
     return SPINNER[tick % len(SPINNER)], "started"
   return "~", "dim"  # started, but nothing is running it
 
@@ -1592,13 +1586,12 @@ def _marker(step: relayrun.Step, run: relayrun.Run, tick: int) -> tuple[str, str
 def _lane(run: relayrun.Run) -> dict[str, list[relayrun.Step]]:
   """Each role's steps in the lane, oldest first; the role that moved last comes last.
 
-  A step is in the lane when nothing spawned it or the orchestrator did. A step that any
-  other role spawned is that role's subagent: it is counted on its parent's row, not drawn.
+  A step is in the lane when `Run.in_lane` says so. A step that any other role spawned is that
+  role's subagent: it is counted on its parent's row, not drawn.
   """
   lane: dict[str, list[relayrun.Step]] = {}
   for step in run.steps:
-    parent = run.step(step.parent) if step.parent else None
-    if step.parent and (parent is None or parent.role != "orchestrator"):
+    if not run.in_lane(step):
       continue
     steps = lane.pop(step.role, [])  # a later step moves its role to the end
     steps.append(step)
@@ -1610,6 +1603,16 @@ def _step_elapsed(step: relayrun.Step, run: relayrun.Run, now: datetime) -> str:
   running = step.phase == "start" and run.state == "active"
   end = now if running else _parse_stamp(step.updated_at)
   return elapsed_text(step.begun_at, end)
+
+
+def _waiting_cells(step: relayrun.Step, now: datetime) -> list[str]:
+  """`wait:OWNER`, and `waited Xm` from the wait's start, for a step in the wait phase."""
+  if not step.waiting:
+    return []
+  cells = [f"wait:{step.waiting_on}"]
+  if step.waiting_since:  # only a step built outside the fold may lack its start
+    cells.append(f"waited {elapsed_text(step.waiting_since, now)}")
+  return cells
 
 
 def _model_effort(step: relayrun.Step) -> str:
@@ -1766,6 +1769,7 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
       marker, role = _marker(step, run, tick)
       lines.append(PanelLine(_fit([
         f"  └ orchestrator {_model_effort(step)}".rstrip(), f"[{marker}]",
+        *_waiting_cells(step, now),
         _step_elapsed(step, run, now),
       ], width), role=role if live else "dim"))
     for at, name in enumerate(names):
@@ -1784,6 +1788,7 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
       model = "/".join(part for part in (step.vendor, step.model) if part)
       lines.append(PanelLine(_fit([
         f"{prefix}[{marker}] {name:<{ROLE_WIDTH}}",
+        *_waiting_cells(step, now),
         f"×{len(steps)}" if len(steps) > 1 else "",
         _step_elapsed(step, run, now),
         f"{subagents} subagent{'s' if subagents != 1 else ''}" if subagents else "",

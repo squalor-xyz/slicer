@@ -203,8 +203,30 @@ class SnapshotTests(unittest.TestCase):
     self.assertEqual(runs, [{"id": active, "items": ["S01"], "worktree": original["worktree"],
       "state": "active", "updated_at": original["updated_at"], "steps": [
         {"id": original["steps"][0]["id"], "role": "implementer", "phase": "start",
-         "task": "Implement snapshot", "model": "test-model"},
+         "task": "Implement snapshot", "model": "test-model", "waiting_on": "", "question": None},
       ]}])
+
+  def test_Snapshot_Runs_StepsCarryWaitingOnAndQuestion(self):
+    repo = self.fixture()
+    run = json.loads(repo.run("relay-run", "begin", "S01", "--json")[1])["run"]["id"]
+    def start(role: str) -> str:
+      out = repo.run("relay-run", "step", run, "--role", role, "--agent", "Codex CLI",
+                     "--phase", "start", "--json")[1]
+      return json.loads(out)["step"]["id"]
+
+    running = start("implementer")
+    asked = start("reviewer")
+    code, _, err = repo.run("relay-run", "ask", run, "--step", asked, "--title", "Which store?",
+                            "--option", "file:A JSON file", "--option", "db:A database")
+    self.assertEqual(code, 0, err)
+    listed = {step["id"]: step for step in
+              json.loads(repo.run("relay-run", "list", "--json")[1])["runs"][0]["steps"]}
+    runs = self.snapshot(repo)["projects"][0]["parts"]["runs"]["value"]
+    steps = {step["id"]: step for step in runs[0]["steps"]}
+    self.assertEqual((steps[running]["waiting_on"], steps[running]["question"]), ("", None))
+    self.assertEqual(steps[asked]["waiting_on"], "owner")
+    self.assertEqual(steps[asked]["question"]["id"], "q1")
+    self.assertEqual(steps[asked]["question"], listed[asked]["question"])
 
   def test_Snapshot_WithoutJson_IsUsage(self):
     repo = self.fixture()

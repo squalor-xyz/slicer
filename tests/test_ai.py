@@ -1456,6 +1456,12 @@ class AiRelayTests(unittest.TestCase):
     )
     self.assertIn("(`--outcome stopped` if the owner stops it)", relay)
 
+  def test_Relay_Heartbeat_SaysItEndsAWait(self) -> None:
+    sentence = "A heartbeat on a waiting step ends its wait: do not heartbeat a step that waits."
+    for label, text in (("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text())):
+      with self.subTest(text=label):
+        self.assertIn(sentence, " ".join(text.split()))
+
   def test_Relay_NamesNoVendorModelOrOutsidePath(self) -> None:
     blob = "\n".join((
       ai.relay_text("done"),
@@ -2231,6 +2237,18 @@ class AiRelayBriefTests(unittest.TestCase):
     self.assertIn(
       "A `blocker` owner question is not a stop: ask it and wait as the Owner questions rule says.",
       stop,
+    )
+
+  def test_AiRelayBrief_Rules_ForbidBackgroundShell(self):
+    repo = self.project()
+    rules = " ".join(self.payload(repo)["brief"].split()).split("## Rules", 1)[1]
+    self.assertIn(
+      "You and every role run their own shell commands in the foreground and background none.",
+      rules,
+    )
+    self.assertIn(
+      "Run long commands such as the full suite in the foreground with a long timeout.",
+      rules,
     )
 
   def test_AiRelayBrief_MissingProjectTemplate_UsesBuiltIn(self):

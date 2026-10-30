@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 430,
+  "next_id": 432,
   "preamble": "",
   "passes": [
     {
@@ -16111,10 +16111,53 @@
       "id": "s411",
       "title": "Relay-run ledger follow-ups from v1.16",
       "short_title": "Relay-run ledger follow-ups from v1.16",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "b24da4b7-b063-4d01-b048-981d8d52bba3",
+          "kind": "",
+          "text": "**2026-10-30** — Spec-check bullet needed no change: test_Relay_UiPassAndSpecCheckNameTheirLedgerRoles already pins that the UI pass and spec check name their ledger roles.",
+          "created_at": "2026-10-30T16:03:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "dc86b454-48d1-4a02-a853-8ca0cf9b51a9",
+          "kind": "",
+          "text": "**2026-10-30** — For ork's next sync: relay-run list --json counts.roles now counts lane steps (top-level steps and steps the orchestrator spawned), not only top-level steps; Roles[\"orchestrator\"] is unchanged.",
+          "created_at": "2026-10-30T16:03:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "3a6f1967-2574-4520-af4e-1fdaa207e44c",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: Step.waiting_since derived in the fold, wait time on relay-run list text and the TUI board ([?] marker, wait:OWNER/waited cells), counts.roles over lane steps (Run.in_lane), snapshot run steps carry waiting_on and question, heartbeat-ends-wait sentence in relay and orchestrator texts (contract stays 10). Full suite 2977 OK; gate PASS.",
+          "created_at": "2026-10-30T16:03:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16134,7 +16177,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16432,10 +16475,25 @@
       "id": "s419",
       "title": "relay-brief.md template states the no-background-shell rule",
       "short_title": "relay-brief.md template states the no-background-shell rule",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "89b73821-80a6-4403-8e7b-8582811f3178",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: built-in relay-brief.md Rules tell the orchestrator that it and every role run their own shell commands in the foreground and background none, and run long commands such as the full suite in the foreground with a long timeout. Full suite 2983 OK; gate PASS.",
+          "created_at": "2026-10-30T16:12:16Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16453,7 +16511,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16780,6 +16838,66 @@
         "group": "",
         "reason": "",
         "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s430",
+      "title": "Waited time stops at the end of an ended run",
+      "short_title": "Waited time in ended runs",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now",
+        "discovered_from": "s411",
+        "parent": "",
+        "cites": [],
+        "key": "s411.waited-time-ended-run",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s431",
+      "title": "This repo's relay-brief override carries the built-in Rules bullets",
+      "short_title": "Sync relay-brief override",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s419 review 2026-10-30, owner question: the repo's customized relay-brief.md override lacks the s419 no-background bullet",
+        "discovered_from": "s419",
+        "parent": "",
+        "cites": [],
+        "key": "s419.override-sync",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
         "urgency": 1,
         "effort": 1,
         "attempts": 0

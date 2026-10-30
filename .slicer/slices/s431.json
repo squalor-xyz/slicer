@@ -1,0 +1,41 @@
+{
+  "id": "s431",
+  "title": "This repo's relay-brief override carries the built-in Rules bullets",
+  "lead": [
+    "s419 added a Rules bullet to the built-in `relay-brief.md`: the orchestrator and every role run their own shell commands in the foreground and background none. This repo customizes the template, and its override's Rules section is the old built-in text, so this repo's own `slicer ai relay-brief` output does not show the bullet."
+  ],
+  "depends_note": null,
+  "findings_note": "s419 review 2026-10-30, owner question: the repo's customized relay-brief.md override lacks the s419 no-background bullet",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** changing the built-in template; a general mechanism that merges built-in changes into overrides.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "This repo runs its own relays from `ai relay-brief`, so the dogfooded briefs miss the rule s419 added for every project. s412 synced its Stop bullet into the override the same way."
+    },
+    {
+      "heading": "Files",
+      "body": "- The project override of `relay-brief.md`, changed only through `slicer template set relay-brief.md --stdin` (read with `slicer template show relay-brief.md` and compare with `--default`)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- None: this is project state, not product code. The check below is the proof."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Take the current override, add the s419 Rules bullet in the same place as the built-in, and set it with `slicer template set relay-brief.md --stdin`.\n2. Keep the override's ENVIRONMENT block unchanged."
+    },
+    {
+      "heading": "Check",
+      "body": "- `slicer template show relay-brief.md` and `--default` differ only in the ENVIRONMENT block.\n- `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit."
+    }
+  ],
+  "notes": []
+}
