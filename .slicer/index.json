@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 434,
+  "next_id": 435,
   "preamble": "",
   "passes": [
     {
@@ -16869,6 +16869,20 @@
           "retracted_by": "",
           "retracted_at": "",
           "retracted_reason": ""
+        },
+        {
+          "id": "720271c3-39e1-4927-bb9c-aa5099ace73e",
+          "kind": "",
+          "text": "**2026-10-30** — From s425 landing merge: s409's session orchestrator text took s425's non-blocker question rule too (ask in the ledger without --blocker as it arises, put it to the owner, read each with relay-run answer --get before finish); include it in the v11 RELAY_CHANGES entry alongside s425's items.",
+          "created_at": "2026-10-30T18:25:27Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
@@ -17189,6 +17203,36 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s434",
+      "title": "Relay-run step JSON lists every open question",
+      "short_title": "Step JSON questions list",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s425 review 2026-10-30, finding A1 (later by orchestrator default, docs-only fix landed with s425): `relay-run list` shows only a step's latest question, while several non-blocker questions can be open at once",
+        "discovered_from": "s425",
+        "parent": "",
+        "cites": [],
+        "key": "s425.step-questions-list",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
+        "effort": 2,
         "attempts": 0
       }
     }
