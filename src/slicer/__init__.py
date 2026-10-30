@@ -7,5 +7,5 @@ everything project-specific lives in `.slicer/config.json`.
 
 from __future__ import annotations
 
-__version__ = "1.16.0"
+__version__ = "1.17.0"
 __url__ = "https://github.com/squalor-xyz/slicer"

@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-10-30
+
 ### Added
 
 - `slicer relay-run stats [--since DATE] [--json]` (s408) measures the ended runs of the ledgers `relay-run list` reads, with no lock and no write: runs by outcome, median and longest wall time, fix rounds, gate rounds and FAILs, time per role and recorded owner wait, overall and for each run. Every number is derived from ledger events by the rules in `docs/commands.md`, and the output for a ledger is byte-identical whatever the clock says. `relay-run step --phase done --verdict pass|fail` records a gate round's verdict (a verdict on another role or phase is `bad_run_field`); `relay-run list --json` carries it as the last key of each step, `verdict`, and the relay contract tells the gate's recorder to pass it (a rule change that relay v11 records). A gate recorded without a verdict counts as a FAIL when a fix round follows it.
