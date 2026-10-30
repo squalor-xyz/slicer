@@ -16,8 +16,8 @@ import support
 from slicer import render, sync, verify
 
 MERGE_HINT = (
-  "only the roadmap render is stale, as a merge leaves it "
-  "(the slicer-generated driver keeps one side); run slicer render, or done --render when landing"
+  "only the roadmap render is stale, as a merge leaves it; "
+  "any slicer write regenerates it, or run slicer render"
 )
 
 

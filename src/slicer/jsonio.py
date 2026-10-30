@@ -57,7 +57,19 @@ def read(path: Path) -> Any:
   try:
     return json.loads(path.read_text(encoding="utf-8"))
   except (json.JSONDecodeError, UnicodeDecodeError) as e:
-    raise StateError(f"{path}: not valid JSON: {e}", code="corrupt") from None
+    note = "; it holds merge conflict markers" if has_conflict_markers(path) else ""
+    raise StateError(f"{path}: not valid JSON: {e}{note}", code="corrupt") from None
+
+
+def has_conflict_markers(path: Path) -> bool:
+  """Whether the file holds a Git conflict: an opening and a closing marker line."""
+  try:
+    lines = path.read_text(encoding="utf-8").splitlines()
+  except (OSError, UnicodeDecodeError):
+    return False
+  return any(line.startswith("<<<<<<< ") for line in lines) and any(
+    line.startswith(">>>>>>> ") for line in lines
+  )
 
 
 def append_jsonl(path: Path, obj: Any) -> None:

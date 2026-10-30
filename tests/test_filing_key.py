@@ -21,7 +21,7 @@ def snapshot(repo):
 
 
 class FilingKeyTests(unittest.TestCase):
-  def test_Add_RetryWithInvalidReplacement_PreservesAllBytes(self):
+  def test_Add_RetryWithInvalidReplacement_CommandChangesNoBytes(self):
     with TempRepo() as repo:
       repo.run("init")
       code, out, _ = repo.run("add", "Original", "--key", " K ", "--render", "--json")
@@ -32,9 +32,12 @@ class FilingKeyTests(unittest.TestCase):
       repo.write(".slicer/render/ROADMAP.md", "deliberately stale")
       before = snapshot(repo)
       for extra in ((), ("--render",), ("--render", "--strict")):
-        code, out, _ = repo.run("add", "", "--key", "K", "--status", "invalid",
-                               "--importance", "99", "--depends-on", "missing",
-                               "--id", "../bad", "--json", *extra)
+        # The command itself writes nothing. The render heal, which runs before any write and
+        # would rewrite the planted stale render, is patched out; test_render_heal covers it.
+        with patch("slicer.cli._heal_render"):
+          code, out, _ = repo.run("add", "", "--key", "K", "--status", "invalid",
+                                 "--importance", "99", "--depends-on", "missing",
+                                 "--id", "../bad", "--json", *extra)
         self.assertEqual(code, 0)
         self.assertEqual(json.loads(out), original | {"existing": True})
         self.assertEqual(snapshot(repo), before)
@@ -94,7 +97,8 @@ class FilingKeyTests(unittest.TestCase):
       repo.write(".slicer/render/ROADMAP.md", "stale")
       before = snapshot(repo)
       for flags in (("--render",), ("--render", "--strict"), ("--force", "--render")):
-        code, out, _ = repo.run("import", "batch.md", "--json", *flags)
+        with patch("slicer.cli._heal_render"):  # the command itself renders nothing; the heal would
+          code, out, _ = repo.run("import", "batch.md", "--json", *flags)
         self.assertEqual(code, 0)
         self.assertEqual(json.loads(out)["created"], 0)
         self.assertEqual(snapshot(repo), before)

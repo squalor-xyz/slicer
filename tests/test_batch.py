@@ -115,12 +115,16 @@ class BatchTests(unittest.TestCase):
   def test_Batches_LoadAndSaveOnce_StatusNoopsDoNotLog(self):
     with self.repo() as repo:
       for command in ("start", "done", "park", "unpark", "set"):
-        with patch.object(store, "load", wraps=store.load) as load:
+        # The render heal loads the state once of its own; this counts the command's loads.
+        with patch("slicer.cli._heal_render"), patch.object(
+          store, "load", wraps=store.load,
+        ) as load:
           with patch.object(store.State, "save_index", autospec=True,
                             side_effect=store.State.save_index) as save:
             self.assertEqual(repo.run(command, "S01", "S02")[0], 0)
         self.assertEqual(load.call_count, 1)
         self.assertEqual(save.call_count, 1)
+      repo.run("render")  # a write heals a stale render first, which is not what this proves
       before = self.snapshot(repo)
       self.assertEqual(repo.run("unpark", "S01", "S02")[0], 0)
       self.assertEqual(self.snapshot(repo), before)
