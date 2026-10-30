@@ -1846,15 +1846,15 @@ class AiRelayTests(unittest.TestCase):
     backticked `slicer` command alone (a wrap would split it)."""
     for finish in ("done", "handoff"):
       for matrix in (False, True):
-        for command in ("relay", "relay-orchestrator"):
-          with self.subTest(command=command, finish=finish, matrix=matrix), support.TempRepo() as repo:
+        for command in (("relay",), ("relay-orchestrator",), ("relay-orchestrator", "--session")):
+          with self.subTest(command=" ".join(command), finish=finish, matrix=matrix), support.TempRepo() as repo:
             for argv in (("init",), ("config", "implement_finish", finish)):
               code, out, err = repo.run(*argv)
               self.assertEqual((code, err), (0, ""), out)
             if matrix:
               code, out, err = repo.run("relay-roles", "init", "--render")
               self.assertEqual((code, err), (0, ""), out)
-            code, out, err = repo.run("ai", command)
+            code, out, err = repo.run("ai", *command)
             self.assertEqual((code, err), (0, ""), out)
             long, fenced, in_matrix = [], False, False
             for number, line in enumerate(out.splitlines(), 1):
@@ -1883,6 +1883,115 @@ class AiRelayTests(unittest.TestCase):
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, rule)
+
+
+class AiRelayOrchestratorSessionTests(unittest.TestCase):
+  """`ai relay-orchestrator --session` is the contract of a session that orchestrates every
+  slice itself (s409): it begins and ends the run, asks the owner directly and runs Approve
+  and Land, with no hand-back. Gate, Every brief, Stop and Conformance stay shared."""
+
+  def rules(self, text: str) -> str:
+    return " ".join(text.split("## Rules\n\n", 1)[1].split("\n## ", 1)[0].split())
+
+  def test_AiRelayOrchestratorSession_Text_OwnsBeginEndAndLand(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = " ".join(ai.orchestrator_text(finish, session=True).split())
+        for phrase in (
+          "`slicer relay-run begin ID --worktree PATH`",
+          "`slicer relay-run end RUN --outcome pass --close-steps done`",
+          "--role orchestrator --agent AGENT",
+          "its Land section",
+          "Between slices, compact or start a fresh session",
+        ):
+          self.assertIn(phrase, text)
+        self.assertNotIn("outer session that spawned you", text)
+        self.assertNotIn("Never run `relay-run begin`", text)
+
+  def test_AiRelayOrchestratorSession_Text_HasNoHandBack(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = ai.orchestrator_text(finish, session=True)
+        rules = self.rules(text)
+        self.assertNotIn("waiting on: ROLE AGENT-ID", " ".join(text.split()))
+        self.assertNotIn("hand-back", rules)
+        # The one `waiting on:` in Rules is the outer-session redirect, not a rule for this session.
+        self.assertEqual(rules.count("waiting on:"), 1)
+        self.assertIn("ending a turn with `waiting on:`", rules)
+        self.assertIn("`slicer relay-run ask RUN --step STEP", rules)
+        self.assertIn("put each owner question to the owner in this session", rules)
+
+  def test_AiRelayOrchestratorSession_SharedSections_MatchRelay(self) -> None:
+    for finish in ("done", "handoff"):
+      for kind in ("", "implementation report"):
+        relay = ai.relay_text(finish, kind)
+        session = ai.orchestrator_text(finish, kind, session=True)
+        for heading in ("Gate", "Every brief", "Stop", "Conformance"):
+          with self.subTest(finish=finish, kind=kind, heading=heading):
+            marker = f"## {heading}\n\n"
+            self.assertEqual(session.count(marker), 1)
+            body = relay.split(marker, 1)[1].split("\n## ", 1)[0]
+            self.assertEqual(session.split(marker, 1)[1].split("\n## ", 1)[0], body)
+
+  def test_AiRelayOrchestratorSession_Json_CarriesSessionFlag(self) -> None:
+    keys = [
+      "contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes",
+      "gate", "finding_kinds", "conformance",
+    ]
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      self.assertEqual(repo.run("init")[0], 0)
+      code, out, err = repo.run("ai", "relay-orchestrator", "--session", "--json")
+      self.assertEqual((code, err), (0, ""), out)
+      payload = json.loads(out)
+      self.assertEqual(list(payload), keys + ["session"])
+      self.assertIs(payload["session"], True)
+      self.assertEqual(payload["orchestrator"], ai.orchestrator_text("done", session=True))
+      prose = " ".join(payload["orchestrator"].split())
+      for step in payload["order"]:
+        self.assertIn(step["text"], prose)
+      lean = json.loads(repo.run("ai", "relay-orchestrator", "--session", "--json", "--lean")[1])
+      self.assertIs(lean["session"], True)
+      plain = json.loads(repo.run("ai", "relay-orchestrator", "--json")[1])
+      self.assertEqual(list(plain), keys)
+      self.assertEqual(plain["orchestrator"], ai.orchestrator_text("done"))
+      for part in ("gate", "finding_kinds", "conformance"):
+        self.assertEqual(payload[part], plain[part])
+
+  def test_AiRelay_Roles_PointsToSessionVariant(self) -> None:
+    text = " ".join(ai.relay_text().split())
+    self.assertIn(
+      "Where the agent cannot nest subagents, the outer session is also the orchestrator: it "
+      "follows `slicer ai relay-orchestrator --session` itself and compacts or starts a fresh "
+      "session between slices.",
+      text,
+    )
+
+  def test_AiRelayOrchestratorSession_Commands_AcceptedByTheParser(self) -> None:
+    parser = cli.build_parser()
+    for finish in ("done", "handoff"):
+      commands = re.findall(r"`(slicer [^`]+)`", ai.orchestrator_text(finish, session=True))
+      self.assertTrue(commands)
+      for command in commands:
+        with self.subTest(finish=finish, command=command):
+          parser.parse_args(shlex.split(command)[1:])
+
+  def test_AiRelayOrchestratorSession_Text_NamesTheOuterSessionAndMainLanding(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rules = self.rules(ai.orchestrator_text(finish, session=True))
+        for phrase in (
+          "except Approve and Land (Order step 5), which run on main as `slicer ai relay`'s "
+          "Land section says",
+          "you are that outer session: wait for the owner in this session, record answers "
+          "yourself",
+          "on your own vendor limit the owner restarts the session on the next row",
+        ):
+          self.assertIn(phrase, rules)
+    self.assertNotIn("you are that outer session", self.rules(ai.orchestrator_text("done")))
+
+  def test_RelayContract_SessionWithoutOrchestrator_RaisesValueError(self) -> None:
+    with self.assertRaises(ValueError):
+      ai.relay_contract("done", session=True)
 
 
 class AiRelayRolesTests(unittest.TestCase):
@@ -2302,7 +2411,8 @@ class AiRelayBriefTests(unittest.TestCase):
 class RelayGoldenTests(unittest.TestCase):
   """Pin the CLI bytes of the current contract version independently of the live contract data."""
 
-  def check_golden(self, command):
+  def check_golden(self, command, *flags):
+    key = "-".join((command, *(flag.lstrip("-") for flag in flags)))
     golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v10.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
@@ -2313,15 +2423,18 @@ class RelayGoldenTests(unittest.TestCase):
           if matrix:
             code, out, err = repo.run("relay-roles", "init", "--render")
             self.assertEqual((code, err), (0, ""), out)
-          code, out, err = repo.run("ai", command)
+          code, out, err = repo.run("ai", command, *flags)
           self.assertEqual((code, err), (0, ""), out)
-          self.assertEqual(out, golden[f"{command}-{finish}-{matrix}"])
+          self.assertEqual(out, golden[f"{key}-{finish}-{matrix}"])
 
   def test_AiRelay_Text_UnchangedByteForByte(self):
     self.check_golden("relay")
 
   def test_AiRelayOrchestrator_Text_UnchangedByteForByte(self):
     self.check_golden("relay-orchestrator")
+
+  def test_AiRelayOrchestratorSession_Text_UnchangedByteForByte(self):
+    self.check_golden("relay-orchestrator", "--session")
 
 
 class RelayApproveLandTests(unittest.TestCase):

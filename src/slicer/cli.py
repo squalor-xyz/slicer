@@ -506,9 +506,9 @@ def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   report kind the way `ai relay` reads them; outside a project it is the generic text."""
   _project, finish, required, pinned, _check = _ai_project(args, relay=True)
   _require_relay_pin(pinned)
-  text = ai.orchestrator_text(finish, required)
+  text = ai.orchestrator_text(finish, required, session=args.session)
   _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "orchestrator": text,
-               **ai.relay_contract(finish, orchestrator=True)},
+               **ai.relay_contract(finish, orchestrator=True, session=args.session)},
         text.rstrip("\n"), keep_empty=("pinned",),
         keep_fields=("order", "report", "outcomes", "stop", "changes"))
   return OK
@@ -3920,9 +3920,16 @@ def build_parser() -> argparse.ArgumentParser:
       "cannot be read, prints the generic text and warns on stderr. A project whose config "
       "pins a different relay contract (`relay_contract`) is refused with code "
       "contract_mismatch. Does not lock or write. "
-      "`--json` returns {contract, pinned, orchestrator, ...}."
+      "`--session` prints the variant for a session the owner talks to that orchestrates "
+      "every slice itself: it begins and ends the run, records its own step, asks the owner "
+      "directly and runs Approve and Land, with no hand-back. `--json` returns "
+      "{contract, pinned, orchestrator, ...}, and with `--session` also `session: true`."
     ),
     parents=[common],
+  )
+  inner.add_argument(
+    "--session", action="store_true",
+    help="print the variant for a session that orchestrates every slice itself",
   )
   inner.set_defaults(func=cmd_ai_relay_orchestrator)
   _json_flags(inner, suppress=True)

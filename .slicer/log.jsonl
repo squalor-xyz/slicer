@@ -2430,3 +2430,7 @@
 {"when": "2026-10-30T16:38:06Z", "item": "s423", "action": "status", "from": "review", "to": "done", "note": "relay-run end --close-steps fail --reason TEXT records the reason on each closed step; refused otherwise with bad_run_field before the lock. Gate PASS; merged suite green.", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:53:49Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s391 review (2026-10-30): the built-in relay-brief.md R", "by": "Jon Robbins"}
 {"when": "2026-10-30T17:03:39Z", "item": "s391", "action": "status", "from": "review", "to": "done", "note": "Every brief requires every role to use absolute paths and git -C and never cd; the orchestrator resumes a headless role in the slice worktree and checks the directory it names. Golden rebaselined, contract stays 10. Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T17:05:32Z", "item": "s409", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:02:55Z", "item": "s409", "action": "note", "from": "", "to": "", "note": "Ready for review: s409 adds `ai relay-orchestrator --session", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:02:56Z", "item": "s409", "action": "note", "from": "", "to": "", "note": "Rule change for s424 v11 RELAY_CHANGES: `ai relay-orchestrat", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:02:56Z", "item": "s409", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

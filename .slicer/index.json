@@ -16432,7 +16432,7 @@
       "id": "s409",
       "title": "Orchestrator text for a session that orchestrates every slice",
       "short_title": "Session orchestrator text",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -16442,6 +16442,34 @@
           "text": "**2026-10-26** — From ork (2026-10-26 orchestration trial, ork docs/review-2026-10-26-orchestration-trial.md, O3). The owner made the session they talk to the one orchestrator for every slice (agents GLOBAL_AGENTS.md, Slice relay, 36dff4b). Five ork relays ran that way (S95, S138, S139, S92, S93): no stalls, owner questions asked directly, no landing conflicts; median 18 min against 24 for 49 earlier Codex-implemented runs with a per-slice orchestrator subagent (small sample). `slicer ai relay-orchestrator` opens 'You run one slice for the outer session that spawned you' and its Rules forbid relay-run begin/end, marking its own step done, landing and pushing; the Waiting and hand-back rules (s402) assume a parent session. Proposed: a variant (for example `slicer ai relay-orchestrator --session`) for a session that orchestrates every slice itself: it owns begin, end, its own step and landing, briefs roles directly, puts owner questions to the owner, and has no hand-back section. ork does not need it (its engine is the orchestrator), but a human-driven session does.",
           "created_at": "2026-10-26T19:35:54Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "865717b5-2bd7-4928-8ac8-6380de47c111",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: s409 adds `ai relay-orchestrator --session`, a variant for a session that orchestrates every slice itself: it begins and ends the run, records its own step, puts owner questions to the owner directly, and runs Approve and Land on main by reference to `ai relay`. The session worktree slot carves out Approve and Land on main and adds the outer-session sentence (owner option a); Gate, Every brief, Stop and Conformance stay byte-identical with the one-slice orchestrator. Docs rows in commands.md and agents.md, the CHANGELOG entries, the session golden keys and the tests cover it; the full suite is 3012 OK (1 skip, SLICER_LEGACY_TREE); the gate is VERDICT: PASS.",
+          "created_at": "2026-10-30T18:02:55Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "fc5b497c-4c0a-4fa7-a4d0-450828c9aabe",
+          "kind": "",
+          "text": "**2026-10-30** — Rule change for s424 v11 RELAY_CHANGES: `ai relay-orchestrator --session` is a new variant for a session that orchestrates every slice itself; it begins and ends the run, records its own step, asks the owner directly, and runs Approve and Land on main, with its worktree slot carving those out and naming the outer-session role; the one-slice orchestrator and the shared sections are unchanged.",
+          "created_at": "2026-10-30T18:02:56Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -16468,7 +16496,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

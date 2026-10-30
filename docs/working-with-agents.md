@@ -50,6 +50,14 @@ slicer ai relay-orchestrator
 slicer config implement_finish
 ```
 
+A session the owner talks to can also orchestrate every slice itself, as the outer
+session and the orchestrator in one. That session reads
+`slicer ai relay-orchestrator --session`, which has its own rules for beginning and
+ending the run, for its own step, for owner questions put to the owner directly, and for
+Approve and Land. The plain `slicer ai relay-orchestrator` is for an orchestrator that a
+parent session spawns for one slice. Where the agent cannot nest subagents,
+`slicer ai relay` points to the session variant.
+
 Before creating the worktree, agree with the outer session on the roles, whether
 implementation is split or slivered, the environment and scratch directories, and
 the endpoint. The architect is optional under the live relay contract: you decide
