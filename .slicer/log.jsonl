@@ -2473,3 +2473,4 @@
 {"when": "2026-10-30T19:41:34Z", "item": "s424", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T19:41:54Z", "item": "s435", "action": "add", "from": "", "to": "open", "note": "Relay gate role text stops repeating the Gate section's FAIL rule"}
 {"when": "2026-10-30T19:41:54Z", "item": "s431", "action": "note", "from": "", "to": "", "note": "From s424 review (later): also sync the built-in Rules bulle", "by": "Jon Robbins"}
+{"when": "2026-10-30T19:48:51Z", "item": "s424", "action": "status", "from": "review", "to": "done", "note": "Landed: relay contract v11 (cleanup and bump: keyed stop, gate role, no severity, error-exit fallback, catch-all kept, every v1.17 rule change in RELAY_CHANGES 11); suite 3085 OK; gate PASS.", "by": "Jon Robbins"}

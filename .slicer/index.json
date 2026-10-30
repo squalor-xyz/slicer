@@ -16789,7 +16789,7 @@
       "id": "s424",
       "title": "Relay v11: contract cleanup and bump",
       "short_title": "Relay v11 cleanup and bump",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s391",
