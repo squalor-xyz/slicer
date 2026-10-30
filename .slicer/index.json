@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 429,
+  "next_id": 430,
   "preamble": "",
   "passes": [
     {
@@ -16316,7 +16316,10 @@
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
-          "stale_after": ""
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
@@ -16713,6 +16716,36 @@
         "parent": "",
         "cites": [],
         "key": "s393.mergeindex-restamp-churn",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s429",
+      "title": "TUI writes heal a stale render like CLI writes",
+      "short_title": "TUI writes heal render",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/",
+        "discovered_from": "s417",
+        "parent": "",
+        "cites": [],
+        "key": "s417.tui-heal",
         "pass": "later",
         "group": "",
         "reason": "",

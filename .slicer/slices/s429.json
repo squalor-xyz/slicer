@@ -1,0 +1,41 @@
+{
+  "id": "s429",
+  "title": "TUI writes heal a stale render like CLI writes",
+  "lead": [
+    "s417 made every locked CLI write regenerate a stale or conflicted `.slicer/render/` first. TUI writes call `ops` directly after `vcs.require_no_merge` and do not heal, so a merge followed by TUI-only edits leaves the render stale until a CLI write or the TUI's `r` key."
+  ],
+  "depends_note": null,
+  "findings_note": "s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/",
+  "size": "S",
+  "flags": [],
+  "trees_note": "slicer",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** healing in the relay-run ledger, feedback commands, `init`, `setup-git --attributes` or `ai relay --init-roles`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "docs/commands.md and the CHANGELOG list the TUI as a write path that does not heal. An owner who works in the TUI after a merge sees `check` fail on a stale render with no hint from the TUI."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/tui.py`: the save paths, including the wizard save (about line 1287), call `ops.heal_render(state)` before the write and show the heal line in the status bar.\n- `docs/commands.md`: drop the TUI from the list of writes that do not heal.\n- `tests/test_tui.py` or `tests/test_render_heal.py`: a TUI write with a stale render heals it."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Tui_WriteWithStaleRender_HealsAndSaysSo`: a fixture with a stale ROADMAP.md, a TUI note save, and the render is current afterwards with the heal line in the status message. It fails today."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Reuse `ops.heal_render` from s417; skip during a merge as the CLI does.\n2. Surface the regenerated file names in the TUI status line, not stderr."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 tests/affected.py --run`, then the full suite. `slicer check` passes."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch."
+    }
+  ],
+  "notes": []
+}
