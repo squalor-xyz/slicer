@@ -16051,12 +16051,41 @@
       "id": "s408",
       "title": "relay-run stats: fix-round rate, role times and owner wait per run",
       "short_title": "relay-run stats",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s411"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e82f1ed1-3adc-4698-ac59-cfab195114c1",
+          "kind": "",
+          "text": "**2026-10-30** — For s424's v11 RELAY_CHANGES entry: a gate round is closed with relay-run step --phase done --verdict pass|fail (RELAY_ORDER recording paragraph, ORCHESTRATOR_RULES Relay run bullet, conformance ledger obligation). RELAY_CONTRACT stays 10 here.",
+          "created_at": "2026-10-30T17:03:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "eccd7b1d-91e2-4488-aa1c-240368af2bd8",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: relay-run stats [--since] (fix-round rate, gate fails by verdict then proxy, vendor-limit reruns, role times without waits or subagents, owner-wait union, per-run JSON; no lock, no writes); relay-run step --verdict pass|fail on a gate's done step, kept across a late owner answer. Full suite 3025 OK; gate PASS.",
+          "created_at": "2026-10-30T17:03:34Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -16074,7 +16103,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

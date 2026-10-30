@@ -499,7 +499,8 @@ On a classified vendor limit (a rate limit or out of credits), record the failed
   stop as Stop says."""),
     ('ledger', """\
 Record each role's round in the run ledger with `relay-run step`: a new step for every
-  round, a parent step for a spawned role, and done or fail when the round ends. The
+  round, a parent step for a spawned role, and done or fail when the round ends; a gate
+  round is closed with `--verdict pass` or `--verdict fail`. The
   outer session begins and ends the run. A failed record never stops the relay."""),
     ('finish_after_pass', """\
 Run the closing note and the finish step only after `{pass_verdict}`. A fix round that
@@ -694,7 +695,10 @@ Record the run as it goes. The outer session starts it with
 the run id; keep that id as RUN. Record each role when it starts with
 `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --phase start --task TASK`,
 which prints the step id. When the step ends, record it with
-`slicer relay-run step RUN --step STEP --phase done` or `--phase fail`. A subagent adds
+`slicer relay-run step RUN --step STEP --phase done` or `--phase fail`. A gate round is
+closed with its verdict, the word of its `VERDICT:` line:
+`slicer relay-run step RUN --step STEP --phase done --verdict pass`
+or `--verdict fail`. A subagent adds
 `--parent STEP` for the step that spawned it. The spec check runs before any
 orchestrator, so the outer session records its round too, with `--role spec-check` and
 no `--parent`, in a run it begins on the batch's slices, and ends that run with
@@ -962,7 +966,8 @@ return one run report.
 - Relay run: record a new step for every round (implement, each fix round, review, the
   UI pass as role `ui`, gate) with
   `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`,
-  where STEP is your own step id, and mark it done or failed when the round ends. A
+  where STEP is your own step id, and mark it done or failed when the round ends. A gate
+  round is closed with its verdict, `--phase done --verdict pass` or `--verdict fail`. A
   heartbeat, `slicer relay-run step RUN --step STEP --phase start`, passes no new
   `--task`. A heartbeat on a waiting step ends its wait: do not heartbeat a step
   that waits.
