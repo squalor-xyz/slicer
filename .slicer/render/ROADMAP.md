@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-418 items · — 31 · done 374 · retired 12 · review 1
+418 items · — 31 · done 375 · retired 12
 
 v1.17.0 release
 
@@ -47,7 +47,7 @@ v1.17.0 release
 | 12 | [s417](slices/s417.md) | Merges re-render automatically | M | 2 |  | owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer. | done |
 | 13 | [s409](slices/s409.md) | Session orchestrator text | S | 1 |  |  | — |
 | 14 | [s419](slices/s419.md) | relay-brief.md template states the no-background-shell rule | S | 1 |  | discovered from s402 | done |
-| 15 | [s423](slices/s423.md) | Allow --reason on relay-run end --close-steps fail | S | 1 |  | discovered from s405 | review |
+| 15 | [s423](slices/s423.md) | Allow --reason on relay-run end --close-steps fail | S | 1 |  | discovered from s405 | done |
 | 16 | [s424](slices/s424.md) | Relay v11 cleanup and bump | M | 2 | ai | owner contract review 2026-10-30 (slicer, adj, ork alignment) | — |
 | 17 | [s425](slices/s425.md) | Squalify relay rules | M | 2 | ai | squalify relay log 2026-10-27 (filed on s412) | — |
 

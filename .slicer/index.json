@@ -16602,7 +16602,7 @@
       "id": "s423",
       "title": "Allow --reason on relay-run end --close-steps fail",
       "short_title": "Allow --reason on relay-run end --close-steps fail",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
