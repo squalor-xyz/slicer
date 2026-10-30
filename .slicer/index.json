@@ -16520,7 +16520,7 @@
       "id": "s409",
       "title": "Orchestrator text for a session that orchestrates every slice",
       "short_title": "Session orchestrator text",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
