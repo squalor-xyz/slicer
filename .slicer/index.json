@@ -16303,10 +16303,25 @@
       "id": "s415",
       "title": "Relay contract pin follow-ups",
       "short_title": "Relay contract pin follow-ups",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "04d3def7-71ed-4fb1-af0a-f01cd5e9d5bb",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: config KEY reads an unset relay_contract or satisfies_dependencies as (unset) / value null (unknown keys stay usage); RELAY_CONTRACT_MAX 9999 bounds the pin in validate and in the salvage path; config relay_contract 10000 is bad_config_value with config.json unchanged; check with an unreadable pin exits 3 code config. Full suite 3002 OK; gate PASS.",
+          "created_at": "2026-10-30T17:01:56Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16326,7 +16341,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

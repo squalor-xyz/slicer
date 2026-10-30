@@ -56,7 +56,7 @@ from slicer import (
   workflow,
 )
 from slicer import __doc__ as _package_doc, __url__, __version__
-from slicer.config import CONFIG_NAME, Config
+from slicer.config import CONFIG_NAME, RELAY_CONTRACT_MAX, Config
 from slicer.errors import ConfigError, SlicerError, StateError, is_internal
 
 OK, DRIFT, USAGE, INTERNAL = 0, 1, 2, 3
@@ -399,11 +399,11 @@ def _salvage_relay_pin(project: Path) -> int | None:
 
   A pin that fails validation must not unpin the project, so where the contract is served
   a config that cannot be loaded still has its pin read straight from the JSON, with
-  nothing but `json`. A usable pin is returned for the usual comparison. A key that is
-  there, not null and not a positive whole number is refused with `contract_mismatch`:
-  the pin was written and cannot be read, and `config --unset` cannot load the file
-  either, so the message says to fix it by hand. No key, a null, or a file that cannot be
-  read or parsed is None, as before.
+  nothing but `json`. A usable pin (a whole number from 1 to `RELAY_CONTRACT_MAX`) is
+  returned for the usual comparison. A key that is there, not null and not such a number is
+  refused with `contract_mismatch`: the pin was written and cannot be read, and
+  `config --unset` cannot load the file either, so the message says to fix it by hand. No
+  key, a null, or a file that cannot be read or parsed is None, as before.
   """
   try:
     raw = json.loads((project / store.DIR_NAME / CONFIG_NAME).read_text(encoding="utf-8"))
@@ -412,11 +412,12 @@ def _salvage_relay_pin(project: Path) -> int | None:
   if not isinstance(raw, dict) or raw.get("relay_contract") is None:
     return None
   pinned = raw["relay_contract"]
-  if isinstance(pinned, int) and not isinstance(pinned, bool) and pinned >= 1:
+  if (isinstance(pinned, int) and not isinstance(pinned, bool)
+      and 1 <= pinned <= RELAY_CONTRACT_MAX):
     return pinned
   raise StateError(
     f"this project's relay_contract pin in {store.DIR_NAME}/{CONFIG_NAME} could not be read "
-    f"({json.dumps(pinned)} is not a positive whole number, such as {ai.RELAY_CONTRACT}), so "
+    f"({json.dumps(pinned)} is not a whole number from 1 to {RELAY_CONTRACT_MAX}), so "
     "slicer will not serve the relay contract. Fix the file by hand: "
     "`slicer config relay_contract --unset` cannot load it either",
     code="contract_mismatch",
@@ -3092,6 +3093,16 @@ def cmd_config(args: argparse.Namespace) -> int:
     return _config_write(args)
 
 
+def _config_key(data: dict, key: str) -> tuple[bool, object]:
+  """Whether a dotted KEY names a value in `data`, and the value when it does."""
+  value: object = data
+  for part in key.split("."):
+    if not isinstance(value, dict) or part not in value:
+      return False, None
+    value = value[part]
+  return True, value
+
+
 def _config_read(args: argparse.Namespace) -> int:
   root = store.discover(Path(args.root).resolve() if args.root else None)
   data = Config.load(root / store.DIR_NAME / CONFIG_NAME).to_dict()
@@ -3100,15 +3111,19 @@ def _config_read(args: argparse.Namespace) -> int:
     lines = [f"{k.ljust(width)}  {_config_text(v, joined=True)}" for k, v in data.items()]
     _emit(args, data, "\n".join(lines))
     return OK
-  value: object = data
-  for part in args.key.split("."):
-    if not isinstance(value, dict) or part not in value:
-      raise StateError(
-        f"{args.key!r} is not a config key; the top-level keys are {', '.join(data)}",
-        code="usage",
-      )
-    value = value[part]
-  _emit(args, {"key": args.key, "value": value}, _config_text(value, joined=False))
+  present, value = _config_key(data, args.key)
+  if present:
+    _emit(args, {"key": args.key, "value": value}, _config_text(value, joined=False))
+    return OK
+  # `to_dict()` leaves an unset key out; a key that can be set reads as unset, default applies.
+  schema = ops.config_schema()
+  if not _config_key(schema, args.key)[0]:
+    raise StateError(
+      f"{args.key!r} is not a config key; the top-level keys are {', '.join(schema)}",
+      code="usage",
+    )
+  # Lean drops nulls. An unset key keeps `value: null`, so its shape stays {key, value}.
+  _emit(args, {"key": args.key, "value": None}, "(unset)", keep_empty=("value",))
   return OK
 
 

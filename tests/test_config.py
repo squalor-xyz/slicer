@@ -242,6 +242,19 @@ class RelayContractConfigTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertIn("relay_contract", err)
 
+  def test_Config_RelayContractAboveCap_IsConfigError(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      poke(repo, "config.json", relay_contract=9999)
+      self.assertEqual(repo.run("list")[0], 0)
+      for bad in (10000, 2**63):
+        with self.subTest(bad=bad):
+          poke(repo, "config.json", relay_contract=bad)
+          code, _, err = repo.run("list")
+          self.assertEqual(code, 3)
+          self.assertIn("relay_contract", err)
+          self.assertIn("1 to 9999", err)
+
   def test_Config_RelayContractSet_LoadsAndSurvivesAnUnrelatedWrite(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")

@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-417 items · — 32 · done 373 · retired 12
+417 items · — 31 · done 373 · retired 12 · review 1
 
 v1.17.0 release
 
@@ -43,7 +43,7 @@ v1.17.0 release
 | 8 | [s410](slices/s410.md) | Test suite: TMPDIR inside a git repo and affected.py on fixture JSON | S | 1 | tests |  | — |
 | 9 | [s411](slices/s411.md) | Relay-run ledger follow-ups from v1.16 | S | 2 | relayrun |  | done |
 | 10 | [s412](slices/s412.md) | Relay contract text follow-ups from v1.16 | S | 1 | ai |  | done |
-| 11 | [s415](slices/s415.md) | Relay contract pin follow-ups | S | 1 | config | discovered from s387 | — |
+| 11 | [s415](slices/s415.md) | Relay contract pin follow-ups | S | 1 | config | discovered from s387 | review |
 | 12 | [s417](slices/s417.md) | Merges re-render automatically | M | 2 |  | owner, 2026-10-26, during the v1.16 relay: every merge of main into a slice branch conflicted on ROADMAP.md/html because this clone had no merge drivers, and even with slicer-generated the render stays stale until slicer render or the optional post-merge hook. The owner wants re-render built into slicer. | done |
 | 13 | [s409](slices/s409.md) | Session orchestrator text | S | 1 |  |  | — |
 | 14 | [s419](slices/s419.md) | relay-brief.md template states the no-background-shell rule | S | 1 |  | discovered from s402 | — |

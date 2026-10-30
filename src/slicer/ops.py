@@ -885,7 +885,7 @@ class ConfigChange:
   changed: bool
 
 
-def _config_schema() -> dict:
+def config_schema() -> dict:
   """Every settable key with its default, in config.json's own shape.
 
   `satisfies_dependencies` and `relay_contract` are omitted from `to_dict()` while
@@ -899,7 +899,7 @@ def _config_schema() -> dict:
 
 def _config_default(key: str) -> object:
   """The default at a dotted key, or a `usage` error naming the keys that exist."""
-  schema = _config_schema()
+  schema = config_schema()
   parts = key.split(".")
   if key == "version":
     raise StateError(

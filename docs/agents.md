@@ -178,8 +178,8 @@ its own docs. Checking the contract version against the one a program was writte
 obligation here; the project pin (`relay_contract`, see below) owns that.
 
 A project can pin the relay contract version its toolchain agreed on: `slicer config
-relay_contract N` writes `relay_contract` to `.slicer/config.json` (any positive whole
-number; `--unset` removes it), and `ai relay --json` and `ai relay-orchestrator --json`
+relay_contract N` writes `relay_contract` to `.slicer/config.json` (a whole number from 1 to
+9999; `--unset` removes it), and `ai relay --json` and `ai relay-orchestrator --json`
 read it back as `pinned`. With a pin, slicer serves the contract only when N is the running
 `ai.RELAY_CONTRACT`: `ai relay`, `ai relay-orchestrator` and `ai relay-brief` exit 2 with
 `contract_mismatch` otherwise, and `check` warns (exit unchanged). slicer never prints an older
@@ -188,7 +188,7 @@ once its tools follow the new version, sets the pin to it. The pin covers the re
 only, and each tool that consumes the contract keeps its own pin. A pin that fails
 validation (`"7"`, `0`, a float) does not unpin the project: where the contract is served,
 slicer reads `relay_contract` straight from the JSON when the config does not load, and a
-key that is present, not null and not a positive whole number is refused with
+key that is present, not null and not a whole number from 1 to 9999 is refused with
 `contract_mismatch`, saying the pin could not be read. Fix `config.json` by hand;
 `slicer config relay_contract --unset` cannot load the file either. A config that does
 not load and has no such key, or a file that is not valid JSON, still gets the generic
@@ -689,7 +689,7 @@ when the meaning does. Branch on the code. A refusal takes its specific code whe
 | `parent_self` | `set --parent` named the item itself |
 | `parent_nested` | `add --parent` or `set --parent` would make a second level: the parent is itself a sliver, or the item being given a parent already has slivers. Exit 2, nothing written |
 | `slivers_open` | `handoff` or `done` named a parent while a sliver is short of what that finish needs: for `handoff` every sliver must be handed off, being reviewed, done or retired, whatever `implement_finish` is; for `done`, done or retired. A sliver named in the same call counts. The message lists each short sliver with its status. Exit 2, nothing written; there is no `--force`. A sliver's own finish is unaffected |
-| `contract_mismatch` | The project's `relay_contract` pin differs from the relay contract this slicer serves (`ai.RELAY_CONTRACT`), and `ai relay`, `ai relay-orchestrator` or `ai relay-brief` refused to print it. Exit 2, nothing printed or written; the message names the pinned and the running version, `slicer config relay_contract N` and installing a slicer that serves the pinned version. `check` reports the same mismatch as a warning and exits as it otherwise would. It is also the code for a pin that is present in `config.json` but not a positive whole number when the config cannot be loaded; the message then says the pin could not be read and to fix the file by hand (`config --unset` cannot load it either). `ai relay --init-roles` is a write and is not refused |
+| `contract_mismatch` | The project's `relay_contract` pin differs from the relay contract this slicer serves (`ai.RELAY_CONTRACT`), and `ai relay`, `ai relay-orchestrator` or `ai relay-brief` refused to print it. Exit 2, nothing printed or written; the message names the pinned and the running version, `slicer config relay_contract N` and installing a slicer that serves the pinned version. `check` reports the same mismatch as a warning and exits as it otherwise would. It is also the code for a pin that is present in `config.json` but not a whole number from 1 to 9999 when the config cannot be loaded; the message then says the pin could not be read and to fix the file by hand (`config --unset` cannot load it either). `ai relay --init-roles` is a write and is not refused |
 | `no_slice` | The item exists but has not been promoted |
 | `unspecified` | `ai relay-brief` named an item whose slice has an empty required section. Exit 2, nothing written |
 | `no_such_section` | `show --section` named a heading the slice does not have |
