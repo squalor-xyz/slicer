@@ -499,7 +499,8 @@ On a classified vendor limit (a rate limit or out of credits), record the failed
   stop as Stop says."""),
     ('ledger', """\
 Record each role's round in the run ledger with `relay-run step`: a new step for every
-  round, a parent step for a spawned role, and done or fail when the round ends. The
+  round, a parent step for a spawned role, and done or fail when the round ends; a gate
+  round is closed with `--verdict pass` or `--verdict fail`. The
   outer session begins and ends the run. A failed record never stops the relay."""),
     ('finish_after_pass', """\
 Run the closing note and the finish step only after `{pass_verdict}`. A fix round that
@@ -694,7 +695,10 @@ Record the run as it goes. The outer session starts it with
 the run id; keep that id as RUN. Record each role when it starts with
 `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --phase start --task TASK`,
 which prints the step id. When the step ends, record it with
-`slicer relay-run step RUN --step STEP --phase done` or `--phase fail`. A subagent adds
+`slicer relay-run step RUN --step STEP --phase done` or `--phase fail`. A gate round is
+closed with its verdict, the word of its `VERDICT:` line:
+`slicer relay-run step RUN --step STEP --phase done --verdict pass`
+or `--verdict fail`. A subagent adds
 `--parent STEP` for the step that spawned it. The spec check runs before any
 orchestrator, so the outer session records its round too, with `--role spec-check` and
 no `--parent`, in a run it begins on the batch's slices, and ends that run with
@@ -813,25 +817,32 @@ Include the slice from `slicer show ID --json --lean`, the tracking rule below,
 and the workspace limit: stay inside the workspace the owner named and do not
 read or write outside it. Every brief carries the slice's `Owner decisions` paragraph,
 when it has one, and each owner answer recorded in a note since, verbatim. The report
-is a diff stat, red lines, test counts, a mutation table and deviations. Every brief
+is a diff stat, red lines, test counts, a mutation table, the implementer's self-check
+(each of the three: what it checked, or `n/a`) and deviations. Every brief
 names the role's own temp directory, and no two agents share one. Every brief carries
 the environment lines verbatim. Every brief says the role runs its own shell commands in
 the foreground and backgrounds none, and runs long commands such as the full suite in
 the foreground with a long timeout.
 Reviewer, architect and gate briefs forbid git writes; a needed write stops and
-goes to the owner. Reviewer, UI pass and gate briefs tell the agent to tag each
-finding `fix`, `owner` or `later` as Gate defines, and to give an `owner` finding its
-2 to 4 options and a preferred one. The UI pass brief says the agent is read-only,
-edits nothing and makes no git writes, and tells it to load the skills the project's
-role matrix names for the UI pass; a vendor that cannot load skills gets the project's
-vendor-neutral UI prompt instead. It asks for each finding's kind and, where the
-project can render, the changed views. The project may fold the UI pass into the
-reviewer by slice size, such as the reviewer on a small slice and a separate role on a
-larger one; where it does, the reviewer's brief also carries the UI pass brief, and
-no separate UI pass runs. The implementer brief says cited line numbers may have
-moved and to re-anchor them at start. The spec-check brief says the agent is read-only,
-edits nothing and makes no git writes, and asks for `ready` or `owner needed` lines for
-each slice. A part brief names the part's own files and the files it must not touch.
+goes to the owner. Every brief says that every role, the read-only ones included,
+uses absolute paths and `git -C` and never `cd`. Reviewer, UI pass and gate briefs
+tell the agent to tag each finding `fix`, `owner` or `later` as Gate defines, and to
+give an `owner` finding its 2 to 4 options and a preferred one. The UI pass brief
+says the agent is read-only, edits nothing and makes no git writes, and tells it to
+load the skills the project's role matrix names for the UI pass; a vendor that
+cannot load skills gets the project's vendor-neutral UI prompt instead. It asks for
+each finding's kind and, where the project can render, the changed views. The
+project may fold the UI pass into the reviewer by slice size, such as the reviewer
+on a small slice and a separate role on a larger one; where it does, the reviewer's
+brief also carries the UI pass brief, and no separate UI pass runs. The implementer
+brief says cited line numbers may have moved and to re-anchor them at start. Before
+each review, fix rounds included, the implementer checks its own diff for concurrency
+and handle lifetime (locks, files and processes it opens are released on every path),
+for docs that describe the changed behaviour updated in the same diff, and for a test
+that fails when the new wiring is removed (a mutation that disconnects the call site),
+and fixes what it finds. The spec-check brief says the agent is read-only, edits
+nothing and makes no git writes, and asks for `ready` or `owner needed` lines for each
+slice. A part brief names the part's own files and the files it must not touch.
 
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
@@ -962,7 +973,8 @@ return one run report.
 - Relay run: record a new step for every round (implement, each fix round, review, the
   UI pass as role `ui`, gate) with
   `slicer relay-run step RUN --role ROLE --agent AGENT --vendor VENDOR --model MODEL --reasoning REASONING --parent STEP --phase start --task TASK`,
-  where STEP is your own step id, and mark it done or failed when the round ends. A
+  where STEP is your own step id, and mark it done or failed when the round ends. A gate
+  round is closed with its verdict, `--phase done --verdict pass` or `--verdict fail`. A
   heartbeat, `slicer relay-run step RUN --step STEP --phase start`, passes no new
   `--task`. A heartbeat on a waiting step ends its wait: do not heartbeat a step
   that waits.
@@ -996,7 +1008,8 @@ return one run report.
   so the outer session can route the report. A nudge to report while a role you started
   still runs is not a reason to report. A role that reports while a command of its own
   still runs, or that stops waiting on its own background work, has not finished its
-  round: resume it and tell it to finish. Every role runs its own shell commands in the
+  round: resume it and tell it to finish, in the slice worktree when it is headless, as
+  the Gate rule below says. Every role runs its own shell commands in the
   foreground and backgrounds none. Send the final run report once; an early hand-back
   for an owner question, a permission denial or a failure is not a run report. When you
   wait for the owner's answer to a question you asked, it is
@@ -1015,6 +1028,9 @@ return one run report.
   it goes in the report as a later note.
 - Gate: after FAIL, resume the agent that raised the blockers. Start a fresh
   reviewer only when that agent is gone or the fixes rewrote much of the diff.
+  A headless role you resume is given the slice worktree as its working directory,
+  and you ask it to name the directory it ran in. Check that the directory it names
+  is the slice worktree before you go on.
 - After `VERDICT: PASS` and the finish step, commit on the slice branch if your
   brief allows it.
 - A small fix round (accepted findings only, no new files) is reviewed and gated in

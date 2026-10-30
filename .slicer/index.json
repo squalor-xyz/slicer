@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 432,
+  "next_id": 434,
   "preamble": "",
   "passes": [
     {
@@ -15011,7 +15011,7 @@
       "id": "s391",
       "title": "Relay briefs pin a resumed headless role to the slice worktree and repeat the no-cd rule",
       "short_title": "Relay resume workdir, no cd",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -15021,6 +15021,34 @@
           "text": "**2026-10-26** — More evidence from ork's relays, 2026-10-26: an implementer typed 'cd /dev/null' twice (S118), and earlier orchestrators broke the no-cd rule repeatedly (ork retrospective R3). Part of the v9 bundle (s397).",
           "created_at": "2026-10-26T13:05:54Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "f3ecff00-824e-40ae-85d6-012f9d096e4a",
+          "kind": "",
+          "text": "**2026-10-30** — For s424's v11 RELAY_CHANGES entry: Every brief requires that every role, read-only ones included, uses absolute paths and git -C and never cd; the orchestrator's Gate rule resumes a headless role with the slice worktree as its working directory and checks the directory it names (Waiting points to it). RELAY_CONTRACT stays 10 here.",
+          "created_at": "2026-10-30T16:53:14Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "f88b1d95-e062-4951-842f-02174880e71e",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: no-cd sentence in Every brief (relay and orchestrator texts), headless resume workdir rule in the orchestrator Gate rule with a Waiting pointer, golden rebaselined. Full suite 2998 OK; gate PASS.",
+          "created_at": "2026-10-30T16:53:14Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -15049,7 +15077,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16021,10 +16049,39 @@
       "id": "s407",
       "title": "The implementer brief runs a defect self-check before review",
       "short_title": "Implementer self-check",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "5c647dbe-1c49-41ec-b149-1cf388b538ce",
+          "kind": "",
+          "text": "**2026-10-30** — For s424's v11 RELAY_CHANGES entry: Every brief now has the implementer check its own diff before each review (concurrency and handle lifetime, docs updated in the same diff, a test that fails when the wiring is removed) and report each check or n/a. RELAY_CONTRACT stays 10 here.",
+          "created_at": "2026-10-30T17:24:50Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "5ddd2af2-f2e1-416f-a261-7159329f4a6b",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: implementer self-check sentence and report-shape sentence in the shared Every brief text, golden rebaselined, re-anchor not restated. Full suite 3006 OK; gate PASS.",
+          "created_at": "2026-10-30T17:24:51Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16044,19 +16101,48 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
       "id": "s408",
       "title": "relay-run stats: fix-round rate, role times and owner wait per run",
       "short_title": "relay-run stats",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s411"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "e82f1ed1-3adc-4698-ac59-cfab195114c1",
+          "kind": "",
+          "text": "**2026-10-30** — For s424's v11 RELAY_CHANGES entry: a gate round is closed with relay-run step --phase done --verdict pass|fail (RELAY_ORDER recording paragraph, ORCHESTRATOR_RULES Relay run bullet, conformance ledger obligation). RELAY_CONTRACT stays 10 here.",
+          "created_at": "2026-10-30T17:03:33Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "eccd7b1d-91e2-4488-aa1c-240368af2bd8",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: relay-run stats [--since] (fix-round rate, gate fails by verdict then proxy, vendor-limit reruns, role times without waits or subagents, owner-wait union, per-run JSON; no lock, no writes); relay-run step --verdict pass|fail on a gate's done step, kept across a late owner answer. Full suite 3025 OK; gate PASS.",
+          "created_at": "2026-10-30T17:03:34Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -16074,7 +16160,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16318,10 +16404,25 @@
       "id": "s415",
       "title": "Relay contract pin follow-ups",
       "short_title": "Relay contract pin follow-ups",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "04d3def7-71ed-4fb1-af0a-f01cd5e9d5bb",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: config KEY reads an unset relay_contract or satisfies_dependencies as (unset) / value null (unknown keys stay usage); RELAY_CONTRACT_MAX 9999 bounds the pin in validate and in the salvage path; config relay_contract 10000 is bad_config_value with config.json unchanged; check with an unreadable pin exits 3 code config. Full suite 3002 OK; gate PASS.",
+          "created_at": "2026-10-30T17:01:56Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16341,7 +16442,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16684,6 +16785,34 @@
           "retracted_by": "",
           "retracted_at": "",
           "retracted_reason": ""
+        },
+        {
+          "id": "b0b4e541-9e82-4db0-bcf8-a4f1715a8ecb",
+          "kind": "",
+          "text": "**2026-10-30** — From s391 review (2026-10-30): the built-in relay-brief.md Rules could carry a no-cd bullet beside s419's no-background bullet ('You and every role use absolute paths and git -C and never cd.'); s391 put the rule in Every brief only. Haiku implementers typed cd in three v1.17 slices despite briefs forbidding it.",
+          "created_at": "2026-10-30T16:53:49Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "c2601d72-7a70-467d-bfec-593e7d14fa29",
+          "kind": "",
+          "text": "**2026-10-30** — From s407 review (2026-10-30): the v1.17 CHANGELOG entries for s391 and s407 say 'no rule change' and then 's424 records this rule change'; reword them when s424 writes the v11 entry.",
+          "created_at": "2026-10-30T17:29:58Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
@@ -16913,6 +17042,66 @@
         "group": "",
         "reason": "",
         "importance": 2,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s432",
+      "title": "Remove the stray tracked root files True and unspecified",
+      "short_title": "Remove stray root files",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done)",
+        "discovered_from": "s415",
+        "parent": "",
+        "cites": [],
+        "key": "s415.stray-root-files",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s433",
+      "title": "relay-run stats counts a failed gate step with no verdict as a FAIL",
+      "short_title": "Stats: fail-phase gate is a FAIL",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s408 review 2026-10-30, later note: stats counts a gate FAIL by verdict, else by proxy (a fix round follows); a gate step closed with phase fail and no verdict is not counted unless a fix round follows",
+        "discovered_from": "s408",
+        "parent": "",
+        "cites": [],
+        "key": "s408.stats-gate-fail-phase",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
         "urgency": 1,
         "effort": 1,
         "attempts": 0

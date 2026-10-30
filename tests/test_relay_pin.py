@@ -296,6 +296,35 @@ class PinUnreadableTests(RelayPinCase):
         self.assertIn("printing the generic guide", err)
         self.assertEqual(json.loads(out)["pinned"], ai.RELAY_CONTRACT)
 
+  def test_AiRelay_PinAboveCap_RefusesAsUnreadable(self) -> None:
+    for bad in (10000, 2**63):
+      repo = self.project()
+      pin(repo, bad)
+      for command in ("relay", "relay-orchestrator", "relay-brief"):
+        with self.subTest(pin=bad, command=command):
+          code, out, err = self.serve(repo, command)
+          self.assertEqual(code, 2, (out, err))
+          self.assertEqual(out, "")
+          message = err.strip().removeprefix("slicer: ")
+          self.assertIn("could not be read", message)
+          self.assertIn("relay_contract pin", message)
+          code, out, err = self.serve(repo, command, "--json")
+          self.assertEqual(code, 2, (out, err))
+          self.assertEqual(self.error(out)["code"], "contract_mismatch")
+
+  def test_Check_UnreadablePin_ExitsThreeWithConfigCode(self) -> None:
+    for bad in (0, 10000):
+      repo = self.project()
+      repo.run("render")
+      pin(repo, bad)
+      before = {p: p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+      with self.subTest(pin=bad):
+        code, out, err = repo.run("check", "--json")
+        self.assertEqual(code, 3, (out, err))
+        self.assertEqual(self.error(out)["code"], "config")
+        after = {p: p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file()}
+        self.assertEqual(before, after)
+
   def test_AiRelayInitRoles_UnreadablePin_IsNotARefusalOfTheContract(self) -> None:
     repo = self.project()
     poke(repo, relay_contract="7")
