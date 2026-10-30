@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 430,
+  "next_id": 431,
   "preamble": "",
   "passes": [
     {
@@ -16804,6 +16804,36 @@
         "parent": "",
         "cites": [],
         "key": "s417.tui-heal",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s430",
+      "title": "Waited time stops at the end of an ended run",
+      "short_title": "Waited time in ended runs",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now",
+        "discovered_from": "s411",
+        "parent": "",
+        "cites": [],
+        "key": "s411.waited-time-ended-run",
         "pass": "later",
         "group": "",
         "reason": "",
