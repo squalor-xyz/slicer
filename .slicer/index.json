@@ -15011,7 +15011,7 @@
       "id": "s391",
       "title": "Relay briefs pin a resumed headless role to the slice worktree and repeat the no-cd rule",
       "short_title": "Relay resume workdir, no cd",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

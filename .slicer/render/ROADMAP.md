@@ -27,14 +27,14 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-418 items · — 30 · done 375 · retired 12 · review 1
+418 items · — 30 · done 376 · retired 12
 
 v1.17.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
 | 1 | [s379](slices/s379.md) | check_command config key | S | 1 | slicer | ork interview 2026-10-18 (squalor-xyz/ork docs/review-2026-10-18.md) | done |
-| 2 | [s391](slices/s391.md) | Relay resume workdir, no cd | S | 1 | slicer | s384 relay report 2026-10-22, later notes 4 and 5: a reviewer used `cd` twice in read-only commands, and a resumed Codex implementer started in the main checkout, not the worktree (main was left clean) · discovered from s384 | review |
+| 2 | [s391](slices/s391.md) | Relay resume workdir, no cd | S | 1 | slicer | s384 relay report 2026-10-22, later notes 4 and 5: a reviewer used `cd` twice in read-only commands, and a resumed Codex implementer started in the main checkout, not the worktree (main was left clean) · discovered from s384 | done |
 | 3 | [s393](slices/s393.md) | Note retraction | S | 1 |  | ork S65 relay, 2026-10-25 | done |
 | 4 | [s402](slices/s402.md) | Foreground waits, no empty hand-backs | S | 1 |  |  | done |
 | 5 | [s405](slices/s405.md) | Fallback on a vendor limit | S | 1 |  |  | done |
