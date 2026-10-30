@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -605,11 +606,28 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
       self.assertNotIn(self.RELAY_MISSING, out)
 
   def test_Verify_OutsideGitRepo_NoDriverWarning(self) -> None:
-    with support.TempRepo() as repo:  # not a git repo
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):  # not a git repo
       repo.run("init")
       code, out, _ = repo.run("verify")
       self.assertEqual(code, 0)
       self.assertNotIn(self.MISSING, out)
+
+  def test_Verify_TmpdirInsideRepoWithSiblingWorktree_NoDriverWarning(self) -> None:
+    # The suite's TMPDIR can sit inside a checkout with sibling worktrees and no render
+    # driver. The fixture is not a repo of its own, so it must not inherit that warning.
+    with support.TempRepo(git=True) as outer:
+      outer.run("init")
+      self._add_sibling(outer)
+      self.assertIn(self.MISSING, outer.run("verify")[1])  # the control: the outer checkout warns
+      scratch = outer.root / ".venv" / "test-tmp"
+      scratch.mkdir(parents=True)
+      with patch.object(tempfile, "tempdir", str(scratch)), support.TempRepo() as repo:
+        repo.run("init")
+        self.assertIn(self.MISSING, repo.run("verify")[1])  # the control: inside it, it warns too
+        with support.isolated_discovery(repo.root):
+          code, out, _ = repo.run("verify")
+    self.assertEqual(code, 0)
+    self.assertNotIn(self.MISSING, out)
 
   def test_Verify_DriverWarning_IsIndependentOfGitCheck(self) -> None:
     with support.TempRepo(git=True) as repo:

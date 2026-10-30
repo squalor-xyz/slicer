@@ -885,7 +885,7 @@ class ConfigChange:
   changed: bool
 
 
-def _config_schema() -> dict:
+def config_schema() -> dict:
   """Every settable key with its default, in config.json's own shape.
 
   `satisfies_dependencies` and `relay_contract` are omitted from `to_dict()` while
@@ -899,7 +899,7 @@ def _config_schema() -> dict:
 
 def _config_default(key: str) -> object:
   """The default at a dotted key, or a `usage` error naming the keys that exist."""
-  schema = _config_schema()
+  schema = config_schema()
   parts = key.split(".")
   if key == "version":
     raise StateError(
@@ -3677,7 +3677,7 @@ def relay_run_begin(
 def relay_run_step(
   root: Path, run_id: str, *, phase: str, step: str | None = None, role: str = "",
   agent: str = "", vendor: str = "", model: str = "", reasoning: str = "", task: str = "",
-  parent: str = "", waiting_on: str = "", reason: str = "",
+  parent: str = "", waiting_on: str = "", reason: str = "", verdict: str | None = None,
   now: datetime | None = None, report: LedgerReport | None = None,
 ) -> tuple[relayrun.Run, relayrun.Step]:
   """Record an agent's step, or with `step` a later phase of one already recorded.
@@ -3698,6 +3698,9 @@ def relay_run_step(
   `reason` says why a step failed, such as a classified vendor limit; it goes with phase
   `fail` and is `usage` with another, for the same reason. The event carries it only when
   given, so an older slicer reads the line as a plain `fail`.
+
+  `verdict` (`pass` or `fail`) closes a gate round: it goes with phase `done` on a gate step
+  and is `bad_run_field` on any other step or phase. The event carries it only when given.
   """
   now = now or relayrun.utcnow()
   relayrun.choice("phase", phase, relayrun.STEP_PHASES)
@@ -3711,6 +3714,10 @@ def relay_run_step(
   reason = relayrun.one_line("reason", reason)
   if reason and phase != "fail":
     raise StateError("--reason needs --phase fail", code="usage")
+  if verdict is not None:
+    verdict = relayrun.choice("verdict", verdict.strip(), relayrun.VERDICTS)
+    if phase != "done":
+      raise relayrun.bad_field("--verdict needs --phase done, which closes a gate round")
   fields = {
     "role": relayrun.one_line("role", role), "agent": relayrun.one_line("agent", agent),
     "vendor": relayrun.one_line("vendor", vendor), "model": relayrun.one_line("model", model),
@@ -3730,6 +3737,7 @@ def relay_run_step(
       if parent and run.step(parent) is None:
         raise relayrun.bad_field(f"parent step {parent!r} is not in run {run_id}")
       step_id = relayrun.next_step_id(run, prefix)
+      recorded_role = ""
     else:
       recorded = run.step(step)
       if recorded is None:
@@ -3742,9 +3750,17 @@ def relay_run_step(
           "Record a new step without --step for another task, or leave out --task to keep this one"
         )
       step_id = step
+      recorded_role = recorded.role
+    if verdict is not None:
+      gate_role = fields["role"] or recorded_role
+      if gate_role != "gate":
+        raise relayrun.bad_field(
+          f"--verdict closes a gate round, and this step is role {gate_role or 'unknown'!r}"
+        )
     wire = "start" if phase == "wait" else phase
     return relayrun.step_event(
-      run_id, now, step_id, wire, parent, waiting_on, reason=reason, **fields,
+      run_id, now, step_id, wire, parent, waiting_on, reason=reason, verdict=verdict or "",
+      **fields,
     )
 
   with ledger_lock(root, report) as ledger:
@@ -3866,7 +3882,11 @@ def relay_run_answer(
       keep = asked.waiting_on
     wire = "start" if asked.phase in ("start", "wait") else asked.phase
     payload = relayrun.answer_payload(question_id, option or "", text or "", why, by)
-    return relayrun.step_event(run_id, now, asked.id, wire, "", keep, answer=payload)
+    # An answer that lands after a gate round was closed must not erase its verdict.
+    return relayrun.step_event(
+      run_id, now, asked.id, wire, "", keep, answer=payload,
+      verdict=asked.verdict if wire == "done" else "",
+    )
 
   with ledger_lock(root, report) as ledger:
     ledger.append_planned(plan)

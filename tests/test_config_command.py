@@ -84,6 +84,42 @@ class ConfigCommandTests(unittest.TestCase):
           self.assertIn("implement_finish", error["message"])
           self.assertIn("done_status", error["message"])
 
+  def test_ConfigCommand_OptionalKeyUnset_ReadsUnset(self) -> None:
+    with self.repo() as repo:
+      for key in ("relay_contract", "satisfies_dependencies"):
+        with self.subTest(key=key):
+          code, out, err = repo.run("config", key)
+          self.assertEqual((code, out), (0, "(unset)\n"), err)
+          code, out, err = repo.run("config", key, "--json")
+          self.assertEqual(code, 0, err)
+          self.assertEqual(json.loads(out), {"key": key, "value": None})
+          code, out, err = repo.run("config", key, "--json", "--lean")
+          self.assertEqual(code, 0, err)
+          self.assertEqual(json.loads(out), {"key": key, "value": None})
+
+  def test_ConfigCommand_UnknownKey_StillUsage(self) -> None:
+    with self.repo() as repo:
+      for key in ("no_such_key", "relay_contract.x", "id.nope"):
+        with self.subTest(key=key):
+          code, out, _ = repo.run("config", key, "--json")
+          self.assertEqual(code, 2)
+          error = _error(out)
+          self.assertEqual(error["code"], "usage")
+          self.assertIn("is not a config key", error["message"])
+          self.assertIn("relay_contract", error["message"])
+
+  def test_ConfigCommand_RelayContractAboveCap_IsBadConfigValue(self) -> None:
+    with self.repo() as repo:
+      before = repo.read(".slicer/config.json")
+      for value in ("10000", "99999999999999999999999"):
+        with self.subTest(value=value):
+          code, out, err = repo.run("config", "relay_contract", value, "--json")
+          self.assertEqual(code, 2, (out, err))
+          error = _error(out)
+          self.assertEqual(error["code"], "bad_config_value")
+          self.assertIn("relay_contract", error["message"])
+          self.assertEqual(repo.read(".slicer/config.json"), before)
+
   def test_Config_NoKeyText_IsOneLinePerTopLevelKey(self) -> None:
     with self.repo() as repo:
       code, out, _ = repo.run("config")
@@ -234,7 +270,7 @@ class ConfigSetTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertEqual(repo.read(".slicer/config.json"), before)
       code, out, _ = repo.run("config", "relay_contract", "--json")
-      self.assertEqual(code, 2)
+      self.assertEqual((code, json.loads(out)), (0, {"key": "relay_contract", "value": None}))
       self.assertEqual(repo.run("config", "relay_contract", "--unset")[0], 0)
       self.assertEqual(repo.read(".slicer/config.json"), before)
 
@@ -401,8 +437,8 @@ class ConfigSetTests(unittest.TestCase):
       self.assertEqual(code, 0, err)
       self.assertNotIn("satisfies_dependencies", _raw(repo))
       code, out, _ = repo.run("config", "satisfies_dependencies", "--json")
-      self.assertEqual(code, 2)
-      self.assertEqual(_error(out)["code"], "usage")
+      self.assertEqual((code, json.loads(out)),
+                       (0, {"key": "satisfies_dependencies", "value": None}))
       repo.run("config", "implement_finish", "handoff")
       code, _, err = repo.run("config", "implement_finish", "--unset")
       self.assertEqual(code, 0, err)

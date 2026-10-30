@@ -38,6 +38,10 @@ way, for the same reason. The ask is a `start` step event with `waiting_on` `own
 `answer` object naming the question. Both carry every key of any step event, so an older slicer
 folds them as heartbeats and ignores the objects. A question lives on the step it was asked on.
 
+`relay-run stats` measures finished runs from those events alone, by the rules `stats` and
+`docs/commands.md` state. The fold keeps each step's per-event `history` for it; nothing about
+a measurement is stored.
+
 This module reads, folds and appends. Validation of user input and the lock around an
 append live in `ops`, which is where every mutation goes.
 """
@@ -47,12 +51,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from itertools import groupby
 from pathlib import Path
 
-from slicer import feedback, jsonio, store, vcs
+from slicer import feedback, jsonio, roles, store, vcs
 from slicer.errors import SlicerError, StateError, reject_future_schema
 
 LEDGER_NAME = "relay-runs.jsonl"
@@ -74,6 +79,8 @@ DEFAULT_WAITING_ON = "owner"
 OPTIONS_MIN = 2
 OPTIONS_MAX = 4
 OUTCOMES = ("pass", "fail", "stopped")
+# The verdict a gate round is closed with, as the gate's `VERDICT:` line says it.
+VERDICTS = ("pass", "fail")
 STATES = ("active", "stale", "ended")
 _STAMP = "%Y-%m-%dT%H:%M:%SZ"
 _FIELDS = ("role", "agent", "vendor", "model", "reasoning", "task")
@@ -100,7 +107,12 @@ def _parse_stamp(text: str) -> datetime:
 def elapsed_text(start: str, end: datetime) -> str:
   """How long from the stamp `start` to `end`, as `5s`, `1m05s` or `1h02m`, never negative.
   The board and `relay-run list` both show it, so it lives here, not in `tui`."""
-  seconds = max(0, int((end - _parse_stamp(start)).total_seconds()))
+  return duration_text(int((end - _parse_stamp(start)).total_seconds()))
+
+
+def duration_text(seconds: int) -> str:
+  """A length of time as `5s`, `1m05s` or `1h02m`, never negative."""
+  seconds = max(0, seconds)
   if seconds < 60:
     return f"{seconds}s"
   if seconds < 3600:
@@ -339,6 +351,11 @@ class Step:
   questions: list[Question] = field(default_factory=list)
   # Why the step failed, when its latest event is a `fail` that gave a reason, else "".
   reason: str = ""
+  # The verdict a gate round was closed with, when the latest event is a `done` that gave one.
+  verdict: str = ""
+  # Every event the fold put into the step, as `(at, folded phase, waiting_on)`, oldest first.
+  # Not serialized: `stats` needs the intervals the latest-phase fold drops.
+  history: list[tuple[str, str, str]] = field(default_factory=list)
 
   @property
   def waiting(self) -> bool:
@@ -363,7 +380,7 @@ class Step:
       "task": self.task, "parent": self.parent,
       "begun_at": self.begun_at, "updated_at": self.updated_at,
       "question": None if question is None else question.to_dict(),
-      "reason": self.reason,
+      "reason": self.reason, "verdict": self.verdict,
     }
 
   @classmethod
@@ -374,7 +391,7 @@ class Step:
       task=data["task"], parent=data["parent"],
       begun_at=data["begun_at"], updated_at=data["updated_at"],
       waiting_on=data.get("waiting_on", ""), waiting_since=data.get("waiting_since", ""),
-      reason=data.get("reason", ""),
+      reason=data.get("reason", ""), verdict=data.get("verdict", ""),
       questions=[Question.from_dict(data["question"])] if data.get("question") else [],
     )
 
@@ -391,6 +408,8 @@ class Run:
   state: str = "active"
   outcome: str = ""
   steps: list[Step] = field(default_factory=list)
+  # The stamp of the end event, else "". Not serialized: `stats` reads it.
+  ended_at: str = ""
 
   def in_lane(self, step: Step) -> bool:
     """Whether the step is drawn in the lane: nothing spawned it, or the orchestrator did. A step
@@ -484,11 +503,12 @@ def answer_payload(question_id: str, option: str, text: str, why: str, by: str) 
 def step_event(
   run: str, at: datetime, step: str, phase: str, parent: str = "", waiting_on: str = "",
   question: dict[str, object] | None = None, answer: dict[str, object] | None = None,
-  reason: str = "", **fields: str,
+  reason: str = "", verdict: str = "", **fields: str,
 ) -> dict[str, object]:
   """A step event. `waiting_on` marks a `start` event as a wait, `question` says what it asks
-  and `answer` what it answers, and `reason` says why a `fail` event failed; each is left out
-  when not given, so every other event is the line an older slicer wrote."""
+  and `answer` what it answers, `reason` says why a `fail` event failed and `verdict` closes a
+  gate round; each is left out when not given, so every other event is the line an older
+  slicer wrote."""
   event: dict[str, object] = {
     "v": VERSION, "event": "step", "run": run, "at": stamp(at), "step": step, "phase": phase,
   }
@@ -502,6 +522,8 @@ def step_event(
     event["answer"] = answer
   if reason:
     event["reason"] = reason
+  if verdict:
+    event["verdict"] = verdict
   return event
 
 
@@ -560,6 +582,8 @@ def read_events(path: Path, *, tolerate_torn_tail: bool = False) -> list[tuple[i
       raise _corrupt(path, number, "step event waiting_on is not a string")
     if kind == "step" and not isinstance(event.get("reason", ""), str):
       raise _corrupt(path, number, "step event reason is not a string")
+    if kind == "step" and not isinstance(event.get("verdict", ""), str):
+      raise _corrupt(path, number, "step event verdict is not a string")
     if kind == "step" and not valid_step_id(event["step"]):
       raise _corrupt(
         path, number,
@@ -695,6 +719,7 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
       raise _corrupt(path, number, str(exc)) from None
     run.updated_at = at
     run.outcome = event["outcome"]
+    run.ended_at = at
     return
   try:
     choice("phase", event["phase"], PHASES)
@@ -716,6 +741,9 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
   step.phase = event["phase"]
   step.waiting_on = ""
   step.reason = str(event["reason"]) if event["phase"] == "fail" and event.get("reason") else ""
+  # Only a `done` event closes a gate round with a verdict; a later event of the step ends it.
+  closing = event["phase"] == "done" and event.get("verdict") in VERDICTS
+  step.verdict = event["verdict"] if closing else ""
   if event["phase"] == "start" and event.get("waiting_on"):
     step.phase = "wait"
     step.waiting_on = str(event["waiting_on"])
@@ -725,6 +753,7 @@ def _apply(runs: dict[str, Run], path: Path, number: int, event: dict) -> None:
     step.waiting_since = ""
   elif (step.phase, step.waiting_on) != before:
     step.waiting_since = at
+  step.history.append((at, step.phase, step.waiting_on))
   for name in _FIELDS:
     if event[name]:  # an update names only what changes
       setattr(step, name, str(event[name]))
@@ -869,3 +898,179 @@ def append(root: Path, event: dict[str, object], *, path: Path | None = None) ->
       with path.open("ab") as fh:
         fh.write(b"\n")
   jsonio.append_jsonl(path, event)
+
+
+# The rounds a lane is counted in: the roles that implement, review and gate a slice.
+_ROUND_ROLES = ("implementer", "reviewer", "gate")
+
+
+def _epoch(text: str) -> int:
+  return int(_parse_stamp(text).timestamp())
+
+
+def _median(values: list[int]) -> int | None:
+  """The lower median, so it is a number the ledger observed; None for no values."""
+  return statistics.median_low(values) if values else None
+
+
+def _union_seconds(spans: list[tuple[int, int]]) -> int:
+  """The seconds covered by the spans together: overlaps count once."""
+  total, reach = 0, None
+  for begin, stop in sorted(spans):
+    if reach is None or begin > reach:
+      total += stop - begin
+      reach = stop
+    elif stop > reach:
+      total += stop - reach
+      reach = stop
+  return total
+
+
+def _ordered_roles(present: set[str]) -> list[str]:
+  """The roles the ledger names, in `LEDGER_ROLE_NAMES` order, then any other role sorted."""
+  known = [name for name in roles.LEDGER_ROLE_NAMES if name in present]
+  return known + sorted(present - set(roles.LEDGER_ROLE_NAMES))
+
+
+def _spans(run: Run, step: Step) -> list[tuple[str, str, int, int]]:
+  """`(phase, waiting_on, from, to)` in seconds for each event of the step: an interval runs
+  to the next event of the step, and the last one to the end of the run."""
+  end = _epoch(run.ended_at) if run.ended_at else None
+  spans = []
+  for index, (at, phase, waiting_on) in enumerate(step.history):
+    begin = _epoch(at)
+    if index + 1 < len(step.history):
+      stop = _epoch(step.history[index + 1][0])
+    else:
+      stop = begin if end is None else end
+    spans.append((phase, waiting_on, begin, max(begin, stop)))
+  return spans
+
+
+def _measure(run: Run) -> dict[str, object]:
+  """One ended run's numbers, by the rules in `docs/commands.md`. Round order is the order
+  of the run's steps, which is creation order, because rounds often share a second."""
+  lane = [step for step in run.steps if run.in_lane(step)]
+  rounds = [step for step in lane if step.role in _ROUND_ROLES]
+  fix: dict[str, bool] = {}
+  implementer_rounds = fix_rounds = 0
+  previous: Step | None = None
+  for index, step in enumerate(rounds):
+    if step.role != "implementer":
+      continue
+    if previous is not None and previous.phase == "fail" and previous.reason:
+      fix[step.id] = fix[previous.id]  # a rerun after a vendor limit is the same round
+    else:
+      implementer_rounds += 1
+      before = any(other.role != "implementer" for other in rounds[:index])
+      after = any(other.role != "implementer" for other in rounds[index + 1:])
+      fix[step.id] = before and after
+      fix_rounds += fix[step.id]
+    previous = step
+  gate_rounds = gate_fails = with_verdict = 0
+  for index, step in enumerate(rounds):
+    if step.role != "gate":
+      continue
+    gate_rounds += 1
+    following = rounds[index + 1] if index + 1 < len(rounds) else None
+    sent_back = following is not None and following.role == "implementer" and fix[following.id]
+    if step.verdict:
+      with_verdict += 1
+      gate_fails += step.verdict == "fail"
+    else:
+      gate_fails += sent_back
+  role_seconds: dict[str, list[int]] = {}
+  for step in lane:
+    seconds = sum(stop - begin for phase, _, begin, stop in _spans(run, step) if phase == "start")
+    role_seconds.setdefault(step.role, []).append(seconds)
+  waits: dict[str, list[tuple[int, int]]] = {}
+  for step in run.steps:
+    for phase, waiting_on, begin, stop in _spans(run, step):
+      if phase == "wait":
+        waits.setdefault(waiting_on, []).append((begin, stop))
+  everything = [span for spans in waits.values() for span in spans]
+  return {
+    "implementer_rounds": implementer_rounds, "fix_rounds": fix_rounds,
+    "gate_rounds": gate_rounds, "gate_fails": gate_fails, "with_verdict": with_verdict,
+    "wall_seconds": max(0, _epoch(run.ended_at) - _epoch(run.begun_at)),
+    "role_seconds": role_seconds,
+    "has_wait": bool(everything), "wait_seconds": _union_seconds(everything),
+    "wait_by": {kind: _union_seconds(spans) for kind, spans in waits.items()},
+  }
+
+
+def stats(runs: list[Run], since: datetime | None) -> dict[str, object]:
+  """The measurements `relay-run stats` prints, from the ended runs that began at or after
+  `since` (all of them when None). Pure: no clock, so a ledger always gives the same bytes.
+
+  A run is measured when it has ended and has an implementer step in its lane (`Run.in_lane`).
+  Every rule is derived from ledger events alone and stated in `docs/commands.md`: no round
+  kind is recorded, so a fix round is an implementer round between a review or gate and a later
+  one; a gate verdict is recorded only since s408, so older gates count as failed when a fix
+  round follows them; waits are recorded only since s404.
+  """
+  kept = [run for run in runs if since is None or _parse_stamp(run.begun_at) >= since]
+  ended = [run for run in kept if run.outcome]
+  rows = [(run, _measure(run)) for run in ended]
+  measured = [
+    (run, got) for run, got in rows
+    if any(step.role == "implementer" and run.in_lane(step) for step in run.steps)
+  ]
+  walls = [int(got["wall_seconds"]) for _, got in measured]
+  fixes = [int(got["fix_rounds"]) for _, got in measured]
+  by_role: dict[str, list[int]] = {}
+  for _, got in measured:
+    for role, seconds in got["role_seconds"].items():
+      by_role.setdefault(role, []).extend(seconds)
+  waited = [got for _, got in measured if got["has_wait"]]
+  kinds = {kind for _, got in measured for kind in got["wait_by"]}
+  by_waiting_on = {
+    kind: sum(got["wait_by"].get(kind, 0) for _, got in measured)
+    for kind in sorted(WAITING_ON) + sorted(kinds - set(WAITING_ON))
+  }
+  waits = [int(got["wait_seconds"]) for got in waited]
+  return {
+    "since": None if since is None else stamp(since),
+    "runs": {
+      "total": len(kept),
+      **{outcome: sum(1 for run in ended if run.outcome == outcome) for outcome in OUTCOMES},
+      "unended": len(kept) - len(ended),
+    },
+    "measured": len(measured),
+    "wall_seconds": {"median": _median(walls), "max": max(walls, default=None)},
+    "fix_rounds": {
+      "total": sum(fixes), "runs_with_any": sum(1 for n in fixes if n >= 1),
+      "runs_with_two_or_more": sum(1 for n in fixes if n >= 2),
+    },
+    "gates": {
+      "rounds": sum(int(got["gate_rounds"]) for _, got in measured),
+      "fails": sum(int(got["gate_fails"]) for _, got in measured),
+      "with_verdict": sum(int(got["with_verdict"]) for _, got in measured),
+      "by_proxy": sum(int(got["gate_rounds"]) - int(got["with_verdict"]) for _, got in measured),
+    },
+    "roles": {
+      role: {
+        "steps": len(by_role[role]), "total_seconds": sum(by_role[role]),
+        "median_seconds": _median(by_role[role]),
+      }
+      for role in _ordered_roles(set(by_role))
+    },
+    "owner_wait": {
+      "runs_with_wait": len(waited), "total_seconds": sum(waits),
+      "median_seconds": _median(waits), "max_seconds": max(waits, default=None),
+      "by_waiting_on": by_waiting_on,
+    },
+    "per_run": [
+      {
+        "id": run.id, "items": list(run.items), "worktree": run.worktree, "outcome": run.outcome,
+        "begun_at": run.begun_at, "ended_at": run.ended_at, "wall_seconds": got["wall_seconds"],
+        "implementer_rounds": got["implementer_rounds"], "fix_rounds": got["fix_rounds"],
+        "gate_rounds": got["gate_rounds"], "gate_fails": got["gate_fails"],
+        "wait_seconds": got["wait_seconds"],
+        "role_seconds": {
+          role: sum(got["role_seconds"][role]) for role in _ordered_roles(set(got["role_seconds"]))
+        },
+      }
+      for run, got in rows
+    ],
+  }
