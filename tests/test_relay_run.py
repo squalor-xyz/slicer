@@ -2867,5 +2867,72 @@ class ReasonTests(RelayRunCase):
     self.assertIn("reason", json.loads(out)["error"]["message"])
 
 
+class EndReasonTests(RelayRunCase):
+  """`relay-run end --close-steps fail --reason` records why each step it closes failed (s423)."""
+
+  # The keys of a step event written without a reason, in the order `step_event` writes them.
+  STEP_KEYS = (
+    "v", "event", "run", "at", "step", "phase", "role", "agent", "vendor", "model", "reasoning",
+    "task", "parent",
+  )
+
+  def two_running(self, repo: support.TempRepo) -> str:
+    run = self.begin(repo, "s1")
+    self.step(repo, run, "--task", "write tests")
+    self.step(repo, run, "--task", "review")
+    return run
+
+  def events_of(self, repo: support.TempRepo) -> list[dict]:
+    return [event for _, event in relayrun.read_events(repo.root / LEDGER)]
+
+  def test_RelayRunEnd_CloseStepsFailReason_RecordsReasonOnEachClosedStep(self) -> None:
+    repo = self.project()
+    run = self.two_running(repo)
+    got = self.ok(repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "fail",
+                  "--reason", "owner stopped")
+    self.assertEqual(got["closed_steps"], ["1", "2"])
+    steps = self.runs(repo)[0]["steps"]
+    self.assertEqual([(s["phase"], s["reason"]) for s in steps], [("fail", "owner stopped")] * 2)
+    # The reason rides on the step events only; the end event carries none.
+    self.assertEqual([e.get("reason") for e in self.events_of(repo)[-3:]],
+                     ["owner stopped", "owner stopped", None])
+
+  def test_RelayRunEnd_ReasonWithoutCloseStepsFail_IsBadRunField(self) -> None:
+    repo = self.project()
+    run = self.two_running(repo)
+    before = repo.read(LEDGER)
+    for extra in ((), ("--close-steps", "done")):
+      with self.subTest(close_steps=extra):
+        payload = self.refuse(
+          repo, "relay-run", "end", run, "--outcome", "pass", "--reason", "x", *extra,
+          code=2, error="bad_run_field",
+        )
+        self.assertIn("--close-steps fail", payload["message"])
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_RelayRunEnd_ReasonMultiLine_IsRefused(self) -> None:
+    repo = self.project()
+    run = self.two_running(repo)
+    before = repo.read(LEDGER)
+    self.refuse(
+      repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "fail",
+      "--reason", "a\nb", code=2, error="bad_run_field",
+    )
+    self.assertEqual(repo.read(LEDGER), before)
+
+  def test_RelayRunEnd_CloseStepsFailNoReason_Unchanged(self) -> None:
+    repo = self.project()
+    run = self.two_running(repo)
+    before = len(self.events_of(repo))
+    self.ok(repo, "relay-run", "end", run, "--outcome", "stopped", "--close-steps", "fail")
+    added = self.events_of(repo)[before:]
+    self.assertEqual([e["event"] for e in added], ["step", "step", "end"])
+    for event in added[:2]:
+      self.assertEqual(list(event), list(self.STEP_KEYS))
+      self.assertEqual((event["phase"], event["role"], event["task"], event["parent"]),
+                       ("fail", "", "", ""))
+    self.assertEqual(list(added[2]), ["v", "event", "run", "at", "outcome"])
+
+
 if __name__ == "__main__":
   unittest.main()
