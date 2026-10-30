@@ -16925,7 +16925,7 @@
       "id": "s425",
       "title": "Relay rules from the squalify run: fix-round recheck, mid-run owner questions, after-land checks, merged-slice regate",
       "short_title": "Squalify relay rules",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s412"
