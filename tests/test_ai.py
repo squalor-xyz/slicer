@@ -1442,6 +1442,12 @@ class AiRelayTests(unittest.TestCase):
     )
     self.assertIn("(`--outcome stopped` if the owner stops it)", relay)
 
+  def test_Relay_Heartbeat_SaysItEndsAWait(self) -> None:
+    sentence = "A heartbeat on a waiting step ends its wait: do not heartbeat a step that waits."
+    for label, text in (("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text())):
+      with self.subTest(text=label):
+        self.assertIn(sentence, " ".join(text.split()))
+
   def test_Relay_NamesNoVendorModelOrOutsidePath(self) -> None:
     blob = "\n".join((
       ai.relay_text("done"),

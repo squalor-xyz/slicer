@@ -684,6 +684,8 @@ def _emit_run(args: argparse.Namespace, payload: dict[str, object], text: str) -
 
 def _step_line(step: relayrun.Step) -> str:
   phase = f"{step.phase}:{step.waiting_on}" if step.waiting_on else step.phase
+  if step.waiting and step.waiting_since:  # how long the wait has run, as of now
+    phase += f" {relayrun.elapsed_text(step.waiting_since, relayrun.utcnow())}"
   cells = [step.role, step.agent, step.model, step.reasoning, phase, step.task]
   line = ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
   return f"{line}  reason: {step.reason}" if step.reason else line

@@ -234,7 +234,9 @@ relay records its roles. When the run has an orchestrator step it is the root of
 the role rows hang under it with `├` and `└`; without one the rows keep the flat layout above.
 A step spawned by any other role is that role's subagent: it is counted on its parent's row
 (`1 subagent`), not drawn. Each row shows: `[|]` is a running step and spins (`| / - \`), `[+]`
-is done, `[!]` failed, `[~]` started but not running (the run is stale or ended), and `[ ]` has
+is done, `[!]` failed, `[?]` waiting on the owner or an approval (it does not spin, and its row
+shows `wait:OWNER` and `waited Xm` from the start of the wait), `[~]` started but not running
+(the run is stale or ended), and `[ ]` has
 not begun. The row carries `×N` when the role has more than one step in the lane (rounds),
 elapsed time, the number of subagents the latest step spawned, its agent, `vendor/model` and
 reasoning, and its task underneath. Each failed gate step adds a `✗ gate FAIL → implementer

@@ -16096,10 +16096,53 @@
       "id": "s411",
       "title": "Relay-run ledger follow-ups from v1.16",
       "short_title": "Relay-run ledger follow-ups from v1.16",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "b24da4b7-b063-4d01-b048-981d8d52bba3",
+          "kind": "",
+          "text": "**2026-10-30** — Spec-check bullet needed no change: test_Relay_UiPassAndSpecCheckNameTheirLedgerRoles already pins that the UI pass and spec check name their ledger roles.",
+          "created_at": "2026-10-30T16:03:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "dc86b454-48d1-4a02-a853-8ca0cf9b51a9",
+          "kind": "",
+          "text": "**2026-10-30** — For ork's next sync: relay-run list --json counts.roles now counts lane steps (top-level steps and steps the orchestrator spawned), not only top-level steps; Roles[\"orchestrator\"] is unchanged.",
+          "created_at": "2026-10-30T16:03:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "3a6f1967-2574-4520-af4e-1fdaa207e44c",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: Step.waiting_since derived in the fold, wait time on relay-run list text and the TUI board ([?] marker, wait:OWNER/waited cells), counts.roles over lane steps (Run.in_lane), snapshot run steps carry waiting_on and question, heartbeat-ends-wait sentence in relay and orchestrator texts (contract stays 10). Full suite 2977 OK; gate PASS.",
+          "created_at": "2026-10-30T16:03:57Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16119,7 +16162,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

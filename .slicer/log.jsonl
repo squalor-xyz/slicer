@@ -2399,3 +2399,8 @@
 {"when": "2026-10-30T15:09:37Z", "item": "s412", "action": "status", "from": "review", "to": "done", "note": "Relay contract text follow-ups: 88-column rewrap (word-identical), QUESTION_VALUE_RULE from relayrun separators, brief Stop bullet, conformance pin, vcs comment. Gate PASS; suite 2957 OK.", "by": "Jon Robbins"}
 {"when": "2026-10-30T15:10:16Z", "item": "s428", "action": "add", "from": "", "to": "open", "note": "Merge-index keeps a pre-schema-11 note edit clean after the retraction restamp"}
 {"when": "2026-10-30T15:18:52Z", "item": "s393", "action": "status", "from": "review", "to": "done", "note": "Note retraction: note-retract keeps text and records who/when/why (schema 11); retracted notes leave packs, never satisfy handoff_requires_note_kind, render [retracted], dim in TUI. Gate PASS; merged suite 2968 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:19:48Z", "item": "s411", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:03:57Z", "item": "s411", "action": "note", "from": "", "to": "", "note": "Spec-check bullet needed no change: test_Relay_UiPassAndSpec", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:03:57Z", "item": "s411", "action": "note", "from": "", "to": "", "note": "For ork's next sync: relay-run list --json counts.roles now ", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:03:57Z", "item": "s411", "action": "note", "from": "", "to": "", "note": "Ready for review: Step.waiting_since derived in the fold, wa", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:04:02Z", "item": "s411", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

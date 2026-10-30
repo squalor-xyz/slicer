@@ -39,11 +39,17 @@ def build(state: State, parts: list[str], read: Callable[[str], object]) -> dict
     }
 
   def runs():
+    # The step's own `to_dict` values, so `question` is the object `relay-run list --json` gives.
+    keys = ("id", "role", "phase", "task", "model", "waiting_on", "question")
+
+    def step_view(step: relayrun.Step) -> dict:
+      dumped = step.to_dict()  # once per step, not once per key
+      return {k: dumped[k] for k in keys}
+
     return [{
       "id": run.id, "items": run.items, "worktree": run.worktree,
       "state": run.state, "updated_at": run.updated_at,
-      "steps": [{k: getattr(step, k) for k in ("id", "role", "phase", "task", "model")}
-                for step in run.steps],
+      "steps": [step_view(step) for step in run.steps],
     } for run in relayrun.list_runs(state.root, active=True)]
 
   def status():
