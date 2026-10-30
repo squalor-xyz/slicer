@@ -16841,6 +16841,34 @@
           "retracted_by": "",
           "retracted_at": "",
           "retracted_reason": ""
+        },
+        {
+          "id": "0453bb3a-f037-4878-a272-9a79657928b3",
+          "kind": "",
+          "text": "**2026-10-30** — From s409 gate (later): Conformance stop_rules and Stop's orchestrator-limit sentence assume a parent session; reword them variant-neutral so ai relay-orchestrator --session needs no override sentence.",
+          "created_at": "2026-10-30T18:03:57Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "6d965327-0e70-4d93-b5a9-d1f36c1daaf5",
+          "kind": "",
+          "text": "**2026-10-30** — From s409 gate (later): Relay Roles names --session only where nesting fails; the owner's session-orchestrator choice applies even where nesting works. State it as an owner choice in Setup.",
+          "created_at": "2026-10-30T18:03:58Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
