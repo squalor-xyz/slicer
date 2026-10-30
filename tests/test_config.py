@@ -7,6 +7,8 @@ import unittest
 from unittest.mock import patch
 
 import support
+from slicer.config import Config
+from slicer.errors import ConfigError
 
 
 def poke(repo: support.TempRepo, name: str, **changes: object) -> None:
@@ -247,6 +249,21 @@ class RelayContractConfigTests(unittest.TestCase):
       self.assertEqual(repo.run("config", "relay_contract")[1], "7\n")
       self.assertEqual(repo.run("config", "claim_owner", "X")[0], 0)
       self.assertEqual(json.loads((repo.root / ".slicer/config.json").read_text())["relay_contract"], 7)
+
+
+class CheckCommandConfigTests(unittest.TestCase):
+  def test_Config_CheckCommand_DefaultsEmptyAndRoundTrips(self) -> None:
+    self.assertEqual(Config.from_dict({}).check_command, "")
+    cfg = Config.from_dict({"check_command": "make test"})
+    self.assertEqual(cfg.to_dict()["check_command"], "make test")
+    self.assertEqual(Config.from_dict(cfg.to_dict()).check_command, "make test")
+
+  def test_Config_CheckCommandNotString_IsConfigError(self) -> None:
+    for bad in (5, ["make test"], None):
+      with self.subTest(bad=bad):
+        with self.assertRaises(ConfigError) as caught:
+          Config.from_dict({"check_command": bad})
+        self.assertIn("check_command", str(caught.exception))
 
 
 class TuiColumnsConfigTests(unittest.TestCase):

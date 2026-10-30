@@ -2387,6 +2387,9 @@
 {"when": "2026-10-30T14:03:01Z", "item": "s412", "action": "set", "from": "", "to": "", "note": "effort -→1"}
 {"when": "2026-10-30T14:03:01Z", "item": "s415", "action": "set", "from": "", "to": "", "note": "effort -→1"}
 {"when": "2026-10-30T14:03:01Z", "item": "s411", "action": "set", "from": "", "to": "", "note": "effort -→2"}
+{"when": "2026-10-30T14:12:00Z", "item": "s417", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:46:08Z", "item": "s417", "action": "note", "from": "", "to": "", "note": "Ready for review: every locked roadmap write first regenerat", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:46:11Z", "item": "s417", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-10-30T14:11:07Z", "item": "s393", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-10-30T15:04:03Z", "item": "s393", "action": "note", "from": "", "to": "", "note": "Ready for review: note-retract marks an item note wrong (who", "by": "Jon Robbins"}
 {"when": "2026-10-30T15:04:06Z", "item": "s393", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
@@ -2404,3 +2407,9 @@
 {"when": "2026-10-30T16:03:57Z", "item": "s411", "action": "note", "from": "", "to": "", "note": "For ork's next sync: relay-run list --json counts.roles now ", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:03:57Z", "item": "s411", "action": "note", "from": "", "to": "", "note": "Ready for review: Step.waiting_since derived in the fold, wa", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:04:02Z", "item": "s411", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:19:45Z", "item": "s379", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:59:49Z", "item": "s379", "action": "note", "from": "", "to": "", "note": "Ready for review: check_command config key (string, default ", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:59:51Z", "item": "s379", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:46:41Z", "item": "s429", "action": "add", "from": "", "to": "open", "note": "TUI writes heal a stale render like CLI writes"}
+{"when": "2026-10-30T15:57:28Z", "item": "s417", "action": "status", "from": "review", "to": "done", "note": "Merges re-render automatically: locked writes heal a stale or conflicted render/ first (one stderr line; skipped during merges and without render/); check names conflict_markers; per-file conflict advice for index and relay-roles JSON. Gate PASS; merged suite 2982 OK. Owner question (heal on no-op writes) taken as option A.", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:08:45Z", "item": "s379", "action": "status", "from": "review", "to": "done", "note": "check_command config key: string, default empty, validated, no schema bump; carried in ai relay --json and ai relay-brief --json; slicer never runs it. Gate PASS; merged suite green.", "by": "Jon Robbins"}

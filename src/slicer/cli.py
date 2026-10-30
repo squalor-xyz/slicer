@@ -57,7 +57,7 @@ from slicer import (
 )
 from slicer import __doc__ as _package_doc, __url__, __version__
 from slicer.config import CONFIG_NAME, Config
-from slicer.errors import SlicerError, StateError, is_internal
+from slicer.errors import ConfigError, SlicerError, StateError, is_internal
 
 OK, DRIFT, USAGE, INTERNAL = 0, 1, 2, 3
 _DESCRIPTION = _package_doc.splitlines()[0].split(" — ", 1)[1].removesuffix(".")
@@ -170,6 +170,37 @@ def _render_after_mutation(args: argparse.Namespace) -> int:
 def _print_render_summary(args: argparse.Namespace, written: int) -> None:
   stream = sys.stderr if getattr(args, "print_id", False) else sys.stdout
   print(f"rendered {written} file(s)", file=stream)
+
+
+def _heal_render(args: argparse.Namespace, *, merge_checked: bool = False) -> None:
+  """Regenerate a stale or conflicted `render/` before a write, and say so on stderr.
+
+  Best effort: a project whose state or config does not load is left for the handler to
+  report, and a render that cannot be written is a warning, because the write itself can
+  still land. Never during a Git merge: `merge_checked` says the caller has just refused
+  one (`_begin_write`); the `next --start` sites have no such refusal and are checked here.
+  """
+  root = Path(args.root) if getattr(args, "root", None) else None
+  try:
+    if not merge_checked and vcs.merge_in_progress(store.discover(root)):
+      return
+    healed = ops.heal_render(store.load(root))
+  except (StateError, ConfigError):
+    return
+  except (SlicerError, OSError) as exc:
+    print(f"slicer: could not regenerate the stale render: {exc}; run `slicer render`",
+          file=sys.stderr)
+    return
+  if healed:
+    print(f"slicer: regenerated stale render files before this write: {', '.join(healed)}",
+          file=sys.stderr)
+
+
+def _begin_write(args: argparse.Namespace, root: Path, *, heal: bool = True) -> None:
+  """The start of every locked state write: refuse during a merge, then heal `render/`."""
+  vcs.require_no_merge(root)
+  if heal:
+    _heal_render(args, merge_checked=True)
 
 
 def _mutating(fn):
@@ -394,8 +425,8 @@ def _salvage_relay_pin(project: Path) -> int | None:
 
 def _ai_project(
   args: argparse.Namespace, *, strict: bool = False, relay: bool = False,
-) -> tuple[Path | None, str, str, int | None]:
-  """The project root, finish and report policy and relay pin when config and index load.
+) -> tuple[Path | None, str, str, int | None, str]:
+  """The project root, finish and report policy, relay pin and check command when config and index load.
 
   Read-only: no lock and no write. A miss warns and keeps the generic text, and the
   root comes back None. `strict` is for callers that write the text somewhere: a project
@@ -418,13 +449,14 @@ def _ai_project(
     pinned = _salvage_relay_pin(project) if relay and project is not None else None
     if ai.pin_mismatch(pinned) is None:  # else the caller refuses, and the guide is not printed
       print(f"{exc}; printing the generic guide", file=sys.stderr)
-    return None, "done", "", pinned
-  return project, cfg.implement_finish, cfg.handoff_requires_note_kind, cfg.relay_contract
+    return None, "done", "", pinned, ""
+  return (project, cfg.implement_finish, cfg.handoff_requires_note_kind, cfg.relay_contract,
+          cfg.check_command)
 
 
 def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, str]:
   """The finish and report policy that `_ai_project` reads, without the root."""
-  _project, finish, required, _pinned = _ai_project(args, strict=strict)
+  _project, finish, required, _pinned, _check = _ai_project(args, strict=strict)
   return finish, required
 
 
@@ -449,7 +481,7 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
     raise StateError("--force needs --init-roles", code="usage")
   if args.init_roles:
     return _init_roles(args)
-  project, finish, required, pinned = _ai_project(args, relay=True)
+  project, finish, required, pinned, check_command = _ai_project(args, relay=True)
   _require_relay_pin(pinned)
   roles = None
   if project is not None:
@@ -462,8 +494,9 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       # The section sits under `## Roles matrix`, so its headings start one level down.
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
-  _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "relay": text, **ai.relay_contract(finish)},
-        text.rstrip("\n"), keep_empty=("pinned",),
+  _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "check_command": check_command,
+               "relay": text, **ai.relay_contract(finish)},
+        text.rstrip("\n"), keep_empty=("pinned", "check_command"),
         keep_fields=("setup", "order", "report", "outcomes", "stop", "changes", "roles"))
   return OK
 
@@ -471,7 +504,7 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
 def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   """Print the orchestrator's contract. Read-only, with the project's finish step and
   report kind the way `ai relay` reads them; outside a project it is the generic text."""
-  _project, finish, required, pinned = _ai_project(args, relay=True)
+  _project, finish, required, pinned, _check = _ai_project(args, relay=True)
   _require_relay_pin(pinned)
   text = ai.orchestrator_text(finish, required)
   _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "orchestrator": text,
@@ -1802,6 +1835,7 @@ def cmd_next(args: argparse.Namespace) -> int:
   if args.start and (args.render or args.max_attempts is not None or args.status is not None):
     root = store.discover(Path(args.root) if args.root else None)
     with store.project_lock(root):
+      _heal_render(args)
       return _next_rendered(args) if args.render else _select_next(args, locked=True)
   return _select_next(args, locked=False)
 
@@ -1845,6 +1879,8 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   if args.start:
     before = _claim_marks([item])
     with (nullcontext() if locked else store.project_lock(state.root)):
+      if not locked:
+        _heal_render(args)
       if queue is not None:
         item = ops.claim_in_queue(state, item.id, queue=queue, owner=args.owner, to=args.start_to)
       else:
@@ -1909,6 +1945,8 @@ def _cmd_next_batch(
     # failure keeps every id unclaimed: no status, move, or log line.
     before = _claim_marks(items)
     with (nullcontext() if locked else store.project_lock(state.root)):
+      if not locked:
+        _heal_render(args)
       with state.staged():
         started = ops.start_many(state, [item.id for item in items], owner=args.owner)
     args._no_change = before == _claim_marks(started)
@@ -2727,7 +2765,7 @@ def cmd_issues_pull(args: argparse.Namespace) -> int:
     return OK
   args._pull = (repo, issues)
   with store.project_lock(root):
-    vcs.require_no_merge(root)
+    _begin_write(args, root)
     return _issues_pull_write(args)
 
 
@@ -3050,7 +3088,7 @@ def cmd_config(args: argparse.Namespace) -> int:
     return _config_read(args)
   root = store.discover(Path(args.root).resolve() if args.root else None)
   with store.project_lock(root):
-    vcs.require_no_merge(root)
+    _begin_write(args, root)
     return _config_write(args)
 
 
@@ -3410,7 +3448,7 @@ def cmd_refs(args: argparse.Namespace) -> int:
     return _refs_run(args, _state(args), fix=False)
   root = store.discover(Path(args.root) if args.root else None)
   with store.project_lock(root):
-    vcs.require_no_merge(root)
+    _begin_write(args, root)
     code = _refs_write(args)
   return code if code != OK else args._refs_exit
 
@@ -3512,8 +3550,8 @@ def _check_report(state: store.State, *, show_diff: bool = False) -> tuple[check
       lines.append(render.unified(expected, state.render_dir, rel))
   if report.stale_render_kind == "roadmap_only":
     lines.append(
-      "only the roadmap render is stale, as a merge leaves it (the slicer-generated driver "
-      "keeps one side); run slicer render, or done --render when landing"
+      "only the roadmap render is stale, as a merge leaves it; any slicer write regenerates "
+      "it, or run slicer render"
     )
   lines.extend(f"orphan render: {rel}" for rel in report.orphan_render)
   lines.extend(f"stale sync: {s}" for s in report.stale_sync)
@@ -3916,7 +3954,7 @@ def build_parser() -> argparse.ArgumentParser:
   )
 
   sp = add("setup-git", cmd_setup_git,
-      "print the git config that turns on the merge drivers (run once per clone)")
+      "print the git config for the merge drivers (once per clone; the render one is optional)")
   modes = sp.add_mutually_exclusive_group()
   modes.add_argument("--hook", action="store_true",
       help="print an optional post-merge hook and its install command; writes nothing")
@@ -4796,7 +4834,7 @@ def main(argv: list[str] | None = None) -> int:
       )
       with (nullcontext() if creating_migrate else store.project_lock(root)):
         if _changes_state(args):
-          vcs.require_no_merge(root)
+          _begin_write(args, root, heal=not creating_migrate)
         return int(args.func(args))
     return int(args.func(args))
   except _ParserError as exc:

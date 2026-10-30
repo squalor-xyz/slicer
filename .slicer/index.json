@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 429,
+  "next_id": 430,
   "preamble": "",
   "passes": [
     {
@@ -14528,10 +14528,25 @@
       "id": "s379",
       "title": "A project check_command config key that scripted orchestrators run before review",
       "short_title": "check_command config key",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "16f2e2dd-012b-4241-ba04-0e846fc8cc35",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: check_command config key (string, default empty, validated; no config schema bump) carried in ai relay --json after pinned and in ai relay-brief --json after contract; slicer never runs it. Full suite 2973 OK; gate PASS.",
+          "created_at": "2026-10-30T15:59:49Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14551,7 +14566,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16346,10 +16361,25 @@
       "id": "s417",
       "title": "A merge leaves the render current without a per-clone setup or a hand-run render",
       "short_title": "Merges re-render automatically",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9e844710-85d3-49d9-aa0d-48b495d43742",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: every locked roadmap write first regenerates a stale or conflicted render/ (one stderr line), skipped during a merge and when render/ is absent; check names a conflict_markers cause; conflicted state JSON names per-file advice (index by hand + setup-git, relay-roles keep one side). Full suite 2964 OK; gate PASS.",
+          "created_at": "2026-10-30T15:46:08Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -16367,7 +16397,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -16744,6 +16774,36 @@
         "parent": "",
         "cites": [],
         "key": "s393.mergeindex-restamp-churn",
+        "pass": "later",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s429",
+      "title": "TUI writes heal a stale render like CLI writes",
+      "short_title": "TUI writes heal render",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/",
+        "discovered_from": "s417",
+        "parent": "",
+        "cites": [],
+        "key": "s417.tui-heal",
         "pass": "later",
         "group": "",
         "reason": "",

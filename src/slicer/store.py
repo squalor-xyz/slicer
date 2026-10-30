@@ -16,7 +16,7 @@ from collections.abc import Callable, Mapping, MutableMapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
 
 from slicer import ids, jsonio, vcs
 from slicer.config import CONFIG_NAME, Config
@@ -36,6 +36,18 @@ DIR_NAME = ".slicer"
 INDEX_NAME = "index.json"
 LOG_NAME = "log.jsonl"
 ROLES_NAME = "relay-roles.json"
+# What to do when a merge left Git conflict markers in a state file, appended to the
+# `corrupt` error. Both name `slicer setup-git`, whose drivers keep a merge from leaving them.
+INDEX_CONFLICT_HINT = (
+  "Resolve them by hand; `slicer setup-git` prints the merge drivers that keep a merge "
+  "from leaving them"
+)
+ROLES_CONFLICT_HINT = (
+  f"Never edit {ROLES_NAME} by hand: keep one side with "
+  f"`git checkout --ours|--theirs .slicer/{ROLES_NAME}`, `git add` it, finish the merge, then "
+  "re-apply the other side's changes with `slicer relay-roles`; `slicer setup-git` prints the "
+  "merge driver that keeps a merge from leaving markers"
+)
 # The hand-edited matrix that ROLES_NAME replaced. Nothing reads it any more.
 LEGACY_ROLES_NAME = "relay-roles.md"
 GITATTRIBUTES_NAME = ".gitattributes"
@@ -695,7 +707,7 @@ def read_roles(root: Path) -> RoleMatrix | None:
   if not path.exists():
     return None
   try:
-    data = jsonio.read(path)
+    data = _read_state_json(path, ROLES_CONFLICT_HINT)
   except OSError as exc:
     raise StateError(f"{path} cannot be read: {exc}", code="io") from exc
   return _from_dict(path, RoleMatrix.from_dict, data)
@@ -723,10 +735,20 @@ def legacy_roles_advice(root: Path) -> str | None:
   )
 
 
+def _read_state_json(path: Path, conflict_hint: str) -> Any:
+  """`jsonio.read`, with the file's own advice added when a merge left conflict markers in it."""
+  try:
+    return jsonio.read(path)
+  except StateError as exc:
+    if exc.code == "corrupt" and jsonio.has_conflict_markers(path):
+      raise StateError(f"{exc}. {conflict_hint}", code="corrupt") from None
+    raise
+
+
 def read_index(root: Path) -> Index:
   """Read only a worktree's index, without discovering or loading slice files."""
   path = root / DIR_NAME / INDEX_NAME
-  return _from_dict(path, Index.from_dict, jsonio.read(path))
+  return _from_dict(path, Index.from_dict, _read_state_json(path, INDEX_CONFLICT_HINT))
 
 
 def _elsewhere_counts(

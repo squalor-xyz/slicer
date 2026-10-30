@@ -37,6 +37,11 @@ class RelayRolesCase(unittest.TestCase):
 
   def ok(self, repo: support.TempRepo, *argv: str) -> str:
     code, out, err = repo.run(*argv)
+    # A write regenerates a stale render first and says so; that is not what these check.
+    err = "".join(
+      line for line in err.splitlines(keepends=True)
+      if not line.startswith("slicer: regenerated stale render files")
+    )
     self.assertEqual((code, err), (0, ""), f"{argv}: {out}")
     return out
 
@@ -656,6 +661,7 @@ class RelayRolesInitTests(RelayRolesCase):
   def test_Init_Existing_IsStateWithoutForceAndForceReplaces(self) -> None:
     repo = self.with_matrix()
     self.ok(repo, "relay-roles", "remove", "r1")
+    self.assertEqual(repo.run("render")[0], 0)  # a write heals a stale render first
     before = self.snapshot(repo)
     error = self.refuse(repo, "relay-roles", "init", code=2, error="state")
     self.assertIn("--force", error["message"])
@@ -1148,7 +1154,7 @@ class RelayRolesMutationContractTests(RelayRolesCase):
     self.ok(repo, "relay-roles", "set", "r1", "--model", "haiku")
     self.assertEqual(len(self.history(repo)), seen)
 
-  def test_NoOp_WithRender_WritesNothingNotEvenTheRender(self) -> None:
+  def test_NoOp_WithRender_CommandItselfWritesNothingNotEvenTheRender(self) -> None:
     repo = self.with_matrix()
     noops = (
       ("set", "r1", "--model", "haiku"),
@@ -1160,7 +1166,9 @@ class RelayRolesMutationContractTests(RelayRolesCase):
         with self.subTest(argv=argv, extra=extra):
           (repo.root / RENDER).unlink(missing_ok=True)
           before = self.snapshot(repo)
-          self.ok(repo, "relay-roles", *argv, *extra)
+          # The command itself renders nothing; the heal before it would write the missing file.
+          with patch("slicer.cli._heal_render"):
+            self.ok(repo, "relay-roles", *argv, *extra)
           self.assertEqual(self.snapshot(repo), before)
           self.assertFalse((repo.root / RENDER).exists())
 
@@ -2136,7 +2144,7 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelay_Json_CarriesStructuredContract(self):
     repo = self.project()
     payload = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(list(payload), ["contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
+    self.assertEqual(list(payload), ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
       "roles", "gate", "finding_kinds", "conformance"])
     setup = self.golden("relay").split("## Setup\n\n", 1)[1].split("Wait for", 1)[0]
     bullets = re.findall(r"(?m)^- (.*(?:\n  [^\n]+)*)", setup)

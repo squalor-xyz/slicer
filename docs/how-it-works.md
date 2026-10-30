@@ -267,7 +267,9 @@ it behaves like the rest of your code.
 - **Shared through git.** What other people and agents see is whatever you committed and
   they pulled or merged. Claims are part of that state. Two branches that file items or
   edit the same row can conflict like any file, and `slicer setup-git` prints the merge
-  drivers that resolve independent changes automatically. See
+  drivers that resolve independent changes automatically. A merge that leaves
+  `.slicer/render/` stale or with conflict markers needs no driver: the next write
+  regenerates it from `index.json` and says so on stderr. See
   [what lives in `.slicer/`](commands.md#what-lives-in-slicer).
 - **Visible on this machine only.** `next`, `list` and `start` also read the other git
   worktrees of this repository on the same computer, read-only, so you see `wt:NAME` and

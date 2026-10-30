@@ -322,7 +322,8 @@ class RenderTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("render")
       self._rewrite_header(repo, "slices/S02.md", "Render format: 1.", "Render format: 0.")
-      repo.run("add", "A new item")
+      with patch("slicer.cli._heal_render"):  # a write would regenerate the stale file
+        repo.run("add", "A new item")
       code, report = self._details(repo)
       self.assertEqual(code, 1)
       by_file = {d["file"]: d for d in report["stale_render_details"]}

@@ -42,9 +42,10 @@ GITATTRIBUTES = """\
 log.jsonl merge=union
 
 # render/ is a generated projection of index.json, never merged by hand. The
-# slicer-generated driver keeps the current branch's copy on merge instead of
-# writing conflict markers; re-run `slicer render` after resolving index.json so
-# the kept files match it. The name resolves only once a clone defines the driver
+# slicer-generated driver is optional: without it a merge may leave conflict markers
+# or one side's rows in render/, and the next slicer write regenerates the stale
+# files from index.json. With it the merge keeps the current branch's copy instead of
+# writing markers. The name resolves only once a clone defines the driver
 # (one-time, per clone -- slicer's git allowlist cannot run `git config` for you):
 #   git config merge.slicer-generated.name "keep the current branch's generated files"
 #   git config merge.slicer-generated.driver true
@@ -1156,7 +1157,8 @@ def relay_brief(
   }
   template = templates.effective("relay-brief.md", state.template_exact("relay-brief.md"))
   text = render.expand(template, context)
-  return {"brief": text, "roles": [pick.to_dict() for pick in picks], "contract": contract}
+  return {"brief": text, "roles": [pick.to_dict() for pick in picks], "contract": contract,
+          "check_command": state.config.check_command}
 
 
 def _relocate_slice(state: State, item_id: str) -> None:
@@ -1328,6 +1330,25 @@ def render_gated(state: State, mutate: Callable[[], object]) -> tuple[object, in
     # render tree, so state (staged) and render/ roll back together as one unit.
     written = len(render.write_atomic(expected, state.render_dir, render.compare(expected, state.render_dir)))
   return result, written
+
+
+def heal_render(state: State) -> list[str]:
+  """Rewrite the stale, conflicted or missing files of `render/` and drop its orphans.
+
+  `render/` is generated output that is never parsed back, so once `index.json` has loaded
+  cleanly it can always be rebuilt, as after a merge in a clone without the merge drivers.
+  Every locked write runs this first (`cli._begin_write`). It costs the one render comparison
+  `check` makes. A project with no `render/` directory has not opted in, so nothing is
+  created. Returns the relative paths it wrote or removed, sorted.
+  """
+  if not state.render_dir.is_dir():
+    return []
+  expected = render.plan(state)
+  diff = render.compare(expected, state.render_dir)
+  if not diff.stale:
+    return []
+  touched = render.write_atomic(expected, state.render_dir, diff)
+  return sorted(touched)
 
 
 def _clear_claim(item: Item) -> None:
