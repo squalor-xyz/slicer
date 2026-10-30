@@ -2267,6 +2267,32 @@ class AskAnswerTests(RelayRunCase):
     got = self.ask(repo, run, step, "--option", "a:Use b: it is faster", "--option", "b:B")
     self.assertEqual(got["question"]["options"][0], {"label": "a", "summary": "Use b: it is faster"})
 
+  def test_Ask_EachCharacterTheRuleNames_IsBadRunField(self) -> None:
+    """The run report's value rule (relayrun.QUESTION_VALUE_RULE) names `|` in every value but
+    `reasoning`, and `;` in a label or summary. `ask` refuses each one in each field it names."""
+    repo = self.project()
+    run, step = self.started(repo)
+    base = ["relay-run", "ask", run, "--step", step]
+    two = ["--option", "a:A", "--option", "b:B"]
+    cases = {
+      "pipe in title": [*base, "--title", "T|x", *two],
+      "pipe in a label": [*base, "--title", "T", "--option", "a|x:A", "--option", "b:B"],
+      "pipe in a summary": [*base, "--title", "T", "--option", "a:A|x", "--option", "b:B"],
+      "pipe in key": [*base, "--title", "T", *two, "--key", "a|b"],
+      "semicolon in a label": [*base, "--title", "T", "--option", "a;x:A", "--option", "b:B"],
+      "semicolon in a summary": [*base, "--title", "T", "--option", "a:A;x", "--option", "b:B"],
+    }
+    for name, argv in cases.items():
+      with self.subTest(name):
+        self.refused(repo, *argv, error="bad_run_field")
+    # `a|b` is also no option label, so only the message shows that the pipe check refused it.
+    payload = self.refused(
+      repo, *base, "--title", "T", *two, "--recommend", "a|b", error="bad_run_field",
+    )
+    self.assertIn("recommend may not contain `|`", payload["message"])
+    got = self.ask(repo, run, step, "--reasoning", "x | y; z")
+    self.assertEqual(got["question"]["reasoning"], "x | y; z")
+
   def test_Ask_Reasoning_MayHoldAPipe(self) -> None:
     repo = self.project()
     run, step = self.started(repo)

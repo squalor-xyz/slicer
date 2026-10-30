@@ -190,11 +190,24 @@ def choice(name: str, value: str, allowed: tuple[str, ...]) -> str:
   return value
 
 
+# The separators of the run report's `owner needed` line. `question_fields` refuses a value that
+# would break the line, and the Run report states the same rule through QUESTION_VALUE_RULE.
+FIELD_SEPARATOR = "|"
+OPTION_SEPARATOR = ";"
+LABEL_SEPARATOR = ":"
+QUESTION_VALUE_RULE = (
+  f"Use no `{FIELD_SEPARATOR}` in any value but `reasoning`, no `{OPTION_SEPARATOR}` in a label "
+  f"or summary, and the first `{LABEL_SEPARATOR}` ends the label."
+)
+
+
 def _plain(name: str, value: str, *, required: bool = False, spaces: bool = True) -> str:
   """A question value that sits in a `|`-separated report line: one line, no `|`."""
   text = one_line(name, value, required=required)
-  if "|" in text:
-    raise bad_field(f"{name} may not contain `|`, which separates the fields of the report line")
+  if FIELD_SEPARATOR in text:
+    raise bad_field(
+      f"{name} may not contain `{FIELD_SEPARATOR}`, which separates the fields of the report line"
+    )
   if not spaces and re.search(r"\s", text):
     raise bad_field(f"{name} may not contain whitespace")
   return text
@@ -214,13 +227,15 @@ def question_fields(
     )
   parsed: list[dict[str, str]] = []
   for raw in options:
-    label, colon, summary = raw.partition(":")
+    label, colon, summary = raw.partition(LABEL_SEPARATOR)
     if not colon:
-      raise bad_field(f"option {raw!r} is not LABEL:SUMMARY")
+      raise bad_field(f"option {raw!r} is not LABEL{LABEL_SEPARATOR}SUMMARY")
     label = _plain("option label", label, required=True)
     summary = _plain("option summary", summary, required=True)
-    if ";" in label or ";" in summary:
-      raise bad_field(f"option {raw!r} may not contain `;`, which separates the options")
+    if OPTION_SEPARATOR in label or OPTION_SEPARATOR in summary:
+      raise bad_field(
+        f"option {raw!r} may not contain `{OPTION_SEPARATOR}`, which separates the options"
+      )
     if any(option["label"] == label for option in parsed):
       raise bad_field(f"option label {label!r} is used twice")
     parsed.append({"label": label, "summary": summary})

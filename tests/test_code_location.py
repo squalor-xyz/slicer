@@ -49,9 +49,9 @@ class ForeignWorktreeTests(unittest.TestCase):
       self.assertIn("PYTHONPATH=src", message)
 
   def test_GitDirSetForAnotherRepo_NoWarning(self) -> None:
-    # A merge driver runs with GIT_DIR (or GIT_COMMON_DIR) pointing at the
-    # project's repo. Git would then answer for that repo from slicer's code dir
-    # too, so the two looked like worktrees of one repo (S394).
+    # Git run with GIT_DIR (or GIT_COMMON_DIR) pointing at the project's repo answers
+    # for that repo from slicer's code dir too, so the two looked like worktrees of one
+    # repo (S394).
     with support.TempRepo(git=True) as project, support.TempRepo(git=True) as code:
       for name in ("GIT_DIR", "GIT_COMMON_DIR"):
         with self.subTest(name=name), patch.dict(os.environ, {name: str(project.root / ".git")}):
@@ -70,6 +70,32 @@ class ForeignWorktreeTests(unittest.TestCase):
           message = vcs.foreign_worktree(sibling, repo.root)
           self.assertIsNotNone(message)
           self.assertIn(str(repo.root.resolve()), message)
+
+  def test_GitDirIsLinkedWorktreeGitdir_UnrelatedCode_NoWarning(self) -> None:
+    # In a linked worktree GIT_DIR names that worktree's own gitdir, not the repo's `.git`.
+    # Code from an unrelated repo is still not the trap.
+    with support.TempRepo(git=True) as repo, support.TempRepo(git=True) as other:
+      repo.write("README.md", "base\n")
+      repo.commit("base")  # `git worktree add` needs a commit
+      sibling = repo.root / "sib"
+      repo._git("worktree", "add", str(sibling), "-b", "sib")
+      gitdir = repo.root / ".git" / "worktrees" / "sib"
+      with patch.dict(os.environ, {"GIT_DIR": str(gitdir)}):
+        self.assertIsNone(vcs.foreign_worktree(sibling, other.root))
+
+  def test_GitDirIsLinkedWorktreeGitdir_SiblingTrap_Warns(self) -> None:
+    # Code in the main checkout, project in its linked worktree, GIT_DIR naming that
+    # worktree's gitdir: still the sibling-worktree trap.
+    with support.TempRepo(git=True) as repo:
+      repo.write("README.md", "base\n")
+      repo.commit("base")  # `git worktree add` needs a commit
+      sibling = repo.root / "sib"
+      repo._git("worktree", "add", str(sibling), "-b", "sib")
+      gitdir = repo.root / ".git" / "worktrees" / "sib"
+      with patch.dict(os.environ, {"GIT_DIR": str(gitdir)}):
+        message = vcs.foreign_worktree(sibling, repo.root)
+        self.assertIsNotNone(message)
+        self.assertIn(str(sibling.resolve()), message)
 
 
 class CodeMismatchWarningTests(unittest.TestCase):

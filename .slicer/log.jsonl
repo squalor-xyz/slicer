@@ -2387,3 +2387,7 @@
 {"when": "2026-10-30T14:03:01Z", "item": "s412", "action": "set", "from": "", "to": "", "note": "effort -→1"}
 {"when": "2026-10-30T14:03:01Z", "item": "s415", "action": "set", "from": "", "to": "", "note": "effort -→1"}
 {"when": "2026-10-30T14:03:01Z", "item": "s411", "action": "set", "from": "", "to": "", "note": "effort -→2"}
+{"when": "2026-10-30T14:11:02Z", "item": "s412", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T14:24:25Z", "item": "template.relay-brief.md", "action": "template", "from": "custom", "to": "custom", "note": ""}
+{"when": "2026-10-30T15:08:19Z", "item": "s412", "action": "note", "from": "", "to": "", "note": "Ready for review: relay texts rewrapped to 88 columns (word-", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:08:23Z", "item": "s412", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

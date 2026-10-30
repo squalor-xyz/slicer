@@ -15295,7 +15295,7 @@
       "id": "s412",
       "title": "Relay contract text follow-ups from v1.16",
       "short_title": "Relay contract text follow-ups from v1.16",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -15305,6 +15305,17 @@
           "text": "**2026-10-27** — From squalify relay log (2026-10-27): (1) the role matrix has no orchestrator row, so relay-roles recommend prints 'orchestrator (no matching row)' every time; add a row or say the outer session orchestrates when the harness cannot nest subagents. (2) A small fix round is re-checked by 'the reviewer'; allow whichever read-only role already holds the findings (in squalify, resuming the gate took 30-70 s against a 72 min reviewer). (3) Ask non-blocking owner questions as they arise (while the next role runs), so an answer after the finish step does not force set --status started, a fix round, a re-gate and done again. (4) A Check item that needs another slice landed first (e.g. a corpus run after a dependency merges) has no place: the finish step had to wait for land. (5) With parallel slices, gating once on the merged result (commit branch, merge main, combined fix round, one gate) beat gate-merge-regate.",
           "created_at": "2026-10-27T16:35:39Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": ""
+        },
+        {
+          "id": "2cb3eb55-4abb-4603-a91d-419ace356d9a",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: relay texts rewrapped to 88 columns (word-identical), run-report value rule built from relayrun separators (QUESTION_VALUE_RULE), built-in relay-brief Stop bullet no longer calls a blocker question a stop, conformance names no relay-run begin/end, vcs comment corrected. Full suite 2957 OK; gate PASS.",
+          "created_at": "2026-10-30T15:08:19Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -15330,7 +15341,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
