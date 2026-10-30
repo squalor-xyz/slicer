@@ -16081,10 +16081,25 @@
       "id": "s410",
       "title": "Test suite: TMPDIR inside a git repo and affected.py on fixture JSON",
       "short_title": "Test suite: TMPDIR inside a git repo and affected.py on fixture JSON",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "81cd7a01-fed3-462c-b0d6-35ebc5d87a83",
+          "kind": "",
+          "text": "**2026-10-30** — Ready for review: tests/affected.py routes a changed non-Python file under tests/ through reads and directory readers (a non-test Python file under tests/ still refuses); outside-git tests isolated with support.isolated_discovery, including the render-driver verify test that failed with TMPDIR inside a repo with a sibling worktree. Full suite 3006 OK (also in that failing setup); gate PASS.",
+          "created_at": "2026-10-30T17:33:45Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16104,7 +16119,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

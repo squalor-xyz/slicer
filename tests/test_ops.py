@@ -439,7 +439,7 @@ class OpsTests(unittest.TestCase):
           self.assertIn("not permitted", str(caught.exception))
 
   def test_Done_OutsideAGitRepo_StillMovesTheFile(self) -> None:
-    with self.repo(git=False) as repo:
+    with self.repo(git=False) as repo, support.isolated_discovery(repo.root):
       repo.run("done", "S02")
       self.assertTrue((repo.root / ".slicer/slices/done/S02.json").is_file())
 

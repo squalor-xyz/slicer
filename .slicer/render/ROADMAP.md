@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-418 items · — 31 · done 375 · retired 12
+418 items · — 30 · done 375 · retired 12 · review 1
 
 v1.17.0 release
 
@@ -40,7 +40,7 @@ v1.17.0 release
 | 5 | [s405](slices/s405.md) | Fallback on a vendor limit | S | 1 |  |  | done |
 | 6 | [s407](slices/s407.md) | Implementer self-check | S | 1 | ai |  | — |
 | 7 | [s408](slices/s408.md) | relay-run stats | M | 2 |  |  | — |
-| 8 | [s410](slices/s410.md) | Test suite: TMPDIR inside a git repo and affected.py on fixture JSON | S | 1 | tests |  | — |
+| 8 | [s410](slices/s410.md) | Test suite: TMPDIR inside a git repo and affected.py on fixture JSON | S | 1 | tests |  | review |
 | 9 | [s411](slices/s411.md) | Relay-run ledger follow-ups from v1.16 | S | 2 | relayrun |  | done |
 | 10 | [s412](slices/s412.md) | Relay contract text follow-ups from v1.16 | S | 1 | ai |  | done |
 | 11 | [s415](slices/s415.md) | Relay contract pin follow-ups | S | 1 | config | discovered from s387 | — |
