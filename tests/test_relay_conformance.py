@@ -16,7 +16,7 @@ from slicer import ai, cli, roles
 
 NEW_RELAY_KEYS = ["roles", "gate", "finding_kinds", "conformance"]
 NEW_ORCHESTRATOR_KEYS = ["gate", "finding_kinds", "conformance"]
-RELAY_KEYS = ["contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"]
+RELAY_KEYS = ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"]
 ORCHESTRATOR_KEYS = ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes"]
 OBLIGATIONS = [
   "role_order", "gate_rule", "finding_kinds", "stop_rules", "vendor_limit", "ledger",
@@ -182,14 +182,18 @@ class ConformanceJsonTests(RelayConformanceCase):
     self.assertEqual(self.payload("relay-orchestrator", "--lean"), payload)
 
   def test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsV9(self) -> None:
-    # The pin (s387) is built; check_command (s379) lands later.
-    for command in ("relay", "relay-orchestrator"):
-      with self.subTest(command=command):
-        payload = self.payload(command)
-        self.assertEqual(payload["contract"], "relay v10")
-        self.assertEqual(list(payload)[:2], ["contract", "pinned"])
-        self.assertIsNone(payload["pinned"])
-        self.assertNotIn("check_command", payload)
+    # The pin (s387) and check_command (s379) are built: `ai relay` carries both right
+    # after contract, and `ai relay-orchestrator` carries the pin only.
+    payload = self.payload("relay")
+    self.assertEqual(payload["contract"], "relay v10")
+    self.assertEqual(list(payload)[:3], ["contract", "pinned", "check_command"])
+    self.assertIsNone(payload["pinned"])
+    self.assertEqual(payload["check_command"], "")
+    orchestrator = self.payload("relay-orchestrator")
+    self.assertEqual(orchestrator["contract"], "relay v10")
+    self.assertEqual(list(orchestrator)[:2], ["contract", "pinned"])
+    self.assertIsNone(orchestrator["pinned"])
+    self.assertNotIn("check_command", orchestrator)
     self.assertEqual(ai.RELAY_CONTRACT, 10)
     self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 10)
 

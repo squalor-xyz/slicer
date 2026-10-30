@@ -947,6 +947,20 @@ class AiRelayTests(unittest.TestCase):
         ):
           self.assertIn(phrase, rule)
 
+  def test_AiRelay_Json_CarriesCheckCommand(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      self.assertEqual(repo.run("init")[0], 0)
+      self.assertEqual(json.loads(repo.run("ai", "relay", "--json")[1])["check_command"], "")
+      lean = json.loads(repo.run("ai", "relay", "--json", "--lean")[1])
+      self.assertEqual(lean["check_command"], "")
+      self.assertEqual(repo.run("config", "check_command", "make test")[0], 0)
+      self.assertEqual(json.loads(repo.run("ai", "relay", "--json")[1])["check_command"], "make test")
+      lean = json.loads(repo.run("ai", "relay", "--json", "--lean")[1])
+      self.assertEqual(lean["check_command"], "make test")
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      code, out, _ = repo.run("ai", "relay", "--json")
+      self.assertEqual((code, json.loads(out)["check_command"]), (0, ""))
+
   def test_AiRelay_Json_ContractFollowsContractLine(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       with patch.object(ai, "contract_line", return_value="relay v1099-test"):
@@ -2121,6 +2135,12 @@ class AiRelayBriefTests(unittest.TestCase):
     self.assertEqual(code, 0, out + err)
     return json.loads(out)
 
+  def test_AiRelayBrief_Json_CarriesCheckCommand(self):
+    repo = self.project()
+    self.assertEqual(self.payload(repo)["check_command"], "")
+    self.assertEqual(repo.run("config", "check_command", "make test")[0], 0)
+    self.assertEqual(self.payload(repo)["check_command"], "make test")
+
   def test_AiRelayBrief_Filled_ContainsIdentityAndRun(self):
     repo = self.project()
     text = self.payload(repo)["brief"]
@@ -2525,7 +2545,7 @@ class RelayApproveLandTests(unittest.TestCase):
       payload = json.loads(out)
       self.assertEqual(
         list(payload),
-        ["contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
+        ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
       "roles", "gate", "finding_kinds", "conformance"],
       )
       self.assertEqual(payload["land"], self.land_steps())

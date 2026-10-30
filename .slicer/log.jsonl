@@ -2399,3 +2399,6 @@
 {"when": "2026-10-30T15:09:37Z", "item": "s412", "action": "status", "from": "review", "to": "done", "note": "Relay contract text follow-ups: 88-column rewrap (word-identical), QUESTION_VALUE_RULE from relayrun separators, brief Stop bullet, conformance pin, vcs comment. Gate PASS; suite 2957 OK.", "by": "Jon Robbins"}
 {"when": "2026-10-30T15:10:16Z", "item": "s428", "action": "add", "from": "", "to": "open", "note": "Merge-index keeps a pre-schema-11 note edit clean after the retraction restamp"}
 {"when": "2026-10-30T15:18:52Z", "item": "s393", "action": "status", "from": "review", "to": "done", "note": "Note retraction: note-retract keeps text and records who/when/why (schema 11); retracted notes leave packs, never satisfy handoff_requires_note_kind, render [retracted], dim in TUI. Gate PASS; merged suite 2968 OK.", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:19:45Z", "item": "s379", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:59:49Z", "item": "s379", "action": "note", "from": "", "to": "", "note": "Ready for review: check_command config key (string, default ", "by": "Jon Robbins"}
+{"when": "2026-10-30T15:59:51Z", "item": "s379", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

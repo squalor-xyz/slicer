@@ -2136,7 +2136,7 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelay_Json_CarriesStructuredContract(self):
     repo = self.project()
     payload = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(list(payload), ["contract", "pinned", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
+    self.assertEqual(list(payload), ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
       "roles", "gate", "finding_kinds", "conformance"])
     setup = self.golden("relay").split("## Setup\n\n", 1)[1].split("Wait for", 1)[0]
     bullets = re.findall(r"(?m)^- (.*(?:\n  [^\n]+)*)", setup)

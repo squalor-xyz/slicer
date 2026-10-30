@@ -394,8 +394,8 @@ def _salvage_relay_pin(project: Path) -> int | None:
 
 def _ai_project(
   args: argparse.Namespace, *, strict: bool = False, relay: bool = False,
-) -> tuple[Path | None, str, str, int | None]:
-  """The project root, finish and report policy and relay pin when config and index load.
+) -> tuple[Path | None, str, str, int | None, str]:
+  """The project root, finish and report policy, relay pin and check command when config and index load.
 
   Read-only: no lock and no write. A miss warns and keeps the generic text, and the
   root comes back None. `strict` is for callers that write the text somewhere: a project
@@ -418,13 +418,14 @@ def _ai_project(
     pinned = _salvage_relay_pin(project) if relay and project is not None else None
     if ai.pin_mismatch(pinned) is None:  # else the caller refuses, and the guide is not printed
       print(f"{exc}; printing the generic guide", file=sys.stderr)
-    return None, "done", "", pinned
-  return project, cfg.implement_finish, cfg.handoff_requires_note_kind, cfg.relay_contract
+    return None, "done", "", pinned, ""
+  return (project, cfg.implement_finish, cfg.handoff_requires_note_kind, cfg.relay_contract,
+          cfg.check_command)
 
 
 def _ai_policy(args: argparse.Namespace, *, strict: bool = False) -> tuple[str, str]:
   """The finish and report policy that `_ai_project` reads, without the root."""
-  _project, finish, required, _pinned = _ai_project(args, strict=strict)
+  _project, finish, required, _pinned, _check = _ai_project(args, strict=strict)
   return finish, required
 
 
@@ -449,7 +450,7 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
     raise StateError("--force needs --init-roles", code="usage")
   if args.init_roles:
     return _init_roles(args)
-  project, finish, required, pinned = _ai_project(args, relay=True)
+  project, finish, required, pinned, check_command = _ai_project(args, relay=True)
   _require_relay_pin(pinned)
   roles = None
   if project is not None:
@@ -462,8 +463,9 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
       # The section sits under `## Roles matrix`, so its headings start one level down.
       roles = role_matrix.render_markdown(matrix, level=2)
   text = ai.relay_text(finish, required, roles=roles, in_project=project is not None)
-  _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "relay": text, **ai.relay_contract(finish)},
-        text.rstrip("\n"), keep_empty=("pinned",),
+  _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "check_command": check_command,
+               "relay": text, **ai.relay_contract(finish)},
+        text.rstrip("\n"), keep_empty=("pinned", "check_command"),
         keep_fields=("setup", "order", "report", "outcomes", "stop", "changes", "roles"))
   return OK
 
@@ -471,7 +473,7 @@ def cmd_ai_relay(args: argparse.Namespace) -> int:
 def cmd_ai_relay_orchestrator(args: argparse.Namespace) -> int:
   """Print the orchestrator's contract. Read-only, with the project's finish step and
   report kind the way `ai relay` reads them; outside a project it is the generic text."""
-  _project, finish, required, pinned = _ai_project(args, relay=True)
+  _project, finish, required, pinned, _check = _ai_project(args, relay=True)
   _require_relay_pin(pinned)
   text = ai.orchestrator_text(finish, required)
   _emit(args, {"contract": ai.contract_line(), "pinned": pinned, "orchestrator": text,

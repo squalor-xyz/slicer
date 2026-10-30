@@ -180,6 +180,9 @@ class Config:
   # Where `feedback-report` files issues, as OWNER/REPO. Empty means no default:
   # the command needs `--repo`, and nothing is inferred from a git remote.
   issues_repo: str = ""
+  # The shell command a scripted orchestrator runs before review. Stored and checked
+  # here; slicer never runs it. Empty means the project names none.
+  check_command: str = ""
   # Which queue cells the TUI shows after the status, and in what order. An empty
   # list shows none. The narrow-pane rule still drops claim and size.
   tui_columns: list[str] = field(default_factory=lambda: list(TUI_COLUMNS))
@@ -266,6 +269,8 @@ class Config:
         f"issues_repo {self.issues_repo!r} is not OWNER/REPO; use letters, digits, '.', '_' or '-' "
         "in each part, or leave it empty"
       )
+    if not isinstance(self.check_command, str):
+      raise ConfigError("check_command must be a string")
     if not isinstance(self.tui_columns, list) or any(
       not isinstance(name, str) for name in self.tui_columns
     ):
@@ -415,6 +420,7 @@ class Config:
       "claim_owner": self.claim_owner,
       "implement_finish": self.implement_finish,
       "issues_repo": self.issues_repo,
+      "check_command": self.check_command,
       "tui": {"columns": list(self.tui_columns)},
     }
 
@@ -498,6 +504,7 @@ class Config:
       implement_finish=_implement_finish(d),
       satisfies_dependencies=d.get("satisfies_dependencies"),
       issues_repo=d.get("issues_repo", ""),
+      check_command=d.get("check_command", ""),
       tui_columns=_tui_columns(d),
       relay_contract=d.get("relay_contract"),
     )
