@@ -15157,7 +15157,7 @@
       "id": "s393",
       "title": "Retract a note that turned out wrong",
       "short_title": "Note retraction",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
