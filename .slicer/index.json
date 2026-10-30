@@ -16697,6 +16697,20 @@
           "retracted_by": "",
           "retracted_at": "",
           "retracted_reason": ""
+        },
+        {
+          "id": "b0b4e541-9e82-4db0-bcf8-a4f1715a8ecb",
+          "kind": "",
+          "text": "**2026-10-30** — From s391 review (2026-10-30): the built-in relay-brief.md Rules could carry a no-cd bullet beside s419's no-background bullet ('You and every role use absolute paths and git -C and never cd.'); s391 put the rule in Every brief only. Haiku implementers typed cd in three v1.17 slices despite briefs forbidding it.",
+          "created_at": "2026-10-30T16:53:49Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,

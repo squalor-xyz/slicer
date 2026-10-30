@@ -2428,3 +2428,4 @@
 {"when": "2026-10-30T16:18:07Z", "item": "s431", "action": "add", "from": "", "to": "open", "note": "This repo's relay-brief override carries the built-in Rules bullets"}
 {"when": "2026-10-30T16:28:00Z", "item": "s419", "action": "status", "from": "review", "to": "done", "note": "Built-in relay-brief.md Rules state the no-background-shell rule for the orchestrator and every role. Gate PASS; merged suite 2997 OK. Repo override sync filed as s431.", "by": "Jon Robbins"}
 {"when": "2026-10-30T16:38:06Z", "item": "s423", "action": "status", "from": "review", "to": "done", "note": "relay-run end --close-steps fail --reason TEXT records the reason on each closed step; refused otherwise with bad_run_field before the lock. Gate PASS; merged suite green.", "by": "Jon Robbins"}
+{"when": "2026-10-30T16:53:49Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s391 review (2026-10-30): the built-in relay-brief.md R", "by": "Jon Robbins"}
