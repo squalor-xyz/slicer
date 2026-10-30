@@ -16331,7 +16331,7 @@
       "id": "s415",
       "title": "Relay contract pin follow-ups",
       "short_title": "Relay contract pin follow-ups",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
