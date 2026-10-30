@@ -975,12 +975,12 @@ class AiRelayTests(unittest.TestCase):
 
   def test_AiRelay_Json_ContractFollowsContractLine(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
-      with patch.object(ai, "contract_line", return_value="relay v1099-test"):
+      with patch.object(ai, "contract_line", return_value="relay v1199-test"):
         for command in ("relay", "relay-orchestrator"):
           with self.subTest(command=command):
             code, out, _ = repo.run("ai", command, "--json")
             self.assertEqual(code, 0)
-            self.assertEqual(json.loads(out)["contract"], "relay v1099-test")
+            self.assertEqual(json.loads(out)["contract"], "relay v1199-test")
 
   def test_AiRelayOrchestrator_FailedReview_NoReject(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -1139,11 +1139,18 @@ class AiRelayTests(unittest.TestCase):
         for phrase in (
           "An `owner` finding that is not a `blocker` does not stop the relay",
           "goes in the report as a numbered owner-needed question",
-          "A `blocker` owner finding stops the relay: ask it as Owner questions says",
-          "return the report with OUTCOME stopped only when you cannot wait for the answer",
         ):
           self.assertIn(phrase, rule)
         self.assertNotIn('goes under "Owner needed"', rule)
+        # The blocker wait is stated once, in Owner questions, and is not a stop.
+        self.assertNotIn("blocker` owner finding stops", rule)
+        questions = self.rule(finish, "Owner questions")
+        self.assertIn(
+          "A `blocker` is not a stop: wait for the answer as above, and return OUTCOME stopped "
+          "only when you cannot wait for it (the harness cannot resume you, or the "
+          "`relay-run ask` fails).",
+          questions,
+        )
 
   def test_RunReport_OwnerNeeded_NumberedQuestionWithS396Fields(self) -> None:
     template = next(
@@ -1185,17 +1192,22 @@ class AiRelayTests(unittest.TestCase):
         ):
           self.assertIn(phrase, flat)
 
-  def test_RelayStop_OwnerDecision_NamesBlockerInJsonAndText(self) -> None:
-    phrase = "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)"
+  def test_RelayStop_OwnerDecision_IsNotAStopConditionInJsonOrText(self) -> None:
+    phrase = "an owner decision marked `blocker` is needed"
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command, part="json"):
-        self.assertIn(phrase, ai.relay_contract(orchestrator=command == "relay-orchestrator")["stop"])
+        stop = ai.relay_contract(orchestrator=command == "relay-orchestrator")["stop"]
+        self.assertNotIn(phrase, json.dumps(stop))
     for label, text in (("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text())):
       with self.subTest(command=label, part="text"):
         stop = " ".join(text.split("## Stop\n\n", 1)[1].split("\n## ", 1)[0].split())
-        self.assertIn(phrase, stop)
+        self.assertNotIn(phrase, stop)
         self.assertNotIn("or an owner decision is needed", stop)
-    self.assertEqual(len(ai.RELAY_STOP), 3)
+        self.assertTrue(stop.startswith(
+          "Stop when the same slice fails its gate three times, the spec turns out ambiguous or "
+          "wrong, a harness permission check denies a role's slicer step, or a role's round ends "
+          "in a vendor limit or an error exit and no eligible row is left to rerun it on"))
+    self.assertEqual(len(ai.RELAY_STOP), 4)
     rule = self.rule("done", "Stop and return without asking the owner")
     self.assertNotIn("or an owner decision marked `blocker` is needed", rule)
 
@@ -1203,7 +1215,7 @@ class AiRelayTests(unittest.TestCase):
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         self.assertIn(
-          "no new `fix` finding of medium severity or worse, no `blocker` owner finding, tests green",
+          "no `fix` finding, no `blocker` owner finding, tests green",
           flat,
         )
         self.assertNotIn("no new issue of medium severity", flat)
@@ -1274,21 +1286,18 @@ class AiRelayTests(unittest.TestCase):
   def test_RelayOrder_OwnerAnswerMidRun_NoteInWorktreeAndResumedRoleBrief(self) -> None:
     step3 = next(step["text"] for step in ai.relay_contract()["order"] if step["step"] == 3)
     self.assertIn(
-      "An owner answer given while the run waits goes in a note on the item in the worktree "
-      "and in the resumed role's brief, not in the slice on main.",
+      "An owner answer given while the run waits goes in a note on the item in the worktree, "
+      '`slicer note ID --text "Owner answer: ..." --render`, and in the resumed role\'s brief, '
+      "not in the slice on main.",
       step3,
     )
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
-        for phrase in (
-          "Owner answers: an answer the owner gives after the worktree exists never reaches it "
-          "through the slice on main.",
-          "The outer session records it against the slice worktree with "
-          '`slicer note ID --text "Owner answer: ..." --render`, then resumes the orchestrator '
-          "with the answer pasted in, and the orchestrator carries it into the resumed role's brief.",
-        ):
-          self.assertIn(phrase, order)
+        # The routing is stated once, in step 3; the paragraph points to it.
+        self.assertIn("Owner answers: Order step 3 says where an owner answer goes.", order)
+        self.assertNotIn("never reaches it through the slice on main", order)
+        self.assertNotIn("The outer session records it against the slice worktree", order)
 
   def test_RelayOrder_OrchestratorBrief_NamesOwnerDecisionsAndAnswersSince(self) -> None:
     phrase = "the slice's `Owner decisions` paragraph and any owner answer since"
@@ -1362,8 +1371,8 @@ class AiRelayTests(unittest.TestCase):
         self.assertEqual(flat.lower().count("re-anchor"), expected)
 
   def test_RelaySpecCheck_Text_NamesNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 10)
+    self.assertEqual(ai.RELAY_CONTRACT, 11)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 11)
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         for token in ("ork", "adj", "s116", "s115", "roles.spec-check"):
@@ -1421,7 +1430,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
       self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
-                       {"contract": "relay v10", "relay": text})
+                       {"contract": "relay v11", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -1468,7 +1477,7 @@ class AiRelayTests(unittest.TestCase):
       "architect",
       "writes no product code",
       "read-only",
-      "A reviewer never wrote code in this slice.",
+      "The reviewer's and the gate's independence is the rule in Stop.",
       "The owner chooses the models.",
       "worktree",
       "slicer start ID --render --strict",
@@ -1477,7 +1486,7 @@ class AiRelayTests(unittest.TestCase):
       "mutation-checks",
       "VERDICT: PASS",
       "VERDICT: FAIL",
-      "medium severity",
+      "no `fix` finding",
       "proving test",
       "docs matching the code",
       "diff stat",
@@ -1486,11 +1495,11 @@ class AiRelayTests(unittest.TestCase):
       "slicer list --json --lean",
       "three times",
       "ambiguous",
-      "owner decision",
+      "permission check denies",
       ai.TRACKING_RULE,
     ):
       with self.subTest(phrase=phrase):
-        self.assertIn(phrase, text)
+        self.assertIn(phrase, " ".join(text.split()))
     self.assertLess(text.index("## Roles"), text.index("## Order"))
     self.assertLess(text.index("## Order"), text.index("## Gate"))
     self.assertLess(text.index("## Gate"), text.index("## Every brief"))
@@ -1703,7 +1712,7 @@ class AiRelayTests(unittest.TestCase):
       "runs `slicer start ID --render --strict`, the note and the finish step",
       "Part implementers change only their own files",
       "run no slicer command that writes",
-      "A reviewer never wrote code in this slice. In a split, that holds for every part.",
+      "The reviewer's and the gate's independence is the rule in Stop.",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, roles_section)
@@ -2034,9 +2043,10 @@ class AiRelayOrchestratorSessionTests(unittest.TestCase):
   def test_AiRelay_Roles_PointsToSessionVariant(self) -> None:
     text = " ".join(ai.relay_text().split())
     self.assertIn(
-      "Where the agent cannot nest subagents, the outer session is also the orchestrator: it "
-      "follows `slicer ai relay-orchestrator --session` itself and compacts or starts a fresh "
-      "session between slices.",
+      "The owner may choose the session variant at Setup, and an agent that cannot nest "
+      "subagents has no other choice: the outer session is also the orchestrator and follows "
+      "`slicer ai relay-orchestrator --session` itself, compacting or starting a fresh session "
+      "between slices.",
       text,
     )
 
@@ -2056,11 +2066,12 @@ class AiRelayOrchestratorSessionTests(unittest.TestCase):
         for phrase in (
           "except Approve and Land (Order step 5), which run on main as `slicer ai relay`'s "
           "Land section says",
-          "you are that outer session: wait for the owner in this session, record answers "
+          "you are that outer session: wait for the owner in this session and record answers "
           "yourself",
-          "on your own vendor limit the owner restarts the session on the next row",
         ):
           self.assertIn(phrase, rules)
+        # The limit fallback is variant-neutral in Stop, so the session needs no sentence of its own.
+        self.assertNotIn("restarts the session on the next row", rules)
     self.assertNotIn("you are that outer session", self.rules(ai.orchestrator_text("done")))
 
   def test_RelayContract_SessionWithoutOrchestrator_RaisesValueError(self) -> None:
@@ -2440,7 +2451,10 @@ class AiRelayBriefTests(unittest.TestCase):
   def test_AiRelayBrief_BuiltInTemplate_StopNamesNoOwnerDecision(self):
     template = " ".join(templates.default("relay-brief.md").split())
     stop = template.split("- Stop and report", 1)[1].split("- Hand back", 1)[0]
-    self.assertIn("(repeated gate failures or a wrong specification) instead of guessing.", stop)
+    self.assertIn(
+      "(repeated gate failures, a wrong specification, a permission denial or no eligible "
+      "row) instead of guessing.", stop,
+    )
     self.assertNotIn("owner decision", stop)
     self.assertIn(
       "A `blocker` owner question is not a stop: ask it and wait as the Owner questions rule says.",
@@ -2478,8 +2492,8 @@ class AiRelayBriefTests(unittest.TestCase):
 
   def test_AiRelayBrief_Contract_UsesLiveMarker(self):
     repo = self.project()
-    with patch.object(ai, "contract_line", return_value="relay v1099-test"):
-      self.assertEqual(self.payload(repo)["contract"], "relay v1099-test")
+    with patch.object(ai, "contract_line", return_value="relay v1199-test"):
+      self.assertEqual(self.payload(repo)["contract"], "relay v1199-test")
 
 
 class RelayGoldenTests(unittest.TestCase):
@@ -2487,7 +2501,7 @@ class RelayGoldenTests(unittest.TestCase):
 
   def check_golden(self, command, *flags):
     key = "-".join((command, *(flag.lstrip("-") for flag in flags)))
-    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v10.json").read_text())
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v11.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
         with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:
@@ -2831,11 +2845,11 @@ class RelayApproveLandTests(unittest.TestCase):
         parser.parse_args(shlex.split(command.strip("`"))[1:])
 
   def test_RelayContract_ApproveAndLand_NameNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
+    self.assertEqual(ai.RELAY_CONTRACT, 11)
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         flat = " ".join(ai.relay_text(finish).split())
-        self.assertTrue(flat.startswith("Contract: relay v10"))
+        self.assertTrue(flat.startswith("Contract: relay v11"))
         for token in ("ork", "adj", "s118", "s119", "landing.in-ork"):
           self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
         if finish == "handoff":
@@ -2978,17 +2992,18 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
       with self.subTest(finish=finish):
         rule = self.rule(finish, "Stop and return without asking the owner")
         for phrase in (
-          "A `blocker` owner finding stops the relay: ask it as Owner questions says",
-          "return the report with OUTCOME stopped only when you cannot wait for the answer",
+          "A `blocker` is not a stop: wait for the answer as above, and return OUTCOME stopped "
+          "only when you cannot wait for it",
         ):
-          self.assertIn(phrase, rule)
+          self.assertIn(phrase, self.rule(finish, "Owner questions"))
         self.assertTrue(
           rule.startswith(
-            "Stop and return without asking the owner when the same slice fails its gate three "
-            "times or the spec is ambiguous or wrong. An `owner` finding"
+            "Stop and return without asking the owner when a stop condition in Stop holds, with "
+            "OUTCOME stopped. An `owner` finding"
           ),
           rule,
         )
+        self.assertNotIn("blocker` owner finding stops", rule)
         self.assertNotIn("an owner decision marked `blocker` is needed", rule)
 
   def test_OrchestratorRules_Waiting_NamesTheOwnerHandBack(self) -> None:
@@ -3019,7 +3034,7 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
       "If the question is already answered (a dashboard recorded it), read it with " + self.GET
       + " and resume the orchestrator with it.",
       "which ends the step's owner wait",
-      "then record the note in the worktree and resume the orchestrator with the answer pasted in",
+      "then record the note as above and resume the orchestrator with the answer pasted in",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, step)
@@ -3035,27 +3050,30 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         order = " ".join(ai.relay_text(finish).split("## Order", 1)[1].split("\n## ", 1)[0].split())
-        self.assertIn(
-          "When the orchestrator waits on a question of its own (`waiting on: owner QUESTION_ID`), "
-          "the outer session also records the answer in the ledger with " + self.ANSWER,
-          order,
-        )
+        # The ledger answer is recorded by step 3, once; the paragraph does not repeat it.
+        self.assertNotIn("the outer session also records the answer in the ledger", order)
+        self.assertEqual(order.count(self.ANSWER), 1)
+        step3 = " ".join(next(
+          step["text"] for step in ai.relay_contract(finish)["order"] if step["step"] == 3
+        ).split())
+        self.assertIn(self.ANSWER, step3)
 
-  def test_RelayConformance_StopRules_NameTheAskWaitResumeException(self) -> None:
+  def test_RelayConformance_BlockerWait_NamesTheAskWaitResumeObligation(self) -> None:
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command):
-        item = next(
-          item["text"] for item in ai.relay_contract(orchestrator=command != "relay")["conformance"]
-          if item["key"] == "stop_rules"
-        )
+        items = {
+          item["key"]: item["text"]
+          for item in ai.relay_contract(orchestrator=command != "relay")["conformance"]
+        }
+        self.assertIn("do not ask the owner", items["stop_rules"])
+        self.assertNotIn("exception", items["stop_rules"])
         for phrase in (
-          "do not ask the owner",
-          "A `blocker` owner question that can wait for its answer is the exception",
+          "Wait for the answer to a `blocker` owner question instead of stopping",
           "record it with `relay-run ask`",
-          "end the turn with `waiting on: owner QUESTION_ID`",
-          "go on only from the answer the outer session records and resumes you with",
+          "ends its turn with `waiting on: owner QUESTION_ID`",
+          "goes on only from the answer the outer session records and resumes it with",
         ):
-          self.assertIn(phrase, item)
+          self.assertIn(phrase, items["blocker_wait"])
 
   def test_RelayContract_Commands_AreNamedInFullAndAcceptedByTheParser(self) -> None:
     parser = cli._cached_parser()
@@ -3075,13 +3093,300 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           parser.parse_args(argv)
           self.assertEqual(cli._unknown_flags(parser, argv), [])
 
-  def test_RelayContract_Bundle_IsV10WithItsChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10])
-    self.assertEqual(ai.contract_line(), "relay v10")
+  def test_RelayContract_Bundle_IsV11WithItsChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 11)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11])
+    self.assertEqual(ai.contract_line(), "relay v11")
 
   def test_RelayContract_OwnerQuestion_NamesNoProject(self) -> None:
     for text in (ai.relay_text(), ai.orchestrator_text()):
       flat = " ".join(text.split()).casefold()
       for token in ("ork", "adj 165"):
         self.assertNotRegex(flat, r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
+
+
+class RelayV11Tests(unittest.TestCase):
+  """The v11 contract (s424): one set of rules with each rule stated once, keyed stop rules,
+  a gate role, no severity scale, a fallback that covers an error exit, no agent type."""
+
+  def texts(self):
+    """Every contract text in each finish mode, as (label, flattened text)."""
+    for finish in ("done", "handoff"):
+      yield f"relay-{finish}", " ".join(ai.relay_text(finish).split())
+      yield f"orchestrator-{finish}", " ".join(ai.orchestrator_text(finish).split())
+      yield f"session-{finish}", " ".join(ai.orchestrator_text(finish, session=True).split())
+
+  def raw_texts(self):
+    for finish in ("done", "handoff"):
+      yield f"relay-{finish}", ai.relay_text(finish)
+      yield f"orchestrator-{finish}", ai.orchestrator_text(finish)
+      yield f"session-{finish}", ai.orchestrator_text(finish, session=True)
+
+  def payload(self, command: str, *extra: str) -> dict:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      self.assertEqual(repo.run("init")[0], 0)
+      code, out, err = repo.run("ai", command, "--json", *extra)
+      self.assertEqual((code, err), (0, ""), out)
+      return json.loads(out)
+
+  def section(self, text: str, heading: str) -> str:
+    return text.split(f"\n## {heading}\n\n", 1)[1].split("\n## ", 1)[0]
+
+  def test_AiRelay_Json_StopHasKeysAndNoBlockerWait(self) -> None:
+    for command, extra in (("relay", ()), ("relay-orchestrator", ()), ("relay-orchestrator", ("--session",))):
+      with self.subTest(command=command, extra=extra):
+        stop = self.payload(command, *extra)["stop"]
+        self.assertEqual(
+          [item["key"] for item in stop],
+          ["gate_fail_3", "spec_wrong", "permission_denied", "no_eligible_row"],
+        )
+        for item in stop:
+          self.assertEqual(list(item), ["key", "text"])
+          self.assertEqual(item["text"], " ".join(item["text"].split()))
+          self.assertNotIn("blocker", item["text"])
+          self.assertNotIn("owner decision", item["text"])
+          self.assertNotIn("relay-run ask", item["text"])
+    for label, flat in self.texts():
+      with self.subTest(label=label):
+        self.assertNotIn("an owner decision marked `blocker` is needed", flat)
+
+  def test_AiRelay_Json_RolesCarryGate(self) -> None:
+    roles_json = self.payload("relay")["roles"]
+    gate = [item for item in roles_json if item["role"] == "gate"]
+    self.assertEqual(len(gate), 1)
+    self.assertEqual(gate[0]["ledger_role"], "gate")
+    self.assertEqual(list(gate[0]), ["role", "text", "ledger_role"])
+    self.assertIn("gate", [role for role in roles.LEDGER_ROLE_NAMES])
+    # The gate's paragraph is in the Roles section, in the order the JSON lists it.
+    prose = " ".join(self.section(ai.relay_text(), "Roles").split())
+    self.assertIn(gate[0]["text"], prose)
+    self.assertEqual(self.payload("relay", "--lean")["roles"], roles_json)
+
+  def test_AiRelay_Text_StatesEachRuleOnce(self) -> None:
+    for label, flat in self.texts():
+      with self.subTest(label=label):
+        # The foreground rule for a role's own shell commands lives in Every brief only.
+        self.assertEqual(flat.count("backgrounds none"), 1, "shell commands in the foreground")
+        self.assertEqual(flat.count("long commands such as the full suite"), 1, "long commands")
+        # Owner-answer routing: the ledger command and the note command each appear once.
+        self.assertEqual(
+          flat.count("`slicer relay-run answer RUN QUESTION_ID --option LABEL"), 1, "ledger answer",
+        )
+        if not label.startswith("orchestrator"):
+          self.assertEqual(flat.count('"Owner answer: ..."'), 1, "owner answer note")
+        # The final report is sent once, said once.
+        self.assertEqual(flat.count("Send it once"), 1, "report once")
+        self.assertNotIn("Send the final run report once", flat)
+        # Reviewer independence is stated once; the matrix rule is the other statement.
+        self.assertEqual(flat.count("wrote code"), 1, "reviewer independence")
+
+  def test_AiRelay_Text_WaitingRuleIsAShortList(self) -> None:
+    for finish in ("done", "handoff"):
+      for session in (False, True):
+        with self.subTest(finish=finish, session=session):
+          rules = ai.orchestrator_text(finish, session=session).split("## Rules\n\n", 1)[1]
+          rules = rules.split("\n## ", 1)[0]
+          waiting = next(b for b in rules.split("\n- ") if b.lstrip("- ").startswith("Waiting"))
+          items = [line for line in waiting.splitlines() if line.startswith("  - ")]
+          # The one-slice rule has five points after its lead (background-only harness, the
+          # interim hand-back, `waiting on:`, a role that reports early, the run report); the
+          # session has no hand-back, so it has three.
+          self.assertEqual(len(items), 3 if session else 5)
+          for line in waiting.splitlines():
+            self.assertLessEqual(len(line), 88)
+          # No sentence of the old paragraph repeats a rule that Every brief or Conformance owns.
+          self.assertNotIn("backgrounds none", waiting)
+          self.assertNotIn("Every role brief says", waiting)
+
+  def test_AiRelay_Gate_EveryFixFindingBlocks(self) -> None:
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        criteria = self.payload(command)["gate"]["criteria"]
+        self.assertIn("no `fix` finding", criteria)
+        self.assertNotIn("severity", " ".join(criteria))
+    for label, flat in self.texts():
+      with self.subTest(label=label):
+        self.assertNotIn("severity", flat)
+        self.assertNotIn("medium", flat)
+        self.assertIn("A `fix` finding fails the gate: tag a minor item `later` instead.", flat)
+
+  def test_AiRelay_Fallback_CoversErrorExit(self) -> None:
+    for label, raw in self.raw_texts():
+      with self.subTest(label=label):
+        stop = " ".join(self.section(raw, "Stop").split())
+        for phrase in (
+          "A role's round that ends in a rate limit, out of credits or an error exit of the "
+          "agent process",
+          "A gate FAIL, a wrong spec or a permission denial is not an error exit",
+          "on a rate limit or an error exit take the plain next matching row",
+          "on out of credits skip later rows on the same vendor",
+          "With no eligible row left (a project with no role matrix has none), or on any other "
+          "failure, stop.",
+        ):
+          self.assertIn(phrase, stop)
+        self.assertIn("or on any other failure, stop.", stop)
+        conformance = " ".join(self.section(raw, "Conformance").split())
+        self.assertIn("or an error exit of the agent process", conformance)
+        self.assertIn(
+          "With no eligible row left, or on any other failure, stop as Stop says.", conformance,
+        )
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        keys = [item["key"] for item in self.payload(command)["conformance"]]
+        self.assertIn("role_fallback", keys)
+        self.assertNotIn("vendor_limit", keys)
+        stop = {item["key"]: item["text"] for item in self.payload(command)["stop"]}
+        self.assertIn("error exit", stop["no_eligible_row"])
+        self.assertIn("no role matrix", stop["no_eligible_row"])
+
+  def test_AiRelay_Text_NoAgentTypeOrAgentsRepo(self) -> None:
+    for label, flat in self.texts():
+      with self.subTest(label=label):
+        self.assertNotIn("agent type", flat)
+        self.assertNotIn("Expects", flat)
+        self.assertNotIn("agents repo", flat)
+        self.assertNotIn("where the harness has one", flat)
+    setup = " ".join(self.section(ai.relay_text(), "Setup").split())
+    self.assertIn("runs as a general-purpose agent briefed with `slicer ai relay-orchestrator`", setup)
+    source = Path(ai.__file__).read_text()
+    self.assertNotIn("Expects:", source)
+    self.assertNotIn("agents repo", source)
+
+  def test_AiRelay_Contract_IsV11WithChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 11)
+    for label, text in (
+      ("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text()),
+      ("session", ai.orchestrator_text(session=True)),
+    ):
+      with self.subTest(label=label):
+        self.assertTrue(text.startswith("Contract: relay v11\n"))
+    version, entry = ai.RELAY_CHANGES[-1]
+    self.assertEqual(version, 11)
+    self.assertEqual([v for v, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11])
+    self.assertNotIn("\n", entry)
+    for phrase in (
+      "the read-only ones included, uses absolute paths and `git -C` and never `cd`",
+      "the orchestrator resumes a headless role in the slice worktree",
+      "the implementer checks its own diff",
+      "gate round is closed with `--verdict pass` or `--verdict fail`",
+      "`slicer ai relay-orchestrator --session`",
+      "small fix round is checked and gated in one pass by the read-only role that raised its findings",
+      "a non-blocker owner question is asked in the ledger as it arises",
+      "`[AFTER LAND]`",
+      "clean merge of main is regated by the one-pass small-fix check",
+      "the session variant takes the same non-blocker question rule",
+      "a heartbeat on a waiting step ends its wait",
+      "`blocker` owner question is a wait, not a stop",
+      "`fix` finding fails the gate",
+      "error exit of the agent process falls back like a vendor limit",
+      "`roles` carries the gate",
+      "`stop` rules carry keys",
+      "orchestrator always runs as a general-purpose agent",
+      "the owner may choose the session variant at Setup",
+      "an unmatched orchestrator means the outer session orchestrates",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, entry)
+    payload = self.payload("relay")
+    self.assertEqual(payload["contract"], "relay v11")
+    self.assertEqual(payload["changes"][-1], {"version": 11, "text": entry})
+
+  def test_AiRelayOrchestratorSession_NonBlockerQuestion_AskedInTheLedgerAndReadBeforeFinish(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        rules = ai.orchestrator_text(finish, session=True).split("## Rules\n\n", 1)[1].split("\n## ", 1)[0]
+        bullet = next(b for b in rules.split("\n- ") if b.lstrip("- ").startswith("Owner questions"))
+        rule = " ".join(bullet.split())
+        for phrase in (
+          "put each owner question to the owner in this session",
+          "Ask an owner question that does not block in the ledger too, as soon as it arises, "
+          "with the same command without `--blocker`.",
+          "It records the question and leaves your step running: put it to the owner and go on "
+          "without waiting.",
+          "Before the closing note and the finish step, read each with "
+          "`slicer relay-run answer RUN QUESTION_ID --get`;",
+          "an answer that changes the slice goes to the implementer as a fix round first.",
+          "A question still open then goes on the report's owner-needed line.",
+        ):
+          self.assertIn(phrase, rule)
+
+  def test_AiRelayOrchestrator_BlockerIsAWaitNotAStop_InEachVariant(self) -> None:
+    for session in (False, True):
+      with self.subTest(session=session):
+        rules = ai.orchestrator_text(session=session).split("## Rules\n\n", 1)[1].split("\n## ", 1)[0]
+        flat = " ".join(rules.split())
+        self.assertIn("A `blocker` is not a stop: wait for the answer", flat)
+        self.assertEqual(flat.count("A `blocker` owner finding stops the relay"), 0)
+        stop = next(b for b in rules.split("\n- ") if b.lstrip("- ").startswith("Stop"))
+        self.assertNotIn("blocker` owner finding stops", " ".join(stop.split()))
+        self.assertIn("a stop condition in Stop holds", " ".join(stop.split()))
+
+  def test_AiRelayConformance_StopAndBlockerWait_AreTwoObligationsForBothVariants(self) -> None:
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        items = {item["key"]: item["text"] for item in self.payload(command)["conformance"]}
+        keys = list(items)
+        self.assertEqual(keys.index("blocker_wait"), keys.index("stop_rules") + 1)
+        self.assertNotIn("do not ask the owner", items["blocker_wait"])
+        self.assertIn("Stop when a stop condition in Stop holds", items["stop_rules"])
+        self.assertNotIn("relay-run ask", items["stop_rules"])
+        for phrase in (
+          "Wait for the answer to a `blocker` owner question instead of stopping",
+          "record it with `relay-run ask`",
+          "An orchestrator an outer session spawned ends its turn with "
+          "`waiting on: owner QUESTION_ID` and goes on only from the answer the outer session "
+          "records and resumes it with",
+          "a session that orchestrates itself waits for the owner in its own session",
+          "Stop with OUTCOME stopped only when the answer cannot be waited for",
+        ):
+          self.assertIn(phrase, items["blocker_wait"])
+
+  def test_AiRelayOrchestratorSession_VendorLimitNeedsNoOverrideSentence(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        session = ai.orchestrator_text(finish, session=True)
+        rules = session.split("## Rules\n\n", 1)[1].split("\n## ", 1)[0]
+        work = next(b for b in rules.split("\n- ") if b.lstrip("- ").startswith("Work only"))
+        self.assertNotIn("vendor limit", " ".join(work.split()))
+        self.assertNotIn("the owner restarts the session on the next row", " ".join(rules.split()))
+        for text in (session, ai.orchestrator_text(finish), ai.relay_text(finish)):
+          stop = " ".join(self.section(text, "Stop").split())
+          self.assertIn(
+            "When the orchestrator's own round ends in a vendor limit or an error exit, the "
+            "next matching row takes over from the ledger and the worktree: the outer session "
+            "starts a new orchestrator on it, or the owner restarts the session when the "
+            "session orchestrates itself.",
+            stop,
+          )
+          # "that way" would follow the catch-all stop and read as including any other failure.
+          self.assertNotIn("ends that way", stop)
+
+  def test_AiRelay_Setup_OrchestratorBulletNamesTheSessionChoiceAndTheUnmatchedCase(self) -> None:
+    items = {item["key"]: item["text"] for item in ai.relay_contract()["setup"]}
+    text = items["orchestrator"]
+    for phrase in (
+      "the outer session itself (the session variant, `slicer ai relay-orchestrator --session`)",
+      "The owner may choose the session variant, also where nesting works",
+      "an orchestrator that no matrix row matches, or a project with no matrix, means the outer "
+      "session orchestrates",
+      "A spawned orchestrator runs as a general-purpose agent briefed with "
+      "`slicer ai relay-orchestrator`",
+    ):
+      self.assertIn(phrase, text)
+    roles_text = " ".join(self.section(ai.relay_text(), "Roles").split())
+    self.assertIn(
+      "The owner may choose the session variant at Setup, and an agent that cannot nest "
+      "subagents has no other choice: the outer session is also the orchestrator and follows "
+      "`slicer ai relay-orchestrator --session` itself, compacting or starting a fresh session "
+      "between slices.",
+      roles_text,
+    )
+
+  def test_AiRelayBrief_BuiltInRules_HaveANoCdBullet(self) -> None:
+    template = " ".join(templates.default("relay-brief.md").split())
+    rules = template.split("## Rules", 1)[1]
+    self.assertIn("You and every role use absolute paths and `git -C` and never `cd`.", rules)
+    self.assertLess(
+      rules.index("run their own shell commands in the foreground and background none"),
+      rules.index("never `cd`"),
+    )

@@ -19,10 +19,12 @@ NEW_ORCHESTRATOR_KEYS = ["gate", "finding_kinds", "conformance"]
 RELAY_KEYS = ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"]
 ORCHESTRATOR_KEYS = ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes"]
 OBLIGATIONS = [
-  "role_order", "gate_rule", "finding_kinds", "stop_rules", "vendor_limit", "ledger",
+  "role_order", "gate_rule", "finding_kinds", "stop_rules", "blocker_wait", "role_fallback", "ledger",
   "finish_after_pass", "run_report", "worktree_scope", "commit_scope",
 ]
-ROLE_KEYS = ["outer_session", "orchestrator", "implementer", "reviewer", "architect", "ui_pass", "spec_check"]
+ROLE_KEYS = [
+  "outer_session", "orchestrator", "implementer", "reviewer", "architect", "ui_pass", "gate", "spec_check",
+]
 
 
 def flat(text: str) -> str:
@@ -81,7 +83,8 @@ class ConformanceSectionTests(RelayConformanceCase):
         for needle, item in zip(
           ("Run the roles in Order's sequence", "Decide the gate on the criteria in Gate",
            "Tag every reviewer, UI pass and gate finding", "Stop when a stop condition in Stop holds",
-           "On a classified vendor limit",
+           "Wait for the answer to a `blocker` owner question",
+           "When a role's round ends in a vendor limit",
            "Record each role's round in the run ledger", "Run the closing note and the finish step only after",
            "Return one run report", "Work only in the worktree the brief names",
            "Commit on the slice branch only when the brief allows it"),
@@ -98,8 +101,8 @@ class ConformanceSectionTests(RelayConformanceCase):
       with self.subTest(label=label):
         items = {key: item for key, item in zip(OBLIGATIONS, bullets(section(text, "Conformance")))}
         for phrase in (
-          "when a harness permission check denies a role's slicer step",
-          "stop before the commit, with the denial's exact text as a `blocker` owner-needed question",
+          "A permission denial stops before the commit, with the denial's exact text as a "
+          "`blocker` owner-needed question.",
           "with OUTCOME stopped",
         ):
           self.assertIn(phrase, items["stop_rules"])
@@ -109,10 +112,11 @@ class ConformanceSectionTests(RelayConformanceCase):
           item["text"] for item in ai.relay_contract(orchestrator=command != "relay")["conformance"]
           if item["key"] == "stop_rules"
         )
-        self.assertIn("permission check denies a role's slicer step", stop_rules)
-        # The three stop conditions stay the three in `stop`; the denial is not a fourth.
-        self.assertEqual(len(ai.relay_contract()["stop"]), 3)
-        self.assertEqual(len(ai.RELAY_STOP), 3)
+        self.assertIn("A permission denial stops before the commit", stop_rules)
+        # The denial is one of the keyed stop conditions Conformance points to, not restated.
+        keys = [item["key"] for item in ai.relay_contract()["stop"]]
+        self.assertIn("permission_denied", keys)
+        self.assertEqual(len(ai.RELAY_STOP), 4)
 
   def test_RelayConformance_ScopeRules_NameWorktreeCommitAndFinalReportOnce(self) -> None:
     for label, text in self.texts():
@@ -182,21 +186,21 @@ class ConformanceJsonTests(RelayConformanceCase):
     self.assertNotIn("roles", payload)
     self.assertEqual(self.payload("relay-orchestrator", "--lean"), payload)
 
-  def test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsV9(self) -> None:
+  def test_AiRelayJson_PinnedAndCheckCommand_PinnedFollowsContractAndContractIsCurrent(self) -> None:
     # The pin (s387) and check_command (s379) are built: `ai relay` carries both right
     # after contract, and `ai relay-orchestrator` carries the pin only.
     payload = self.payload("relay")
-    self.assertEqual(payload["contract"], "relay v10")
+    self.assertEqual(payload["contract"], "relay v11")
     self.assertEqual(list(payload)[:3], ["contract", "pinned", "check_command"])
     self.assertIsNone(payload["pinned"])
     self.assertEqual(payload["check_command"], "")
     orchestrator = self.payload("relay-orchestrator")
-    self.assertEqual(orchestrator["contract"], "relay v10")
+    self.assertEqual(orchestrator["contract"], "relay v11")
     self.assertEqual(list(orchestrator)[:2], ["contract", "pinned"])
     self.assertIsNone(orchestrator["pinned"])
     self.assertNotIn("check_command", orchestrator)
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 10)
+    self.assertEqual(ai.RELAY_CONTRACT, 11)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 11)
 
   def test_AiRelayJson_Conformance_ListsKeyAndTextForEachObligation(self) -> None:
     for command in ("relay", "relay-orchestrator"):
@@ -243,7 +247,7 @@ class ConformanceJsonTests(RelayConformanceCase):
     self.assertEqual([(item["role"], item["ledger_role"]) for item in roles_json], [
       ("outer_session", None), ("orchestrator", "orchestrator"),
       ("implementer", "implementer"), ("reviewer", "reviewer"), ("architect", "architect"),
-      ("ui_pass", "ui"), ("spec_check", "spec-check"),
+      ("ui_pass", "ui"), ("gate", "gate"), ("spec_check", "spec-check"),
     ])
     for item in roles_json:
       with self.subTest(role=item["role"]):
@@ -264,7 +268,7 @@ class ConformanceJsonTests(RelayConformanceCase):
         self.assertEqual(gate["criteria"], head.split(", ") + [last])
         self.assertEqual(len(gate["criteria"]), 5)
         self.assertIn("The first line is exactly `VERDICT: PASS` or `VERDICT: FAIL`.", prose)
-        self.assertIn("no new `fix` finding of medium severity or worse", gate["criteria"])
+        self.assertIn("no `fix` finding", gate["criteria"])
         self.assertIn("no `blocker` owner finding", gate["criteria"])
 
   def test_RelayGate_CriteriaSentence_IsWrappedLikeTheRestOfTheProse(self) -> None:
@@ -296,16 +300,16 @@ class ConformanceJsonTests(RelayConformanceCase):
     # refers to them rather than carrying a second copy.
     payload = self.payload("relay")
     self.assertEqual(payload["outcomes"], ["pass", "fail", "stopped"])
-    self.assertEqual(len(payload["stop"]), 3)
+    self.assertEqual(len(payload["stop"]), 4)
     self.assertEqual(payload["report"]["lines"][-1]["key"], "nothing_left_running")
     self.assertEqual(payload["contract"], ai.contract_line())
     text = json.dumps(payload["conformance"])
     for stop in payload["stop"]:
-      self.assertNotIn(stop, text)
+      self.assertNotIn(stop["text"], text)
 
 
 class VendorLimitTests(RelayConformanceCase):
-  """A classified vendor limit falls back to the role's next matching row (s405)."""
+  """A vendor limit or an error exit falls back to the role's next matching row (s405, s424)."""
 
   def stop(self, text: str) -> str:
     return flat(section(text, "Stop"))
@@ -315,13 +319,14 @@ class VendorLimitTests(RelayConformanceCase):
       with self.subTest(label=label):
         stop = self.stop(text)
         for phrase in (
-          "A vendor limit is not a stop condition.",
+          "A vendor limit or an error exit is not a stop condition.",
           "start the same round as a new `relay-run step` on a fresh agent on the role's next "
           "matching matrix row, with the partial diff left in the worktree",
           "`slicer relay-run step RUN --step STEP --phase fail --reason TEXT`",
           "Name the switch on the report's deviations line as `role switched: ROLE FROM to TO "
           "(REASON)`",
-          "With no eligible row left, or on any other failure, stop.",
+          "With no eligible row left (a project with no role matrix has none), or on any other "
+          "failure, stop.",
         ):
           self.assertIn(phrase, stop)
 
@@ -330,11 +335,11 @@ class VendorLimitTests(RelayConformanceCase):
       with self.subTest(label=label):
         stop = self.stop(text)
         self.assertIn(
-          "because its vendor refused more work (a rate limit or out of credits) and for no "
-          "other reason", stop,
+          "A role's round that ends in a rate limit, out of credits or an error exit of the "
+          "agent process is a failed round", stop,
         )
-        self.assertIn("classify it from the vendor's or harness's error, not from the role's "
-                      "own account", stop)
+        self.assertIn("classify it from the vendor's or harness's error or the process's exit, "
+                      "not from the role's own account", stop)
         self.assertIn("Record the failed step with that error as its reason", stop)
 
   def test_Stop_VendorLimit_NextRowSkipsSameVendorOnlyOnOutOfCredits(self) -> None:
@@ -342,25 +347,26 @@ class VendorLimitTests(RelayConformanceCase):
       with self.subTest(label=label):
         self.assertIn(
           "Rows only move forward: on out of credits skip later rows on the same vendor, on a "
-          "rate limit take the plain next matching row. The new row keeps the role for the "
-          "rest of the run.", self.stop(text),
+          "rate limit or an error exit take the plain next matching row. The new row keeps the "
+          "role for the rest of the run.", self.stop(text),
         )
 
-  def test_Stop_VendorLimit_KeepsTheReviewersIndependence(self) -> None:
+  def test_Stop_VendorLimit_KeepsTheIndependenceStatedOnceHere(self) -> None:
     for label, text in self.texts():
       with self.subTest(label=label):
         self.assertIn(
-          "The fresh agent is never a resumed one; a reviewer or gate is never an agent that "
-          "wrote code in the slice, and an implementer never reuses the reviewer's or gate's "
-          "agent.", self.stop(text),
+          "The fresh agent is never a resumed one. Independence holds on the new row as on every "
+          "row: a reviewer or gate never wrote code in the slice (in a split, in any part of it), "
+          "and an implementer never reuses the reviewer's or gate's agent.", self.stop(text),
         )
 
-  def test_Stop_VendorLimit_OuterSessionAppliesItToAnOrchestrator(self) -> None:
+  def test_Stop_VendorLimit_OuterSessionOrOwnerStartsTheNextOrchestrator(self) -> None:
     for label, text in self.texts():
       with self.subTest(label=label):
         self.assertIn(
-          "An orchestrator that hits a limit gets the same fallback from the outer session: a "
-          "new orchestrator on the next row resumes from the ledger and the worktree.",
+          "When the orchestrator's own round ends in a vendor limit or an error exit, the next matching row takes over "
+          "from the ledger and the worktree: the outer session starts a new orchestrator on it, "
+          "or the owner restarts the session when the session orchestrates itself.",
           self.stop(text),
         )
 
@@ -369,44 +375,48 @@ class VendorLimitTests(RelayConformanceCase):
       with self.subTest(label=label):
         self.assertIn("FROM and TO being row ids", self.stop(text))
 
-  def test_Stop_VendorLimit_IsNotAFourthStopCondition(self) -> None:
-    self.assertEqual(len(ai.RELAY_STOP), 3)
+  def test_Stop_KeyedConditions_AreFourAndTheFallbackIsNotOne(self) -> None:
+    self.assertEqual([key for key, _ in ai.RELAY_STOP], [
+      "gate_fail_3", "spec_wrong", "permission_denied", "no_eligible_row",
+    ])
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command):
-        self.assertEqual(len(self.payload(command)["stop"]), 3)
+        self.assertEqual(len(self.payload(command)["stop"]), 4)
 
-  def test_Conformance_VendorLimit_IsInBothTextAndJson(self) -> None:
+  def test_Conformance_RoleFallback_IsInBothTextAndJson(self) -> None:
     for label, text in self.texts():
       with self.subTest(label=label):
-        item = dict(zip(OBLIGATIONS, bullets(section(text, "Conformance"))))["vendor_limit"]
+        item = dict(zip(OBLIGATIONS, bullets(section(text, "Conformance"))))["role_fallback"]
         for phrase in (
-          "classified vendor limit (a rate limit or out of credits)",
+          "ends in a vendor limit (a rate limit or out of credits) or an error exit of the "
+          "agent process",
           "record the failed step with its reason",
           "as a new step on a fresh agent on the role's next matching row",
           "later rows on the same vendor skipped on out of credits",
-          "never an agent that breaks the reviewer's independence",
+          "independence kept as Stop says",
           "name the switch on the run report's deviations line",
-          "the outer session does the same for an orchestrator that hits a limit",
+          "A gate FAIL, a wrong spec or a permission denial is not an error exit.",
+          "The same fallback applies to an orchestrator, as Stop says.",
           "With no eligible row left, or on any other failure, stop as Stop says.",
         ):
           self.assertIn(phrase, item)
     for command in ("relay", "relay-orchestrator"):
       with self.subTest(command=command):
         data = {i["key"]: i["text"] for i in self.payload(command)["conformance"]}
-        self.assertIn("fresh agent on the role's next matching row", data["vendor_limit"])
-        self.assertNotIn("any other failure stops", data["vendor_limit"])
+        self.assertIn("fresh agent on the role's next matching row", data["role_fallback"])
+        self.assertNotIn("vendor_limit", data)
+        self.assertIn("or on any other failure, stop as Stop says.", data["role_fallback"])
 
   def test_OrchestratorRules_VendorLimit_NamesTheSwitchOnTheDeviationsLine(self) -> None:
     text = flat(ai.orchestrator_text("done"))
     self.assertIn(
-      "A role that hits a classified vendor limit: record its step failed with `--reason`, start "
-      "the same round as a new step on a fresh agent on the next matching row and put "
-      "`role switched: ROLE FROM to TO (REASON)` on the deviations line.",
+      "A role whose round ends in a vendor limit or an error exit: record its step failed with "
+      "`--reason`, start the same round as a new step on a fresh agent on the next matching row "
+      "and put `role switched: ROLE FROM to TO (REASON)` on the deviations line.",
       text,
     )
 
   def test_Changes_Version10_MentionsTheFallbackAndKeepsTheVersion(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
     text = dict(ai.RELAY_CHANGES)[10]
     self.assertIn("vendor limit", text)
     self.assertIn("next matching row", text)

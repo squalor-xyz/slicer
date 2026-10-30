@@ -55,8 +55,10 @@ session and the orchestrator in one. That session reads
 `slicer ai relay-orchestrator --session`, which has its own rules for beginning and
 ending the run, for its own step, for owner questions put to the owner directly, and for
 Approve and Land. The plain `slicer ai relay-orchestrator` is for an orchestrator that a
-parent session spawns for one slice. Where the agent cannot nest subagents,
-`slicer ai relay` points to the session variant.
+parent session spawns for one slice. You can choose the session variant at Setup, also
+where nesting works; where the agent cannot nest subagents, it is the only choice.
+The orchestrator is always a general-purpose agent briefed with
+`slicer ai relay-orchestrator`, never a named agent type.
 
 Before creating the worktree, agree with the outer session on the roles, whether
 implementation is split or slivered, the environment and scratch directories, and
@@ -116,7 +118,11 @@ then another review or the gate. An architect, if chosen, checks the shape and
 confirms fixes before the gate. A failed gate returns to implementation and another gate; a pass
 allows the closing note and configured finish step. The outer session receives
 the report and carries out only the endpoint you authorized. The contract also
-defines when repeated failures or a missing owner decision stop the relay.
+defines when the relay stops: the same slice failing its gate three times, a wrong spec,
+a harness permission denial, or a role's round that ends in a vendor limit or an error exit
+with no row left to rerun it on. A limit or an error exit with a row left reruns the round
+on the role's next matching row, and a question you must answer waits for you; neither stops
+the relay.
 
 The orchestrator does not have to be an LLM agent. A program that spawns the roles, records
 the run and applies the stop rules in code conforms to the same contract: its Conformance
@@ -146,7 +152,7 @@ there too. The implementer re-checks cited line numbers at start, since they may
 Every review, UI pass and gate finding is a `fix` (back to the implementer), an
 `owner` question (a design call for you, with 2 to 4 options and a recommendation;
 it blocks the gate only when marked `blocker`) or a `later` follow-up with a one-line
-title. The run report lists your questions as numbered lines you can answer by
+title. Every `fix` finding fails the gate, so a minor item is a `later` one. The run report lists your questions as numbered lines you can answer by
 number. A `Review FAIL` note appears only after a `VERDICT: FAIL`.
 
 A question the slice cannot go on without (a `blocker`) does not wait for the report. The

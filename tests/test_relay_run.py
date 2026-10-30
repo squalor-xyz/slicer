@@ -197,7 +197,7 @@ class FoldTests(RelayRunCase):
     run = self.begin(repo, "s1")
     ledger = [item["ledger_role"] for item in ai.relay_contract()["roles"] if item["ledger_role"]]
     self.assertEqual(
-      ledger, ["orchestrator", "implementer", "reviewer", "architect", "ui", "spec-check"],
+      ledger, ["orchestrator", "implementer", "reviewer", "architect", "ui", "gate", "spec-check"],
     )
     for role in ledger:
       with self.subTest(role=role):

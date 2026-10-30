@@ -147,12 +147,10 @@ def handoff_policy_text(kind: str) -> str:
 
 
 # The version of the relay contract, printed as the first line of `ai relay` and
-# `ai relay-orchestrator` and carried in their `--json`. The agents repo's
-# `relay-orchestrator` role carries an `Expects:` line that its doctor checks against this
-# marker. Bump it when a rule an outer session, orchestrator or role
-# follows changes (order, gate, tracking order, waiting, report shape), not for a
-# rewording. Record each version's change in RELAY_CHANGES.
-RELAY_CONTRACT = 10
+# `ai relay-orchestrator` and carried in their `--json`. Bump it when a rule an outer
+# session, orchestrator or role follows changes (order, gate, tracking order, waiting,
+# report shape), not for a rewording. Record each version's change in RELAY_CHANGES.
+RELAY_CONTRACT = 11
 
 RELAY_CHANGES = (
   (5, "Setup resolves the role lineup, orchestrator included, with "
@@ -183,6 +181,29 @@ RELAY_CHANGES = (
    "the role's next matching row (never breaking the reviewer's independence), with the partial diff; the "
    "outer session does the same for an orchestrator; the switch is named on the deviations line; any other "
    "failure, or no eligible row, still stops."),
+  (11, "The contract states each rule once and carries its data in `--json`. Every role, the read-only "
+   "ones included, uses absolute paths and `git -C` and never `cd`, and the orchestrator resumes a headless "
+   "role in the slice worktree and checks the directory it names. Before each review, fix rounds included, "
+   "the implementer checks its own diff (concurrency and handle lifetime, docs updated in the same diff, a "
+   "test that fails when the new wiring is removed) and reports each check or `n/a`. A gate round is closed "
+   "with `--verdict pass` or `--verdict fail`, and a heartbeat on a waiting step ends its wait. "
+   "`slicer ai relay-orchestrator --session` is a variant for a session that orchestrates every slice "
+   "itself: it begins and ends the run, records its own step, asks the owner directly and runs Approve and "
+   "Land, and the owner may choose the session variant at Setup even where nesting works. A small fix round is checked and "
+   "gated in one pass by the read-only role that raised its findings; a non-blocker owner question is asked "
+   "in the ledger as it arises, without a wait, and read with `relay-run answer --get` before the finish "
+   "step, and the session variant takes the same non-blocker question rule; a Check line marked "
+   "`[AFTER LAND]` is deferred to Land step 6; a clean merge of main is regated by the one-pass small-fix "
+   "check. A `blocker` owner question is a wait, not a stop. Every `fix` finding fails the gate, with no "
+   "severity scale, and a minor item is tagged `later`. An error exit of the agent process falls back like a "
+   "vendor limit, to a fresh agent on the role's next matching row, with `role_fallback` as the conformance "
+   "key (was `vendor_limit`); with no eligible row (a project with no role matrix has none), or on any "
+   "other failure, the run still stops. `stop` rules carry keys "
+   "(`gate_fail_3`, `spec_wrong`, `permission_denied`, `no_eligible_row`), the stop no longer lists a "
+   "blocker owner decision, and conformance splits the stop obligation from a new `blocker_wait` one. "
+   "`roles` carries the gate with ledger role `gate`. The orchestrator always runs as a general-purpose "
+   "agent briefed with `slicer ai relay-orchestrator`, never an agent type, and an unmatched orchestrator "
+   "means the outer session orchestrates."),
 )
 
 
@@ -235,10 +256,13 @@ the agent, vendor, model and reasoning effort for each role. A role on the
   orchestrator's own harness runs as a native subagent; a role on another harness
   runs as a headless session in the slice worktree with the same brief."""),
   ('orchestrator', """\
-the orchestrator's agent, model and reasoning effort, set explicitly on every
-  spawn. It runs as the agent type `relay-orchestrator` where the harness has one
-  installed, otherwise as a general-purpose agent briefed with
-  `slicer ai relay-orchestrator`."""),
+the orchestrator: either the outer session itself (the session variant,
+  `slicer ai relay-orchestrator --session`) or a spawned orchestrator with its agent,
+  model and reasoning effort set explicitly on every spawn. The owner may choose the
+  session variant, also where nesting works; an agent that cannot nest subagents has no
+  other choice, and an orchestrator that no matrix row matches, or a project with no
+  matrix, means the outer session orchestrates. A spawned orchestrator runs as a
+  general-purpose agent briefed with `slicer ai relay-orchestrator`."""),
   ('environment', """\
 the environment lines every brief carries: the interpreter, the shell limits
   and the scratch directory, taken from the project's own instructions."""),
@@ -273,7 +297,8 @@ Wait for its run report in the same turn. A harness that can spawn only in the
    forces its turn to end while a role runs. That last-line hand-back is a wait, not
    a report: wait for that role's report, then resume the orchestrator with the
    report pasted in. Do not stop the orchestrator for it. An owner answer given while
-   the run waits goes in a note on the item in the worktree and in the resumed role's
+   the run waits goes in a note on the item in the worktree,
+   `slicer note ID --text "Owner answer: ..." --render`, and in the resumed role's
    brief, not in the slice on main. A hand-back whose last line is
    `waiting on: owner QUESTION_ID` is a wait for the owner's answer to a question the
    orchestrator asked with `relay-run ask`, not a report: `slicer relay-run list RUN`
@@ -282,8 +307,8 @@ Wait for its run report in the same turn. A harness that can spawn only in the
    orchestrator with it. Otherwise put it to the owner, record the answer with
    `slicer relay-run answer RUN QUESTION_ID --option LABEL --why TEXT --by NAME`
    (`slicer relay-run answer RUN QUESTION_ID --text TEXT` for a free-text answer),
-   which ends the step's owner wait, then record the note in the worktree and resume
-   the orchestrator with the answer pasted in."""),
+   which ends the step's owner wait, then record the note as above and resume the
+   orchestrator with the answer pasted in."""),
   (4, """\
 Check the report's first line, the contract marker, and its last line,
    `nothing left running: yes`. Stop the orchestrator first when a hand-back lacks
@@ -411,35 +436,41 @@ nothing left running: yes"""),
 )
 
 RELAY_STOP = (
-  "the same slice fails its gate three times",
-  "the spec turns out ambiguous or wrong",
-  "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)",
+  ('gate_fail_3', "the same slice fails its gate three times"),
+  ('spec_wrong', "the spec turns out ambiguous or wrong"),
+  ('permission_denied', "a harness permission check denies a role's slicer step"),
+  ('no_eligible_row', "a role's round ends in a vendor limit or an error exit and no eligible row "
+   "is left to rerun it on (a project with no role matrix has none)"),
 )
 
-# What a classified vendor limit does. It is a sentence of the Stop section and is not a
-# fourth stop condition: `RELAY_STOP` stays the conditions that end the relay.
-RELAY_LIMIT_FALLBACK = """\
-A vendor limit is not a stop condition. A role's round that ends because its vendor
-refused more work (a rate limit or out of credits) and for no other reason is a limit;
-classify it from the vendor's or harness's error, not from the role's own account.
-Record the failed step with that error as its reason
+# What a vendor limit or an error exit does. It is a paragraph of the Stop section: the
+# fallback is not a stop condition, and `no_eligible_row` in `RELAY_STOP` is where it ends.
+RELAY_FALLBACK = """\
+A vendor limit or an error exit is not a stop condition. A role's round that ends in a
+rate limit, out of credits or an error exit of the agent process is a failed round;
+classify it from the vendor's or harness's error or the process's exit, not from the
+role's own account. A gate FAIL, a wrong spec or a permission denial is not an error
+exit and keeps its own rule. Record the failed step with that error as its reason
 (`slicer relay-run step RUN --step STEP --phase fail --reason TEXT`), then start the
 same round as a new `relay-run step` on a fresh agent on the role's next matching matrix
 row, with the partial diff left in the worktree. Rows only move forward: on out of
-credits skip later rows on the same vendor, on a rate limit take the plain next matching
-row. The new row keeps the role for the rest of the run. The fresh agent is never a
-resumed one; a reviewer or gate is never an agent that wrote code in the slice, and an
+credits skip later rows on the same vendor, on a rate limit or an error exit take the
+plain next matching row. The new row keeps the role for the rest of the run. The fresh
+agent is never a resumed one. Independence holds on the new row as on every row: a
+reviewer or gate never wrote code in the slice (in a split, in any part of it), and an
 implementer never reuses the reviewer's or gate's agent. Name the switch on the report's
 deviations line as `role switched: ROLE FROM to TO (REASON)`, FROM and TO being row ids.
-With no eligible row left, or on any other failure, stop. An orchestrator that hits a
-limit gets the same fallback from the outer session: a new orchestrator on the next row
-resumes from the ledger and the worktree."""
+With no eligible row left (a project with no role matrix has none), or on any other
+failure, stop. When the orchestrator's own round ends in a vendor limit or an error
+exit, the next matching row takes over from the ledger and the worktree: the outer
+session starts a new orchestrator on it, or the owner restarts the session when the
+session orchestrates itself."""
 
 # The gate's criteria and verdict lines, as data: `RELAY_GATE` renders them and
 # `relay_contract` carries the same lists in `--json`.
 RELAY_GATE_CRITERIA = (
   "earlier blockers resolved with a proving test",
-  "no new `fix` finding of medium severity or worse",
+  "no `fix` finding",
   "no `blocker` owner finding",
   "tests green",
   "docs matching the code",
@@ -489,20 +520,24 @@ Decide the gate on the criteria in Gate, with its verdict as the first line as G
 Tag every reviewer, UI pass and gate finding `fix`, `owner` or `later`, and route
   each as Gate says."""),
     ('stop_rules', """\
-Stop when a stop condition in Stop holds, or when a harness permission check denies a
-  role's slicer step (stop before the commit, with the denial's exact text as a
-  `blocker` owner-needed question), with OUTCOME stopped, and return the run report.
-  Do not go on past it and do not ask the owner. A `blocker` owner question that can
-  wait for its answer is the exception: record it with `relay-run ask`, end the turn
-  with `waiting on: owner QUESTION_ID`, and go on only from the answer the outer
-  session records and resumes you with."""),
-    ('vendor_limit', """\
-On a classified vendor limit (a rate limit or out of credits), record the failed step
-  with its reason, rerun the same round as a new step on a fresh agent on the role's
-  next matching row (later rows on the same vendor skipped on out of credits, never an
-  agent that breaks the reviewer's independence) with the partial diff, and name the
-  switch on the run report's deviations line; the outer session does the same for an
-  orchestrator that hits a limit. With no eligible row left, or on any other failure,
+Stop when a stop condition in Stop holds, with OUTCOME stopped, and return the run
+  report. Do not go on past it and do not ask the owner. A permission denial stops
+  before the commit, with the denial's exact text as a `blocker` owner-needed question."""),
+    ('blocker_wait', """\
+Wait for the answer to a `blocker` owner question instead of stopping: record it with
+  `relay-run ask`, then wait for the answer where the owner gives it. An orchestrator an
+  outer session spawned ends its turn with `waiting on: owner QUESTION_ID` and goes on
+  only from the answer the outer session records and resumes it with; a session that
+  orchestrates itself waits for the owner in its own session. Stop with OUTCOME stopped
+  only when the answer cannot be waited for."""),
+    ('role_fallback', """\
+When a role's round ends in a vendor limit (a rate limit or out of credits) or an
+  error exit of the agent process, record the failed step with its reason, rerun the
+  same round as a new step on a fresh agent on the role's next matching row (later rows
+  on the same vendor skipped on out of credits, independence kept as Stop says) with the
+  partial diff, and name the switch on the run report's deviations line. A gate FAIL, a
+  wrong spec or a permission denial is not an error exit. The same fallback applies to
+  an orchestrator, as Stop says. With no eligible row left, or on any other failure,
   stop as Stop says."""),
     ('ledger', """\
 Record each role's round in the run ledger with `relay-run step`: a new step for every
@@ -573,7 +608,7 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False, session:
     ],
   }
   payload["outcomes"] = list(OUTCOMES)
-  payload["stop"] = list(RELAY_STOP)
+  payload["stop"] = [{"key": key, "text": text} for key, text in RELAY_STOP]
   payload["changes"] = [{"version": version, "text": text} for version, text in RELAY_CHANGES]
   # New keys go after `changes`, so every earlier key keeps its position.
   if not orchestrator:
@@ -622,6 +657,10 @@ The UI pass is read-only and edits nothing. It runs beside the reviewer on a sli
 the project marks as UI; the project says what counts as a UI slice. It returns
 triaged suggestions, each tagged with a finding kind, and, where the project can
 render, the changed views. The gate still decides."""),
+  ('gate', 'gate', """\
+The gate is read-only and decides. It checks the diff under review against the criteria
+in Gate, gives its verdict as the first line of its report, and sends a FAIL back to the
+implementer."""),
   ('spec_check', 'spec-check', """\
 The spec check is optional, read-only and edits nothing. It runs before any worktree
 exists, on a batch of slices the owner picks. For each slice it returns `ready` or
@@ -650,9 +689,10 @@ architect and a gate. The relay uses slicer's own commands.
 
 {role.orchestrator}
 
-Where the agent cannot nest subagents, the outer session is also the
-orchestrator: it follows `slicer ai relay-orchestrator --session` itself and
-compacts or starts a fresh session between slices.
+The owner may choose the session variant at Setup, and an agent that cannot nest
+subagents has no other choice: the outer session is also the orchestrator and follows
+`slicer ai relay-orchestrator --session` itself, compacting or starting a fresh session
+between slices.
 
 {role.implementer}
 
@@ -667,9 +707,11 @@ run no slicer command that writes.
 
 {role.ui_pass}
 
+{role.gate}
+
 {role.spec_check}
 
-A reviewer never wrote code in this slice. In a split, that holds for every part.
+The reviewer's and the gate's independence is the rule in Stop.
 The owner chooses the models.
 
 ## Setup
@@ -747,17 +789,10 @@ their own tests and the orchestrator's run on the combined diff is the one full
 run. The orchestrator reruns the suite only if the diff changed after that run or
 main moved.
 
-Owner answers: an answer the owner gives after the worktree exists never reaches it
-through the slice on main. The outer session records it against the slice worktree with
-`slicer note ID --text "Owner answer: ..." --render`, then resumes the orchestrator with
-the answer pasted in, and the orchestrator carries it into the resumed role's brief.
-When the orchestrator waits on a question of its own (`waiting on: owner QUESTION_ID`),
-the outer session also records the answer in the ledger with
-`slicer relay-run answer RUN QUESTION_ID --option LABEL --why TEXT --by NAME`, or
-`--text TEXT` for a free-text answer, before it resumes the orchestrator. While the run
-goes on, the owner, or a dashboard that reads the ledger, may answer a non-blocker
-question with `relay-run answer`; the outer session does so only when its harness leaves
-it free while the orchestrator runs. A project that keeps a decision log also records
+Owner answers: Order step 3 says where an owner answer goes. While the run goes on, the
+owner, or a dashboard that reads the ledger, may answer a non-blocker question with
+`relay-run answer`; the outer session does so only when its harness leaves it free while
+the orchestrator runs. A project that keeps a decision log also records
 there a design answer the owner explicitly picked, not a default an agent assumed.
 
 Run slices in parallel only when their files are disjoint. The outer session
@@ -807,6 +842,7 @@ RELAY_GATE = """\
 {criteria}
 The first line is exactly {verdicts}.
 FAIL goes back to the implementer and then the gate again.
+A `fix` finding fails the gate: tag a minor item `later` instead.
 Write a `Review FAIL` note only after `VERDICT: FAIL`.
 Record a failed review on the started item with
 `slicer note ID --text "Review FAIL: ..." --render`.
@@ -902,9 +938,12 @@ def relay_shared_sections(required_note_kind: str = "") -> str:
       "`slicer list --json --lean`."
     ) + "\n\n"
     + "## Stop\n\n"
-    + _fill("Stop when " + ", ".join(RELAY_STOP[:-1]) + ", or " + RELAY_STOP[-1] + ".")
+    + _fill(
+      "Stop when " + ", ".join(text for _key, text in RELAY_STOP[:-1])
+      + ", or " + RELAY_STOP[-1][1] + "."
+    )
     + "\n\n"
-    + RELAY_LIMIT_FALLBACK + "\n\n"
+    + RELAY_FALLBACK + "\n\n"
     + handoff_policy_text(required_note_kind)
     + RELAY_CONFORMANCE_SECTION
   )
@@ -1016,47 +1055,44 @@ return one run report.""",
   `slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`) and
   resumes you with it pasted in; to read it again, run
   `slicer relay-run answer RUN QUESTION_ID --get`. Do not poll the ledger for the
-  answer. Ask an owner question that does not block as soon as it arises, with the same
-  command without `--blocker`. It records the question and leaves your step running: do
-  not end your turn or wait for it. Before the closing note and the finish step, read
-  each with `slicer relay-run answer RUN QUESTION_ID --get`; an answer that changes the
-  slice goes to the implementer as a fix round first. A question still open then goes on
-  the report's owner-needed line.""",
+  answer. A `blocker` is not a stop: wait for the answer as above, and return OUTCOME
+  stopped only when you cannot wait for it (the harness cannot resume you, or the
+  `relay-run ask` fails). Ask an owner question that does not block as soon as it
+  arises, with the same command without `--blocker`. It records the question and leaves
+  your step running: do not end your turn or wait for it. Before the closing note and
+  the finish step, read each with `slicer relay-run answer RUN QUESTION_ID --get`; an
+  answer that changes the slice goes to the implementer as a fix round first. A question
+  still open then goes on the report's owner-needed line.""",
   "waiting": """\
 - Waiting: Run each role in the foreground and wait for its report in the same turn: a
   native subagent where the harness offers a foreground spawn, and a headless role with
   a foreground wait on its process. That wait is one command with a long timeout; when
   it times out before the role ends, issue the same foreground wait again, and a
-  timed-out wait is never a reason to hand back. A harness that can spawn only in the
-  background (its spawn notifies on completion) does not end your turn while a spawned
-  role runs: wait for its completion notice. End your turn before the final report only
-  to hand back an owner question, a harness permission denial or a failure. A progress
-  note or a bare "waiting on" is not one. `waiting on: ROLE AGENT-ID` is the last line
-  of a hand-back only when the harness forces the turn to end while a role still runs,
-  so the outer session can route the report. A nudge to report while a role you started
-  still runs is not a reason to report. A role that reports while a command of its own
-  still runs, or that stops waiting on its own background work, has not finished its
-  round: resume it and tell it to finish, in the slice worktree when it is headless, as
-  the Gate rule below says. Every role runs its own shell commands in the
-  foreground and backgrounds none. Send the final run report once; an early hand-back
-  for an owner question, a permission denial or a failure is not a run report. When you
-  wait for the owner's answer to a question you asked, it is
-  `waiting on: owner QUESTION_ID`. A role report pasted in by the outer session on
-  resume is that role's report. Run no sleep loop, no monitor keepalive and no
-  background shell job; nothing you started still runs when you report. Every role brief
-  says to run long commands such as the full suite in the foreground with a long
-  timeout.""",
+  timed-out wait is never a reason to hand back.
+  - A harness that can spawn only in the background (its spawn notifies on completion)
+    does not end your turn while a spawned role runs: wait for its completion notice.
+  - End your turn before the final report only to hand back an owner question, a harness
+    permission denial or a failure. A progress note or a bare "waiting on" is not one,
+    and a nudge to report while a role you started still runs is not a reason to report.
+  - `waiting on: ROLE AGENT-ID` is the last line of a hand-back only when the harness
+    forces the turn to end while a role still runs, so the outer session can route the
+    report. When you wait for the owner's answer to a question you asked, it is
+    `waiting on: owner QUESTION_ID`. A role report pasted in by the outer session on
+    resume is that role's report.
+  - A role that reports while a command of its own still runs, or that stops waiting on
+    its own background work, has not finished its round: resume it and tell it to
+    finish, in the slice worktree when it is headless, as the Gate rule below says.
+  - An early hand-back for an owner question, a permission denial or a failure is not a
+    run report. Run no sleep loop, no monitor keepalive and no background shell job;
+    nothing you started still runs when you report.""",
   "commit": """\
 - After `VERDICT: PASS` and the finish step, commit on the slice branch if your
   brief allows it.""",
   "stop_return": """\
-- Stop and return without asking the owner when the same slice fails its gate three
-  times or the spec is ambiguous or wrong. An `owner` finding that is not a `blocker`
-  does not stop the relay: it goes in the report as a numbered owner-needed question and
-  the slice goes on to the gate. A `blocker` owner finding stops the relay: ask it as
-  Owner questions says and wait for the answer; return the report with OUTCOME stopped
-  only when you cannot wait for the answer (the harness cannot resume you, or the
-  `relay-run ask` fails) or when the denial rule above applies.""",
+- Stop and return without asking the owner when a stop condition in Stop holds, with
+  OUTCOME stopped. An `owner` finding that is not a `blocker` does not stop the relay:
+  it goes in the report as a numbered owner-needed question and the slice goes on to the
+  gate.""",
   "order_intro": "Run your one slice in the worktree you were given, with the roles your brief lists:",
 }
 
@@ -1078,9 +1114,8 @@ or stopped, give the owner one run report.""",
   change directory. Write no product code. Read and change tracking state only through
   slicer commands. Where a section below speaks of the outer session (resuming you,
   owning merge and land, ending a turn with `waiting on:`, or starting a new
-  orchestrator), you are that outer session: wait for the owner in this session, record
-  answers yourself, and on your own vendor limit the owner restarts the session on the
-  next row.""",
+  orchestrator), you are that outer session: wait for the owner in this session and
+  record answers yourself.""",
   "record": """\
 - Run record: begin the run with `slicer relay-run begin ID --worktree PATH`, where PATH
   is the slice worktree, and keep its id as RUN. Record your own step as role
@@ -1105,41 +1140,36 @@ or stopped, give the owner one run report.""",
   where STEP is your own step id and the fields are those of the run report's
   `owner needed` line (`--recommend`, `--key` and `--reasoning` are optional). It puts
   your step in the owner wait. Wait for the owner's answer in this session, record it
-  with `slicer relay-run answer RUN QUESTION_ID --option LABEL` (or `--text TEXT`), and
-  go on. If a dashboard answered first, read the answer with
-  `slicer relay-run answer RUN QUESTION_ID --get`, and do not poll the ledger for it.
-  Ask an owner question that does not block in the ledger too, as soon as it arises,
-  with the same command without `--blocker`. It records the question and leaves your
-  step running: put it to the owner and go on without waiting. Record an answer the
-  owner gives here with `relay-run answer`. Before the closing note and the finish step,
-  read each with `slicer relay-run answer RUN QUESTION_ID --get`; an answer that changes
-  the slice goes to the implementer as a fix round first. A question still open then
-  goes on the report's owner-needed line.""",
+  as Owner answers says, and go on. If a dashboard answered first, read the answer with
+  `slicer relay-run answer RUN QUESTION_ID --get`, and do not poll the ledger for it. A
+  `blocker` is not a stop: wait for the answer in this session, and end the run stopped
+  only when the owner stops the slice. Ask an owner question that does not block in the
+  ledger too, as soon as it arises, with the same command without `--blocker`. It
+  records the question and leaves your step running: put it to the owner and go on
+  without waiting. Before the closing note and the finish step, read each with
+  `slicer relay-run answer RUN QUESTION_ID --get`; an answer that changes the slice goes
+  to the implementer as a fix round first. A question still open then goes on the
+  report's owner-needed line.""",
   "waiting": """\
 - Waiting: Run each role in the foreground and wait for its report in the same turn: a
   native subagent where the harness offers a foreground spawn, and a headless role with
   a foreground wait on its process. That wait is one command with a long timeout; when
-  it times out before the role ends, issue the same foreground wait again. A harness
-  that can spawn only in the background (its spawn notifies on completion) does not end
-  your turn while a spawned role runs: wait for its completion notice. A role that
-  reports while a command of its own still runs, or that stops waiting on its own
-  background work, has not finished its round: resume it and tell it to finish, in the
-  slice worktree when it is headless, as the Gate rule below says. Every role runs its
-  own shell commands in the foreground and backgrounds none. Run no sleep loop, no
-  monitor keepalive and no background shell job; nothing you started still runs when the
-  slice ends. Every role brief says to run long commands such as the full suite in the
-  foreground with a long timeout.""",
+  it times out before the role ends, issue the same foreground wait again.
+  - A harness that can spawn only in the background (its spawn notifies on completion)
+    does not end your turn while a spawned role runs: wait for its completion notice.
+  - A role that reports while a command of its own still runs, or that stops waiting on
+    its own background work, has not finished its round: resume it and tell it to
+    finish, in the slice worktree when it is headless, as the Gate rule below says.
+  - Run no sleep loop, no monitor keepalive and no background shell job; nothing you
+    started still runs when the slice ends.""",
   "commit": """\
 - After `VERDICT: PASS` and the finish step, commit on the slice branch only when the
   end point Setup chose is `commit` or `landed`.""",
   "stop_return": """\
-- Stop without asking the owner when the same slice fails its gate three times or the
-  spec is ambiguous or wrong: end the run with `--outcome stopped`, and give the owner
-  the run report. An `owner` finding that is not a `blocker` does not stop the relay: it
-  goes in the report as a numbered owner-needed question and the slice goes on to the
-  gate. A `blocker` owner finding stops the relay: put it to the owner as Owner
-  questions says and wait for the answer in this session. End the run stopped only when
-  the owner stops the slice or the denial rule above applies.""",
+- Stop without asking the owner when a stop condition in Stop holds: end the run with
+  `--outcome stopped`, and give the owner the run report. An `owner` finding that is not
+  a `blocker` does not stop the relay: it goes in the report as a numbered owner-needed
+  question and the slice goes on to the gate.""",
   "order_intro": "Run your one slice in the worktree Setup names, with the roles Setup chose:",
 }
 
@@ -1197,10 +1227,10 @@ ORCHESTRATOR_RULES = """\
   and do not work around it. Stop before the commit with OUTCOME stopped and put the
   denial's exact text under owner needed, as a `blocker` question whose reasoning is
   that exact text, with options such as `grant:` and `skip:`.
-- A role that hits a classified vendor limit: record its step failed with `--reason`,
-  start the same round as a new step on a fresh agent on the next matching row and put
-  `role switched: ROLE FROM to TO (REASON)` on the deviations line. Stop says what
-  counts, how the next row is chosen and when to stop.
+- A role whose round ends in a vendor limit or an error exit: record its step failed
+  with `--reason`, start the same round as a new step on a fresh agent on the next
+  matching row and put `role switched: ROLE FROM to TO (REASON)` on the deviations line.
+  Stop says what counts, how the next row is chosen and when to stop.
 {stop_return}
 
 ## Order
@@ -1234,10 +1264,10 @@ Each owner question is one line and counts toward the line limit. Number the
 questions from 1 and give each 2 to 4 options.
 {question_rule}
 `reasoning` is the last field and takes the rest of the line. With no question, the line
-is `owner needed: none`. A role switched after a vendor limit goes on the deviations
-line as `role switched: ROLE FROM to TO (REASON)`, so the report names it without a line
-of its own. Write the last line only after you check that nothing you started still
-runs.
+is `owner needed: none`. A role switched after a vendor limit or an error exit goes on
+the deviations line as `role switched: ROLE FROM to TO (REASON)`, so the report names it
+without a line of its own. Write the last line only after you check that nothing you
+started still runs.
 """
 
 

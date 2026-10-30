@@ -2466,3 +2466,8 @@
 {"when": "2026-10-30T18:25:27Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s425 landing merge: s409's session orchestrator text to", "by": "Jon Robbins"}
 {"when": "2026-10-30T18:33:43Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "From s425 merge regate (later): pin the session variant's no", "by": "Jon Robbins"}
 {"when": "2026-10-30T18:33:44Z", "item": "s425", "action": "status", "from": "review", "to": "done", "note": "Landed: one-pass small-fix gate by the role that raised findings, non-blocker questions in the ledger without a wait, [AFTER LAND] checks at Land step 6, merge regate rule; merged suite 3071 OK; gate and merge regate PASS.", "by": "Jon Robbins"}
+{"when": "2026-10-30T18:52:10Z", "item": "template.relay-brief.md", "action": "template", "from": "custom", "to": "custom", "note": ""}
+{"when": "2026-10-30T18:52:15Z", "item": "s424", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-10-30T19:41:33Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "Ready for review: relay contract v11 is implemented and the ", "by": "Jon Robbins"}
+{"when": "2026-10-30T19:41:34Z", "item": "s424", "action": "note", "from": "", "to": "", "note": "ork companion slice and ork S198 (later): final v11 JSON sha", "by": "Jon Robbins"}
+{"when": "2026-10-30T19:41:34Z", "item": "s424", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

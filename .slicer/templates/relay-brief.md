@@ -49,8 +49,8 @@ branch with title `{{commit_title}}`. Do not merge or push.
 - Follow the waiting rule from `slicer ai relay-orchestrator`: wait for every
   role and process to finish before reporting. A nudge is not a reason to report.
 - Stop and report under the Stop section of `slicer ai relay-orchestrator`
-  (repeated gate failures or a wrong specification) instead of guessing. A
-  `blocker` owner question is not a stop: ask it and wait as the Owner
-  questions rule says.
+  (repeated gate failures, a wrong specification, a permission denial or no
+  eligible row) instead of guessing. A `blocker` owner question is not a
+  stop: ask it and wait as the Owner questions rule says.
 - Hand back one final run report, or a stop that needs the owner. Never hand
   back while work you started is still running.

@@ -1877,7 +1877,7 @@ class AiRelayContractTests(RelayRolesCase):
   """The nested relay: `ai relay` is the outer session's contract and
   `ai relay-orchestrator` the orchestrator's, both carrying one version marker."""
 
-  MARKER = "Contract: relay v10"
+  MARKER = "Contract: relay v11"
 
   def flat(self, text: str) -> str:
     return " ".join(text.split())
@@ -1969,6 +1969,10 @@ class AiRelayContractTests(RelayRolesCase):
   WAIT_SHELL = (
     "Every role runs its own shell commands in the foreground and backgrounds none."
   )
+  BRIEF_SHELL = (
+    "Every brief says the role runs its own shell commands in the foreground and backgrounds "
+    "none, and runs long commands such as the full suite in the foreground with a long timeout."
+  )
 
   def test_OrchestratorText_Waiting_RunsRolesInTheForeground(self) -> None:
     repo = self.project()
@@ -2013,7 +2017,9 @@ class AiRelayContractTests(RelayRolesCase):
     repo = self.project()
     waiting = self.flat(next(b for b in self.orchestrator(repo).split("\n- ")
                              if b.startswith("Waiting")))
-    self.assertIn(self.WAIT_SHELL, waiting)
+    # Waiting does not repeat it: Every brief owns the rule (s424).
+    self.assertNotIn(self.WAIT_SHELL, waiting)
+    self.assertNotIn("backgrounds none", waiting)
 
   def test_RelayText_Order3_SpawnsOrchestratorInTheForeground(self) -> None:
     order = self.section(ai.relay_text(), "## Order", "## Slivers")
@@ -2042,14 +2048,12 @@ class AiRelayContractTests(RelayRolesCase):
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     flat = self.flat(orchestrator["orchestrator"])
     for phrase in (self.WAIT_FOREGROUND, self.WAIT_INTERIM, self.WAIT_FALLBACK,
-                   self.WAIT_BACKGROUND_ONLY, self.WAIT_TIMEOUT, self.WAIT_SHELL):
+                   self.WAIT_BACKGROUND_ONLY, self.WAIT_TIMEOUT, self.BRIEF_SHELL):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, flat)
 
   def test_RelayChanges_V10_NamesTheForegroundWait(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
-    version, text = ai.RELAY_CHANGES[-1]
-    self.assertEqual(version, 10)
+    text = dict(ai.RELAY_CHANGES)[10]
     self.assertIn("Roles wait in the foreground", text)
     self.assertIn("`waiting on: ROLE AGENT-ID`", text)
     self.assertIn("timed-out wait is re-issued", text)
@@ -2094,20 +2098,20 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertEqual(first, self.MARKER)
     self.assertEqual(first, self.ok(repo, "ai", "relay").splitlines()[0])
     # Both texts build the line from the one constant: a bumped number shows in both.
-    with patch.object(ai, "RELAY_CONTRACT", 11):
-      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v11")
-      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v11")
+    with patch.object(ai, "RELAY_CONTRACT", 12):
+      self.assertEqual(ai.relay_text().splitlines()[0], "Contract: relay v12")
+      self.assertEqual(ai.orchestrator_text().splitlines()[0], "Contract: relay v12")
 
   def test_AiRelay_Json_CarriesContract(self) -> None:
     repo = self.project()
     relay = json.loads(self.ok(repo, "ai", "relay", "--json"))
-    self.assertEqual(relay["contract"], "relay v10")
+    self.assertEqual(relay["contract"], "relay v11")
     self.assertEqual(relay["relay"].rstrip("\n"), self.ok(repo, "ai", "relay").rstrip("\n"))
     orchestrator = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
-    self.assertEqual(orchestrator["contract"], "relay v10")
+    self.assertEqual(orchestrator["contract"], "relay v11")
 
   def golden(self, command, finish="done", matrix=False):
-    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v10.json").read_text())[
+    return json.loads((Path(__file__).parent / "fixtures/relay-contract-v11.json").read_text())[
       f"{command}-{finish}-{matrix}"
     ]
 
@@ -2157,8 +2161,11 @@ class AiRelayContractTests(RelayRolesCase):
     self.assertEqual(payload["order"], self.numbered_steps(self.golden("relay")))
     self.assertEqual(payload["outcomes"], ["pass", "fail", "stopped"])
     self.assertEqual(payload["stop"], [
-      "the same slice fails its gate three times", "the spec turns out ambiguous or wrong",
-      "an owner decision marked `blocker` is needed (asked and waited on with `relay-run ask`)",
+      {"key": "gate_fail_3", "text": "the same slice fails its gate three times"},
+      {"key": "spec_wrong", "text": "the spec turns out ambiguous or wrong"},
+      {"key": "permission_denied", "text": "a harness permission check denies a role's slicer step"},
+      {"key": "no_eligible_row", "text": "a role's round ends in a vendor limit or an error exit and "
+       "no eligible row is left to rerun it on (a project with no role matrix has none)"},
     ])
 
   def test_AiRelayOrchestrator_Json_CarriesStructuredContract(self):
@@ -2231,9 +2238,9 @@ class AiRelayContractTests(RelayRolesCase):
           no_options = json.loads(self.ok(repo, "ai", command, "--json", "--lean"))
         self.assertEqual(no_options["setup"][-1]["options"], [])
 
-  def test_AiRelay_Setup_NamesOrchestratorAgentType(self) -> None:
+  def test_AiRelay_Setup_NamesOrchestratorNoAgentType(self) -> None:
     setup = self.section(ai.relay_text(), "## Setup", "## Order")
-    self.assertIn("agent type `relay-orchestrator`", setup)
+    self.assertNotIn("agent type", setup)
     self.assertIn("general-purpose agent briefed with `slicer ai relay-orchestrator`", setup)
     self.assertIn("set explicitly on every spawn", setup)
     self.assertIn("environment lines", setup)
@@ -2284,11 +2291,11 @@ class AiRelayContractTests(RelayRolesCase):
 
   def test_AiRelay_ContractMarker_AgreesAcrossBothCommandsAndTheConstant(self) -> None:
     repo = self.project()
-    self.assertEqual(ai.RELAY_CONTRACT, 10)
+    self.assertEqual(ai.RELAY_CONTRACT, 11)
     texts = [self.ok(repo, "ai", "relay"), self.orchestrator(repo)]
-    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v10"})
+    self.assertEqual({t.splitlines()[0] for t in texts}, {"Contract: relay v11"})
     payloads = [json.loads(self.ok(repo, "ai", c, "--json")) for c in ("relay", "relay-orchestrator")]
-    self.assertEqual({p["contract"] for p in payloads}, {"relay v10"})
+    self.assertEqual({p["contract"] for p in payloads}, {"relay v11"})
 
   def test_AiRelayOrchestrator_Waiting_KeepsTheRoundRules(self) -> None:
     repo = self.project()
@@ -2296,17 +2303,18 @@ class AiRelayContractTests(RelayRolesCase):
     waiting = next(b for b in text.split("\n- ") if b.startswith("Waiting"))
     waiting = self.flat(waiting)
     for phrase in (
-      "A nudge to report while a role you started still runs is not a reason to report",
-      "Send the final run report once; an early hand-back for an owner question, a permission "
-      "denial or a failure is not a run report",
+      "a nudge to report while a role you started still runs is not a reason to report",
+      "An early hand-back for an owner question, a permission denial or a failure is not a "
+      "run report",
       "resume it and tell it to finish",
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, waiting)
-    # The foreground is for a role's own long commands, which the brief asks for.
+    # The foreground for a role's own long commands is Every brief's rule, said once.
+    self.assertNotIn("Every role brief says to run long commands", waiting)
     self.assertIn(
-      "Every role brief says to run long commands such as the full suite in the foreground "
-      "with a long timeout", waiting)
+      "runs long commands such as the full suite in the foreground with a long timeout",
+      self.flat(self.section(text, "## Every brief", ai.TRACKING_RULE.split()[0])))
 
   def test_AiRelayOrchestrator_FinishOnlyAfterPass(self) -> None:
     done = self.flat(ai.orchestrator_text("done"))
@@ -2376,7 +2384,7 @@ class AiRelayContractTests(RelayRolesCase):
     payload = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json"))
     self.assertEqual(list(payload), ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes",
       "gate", "finding_kinds", "conformance"])
-    self.assertEqual(payload["contract"], "relay v10")
+    self.assertEqual(payload["contract"], "relay v11")
     self.assertEqual(payload["orchestrator"].rstrip("\n"), text.rstrip("\n"))
     lean = json.loads(self.ok(repo, "ai", "relay-orchestrator", "--json", "--lean"))
     self.assertEqual(lean, payload)
