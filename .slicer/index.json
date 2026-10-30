@@ -16303,7 +16303,7 @@
       "id": "s417",
       "title": "A merge leaves the render current without a per-clone setup or a hand-run render",
       "short_title": "Merges re-render automatically",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
