@@ -7,7 +7,7 @@ import unittest
 
 import support
 
-ITEM_KEYS = ["attempts", "depends_on", "effective_score", "id", "note_records", "notes", "path", "status", "title"]
+ITEM_KEYS = ["attempts", "depends_on", "effective_score", "id", "note_records", "notes", "path", "ready", "status", "title"]
 
 
 class ReadyTests(unittest.TestCase):
@@ -170,6 +170,7 @@ class ReadyTests(unittest.TestCase):
           "id": "S01",
           "title": "work",
           "status": "open",
+          "ready": False,
           "effective_score": 22,
         },
       })
@@ -287,6 +288,7 @@ class ReadyTests(unittest.TestCase):
           "id": "S01",
           "title": "work",
           "status": "open",
+          "ready": False,
           "effective_score": 22,
         },
         "slice": {
@@ -307,6 +309,7 @@ class ReadyTests(unittest.TestCase):
           "id": "S02",
           "title": "bare",
           "status": "open",
+          "ready": False,
           "effective_score": 22,
         },
       })

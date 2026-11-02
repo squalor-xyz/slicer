@@ -2547,3 +2547,7 @@
 {"when": "2026-11-02T16:55:45Z", "item": "s426", "action": "note", "from": "", "to": "", "note": "Ready for review: s426 makes an emptied TUI note ask for a r", "by": "Jon Robbins"}
 {"when": "2026-11-02T16:55:45Z", "item": "s426", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-02T16:56:13Z", "item": "s426", "action": "status", "from": "review", "to": "done", "note": "Landed: emptying a TUI note asks for a reason and retracts it instead of deleting; full suite 3170 OK; gate PASS. Human check pending: run slicer tui by hand.", "by": "Jon Robbins"}
+{"when": "2026-11-02T16:56:47Z", "item": "s416", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:23:19Z", "item": "s416", "action": "note", "from": "", "to": "", "note": "Review FAIL: docs/agents.md:546 still says an item is 'the o", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:24:21Z", "item": "s416", "action": "note", "from": "", "to": "", "note": "Ready for review: s416 accepts land --render as a no-op and ", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:24:23Z", "item": "s416", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -348,8 +348,10 @@ def _migrate_strict(fn, args: argparse.Namespace) -> int:
   return code
 
 
-def _render_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  sp.add_argument("--render", action="store_true", help="render .slicer/render/ after the change")
+def _render_flag(
+  sp: argparse.ArgumentParser, *, help: str = "render .slicer/render/ after the change",
+) -> argparse.ArgumentParser:
+  sp.add_argument("--render", action="store_true", help=help)
   return sp
 
 
@@ -1855,7 +1857,10 @@ def _next_fields(
   eff = graph.effective_scores(state.index)[item.id]
   path = state.find_slice_file(item.id)
   inherited = "^" if eff > item.score else ""
-  payload = item.to_dict() | {"path": str(path) if path else None, "effective_score": eff}
+  payload = item.to_dict() | {
+    "path": str(path) if path else None, "effective_score": eff,
+    "ready": ops.ready_state(state, item),
+  }
   lines = [
     f"{item.id}  {item.display_title()}",
     f"     score {eff}{inherited} · {state.config.status_label(item.status)}",
@@ -1930,6 +1935,7 @@ def _ready_entry(
       "id": item.id,
       "title": item.title,
       "status": item.status,
+      "ready": ops.ready_state(state, item),
       "depends_on": list(item.depends_on),
       "attempts": item.attempts,
       **_note_fields(item, manifest),
@@ -4270,7 +4276,8 @@ def build_parser() -> argparse.ArgumentParser:
                   help="pack whole current notes within this nonnegative character budget")
   sp.add_argument("--ready", action="store_true",
                   help="bounded pickup: item identity, its slice, and blocked ids; "
-                       "ready-checked items come first, within their pass")
+                       "ready-checked items come first, within their pass; "
+                       "does not filter, so an item's ready can be false")
   sp.add_argument("--section", action="append",
                   help="with --ready, return only this section (repeatable)")
   sp.add_argument("--owner", help="with --start, who to claim as (overrides SLICER_CLAIM_OWNER and claim_owner)")
@@ -4514,7 +4521,10 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
   sp.add_argument("--owner", help="who to record (overrides SLICER_CLAIM_OWNER and claim_owner)")
 
-  sp = add("land", cmd_land, "mark a merged slice done and print the git commands left")
+  sp = _render_flag(
+    add("land", cmd_land, "mark a merged slice done and print the git commands left"),
+    help="accepted for symmetry with done; land always renders and checks",
+  )
   sp.add_argument("id", help="the item to land")
   sp.add_argument("--branch", required=True, help="the slice's branch; it must be merged into HEAD")
   sp.add_argument("--note", required=True, help="one line recorded in history, as for `done`")

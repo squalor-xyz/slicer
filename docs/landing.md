@@ -18,6 +18,8 @@ Otherwise commit on its branch, merge into `main` with `git merge --no-ff`, then
 PYTHONPATH=src python3 -m slicer land <ID> --branch feature/<id>-<slug> --note "Describe the verified outcome"
 ```
 
+`land --render` is accepted and changes nothing: land always renders and checks.
+
 `land --owner NAME` records the done transition under that name, with the same actor precedence as `done --owner`.
 
 `--branch` must be an exact short local branch name other than the checked-out branch. A tag, SHA, revision expression, full `refs/heads/NAME`, unknown branch or current branch is refused (`invalid_branch`), before anything is written.

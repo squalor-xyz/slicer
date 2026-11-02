@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import unittest
+from contextlib import redirect_stdout
 from unittest.mock import patch
 
 import support
-from slicer import jsonio, mergeindex, model
+from slicer import cli, jsonio, mergeindex, model
 from slicer.errors import StateError
 
 WHEN = r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$"
@@ -55,6 +57,52 @@ class ReadinessTests(unittest.TestCase):
 
   def error_code(self, out: str) -> str:
     return json.loads(out)["error"]["code"]
+
+  def test_NextReady_ItemCarriesReadyLikeShow(self) -> None:
+    with self.repo() as repo:
+      for expected in (False, True, "stale"):
+        if expected is True:
+          self.mark(repo)
+        elif expected == "stale":
+          self.assertEqual(repo.run("edit", "S01", "--section", "Check", "--text", "changed")[0], 0)
+        for lean in ((), ("--lean",)):
+          with self.subTest(expected=expected, lean=lean):
+            code, out, err = repo.run("next", "--ready", "--json", *lean)
+            self.assertEqual(code, 0, err)
+            item = json.loads(out)["item"]
+            self.assertEqual(item["id"], "S01")
+            self.assertEqual(item["ready"], expected)
+            self.assertEqual(item["ready"], self.ready_of(repo))
+            keys = list(item)
+            self.assertEqual(keys[keys.index("status") + 1], "ready")
+
+  def test_Next_PlainAndBatch_CarryReady(self) -> None:
+    with self.repo(3) as repo:
+      self.mark(repo, "S01")
+      self.mark(repo, "S02")
+      self.assertEqual(repo.run("edit", "S02", "--section", "Check", "--text", "changed")[0], 0)
+      for ready in ((), ("--ready",)):
+        for batch in ((), ("--batch", "3")):
+          for lean in ((), ("--lean",)):
+            with self.subTest(ready=ready, batch=batch, lean=lean):
+              code, out, err = repo.run("next", *ready, *batch, "--json", *lean)
+              self.assertEqual(code, 0, err)
+              payload = json.loads(out)
+              entries = payload["items"] if batch else [payload]
+              items = [entry["item"] if ready else entry for entry in entries]
+              self.assertEqual(len(items), 3 if batch else 1)
+              for item in items:
+                self.assertEqual(item["ready"], self.ready_of(repo, item["id"]))
+                if not ready:
+                  keys = list(item)
+                  self.assertEqual(keys[keys.index("effective_score") + 1], "ready")
+
+  def test_NextReadyHelp_SaysItDoesNotFilter(self) -> None:
+    out = io.StringIO()
+    with redirect_stdout(out), self.assertRaises(SystemExit) as caught:
+      cli.main(["next", "--help"])
+    self.assertEqual(caught.exception.code, 0)
+    self.assertIn("does not filter", " ".join(out.getvalue().split()))
 
   def test_Show_NeverChecked_ReadyFalseWithoutARecord(self) -> None:
     with self.repo() as repo:

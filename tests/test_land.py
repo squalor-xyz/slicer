@@ -171,6 +171,23 @@ class LandTests(LandCase):
       f"git -C {repo.root} branch -d {BRANCH}",
     ])
 
+  def test_Land_RenderFlag_IsAcceptedAndChangesNothing(self) -> None:
+    outcomes = []
+    for flags in ((), ("--render",)):
+      repo = self.repo()
+      self.worktree(repo)
+      self.merge(repo)
+      code, out, err = self.land(repo, *flags, "--json")
+      self.assertEqual((code, err), (0, ""), out)
+      payload = json.loads(out)
+      rendered = {name: data for name, data in self.snapshot(repo).items()
+                  if name.startswith("render/")}
+      self.assertTrue(rendered)
+      self.assertEqual(self.status(repo), "done")
+      self.assertEqual(repo.run("check")[0], 0)
+      outcomes.append((list(payload), payload["item"], rendered))
+    self.assertEqual(outcomes[0], outcomes[1])
+
   def test_Land_PrintsCommitWorktreeRemoveAndBranchDelete(self) -> None:
     repo = self.repo()
     path = self.worktree(repo)

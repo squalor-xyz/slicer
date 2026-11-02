@@ -50,6 +50,9 @@ def _rows_for(name: str, doc: Path = REFERENCE) -> list[str]:
 
 
 class CommandTableTests(unittest.TestCase):
+  def test_Land_RenderFlag_IsNamedInCommandRow(self) -> None:
+    self.assertIn("[--render]", " ".join(_rows_for("land")))
+
   def test_EverySubcommand_HasACommandTableRow(self) -> None:
     missing = sorted(name for name in _subcommands() if not _rows_for(name))
     self.assertEqual(missing, [], "add a command-reference row for each command")
