@@ -15,8 +15,11 @@ returns `{"instructions": "..."}` with the same Markdown as the text output.
 `--root` selects the project. This page provides the detailed reference and
 reusable prompts; the command is the single source for the quick start.
 
-`slicer ai skill` prints a `SKILL.md` for that implement loop and the exit-code
-rules, using the same finish choice and the same fallback. Claude Code, Codex, and Grok load the same file.
+`slicer ai skill` prints a `SKILL.md` that opens by routing four jobs: getting started
+to `slicer ai getting-started`, building a roadmap from the project's docs to
+`slicer ai build-roadmap`, planning and filing to `slicer ai instructions --rest`,
+and implementing a slice to the loop below the routing. It keeps the exit-code
+rules, the same finish choice and the same fallback. Claude Code, Codex, and Grok load the same file.
 `slicer ai skill --install` writes it to `.claude/skills/slicer/SKILL.md`,
 `.agents/skills/slicer/SKILL.md` (Codex reads `.agents/skills/`, so there is no `.codex` copy),
 and `.grok/skills/slicer/SKILL.md` under the project root; it never touches the home directory.

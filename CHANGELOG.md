@@ -10,6 +10,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - `slicer ai getting-started` and `slicer ai build-roadmap` print short prompts for a first agent session and for building a roadmap from project documentation. Both point at `slicer ai instructions --rest`, stop for owner direction or agreement, and need no project, lock or write. `--json` returns `{name, prompt}` in that order.
 
+### Changed
+
+- The slicer skill routes getting started, building a roadmap from project docs, planning and filing, and implementing to their prompts or the implement loop. Its description now names getting started and building a roadmap so agents load it for those requests.
+
 ## [1.17.0] - 2026-10-30
 
 ### Added
