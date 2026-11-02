@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 import support
-from slicer import ops, store
+from slicer import ops, queries, store
 from slicer.errors import StateError
 
 
@@ -113,7 +113,7 @@ class NextAttemptsTests(unittest.TestCase):
         self.assertEqual(code, 2, err)
         self.assertEqual(json.loads(out)["error"]["code"], "usage")
       for value in (0, -1, True, "1", 1.5):
-        for select, args in ((ops.next_item, ()), (ops.next_batch, (2,))):
+        for select, args in ((queries.next_item, ()), (queries.next_batch, (2,))):
           with self.assertRaises(StateError) as caught:
             select(repo.state(), *args, max_attempts=value)
           self.assertEqual(caught.exception.code, "usage")

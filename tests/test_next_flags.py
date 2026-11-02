@@ -8,7 +8,7 @@ import unittest
 from contextlib import redirect_stdout
 
 import support
-from slicer import ops
+from slicer import queries
 from slicer.cli import build_parser
 from slicer.errors import StateError
 
@@ -108,7 +108,7 @@ class NextFlagTests(unittest.TestCase):
       self.add(repo, "elsewhere", "risk-db")
       self.add(repo, "safe")
       elsewhere = {"S05": [{"worktree": "other", "owner": "Ada", "status": "started"}]}
-      for select in (ops.next_item, lambda state, **kw: ops.next_batch(state, 10, **kw)):
+      for select in (queries.next_item, lambda state, **kw: queries.next_batch(state, 10, **kw)):
         result = select(repo.state(), elsewhere=elsewhere, no_flags=["risk-*"], max_attempts=2)
         self.assertEqual(result.blocked, [])
         self.assertEqual(result.unspecified, [])
@@ -171,7 +171,7 @@ class NextFlagTests(unittest.TestCase):
             else:
               self.assertEqual(out, "")
             self.assertEqual(repo.read(".slicer/index.json"), before)
-      for select in (ops.next_item, lambda state, **kw: ops.next_batch(state, 2, **kw)):
+      for select in (queries.next_item, lambda state, **kw: queries.next_batch(state, 2, **kw)):
         with self.assertRaises(StateError) as caught:
           select(repo.state(), flags=[""])
         self.assertEqual(caught.exception.code, "usage")

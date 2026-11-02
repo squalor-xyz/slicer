@@ -6,7 +6,7 @@ import json
 import unittest
 
 import support
-from slicer import ops
+from slicer import queries
 from slicer.errors import StateError
 
 
@@ -75,7 +75,7 @@ class NextOffsetTests(unittest.TestCase):
       self.assertEqual(code, 2)
       self.assertEqual(out, "no eligible item at offset 1\n")
       with self.assertRaises(StateError) as caught:
-        ops.next_item(repo.state(), -1)
+        queries.next_item(repo.state(), -1)
       self.assertEqual(caught.exception.code, "usage")
 
   def test_Next_InvalidOffset_ReportsUsageInTextAndJson(self):

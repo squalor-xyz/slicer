@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import graph, ops, tui
+from slicer import graph, queries, tui
 from slicer.config import Config
 from slicer.model import Index, Item, PassInfo
 
@@ -219,7 +219,7 @@ class ListPassOrderTests(unittest.TestCase):
       self.assertEqual(self.ids(repo), expected)
       state = repo.state()
       elsewhere = {"S03": [{"worktree": "sibling", "owner": "other", "status": "started"}]}
-      self.assertEqual(ops.next_item(state, elsewhere=elsewhere).item.id, "S04")
+      self.assertEqual(queries.next_item(state, elsewhere=elsewhere).item.id, "S04")
       self.run_ok(repo, "set", "S03", "--tree", "other")
       self.assertEqual(json.loads(self.run_ok(repo, "next", "--tree", "core", "--json"))["id"], "S04")
       self.run_ok(repo, "promote", "S03")

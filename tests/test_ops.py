@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import support
@@ -1102,3 +1104,41 @@ class SetFlagGroupTests(unittest.TestCase):
       code, _, err = repo.run("set", "S01", "--flag", "a\nb")
       self.assertEqual(code, 2)
       self.assertIn("newline", err)
+
+
+class QueryModuleTests(unittest.TestCase):
+  """`queries.py` holds the read-only half of what used to live in `ops.py`."""
+
+  # Modules that write, render or reach a front end. `cli*` is checked by prefix.
+  FORBIDDEN_IMPORTS = {
+    "ops", "render", "jsonio", "sync", "migrator", "relayrun", "feedback", "templates", "land", "tui",
+  }
+  STATE_WRITERS = {
+    "save_index", "save_slice", "save_roles", "save_template", "save_prompt", "save_config_raw",
+    "save_config_prefix", "delete_file", "delete_slice", "delete_prompt", "move_slice", "log",
+    "begin_stage", "commit_stage", "discard_stage", "staged",
+  }
+  FILE_WRITERS = {"open", "write_text", "write_bytes", "unlink", "replace", "rename"}
+
+  def test_Ops_QueryModule_WritesNothing(self) -> None:
+    source = (Path(support.__file__).resolve().parents[1] / "src" / "slicer" / "queries.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    imported = set()
+    for node in ast.walk(tree):
+      if isinstance(node, ast.ImportFrom) and node.module == "slicer":
+        imported.update(alias.name for alias in node.names)
+      elif isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("slicer."):
+        imported.add(node.module.split(".")[1])
+      elif isinstance(node, ast.Import):
+        imported.update(alias.name.split(".")[1] for alias in node.names if alias.name.startswith("slicer."))
+    self.assertFalse(imported & self.FORBIDDEN_IMPORTS, sorted(imported))
+    self.assertFalse([name for name in imported if name.startswith("cli")], sorted(imported))
+    called = set()
+    for node in ast.walk(tree):
+      if isinstance(node, ast.Call):
+        func = node.func
+        if isinstance(func, ast.Attribute):
+          called.add(func.attr)
+        elif isinstance(func, ast.Name):
+          called.add(func.id)
+    self.assertEqual(called & (self.STATE_WRITERS | self.FILE_WRITERS), set())

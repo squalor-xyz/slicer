@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Callable
 
-from slicer import check, graph, jsonio, ops, relayrun, vcs
+from slicer import check, graph, jsonio, queries, relayrun, vcs
 from slicer.store import State
 
 PARTS = ("items", "goals", "runs", "status", "health")
@@ -25,7 +25,7 @@ def build(state: State, parts: list[str], read: Callable[[str], object]) -> dict
         "id": item.id, "short_title": item.short_title, "status": item.status,
         "claim": item.claim_owner or None, "pass": item.pass_key,
         "size": item.size, "effort": item.effort, "score": item.score,
-        "quadrant": item.quadrant, "held": bool(ops.held_flags(state, item)),
+        "quadrant": item.quadrant, "held": bool(queries.held_flags(state, item)),
         "blocked": bool(graph.pending(state.index, item, state.config)),
       })
     return rows

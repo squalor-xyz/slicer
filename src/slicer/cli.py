@@ -43,6 +43,7 @@ from slicer import (
   ops,
   outline,
   prose,
+  queries,
   refs,
   relayrun,
   render,
@@ -1754,11 +1755,11 @@ def cmd_id_prefix(args: argparse.Namespace) -> int:
   return OK
 
 
-def _unspecified_payload(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[dict[str, object]]:
+def _unspecified_payload(result: queries.NextResult | queries.BatchResult | queries.ParallelPlan) -> list[dict[str, object]]:
   return [{"id": item_id, "missing": missing} for item_id, missing in result.unspecified]
 
 
-def _unspecified_lines(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[str]:
+def _unspecified_lines(result: queries.NextResult | queries.BatchResult | queries.ParallelPlan) -> list[str]:
   lines: list[str] = []
   for item_id, missing in result.unspecified:
     names = " and ".join(missing)
@@ -1770,12 +1771,12 @@ def _unspecified_lines(result: ops.NextResult | ops.BatchResult | ops.ParallelPl
   return lines
 
 
-def _elsewhere_payload(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[dict[str, str]]:
+def _elsewhere_payload(result: queries.NextResult | queries.BatchResult | queries.ParallelPlan) -> list[dict[str, str]]:
   """Skipped items, one row per sibling, in list's `{worktree, owner, status}` shape plus the id."""
   return [{"id": item_id} | entry for item_id, entries in result.elsewhere for entry in entries]
 
 
-def _elsewhere_lines(result: ops.NextResult | ops.BatchResult | ops.ParallelPlan) -> list[str]:
+def _elsewhere_lines(result: queries.NextResult | queries.BatchResult | queries.ParallelPlan) -> list[str]:
   return [
     f"skipped {item_id} (in work in {', '.join('wt:' + e['worktree'] for e in entries)})"
     for item_id, entries in result.elsewhere
@@ -1795,7 +1796,7 @@ def _sibling_only_lines(rows: list[dict[str, str]]) -> list[str]:
 
 def _note_skips(
   payload: dict, lines: list[str],
-  result: ops.NextResult | ops.BatchResult | ops.ParallelPlan,
+  result: queries.NextResult | queries.BatchResult | queries.ParallelPlan,
 ) -> None:
   """Expose why candidates were skipped, each category only when non-empty."""
   if result.held:
@@ -1888,7 +1889,7 @@ def _next_fields(
   inherited = "^" if eff > item.score else ""
   payload = item.to_dict() | {
     "path": str(path) if path else None, "effective_score": eff,
-    "ready": ops.ready_state(state, item),
+    "ready": queries.ready_state(state, item),
   }
   lines = [
     f"{item.id}  {item.display_title()}",
@@ -1964,7 +1965,7 @@ def _ready_entry(
       "id": item.id,
       "title": item.title,
       "status": item.status,
-      "ready": ops.ready_state(state, item),
+      "ready": queries.ready_state(state, item),
       "depends_on": list(item.depends_on),
       "attempts": item.attempts,
       **_note_fields(item, manifest),
@@ -1997,7 +1998,7 @@ def _ready_entry(
 
 
 def _emit_ready(
-  args: argparse.Namespace, state: store.State, item: model.Item, result: ops.NextResult,
+  args: argparse.Namespace, state: store.State, item: model.Item, result: queries.NextResult,
 ) -> None:
   """One bounded pickup: who is next, the slice to implement, and who is blocked.
 
@@ -2068,7 +2069,7 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   review = bool(cfg.review_status) and args.status == cfg.review_status
   queue = args.status if args.status is not None and not review else None
   if queue is not None:
-    ops.custom_queue(cfg, queue)
+    queries.custom_queue(cfg, queue)
   if args.start_to is not None and queue is None:
     raise StateError("--start-to on next requires a custom --status, not the review status",
                      code="usage")
@@ -2076,7 +2077,7 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   if args.batch is not None:
     return _cmd_next_batch(args, state, elsewhere, locked=locked)
   offset = 0 if args.n is None else args.n
-  result = ops.next_item(
+  result = queries.next_item(
     state, offset, elsewhere, review=review, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
     queue=queue, owner=args.owner, start_to=args.start_to, prefer_ready=bool(args.ready),
@@ -2139,7 +2140,7 @@ def _cmd_next_batch(
   elsewhere: dict[str, list[dict[str, str]]], *, locked: bool,
 ) -> int:
   """Several items from one tree and size. One lock covers the whole start."""
-  result = ops.next_batch(
+  result = queries.next_batch(
     state, args.batch, elsewhere, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
     disjoint=args.disjoint, prefer_ready=bool(args.ready),
@@ -2194,7 +2195,7 @@ def cmd_plan_parallel(args: argparse.Namespace) -> int:
   """The waves of work that can run side by side. Read-only, like `next`."""
   state = _state(args)
   elsewhere = store.in_work_elsewhere(state.root, state.index)
-  plan = ops.plan_parallel(
+  plan = queries.plan_parallel(
     state, args.width, elsewhere, tree=args.tree, size=args.size,
     max_attempts=args.max_attempts, flags=args.flag, no_flags=args.no_flag,
   )
@@ -2362,7 +2363,7 @@ def cmd_list(args: argparse.Namespace) -> int:
   if args.flag:
     items = [i for i in items if set(args.flag) & set(i.flags)]
   if args.held:
-    items = [i for i in items if ops.held_flags(state, i)]
+    items = [i for i in items if queries.held_flags(state, i)]
   elsewhere, only_sibling = store.sibling_work(state.root, state.index)
   hidden_count = 0
   if view is not None:
@@ -2407,7 +2408,7 @@ def cmd_list(args: argparse.Namespace) -> int:
     lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
   lines.extend(_sibling_only_lines(only_sibling))
   rows = [
-    i.to_dict() | {"ready": ops.ready_state(state, i), "in_work_elsewhere": elsewhere.get(i.id, [])}
+    i.to_dict() | {"ready": queries.ready_state(state, i), "in_work_elsewhere": elsewhere.get(i.id, [])}
     for i in items
   ]
   if args.envelope:
@@ -2525,7 +2526,7 @@ def _emit_find(
 
 
 def _warn_files_section(state: store.State) -> None:
-  warning = ops.files_section_warning(state)
+  warning = queries.files_section_warning(state)
   if warning is not None:
     print(f"slicer: warning: {warning}", file=sys.stderr)
 
@@ -2536,7 +2537,7 @@ def _deps_overlap(args: argparse.Namespace, state: store.State) -> int:
     raise StateError("deps --overlap needs at least two item ids", code="usage")
   if args.id is not None or args.format is not None:
     raise StateError("deps --overlap cannot be combined with ID or --format", code="usage")
-  pairs = ops.path_overlap(state, args.overlap)
+  pairs = queries.path_overlap(state, args.overlap)
   _warn_files_section(state)
   lines = [
     f"{pair['a']} {pair['b']}  " + (", ".join(pair["shared"]) or "-")  # type: ignore[arg-type]
@@ -2669,7 +2670,7 @@ def cmd_show(args: argparse.Namespace) -> int:
     )
   resolved = render.citations(state.index, item)
   header = render.header_lines(state.index, item)
-  kids = ops.slivers_of(state, item.id)
+  kids = queries.slivers_of(state, item.id)
   sliver_rows = [{"id": k.id, "status": k.status, "title": k.title} for k in kids]
   sliver_lines = ["Slivers:", *(f"  {k.id}  {k.status}  {k.display_title()}" for k in kids)] if kids else []
   if sl is None:
@@ -2678,7 +2679,7 @@ def cmd_show(args: argparse.Namespace) -> int:
       lines.append(header)
     lines.append(f"(no slice yet; run `slicer promote {item.id}`)")
     _emit(args, item.to_dict() | _note_fields(item, manifest) | {
-            "ready": ops.ready_state(state, item), "paths": ops.item_file_paths(state, item.id),
+            "ready": queries.ready_state(state, item), "paths": queries.item_file_paths(state, item.id),
             "citations": resolved, "slivers": sliver_rows},
           "\n".join(lines + sliver_lines + _ready_line(state, item)
                     + _pack_text(item, sl, manifest, notes=False)))
@@ -2687,8 +2688,8 @@ def cmd_show(args: argparse.Namespace) -> int:
     sl, state.config, state.template("slice.md"), item.rendered_notes, header,
   ).decode("utf-8")
   _emit(args, item.to_dict() | _note_fields(item, manifest) | {
-    "ready": ops.ready_state(state, item),
-    "slice": sl.to_dict(), "paths": ops.item_file_paths(state, item.id),
+    "ready": queries.ready_state(state, item),
+    "slice": sl.to_dict(), "paths": queries.item_file_paths(state, item.id),
     "citations": resolved, "slivers": sliver_rows,
   }, "\n".join([text, *sliver_lines, *_ready_line(state, item),
                 *_pack_text(item, sl, manifest, notes=False)]))
@@ -2823,7 +2824,7 @@ def _ready_line(state: store.State, item: model.Item) -> list[str]:
   if item.readiness is None:
     return []
   record = item.readiness
-  verdict = "true" if ops.ready_state(state, item) is True else "stale"
+  verdict = "true" if queries.ready_state(state, item) is True else "stale"
   return [f"Ready: {verdict} ({record.by}, {record.at})"]
 
 
@@ -3204,7 +3205,7 @@ def cmd_done(args: argparse.Namespace) -> int:
     raise StateError("--check has no effect without --render", code="usage")
   item_ids, batch = _batch_ids(args)
   state = _state(args)
-  by = ops.actor(state, args.owner)
+  by = queries.actor(state, args.owner)
   if args.render:
     items, written = ops.done_and_render(state, item_ids, note=args.note or "", by=by)
   else:
@@ -3229,7 +3230,7 @@ def cmd_land(args: argparse.Namespace) -> int:
   Prints the git commands left; slicer commits, removes and deletes nothing itself.
   """
   state = _state(args)
-  landing = land.land(state, args.id, args.branch, note=args.note, by=ops.actor(state, args.owner))
+  landing = land.land(state, args.id, args.branch, note=args.note, by=queries.actor(state, args.owner))
   lines = [
     f"{landing.item.id} -> {state.config.status_label(landing.item.status)}",
     f"rendered {landing.written} file(s)",
@@ -3920,7 +3921,7 @@ def cmd_status(args: argparse.Namespace) -> int:
   """The one-call front door: what is next, how far along, and what is blocked."""
   state = _state(args)
   elsewhere, only_sibling = store.sibling_work(state.root, state.index)
-  result = ops.next_item(state, 0, elsewhere)
+  result = queries.next_item(state, 0, elsewhere)
   census = _census(state)
   nxt = result.item
   blocked = [{"id": i, "waiting_on": b} for i, b in result.blocked]
