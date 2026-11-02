@@ -81,7 +81,7 @@ class AiPromptTests(unittest.TestCase):
                 for p in repo.root.rglob("*")}
       before = snapshot()
       with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
-           patch("slicer.cli._ai_project", side_effect=AssertionError("project read")):
+           patch("slicer.cli_ai._ai_project", side_effect=AssertionError("project read")):
         for name in ("build-roadmap", "getting-started"):
           for flags in ((), ("--json",)):
             self.assertEqual(repo.run("ai", name, *flags)[0], 0)
