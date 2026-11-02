@@ -17479,7 +17479,7 @@
       "id": "s439",
       "title": "ai hooks: a project-local Claude Code hooks snippet",
       "short_title": "ai hooks for Claude Code",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s436"
