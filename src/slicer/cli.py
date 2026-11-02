@@ -785,12 +785,14 @@ def _step_line(step: relayrun.Step) -> str:
 
 def _question_line(step: relayrun.Step) -> str | None:
   """The step's latest question under its line in the text list: its id, whether it is still
-  open, and its title."""
+  open, its title, and the open count when several questions remain open."""
   question = step.question
   if question is None:
     return None
   state = "open" if question.answer is None else "answered"
-  return f"      question {question.id} {state}  {question.title}"
+  open_count = sum(q.answer is None for q in step.questions)
+  count = f" ({open_count} open questions)" if open_count > 1 else ""
+  return f"      question {question.id} {state}  {question.title}{count}"
 
 
 def _say_fallback(report: ops.LedgerReport) -> None:

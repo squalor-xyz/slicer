@@ -383,6 +383,7 @@ class Step:
       "task": self.task, "parent": self.parent,
       "begun_at": self.begun_at, "updated_at": self.updated_at,
       "question": None if question is None else question.to_dict(),
+      "questions": [q.to_dict() for q in self.questions],
       "reason": self.reason, "verdict": self.verdict,
     }
 
@@ -395,7 +396,8 @@ class Step:
       begun_at=data["begun_at"], updated_at=data["updated_at"],
       waiting_on=data.get("waiting_on", ""), waiting_since=data.get("waiting_since", ""),
       reason=data.get("reason", ""), verdict=data.get("verdict", ""),
-      questions=[Question.from_dict(data["question"])] if data.get("question") else [],
+      questions=[Question.from_dict(q) for q in data["questions"]] if "questions" in data else
+        ([Question.from_dict(data["question"])] if data.get("question") else []),
     )
 
 

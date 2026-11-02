@@ -2565,3 +2565,6 @@
 {"when": "2026-11-02T17:48:17Z", "item": "s431", "action": "note", "from": "", "to": "", "note": "Ready for review: s431 syncs the relay-brief.md override wit", "by": "Jon Robbins"}
 {"when": "2026-11-02T17:48:17Z", "item": "s431", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-02T17:48:29Z", "item": "s431", "action": "status", "from": "review", "to": "done", "note": "Landed: relay-brief.md override carries the built-in no-background and no-cd Rules bullets; differs from the default only in ENVIRONMENT; gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:48:53Z", "item": "s434", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:14:09Z", "item": "s434", "action": "note", "from": "", "to": "", "note": "Ready for review: s434 lists every open question in the rela", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:14:10Z", "item": "s434", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

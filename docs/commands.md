@@ -663,14 +663,15 @@ records the question and leaves the step running, so the orchestrator does not e
 wait. The owner, or a dashboard that reads `relay-run list --json`, may answer it with `relay-run
 answer` while the run goes on, and the orchestrator reads it with `relay-run answer RUN QUESTION_ID
 --get` before the closing note and the finish step. A question still open then goes on the run
-report's owner-needed line. `relay-run list` shows only a step's latest question (the JSON
-`question` and the text line below), so a dashboard with several non-blocker questions open reads
-each one by its id with `relay-run answer RUN QUESTION_ID --get` (ids run `q1`, `q2`, ... in the
-run); a `questions` list in the step JSON is filed for later.
+report's owner-needed line. `relay-run list --json` includes every question on each step in
+`questions`, oldest first, including both open and answered questions. A dashboard can find
+every open question there without reading each by id.
 
 In `list --json` a step's `question` is its latest question, or `null`: `{id, title, options,
-recommend, blocker, key, reasoning, asked_at, answered_at, answer}`. `options` is a list of
-`{label, summary}`; `recommend`, `key` and `reasoning` are `""` when not given. `asked_at` and
+recommend, blocker, key, reasoning, asked_at, answered_at, answer}`. The `questions` list follows
+`question` in the step JSON, with each entry in that same shape; it is empty when none were
+asked. `options` is a list of `{label, summary}`; `recommend`, `key` and `reasoning` are `""`
+when not given. `asked_at` and
 `answered_at` are the UTC stamps of the ask and the answer events; while the question is open
 `answered_at` is `""` and `answer` is `null`, afterwards `answer` is `{option, text, why, by}`
 with `option` the picked label and `text` `""`, or `text` the free text and `option` `""`. A
@@ -678,7 +679,8 @@ question is open while `answered_at` is `""`, whatever phase its step is in. Its
 number, one past the largest in the run; a question asked from the checkout's own file (see
 [Sandboxes](#sandboxes)) carries that file's prefix like a step id, `cXXXXXXXX-q1`. The text list
 shows a step's latest question on a line of its own under the step:
-`      question q1 open  TITLE`, or `answered` once it is.
+`      question q1 open  TITLE`, or `answered` once it is. When more than one question is open
+on the step, the line adds the count, for example ` (2 open questions)`.
 
 Both events are step events an older slicer folds as heartbeats. The ask is a `start` event with
 `waiting_on` `owner` and a `question` object; the answer is a step event with no `waiting_on` and an

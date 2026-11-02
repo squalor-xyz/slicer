@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `relay-run list --json` includes each step's `questions`, oldest first, both open and answered, while `question` keeps the latest for compatibility (s434). The text list adds the open-question count when a step has more than one open question.
+
 - `slicer land` accepts `--render` as a no-op: it always renders and checks. `next --json`, plain, with `--ready` and in both `--batch` forms, reports the same `ready` value as `show` and `list` (`true`, `false` or `"stale"`), including under `--lean`. The `--ready` help clarifies that it orders rather than filters, so an item's `ready` can be `false` (s416).
 
 - Emptying an item note in the TUI (s426) no longer deletes it. A one-line prompt asks for the reason and retracts the note through the same operation as `slicer note-retract`, so its text and who, when and why stay on the record; a blank reason or Esc writes nothing, and a note that is already retracted reports an error. The status line reads "Retract reason, required".

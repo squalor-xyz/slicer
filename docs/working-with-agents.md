@@ -170,10 +170,10 @@ A question that does not block is asked in the ledger too, as soon as it arises,
 `--blocker`: the run goes on and does not wait for you. You, or a dashboard that reads the ledger,
 may answer it with `relay-run answer` while the run goes on; the orchestrator reads the answers
 before the closing note and the finish step, and an answer that changes the slice becomes a fix
-round first. A question still open then goes on the report's owner-needed line. `relay-run list`
-shows only a step's latest question, so with several open, read each by its id with
-`relay-run answer RUN QUESTION_ID --get`; a list of every question in the step JSON is filed for
-later.
+round first. A question still open then goes on the report's owner-needed line.
+`relay-run list --json` includes every question on each step in `questions`, oldest first,
+both open and answered; `question` keeps the latest. The text list shows the latest question
+and adds the count when more than one question on that step is open.
 
 ### Approval and landing
 

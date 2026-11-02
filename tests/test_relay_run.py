@@ -422,7 +422,7 @@ class FoldTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
-       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason",
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "questions", "reason",
        "verdict"],
     )
     self.assertEqual(list(data["counts"]), ["steps", "running", "waiting", "subagents", "roles"])
@@ -2076,7 +2076,7 @@ class WaitTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
-       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason",
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "questions", "reason",
        "verdict"],
     )
     self.assertEqual((data["state"], data["counts"]["waiting"]), ("active", 1))
@@ -2740,7 +2740,7 @@ class AskAnswerTests(RelayRunCase):
     self.assertEqual(
       list(data["steps"][0]),
       ["id", "role", "agent", "vendor", "model", "reasoning", "phase", "waiting_on",
-       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "reason",
+       "waiting_since", "task", "parent", "begun_at", "updated_at", "question", "questions", "reason",
        "verdict"],
     )
     self.assertIsNone(data["steps"][0]["question"])
@@ -2765,6 +2765,56 @@ class AskAnswerTests(RelayRunCase):
     self.assertEqual(self.runs(repo)[0]["steps"][0]["question"]["id"], "q2")
     got = self.ok(repo, "relay-run", "answer", run, "q1", "--get")
     self.assertEqual(got["question"]["answer"]["option"], "file")
+
+  def test_List_SeveralOpenQuestions_JsonListsEveryQuestion(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.assertEqual(self.runs(repo)[0]["steps"][0]["questions"], [])
+    q1 = self.ask(repo, run, step, blocker=False)["question"]
+    q2 = self.ask(repo, run, step, "--title", "Which format?", blocker=False)["question"]
+    self.assertEqual([q1["id"], q2["id"]], ["q1", "q2"])
+    self.assertEqual([(q["answer"], q["answered_at"]) for q in (q1, q2)], [(None, ""), (None, "")])
+    for lean in ((), ("--lean",)):
+      data = self.ok(repo, "relay-run", "list", run, *lean)["runs"][0]
+      listed = data["steps"][0]
+      self.assertEqual(listed["questions"], [q1, q2])
+      self.assertEqual(listed["question"], q2)
+      self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
+    answered = self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")["question"]
+    self.assertEqual(answered["answer"]["option"], "file")
+    self.assertTrue(answered["answered_at"])
+    data = self.ok(repo, "relay-run", "list", run)["runs"][0]
+    self.assertEqual(data["steps"][0]["questions"], [answered, q2])
+    self.assertEqual(data["steps"][0]["question"], q2)
+    self.assertEqual(relayrun.Run.from_dict(data).to_dict(), data)
+    legacy = dict(data["steps"][0])
+    del legacy["questions"]
+    self.assertEqual(relayrun.Step.from_dict(legacy).to_dict()["questions"], [q2])
+
+  def test_List_SeveralOpenQuestions_TextNamesOpenCount(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.ask(repo, run, step, blocker=False)
+    self.ask(repo, run, step, "--title", "Which format?", blocker=False)
+    code, out, err = repo.run("relay-run", "list", run)
+    self.assertEqual((code, err), (0, ""))
+    self.assertEqual(out.splitlines()[2], "      question q2 open  Which format? (2 open questions)")
+    self.ask(repo, run, step, blocker=False)
+    self.ok(repo, "relay-run", "answer", run, "q3", "--option", "file")
+    self.assertEqual(
+      repo.run("relay-run", "list", run)[1].splitlines()[2],
+      "      question q3 answered  Which store? (2 open questions)",
+    )
+    self.ok(repo, "relay-run", "answer", run, "q1", "--option", "file")
+    self.assertEqual(
+      repo.run("relay-run", "list", run)[1].splitlines()[2],
+      "      question q3 answered  Which store?",
+    )
+    self.ok(repo, "relay-run", "answer", run, "q2", "--option", "file")
+    self.assertEqual(
+      repo.run("relay-run", "list", run)[1].splitlines()[2],
+      "      question q3 answered  Which store?",
+    )
 
   def test_List_Text_OpenQuestion_ShowsUnderItsStep(self) -> None:
     repo = self.project()
