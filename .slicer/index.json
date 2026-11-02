@@ -17244,7 +17244,7 @@
       "id": "s431",
       "title": "This repo's relay-brief override carries the built-in Rules bullets",
       "short_title": "Sync relay-brief override",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
