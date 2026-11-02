@@ -17661,10 +17661,25 @@
       "id": "s440",
       "title": "ai help and docs coverage",
       "short_title": "ai help and docs coverage",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "524c1a54-a427-40c4-8ee3-e1348d294546",
+          "kind": "",
+          "text": "**2026-11-02** — Ready for review: s440 covers nested ai subcommands in the docs-coverage test, fixes the build-roadmap placeholders and the ai skill and ai help text; full suite 3186 tests OK; gate VERDICT: PASS.",
+          "created_at": "2026-11-02T18:26:19Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17687,7 +17702,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

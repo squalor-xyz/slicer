@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `ai build-roadmap` uses distinct `OUTLINE` and `GOALS` file placeholders; `ai skill --help` names the jobs the skill routes, and the top-level `ai` help lists every subcommand (s440).
+
 - `relay-run list --json` includes each step's `questions`, oldest first, both open and answered, while `question` keeps the latest for compatibility (s434). The text list adds the open-question count when a step has more than one open question.
 
 - `slicer land` accepts `--render` as a no-op: it always renders and checks. `next --json`, plain, with `--ready` and in both `--batch` forms, reports the same `ready` value as `show` and `list` (`true`, `false` or `"stale"`), including under `--lean`. The `--ready` help clarifies that it orders rather than filters, so an item's `ready` can be `false` (s416).

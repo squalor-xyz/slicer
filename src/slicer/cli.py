@@ -4035,7 +4035,7 @@ def build_parser() -> argparse.ArgumentParser:
       _json_flags(sp)
     return sp
 
-  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started, hooks, guard", parents=[common])
+  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started, show, set, reset, hooks, guard, relay-orchestrator, relay-brief", parents=[common])
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
   _json_flags(sp)
@@ -4085,7 +4085,8 @@ def build_parser() -> argparse.ArgumentParser:
   inner = aisub.add_parser(
     "skill", help="print or install the agent skill for Claude Code, Codex, and Grok",
     description=(
-      "Print the SKILL.md for the implement loop. Same project read and "
+      "Print the SKILL.md that routes getting started, building a roadmap, "
+      "planning and filing, implementing a slice, and a slice relay. Same project read and "
       "fallback as instructions: warns on stderr, does not lock or write. "
       "--output PATH and --install write the text it would have printed "
       "instead, and stdout lists the paths written."

@@ -37,6 +37,19 @@ def _subcommands() -> dict[str, argparse.ArgumentParser]:
   return dict(action.choices)
 
 
+def _ai_subcommands() -> dict[str, argparse.ArgumentParser]:
+  parser = _subcommands()["ai"]
+  action = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
+  return dict(action.choices)
+
+
+def _ai_rows_for(name: str) -> list[str]:
+  # The default subcommand is documented as `ai [instructions]`.
+  word = re.escape(name)
+  pattern = re.compile(rf"`ai (?:{word}|\[{word}\])(?:[ `]|$)")
+  return [row for row in _rows(REFERENCE) if pattern.search(row.split(" | ")[0])]
+
+
 def _rows(doc: Path) -> list[str]:
   """Each command-table row, first cell and description joined."""
   return [line for line in doc.read_text(encoding="utf-8").splitlines() if line.startswith("| `")]
@@ -50,6 +63,23 @@ def _rows_for(name: str, doc: Path = REFERENCE) -> list[str]:
 
 
 class CommandTableTests(unittest.TestCase):
+  def test_EveryAiSubcommand_HasACommandTableRow(self) -> None:
+    missing = sorted(name for name in _ai_subcommands() if not _ai_rows_for(name))
+    self.assertEqual(missing, [], "add a command-reference row for each ai subcommand")
+
+  def test_EveryAiSubcommandFlag_IsNamedInItsRow(self) -> None:
+    missing = {}
+    for name, sub in _ai_subcommands().items():
+      flags = {
+        o for a in sub._actions if a.help is not argparse.SUPPRESS
+        for o in a.option_strings if o.startswith("--")
+      } - COMMON
+      text = " ".join(_ai_rows_for(name))
+      gone = sorted(flag for flag in flags if flag not in text)
+      if gone:
+        missing[name] = gone
+    self.assertEqual(missing, {}, "name each flag in its docs/commands.md ai row")
+
   def test_Land_RenderFlag_IsNamedInCommandRow(self) -> None:
     self.assertIn("[--render]", " ".join(_rows_for("land")))
 

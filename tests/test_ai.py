@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import ast
 import dataclasses
 import io
@@ -18,6 +19,34 @@ from slicer import ai, cli, config, ops, relayrun, roles, store, templates
 
 
 class AiPromptTests(unittest.TestCase):
+  def test_AiBuildRoadmap_NamesTheOutlineAndGoalsFilesApart(self) -> None:
+    self.assertNotIn("FILE", ai.BUILD_ROADMAP)
+    for command in (
+      "slicer import OUTLINE --dry-run --json",
+      "slicer import OUTLINE --render --json",
+      "slicer prose edit goals --file GOALS --render",
+    ):
+      self.assertIn(command, ai.BUILD_ROADMAP)
+
+  def test_AiSkillHelp_NamesTheJobsItRoutes(self) -> None:
+    with redirect_stdout(io.StringIO()) as out:
+      with self.assertRaises(SystemExit) as caught:
+        cli.main(["ai", "skill", "--help"])
+    self.assertEqual(caught.exception.code, 0)
+    text = " ".join(out.getvalue().split())
+    self.assertNotIn("implement loop", text)
+    for job in ("getting started", "building a roadmap", "slice relay"):
+      self.assertIn(job, text)
+
+  def test_AiHelpLine_NamesEveryAiSubcommand(self) -> None:
+    parser = cli.build_parser()
+    sub = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
+    aisub = next(a for a in sub.choices["ai"]._actions
+                 if isinstance(a, argparse._SubParsersAction))
+    help_text = next(a.help for a in sub._choices_actions if a.dest == "ai")
+    named = set(help_text.partition(": ")[2].split(", "))
+    self.assertEqual(set(aisub.choices) - named, set())
+
   def _check_text(self, name: str, expected: str) -> None:
     for initialized in (False, True):
       with self.subTest(initialized=initialized), support.TempRepo() as repo, \
@@ -82,7 +111,7 @@ class AiPromptTests(unittest.TestCase):
     self.assertIn("Do not claim, edit or commit anything until the owner asks.", text)
     text = ai.BUILD_ROADMAP
     self.assertLess(text.index("Stop and show the owner the proposal"),
-                    text.index("slicer import FILE --dry-run --json"))
+                    text.index("slicer import OUTLINE --dry-run --json"))
     self.assertIn("Once it is agreed", text)
     self.assertIn("Do not implement, commit or push.", text)
 

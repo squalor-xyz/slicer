@@ -2569,3 +2569,6 @@
 {"when": "2026-11-02T18:14:09Z", "item": "s434", "action": "note", "from": "", "to": "", "note": "Ready for review: s434 lists every open question in the rela", "by": "Jon Robbins"}
 {"when": "2026-11-02T18:14:10Z", "item": "s434", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-02T18:14:19Z", "item": "s434", "action": "status", "from": "review", "to": "done", "note": "Landed: relay-run step JSON lists every open question (questions, in order) and the text counts open questions; full suite 3181 OK; gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:14:48Z", "item": "s440", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:26:19Z", "item": "s440", "action": "note", "from": "", "to": "", "note": "Ready for review: s440 covers nested ai subcommands in the d", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:26:19Z", "item": "s440", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

@@ -1489,9 +1489,9 @@ slices using the slicer CLI.
    each with dependencies, acceptance checks and scores, citing the document it comes from.
    Mark anything the documentation leaves open as a question; do not invent scope.
 4. Stop and show the owner the proposal. Once it is agreed, write it as one outline, run
-   `slicer import FILE --dry-run --json`, fix every problem, then
-   `slicer import FILE --render --json` and `slicer check --json`. Record agreed goals with
-   `slicer prose edit goals --file FILE --render`.
+   `slicer import OUTLINE --dry-run --json`, fix every problem, then
+   `slicer import OUTLINE --render --json` and `slicer check --json`. Record agreed goals with
+   `slicer prose edit goals --file GOALS --render`.
 5. Do not implement, commit or push.
 """
 
