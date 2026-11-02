@@ -1,9 +1,17 @@
 ---
 name: slicer
-description: Drive a slicer roadmap. Use when asked to review a roadmap, plan work, take a slice, implement the next slice, or drive slicer. Read and change roadmap state only through slicer commands, never by opening .slicer/ files.
+description: Drive a slicer roadmap. Use when asked to get started with slicer, build a roadmap from a project's docs, review a roadmap, plan work, take a slice, implement the next slice, or drive slicer. Read and change roadmap state only through slicer commands, never by opening .slicer/ files.
 ---
 
 Do not open, search, parse, or edit tracking files; use the slicer commands.
+
+Pick the job you were asked to do:
+
+- Getting started in this project: run `slicer ai getting-started` and follow it.
+- Building a roadmap from the project's docs: run `slicer ai build-roadmap` and follow it.
+- Planning, filing, claims and review: run `slicer ai instructions --rest`.
+- Implementing a slice: follow the steps below.
+- A slice relay: run `slicer ai relay` (see the end of this skill).
 
 1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
    to get the next item and only those sections. The headings are examples;
