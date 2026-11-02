@@ -29,7 +29,10 @@ from slicer.model import (
   PassInfo, Readiness, Section, Slice, canonical_kind, effort_rank, extract_boundary,
   is_unscored, spec_digest, successor_would_cycle,
 )
-from slicer.queries import _missing_spec, actor, check_start_to, custom_queue, held_flags, slivers_of
+from slicer.queries import (
+  _blockers, _missing_spec, _reclaim_check, actor, check_start_to, custom_queue, held_flags,
+  slivers_of,
+)
 from slicer.roles import RoleMatrix, RoleRow, RoleRule, RoleWhen
 from slicer.store import LazySlices, SliceFiles, State
 
@@ -2074,32 +2077,6 @@ class PurgeResult:
   file_removed: bool
 
 
-def dependents(state: State, item_id: str) -> list[str]:
-  """Items whose `depends_on` names this one."""
-  return [i.id for i in state.index.items if item_id in i.depends_on]
-
-
-def _blockers(state: State, item_id: str, *, purge: bool = False) -> list[str]:
-  """Reasons not to remove this item, in the order worth reading."""
-  item = state.index.get(item_id)
-  if item is None:
-    raise StateError(f"no such item: {item_id}", code="no_such_item")
-  reasons: list[str] = []
-  citing = dependents(state, item_id)
-  if citing:
-    reasons.append(f"{', '.join(citing)} depend(s) on it")
-  kids = [i.id for i in slivers_of(state, item_id)]
-  if kids:
-    reasons.append(f"{', '.join(kids)} {'is a sliver' if len(kids) == 1 else 'are slivers'} of it")
-  if purge:
-    sources = [i.id for i in state.index.items if i.discovered_from == item_id]
-    if sources:
-      reasons.append(f"{', '.join(sources)} discovered from it")
-  if item.status == state.config.done_status:
-    reasons.append("it is done; removing it hides landed work")
-  return reasons
-
-
 def _guard(state: State, item_id: str, action: str, force: bool) -> None:
   reasons = _blockers(state, item_id, purge=action == "purge")
   if reasons and not force:
@@ -2127,49 +2104,6 @@ def retire(state: State, item_id: str, *, reason: str, force: bool = False) -> I
   state.save_index()
   _record(state, item_id, "retire", frm=previous, to=item.status, note=item.reason)
   return item
-
-
-def _reclaim_check(state: State, item_id: str) -> tuple[bool, str]:
-  """Whether purging `item_id` frees its id, and why. Read-only; independent of
-  whether the item is still in the index, so a preview and the real purge agree."""
-  if any(i.discovered_from == item_id for i in state.index.items):
-    return False, f"{item_id} is referenced by discovered_from"
-  if slivers_of(state, item_id):
-    return False, f"{item_id} is referenced by parent"
-  number = ids.parse_id(item_id, state.index.id_prefix)
-  if number is None:
-    return False, f"{item_id} is not an allocated id"
-  if number + 1 != state.index.next_id:
-    return False, f"{item_id} is not the most recent id"
-  cited = [s for s in vcs.subjects(state.root) if re.search(rf"\b{re.escape(item_id)}\b", s)]
-  if cited:
-    return False, f"{item_id} is named in {len(cited)} commit subject(s)"
-  return True, "it was the most recent id and nothing refers to it"
-
-
-@dataclass
-class RemovePreview:
-  """What `remove --dry-run` would do, computed without writing anything."""
-
-  id: str
-  mode: str
-  blockers: list[str]
-  file: str | None
-  id_freed: bool = False
-  reason: str = ""
-
-
-def remove_preview(state: State, item_id: str, *, purge: bool) -> RemovePreview:
-  """Report the effect of a purge/retire — dependents, id fate, slice file —
-  without mutating anything, so a destructive removal is a decision not a surprise."""
-  state.index.require(item_id)
-  path = state.find_slice_file(item_id)
-  blockers = _blockers(state, item_id, purge=purge)
-  freed, why = _reclaim_check(state, item_id) if purge else (False, "")
-  return RemovePreview(
-    id=item_id, mode="purge" if purge else "retire", blockers=blockers,
-    file=str(path) if path else None, id_freed=freed, reason=why,
-  )
 
 
 def purge(state: State, item_id: str, *, force: bool = False) -> PurgeResult:

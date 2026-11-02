@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import support
-from slicer import graph, jsonio, mergeindex, model, ops, outline, render, templates, tui, verify
+from slicer import graph, jsonio, mergeindex, model, ops, outline, queries, render, templates, tui, verify
 from slicer.errors import StateError
 
 
@@ -273,7 +273,7 @@ class ParentTests(unittest.TestCase):
       state = repo.state()
       state.index.require("S01").parent = "S02"
       state.save_index()
-      preview = ops.remove_preview(state, "S02", purge=True)
+      preview = queries.remove_preview(state, "S02", purge=True)
       self.assertFalse(preview.id_freed)
       self.assertIn("parent", preview.reason)
       result = ops.purge(state, "S02", force=True)

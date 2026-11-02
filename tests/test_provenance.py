@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import support
-from slicer import graph, model, ops, outline, render, templates, verify
+from slicer import graph, model, ops, outline, queries, render, templates, verify
 from slicer.errors import StateError
 
 
@@ -170,7 +170,7 @@ class ProvenanceTests(unittest.TestCase):
       state = repo.state()
       state.index.require("S01").discovered_from = "S02"
       state.save_index()
-      preview = ops.remove_preview(state, "S02", purge=True)
+      preview = queries.remove_preview(state, "S02", purge=True)
       self.assertFalse(preview.id_freed)
       result = ops.purge(state, "S02", force=True)
       self.assertFalse(result.id_freed)

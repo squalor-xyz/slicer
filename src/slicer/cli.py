@@ -3527,7 +3527,7 @@ def cmd_prose_drop_pass(args: argparse.Namespace) -> int:
 def cmd_remove(args: argparse.Namespace) -> int:
   state = _state(args)
   if args.dry_run:
-    preview = ops.remove_preview(state, args.id, purge=args.purge)
+    preview = queries.remove_preview(state, args.id, purge=args.purge)
     payload = {
       "id": preview.id, "mode": preview.mode, "dry_run": True,
       "blockers": preview.blockers, "file": preview.file,
