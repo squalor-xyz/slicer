@@ -1,38 +1,40 @@
 {
   "id": "s414",
   "title": "Readiness follow-ups",
-  "lead": [],
+  "lead": [
+    "The merge driver treats an item's `readiness` record as one value: two different records conflict at `items/ID/readiness` instead of being merged field by field into a record nobody wrote. The docs also say where a ready item with no pass goes in `next --ready`."
+  ],
   "depends_note": null,
   "findings_note": "",
   "size": "S",
   "flags": [],
   "trees_note": "ops",
   "trees_plural": false,
-  "boundary": "**Not in this slice:**",
+  "boundary": "**Not in this slice:** the `ready` key on `next` payloads and the \"orders, not filters\" wording, both landed with s416 (5a384a9); any change to `next --ready` ordering itself; readiness staleness rules; merge handling of any other item field.",
   "sections": [
     {
       "heading": "Why",
-      "body": "From the s400 review: confirm where ready items without a pass slot in `next --ready`; give the `next --ready` payload the ready value; mergeindex should treat readiness as one value when merging."
+      "body": "The s400 review left three follow-ups. Checked against main at 4b32624 on 2026-11-02:\n\n1. **Where ready items without a pass slot go in `next --ready`.** The behaviour is settled and tested, but not documented. `ops._ready_first` (src/slicer/ops.py:1973-1991) groups items by `(graph.tier, graph.pass_rank)`, and `pass_rank` (src/slicer/graph.py:184-196) gives an item with no pass `-1` when passes are declared. Unpassed items therefore form their own group. A ready unpassed item moves ahead only of unpassed items, in the slots they already hold; `ranked_order` places those slots by score among the passed items (\"empty keys merge by score\"). Two tests from s400 pin this, and they pass: `test_NextReady_ReadyItemWithNoPass_StaysInItsSlot` and `test_NextReady_ReadyUnpassedItem_LeadsOnlyAmongUnpassedItems` (tests/test_readiness.py). A probe with passes p1 and p2, S01 in p1, S04 in p2, S02 and S03 unpassed and S03 ready gave `next --ready --batch 4`: S01, S03, S02, S04 (plain: S01, S02, S03, S04). The batch form agrees with `-n` but no test covers it. docs/agents.md's readiness paragraph (~line 969) says only \"within their tier and declared pass, never moves an item across passes\" and says nothing of unpassed items.\n2. **`next --ready` payload carries the ready value.** Done by s416: `_ready_entry` and `_next_fields` (src/slicer/cli.py) add `ready`, and docs/agents.md says `next --json` (plain, `--ready`, both `--batch` forms) adds it. Left out of this slice.\n3. **Merge-index treats readiness as one value.** Still true. `Item.to_dict` stores `readiness` as an object `{by, at, note, digest}` at item level (src/slicer/model.py:396-397). `ops.mark_ready` only ever replaces it whole (ops.py:2402). `mergeindex._dicts` (src/slicer/mergeindex.py) merges any dict field key by key through `_value`, so each side's changed keys are taken separately. Probe (merge-index driver on `_doc` fixtures from tests/test_readiness.py): base `RECORD`; ours re-ready with `at` 2026-10-27T10:00:00Z and note `rechecked`; theirs re-ready in the same second with a new digest. It exited 0 and wrote `{by: Ada, at: ...10:00:00Z, note: \"rechecked\", digest: sha256:bbbb...}`. That pairs ours' note with theirs' digest, which neither side recorded. When `at` differs the merge does conflict, but at `items/s01/readiness/at`, which names one key of a record that only has meaning whole. The case needs both re-readies in the same second, so it is rare, but the result is silent and wrong."
     },
     {
       "heading": "Files",
-      "body": ""
+      "body": "- `src/slicer/mergeindex.py`: in `_dicts`, a branch for `len(path) == 2 and path[0] == \"items\" and key == \"readiness\"`. It takes ours if ours equals theirs, theirs if ours equals base, ours if theirs equals base, and otherwise calls `_conflict` at `items/ID/readiness`, never recursing into the dict. Extend the module docstring's list of exceptions with one sentence: a readiness record is atomic.\n- `tests/test_readiness.py` (`MergeIndexTests`, `NextOrderTests`): the tests below. Existing `test_MergeIndex_RecordOnOneSide_SurvivesAnotherSidesEdit`, `test_MergeIndex_RecordsOnDifferentItems_BothKept` and `test_MergeIndex_DifferentRecordsOnOneItem_Conflict` keep passing.\n- `docs/agents.md`: the readiness paragraph adds that with declared passes an item with no pass is its own group, so a ready unpassed item leads only among unpassed items, in their slots. The merge-index paragraph (docs/commands.md `merge-index` row, line 29, and the conflict list near docs/commands.md:1084, which gains \"a readiness record changed two ways\") says a readiness record merges as one value.\n- `CHANGELOG.md` `## [Unreleased]` `### Fixed`."
     },
     {
       "heading": "Failing tests",
-      "body": ""
+      "body": "- `test_MergeIndex_SameSecondRecordsDiffering_ConflictsAtTheRecord`: the probe above (same `at`, ours changes `note`, theirs changes `digest`). The driver exits nonzero and stderr names `items/s01/readiness`, not a key under it. Fails today (exit 0, mixed record).\n- `test_MergeIndex_DifferentRecords_ConflictNamesTheRecordNotAKey`: ours and theirs re-ready at different times. stderr's conflict path is `items/s01/readiness`. Fails today (`items/s01/readiness/at`).\n- `test_MergeIndex_RecordAddedOnBothSidesEqual_Coalesces`: base without a record, ours and theirs add the same record, merge exits 0 with it. Passes today; it guards the atomic branch.\n- `test_NextReadyBatch_ReadyUnpassedItem_LeadsOnlyAmongUnpassedItems` (`NextOrderTests`): the probe fixture. `next --ready --batch 4 --json` gives S01, S03, S02, S04, matching the `-n` order in the existing test. Passes today; it pins the batch form."
     },
     {
       "heading": "Implement",
-      "body": ""
+      "body": "1. Write the three merge tests and the batch test; watch the first two fail.\n2. Add the atomic `readiness` branch in `mergeindex._dicts`, and update the docstring.\n3. Docs and CHANGELOG. Mutation-check: removing the branch must fail both conflict tests."
     },
     {
       "heading": "Check",
-      "body": ""
+      "body": "- [ ] `python3 -m unittest discover -s tests -t tests -k '*MergeIndex*'` and `-k '*NextReady*'` pass.\n- [ ] Running the probe (three `_doc` files through `PYTHONPATH=src python3 -m slicer merge-index BASE OURS THEIRS`) exits 1 and names `items/s01/readiness`.\n- [ ] `python3 tests/affected.py --run`, the full suite, `slicer check` and `git diff --check` pass."
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "Commit on the worktree branch."
     }
   ],
   "notes": []

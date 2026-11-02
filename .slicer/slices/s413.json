@@ -1,38 +1,40 @@
 {
   "id": "s413",
   "title": "show --json paths edge cases",
-  "lead": [],
+  "lead": [
+    "Three follow-ups from the s395 review of `show --json` `paths`. A root file that does not exist yet (or was deleted) can be named as `./NAME` so it counts as a path. `ops.item_file_paths` lists the project root only when there is a Files section to read. The docs say that only a space inside a span disqualifies it."
+  ],
   "depends_note": null,
   "findings_note": "",
   "size": "S",
   "flags": [],
   "trees_note": "ops",
   "trees_plural": false,
-  "boundary": "**Not in this slice:**",
+  "boundary": "**Not in this slice:** guessing root files from git (`ls-tree HEAD`) or from slash-less names without `./`; changing which spans with a slash count; `overlap_ignore`; the 1.16 CHANGELOG entry, which is history and stays as written.",
   "sections": [
     {
       "heading": "Why",
-      "body": "From the s395 review: a root file that is deleted or not yet created drops out of `paths`; `item_file_paths` could short-circuit before `iterdir`; docs have an inner-space typo."
+      "body": "From the s395 review (s395 added `paths` to `show --json`, commit 4cb1e1e). Checked against main at 4b32624 on 2026-11-02:\n\n1. **A root file that is deleted or not yet created drops out of `paths`.** `paths.extract` (src/slicer/paths.py) admits a slash-less token only when it has a file extension and its name is in `top_level`. For `show`, `top_level` is `{entry.name for entry in state.root.iterdir()}` (ops.item_file_paths, src/slicer/ops.py:2317-2326). Probe: `extract(\"`CHANGELOG.md` `NEWS.md` `docs/new.md` `Makefile`\", top_level={\"CHANGELOG.md\", \"docs\"})` returned `['CHANGELOG.md', 'docs/new.md']`. `NEWS.md`, which the slice will create, is gone. A file the slice deletes drops out as soon as it is deleted in the worktree. `docs/new.md` survives because a slash plus an extension needs no root match. The same extraction feeds `plan-parallel`, `next --batch --disjoint` and `deps --overlap`, so they miss the overlap too. The root check exists on purpose: it keeps bare names like `ai.py` or `config.json` in prose from counting as paths. So the spec does not drop the check. It lets an author mark a root path explicitly with a leading `./`, which today is only stripped. Owner question, with this answer recommended: a span that starts with `./` is a path whatever its root match or extension (`./NEWS.md`, `./Makefile`). The alternative is to document the limitation and change nothing.\n2. **`item_file_paths` could short-circuit before `iterdir`.** It calls `state.root.iterdir()` first and only then `item_paths`, which returns `[]` for an item with no slice, no Files section or `files_section` unset (ops.py:2304-2314). `show` calls it for every item (cli.py, both the no-slice and the slice branch), so `show` of a bare row lists the project root for nothing.\n3. **Docs inner-space wording.** docs/agents.md's `show ID` row (line 595) says \"a span with a space ... is not a path\". `extract` strips the span first (`span.strip()`), so a span with only surrounding spaces is a path. Probe: `` ` src/a.py ` `` gave `['src/a.py']`, while `` `src/a b.py` `` gave nothing. The rule is a space inside the span."
     },
     {
       "heading": "Files",
-      "body": ""
+      "body": "- `src/slicer/paths.py` `extract`: note whether the stripped span started with `./` before removing it; such a token is admitted once it passes `_TOKEN` and is not empty after `strip(\"/\")`. Update the docstring.\n- `src/slicer/ops.py` `item_file_paths`: look up the slice and `files_section` first and return `[]` without listing the root when there is nothing to read, for example by resolving the section, then calling `paths.extract(section.body, top_level=...)` with the root names only in that branch. `item_paths` and its callers are unchanged.\n- `docs/agents.md` line 595: \"a span with a space\" becomes \"a span with a space inside it (surrounding spaces are trimmed)\"; add \"a span written `./NAME` is a path even when no such root entry exists\". The same rule goes in the paths sentence of the `deps` row (line 625) if it repeats the rule; it does not today, so only line 595 changes.\n- `tests/test_paths.py` for the `extract` tests; `tests/test_next.py` (`DisjointTests`, beside `test_Show_FilesSection_ListsPathSpansInJson`) for the `show` tests.\n- `CHANGELOG.md` `## [Unreleased]` `### Changed`."
     },
     {
       "heading": "Failing tests",
-      "body": ""
+      "body": "- `test_Extract_DotSlashRootName_IsAPathWithoutARootMatch`: `extract(\"`./NEWS.md` `./Makefile` `NEWS.md`\", top_level=set())` returns `['NEWS.md', 'Makefile']`. The bare `NEWS.md` stays out, and the dedup keeps one `NEWS.md`. Fails today (returns `[]`).\n- `test_Show_NewRootFile_ListedWhenWrittenDotSlash`: an item whose Files section names `./NEWS.md` (absent from the fixture root) has `\"NEWS.md\"` in `show --json` `paths`. Fails today.\n- `test_Show_NoFilesToRead_DoesNotListTheRoot`: with `Path.iterdir` patched to raise `AssertionError` (only for the project root), `show ID --json` on a bare row and on a slice without a Files section exits 0 with `paths` `[]`. Fails today.\n- `test_Extract_SurroundingSpaces_AreTrimmed`: `` ` src/a.py ` `` gives `src/a.py`; `` `src/a b.py` `` gives nothing. Passes today; it pins the documented rule."
     },
     {
       "heading": "Implement",
-      "body": ""
+      "body": "1. Write the tests; watch the three fail.\n2. The `./` rule in `extract`; the short-circuit in `item_file_paths`.\n3. Docs and CHANGELOG. Run `-k '*Overlap*'` and `-k '*Disjoint*'` to confirm that `deps --overlap` and `next --batch --disjoint` still pass with the shared rule."
     },
     {
       "heading": "Check",
-      "body": ""
+      "body": "- [ ] `python3 -m unittest discover -s tests -t tests -k '*Extract*'`, `-k '*Show*Paths*'`, `-k '*Overlap*'` and `-k '*Disjoint*'` pass.\n- [ ] `PYTHONPATH=src python3 -m slicer show s413 --json --lean` still reports this slice's own paths.\n- [ ] `python3 tests/affected.py --run`, the full suite, `slicer check` and `git diff --check` pass."
     },
     {
       "heading": "Git",
-      "body": ""
+      "body": "Commit on the worktree branch."
     }
   ],
   "notes": []
