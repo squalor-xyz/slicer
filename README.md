@@ -50,7 +50,7 @@ uv, and unreleased main. The [contributor install](AGENTS.md#install) tracks a c
 - [CHANGELOG.md](CHANGELOG.md) — changes by release
 
 Run `slicer --help` for the command list or `slicer ai getting-started` for a new agent session.
-Every command except `tui`, `ui`, `merge-index` and `merge-relay-roles` takes `--json`;
+Every command except `tui`, `ui`, `merge-index`, `merge-relay-roles` and `ai guard` takes `--json`;
 see the [agent reference](docs/agents.md) for payloads and exit codes.
 To try slicer, follow [Getting started](docs/getting-started.md); to understand it first,
 read [How slicer works](docs/how-it-works.md).

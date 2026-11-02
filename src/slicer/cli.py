@@ -1026,6 +1026,81 @@ def _write_skill(targets: list[Path], content: str, *, force: bool) -> list[str]
   return [str(path) for path in unique]
 
 
+def cmd_ai_hooks(args: argparse.Namespace) -> int:
+  if args.force and not args.install:
+    raise StateError("--force needs --install", code="usage")
+  snippet = ai.hooks_settings()
+  if not args.install:
+    _emit(args, {"settings": snippet}, jsonio.dumps(snippet).rstrip("\n"))
+    return OK
+  project = store.discover(Path(args.root or "."))
+  target = project / ".claude/settings.json"
+  if target.parent.is_symlink() or target.is_symlink():
+    raise StateError(f"{target}: refusing a symlink settings path; nothing was written")
+  try:
+    existing = jsonio.read(target) if target.exists() else {}
+  except StateError as exc:
+    raise StateError(f"{target}: {exc}; nothing was written", code="state") from None
+  if not isinstance(existing, dict) or not isinstance(existing.get("hooks", {}), dict):
+    raise StateError(f"{target}: settings and hooks must be JSON objects; nothing was written")
+  settings = copy.deepcopy(existing)
+  hooks = settings.setdefault("hooks", {})
+  conflicts: list[str] = []
+  for event, wanted in snippet["hooks"].items():
+    groups = hooks.setdefault(event, [])
+    if not isinstance(groups, list):
+      raise StateError(f"{target}: hooks.{event} must be a list; nothing was written")
+    installed = False
+    for i, group in enumerate(groups):
+      handlers = group.get("hooks", []) if isinstance(group, dict) else []
+      if handlers == wanted[0]["hooks"]:
+        installed = True
+      elif isinstance(handlers, list) and any(
+        isinstance(handler, dict) and isinstance(handler.get("command"), str)
+        and any(command in handler["command"] for command in (
+          "slicer ai getting-started", "slicer ai guard"))
+        for handler in handlers
+      ):
+        conflicts.append(event)
+        if args.force:
+          groups[i] = copy.deepcopy(wanted[0])
+          installed = True
+    if not installed:
+      groups.extend(wanted)
+  if conflicts and not args.force:
+    raise StateError(
+      f"different slicer hooks already exist at {target} ({', '.join(dict.fromkeys(conflicts))}); "
+      "pass --force to replace them. Nothing was written.", code="state",
+    )
+  written: list[str] = []
+  if settings != existing:
+    jsonio.write(target, settings)
+    written.append(str(target))
+  _emit(args, {"settings": snippet, "written": written},
+        f"wrote {target}" if written else f"already installed at {target}")
+  return OK
+
+
+def cmd_ai_guard(args: argparse.Namespace) -> int:
+  try:
+    payload = json.load(sys.stdin)
+    if not isinstance(payload, dict):
+      return OK
+    start = payload.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or args.root or "."
+    if not isinstance(start, str):
+      return OK
+    root = Path(start)
+    reason = ai.guard_decision(payload, root)
+  except (ValueError, OSError, RuntimeError, SlicerError):
+    return OK
+  if reason is not None:
+    print(jsonio.dumps({"hookSpecificOutput": {
+      "hookEventName": "PreToolUse", "permissionDecision": "deny",
+      "permissionDecisionReason": reason,
+    }}), end="")
+  return OK
+
+
 def _render_driver_commands() -> list[str]:
   """The per-clone `git config` commands that turn on the merge drivers named in
   `.gitattributes`: the render files (S109), the index counter (S191) and the relay
@@ -3900,7 +3975,7 @@ def build_parser() -> argparse.ArgumentParser:
       _json_flags(sp)
     return sp
 
-  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started", parents=[common])
+  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started, hooks, guard", parents=[common])
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
   _json_flags(sp)
@@ -3955,6 +4030,30 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument(
     "--force", action="store_true", help="replace a destination that holds different text",
   )
+  inner = aisub.add_parser(
+    "hooks", help="print or install project-local Claude Code hooks",
+    description=(
+      "Print the Claude Code hooks snippet. --install merges it into the project's "
+      ".claude/settings.json; stdout lists the path written. Conflicting slicer hooks "
+      "are refused unless --force. Does not take a project lock. "
+      "The PreToolUse guard hook needs slicer 1.18 or later on PATH: an older slicer "
+      "exits 2 on the unknown subcommand, and Claude Code treats exit 2 as a block."
+    ), parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_hooks)
+  _json_flags(inner, suppress=True)
+  inner.add_argument("--install", action="store_true",
+                     help="merge hooks into .claude/settings.json under the project root")
+  inner.add_argument("--force", action="store_true",
+                     help="replace conflicting slicer hook groups (needs --install)")
+  inner = aisub.add_parser(
+    "guard", help="judge a Claude Code PreToolUse payload from stdin",
+    description=(
+      "Read a PreToolUse JSON object from stdin and deny explicit tracking paths. "
+      "Allows malformed input silently. Stdout is the hook protocol, not --json."
+    ), parents=[common],
+  )
+  inner.set_defaults(func=cmd_ai_guard)
   inner = aisub.add_parser(
     "relay", help="print the slice relay, or write the example role matrix with --init-roles",
     description=(

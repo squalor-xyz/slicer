@@ -40,6 +40,7 @@ Choose how to implement it:
 ## Set up a relay
 
 For a new agent session, start with `slicer ai getting-started`.
+For Claude Code, `slicer ai hooks --install` installs project-local onboarding and a guard for tracking-file tool calls.
 
 Read the generated [agent instructions and relay contracts](agents.md) from your
 installed slicer. These commands are the authoritative workflow for that version

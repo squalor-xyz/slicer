@@ -5,8 +5,108 @@ from __future__ import annotations
 import re
 import shlex
 import textwrap
+from collections.abc import Mapping
+from fnmatch import fnmatchcase
+from pathlib import Path
 
 from slicer.relayrun import OUTCOMES, QUESTION_VALUE_RULE
+
+
+HOOK_SESSION_START = '[ -d "$CLAUDE_PROJECT_DIR/.slicer" ] && slicer ai getting-started || true'
+HOOK_GUARD = "slicer ai guard"
+GUARD_REASON = (
+  "Use slicer's CLI for tracking files: slicer show ID --json --lean, "
+  "slicer list --json --lean, slicer log --json --lean; "
+  "see slicer ai instructions for the tracking rule."
+)
+
+
+def hooks_settings() -> dict:
+  """Return fresh project-local Claude Code hooks in their printed key order."""
+  return {"hooks": {
+    "SessionStart": [{"matcher": "startup|clear|compact", "hooks": [
+      {"type": "command", "command": HOOK_SESSION_START, "timeout": 30}]}],
+    "PreToolUse": [{"matcher": "Read|Grep|Edit|Write", "hooks": [
+      {"type": "command", "command": HOOK_GUARD, "timeout": 10}]}],
+  }}
+
+
+def _glob_could_match_json(pattern: str) -> bool:
+  """Match a possible `.json` suffix without enumerating files or reading state.
+
+  Work backwards through glob tokens; once the suffix matches, the remaining
+  tokens can match a filename prefix. Stars consume suffix characters; brace
+  alternatives share position sets so nested alternatives do not expand exponentially.
+  """
+  tokens: list[str] = []
+  i = 0
+  while i < len(pattern):
+    end = i + 1
+    if pattern[i] == "[":
+      if end < len(pattern) and pattern[end] == "!":
+        end += 1
+      if end < len(pattern) and pattern[end] == "]":
+        end += 1
+      end = pattern.find("]", end) + 1
+      if not end:
+        end = i + 1
+    tokens.append(pattern[i:end])
+    i = end
+  suffix = ".json"[::-1]
+  positions = {0}
+  alternatives: list[tuple[set[int], set[int]]] = []
+  for token in reversed(tokens):
+    if token == "}":
+      alternatives.append((positions.copy(), set()))
+    elif token == "," and alternatives:
+      start, ends = alternatives[-1]
+      ends.update(positions)
+      positions = start.copy()
+    elif token == "{" and alternatives:
+      _start, ends = alternatives.pop()
+      positions.update(ends)
+    elif token == "*":
+      positions = {j for p in positions for j in range(p, len(suffix) + 1)}
+    else:
+      positions = {p + 1 for p in positions if p < len(suffix)
+                   and fnmatchcase(suffix[p], token)}
+    if len(suffix) in positions:
+      return True
+  return False
+
+
+def guard_decision(payload: Mapping, root: Path) -> str | None:
+  """Judge the target's nearest project using config existence, never state contents."""
+  tool = payload.get("tool_name")
+  inputs = payload.get("tool_input")
+  if tool not in ("Read", "Grep", "Edit", "Write") or not isinstance(inputs, Mapping):
+    return None
+  value = inputs.get("path" if tool == "Grep" else "file_path")
+  if not isinstance(value, str) or not value:
+    return None
+  try:
+    target = (root / value).resolve()
+    for project in (target, *target.parents):
+      if (project / ".slicer/config.json").is_file():
+        relative = target.relative_to(project)
+        break
+    else:
+      return None
+  except (ValueError, OSError, RuntimeError):
+    return None
+  parts = tuple(part.casefold() for part in relative.parts)
+  if not parts or parts[0] != ".slicer":
+    return None
+  if (relative.suffix.casefold() == ".json" or parts[1:2] == ("render",)
+      or parts[1:] == ("log.jsonl",)):
+    return GUARD_REASON
+  if tool == "Grep":
+    if len(parts) == 1 or parts[1:2] == ("slices",):
+      return GUARD_REASON
+    glob = inputs.get("glob")
+    if isinstance(glob, str) and _glob_could_match_json(glob.casefold()):
+      return GUARD_REASON
+  return None
 
 
 # The implement loop and the exit-code rules. The instructions and the agent

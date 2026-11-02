@@ -36,6 +36,66 @@ with the owner before the worktree is created. It says to read the role matrix w
 `slicer relay-roles show` and change it with the other `relay-roles` commands, never from
 `.slicer/relay-roles.json`.
 
+`slicer ai hooks` prints this project-local Claude Code settings snippet (shell form,
+so `slicer` must be on PATH). The PreToolUse guard hook needs slicer 1.18 or later
+on PATH: an older slicer exits 2 on the unknown subcommand, and Claude Code treats
+exit 2 as a block. The guard command remains exactly `slicer ai guard`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {"matcher": "startup|clear|compact", "hooks": [
+        {"type": "command", "command": "[ -d \"$CLAUDE_PROJECT_DIR/.slicer\" ] && slicer ai getting-started || true", "timeout": 30}
+      ]}
+    ],
+    "PreToolUse": [
+      {"matcher": "Read|Grep|Edit|Write", "hooks": [
+        {"type": "command", "command": "slicer ai guard", "timeout": 10}
+      ]}
+    ]
+  }
+}
+```
+
+`--install` needs a project and merges into its `.claude/settings.json` only, creating
+parents when needed; it never targets `~/.claude` or `.claude/settings.local.json`.
+Symlinked `.claude` directories or settings files are refused with `state`.
+Other keys, events and groups retain their content and order. An event group with
+exactly the snippet's handlers is already installed, even with a different matcher.
+A different group containing a command with `slicer ai getting-started` or
+`slicer ai guard` conflicts: exit 2, code `state`, naming the file and events, with
+nothing written. `--force` replaces those groups in place; otherwise each missing
+group is appended. Invalid JSON, a non-object settings or hooks value, or a non-list
+target event is also `state` and writes nothing. Changed settings use indent 2 and a
+trailing newline; unchanged settings retain their bytes and mtime. Text lists the path
+written or says already installed. `--force` without `--install` is `usage`.
+`--json` returns `{settings}`, or `{settings, written}` with `--install`; `written`
+contains the absolute path or is empty on a no-op. No project lock is taken.
+
+`slicer ai guard` reads the PreToolUse payload from stdin. It denies Read, Edit and
+Write on every JSON file under `.slicer/`, `.slicer/log.jsonl`, and anything under
+`.slicer/render/`. Grep is denied on those files, on `.slicer` itself and its `slices`
+and `render` trees, and for a glob under `.slicer` that could match a JSON file.
+Templates and prompts remain accessible except their JSON files. Relative paths are
+resolved against payload `cwd`, falling back to `$CLAUDE_PROJECT_DIR`. From the resolved
+target path, the guard walks upward to the nearest directory holding
+`.slicer/config.json` and judges the path relative to that project. This includes
+nested worktrees, a parent checkout reached from a worktree, and unrelated target
+projects outside the session root; the nearest enclosing project wins. Paths without
+an enclosing slicer project stay allowed. Discovery only checks config-file existence
+and never reads state contents. Tracking path parts and JSON suffixes are compared
+without regard to case. Malformed input,
+non-objects, unjudged tools, and Grep without a path are allowed silently. Bash
+commands and Grep from the project root are outside this guard's scope. All decisions
+exit 0; an allow prints nothing and a denial prints:
+
+```json
+{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "Use slicer's CLI for tracking files: slicer show ID --json --lean, slicer list --json --lean, slicer log --json --lean; see slicer ai instructions for the tracking rule."}}
+```
+
+This stdout is the hook protocol: `ai guard` has no `--json` flag and takes no lock or write.
+
 `slicer ai getting-started` prints a short first-session prompt: read the project's
 instructions and roadmap, summarize what is ready or blocked, and ask the owner what
 to work on. `slicer ai build-roadmap` prints a prompt for turning project documentation
@@ -382,8 +442,8 @@ publish unless separately authorized.
 
 ## Everything takes `--json`
 
-Every subcommand except the interactive `tui`/`ui` and the git merge drivers `merge-index`
-and `merge-relay-roles` accepts `--json` and writes a single JSON document to stdout. Read
+Every subcommand except the interactive `tui`/`ui`, the git merge drivers `merge-index`
+and `merge-relay-roles`, and the hook protocol `ai guard` accepts `--json` and writes a single JSON document to stdout. Read
 commands return data; write commands return what they changed.
 
 ```console
@@ -496,6 +556,7 @@ trees_plural, sections: [{heading, body}], notes[]}`.
 |---|---|
 | `ai instructions` | `{instructions}`. `--rest` returns only what the skill does not carry, the same text for every project. Bare `slicer ai` and `slicer ai --json` are this command. Generic Markdown, or the handoff loop when the project sets `implement_finish` to `handoff`; a nonempty `handoff_requires_note_kind` adds the required report kind and filing command. No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write |
 | `ai skill` | `{skill}` containing the `SKILL.md` text, chosen the same way. The handoff skill's step 4 is only handoff, and that text does not contain the done command. With `--output` or `--install` it is `{skill, written}`, `written` being the absolute paths written, in order |
+| `ai hooks` | `{settings}` containing the Claude Code hooks snippet in key order `hooks`, then events `SessionStart`, `PreToolUse`. With `--install`, `{settings, written}`, where `written` is the absolute project settings path or `[]` if already installed. No project required to print; installation discovers the project and preserves unrelated settings |
 | `ai getting-started` | `{name, prompt}` in that key order, with `name: "getting-started"` and the built-in first-session prompt. No project needed, no stderr warning, no lock or write |
 | `ai build-roadmap` | `{name, prompt}` in that key order, with `name: "build-roadmap"` and the built-in documentation-to-roadmap prompt. No project needed, no stderr warning, no lock or write |
 | `ai relay` | `{contract, pinned, check_command, relay, setup, order, land, report, outcomes, stop, changes, roles, gate, finding_kinds, conformance}` (keys in that order): `setup` lists `{key, text}` for the eight Setup bullets (keys `spec_check`, `roles`, `split`, `sliver`, `role_models`, `orchestrator`, `environment`, `end_point`); `end_point` also carries `options: ["finish", "commit", "landed"]`. `order` is a list of `{step, text}`. `order` holds outer-session steps 1–6; step 5 is Approve (the wait record, what the owner sees, the human-check notes and the fix note) and step 6 points at Land. `land` is a list of `{step, text}` for the ten steps of the `## Land` section, in order (rerun the checks, commit, merge main when it moved, render, check, rerun the suite, `git merge --ff-only`, `relay-run end`, `slicer land`, then commit, push when authorized, remove the worktree and branch); `ai relay-orchestrator` has no `land`. `report` is `{max_lines: 30, lines: [{key, template}]}` with line keys `contract`, `slice`, `worktree`, `rounds`, `tests`, `diff_stat`, `deviations`, `later_notes`, `owner_needed`, `role_steps`, `nothing_left_running`, in that order. `outcomes` is `["pass", "fail", "stopped"]`, shared with `relay-run end --outcome`; `stop` lists the four stop conditions as `{key, text}` objects, in order `gate_fail_3` (the same slice fails its gate three times), `spec_wrong`, `permission_denied` (a harness permission check denies a role's slicer step) and `no_eligible_row` (a role's round ends in a vendor limit or an error exit and no eligible row is left to rerun it on, a project with no role matrix having none); a `blocker` owner question is a wait, not a stop, so it has no entry. `changes` lists `{version, text}` in ascending version order, from 5 through the current contract version; each `text` is one nonempty line recording what that version changed. All `text` values join prose line breaks with single spaces. `--lean` preserves all contract lists, even empty ones, and the `null` `ledger_role` entries of `roles`. `roles` (`ai relay` only) is a list of `{role, text, ledger_role}` for the eight role paragraphs of the Roles section, in prose order (`outer_session`, `orchestrator`, `implementer`, `reviewer`, `architect`, `ui_pass`, `gate`, `spec_check`). `ledger_role` is the `relay-run step --role` name that role records under: `null` for `outer_session`, which records no step of its own; `orchestrator`, `implementer`, `reviewer` and `architect` for their keys; `ui` for `ui_pass`; `gate` for `gate`; and `spec-check` for `spec_check`. The session-variant paragraph, the split paragraph and the independence and models sentences stay prose. `gate` is `{criteria: [...], verdicts: ["VERDICT: PASS", "VERDICT: FAIL"]}` (a key of the payload, not the `roles` entry of the same name): the five gate criteria, which name no severity ("no `fix` finding") and the two first lines the gate may take, the lists the Gate section renders. `finding_kinds` is a list of `{kind, text}` for `fix`, `owner` and `later`, the Gate section's bullets. `conformance` is a list of `{key, text}` for the eleven obligations of the Conformance section, with keys `role_order`, `gate_rule`, `finding_kinds`, `stop_rules`, `blocker_wait`, `role_fallback`, `ledger`, `finish_after_pass`, `run_report`, `worktree_scope` and `commit_scope`. Each new list is built from the data that renders its prose, and the text agrees with it. The new keys come after `changes`, so every earlier key keeps its position, except that `pinned` sits right after `contract`. `check_command` is the project's `check_command` config value, `""` while unset or outside a project; `ai relay --json` carries it right after `pinned`, `ai relay-orchestrator --json` does not, and `--lean` keeps it. `contract` is the version. `pinned` is the project's `relay_contract` pin as an integer, or `null` while nothing is pinned (and outside a project). In `ai relay --json`, `contract`, `pinned` and `check_command` lead, and the keys from `relay` on sit two places later than before s387; `--lean` keeps `pinned`, `null` included. A project that pins a version other than the running one is not served: the command exits 2 with code `contract_mismatch`, prints no contract text, and the message names the pinned and running versions, `slicer config relay_contract N` and installing a slicer that serves the pinned version. An equal pin serves as usual. `contract` is `"relay v11"`, the version on the text's first line (`Contract: relay v11`), and `relay` is the same Markdown as the text. Chosen the same way as `ai instructions`: the handoff close when the project sets `implement_finish` to `handoff` (that text does not name `done`), otherwise the done close. A nonempty `handoff_requires_note_kind` adds the required report kind and filing command. A project with `.slicer/relay-roles.json` gets a `## Roles matrix` section after Setup holding the matrix as Markdown, and Setup gets the propose line and the `relay-roles recommend` command; a project without it gets the `relay-roles init` line in Setup. A leftover `.slicer/relay-roles.md` is ignored with a stderr warning. A corrupt matrix is `corrupt` and a newer one `schema_too_new` (exit 3). No project, or an unreadable config or index, is the generic text, a stderr warning, and exit 0. No lock or write, except `--init-roles` (below) |

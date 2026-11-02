@@ -17449,7 +17449,7 @@
       "id": "s439",
       "title": "ai hooks: a project-local Claude Code hooks snippet",
       "short_title": "ai hooks for Claude Code",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s436"
@@ -17461,6 +17461,20 @@
           "text": "**2026-11-02** — Owner decided 2026-11-02: add a new 'slicer ai guard' command that reads the PreToolUse hook JSON from stdin and denies Read/Grep/Edit/Write on .slicer state files (index, slices, log, render), allowing templates and prompts. It fails open on malformed stdin.",
           "created_at": "2026-11-02T13:00:01Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "8b98f57c-1587-4e71-afbf-ed95c8a7cb87",
+          "kind": "",
+          "text": "**2026-11-02** — Ready for review: s439 adds slicer ai hooks and slicer ai guard (project-local Claude Code hooks; guard judges the target file's own project; needs slicer 1.18+ for the PreToolUse hook); reviewer VERDICT: PASS. [HUMAN CHECK] pending: in a scratch project with the snippet installed, a new Claude Code session shows the getting-started text and a Read of .slicer/index.json is denied with the reason.",
+          "created_at": "2026-11-02T14:56:06Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -17491,7 +17505,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

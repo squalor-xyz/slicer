@@ -245,7 +245,7 @@ Keys are local to this checkout, with no cross-branch or machine synchronization
 
 ## Driving it from an agent
 
-Every command except the interactive `tui`/`ui` and the git merge drivers `merge-index` and `merge-relay-roles` takes `--json`, including the failures. See [agents.md](agents.md).
+Every command except the interactive `tui`/`ui`, the git merge drivers `merge-index` and `merge-relay-roles`, and the hook protocol `ai guard` takes `--json`, including the failures. See [agents.md](agents.md).
 
 ```console
 $ slicer import roadmap.md --json

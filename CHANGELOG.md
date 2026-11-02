@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- `slicer ai hooks [--install] [--force]` (s439) prints or merges project-local Claude Code hooks into `.claude/settings.json`, preserving other settings and refusing conflicting slicer groups unless forced. SessionStart supplies `ai getting-started`; PreToolUse calls the new `slicer ai guard`, which denies explicit tracking-file Read/Grep/Edit/Write requests against each resolved target's nearest enclosing slicer project, including nested worktrees, parent checkouts and unrelated projects. Tracking path parts and JSON suffixes are checked without regard to case; denials name CLI alternatives and malformed input is allowed silently. The guard hook needs slicer 1.18 or later on PATH: older versions exit 2 on the unknown subcommand, which Claude Code treats as a block. No home-directory settings are changed; Bash and root-wide Grep are outside the guard's scope.
 - `slicer ai getting-started` and `slicer ai build-roadmap` print short prompts for a first agent session and for building a roadmap from project documentation. Both point at `slicer ai instructions --rest`, stop for owner direction or agreement, and need no project, lock or write. `--json` returns `{name, prompt}` in that order.
 
 ## [1.17.0] - 2026-10-30
