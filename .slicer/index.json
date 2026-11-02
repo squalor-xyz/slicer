@@ -17380,7 +17380,7 @@
       "id": "s437",
       "title": "Per-project prompt overrides: ai set, reset and show",
       "short_title": "ai set, reset and show prompt overrides",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s436"
