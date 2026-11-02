@@ -17661,7 +17661,7 @@
       "id": "s440",
       "title": "ai help and docs coverage",
       "short_title": "ai help and docs coverage",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

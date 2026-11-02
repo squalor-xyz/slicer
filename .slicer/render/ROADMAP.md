@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-431 items · — 26 · done 392 · retired 12 · review 1
+431 items · — 26 · done 393 · retired 12
 
 v1.20.0 release
 
@@ -67,7 +67,7 @@ v1.19.0 release
 | 25 | [s426](slices/s426.md) | TUI note delete retracts instead of deleting | S | - |  | discovered from s393 | done |
 | 26 | [s431](slices/s431.md) | Sync relay-brief override | S | 1 | slicer | s419 review 2026-10-30, owner question: the repo's customized relay-brief.md override lacks the s419 no-background bullet · discovered from s419 | done |
 | 27 | [s434](slices/s434.md) | Step JSON questions list | S | 2 | slicer | s425 review 2026-10-30, finding A1 (later by orchestrator default, docs-only fix landed with s425): `relay-run list` shows only a step's latest question, while several non-blocker questions can be open at once · discovered from s425 | done |
-| 28 | [s440](slices/s440.md) | ai help and docs coverage | S | 1 | ai, cli, docs, tests | Deferred `later` follow-ups from the 1.18.0 relay reviews of s436 (docs coverage, build-roadmap FILE), s438 (ai skill description) and s439 (ai help line), 2026-11-02. · discovered from s436 | review |
+| 28 | [s440](slices/s440.md) | ai help and docs coverage | S | 1 | ai, cli, docs, tests | Deferred `later` follow-ups from the 1.18.0 relay reviews of s436 (docs coverage, build-roadmap FILE), s438 (ai skill description) and s439 (ai help line), 2026-11-02. · discovered from s436 | done |
 | 29 | [s441](slices/s441.md) | prompt override hardening | S | 1 | check, cli, tests, docs | Deferred `later` follow-ups from the s437 relay review (release 1.18.0), 2026-11-02: check warns on dotfiles in `.slicer/prompts/`, and no test feeds non-UTF-8 bytes through a buffered stdin to `ai set --stdin`. · discovered from s437 | — |
 | 30 | [s442](slices/s442.md) | ai hooks and guard hardening | M | 2 | ai, cli, tests, docs | Deferred `later` follow-ups from the s439 relay review (release 1.18.0), 2026-11-02: `ai hooks --install --force` duplicates or drops handlers, untested symlink and directory settings paths, and an over-built Grep glob judgement in the guard. · discovered from s439 | — |
 
