@@ -9,6 +9,7 @@ modules and `cli_common`, never `cli`, so the entry point can import it without 
 from __future__ import annotations
 
 import argparse
+from typing import Callable
 
 from slicer import __url__, __version__, ai, note_pack, snapshot
 from slicer.cli_ai import (
@@ -50,29 +51,10 @@ from slicer.cli_track import (
 )
 
 
-def build_parser() -> argparse.ArgumentParser:
-  # --root is accepted on both sides of the subcommand, because both
-  # `slicer --root x next` and `slicer next --root x` are natural to type.
-  # The subcommand copy suppresses its default so that, when it is absent, it
-  # does not overwrite a value already parsed from before the subcommand.
-  common = argparse.ArgumentParser(add_help=False)
-  common.add_argument(
-    "--root",
-    default=argparse.SUPPRESS,
-    help="project root (default: discovered from the working directory)",
-  )
-  p = _ArgumentParser(
-    prog="slicer", description=_DESCRIPTION,
-    epilog=f"Source: {__url__}\nIssues: {_ISSUES_URL}",
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-  )
-  p.add_argument(
-    "--root", default=None, help="project root (default: discovered from the working directory)"
-  )
-  p.add_argument("--version", action="version", version=f"slicer {__version__}")
-  p.add_argument("--about", action="store_true", help="show version, description, source and issues URLs")
-  sub = p.add_subparsers(dest="command", required=True)
-
+def _make_add(
+  sub: argparse._SubParsersAction, common: argparse.ArgumentParser,
+) -> Callable[..., argparse.ArgumentParser]:
+  """The `add` helper every section uses: a subcommand that shares `common` and, unless told otherwise, `--json`."""
   def add(name: str, fn, help_: str, *, json_flag: bool = True,
           aliases: tuple[str, ...] = ()) -> argparse.ArgumentParser:
     sp = sub.add_parser(name, help=help_, parents=[common], aliases=list(aliases))
@@ -80,7 +62,11 @@ def build_parser() -> argparse.ArgumentParser:
     if json_flag:
       _json_flags(sp)
     return sp
+  return add
 
+
+def _add_ai(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:
+  """`ai` and its subcommands: the agent-facing text, skill, hooks, guard and relay."""
   sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started, show, set, reset, hooks, guard, relay-orchestrator, relay-brief", parents=[common])
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
@@ -256,6 +242,9 @@ def build_parser() -> argparse.ArgumentParser:
   inner.set_defaults(func=cmd_ai_relay_brief)
   _json_flags(inner, suppress=True)
 
+
+def _add_setup(add) -> None:
+  """`init`, `setup-git` and the two merge drivers."""
   sp = add("init", cmd_init, "create .slicer/ in a project")
   sp.add_argument("--force", action="store_true", help="overwrite an existing config and templates")
   sp.add_argument("--id-prefix", help="prefix for new ids (default S; --force retains the existing prefix)")
@@ -286,6 +275,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("ours", help="this side's relay-roles.json, rewritten with the result (%%A)")
   sp.add_argument("theirs", help="the other side's relay-roles.json (%%B)")
 
+
+def _add_import(add) -> None:
+  """`import` and `migrate`."""
   sp = _strict_flag(_render_flag(add("import", _mutating(cmd_import), "add items in bulk from a markdown outline")))
   sp.add_argument("file", nargs="?", help="the outline file")
   sp.add_argument("--skeleton", action="store_true", help="print a template and exit")
@@ -300,6 +292,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
   sp.add_argument("--force", action="store_true", help="replace an existing roadmap")
 
+
+def _add_next(add) -> None:
+  """`next`, `plan-parallel`, `next-id` and `id-prefix`."""
   sp = _strict_flag(_render_flag(add("next", cmd_next, "the highest-priority startable item")))
   _recursive_flag(sp)
   sp.add_argument("-n", type=_nonnegative_int, default=None, metavar="N",
@@ -359,6 +354,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("prefix", nargs="?", help="the new prefix; only its case may differ")
   sp.add_argument("--dry-run", action="store_true", help="report only; write nothing")
 
+
+def _add_browse(add) -> None:
+  """`list`, `deps`, `find`, `show`, `sections`, `config` and `recommended-workflow`."""
   sp = _recursive_flag(add("list", cmd_list, "list by readiness, pass and score; empty passes merge by score; omit done and retired unless asked"))
   sp.add_argument("--envelope", action="store_true",
                   help="with --json, wrap items and sibling-only rows in an object")
@@ -430,6 +428,9 @@ def build_parser() -> argparse.ArgumentParser:
   add("recommended-workflow", cmd_recommended_workflow,
       "print the generic recommended project workflow")
 
+
+def _add_item_writes(add) -> None:
+  """`add`, `promote`, `move`, `sort`, `set`, `edit`, `refs`, `decide` and `ready`."""
   sp = _strict_flag(_render_flag(add("add", _mutating(cmd_add), "append a roadmap item")))
   sp.add_argument("title")
   sp.add_argument("--depends-on", action="append", help="dependency id (repeatable)")
@@ -516,6 +517,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--by", required=True, help="who ran the spec check, one line")
   sp.add_argument("--note", help="one line kept with the verdict")
 
+
+def _add_notes_and_feedback(add) -> None:
+  """`note`, `feedback`, `feedback-report`, `issues-pull` and the note verdict commands."""
   sp = _strict_flag(_render_flag(add("note", _mutating(cmd_note), "append a dated note to an item")))
   sp.add_argument("id")
   sp.add_argument("--kind", help="optional note kind, validated against note_kinds")
@@ -566,6 +570,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--reason", required=True, help="one line saying why the note is wrong")
   sp.add_argument("--owner", help="retracting actor; uses the claim actor precedence; no human: prefix")
 
+
+def _add_lifecycle(add) -> None:
+  """`done`, `land`, `start`, `release`, `handoff`, `reject`, `park` and `unpark`."""
   sp = _check_flag(_render_flag(add("done", cmd_done, "mark an item finished")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
@@ -608,6 +615,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
+
+def _add_prose_and_template(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:
+  """`prose` and `template`."""
   sp = sub.add_parser("prose", help="read and edit the roadmap's own prose", parents=[common])
   psub = sp.add_subparsers(dest="prose_command", required=True)
 
@@ -655,6 +665,9 @@ def build_parser() -> argparse.ArgumentParser:
   tadd("reset", cmd_template_reset, "restore a template to the built-in text",
        write=True).add_argument("name", help="slice.md, roadmap.md, row.md or relay-brief.md")
 
+
+def _add_remove(add) -> None:
+  """`remove` and `retire`."""
   sp = _strict_flag(_render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright")))
   sp.add_argument("id")
   mode = sp.add_mutually_exclusive_group(required=True)
@@ -674,6 +687,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp.add_argument("--dry-run", action="store_true", help="preview the retirement and its fallout; write nothing")
   sp.set_defaults(purge=False)
 
+
+def _add_checks(add) -> None:
+  """`render`, `sync`, `verify`, `check` and `goals`."""
   add("render", cmd_render, "regenerate .slicer/render/")
 
   sp = add("sync", cmd_sync, "rewrite derived lines in other documents")
@@ -692,6 +708,9 @@ def build_parser() -> argparse.ArgumentParser:
   sp = add("goals", cmd_goals, "show project goals and non-goals, and their records")
   sp.add_argument("--retired", action="store_true", help="include retired goal and non-goal records")
 
+
+def _add_catalog(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:
+  """`catalog` and its subcommands."""
   sp = sub.add_parser("catalog", help="project-knowledge records", parents=[common])
   csub = sp.add_subparsers(dest="catalog_command", required=True)
 
@@ -742,6 +761,9 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("item")
   inner.add_argument("ids", nargs="+", metavar="ID")
 
+
+def _add_relay_roles(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:
+  """`relay-roles` and its subcommands."""
   sp = sub.add_parser(
     "relay-roles", help="the slice-relay role matrix: rows, conditions and rules",
     description=(
@@ -834,6 +856,9 @@ def build_parser() -> argparse.ArgumentParser:
 
   radd("rule-remove", cmd_relay_roles_rule_remove, "drop a rule", mutate=True).add_argument("id")
 
+
+def _add_relay_run(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:
+  """`relay-run` and its subcommands."""
   sp = sub.add_parser(
     "relay-run", help="the local ledger of slice-relay runs and their agent steps",
     description=(
@@ -972,6 +997,9 @@ def build_parser() -> argparse.ArgumentParser:
     "YYYY-MM-DD, which means 00:00Z that day",
   )
 
+
+def _add_reports(sub: argparse._SubParsersAction, add) -> None:
+  """`stats`, `snapshot`, `status`, `log` and `tui`."""
   _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))
 
   sp = sub.add_parser("snapshot", help="compact dashboard reads across projects")
@@ -995,4 +1023,46 @@ def build_parser() -> argparse.ArgumentParser:
 
   add("tui", cmd_tui, "browse and reorder interactively (also: ui)",
       json_flag=False, aliases=("ui",))
+
+
+def build_parser() -> argparse.ArgumentParser:
+  # --root is accepted on both sides of the subcommand, because both
+  # `slicer --root x next` and `slicer next --root x` are natural to type.
+  # The subcommand copy suppresses its default so that, when it is absent, it
+  # does not overwrite a value already parsed from before the subcommand.
+  common = argparse.ArgumentParser(add_help=False)
+  common.add_argument(
+    "--root",
+    default=argparse.SUPPRESS,
+    help="project root (default: discovered from the working directory)",
+  )
+  p = _ArgumentParser(
+    prog="slicer", description=_DESCRIPTION,
+    epilog=f"Source: {__url__}\nIssues: {_ISSUES_URL}",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+  )
+  p.add_argument(
+    "--root", default=None, help="project root (default: discovered from the working directory)"
+  )
+  p.add_argument("--version", action="version", version=f"slicer {__version__}")
+  p.add_argument("--about", action="store_true", help="show version, description, source and issues URLs")
+  sub = p.add_subparsers(dest="command", required=True)
+
+  add = _make_add(sub, common)
+
+  _add_ai(sub, common)
+  _add_setup(add)
+  _add_import(add)
+  _add_next(add)
+  _add_browse(add)
+  _add_item_writes(add)
+  _add_notes_and_feedback(add)
+  _add_lifecycle(add)
+  _add_prose_and_template(sub, common)
+  _add_remove(add)
+  _add_checks(add)
+  _add_catalog(sub, common)
+  _add_relay_roles(sub, common)
+  _add_relay_run(sub, common)
+  _add_reports(sub, add)
   return p
