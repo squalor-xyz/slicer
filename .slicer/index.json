@@ -17032,7 +17032,7 @@
       "id": "s426",
       "title": "TUI note delete retracts instead of deleting",
       "short_title": "TUI note delete retracts instead of deleting",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
