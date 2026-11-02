@@ -150,7 +150,7 @@ class NextBatchTests(unittest.TestCase):
       self.run_ok(repo, "init")
       self.run_ok(repo, "add", "first")
       self.run_ok(repo, "add", "second")
-      with patch("slicer.cli.store.project_lock", wraps=store.project_lock) as locked, \
+      with patch("slicer.store.project_lock", wraps=store.project_lock) as locked, \
            patch("slicer.ops.start_many", wraps=ops.start_many) as started:
         payload = json.loads(self.run_ok(
           repo, "next", "--batch", "2", "--start", "--owner", "Ada", "--json",

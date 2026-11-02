@@ -188,9 +188,9 @@ class MergeIndexCommandTests(unittest.TestCase):
 
   def test_MergeIndex_NeedsNoProject(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
-      with patch("slicer.cli.store.discover", side_effect=AssertionError("discover")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
-           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+      with patch("slicer.store.discover", side_effect=AssertionError("discover")), \
+           patch("slicer.store.load", side_effect=AssertionError("load")), \
+           patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
         for name, text in (("base", _index(1)), ("ours", _index(2)), ("theirs", _index(3))):
           repo.write(name, text)
         code, _, err = repo.run(

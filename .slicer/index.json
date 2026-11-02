@@ -11308,11 +11308,14 @@
       "id": "s311",
       "title": "Split cli.py and ops.py",
       "short_title": "Split cli.py and ops.py",
-      "status": "open",
+      "status": "started",
       "has_slice": true,
       "depends_on": [],
       "note_records": [],
-      "claim": null,
+      "claim": {
+        "owner": "Jon Robbins",
+        "at": "2026-11-02T21:24:48Z"
+      },
       "fields": {
         "size": "L",
         "flags": [],
@@ -11331,7 +11334,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -86,7 +86,7 @@ class NextRenderTests(unittest.TestCase):
       render = repo.root / DIR_NAME / "render" / "ROADMAP.md"
       before = render.read_bytes()
       with patch("slicer.cli._heal_render"), patch(
-        "slicer.cli.render.plan", side_effect=AssertionError("rendered"),
+        "slicer.render.plan", side_effect=AssertionError("rendered"),
       ):
         code, out, _ = repo.run("next", "--start", "--render", "--json")
       self.assertEqual(code, 2)
@@ -99,7 +99,7 @@ class NextRenderTests(unittest.TestCase):
       log = repo.root / DIR_NAME / "log.jsonl"
       before = log.read_bytes()
       with patch("slicer.cli._heal_render"), patch(
-        "slicer.cli.render.plan", side_effect=AssertionError("rendered"),
+        "slicer.render.plan", side_effect=AssertionError("rendered"),
       ):
         code, _, err = repo.run("next", "--start", "--render", "--strict", "--json")
       self.assertEqual(code, 0, err)
@@ -110,7 +110,7 @@ class NextRenderTests(unittest.TestCase):
       index = repo.root / DIR_NAME / INDEX_NAME
       log = repo.root / DIR_NAME / "log.jsonl"
       before = (index.read_bytes(), log.read_bytes())
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = repo.run("next", "--start", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")
@@ -119,7 +119,7 @@ class NextRenderTests(unittest.TestCase):
 
   def test_Next_StartRenderStrictBatch_RenderFailure_ClaimsNothing(self) -> None:
     with self.repo() as repo:
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, _, _ = repo.run("next", "--batch", "2", "--start", "--render", "--strict")
       self.assertEqual(code, 2)
       for item_id in ("S01", "S02"):

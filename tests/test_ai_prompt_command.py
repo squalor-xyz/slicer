@@ -23,7 +23,7 @@ def _tracking_bytes(repo: support.TempRepo) -> dict[str, bytes]:
 
 
 def _set(repo: support.TempRepo, text: str = TEXT, *flags: str, name: str = NAME):
-  with patch("slicer.cli.sys.stdin", io.StringIO(text)):
+  with patch("sys.stdin", io.StringIO(text)):
     return repo.run("ai", "set", name, "--stdin", *flags)
 
 
@@ -70,7 +70,7 @@ class AiPromptCommandTests(unittest.TestCase):
     with self.repo() as repo:
       text = TEXT + " — café"
       with io.TextIOWrapper(io.BytesIO(text.encode("utf-8"))) as stdin, \
-           patch("slicer.cli.sys.stdin", stdin):
+           patch("sys.stdin", stdin):
         self.assertEqual(repo.run("ai", "set", NAME, "--stdin")[0], 0)
       self.assertEqual(self.path(repo).read_bytes(), text.encode("utf-8"))
 
@@ -125,7 +125,7 @@ class AiPromptCommandTests(unittest.TestCase):
         raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
     with self.repo() as repo:
       before = _tracking_bytes(repo)
-      with patch("slicer.cli.sys.stdin", BadStdin()):
+      with patch("sys.stdin", BadStdin()):
         self.error(repo.run("ai", "set", NAME, "--stdin", "--json"), 3, "io")
       self.assertEqual(_tracking_bytes(repo), before)
 
@@ -134,7 +134,7 @@ class AiPromptCommandTests(unittest.TestCase):
       before = _tracking_bytes(repo)
       # latin-1 decodes every byte, so only the raw-buffer path can refuse these.
       with io.TextIOWrapper(io.BytesIO(b"# facts \xff\xfe\n"), encoding="latin-1") as stdin, \
-           patch("slicer.cli.sys.stdin", stdin):
+           patch("sys.stdin", stdin):
         message = self.error(repo.run("ai", "set", NAME, "--stdin", "--json"), 3, "io")
       self.assertIn("stdin", message)
       self.assertFalse(self.path(repo).exists())
@@ -229,7 +229,7 @@ class AiPromptCommandTests(unittest.TestCase):
   def test_AiPrompt_UnreadableConfig_FallsBackWithoutWarning(self):
     with self.repo() as repo:
       self.seed(repo)
-      with patch("slicer.cli.Config.load", side_effect=StateError("broken", code="config")):
+      with patch("slicer.config.Config.load", side_effect=StateError("broken", code="config")):
         for cmd in (("ai", NAME), ("ai", "show", NAME)):
           self.assertEqual(repo.run(*cmd), (0, ai.prompt_text(NAME), ""))
 
@@ -245,7 +245,7 @@ class AiPromptCommandTests(unittest.TestCase):
       self.seed(repo)
       before = _tracking_bytes(repo)
       for cmd, text in (("set", "new"), ("set", ai.prompt_text(NAME)), ("reset", "")):
-        with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+        with patch("slicer.render.plan", side_effect=RenderError("boom")):
           result = (_set(repo, text, "--render", "--strict") if cmd == "set" else
                     repo.run("ai", "reset", NAME, "--render", "--strict"))
         self.assertEqual(result[0:2], (2, ""))
@@ -254,7 +254,7 @@ class AiPromptCommandTests(unittest.TestCase):
   def test_AiSet_DuringAMerge_IsRefused(self):
     with self.repo() as repo:
       before = _tracking_bytes(repo)
-      with patch("slicer.cli.vcs.merge_in_progress", return_value=True):
+      with patch("slicer.vcs.merge_in_progress", return_value=True):
         for cmd in ("set", "reset"):
           self.error(repo.run("ai", cmd, NAME, "--json"), 2, "merge_in_progress")
       self.assertEqual(_tracking_bytes(repo), before)

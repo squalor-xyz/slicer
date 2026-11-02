@@ -142,7 +142,7 @@ class SectionsCommandTests(unittest.TestCase):
       (repo.root / ".slicer/index.json").write_text("{", encoding="utf-8")
       before = {p.relative_to(repo.root): p.read_bytes()
                 for p in repo.root.rglob("*") if p.is_file()}
-      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+      with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
            patch("slicer.store.read_index", side_effect=AssertionError("index")):
         code, out, err = repo.run("sections", "--json")
       self.assertEqual(code, 0, err)

@@ -1248,7 +1248,7 @@ class RelayRolesShowAndRenderTests(RelayRolesCase):
   def test_Show_ReadsWithoutLockingOrWriting(self) -> None:
     repo = self.with_matrix()
     before = self.snapshot(repo)
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
       self.ok(repo, "relay-roles", "show", "--json")
     self.assertEqual(self.snapshot(repo), before)
 
@@ -1530,7 +1530,7 @@ class RelayRolesRecommendTests(RelayRolesCase):
     repo = self.with_matrix()
     item = self.item(repo, "--size", "S")
     before = self.snapshot(repo)
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
       self.recommend(repo, item)
     self.assertEqual(self.snapshot(repo), before)
 
@@ -1686,7 +1686,7 @@ class RelayRolesRecommendTests(RelayRolesCase):
     repo, item = self.lineup()
     before = self.snapshot(repo)
     history = len(repo.state().history())
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
       self.lineup_cli(repo, item, "--prefer-agent", "Codex", "--select", "implementer=r3")
       self.ok(repo, "relay-roles", "recommend", item, "--well-specified", "yes", "--split", "no",
               "--prefer-agent", "Codex")
@@ -1837,8 +1837,8 @@ class AiRelayJsonTests(RelayRolesCase):
   def test_AiRelay_ReadsWithoutLockingOrLoadingState(self) -> None:
     repo = self.with_matrix()
     before = self.snapshot(repo)
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
-         patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
+         patch("slicer.store.load", side_effect=AssertionError("load")):
       self.ok(repo, "ai", "relay")
       self.ok(repo, "ai", "relay-roles")
     self.assertEqual(self.snapshot(repo), before)
@@ -2400,8 +2400,8 @@ class AiRelayContractTests(RelayRolesCase):
   def test_AiRelayOrchestrator_ReadsWithoutLockingOrLoadingState(self) -> None:
     repo = self.project()
     before = self.snapshot(repo)
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
-         patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
+         patch("slicer.store.load", side_effect=AssertionError("load")):
       self.ok(repo, "ai", "relay-orchestrator")
     self.assertEqual(self.snapshot(repo), before)
 

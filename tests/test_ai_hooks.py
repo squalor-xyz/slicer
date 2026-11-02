@@ -43,7 +43,7 @@ class AiHooksTests(unittest.TestCase):
 
   def test_AiHooks_Print_IsTheSnippetAndWritesNothing(self) -> None:
     before = self.snapshot()
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
       self.assertEqual(self.repo.run("ai", "hooks"), (0, jsonio.dumps(ai.hooks_settings()), ""))
     self.assertEqual(self.snapshot(), before)
     with support.TempRepo(git=False) as outside, support.isolated_discovery(outside.root):
@@ -84,7 +84,7 @@ class AiHooksTests(unittest.TestCase):
 
   def test_AiHooksInstall_NoSettings_CreatesProjectSettings(self) -> None:
     before = self.snapshot()
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
       code, out, err = self.install()
     self.assertEqual((code, err), (0, ""))
     self.assertEqual(self.target.read_text(), jsonio.dumps(ai.hooks_settings()))
@@ -282,7 +282,7 @@ class AiGuardTests(unittest.TestCase):
     base = Path(payload.get("cwd", self.repo.root))
     self.assertEqual(ai.guard_decision(payload, base), ai.GUARD_REASON if denied else None)
     with patch("sys.stdin", io.StringIO(json.dumps(payload))), \
-         patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+         patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
       code, out, err = self.repo.run("ai", "guard")
     self.assertEqual((code, err), (0, ""))
     if denied:

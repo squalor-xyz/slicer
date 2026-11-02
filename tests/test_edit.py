@@ -57,7 +57,7 @@ class EditInputTests(unittest.TestCase):
       with self.subTest(command=command, body=body), self.repo() as repo:
         path = repo.write("previous.md", "previous body")
         self.assertEqual(repo.run(*command, "--file", str(path))[0], 0)
-        with patch("slicer.cli._via_editor") as editor, patch("slicer.cli.sys.stdin") as stdin:
+        with patch("slicer.cli._via_editor") as editor, patch("sys.stdin") as stdin:
           code, out, err = repo.run(*command, "--text", body, "--json")
         self.assertEqual(code, 0, err)
         self.assertNotIn("error", json.loads(out))
@@ -74,7 +74,7 @@ class EditInputTests(unittest.TestCase):
         args = tuple(itertools.chain.from_iterable(combination))
         with patch("slicer.cli._via_editor") as editor, \
              patch("slicer.cli._read_user_file") as read_file, \
-             patch("slicer.cli.sys.stdin") as stdin:
+             patch("sys.stdin") as stdin:
           code, out, err = repo.run(*command, *args, "--render", "--json")
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(out)["error"]["code"], "usage")
@@ -89,7 +89,7 @@ class EditInputTests(unittest.TestCase):
       with self.subTest(command=command, source=source), self.repo() as repo:
         path = repo.write("body.md", " first\nsecond \n\n")
         args = ("--file", str(path)) if source == "file" else ("--stdin",)
-        with patch("slicer.cli.sys.stdin", io.StringIO(" first\nsecond \n\n")):
+        with patch("sys.stdin", io.StringIO(" first\nsecond \n\n")):
           code, _, err = repo.run(*command, *args)
         self.assertEqual(code, 0, err)
         self.assertEqual(self.body(repo, command), " first\nsecond ")
@@ -215,7 +215,7 @@ class EditInputTests(unittest.TestCase):
         args = {"text": ("--text", incoming), "file": ("--file", str(path)),
                 "stdin": ("--stdin",)}[source]
         before = repo.read(".slicer/log.jsonl").splitlines()
-        with patch("slicer.cli.sys.stdin", io.StringIO(incoming)), \
+        with patch("sys.stdin", io.StringIO(incoming)), \
              patch("slicer.cli._via_editor") as editor:
           code, out, err = repo.run(*command, "--append", *args, "--render", "--json")
         self.assertEqual(code, 0, err)
@@ -249,7 +249,7 @@ class EditInputTests(unittest.TestCase):
                 "stdin": ("--stdin",)}[source]
         repo.run("render")  # a write heals a stale render first; start from a current one
         before = self.snapshot(repo)
-        with patch("slicer.cli.sys.stdin", io.StringIO(incoming)):
+        with patch("sys.stdin", io.StringIO(incoming)):
           code, _, err = repo.run("edit", "S01", "--section", heading, "--append", *args)
         self.assertEqual(code, 0, err)
         self.assertEqual(self.snapshot(repo), before)
@@ -270,7 +270,7 @@ class EditInputTests(unittest.TestCase):
         args = tuple(itertools.chain.from_iterable(combination))
         with patch("slicer.cli._via_editor") as editor, \
              patch("slicer.cli._read_user_file") as read_file, \
-             patch("slicer.cli.sys.stdin") as stdin:
+             patch("sys.stdin") as stdin:
           code, out, _ = repo.run(*self.commands[0], "--append", *args, "--render", "--json")
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(out)["error"]["code"], "usage")

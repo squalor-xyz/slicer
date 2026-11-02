@@ -119,7 +119,7 @@ class HandoffTests(unittest.TestCase):
       index = repo.root / DIR_NAME / INDEX_NAME
       log = repo.root / DIR_NAME / "log.jsonl"
       before = (index.read_bytes(), log.read_bytes())
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = repo.run("handoff", "S01", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")
@@ -300,7 +300,7 @@ class HandoffReportTests(unittest.TestCase):
       self.require_report(repo)
       repo.run("note", "S01", "--kind", "report", "--text", "Verified", "--render")
       before = self.snapshot(repo)
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         self.assertEqual(repo.run("handoff", "S01", "--render", "--strict")[0], 2)
       self.assertEqual(self.snapshot(repo), before)
 
@@ -709,7 +709,7 @@ class RejectTests(unittest.TestCase):
   def test_Reject_StrictRenderFailure_LeavesItInReview(self) -> None:
     with self.repo() as repo:
       before = self.index_bytes(repo)
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = repo.run("reject", "S01", "--note", self.VERDICT, "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")

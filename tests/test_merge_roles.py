@@ -436,9 +436,9 @@ class UnreadableInputTests(MergeRelayRolesCase):
 
   def test_MergeRelayRoles_NeedsNoProject(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
-      with patch("slicer.cli.store.discover", side_effect=AssertionError("discover")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
-           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+      with patch("slicer.store.discover", side_effect=AssertionError("discover")), \
+           patch("slicer.store.load", side_effect=AssertionError("load")), \
+           patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
         for name in ("base", "ours", "theirs"):
           repo.write(name, BASE)
         code, out, err = repo.run(

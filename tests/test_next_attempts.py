@@ -147,7 +147,7 @@ class NextAttemptsTests(unittest.TestCase):
           yield
 
       for batch in ((), ("--batch", "2")):
-        with patch("slicer.cli.store.project_lock", side_effect=intervening_writer):
+        with patch("slicer.store.project_lock", side_effect=intervening_writer):
           payload = json.loads(self.run_ok(
             repo, "next", "--max-attempts", "1", "--start", "--owner", "Ada", "--json", *batch,
           ))

@@ -607,7 +607,7 @@ class ConfigSetTests(unittest.TestCase):
   def test_ConfigSet_StrictRenderFailure_WritesNothing(self) -> None:
     with self.repo() as repo:
       before = _tracking_bytes(repo)
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = repo.run("config", "boundary", "x", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")

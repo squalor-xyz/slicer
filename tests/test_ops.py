@@ -908,7 +908,7 @@ class OpsTests(unittest.TestCase):
       made = repo._git("branch", "feature/S02")
       self.assertEqual(made.returncode, 0, made.stderr)
       before = repo.state().index.require("S02").status
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, err = repo.run("start", "S02", "--render", "--strict")
       self.assertEqual(code, 2, err)
       self.assertEqual(out, "")

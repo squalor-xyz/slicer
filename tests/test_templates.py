@@ -18,7 +18,7 @@ class RelayBriefTemplateTests(unittest.TestCase):
     repo = case.project()
     original = case.brief(repo)[1]
     custom = "ENVIRONMENT\nUse project-interpreter for {{id}}\n"
-    with patch("slicer.cli.sys.stdin", io.StringIO(custom)):
+    with patch("sys.stdin", io.StringIO(custom)):
       code, out, err = repo.run("template", "set", "relay-brief.md", "--stdin")
     self.assertEqual(code, 0, out + err)
     self.assertEqual(case.payload(repo)["brief"], "ENVIRONMENT\nUse project-interpreter for S01\n")
@@ -28,7 +28,7 @@ class RelayBriefTemplateTests(unittest.TestCase):
   def test_AiRelayBrief_UnknownPlaceholder_Refused(self):
     with support.TempRepo() as repo:
       repo.run("init")
-      with patch("slicer.cli.sys.stdin", io.StringIO("{{unknown}}")):
+      with patch("sys.stdin", io.StringIO("{{unknown}}")):
         code, out, err = repo.run("template", "set", "relay-brief.md", "--stdin", "--json")
       self.assertEqual(code, 2, out + err)
       self.assertEqual(json.loads(out)["error"]["code"], "bad_template", err)

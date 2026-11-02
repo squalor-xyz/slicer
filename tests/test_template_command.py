@@ -45,7 +45,7 @@ def _log_pairs(repo: support.TempRepo) -> list[tuple[str, str]]:
 
 
 def _set(repo: support.TempRepo, name: str, text: str, *flags: str) -> tuple[int, str, str]:
-  with patch("slicer.cli.sys.stdin", io.StringIO(text)):
+  with patch("sys.stdin", io.StringIO(text)):
     return repo.run("template", "set", name, "--stdin", *flags)
 
 
@@ -179,7 +179,7 @@ class TemplateCommandTests(unittest.TestCase):
 
   def test_TemplateSet_Json_ReportsNameAndChanged(self) -> None:
     with self.repo() as repo:
-      with patch("slicer.cli.sys.stdin", io.StringIO(ALT_ROW)):
+      with patch("sys.stdin", io.StringIO(ALT_ROW)):
         code, out, _ = repo.run("template", "set", "row.md", "--stdin", "--json")
       self.assertEqual(code, 0)
       self.assertEqual(
@@ -233,7 +233,7 @@ class TemplateCommandTests(unittest.TestCase):
 
     with self.repo() as repo:
       before = _tracking_bytes(repo)
-      with patch("slicer.cli.sys.stdin", BadStdin()):
+      with patch("sys.stdin", BadStdin()):
         code, out, _ = repo.run("template", "set", "row.md", "--stdin", "--json")
       self.assertEqual((code, _error(out)["code"]), (3, "io"))
       self.assertEqual(_tracking_bytes(repo), before)
@@ -253,7 +253,7 @@ class TemplateCommandTests(unittest.TestCase):
       self.assertEqual((code, _error(out)["code"]), (2, "usage"))
       src = repo.root / "t.md"
       src.write_text(ALT_ROW)
-      with patch("slicer.cli.sys.stdin", io.StringIO(ALT_ROW)):
+      with patch("sys.stdin", io.StringIO(ALT_ROW)):
         code, out, _ = repo.run(
           "template", "set", "row.md", "--file", str(src), "--stdin", "--json")
       self.assertEqual((code, _error(out)["code"]), (2, "usage"))
@@ -338,7 +338,7 @@ class TemplateCommandTests(unittest.TestCase):
   def test_TemplateSet_StrictRenderFailure_LeavesTheFileAndLogAlone(self) -> None:
     with self.repo() as repo:
       before = _tracking_bytes(repo)
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = _set(repo, "row.md", ALT_ROW, "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")

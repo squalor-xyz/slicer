@@ -211,8 +211,8 @@ class ParserErrorTests(unittest.TestCase):
 
   def test_ParserFailure_Json_EnvelopeAndDiagnosticsWithoutStateAccess(self) -> None:
     for argv, command in self.cases:
-      with self.subTest(argv=argv), patch("slicer.cli.store.load") as load, \
-           patch("slicer.cli.store.project_lock") as lock:
+      with self.subTest(argv=argv), patch("slicer.store.load") as load, \
+           patch("slicer.store.project_lock") as lock:
         code, out, err = self.run_main(argv)
         self.assertEqual(code, 2)
         error = json.loads(out)["error"]

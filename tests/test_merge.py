@@ -332,9 +332,9 @@ class SetupGitCommandTests(unittest.TestCase):
 
   def test_SetupGit_NeedsNoProject_NeverLoadsOrLocks(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
-      with patch("slicer.cli.store.discover", side_effect=AssertionError("discover")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")), \
-           patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+      with patch("slicer.store.discover", side_effect=AssertionError("discover")), \
+           patch("slicer.store.load", side_effect=AssertionError("load")), \
+           patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
         # Discovery is mocked here; bypass only the test harness's guard.
         code, out, err = repo.run("setup-git", allow_parent_project=True)
       self.assertEqual((code, err), (0, ""))

@@ -131,7 +131,7 @@ class ClaimTests(unittest.TestCase):
   def test_Start_StrictRenderFailure_DoesNotClaim(self) -> None:
     with self.repo() as repo:
       _owner(repo, "Ada")
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, err = repo.run("start", "S01", "--render", "--strict")
       self.assertEqual(code, 2, err)
       self.assertEqual(out, "")
@@ -255,7 +255,7 @@ class ClaimOwnerTests(unittest.TestCase):
   def test_Start_StrictRenderFailure_WithOwner_WritesNothing(self) -> None:
     with self.repo() as repo:
       index, log = repo.read(".slicer/index.json"), repo.read(".slicer/log.jsonl")
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = repo.run("start", "S01", "--owner", "grok/implementer", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")

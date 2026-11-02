@@ -80,7 +80,7 @@ class AiPromptTests(unittest.TestCase):
         return {p.relative_to(repo.root): p.read_bytes() if p.is_file() else None
                 for p in repo.root.rglob("*")}
       before = snapshot()
-      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+      with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
            patch("slicer.cli._ai_project", side_effect=AssertionError("project read")):
         for name in ("build-roadmap", "getting-started"):
           for flags in ((), ("--json",)):
@@ -363,8 +363,8 @@ class AiInstructionsTests(unittest.TestCase):
       (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
       before = {p.relative_to(repo.root): p.read_bytes()
                 for p in repo.root.rglob("*") if p.is_file()}
-      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+      with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
+           patch("slicer.store.load", side_effect=AssertionError("load")):
         code, text, err = repo.run("ai", "instructions")
       self.assertEqual((code, err), (0, ""))
       self.assertIn("slicer handoff ID --render --json", text)
@@ -1682,8 +1682,8 @@ class AiRelayTests(unittest.TestCase):
       (repo.root / ".slicer/config.json").write_text(json.dumps(data) + "\n")
       before = {p.relative_to(repo.root): p.read_bytes()
                 for p in repo.root.rglob("*") if p.is_file()}
-      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
-           patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+      with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
+           patch("slicer.store.load", side_effect=AssertionError("load")):
         code, text, err = repo.run("ai", "relay")
       self.assertEqual((code, err), (0, ""))
       self.assertIn("slicer handoff ID --render --check", text)
@@ -2367,8 +2367,8 @@ class AiRelayRolesTests(unittest.TestCase):
   def test_RelayRoles_ReadsWithoutLockingOrWriting(self) -> None:
     repo = self.with_matrix()
     before = self.snapshot(repo)
-    with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
-         patch("slicer.cli.store.load", side_effect=AssertionError("load")):
+    with patch("slicer.store.project_lock", side_effect=AssertionError("lock")), \
+         patch("slicer.store.load", side_effect=AssertionError("load")):
       code, out, err = repo.run("ai", "relay-roles", "--json")
     self.assertEqual((code, err), (0, ""))
     self.assertIn("rows", json.loads(out))

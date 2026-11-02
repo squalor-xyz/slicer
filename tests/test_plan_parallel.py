@@ -300,7 +300,7 @@ class PlanParallelTests(unittest.TestCase):
       self.file_item(repo, "first", "- `src/a.py`")
       self.file_item(repo, "second", "- `src/a.py`")
       before = self.snapshot(repo)
-      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")):
+      with patch("slicer.store.project_lock", side_effect=AssertionError("lock")):
         for extra in ((), ("--json",)):
           code, _out, err = repo.run("plan-parallel", *extra)
           self.assertEqual((code, err), (0, ""))

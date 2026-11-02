@@ -452,7 +452,7 @@ class IdPrefixTests(unittest.TestCase):
   def test_IdPrefix_StrictRenderFailure_WritesNothing(self) -> None:
     with self.repo() as repo:
       index, config = repo.read(".slicer/index.json"), repo.read(".slicer/config.json")
-      with patch("slicer.cli.render.plan", side_effect=RenderError("boom")):
+      with patch("slicer.render.plan", side_effect=RenderError("boom")):
         code, out, _ = repo.run("id-prefix", "s", "--render", "--strict")
       self.assertEqual(code, 2)
       self.assertEqual(out, "")
