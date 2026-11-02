@@ -16395,7 +16395,7 @@
       "id": "s414",
       "title": "Readiness follow-ups",
       "short_title": "Readiness follow-ups",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
