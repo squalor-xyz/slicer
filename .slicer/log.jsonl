@@ -2504,3 +2504,39 @@
 {"when": "2026-11-02T14:39:49Z", "item": "s438", "action": "status", "from": "review", "to": "done", "note": "Verified: slicer skill routes getting started, build-roadmap, planning and implementing; committed skill copy matches; full suite 3095 OK; gate VERDICT: PASS.", "by": "Jon Robbins"}
 {"when": "2026-11-02T14:55:35Z", "item": "s437", "action": "status", "from": "review", "to": "done", "note": "Verified: ai set, reset and show per-project prompt overrides over .slicer/prompts; getting-started/build-roadmap print the override; check warns on unknown files; merged-branch full suite 3127 OK; reviewer VERDICT: PASS.", "by": "Jon Robbins"}
 {"when": "2026-11-02T15:08:37Z", "item": "s439", "action": "status", "from": "review", "to": "done", "note": "Verified: ai hooks prints/installs the project-local Claude Code hooks snippet and ai guard denies tracking-file access judged against the target file's own project (needs slicer 1.18+ for the PreToolUse hook); merged-branch full suite 3165 OK; reviewer VERDICT: PASS. [HUMAN CHECK] pending: real Claude Code session shows getting-started text and a Read of .slicer/index.json is denied.", "by": "Jon Robbins"}
+{"when": "2026-11-02T15:43:33Z", "item": "pass.v1.19", "action": "prose", "from": "", "to": "v1.19", "note": "add-pass"}
+{"when": "2026-11-02T15:43:33Z", "item": "pass.v1.20", "action": "prose", "from": "", "to": "v1.20", "note": "add-pass"}
+{"when": "2026-11-02T15:52:03Z", "item": "s440", "action": "add", "from": "", "to": "open", "note": "ai help and docs coverage"}
+{"when": "2026-11-02T15:52:03Z", "item": "s441", "action": "add", "from": "", "to": "open", "note": "prompt override hardening"}
+{"when": "2026-11-02T15:52:03Z", "item": "s442", "action": "add", "from": "", "to": "open", "note": "ai hooks and guard hardening"}
+{"when": "2026-11-02T15:52:36Z", "item": "s426", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-02T15:53:13Z", "item": "s416", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-02T15:53:37Z", "item": "s442", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-02T15:54:20Z", "item": "s426", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.19"}
+{"when": "2026-11-02T15:54:21Z", "item": "s311", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.19"}
+{"when": "2026-11-02T15:54:21Z", "item": "s414", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.19"}
+{"when": "2026-11-02T15:54:21Z", "item": "s416", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.19"}
+{"when": "2026-11-02T15:54:21Z", "item": "s431", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.19"}
+{"when": "2026-11-02T15:54:22Z", "item": "s434", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.19"}
+{"when": "2026-11-02T15:54:22Z", "item": "s313", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:22Z", "item": "s368", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:22Z", "item": "s370", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:23Z", "item": "s371", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:23Z", "item": "s372", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:23Z", "item": "s374", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:23Z", "item": "s375", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:24Z", "item": "s377", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:24Z", "item": "s381", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:24Z", "item": "s386", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:24Z", "item": "s388", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:25Z", "item": "s389", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:25Z", "item": "s390", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:25Z", "item": "s413", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:25Z", "item": "s427", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:26Z", "item": "s428", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:26Z", "item": "s429", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:26Z", "item": "s430", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:26Z", "item": "s432", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:27Z", "item": "s433", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:54:27Z", "item": "s435", "action": "set", "from": "", "to": "", "note": "pass_key later→v1.20"}
+{"when": "2026-11-02T15:56:07Z", "item": "s439", "action": "note", "from": "", "to": "", "note": "Human check waived by the owner 2026-11-02 and accepted with", "by": "Jon Robbins"}

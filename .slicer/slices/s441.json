@@ -1,0 +1,41 @@
+{
+  "id": "s441",
+  "title": "prompt override hardening",
+  "lead": [
+    "`slicer check` stops warning about dotfiles in `.slicer/prompts/`, and a test proves that `ai set NAME --stdin` reads the raw byte stream and refuses non-UTF-8 bytes with code `io`."
+  ],
+  "depends_note": null,
+  "findings_note": "Deferred `later` follow-ups from the s437 relay review (release 1.18.0), 2026-11-02: check warns on dotfiles in `.slicer/prompts/`, and no test feeds non-UTF-8 bytes through a buffered stdin to `ai set --stdin`.",
+  "size": "S",
+  "flags": [],
+  "trees_note": "check, cli, tests, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** any other check warning; the `--file` path (already covered by `test_AiSet_NonUtf8OrMissingFile_IsIoAndWritesNothing`); `template set --stdin`, which keeps reading `sys.stdin.read()`; changing the `io` code or exit 3 for non-UTF-8 input.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Verified against main at 50bd033 on 2026-11-02:\n\n1. `check._prompt_warnings` (src/slicer/check.py:99-117) walks `state.prompts_dir.glob(\"*\")`, which matches dotfiles, and warns \"unknown prompt file\" for every regular file not named `build-roadmap.md` or `getting-started.md`. In a scratch project, `printf x > .slicer/prompts/.DS_Store` made `slicer check --json` report that warning (ok stays true). Finder's `.DS_Store`, editor swap files such as `.getting-started.md.swp`, and the `.slicer-tmp-*` file `jsonio.write_bytes` creates for a moment are all dotfiles and are never prompts. Rule: skip any entry whose name starts with `.`. Undotted unknown files still warn (`test_Check_UnknownPromptFile_Warns`), and conflict-marker detection on known names is unchanged.\n2. `cli._template_source` (cli.py:3379-3395) reads a prompt from `sys.stdin.buffer.read().decode(\"utf-8\")` when stdin has a `buffer`, else `sys.stdin.read()`. `test_AiSet_NonUtf8Stdin_IsIoAndWritesNothing` (tests/test_ai_prompt_command.py:122) patches stdin with a `BadStdin` class that has no `buffer` and whose `read()` raises, so it only exercises the fallback branch. `test_AiSet_BufferedStdin_PreservesUtf8AndCrLf` (line 69) does use a real `io.TextIOWrapper(io.BytesIO(...))` but only with valid UTF-8. Nothing proves invalid bytes on the buffered path give `io`. To make the test fail if the buffer path were dropped, wrap the bytes in a TextIOWrapper with `encoding=\"latin-1\"`: its `read()` would succeed and write a file, so only the buffer path refuses."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/check.py`: in `_prompt_warnings`, skip a path whose name starts with `.` before the `is_file` test. Update the docstring to say so.\n- `tests/test_ai_prompt_command.py`: the two tests below, reusing `self.repo()`, `self.error()`, `_tracking_bytes()` and `check_warning`'s setup.\n- `docs/configuration.md` (the prompts paragraph, ~line 314): \"`check` warns on unknown files or conflict markers\" gains \"(dotfiles are ignored)\".\n- `CHANGELOG.md` under `## [Unreleased]` `### Fixed`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Check_DotfileInPrompts_IsIgnored`: with a valid override seeded and `.DS_Store` and `.getting-started.md.swp` written under `.slicer/prompts/`, after `render`, `check --json` exits 0, `ok` is true and no warning names either file. Fails today on `.DS_Store`.\n- `test_AiSet_NonUtf8OnBufferedStdin_IsIoAndWritesNothing`: patch `slicer.cli.sys.stdin` with `io.TextIOWrapper(io.BytesIO(b\"# facts \\xff\\xfe\\n\"), encoding=\"latin-1\")`; `ai set getting-started --stdin --json` exits 3 with error code `io`, the message names stdin, no `.slicer/prompts/getting-started.md` exists and `_tracking_bytes` is unchanged. This passes on today's code (it pins the buffer path); mutation-check it by changing the prompt branch in `_template_source` to `sys.stdin.read()`, which must make it fail."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write both tests; confirm the check test fails and the stdin test fails under the mutation.\n2. Add the dotfile skip in `_prompt_warnings`.\n3. Docs and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- [ ] `python3 -m unittest discover -s tests -t tests -k '*DotfileInPrompts*'` and `-k '*NonUtf8OnBufferedStdin*'` pass; `-k '*PromptFile*'` and `-k '*ConflictMarkers*'` still pass.\n- [ ] In a scratch project, a `.DS_Store` under `.slicer/prompts/` gives no `check` warning and `other.md` still does.\n- [ ] `python3 tests/affected.py --run`, the full suite, `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Commit on the worktree branch."
+    }
+  ],
+  "notes": []
+}

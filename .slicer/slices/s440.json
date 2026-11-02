@@ -1,0 +1,41 @@
+{
+  "id": "s440",
+  "title": "ai help and docs coverage",
+  "lead": [
+    "Four small text and test gaps the 1.18.0 reviews deferred: nested `ai` subcommands are not checked against docs/commands.md, the `build-roadmap` prompt uses `FILE` for two different files, `ai skill --help` still describes only the implement loop, and the `ai` line in `slicer --help` omits five of its subcommands."
+  ],
+  "depends_note": null,
+  "findings_note": "Deferred `later` follow-ups from the 1.18.0 relay reviews of s436 (docs coverage, build-roadmap FILE), s438 (ai skill description) and s439 (ai help line), 2026-11-02.",
+  "size": "S",
+  "flags": [],
+  "trees_note": "ai, cli, docs, tests",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** docs coverage for the other nested groups (`prose`, `catalog`, `template`, `relay-roles`, `relay-run`), whose rows use other first-cell forms; any change to the `getting-started` prompt, `ai instructions`, the skill text or the relay texts; project prompt overrides already stored in `.slicer/prompts/`.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Verified against main at 50bd033 on 2026-11-02:\n\n1. `tests/test_docs_coverage.py` `_subcommands()` returns only the top-level parser's choices, so `test_EverySubcommand_HasACommandTableRow` and `test_EveryFlag_IsNamedInItsCommandsRow` check `ai` as one command (its own flags `--json`, `--lean`, `--rest`) and never look at its 13 subcommands (`instructions`, `build-roadmap`, `getting-started`, `show`, `set`, `reset`, `skill`, `hooks`, `guard`, `relay`, `relay-roles`, `relay-orchestrator`, `relay-brief`). Today every one of them does have a row in docs/commands.md (lines 16-26) and every flag is named, with one exception for the matcher: the `instructions` row is written `` `ai [instructions]` ``, which `_rows_for`'s pattern `` `NAME(?:[ `]|$) `` does not match. So the new test passes once it accepts the bracketed form; its value is catching the next undocumented `ai` subcommand or flag.\n2. `ai.BUILD_ROADMAP` (src/slicer/ai.py:1478-1496) step 4 says `slicer import FILE --dry-run --json`, `slicer import FILE --render --json` and `slicer prose edit goals --file FILE --render`. The first two are the outline; the third is a separate goals Markdown file, but all three read as the same `FILE`.\n3. The `ai skill` parser description (src/slicer/cli.py:4080) begins \"Print the SKILL.md for the implement loop.\" Since s438 the skill routes five jobs (`ai.SKILL_JOBS`, ai.py:168-176): getting started, building a roadmap, planning/filing/claims/review, implementing a slice, and a slice relay. docs/commands.md row 17 already describes the routing; only the help text is stale.\n4. The `ai` parser help (cli.py:4030) is \"agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started, hooks, guard\". It omits `show`, `set`, `reset` (s437) and also `relay-orchestrator` and `relay-brief`.\n\nThe prompts must stay minimal: `test_AiPrompts_PointAtRestAndStayShort` (tests/test_ai.py:61) caps each at 20 lines and 1400 characters; BUILD_ROADMAP is 17 lines and 1142 characters today."
+    },
+    {
+      "heading": "Files",
+      "body": "- `tests/test_docs_coverage.py`: a helper `_ai_subcommands()` returning the `ai` parser's subparser choices, and two tests (below). A row matches `ai NAME` with the same rule as `_rows_for`, except that the name may sit in square brackets (`` `ai [instructions]` ``). Flags are collected as in `test_EveryFlag_IsNamedInItsCommandsRow` (non-suppressed `--` options minus `COMMON`).\n- `src/slicer/ai.py`: BUILD_ROADMAP step 4 names the outline `OUTLINE` and the goals file `GOALS`, for example: \"write it as one outline file, run `slicer import OUTLINE --dry-run --json`, fix every problem, then `slicer import OUTLINE --render --json` and `slicer check --json`. Record agreed goals with `slicer prose edit goals --file GOALS --render`.\" No other wording changes; it stays within the 20-line and 1400-character limit.\n- `src/slicer/cli.py`: the `ai skill` description names the jobs the skill routes (getting started, building a roadmap, planning and filing, implementing a slice, a slice relay) instead of \"the implement loop\"; keep the rest of the sentence (project read, fallback, `--output`/`--install`). The `ai` help (line 4030) lists every `ai` subcommand and keeps the prefix \"agent onboarding: instructions, skill, relay\", which `test_Instructions_HelpAtEveryLevel_IsDiscoverableAndHumanReadable` (tests/test_ai.py:384) asserts.\n- `tests/test_ai.py`: update the one assertion in `test_AiPrompts_StopBeforeImplementingOrCommitting` (line 85) from `slicer import FILE --dry-run --json` to `slicer import OUTLINE --dry-run --json`; add the tests below.\n- `CHANGELOG.md` under `## [Unreleased]` `### Changed`: one line for the prompt placeholders and the help text."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_EveryAiSubcommand_HasACommandTableRow` (tests/test_docs_coverage.py): every `ai` subcommand has a docs/commands.md row. Passes once the bracket rule is in; fails if a row is removed (mutation-check by deleting the `ai guard` row locally).\n- `test_EveryAiSubcommandFlag_IsNamedInItsRow` (tests/test_docs_coverage.py): every non-common flag of each `ai` subcommand is named in its rows (for example `--session` for `ai relay-orchestrator`, `--init-roles` for `ai relay`). Mutation-check by renaming one flag in a row.\n- `test_AiBuildRoadmap_NamesTheOutlineAndGoalsFilesApart` (tests/test_ai.py): `FILE` does not occur in `ai.BUILD_ROADMAP`; `slicer import OUTLINE --dry-run --json`, `slicer import OUTLINE --render --json` and `slicer prose edit goals --file GOALS --render` do. Fails today.\n- `test_AiSkillHelp_NamesTheJobsItRoutes` (tests/test_ai.py): `slicer ai skill --help` (whitespace-normalised) does not contain \"implement loop\" and contains \"getting started\", \"building a roadmap\" and \"slice relay\". Fails today.\n- `test_AiHelpLine_NamesEveryAiSubcommand` (tests/test_ai.py): the `ai` entry's help in the top-level parser names every choice of the `ai` subparsers. Fails today on `show`, `set`, `reset`, `relay-orchestrator`, `relay-brief`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Write the five tests; confirm the three in test_ai.py fail and the two coverage tests fail only on `ai instructions` before the bracket rule.\n2. Add the bracket rule to the coverage helper; change BUILD_ROADMAP step 4, the `ai skill` description and the `ai` help line; update the line-85 assertion.\n3. `test_Instructions_CommandExamples_AreAcceptedByTheParser` parses every `slicer ...` example in BUILD_ROADMAP; `OUTLINE` and `GOALS` must still parse as positional and `--file` values.\n4. CHANGELOG line."
+    },
+    {
+      "heading": "Check",
+      "body": "- [ ] `python3 -m unittest discover -s tests -t tests -k '*AiSubcommand*'` and `-k '*AiBuildRoadmap*'`, `-k '*AiSkillHelp*'`, `-k '*AiHelpLine*'` pass.\n- [ ] `PYTHONPATH=src python3 -m slicer ai build-roadmap | grep -c FILE` prints 0, and the text is at most 20 lines (`| wc -l`).\n- [ ] `PYTHONPATH=src python3 -m slicer ai skill --help` no longer says \"implement loop\"; `PYTHONPATH=src python3 -m slicer --help` lists `show`, `set`, `reset`, `relay-orchestrator` and `relay-brief` on the `ai` line.\n- [ ] `python3 tests/affected.py --run`, the full suite, `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Commit on the worktree branch."
+    }
+  ],
+  "notes": []
+}
