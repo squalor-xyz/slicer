@@ -2554,3 +2554,5 @@
 {"when": "2026-11-02T17:24:50Z", "item": "s416", "action": "status", "from": "review", "to": "done", "note": "Landed: land --render accepted as a no-op; ready on every next payload, documented as not filtering; full suite 3175 OK; gate PASS after two docs-only fix rounds.", "by": "Jon Robbins"}
 {"when": "2026-11-02T17:28:52Z", "item": "s414", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-11-02T17:28:52Z", "item": "s413", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-02T17:29:40Z", "item": "s414", "action": "set", "from": "", "to": "", "note": "trees ops→mergeindex,docs,tests; findings -→s400 relay review, 2026-10-26; effort -→1"}
+{"when": "2026-11-02T17:29:40Z", "item": "s413", "action": "set", "from": "", "to": "", "note": "trees ops→paths,ops,docs,tests; findings -→s395 relay review, 2026-10-26; effort -→1"}

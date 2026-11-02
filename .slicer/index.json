@@ -16371,10 +16371,13 @@
         "size": "S",
         "flags": [],
         "trees": [
-          "ops"
+          "paths",
+          "ops",
+          "docs",
+          "tests"
         ],
         "trees_literal": false,
-        "findings": "",
+        "findings": "s395 relay review, 2026-10-26",
         "discovered_from": "s395",
         "parent": "",
         "cites": [],
@@ -16384,7 +16387,7 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
-        "effort": null,
+        "effort": 1,
         "attempts": 0
       }
     },
@@ -16401,10 +16404,12 @@
         "size": "S",
         "flags": [],
         "trees": [
-          "ops"
+          "mergeindex",
+          "docs",
+          "tests"
         ],
         "trees_literal": false,
-        "findings": "",
+        "findings": "s400 relay review, 2026-10-26",
         "discovered_from": "s400",
         "parent": "",
         "cites": [],
@@ -16414,7 +16419,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 1,
-        "effort": null,
+        "effort": 1,
         "attempts": 0
       }
     },

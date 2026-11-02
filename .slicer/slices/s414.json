@@ -5,11 +5,11 @@
     "The merge driver treats an item's `readiness` record as one value: two different records conflict at `items/ID/readiness` instead of being merged field by field into a record nobody wrote. The docs also say where a ready item with no pass goes in `next --ready`."
   ],
   "depends_note": null,
-  "findings_note": "",
+  "findings_note": "s400 relay review, 2026-10-26",
   "size": "S",
   "flags": [],
-  "trees_note": "ops",
-  "trees_plural": false,
+  "trees_note": "mergeindex, docs, tests",
+  "trees_plural": true,
   "boundary": "**Not in this slice:** the `ready` key on `next` payloads and the \"orders, not filters\" wording, both landed with s416 (5a384a9); any change to `next --ready` ordering itself; readiness staleness rules; merge handling of any other item field.",
   "sections": [
     {

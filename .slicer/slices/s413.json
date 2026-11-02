@@ -5,11 +5,11 @@
     "Three follow-ups from the s395 review of `show --json` `paths`. A root file that does not exist yet (or was deleted) can be named as `./NAME` so it counts as a path. `ops.item_file_paths` lists the project root only when there is a Files section to read. The docs say that only a space inside a span disqualifies it."
   ],
   "depends_note": null,
-  "findings_note": "",
+  "findings_note": "s395 relay review, 2026-10-26",
   "size": "S",
   "flags": [],
-  "trees_note": "ops",
-  "trees_plural": false,
+  "trees_note": "paths, ops, docs, tests",
+  "trees_plural": true,
   "boundary": "**Not in this slice:** guessing root files from git (`ls-tree HEAD`) or from slash-less names without `./`; changing which spans with a slash count; `overlap_ignore`; the 1.16 CHANGELOG entry, which is history and stays as written.",
   "sections": [
     {

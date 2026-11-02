@@ -46,7 +46,7 @@ v1.20.0 release
 | 11 | [s388](slices/s388.md) | snapshot --parts validation | S | 1 | slicer | s383 relay report 2026-10-22, later note: `--parts ''` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently · discovered from s383 | — |
 | 12 | [s389](slices/s389.md) | snapshot code-mismatch warning | S | 1 | slicer | s383 relay report 2026-10-22, later note: `snapshot` dispatches before `_warn_code_mismatch`, so the editable-install warning every other command prints is skipped · discovered from s383 | — |
 | 13 | [s390](slices/s390.md) | Post-merge hook polish | S | 1 | slicer | s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only "run slicer check", and no test runs the printed install command · discovered from s384 | — |
-| 14 | [s413](slices/s413.md) | show --json paths edge cases | S | - | ops | discovered from s395 | — |
+| 14 | [s413](slices/s413.md) | show --json paths edge cases | S | 1 | paths, ops, docs, tests | s395 relay review, 2026-10-26 · discovered from s395 | — |
 | 15 | [s427](slices/s427.md) | Wrap handoff policy text | S | 1 | slicer | s412 review 2026-10-30, later note: with handoff_requires_note_kind set, ai relay prints a ~394-430 column line from handoff_policy_text · discovered from s412 | — |
 | 16 | [s428](slices/s428.md) | Merge-index churn after schema 11 | S | 1 | slicer | s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note · discovered from s393 | — |
 | 17 | [s429](slices/s429.md) | TUI writes heal render | S | 1 | slicer | s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/ · discovered from s417 | — |
@@ -62,7 +62,7 @@ v1.19.0 release
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
 | 22 | [s311](slices/s311.md) | Split cli.py and ops.py | L | 3 | slicer | research/go-rewrite-evaluation.md, code review 3, 2026-10-15 | — |
-| 23 | [s414](slices/s414.md) | Readiness follow-ups | S | - | ops | discovered from s400 | — |
+| 23 | [s414](slices/s414.md) | Readiness follow-ups | S | 1 | mergeindex, docs, tests | s400 relay review, 2026-10-26 · discovered from s400 | — |
 | 24 | [s416](slices/s416.md) | land --render, ready flag | S | 1 |  | squalify relay log 2026-10-27: 'slicer land' rejects --render unlike other mutations; 'slicer show ID --json' reported ready:false for a slice that list and next treated as ready (sq-16, 2026-10-26). | done |
 | 25 | [s426](slices/s426.md) | TUI note delete retracts instead of deleting | S | - |  | discovered from s393 | done |
 | 26 | [s431](slices/s431.md) | Sync relay-brief override | S | 1 | slicer | s419 review 2026-10-30, owner question: the repo's customized relay-brief.md override lacks the s419 no-background bullet · discovered from s419 | — |
