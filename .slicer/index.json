@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 443,
+  "next_id": 445,
   "preamble": "",
   "passes": [
     {
@@ -17767,6 +17767,68 @@
         "reason": "",
         "importance": 1,
         "urgency": 1,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s443",
+      "title": "Apply a change set to the relay role matrix in one atomic write",
+      "short_title": "Relay roles apply",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "ork owner request 2026-11-02: unify settings across ork, slicer and adj; a tool sets up the matrix per project through slicer's own commands",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "relay-roles-apply",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s444",
+      "title": "Replace the whole relay role matrix through relay-roles apply",
+      "short_title": "Relay roles replace",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s443"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "slicer"
+        ],
+        "trees_literal": false,
+        "findings": "ork owner answer 2026-11-02 (interactive): the apply form also takes a complete matrix to replace the current one",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "relay-roles-replace",
+        "pass": "",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
         "effort": 2,
         "attempts": 0
       }
