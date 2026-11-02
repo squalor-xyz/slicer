@@ -48,6 +48,10 @@ branch with title `{{commit_title}}`. Do not merge or push.
 
 - Follow the waiting rule from `slicer ai relay-orchestrator`: wait for every
   role and process to finish before reporting. A nudge is not a reason to report.
+- You and every role run their own shell commands in the foreground and
+  background none. Run long commands such as the full suite in the
+  foreground with a long timeout.
+- You and every role use absolute paths and `git -C` and never `cd`.
 - Stop and report under the Stop section of `slicer ai relay-orchestrator`
   (repeated gate failures, a wrong specification, a permission denial or no
   eligible row) instead of guessing. A `blocker` owner question is not a
