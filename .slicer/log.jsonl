@@ -2575,3 +2575,6 @@
 {"when": "2026-11-02T18:17:22Z", "item": "s443", "action": "add", "from": "", "to": "open", "note": "Apply a change set to the relay role matrix in one atomic write"}
 {"when": "2026-11-02T18:17:22Z", "item": "s444", "action": "add", "from": "", "to": "open", "note": "Replace the whole relay role matrix through relay-roles apply"}
 {"when": "2026-11-02T18:35:53Z", "item": "s440", "action": "status", "from": "review", "to": "done", "note": "Landed: nested ai subcommands covered by the docs test, build-roadmap placeholders fixed, ai skill and ai help text updated; full suite 3186 OK on the merged branch; gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:37:06Z", "item": "s441", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T19:02:28Z", "item": "s441", "action": "note", "from": "", "to": "", "note": "Ready for review: s441 makes check ignore dotfiles in .slice", "by": "Jon Robbins"}
+{"when": "2026-11-02T19:02:35Z", "item": "s441", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

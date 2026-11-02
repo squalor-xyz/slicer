@@ -16,6 +16,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - Emptying an item note in the TUI (s426) no longer deletes it. A one-line prompt asks for the reason and retracts the note through the same operation as `slicer note-retract`, so its text and who, when and why stay on the record; a blank reason or Esc writes nothing, and a note that is already retracted reports an error. The status line reads "Retract reason, required".
 
+### Fixed
+
+- `check` no longer warns about dotfiles in `.slicer/prompts/` such as `.DS_Store` or editor swap files; other unknown files still warn (s441).
+
 ## [1.18.0] - 2026-11-02
 
 ### Added

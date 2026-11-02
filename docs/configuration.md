@@ -312,7 +312,7 @@ text also removes the file, so upgrades supply the current built-in instead of p
 an old copy. Blank text is refused (`bad_prompt`); there are no placeholders or expansion.
 Only those two prompts support overrides, not instructions, skills or relay texts.
 Overrides are committed and merge as plain Markdown: `check` warns on unknown files
-or conflict markers without failing. They are never rendered. `init`, `init --force`
+(dotfiles are ignored) or conflict markers without failing. They are never rendered. `init`, `init --force`
 and `migrate` create no prompt files and leave existing overrides alone; `setup-git`
 and `.gitattributes` need no change.
 

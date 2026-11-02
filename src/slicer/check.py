@@ -97,11 +97,15 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
 
 
 def _prompt_warnings(state: State) -> list[str]:
-  """Prompt files merge as plain text; warn about typos and unresolved conflicts."""
+  """Prompt files merge as plain text; warn about typos and unresolved conflicts.
+
+  Dotfiles (Finder's `.DS_Store`, editor swap files, `jsonio`'s temporary files) are
+  never prompts and are skipped.
+  """
   warnings = []
   known = {f"{name}.md": name for name in ai.PROMPT_NAMES}
   for path in sorted(state.prompts_dir.glob("*")):
-    if not path.is_file():
+    if path.name.startswith(".") or not path.is_file():
       continue
     name = known.get(path.name)
     if name is None:

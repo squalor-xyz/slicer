@@ -129,6 +129,17 @@ class AiPromptCommandTests(unittest.TestCase):
         self.error(repo.run("ai", "set", NAME, "--stdin", "--json"), 3, "io")
       self.assertEqual(_tracking_bytes(repo), before)
 
+  def test_AiSet_NonUtf8OnBufferedStdin_IsIoAndWritesNothing(self):
+    with self.repo() as repo:
+      before = _tracking_bytes(repo)
+      # latin-1 decodes every byte, so only the raw-buffer path can refuse these.
+      with io.TextIOWrapper(io.BytesIO(b"# facts \xff\xfe\n"), encoding="latin-1") as stdin, \
+           patch("slicer.cli.sys.stdin", stdin):
+        message = self.error(repo.run("ai", "set", NAME, "--stdin", "--json"), 3, "io")
+      self.assertIn("stdin", message)
+      self.assertFalse(self.path(repo).exists())
+      self.assertEqual(_tracking_bytes(repo), before)
+
   def test_AiSet_NonUtf8OrMissingFile_IsIoAndWritesNothing(self):
     with self.repo() as repo:
       src = repo.root / "bad.md"
@@ -283,6 +294,20 @@ class AiPromptCommandTests(unittest.TestCase):
 
   def test_Check_PromptWithConflictMarkers_Warns(self):
     self.check_warning(f"{NAME}.md", "<<<<<<< ours\none\n=======\ntwo\n>>>>>>> theirs\n", "conflict")
+
+  def test_Check_DotfileInPrompts_IsIgnored(self):
+    with self.repo() as repo:
+      self.seed(repo)
+      for dotfile in (".DS_Store", ".getting-started.md.swp"):
+        (self.path(repo).parent / dotfile).write_text("x")
+      repo.run("render")
+      code, out, err = repo.run("check", "--json")
+      self.assertEqual(code, 0, err)
+      report = json.loads(out)
+      self.assertTrue(report["ok"])
+      warning = "\n".join(report["warnings"])
+      for dotfile in (".DS_Store", ".getting-started.md.swp"):
+        self.assertNotIn(dotfile, warning)
 
   def check_warning(self, filename, text, word):
     with self.repo() as repo:
