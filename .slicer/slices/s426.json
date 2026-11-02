@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the new tests and change the two removal tests; watch them fail.\n2. Add `ActResult.retract`, the `apply_edit_result` branch, the `accept` hook, the `retract` action in `_note` and its label.\n3. docs/tui.md and CHANGELOG. Mutation-check: restoring the `ops.remove_note` call must fail `test_ApplyEdit_EmptiedNote_AsksForARetractReason`."
+      "body": "1. Write the new tests and change the two removal tests; watch them fail.\n2. Add `ActResult.retract`, the `apply_edit_result` branch, the `accept` hook, the `retract` action in `_note` and its label.\n3. docs/tui.md and CHANGELOG. Mutation-check: restoring the `ops.remove_note` call must fail `test_ApplyEdit_EmptiedNote_AsksForARetractReason`.\n\nOwner decisions: emptying a note in the TUI opens a one-line prompt for the retraction reason; an empty reason or Esc cancels (confirmed 2026-11-02)."
     },
     {
       "heading": "Check",

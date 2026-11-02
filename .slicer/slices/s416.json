@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests and watch them fail.\n2. Add `--render` to `land`; add `ready` to `_ready_entry` and `_next_fields`; update the `--ready` help.\n3. Docs rows and paragraph, CHANGELOG. `tests/test_docs_coverage.py` checks that `--render` is named in the `land` row."
+      "body": "1. Write the tests and watch them fail.\n2. Add `--render` to `land`; add `ready` to `_ready_entry` and `_next_fields`; update the `--ready` help.\n3. Docs rows and paragraph, CHANGELOG. `tests/test_docs_coverage.py` checks that `--render` is named in the `land` row.\n\nOwner decisions: add only `land --render`, as a no-op; do not add `--check` (confirmed 2026-11-02)."
     },
     {
       "heading": "Check",

@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; confirm the mixed-group, duplicate and directory tests fail.\n2. Directory refusal; then the `--force` merge rule as a small helper inside cli.py, used only by `cmd_ai_hooks`.\n3. Rewrite `_glob_could_match_json`; run `python3 -m unittest discover -s tests -t tests -k '*AiGuard*'` with no edits to existing guard tests.\n4. Help text, docs and CHANGELOG."
+      "body": "1. Write the tests; confirm the mixed-group, duplicate and directory tests fail.\n2. Directory refusal; then the `--force` merge rule as a small helper inside cli.py, used only by `cmd_ai_hooks`.\n3. Rewrite `_glob_could_match_json`; run `python3 -m unittest discover -s tests -t tests -k '*AiGuard*'` with no edits to existing guard tests.\n4. Help text, docs and CHANGELOG.\n\nOwner decisions: a directory at `.claude/settings.json` is refused with code `state` (exit 2), not `io` (confirmed 2026-11-02)."
     },
     {
       "heading": "Check",
