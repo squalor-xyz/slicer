@@ -968,9 +968,10 @@ note, size, pass, effort, tree, flag or dependency change does not. A stale item
 by running `ready` again after the check, or by restoring the text. `readiness` (`by`, `at`, `note`,
 `digest`) appears on the item JSON once recorded and is absent before. `next --ready` (and
 `--batch`) lists `ready: true` items first within their tier and declared pass, never moves an
-item across passes, and drops nothing. A record is not a
-gate and does not replace reading the slice. It does not know about open decision-log records that
-reference the slice. Index saves stamp schema 11 so older readers refuse rather than drop records.
+item across passes, and drops nothing. With declared passes, items with no pass form their
+own group: a ready unpassed item leads only among unpassed items, in the slots they already
+hold among passed items. A record is not a gate and does not replace reading the slice. It
+does not know about open decision-log records that reference the slice. Index saves stamp schema 11 so older readers refuse rather than drop records.
 
 Repeat `--depends-on` for multiple ids. `add` and `set` refuse, before writing anything,
 an id that names no item (`no_such_item`, including a comma list passed as one value)

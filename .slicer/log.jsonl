@@ -2556,3 +2556,6 @@
 {"when": "2026-11-02T17:28:52Z", "item": "s413", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-11-02T17:29:40Z", "item": "s414", "action": "set", "from": "", "to": "", "note": "trees ops→mergeindex,docs,tests; findings -→s400 relay review, 2026-10-26; effort -→1"}
 {"when": "2026-11-02T17:29:40Z", "item": "s413", "action": "set", "from": "", "to": "", "note": "trees ops→paths,ops,docs,tests; findings -→s395 relay review, 2026-10-26; effort -→1"}
+{"when": "2026-11-02T17:30:15Z", "item": "s414", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:45:46Z", "item": "s414", "action": "note", "from": "", "to": "", "note": "Ready for review: s414 makes merge-index treat a readiness r", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:45:49Z", "item": "s414", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

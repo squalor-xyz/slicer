@@ -10,8 +10,9 @@ so two different edits to one list are never guessed into one. `cites` stays one
 those lists. An item's `note_records` is the exception: notes are append-only records
 with unique ids, so two edited lists merge as the union by note id, ordered by
 `created_at` (ties keep ours first, then theirs-only notes), and a note removed on one
-side stays removed only when the other side left it unchanged. Item order and
-catalog-record order follow the base unless exactly one side reordered them. `next_id`
+side stays removed only when the other side left it unchanged. A readiness record is
+atomic. Item order and catalog-record order follow the base unless exactly one side
+reordered them. `next_id`
 and `catalog.next_id` are each the largest of the three: an id is never reused.
 
 A merge that would leave the index inconsistent -- two ids for one filing key, ids
@@ -109,6 +110,16 @@ class _Merge:
         value = max(sides)
       elif len(path) == 2 and path[0] == "items" and key == "note_records":
         value = self._note_records(sides, [*path, key])
+      elif len(path) == 2 and path[0] == "items" and key == "readiness":
+        base_record, ours_record, theirs_record = sides
+        if _same(ours_record, theirs_record):
+          value = ours_record
+        elif _same(ours_record, base_record):
+          value = theirs_record
+        elif _same(theirs_record, base_record):
+          value = ours_record
+        else:
+          value = self._conflict([*path, key], *sides)
       elif path == ["catalog"] and key == "records":
         listed = self._record_lists(sides, [*path, key])
         value = self._value(*sides, [*path, key]) if listed is None else listed

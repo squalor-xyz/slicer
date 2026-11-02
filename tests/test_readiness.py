@@ -441,6 +441,29 @@ class MergeIndexTests(unittest.TestCase):
     code, merged = self.merge(_doc(), _doc(s01=RECORD), _doc(s01=other))
     self.assertNotEqual(code, 0)
 
+  def test_MergeIndex_SameSecondRecordsDiffering_ConflictsAtTheRecord(self) -> None:
+    ours = {**RECORD, "at": "2026-10-27T10:00:00Z", "note": "rechecked"}
+    theirs = {**RECORD, "at": ours["at"], "digest": "sha256:" + "b" * 64}
+    code, merged = self.merge(_doc(s01=RECORD), _doc(s01=ours), _doc(s01=theirs))
+    self.assertEqual(code, 1, merged)
+    self.assertIn("items/s01/readiness", merged["out"])
+    self.assertNotIn("items/s01/readiness/", merged["out"])
+
+  def test_MergeIndex_DifferentRecords_ConflictNamesTheRecordNotAKey(self) -> None:
+    ours = {**RECORD, "at": "2026-10-27T10:00:00Z"}
+    theirs = {**RECORD, "at": "2026-10-27T11:00:00Z"}
+    code, merged = self.merge(_doc(s01=RECORD), _doc(s01=ours), _doc(s01=theirs))
+    self.assertEqual(code, 1, merged)
+    self.assertIn("items/s01/readiness", merged["out"])
+    self.assertNotIn("items/s01/readiness/", merged["out"])
+
+  def test_MergeIndex_RecordAddedOnBothSidesEqual_Coalesces(self) -> None:
+    theirs = _doc(s01=RECORD)
+    theirs["items"][0]["status"] = "done"
+    code, merged = self.merge(_doc(), _doc(s01=RECORD), theirs)
+    self.assertEqual(code, 0, merged)
+    self.assertEqual(merged["items"][0]["readiness"], RECORD)
+
   def test_MergeIndex_Problems_AcceptsARecord(self) -> None:
     self.assertEqual(mergeindex._problems(_doc(s01=RECORD)), [])
 
@@ -552,6 +575,17 @@ class NextOrderTests(unittest.TestCase):
       ready = self.picks(repo, "--ready")
       self.assertEqual(plain, ["S01", "S02", "S03", "S04"])
       self.assertEqual(ready, ["S01", "S03", "S02", "S04"])
+
+  def test_NextReadyBatch_ReadyUnpassedItem_LeadsOnlyAmongUnpassedItems(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "work 4")
+      self.passes(repo, ("S01", "p1"), ("S04", "p2"))
+      ReadinessTests().mark(repo, "S03")
+      code, out, err = repo.run("next", "--ready", "--batch", "4", "--json")
+      self.assertEqual((code, err), (0, ""))
+      order = [entry["item"]["id"] for entry in json.loads(out)["items"]]
+      self.assertEqual(order, ["S01", "S03", "S02", "S04"])
+      self.assertEqual(order, self.picks(repo, "--ready"))
 
   def test_NextReady_NoDeclaredPasses_KeysDoNotSplitTheGroup(self) -> None:
     # With no declared pass the ranking ignores pass keys, so ready leads across them.

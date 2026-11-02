@@ -50,6 +50,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- The merge-index driver merges a readiness record as one value and reports conflicting edits at `items/ID/readiness`, preventing a record assembled from two different checks (s414). The readiness docs also clarify that, with declared passes, `next --ready` moves a ready unpassed item only among unpassed items in their existing slots.
 - `slicer config relay_contract` and `slicer config satisfies_dependencies` read `(unset)` and exit 0 while the key is unset (`--json`: `{"key": KEY, "value": null}`), where they failed with `usage` as if the key did not exist. A key that is neither set nor settable is still `usage`, and its message now names every settable top-level key, those two included (s415).
 - The `relay_contract` pin is a whole number from 1 to 9999 (`RELAY_CONTRACT_MAX`) wherever it is read. Above 9999 is a config error: loading commands exit 3 with `config`, and `slicer config relay_contract 10000` is `bad_config_value` and writes nothing. `ai relay`, `ai relay-orchestrator` and `ai relay-brief` refuse an oversized pin with `contract_mismatch` ("could not be read"), as they already did for `0`. The validation message reads "relay_contract must be a whole number from 1 to 9999" and drops the stale "such as 9" example (s415).
 - `slicer check` on a config whose `relay_contract` pin cannot be read exits 3 with code `config`, not a warning. [commands.md](docs/commands.md) says so and a test pins it (s415).

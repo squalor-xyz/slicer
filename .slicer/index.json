@@ -16395,10 +16395,25 @@
       "id": "s414",
       "title": "Readiness follow-ups",
       "short_title": "Readiness follow-ups",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "d8501ecd-3d1d-4b68-a7a5-6015e1731ad7",
+          "kind": "",
+          "text": "**2026-11-02** — Ready for review: s414 makes merge-index treat a readiness record as one value (conflict at items/ID/readiness) and documents unpassed ready ordering in next --ready; full suite 3179 tests OK before one CHANGELOG-only fix; gate VERDICT: PASS.",
+          "created_at": "2026-11-02T17:45:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -16420,7 +16435,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -175,7 +175,8 @@ Schema 10 adds an optional item-level `readiness` record (`by`, `at`, `note`, `d
 once `slicer ready` runs. The digest (`model.spec_digest`) covers the slice's title, lead, boundary and
 ordered sections; whether the record still holds is derived on read (`model.readiness_of`), never
 stored, so no edit has to invalidate it. An older reader would drop the key on its next save, so it
-refuses schema 10 like every earlier bump. `mergeindex` merges the record field by field.
+refuses schema 10 like every earlier bump. `mergeindex` merges the readiness record as one
+value; different edits conflict at `items/ID/readiness`.
 Schema 11 adds note retraction (`retracted_by`, `retracted_at`, `retracted_reason`). Missing
 fields load empty. A retraction keeps the note's text and history; the bump makes an older
 reader refuse an index that may hold one rather than drop the fields on save.
