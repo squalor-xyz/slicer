@@ -16467,7 +16467,7 @@
       "id": "s416",
       "title": "slicer land should accept --render, and show --json ready should agree with next",
       "short_title": "land --render, ready flag",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

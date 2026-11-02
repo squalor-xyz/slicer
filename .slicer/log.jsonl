@@ -2551,3 +2551,4 @@
 {"when": "2026-11-02T17:23:19Z", "item": "s416", "action": "note", "from": "", "to": "", "note": "Review FAIL: docs/agents.md:546 still says an item is 'the o", "by": "Jon Robbins"}
 {"when": "2026-11-02T17:24:21Z", "item": "s416", "action": "note", "from": "", "to": "", "note": "Ready for review: s416 accepts land --render as a no-op and ", "by": "Jon Robbins"}
 {"when": "2026-11-02T17:24:23Z", "item": "s416", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-02T17:24:50Z", "item": "s416", "action": "status", "from": "review", "to": "done", "note": "Landed: land --render accepted as a no-op; ready on every next payload, documented as not filtering; full suite 3175 OK; gate PASS after two docs-only fix rounds.", "by": "Jon Robbins"}

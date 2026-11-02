@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-429 items · — 28 · done 388 · retired 12 · review 1
+429 items · — 28 · done 389 · retired 12
 
 v1.20.0 release
 
@@ -63,7 +63,7 @@ v1.19.0 release
 |---|---|---|---|---|---|---|---|
 | 22 | [s311](slices/s311.md) | Split cli.py and ops.py | L | 3 | slicer | research/go-rewrite-evaluation.md, code review 3, 2026-10-15 | — |
 | 23 | [s414](slices/s414.md) | Readiness follow-ups | S | - | ops | discovered from s400 | — |
-| 24 | [s416](slices/s416.md) | land --render, ready flag | S | 1 |  | squalify relay log 2026-10-27: 'slicer land' rejects --render unlike other mutations; 'slicer show ID --json' reported ready:false for a slice that list and next treated as ready (sq-16, 2026-10-26). | review |
+| 24 | [s416](slices/s416.md) | land --render, ready flag | S | 1 |  | squalify relay log 2026-10-27: 'slicer land' rejects --render unlike other mutations; 'slicer show ID --json' reported ready:false for a slice that list and next treated as ready (sq-16, 2026-10-26). | done |
 | 25 | [s426](slices/s426.md) | TUI note delete retracts instead of deleting | S | - |  | discovered from s393 | done |
 | 26 | [s431](slices/s431.md) | Sync relay-brief override | S | 1 | slicer | s419 review 2026-10-30, owner question: the repo's customized relay-brief.md override lacks the s419 no-background bullet · discovered from s419 | — |
 | 27 | [s434](slices/s434.md) | Step JSON questions list | S | 2 | slicer | s425 review 2026-10-30, finding A1 (later by orchestrator default, docs-only fix landed with s425): `relay-run list` shows only a step's latest question, while several non-blocker questions can be open at once · discovered from s425 | — |
