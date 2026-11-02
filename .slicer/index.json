@@ -17757,7 +17757,7 @@
       "id": "s442",
       "title": "ai hooks and guard hardening",
       "short_title": "ai hooks and guard hardening",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
