@@ -17709,7 +17709,7 @@
       "id": "s441",
       "title": "prompt override hardening",
       "short_title": "prompt override hardening",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
