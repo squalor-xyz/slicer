@@ -17416,7 +17416,7 @@
       "id": "s438",
       "title": "Skill rewrite for getting started, building a roadmap, planning and implementing",
       "short_title": "Skill routes the four agent jobs",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s436"

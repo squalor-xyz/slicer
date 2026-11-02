@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-426 items · — 29 · done 384 · retired 12 · review 1
+426 items · — 29 · done 385 · retired 12
 
 v1.18.0 release
 
@@ -35,7 +35,7 @@ v1.18.0 release
 |---|---|---|---|---|---|---|---|
 | 1 | [s436](slices/s436.md) | ai getting-started and build-roadmap | S | 1 | ai, cli, docs | owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 1, new prompts `slicer ai getting-started` and `slicer ai build-roadmap`, short, pointing at `slicer ai instructions --rest` instead of repeating it | done |
 | 2 | [s437](slices/s437.md) | ai set, reset and show prompt overrides | M | 2 | ai, cli, ops, store, docs | owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 2, per-project overrides stored in `.slicer/prompts/NAME.md`, mirroring `slicer template set\|show\|reset` | — |
-| 3 | [s438](slices/s438.md) | Skill routes the four agent jobs | S | 1 | ai, docs | owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 3, update the slicer skill so it is the most useful for getting started, building a roadmap from docs, planning and implementing (split from `ai hooks`, which is its own slice) | review |
+| 3 | [s438](slices/s438.md) | Skill routes the four agent jobs | S | 1 | ai, docs | owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 3, update the slicer skill so it is the most useful for getting started, building a roadmap from docs, planning and implementing (split from `ai hooks`, which is its own slice) | done |
 | 4 | [s439](slices/s439.md) | ai hooks for Claude Code | M | 2 | ai, cli, docs | owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 3, `slicer ai hooks [--install] [--force]` printing or installing a project-local Claude Code hooks snippet (SessionStart pointing at `slicer ai getting-started`; a PreToolUse guard denying Read/Grep/Edit/Write on tracking files); hooks format verified against code.claude.com/docs/en/hooks and /permissions on 2026-11-02 | — |
 
 ---
