@@ -17,6 +17,9 @@
 | r6 | Architect | size L | Claude Code | Claude | opus | high | - |
 | r10 | Orchestrator | every slice | Claude Code | Claude | opus | high | default orchestrator |
 | r11 | Orchestrator | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate orchestrator |
+| r12 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | low | alternate implementer, sol low, any slice |
+| r13 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate implementer, sol high, any slice |
+| r14 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | xhigh | alternate implementer, sol xhigh, any slice |
 
 ## Rules
 

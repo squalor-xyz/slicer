@@ -209,6 +209,60 @@
       "model": "gpt-6.1-sol",
       "reasoning": "high",
       "note": "alternate orchestrator"
+    },
+    {
+      "id": "r12",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
+      "reasoning": "low",
+      "note": "alternate implementer, sol low, any slice"
+    },
+    {
+      "id": "r13",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
+      "reasoning": "high",
+      "note": "alternate implementer, sol high, any slice"
+    },
+    {
+      "id": "r14",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
+      "reasoning": "xhigh",
+      "note": "alternate implementer, sol xhigh, any slice"
     }
   ],
   "rules": [
@@ -249,6 +303,6 @@
       "text": "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high)."
     }
   ],
-  "next_row": 12,
+  "next_row": 15,
   "next_rule": 10
 }

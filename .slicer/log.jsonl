@@ -2485,3 +2485,6 @@
 {"when": "2026-11-02T13:00:01Z", "item": "s438", "action": "set", "from": "", "to": "", "note": "pass_key release-1.18.0→v1.18"}
 {"when": "2026-11-02T13:00:01Z", "item": "s439", "action": "set", "from": "", "to": "", "note": "pass_key release-1.18.0→v1.18"}
 {"when": "2026-11-02T13:00:01Z", "item": "s439", "action": "decide", "from": "", "to": "", "note": "Owner decided 2026-11-02: add a new 'slicer ai guard' comman", "by": "Jon Robbins"}
+{"when": "2026-11-02T13:10:51Z", "item": "relay-roles.r12", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
+{"when": "2026-11-02T13:10:51Z", "item": "relay-roles.r13", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
+{"when": "2026-11-02T13:10:51Z", "item": "relay-roles.r14", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
