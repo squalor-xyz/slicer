@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 436,
+  "next_id": 440,
   "preamble": "",
   "passes": [
     {
@@ -80,6 +80,12 @@
     {
       "key": "v1.17",
       "heading": "v1.17.0 release",
+      "intro": "",
+      "outro": ""
+    },
+    {
+      "key": "v1.18",
+      "heading": "v1.18.0 release",
       "intro": "",
       "outro": ""
     },
@@ -17320,6 +17326,156 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s436",
+      "title": "Getting-started and build-roadmap prompts",
+      "short_title": "ai getting-started and build-roadmap",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "ai",
+          "cli",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 1, new prompts `slicer ai getting-started` and `slicer ai build-roadmap`, short, pointing at `slicer ai instructions --rest` instead of repeating it",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "release-1.18.0.getting-started-prompts",
+        "pass": "v1.18",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s437",
+      "title": "Per-project prompt overrides: ai set, reset and show",
+      "short_title": "ai set, reset and show prompt overrides",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s436"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "ai",
+          "cli",
+          "ops",
+          "store",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 2, per-project overrides stored in `.slicer/prompts/NAME.md`, mirroring `slicer template set|show|reset`",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "release-1.18.0.prompt-overrides",
+        "pass": "v1.18",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s438",
+      "title": "Skill rewrite for getting started, building a roadmap, planning and implementing",
+      "short_title": "Skill routes the four agent jobs",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s436"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [
+          "ai",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 3, update the slicer skill so it is the most useful for getting started, building a roadmap from docs, planning and implementing (split from `ai hooks`, which is its own slice)",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "release-1.18.0.skill-rewrite",
+        "pass": "v1.18",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s439",
+      "title": "ai hooks: a project-local Claude Code hooks snippet",
+      "short_title": "ai hooks for Claude Code",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s436"
+      ],
+      "note_records": [
+        {
+          "id": "fceed09f-863f-4bf5-b29b-20b0521356b3",
+          "kind": "decision",
+          "text": "**2026-11-02** — Owner decided 2026-11-02: add a new 'slicer ai guard' command that reads the PreToolUse hook JSON from stdin and denies Read/Grep/Edit/Write on .slicer state files (index, slices, log, render), allowing templates and prompts. It fails open on malformed stdin.",
+          "created_at": "2026-11-02T13:00:01Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [
+          "ai",
+          "cli",
+          "docs"
+        ],
+        "trees_literal": false,
+        "findings": "owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 3, `slicer ai hooks [--install] [--force]` printing or installing a project-local Claude Code hooks snippet (SessionStart pointing at `slicer ai getting-started`; a PreToolUse guard denying Read/Grep/Edit/Write on tracking files); hooks format verified against code.claude.com/docs/en/hooks and /permissions on 2026-11-02",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "release-1.18.0.ai-hooks",
+        "pass": "v1.18",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
         "attempts": 0
       }
     }

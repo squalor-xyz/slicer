@@ -1,0 +1,41 @@
+{
+  "id": "s438",
+  "title": "Skill rewrite for getting started, building a roadmap, planning and implementing",
+  "lead": [
+    "The slicer skill (`ai.skill_text()`, committed as `skills/slicer/SKILL.md`) opens by routing the four jobs an agent arrives with: getting started, building a roadmap from the docs, planning or filing, and implementing. Its description names them, so the harness loads it for those requests."
+  ],
+  "depends_note": null,
+  "findings_note": "owner request 2026-11-02 (release 1.18.0, helping an agent get started): decision 3, update the slicer skill so it is the most useful for getting started, building a roadmap from docs, planning and implementing (split from `ai hooks`, which is its own slice)",
+  "size": "S",
+  "flags": [],
+  "trees_note": "ai, docs",
+  "trees_plural": true,
+  "boundary": "**Not in this slice:** `ai hooks` (the next slice), prompt overrides, changes to the implement loop, the exit codes or the TRACKING block wording beyond what the routing needs, and Codex or Grok specific skill text.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Owner request 2026-11-02, decision 3: update the slicer skill so it is the most useful for getting started, building a roadmap from docs, planning and implementing. This slice is the skill half; the owner allowed splitting `ai hooks` out when the combined slice would exceed M, and it would (skill text, a settings merge and a guard command).\n\nToday (`ai.skill_text`, ai.py ~1321-1347) the skill is the implement loop, the spec-gap rule, the exit codes, the TRACKING block, a closer, a relay sentence and a last line pointing at `slicer ai instructions --rest`. `SKILL_DESCRIPTION` (ai.py ~61) says \"review a roadmap, plan work, take a slice, implement the next slice, or drive slicer\". An agent asked to get started or to build a roadmap from docs gets the implement loop first, which is the wrong first step for both."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py`:\n  - `SKILL_DESCRIPTION`: name the jobs. Proposed: \"Drive a slicer roadmap. Use when asked to get started with slicer, build a roadmap from a project's docs, review a roadmap, plan work, take a slice, implement the next slice, or drive slicer. Read and change roadmap state only through slicer commands, never by opening .slicer/ files.\"\n  - New `SKILL_JOBS` block placed after `TRACKING_RULE` and before the loop in `skill_text`. Proposed:\n\n    ```text\n    Pick the job you were asked to do:\n\n    - Getting started in this project: run `slicer ai getting-started` and follow it.\n    - Building a roadmap from the project's docs: run `slicer ai build-roadmap` and follow it.\n    - Planning, filing, claims and review: run `slicer ai instructions --rest`.\n    - Implementing a slice: follow the steps below.\n    - A slice relay: run `slicer ai relay` (see the end of this skill).\n    ```\n  - `skill_text` keeps `LOOP`/`loop_text`, `handoff_policy_text`, `SPEC_GAP`, `EXITS`, `TRACKING`, the closer, the relay sentence and the last line exactly as they are, so `test_Skill_LastLine_PointsAtRest`, `test_Tracking_RequiresTheCliForReadsAndEdits_InInstructionsAndSkill` and the handoff tests keep passing.\n- `skills/slicer/SKILL.md`, `.claude/skills/slicer/SKILL.md`, `.agents/skills/slicer/SKILL.md`: regenerated from `skill_text()` (the committed generic `done` text).\n- `tests/test_ai.py`: new tests below.\n- `docs/agents.md`: the `slicer ai skill` paragraph says the skill opens by routing the four jobs to `ai getting-started`, `ai build-roadmap`, `ai instructions --rest` and the loop.\n- `CHANGELOG.md` `## [Unreleased]` `### Changed`: one entry."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "In `tests/test_ai.py`:\n\n- `test_Skill_Description_NamesGettingStartedAndBuildingARoadmap`: `SKILL_DESCRIPTION` contains \"get started\" and \"build a roadmap\" and still \"review a roadmap\" and \"plan work\".\n- `test_Skill_Jobs_RouteEachJobToItsCommand`: `skill_text()` contains `ai.SKILL_JOBS` before `ai.LOOP`, and `SKILL_JOBS` names `slicer ai getting-started`, `slicer ai build-roadmap`, `slicer ai instructions --rest` and `slicer ai relay`.\n- `test_Skill_Jobs_InEveryFinishMode`: `skill_text(\"handoff\")` and `skill_text(\"done\", \"report\")` contain `SKILL_JOBS`.\n- Existing tests that must stay green unchanged: `test_Skill_MatchesTheInstructionsLoop_AndTheCommittedFile` (no `import --skeleton` in the skill itself), `test_CommittedSkill_MatchesSkillText`, `test_Instructions_LeaveRenderUnread_AndDoNotLinkTheLongReference` (the skill stays under half of docs/agents.md), `test_Instructions_CommandExamples_AreAcceptedByTheParser`, `test_Instructions_Rest_LeavesOutEverySkillBlock` (`rest_text` must not gain `SKILL_JOBS`; add `SKILL_JOBS` to that test's block list)."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add `SKILL_JOBS`, reword `SKILL_DESCRIPTION`, insert the block in `skill_text`.\n2. Regenerate the three committed copies byte for byte from `skill_text()` (`slicer ai skill --output PATH --force` from the worktree's code, or `PYTHONPATH=src python3 -m slicer ai skill > PATH`).\n3. Update docs/agents.md and CHANGELOG."
+    },
+    {
+      "heading": "Check",
+      "body": "- [ ] The skill opens with the job routing, and its description names getting started and building a roadmap.\n- [ ] The loop, exit codes, TRACKING block, closer, relay sentence and last line are unchanged.\n- [ ] `skills/slicer/SKILL.md`, `.claude/skills/slicer/SKILL.md` and `.agents/skills/slicer/SKILL.md` equal `slicer ai skill` output.\n- [ ] Every `slicer` command in the skill parses; the skill stays under half of docs/agents.md.\n- [ ] `python3 tests/affected.py --run`, the full suite, `slicer check` and `git diff --check` pass."
+    },
+    {
+      "heading": "Git",
+      "body": "Commit on the worktree branch; merging, pushing and publishing wait for the owner."
+    }
+  ],
+  "notes": []
+}

@@ -2474,3 +2474,14 @@
 {"when": "2026-10-30T19:41:54Z", "item": "s435", "action": "add", "from": "", "to": "open", "note": "Relay gate role text stops repeating the Gate section's FAIL rule"}
 {"when": "2026-10-30T19:41:54Z", "item": "s431", "action": "note", "from": "", "to": "", "note": "From s424 review (later): also sync the built-in Rules bulle", "by": "Jon Robbins"}
 {"when": "2026-10-30T19:48:51Z", "item": "s424", "action": "status", "from": "review", "to": "done", "note": "Landed: relay contract v11 (cleanup and bump: keyed stop, gate role, no severity, error-exit fallback, catch-all kept, every v1.17 rule change in RELAY_CHANGES 11); suite 3085 OK; gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T12:55:02Z", "item": "s436", "action": "add", "from": "", "to": "open", "note": "Getting-started and build-roadmap prompts"}
+{"when": "2026-11-02T12:55:02Z", "item": "s437", "action": "add", "from": "", "to": "open", "note": "Per-project prompt overrides: ai set, reset and show"}
+{"when": "2026-11-02T12:55:02Z", "item": "s438", "action": "add", "from": "", "to": "open", "note": "Skill rewrite for getting started, building a roadmap, planning and implementing"}
+{"when": "2026-11-02T12:55:02Z", "item": "s439", "action": "add", "from": "", "to": "open", "note": "ai hooks: a project-local Claude Code hooks snippet"}
+{"when": "2026-11-02T12:55:02Z", "item": "s439", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
+{"when": "2026-11-02T13:00:00Z", "item": "pass.v1.18", "action": "prose", "from": "", "to": "v1.18", "note": "add-pass"}
+{"when": "2026-11-02T13:00:01Z", "item": "s436", "action": "set", "from": "", "to": "", "note": "pass_key release-1.18.0→v1.18"}
+{"when": "2026-11-02T13:00:01Z", "item": "s437", "action": "set", "from": "", "to": "", "note": "pass_key release-1.18.0→v1.18"}
+{"when": "2026-11-02T13:00:01Z", "item": "s438", "action": "set", "from": "", "to": "", "note": "pass_key release-1.18.0→v1.18"}
+{"when": "2026-11-02T13:00:01Z", "item": "s439", "action": "set", "from": "", "to": "", "note": "pass_key release-1.18.0→v1.18"}
+{"when": "2026-11-02T13:00:01Z", "item": "s439", "action": "decide", "from": "", "to": "", "note": "Owner decided 2026-11-02: add a new 'slicer ai guard' comman", "by": "Jon Robbins"}
