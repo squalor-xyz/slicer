@@ -403,7 +403,7 @@ class WizardLoopTests(unittest.TestCase):
         patches.enter_context(patch("curses.wrapper", side_effect=lambda fn: fn(screen)))
         patches.enter_context(patch("curses.keyname", return_value=b"KEY_BTAB"))
         patches.enter_context(patch("slicer.tui_style.setup_palette", return_value=tui.tui_style.monochrome()))
-        editor = patches.enter_context(patch("slicer.cli._via_editor", return_value="First line\nSecond line"))
+        editor = patches.enter_context(patch("slicer.cli_common._via_editor", return_value="First line\nSecond line"))
         self.assertEqual(tui.run(repo.state()), 0)
         editor.assert_called_once_with("")
       state = repo.state()

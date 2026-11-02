@@ -1167,7 +1167,7 @@ class RelayRolesMutationContractTests(RelayRolesCase):
           (repo.root / RENDER).unlink(missing_ok=True)
           before = self.snapshot(repo)
           # The command itself renders nothing; the heal before it would write the missing file.
-          with patch("slicer.cli._heal_render"):
+          with patch("slicer.cli_common._heal_render"):
             self.ok(repo, "relay-roles", *argv, *extra)
           self.assertEqual(self.snapshot(repo), before)
           self.assertFalse((repo.root / RENDER).exists())

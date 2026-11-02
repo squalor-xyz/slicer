@@ -116,7 +116,7 @@ class BatchTests(unittest.TestCase):
     with self.repo() as repo:
       for command in ("start", "done", "park", "unpark", "set"):
         # The render heal loads the state once of its own; this counts the command's loads.
-        with patch("slicer.cli._heal_render"), patch.object(
+        with patch("slicer.cli_common._heal_render"), patch.object(
           store, "load", wraps=store.load,
         ) as load:
           with patch.object(store.State, "save_index", autospec=True,

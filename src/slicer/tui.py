@@ -2012,7 +2012,7 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
 def run(state: State) -> int:  # pragma: no cover - requires a terminal
   import curses
 
-  from slicer.cli import _via_editor
+  from slicer import cli_common
 
   def loop(screen: "curses._CursesWindow") -> int:
     try:
@@ -2041,7 +2041,7 @@ def run(state: State) -> int:  # pragma: no cover - requires a terminal
         curses.def_prog_mode()
         curses.endwin()
         try:
-          body = _via_editor(result.edit.body)
+          body = cli_common._via_editor(result.edit.body)
         except (SlicerError, OSError) as exc:
           if result.edit.kind == "wizard" and view.wizard is not None:
             view.wizard.error = f"Editor failed; body unchanged: {exc}"

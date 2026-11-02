@@ -57,7 +57,7 @@ class EditInputTests(unittest.TestCase):
       with self.subTest(command=command, body=body), self.repo() as repo:
         path = repo.write("previous.md", "previous body")
         self.assertEqual(repo.run(*command, "--file", str(path))[0], 0)
-        with patch("slicer.cli._via_editor") as editor, patch("sys.stdin") as stdin:
+        with patch("slicer.cli_common._via_editor") as editor, patch("sys.stdin") as stdin:
           code, out, err = repo.run(*command, "--text", body, "--json")
         self.assertEqual(code, 0, err)
         self.assertNotIn("error", json.loads(out))
@@ -72,8 +72,8 @@ class EditInputTests(unittest.TestCase):
       with self.subTest(command=command, sources=combination), self.repo() as repo:
         before = self.snapshot(repo)
         args = tuple(itertools.chain.from_iterable(combination))
-        with patch("slicer.cli._via_editor") as editor, \
-             patch("slicer.cli._read_user_file") as read_file, \
+        with patch("slicer.cli_common._via_editor") as editor, \
+             patch("slicer.cli_common._read_user_file") as read_file, \
              patch("sys.stdin") as stdin:
           code, out, err = repo.run(*command, *args, "--render", "--json")
         self.assertEqual(code, 2)
@@ -98,7 +98,7 @@ class EditInputTests(unittest.TestCase):
     for command in self.commands:
       with self.subTest(command=command), self.repo() as repo:
         repo.run(*command, "--text", "existing")
-        with patch("slicer.cli._via_editor", return_value="edited") as editor:
+        with patch("slicer.cli_common._via_editor", return_value="edited") as editor:
           code, _, err = repo.run(*command)
         self.assertEqual(code, 0, err)
         editor.assert_called_once_with("existing")
@@ -108,7 +108,7 @@ class EditInputTests(unittest.TestCase):
     for command in self.commands:
       with self.subTest(command=command), self.repo() as repo:
         before = self.snapshot(repo)
-        with patch("slicer.cli._via_editor", return_value=None):
+        with patch("slicer.cli_common._via_editor", return_value=None):
           code, out, _ = repo.run(*command, "--json")
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(out)["error"]["code"], "editor_aborted")
@@ -144,7 +144,7 @@ class EditInputTests(unittest.TestCase):
     for extra in (("--section", "Why"), ("--boundary",)):
       with self.subTest(extra=extra), self.repo() as repo:
         before = self.snapshot(repo)
-        with patch("slicer.cli._via_editor") as editor:
+        with patch("slicer.cli_common._via_editor") as editor:
           code, out, err = repo.run("edit", "S01", "--lead", *extra, "--text", "x", "--json")
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(out)["error"]["code"], "usage")
@@ -155,7 +155,7 @@ class EditInputTests(unittest.TestCase):
   def test_Edit_LeadAppend_IsUsage(self) -> None:
     with self.repo() as repo:
       before = self.snapshot(repo)
-      with patch("slicer.cli._via_editor") as editor:
+      with patch("slicer.cli_common._via_editor") as editor:
         code, out, err = repo.run("edit", "S01", "--lead", "--append", "--text", "x", "--json")
       self.assertEqual(code, 2)
       self.assertEqual(json.loads(out)["error"]["code"], "usage")
@@ -182,7 +182,7 @@ class EditInputTests(unittest.TestCase):
   def test_Edit_LeadNoSource_EditorOpensWithJoinedLead(self) -> None:
     with self.repo() as repo:
       repo.run("edit", "S01", "--lead", "--text", "One.\n\nTwo.")
-      with patch("slicer.cli._via_editor", return_value="Three.") as editor:
+      with patch("slicer.cli_common._via_editor", return_value="Three.") as editor:
         code, _, err = repo.run("edit", "S01", "--lead")
       self.assertEqual(code, 0, err)
       editor.assert_called_once_with("One.\n\nTwo.")
@@ -216,7 +216,7 @@ class EditInputTests(unittest.TestCase):
                 "stdin": ("--stdin",)}[source]
         before = repo.read(".slicer/log.jsonl").splitlines()
         with patch("sys.stdin", io.StringIO(incoming)), \
-             patch("slicer.cli._via_editor") as editor:
+             patch("slicer.cli_common._via_editor") as editor:
           code, out, err = repo.run(*command, "--append", *args, "--render", "--json")
         self.assertEqual(code, 0, err)
         self.assertEqual(json.loads(out), {"id": "S01", "section": "Why"})
@@ -268,8 +268,8 @@ class EditInputTests(unittest.TestCase):
       with self.subTest(sources=combination), self.repo() as repo:
         before = self.snapshot(repo)
         args = tuple(itertools.chain.from_iterable(combination))
-        with patch("slicer.cli._via_editor") as editor, \
-             patch("slicer.cli._read_user_file") as read_file, \
+        with patch("slicer.cli_common._via_editor") as editor, \
+             patch("slicer.cli_common._read_user_file") as read_file, \
              patch("sys.stdin") as stdin:
           code, out, _ = repo.run(*self.commands[0], "--append", *args, "--render", "--json")
         self.assertEqual(code, 2)

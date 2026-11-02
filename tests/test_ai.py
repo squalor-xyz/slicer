@@ -15,7 +15,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import ai, cli, config, ops, relayrun, roles, store, templates
+from slicer import ai, cli, cli_common, config, ops, relayrun, roles, store, templates
 
 
 class AiPromptTests(unittest.TestCase):
@@ -1991,13 +1991,13 @@ class AiRelayTests(unittest.TestCase):
   def test_RelayText_RelayRunCommands_PassUnknownFlagCheck(self) -> None:
     text = ai.relay_text()
     commands = [
-      span for span in cli._BACKTICK_SPAN.findall(text) if span.startswith("slicer relay-run ")
+      span for span in cli_common._BACKTICK_SPAN.findall(text) if span.startswith("slicer relay-run ")
     ]
     self.assertLessEqual({"begin", "step", "end"}, {span.split()[2] for span in commands})
     parser = cli._cached_parser()
     for command in commands:
       with self.subTest(command=command):
-        self.assertEqual(cli._unknown_flags(parser, shlex.split(command)[1:]), [])
+        self.assertEqual(cli_common._unknown_flags(parser, shlex.split(command)[1:]), [])
 
   def test_RelayText_RelayRunSentences_EachAppearsOnce(self) -> None:
     flat = " ".join(ai.relay_text().split())
@@ -3217,7 +3217,7 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           self.assertIn(command, texts[label])
           argv = shlex.split(command.strip("`"))[1:]
           parser.parse_args(argv)
-          self.assertEqual(cli._unknown_flags(parser, argv), [])
+          self.assertEqual(cli_common._unknown_flags(parser, argv), [])
 
   def test_RelayContract_Bundle_IsV11WithItsChangeEntry(self) -> None:
     self.assertEqual(ai.RELAY_CONTRACT, 11)

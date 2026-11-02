@@ -172,7 +172,7 @@ class BoundaryTests(unittest.TestCase):
       for args in (("--boundary", "--append"), ("--boundary", "--section", "Why"), ()):
         with self.subTest(args=args):
           before = {str(p): p.read_bytes() for p in (repo.root / ".slicer").rglob("*") if p.is_file() and p.name != "lock"}
-          with patch("slicer.cli._via_editor") as editor:
+          with patch("slicer.cli_common._via_editor") as editor:
             code, out, _ = repo.run("edit", "S01", *args, "--json")
           self.assertEqual(code, 2)
           self.assertEqual(json.loads(out)["error"]["code"], "usage")

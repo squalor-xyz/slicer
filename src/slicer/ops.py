@@ -1378,7 +1378,7 @@ def heal_render(state: State) -> list[str]:
 
   `render/` is generated output that is never parsed back, so once `index.json` has loaded
   cleanly it can always be rebuilt, as after a merge in a clone without the merge drivers.
-  Every locked write runs this first (`cli._begin_write`). It costs the one render comparison
+  Every locked write runs this first (`cli_common._begin_write`). It costs the one render comparison
   `check` makes. A project with no `render/` directory has not opted in, so nothing is
   created. Returns the relative paths it wrote or removed, sorted.
   """
