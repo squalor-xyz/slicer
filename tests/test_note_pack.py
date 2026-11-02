@@ -155,7 +155,7 @@ class PackCommandTests(unittest.TestCase):
       rendered = render.plan(state)
       commands = (("show", "S01"), ("next", "--ready"), ("next", "--ready", "--batch", "2"))
       sections = ((), ("--section", "Implement"), ("--section", "Implement", "--section", "Check"))
-      with patch("slicer.cli.datetime") as clock:
+      with patch("slicer.cli_queue.datetime") as clock:
         clock.now.return_value = NOW
         for command in commands:
           for section in sections:
@@ -181,7 +181,7 @@ class PackCommandTests(unittest.TestCase):
   def test_EitherOption_EnablesExpiryAndDefaults_WithLegacyProjection(self):
     with self.repo() as repo:
       self.seed(repo)
-      with patch("slicer.cli.datetime") as clock:
+      with patch("slicer.cli_queue.datetime") as clock:
         clock.now.return_value = NOW
         for options in (("--min-trust", "unverified"), ("--notes-budget", "100")):
           data = self.payload(repo, "show", "S01", *options)
@@ -200,7 +200,7 @@ class PackCommandTests(unittest.TestCase):
       state = repo.state()
       state.index.require("S02").note_records = [record("second", "abc", expiry="2030-01-01T00:00:01Z")]
       state.save_index()
-      with patch("slicer.cli.datetime") as clock:
+      with patch("slicer.cli_queue.datetime") as clock:
         clock.now.return_value = NOW
         data = self.payload(repo, "next", "--ready", "--batch", "2", "--notes-budget", "12")
         clock.now.assert_called_once_with(timezone.utc)
