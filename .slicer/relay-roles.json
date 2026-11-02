@@ -263,6 +263,62 @@
       "model": "gpt-6.1-sol",
       "reasoning": "xhigh",
       "note": "alternate implementer, sol xhigh, any slice"
+    },
+    {
+      "id": "r15",
+      "role": "reviewer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "medium",
+      "note": "alternate reviewer, grok medium, any slice"
+    },
+    {
+      "id": "r16",
+      "role": "gate",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "medium",
+      "note": "alternate gate, grok medium, any slice"
+    },
+    {
+      "id": "r17",
+      "role": "architect",
+      "when": {
+        "size": [
+          "L"
+        ],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "high",
+      "note": "alternate architect, grok high, size L"
     }
   ],
   "rules": [
@@ -303,6 +359,6 @@
       "text": "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high)."
     }
   ],
-  "next_row": 15,
+  "next_row": 18,
   "next_rule": 10
 }

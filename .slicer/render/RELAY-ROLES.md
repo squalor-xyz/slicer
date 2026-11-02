@@ -20,6 +20,9 @@
 | r12 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | low | alternate implementer, sol low, any slice |
 | r13 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate implementer, sol high, any slice |
 | r14 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | xhigh | alternate implementer, sol xhigh, any slice |
+| r15 | Reviewer | every slice | Grok | xAI | grok-4.7 | medium | alternate reviewer, grok medium, any slice |
+| r16 | Gate | every slice | Grok | xAI | grok-4.7 | medium | alternate gate, grok medium, any slice |
+| r17 | Architect | size L | Grok | xAI | grok-4.7 | high | alternate architect, grok high, size L |
 
 ## Rules
 
