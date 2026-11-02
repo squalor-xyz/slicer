@@ -1227,6 +1227,59 @@ class ReviewKeyTests(unittest.TestCase):
       self.assertIn('cancelled', view.message)
       self.assertEqual(before, (repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')))
 
+  def retract_prompt(self, repo: support.TempRepo) -> tuple[State, tui.View, str]:
+    repo.run('init')
+    repo.run('add', 'First')
+    repo.run('promote', 'S01')
+    repo.run('note', 'S01', '--text', 'wrong claim')
+    repo.run('render')
+    state = repo.state()
+    note_id = state.index.require('S01').note_records[0].id
+    view = tui.View.initial(state)
+    request = tui.EditRequest('note', 'S01', 'note 1', state.index.require('S01').note_records[0].text, index=0)
+    view.accept(tui.apply_edit_result(state, request, ''))
+    return state, view, note_id
+
+  def test_NoteRetractPrompt_Reason_RetractsAndKeepsText(self) -> None:
+    with support.TempRepo() as repo:
+      state, view, note_id = self.retract_prompt(repo)
+      text = state.index.require('S01').note_records[0].text
+      self.assertEqual((view.mode, view.note_action), ('note', 'retract'))
+      type_keys(view, state, 'wrong item')
+      self.assertFalse(view.render_stale)
+      view.handle(state, '\n')
+      self.assertTrue(view.render_stale)
+      self.assertEqual(view.mode, 'normal')
+      self.assertEqual(view.message_severity, 'success')
+      self.assertIn('note retracted', view.message)
+      record = repo.state().index.require('S01').note_records[0]
+      self.assertEqual(record.text, text)
+      self.assertEqual(record.retracted_reason, 'wrong item')
+      self.assertTrue(record.retracted_by)
+      self.assertTrue(record.retracted_at)
+      lines = [e for e in repo.state().history() if e.action == 'note-retract']
+      self.assertEqual([(e.item, e.note) for e in lines], [('S01', note_id)])
+
+  def test_NoteRetractPrompt_BlankReasonOrEsc_CancelsAndWritesNothing(self) -> None:
+    for keys in ('\n', '  \n', 'half a reason\x1b'):
+      with self.subTest(keys=keys), support.TempRepo() as repo:
+        state, view, _ = self.retract_prompt(repo)
+        before = repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')
+        type_keys(view, state, keys)
+        self.assertEqual(view.mode, 'normal')
+        self.assertIn('cancelled', view.message)
+        self.assertEqual(before, (repo.read('.slicer/index.json'), repo.read('.slicer/log.jsonl')))
+        self.assertFalse(repo.state().index.require('S01').note_records[0].retracted)
+
+  def test_Draw_RetractPrompt_NamesTheReasonAsRequired(self) -> None:
+    state = example()
+    view = tui.View.initial(state)
+    view.mode, view.note_action, view.text = 'note', 'retract', 'abc'
+    screen = Screen(10, 80)
+    tui.draw(screen, state, view)
+    text = '\n'.join(t for _, t in screen.writes)
+    self.assertIn('Retract reason, required (Enter accepts, Esc cancels): abc', text)
+
   def test_Reject_RequiresANote_AndSendsTheSelectedItemBack(self) -> None:
     with support.TempRepo() as repo:
       self.repo_with_started(repo, 'First', 'Second')

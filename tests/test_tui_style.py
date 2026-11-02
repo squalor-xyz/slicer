@@ -301,7 +301,7 @@ class TuiFeedbackTests(unittest.TestCase):
 
 
 class TuiNotesEditTests(unittest.TestCase):
-  def test_ApplyEdit_AddEditRemoveNote(self) -> None:
+  def test_ApplyEdit_AddEditRetractNote(self) -> None:
     with support.TempRepo() as repo:
       repo.run("init")
       repo.run("add", "Example")  # S01, bare
@@ -316,11 +316,50 @@ class TuiNotesEditTests(unittest.TestCase):
       edit_req = tui.EditRequest("note", "S01", "note 1", body, index=0)
       self.assertEqual(tui.apply_edit_result(state, edit_req, "revised").severity, "success")
       self.assertEqual(repo.state().index.require("S01").notes, ["revised"])
-      # editing to empty removes it
+      # editing to empty asks for a reason; the reason retracts the note and keeps it
       state = repo.state()
       rm_req = tui.EditRequest("note", "S01", "note 1", "revised", index=0)
-      self.assertEqual(tui.apply_edit_result(state, rm_req, "").severity, "success")
-      self.assertEqual(repo.state().index.require("S01").notes, [])
+      asked = tui.apply_edit_result(state, rm_req, "")
+      self.assertIsNotNone(asked.retract)
+      self.assertEqual(repo.state().index.require("S01").notes, ["revised"])
+      view = tui.View.initial(state)
+      view.accept(asked)
+      for key in "typo\n":
+        view.handle(state, key)
+      record = repo.state().index.require("S01").note_records[0]
+      self.assertEqual((record.text, record.retracted_reason), ("revised", "typo"))
+      self.assertTrue(record.retracted)
+
+  def test_ApplyEdit_EmptiedNote_AsksForARetractReason(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Example")
+      repo.run("note", "S01", "--text", "keep me")
+      state = repo.state()
+      record = state.index.require("S01").note_records[0]
+      before = repo.read(".slicer/index.json"), repo.read(".slicer/log.jsonl")
+      request = tui.EditRequest("note", "S01", "note 1", record.text, index=0)
+      result = tui.apply_edit_result(state, request, "")
+      self.assertEqual(result.retract, ("S01", record.id))
+      self.assertEqual(before, (repo.read(".slicer/index.json"), repo.read(".slicer/log.jsonl")))
+      kept = repo.state().index.require("S01").note_records
+      self.assertEqual([(n.text, n.retracted) for n in kept], [(record.text, False)])
+
+  def test_ApplyEdit_EmptiedRetractedNote_IsErrorAndWritesNothing(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Example")
+      repo.run("note", "S01", "--text", "wrong")
+      note_id = repo.state().index.require("S01").note_records[0].id
+      repo.run("note-retract", "S01", "--note-id", note_id, "--reason", "mistaken")
+      before = repo.read(".slicer/index.json"), repo.read(".slicer/log.jsonl")
+      state = repo.state()
+      request = tui.EditRequest("note", "S01", "note 1", "wrong", index=0)
+      result = tui.apply_edit_result(state, request, "")
+      self.assertEqual(result.severity, "error")
+      self.assertIn("already retracted", result.message)
+      self.assertIsNone(result.retract)
+      self.assertEqual(before, (repo.read(".slicer/index.json"), repo.read(".slicer/log.jsonl")))
 
   def test_Panel_PromotedItem_ShowsNotesAfterSections(self) -> None:
     with support.TempRepo() as repo:

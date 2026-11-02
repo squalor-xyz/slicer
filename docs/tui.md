@@ -19,7 +19,7 @@ search is active.
 
 `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (title, size, trees, findings, depends, importance,
-urgency, effort, short title, pass, flags), a slice's lead, a slice section, its scope boundary, a note (edit it, or empty to remove; the
+urgency, effort, short title, pass, flags), a slice's lead, a slice section, its scope boundary, a note (edit it, or empty to retract it: a prompt asks for the reason, and the note stays on the record marked retracted; the
 `+ add a note` line adds one; an edit that changes the text clears its verification), or a prose block — `s` starts the selected item and `a` adds a
 new one. Press `w` for the guided roadmap wizard; an empty roadmap offers it once
 when the TUI starts.

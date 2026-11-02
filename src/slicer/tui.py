@@ -47,7 +47,7 @@ BINDINGS = (
   Binding(("g",), "g", "jump", "Jump to ID; reveal hidden items by clearing restrictions"),
   Binding(("?",), "?", "help", "Show help; j/k scroll, ? or Esc closes"),
   Binding(("i",), "i", "detail", "Cycle the detail pane: details, dependencies, history (read-only; Tab then j/k or arrows scroll)"),
-  Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty removes a note)"),
+  Binding(("e",), "e", "edit", "Edit selected detail field/section/note or prose (empty retracts a note)"),
   Binding(("a",), "a", "add", "Add an item"),
   Binding(("w",), "w", "wizard", "Create roadmap items with the guided wizard"),
   Binding(("J",), "J", "reorder_down", "Reorder down (clear restrictions first)"),
@@ -209,6 +209,8 @@ class ActResult:
   message: str = ""
   edit: EditRequest | None = None
   severity: str = "info"
+  # (item id, note id) when an emptied note needs a reason before it is retracted.
+  retract: tuple[str, str] | None = None
 
 
 SORT_FIELDS = (
@@ -438,7 +440,7 @@ def panel(
         out.append(PanelLine(line, base + i))
       out.append(PanelLine("", base + i))
     note_base = base + len(sl.sections)
-  # Notes live on any item: `e` edits one (empty removes it), the last line adds one.
+  # Notes live on any item: `e` edits one (empty retracts it), the last line adds one.
   out.append(PanelLine(""))
   out.append(PanelLine("Notes", role="heading"))
   for i, note in enumerate(item.rendered_notes):
@@ -652,9 +654,11 @@ def apply_edit_result(state: State, request: EditRequest, body: str | None) -> A
         vcs.require_no_merge(state.root)
         ops.set_note(state, request.target, request.index, body)
         return ActResult("updated note; press r to render", severity="success")
-      vcs.require_no_merge(state.root)
-      ops.remove_note(state, request.target, request.index)
-      return ActResult("note removed; press r to render", severity="success")
+      # An emptied note is retracted, never deleted: the reason comes from the note prompt.
+      record = state.index.require(request.target).note_records[request.index]
+      if record.retracted:
+        return ActResult("note already retracted; nothing changed", severity="error")
+      return ActResult("give a reason to retract the note", retract=(request.target, record.id))
     elif request.kind == "note_new":
       if not body.strip():
         return ActResult("cancelled")
@@ -856,8 +860,10 @@ class View:
   focus: str = "left"
   scroll: int = 0
   mode: str = "normal"
-  # "handoff" or "reject" while the note prompt is open.
+  # "handoff", "reject" or "retract" while the note prompt is open.
   note_action: str = ""
+  # The (item id, note id) a "retract" prompt is collecting a reason for.
+  retract_target: tuple[str, str] | None = None
   message: str = ""
   message_severity: str = "normal"
   text: str = ""
@@ -941,6 +947,9 @@ class View:
     self.drift_due = True
     if result.message:
       self.notify(result.message, result.severity)
+    if result.retract:
+      self.mode, self.text, self.note_action = "note", "", "retract"
+      self.retract_target = result.retract
 
   def feedback(self) -> str:
     prefix = {"info": "Info: ", "success": "OK: ", "error": "Error: "}.get(self.message_severity, "")
@@ -1386,16 +1395,25 @@ class View:
     return ActResult()
 
   def _note(self, state: State, key: str) -> ActResult:
-    """Collect a note, then hand off or reject through the same ops the CLI uses.
-    A handoff note is optional; a reject needs one, so an empty one cancels."""
+    """Collect a note, then hand off, reject or retract through the same ops the CLI uses.
+    A handoff note is optional; a reject or a retraction needs one, so an empty one cancels."""
     if key == "\x1b":
       self.mode = "normal"
       self.notify("cancelled")
     elif key in ("\n", "\r", "KEY_ENTER"):
       self.mode = "normal"
       note = self.text.strip()
-      if self.note_action == "reject" and not note:
+      if self.note_action in ("reject", "retract") and not note:
         self.notify("cancelled")
+      elif self.note_action == "retract":
+        try:
+          vcs.require_no_merge(state.root)
+          item_id, note_id = self.retract_target or ("", "")
+          ops.retract_note(state, item_id, note_id, note, owner=None)
+          self.notify("note retracted; press r to render", "success")
+          self.drift_due = True
+        except (SlicerError, OSError) as exc:
+          self.notify(str(exc), "error")
       elif not self.selected:
         self.notify("no item selected", "error")
       else:
@@ -1977,8 +1995,8 @@ def draw(screen, state: State, view: View, palette: tui_style.Palette | None = N
   elif view.mode in ("search", "jump", "move", "note"):
     label = {
       "search": "Search", "jump": "Jump to ID", "move": "Move to position",
-      "note": "Handoff note, optional" if view.note_action == "handoff"
-      else "Reject verdict, required",
+      "note": {"handoff": "Handoff note, optional", "retract": "Retract reason, required"}.get(
+        view.note_action, "Reject verdict, required"),
     }[view.mode]
     prompt = f"{label} (Enter accepts, Esc cancels): {view.text}"
     put(status_y + 1, 0, prompt[-max(1, width - 1):], palette.attr(selected=True, focused=True))

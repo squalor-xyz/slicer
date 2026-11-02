@@ -199,7 +199,7 @@ class StructuredNoteTests(unittest.TestCase):
       self.assertEqual(render.render_slice(sl, state.config, state.template("slice.md"),
         state.index.require("S01").notes), expected)
 
-  def test_Tui_TypedEditAndDelete_PreserveMetadataAndLabels(self):
+  def test_Tui_TypedEditAndRetract_PreserveMetadataAndLabels(self):
     with self.repo() as repo:
       repo.run("note", "S01", "--kind", "decision", "--text", "original")
       state = repo.state()
@@ -217,13 +217,21 @@ class StructuredNoteTests(unittest.TestCase):
         {k: v for k, v in before.items() if k != "text"})
       self.assertEqual(repo.state().index.require("S01").notes[0].count("[decision]"), 1)
       request.body = saved["text"]
+      state = repo.state()
       result = tui.apply_edit_result(state, request, "")
-      self.assertEqual(result.severity, "success")
-      self.assertEqual(repo.state().index.require("S01").note_records, [])
+      self.assertIsNotNone(result.retract)
+      view = tui.View.initial(state)
+      view.accept(result)
+      for key in "wrong\n":
+        view.handle(state, key)
+      kept = repo.state().index.require("S01").note_records
+      self.assertEqual([(n.text, n.kind, n.retracted_reason) for n in kept],
+        [(saved["text"], "decision", "wrong")])
+      self.assertIn("[decision]", repo.state().index.require("S01").rendered_notes[0])
       added = tui.apply_edit_result(state, tui.EditRequest(kind="note_new", target="S01",
         name="add a note", body=""), "from TUI")
       self.assertEqual(added.severity, "success")
-      self.assertEqual(repo.state().index.require("S01").note_records[0].kind, "")
+      self.assertEqual(repo.state().index.require("S01").note_records[-1].kind, "")
 
   def test_Kinds_InvalidConfigAndWrites_LeaveFilesUntouched(self):
     for invalid in (None, "report", [""], [1], [" "]):
