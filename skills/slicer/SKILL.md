@@ -1,9 +1,17 @@
 ---
 name: slicer
-description: Drive a slicer roadmap. Use when asked to review a roadmap, plan work, take a slice, implement the next slice, or drive slicer. Read and change roadmap state only through slicer commands, never by opening .slicer/ files.
+description: Drive a slicer roadmap. Use when asked to get started with slicer, build a roadmap from a project's docs, review a roadmap, plan work, take a slice, implement the next slice, or drive slicer. Read and change roadmap state only through slicer commands, never by opening .slicer/ files.
 ---
 
 Do not open, search, parse, or edit tracking files; use the slicer commands.
+
+Pick the job you were asked to do:
+
+- Getting started in this project: run `slicer ai getting-started` and follow it.
+- Building a roadmap from the project's docs: run `slicer ai build-roadmap` and follow it.
+- Planning, filing, claims and review: run `slicer ai instructions --rest`.
+- Implementing a slice: follow the steps below.
+- A slice relay: run `slicer ai relay` (see the end of this skill).
 
 1. Run `slicer next --ready --section "Implement" --section "Check" --json --lean`
    to get the next item and only those sections. The headings are examples;
@@ -61,7 +69,8 @@ Do not switch to the tracking files.
 Source code, ordinary project documentation, templates, and this skill stay
 readable when you are implementing. Change a render template with
 `slicer template set NAME --stdin` or `slicer template reset NAME`, never by
-editing the file. A task that explicitly asks you to inspect or
+editing the file. Change a prompt with `slicer ai set NAME --stdin` or
+`slicer ai reset NAME`. A task that explicitly asks you to inspect or
 repair tracking internals is the only exception.
 
 When slicer warns that the running code belongs to another worktree, run

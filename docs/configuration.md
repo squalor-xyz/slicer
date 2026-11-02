@@ -304,6 +304,18 @@ loops, no conditionals and no eval; an unknown placeholder raises rather than re
 empty, and `set` refuses text that names one (`bad_template`) before it writes anything.
 Anything that repeats is flattened before it reaches a template.
 
+The prompts `ai getting-started` and `ai build-roadmap` have a separate escape hatch:
+`.slicer/prompts/NAME.md`. Inspect the effective text with `slicer ai show NAME`
+(`--default` shows the built-in), replace it with `slicer ai set NAME --file FILE`
+or `--stdin`, and remove the override with `slicer ai reset NAME`. Setting the built-in
+text also removes the file, so upgrades supply the current built-in instead of pinning
+an old copy. Blank text is refused (`bad_prompt`); there are no placeholders or expansion.
+Only those two prompts support overrides, not instructions, skills or relay texts.
+Overrides are committed and merge as plain Markdown: `check` warns on unknown files
+or conflict markers without failing. They are never rendered. `init`, `init --force`
+and `migrate` create no prompt files and leave existing overrides alone; `setup-git`
+and `.gitattributes` need no change.
+
 `relay-brief.md` controls `ai relay-brief`. Its placeholders are `{{id}}`,
 `{{title}}`, `{{size}}`, `{{effort}}`, `{{worktree}}`, `{{branch}}`, `{{run}}`,
 `{{step}}`, `{{roles}}`, `{{finish_override}}`, `{{commit_title}}`, `{{parallel}}`

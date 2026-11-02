@@ -2495,3 +2495,11 @@
 {"when": "2026-11-02T13:49:51Z", "item": "s439", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-11-02T14:56:06Z", "item": "s439", "action": "note", "from": "", "to": "", "note": "Ready for review: s439 adds slicer ai hooks and slicer ai gu", "by": "Jon Robbins"}
 {"when": "2026-11-02T14:56:08Z", "item": "s439", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-02T13:49:57Z", "item": "s437", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:42:15Z", "item": "s437", "action": "note", "from": "", "to": "", "note": "Ready for review: s437 adds slicer ai set, reset and show pr", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:42:21Z", "item": "s437", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-02T13:49:50Z", "item": "s438", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:39:36Z", "item": "s438", "action": "note", "from": "", "to": "", "note": "Ready for review: s438 routes the four agent jobs in the sli", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:39:37Z", "item": "s438", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:39:49Z", "item": "s438", "action": "status", "from": "review", "to": "done", "note": "Verified: slicer skill routes getting started, build-roadmap, planning and implementing; committed skill copy matches; full suite 3095 OK; gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:55:35Z", "item": "s437", "action": "status", "from": "review", "to": "done", "note": "Verified: ai set, reset and show per-project prompt overrides over .slicer/prompts; getting-started/build-roadmap print the override; check warns on unknown files; merged-branch full suite 3127 OK; reviewer VERDICT: PASS.", "by": "Jon Robbins"}

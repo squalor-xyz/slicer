@@ -170,10 +170,10 @@ a worktree; [docs/landing.md](docs/landing.md) has the commands.
 **Read and change tracking state through the slicer CLI.** Never open, search, parse
 or edit `.slicer/*.json`, `.slicer/slices/`, `.slicer/log.jsonl` or `.slicer/render/`,
 even when `git status` lists one. Use `slicer show ID --json --lean`,
-`slicer list --json --lean` or `slicer next --json --lean`. Read `config.json` with
-`slicer config KEY` and set a key with `slicer config KEY VALUE`, as
-[docs/configuration.md](docs/configuration.md) describes. `.slicer/relay-roles.json`
-changes only through `slicer relay-roles`.
+`slicer list --json --lean` or `slicer next --json --lean`. Read config with
+`slicer config KEY`; set it with `slicer config KEY VALUE` ([reference](docs/configuration.md)).
+Change `.slicer/relay-roles.json` only through `slicer relay-roles`, a prompt
+through `slicer ai set|reset NAME`.
 
 To file one item with its fields and spec, pass `import` a one-item outline;
 `--dry-run` first. `import --skeleton` lists every key. `promote` gives an existing

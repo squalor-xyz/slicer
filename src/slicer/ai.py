@@ -159,10 +159,21 @@ If `next` JSON includes `unspecified`, those ids are not ready. Fill each missin
 """
 
 SKILL_DESCRIPTION = (
-  "Drive a slicer roadmap. Use when asked to review a roadmap, plan work, "
+  "Drive a slicer roadmap. Use when asked to get started with slicer, "
+  "build a roadmap from a project's docs, review a roadmap, plan work, "
   "take a slice, implement the next slice, or drive slicer. "
   "Read and change roadmap state only through slicer commands, never by opening .slicer/ files."
 )
+
+SKILL_JOBS = """\
+Pick the job you were asked to do:
+
+- Getting started in this project: run `slicer ai getting-started` and follow it.
+- Building a roadmap from the project's docs: run `slicer ai build-roadmap` and follow it.
+- Planning, filing, claims and review: run `slicer ai instructions --rest`.
+- Implementing a slice: follow the steps below.
+- A slice relay: run `slicer ai relay` (see the end of this skill).
+"""
 
 # Reads and edits of tracking state. The instructions and the skill both use
 # this block, so the rule cannot land in only one of them.
@@ -193,7 +204,8 @@ Do not switch to the tracking files.
 Source code, ordinary project documentation, templates, and this skill stay
 readable when you are implementing. Change a render template with
 `slicer template set NAME --stdin` or `slicer template reset NAME`, never by
-editing the file. A task that explicitly asks you to inspect or
+editing the file. Change a prompt with `slicer ai set NAME --stdin` or
+`slicer ai reset NAME`. A task that explicitly asks you to inspect or
 repair tracking internals is the only exception.
 
 When slicer warns that the running code belongs to another worktree, run
@@ -1432,6 +1444,7 @@ def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
     "\n"
     f"{TRACKING_RULE}\n"
     "\n"
+    f"{SKILL_JOBS}\n"
     f"{loop_text(finish)}\n"
     f"{handoff_policy_text(required_note_kind)}"
     f"{SPEC_GAP}\n"

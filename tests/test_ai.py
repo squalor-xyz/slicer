@@ -32,7 +32,7 @@ class AiPromptTests(unittest.TestCase):
   def test_AiBuildRoadmap_Text_PrintsTheBuiltInPrompt(self) -> None:
     self._check_text("build-roadmap", ai.BUILD_ROADMAP)
 
-  def test_AiPrompt_Json_IsNameThenPrompt(self) -> None:
+  def test_AiPrompt_Json_IsNameThenPromptThenCustomized(self) -> None:
     self.assertEqual(ai.PROMPT_NAMES, ("build-roadmap", "getting-started"))
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       for name in ai.PROMPT_NAMES:
@@ -40,8 +40,8 @@ class AiPromptTests(unittest.TestCase):
           code, out, err = repo.run("ai", name, "--json")
           self.assertEqual((code, err), (0, ""))
           payload = json.loads(out)
-          self.assertEqual(list(payload), ["name", "prompt"])
-          self.assertEqual(payload, {"name": name, "prompt": ai.PROMPTS[name]})
+          self.assertEqual(list(payload), ["name", "prompt", "customized"])
+          self.assertEqual(payload, {"name": name, "prompt": ai.PROMPTS[name], "customized": False})
           self.assertEqual(ai.prompt_text(name), ai.PROMPTS[name])
 
   def test_AiPrompt_WritesNothingAndTakesNoLock(self) -> None:
@@ -431,6 +431,29 @@ class AiInstructionsTests(unittest.TestCase):
       self.assertEqual(skill_first, skill)
       self.assertNotEqual(skill[1], repo.run("ai", "--json")[1])
 
+  def test_Skill_Description_NamesGettingStartedAndBuildingARoadmap(self) -> None:
+    for job in ("get started", "build a roadmap", "review a roadmap", "plan work"):
+      with self.subTest(job=job):
+        self.assertIn(job, ai.SKILL_DESCRIPTION)
+
+  def test_Skill_Jobs_RouteEachJobToItsCommand(self) -> None:
+    text = ai.skill_text()
+    self.assertIn(ai.SKILL_JOBS, text)
+    self.assertLess(text.index(ai.TRACKING_RULE), text.index(ai.SKILL_JOBS))
+    self.assertLess(text.index(ai.SKILL_JOBS), text.index(ai.LOOP))
+    for command in (
+      "slicer ai getting-started", "slicer ai build-roadmap",
+      "slicer ai instructions --rest", "slicer ai relay",
+    ):
+      with self.subTest(command=command):
+        self.assertIn(command, ai.SKILL_JOBS)
+    self.assertIn("Implementing a slice: follow the steps below.", ai.SKILL_JOBS)
+
+  def test_Skill_Jobs_InEveryFinishMode(self) -> None:
+    for finish, kind in (("handoff", ""), ("done", "report")):
+      with self.subTest(finish=finish, kind=kind):
+        self.assertIn(ai.SKILL_JOBS, ai.skill_text(finish, kind))
+
   def test_Skill_MatchesTheInstructionsLoop_AndTheCommittedFile(self) -> None:
     text = ai.skill_text()
     self.assertIn(ai.LOOP, text)
@@ -595,7 +618,8 @@ class AiInstructionsTests(unittest.TestCase):
 
   def test_Instructions_Rest_LeavesOutEverySkillBlock(self) -> None:
     text = ai.rest_text()
-    for block in (ai.TRACKING_RULE, ai.TRACKING, ai.LOOP, ai.SPEC_GAP, ai.EXITS, ai.HANDOFF_STEP):
+    for block in (ai.TRACKING_RULE, ai.TRACKING, ai.SKILL_JOBS, ai.LOOP,
+                  ai.SPEC_GAP, ai.EXITS, ai.HANDOFF_STEP):
       self.assertNotIn(block, text)
     for heading in (
       "## Read the project first",
@@ -1689,11 +1713,13 @@ class AiRelayTests(unittest.TestCase):
           text,
         )
 
-  def test_SkillText_RelayMention_IsOnlyTheRequestLine(self) -> None:
+  def test_SkillText_RelayMentions_AreOnlyTheRoutingAndRequestLines(self) -> None:
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         lines = [line for line in ai.skill_text(finish).splitlines() if "relay" in line]
-        self.assertEqual(len(lines), 1)
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(lines[0], "- A slice relay: run `slicer ai relay` (see the end of this skill).")
+        self.assertTrue(lines[1].startswith("When the owner asks for a slice relay,"))
 
   def test_RelayText_Setup_BeforeOrder(self) -> None:
     text = ai.relay_text()
