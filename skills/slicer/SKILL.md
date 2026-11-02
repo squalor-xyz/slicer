@@ -61,7 +61,8 @@ Do not switch to the tracking files.
 Source code, ordinary project documentation, templates, and this skill stay
 readable when you are implementing. Change a render template with
 `slicer template set NAME --stdin` or `slicer template reset NAME`, never by
-editing the file. A task that explicitly asks you to inspect or
+editing the file. Change a prompt with `slicer ai set NAME --stdin` or
+`slicer ai reset NAME`. A task that explicitly asks you to inspect or
 repair tracking internals is the only exception.
 
 When slicer warns that the running code belongs to another worktree, run

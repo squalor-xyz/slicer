@@ -2492,3 +2492,6 @@
 {"when": "2026-11-02T13:48:04Z", "item": "s436", "action": "note", "from": "", "to": "", "note": "Ready for review: s436 adds slicer ai getting-started and sl", "by": "Jon Robbins"}
 {"when": "2026-11-02T13:48:07Z", "item": "s436", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-02T13:48:36Z", "item": "s436", "action": "status", "from": "review", "to": "done", "note": "Verified: ai getting-started and ai build-roadmap print short built-in prompts (no project, no write, --json {name, prompt}); full suite 3092 OK; gate VERDICT: PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T13:49:57Z", "item": "s437", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:42:15Z", "item": "s437", "action": "note", "from": "", "to": "", "note": "Ready for review: s437 adds slicer ai set, reset and show pr", "by": "Jon Robbins"}
+{"when": "2026-11-02T14:42:21Z", "item": "s437", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

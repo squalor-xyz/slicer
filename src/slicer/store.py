@@ -55,6 +55,7 @@ LOCK_NAME = "lock"
 SLICES_DIR = "slices"
 RENDER_DIR = "render"
 TEMPLATES_DIR = "templates"
+PROMPTS_DIR = "prompts"
 
 # How long a second writer waits for the lock before giving up. Overridable so
 # tests need not sit through the real wait.
@@ -75,6 +76,17 @@ def read_template_exact(root: Path, name: str) -> str | None:
     return None
   except UnicodeDecodeError as exc:
     raise StateError(f"{path}: not valid UTF-8: {exc}", code="io") from None
+
+
+def read_prompt_exact(root: Path, name: str) -> str | None:
+  """Read an optional override without translating its newlines."""
+  path = root / DIR_NAME / PROMPTS_DIR / f"{name}.md"
+  try:
+    return path.read_bytes().decode("utf-8")
+  except FileNotFoundError:
+    return None
+  except (OSError, UnicodeDecodeError) as exc:
+    raise StateError(f"{path}: could not read UTF-8 prompt: {exc}", code="io") from None
 
 
 def require_template_text(root: Path, name: str) -> str:
@@ -266,6 +278,7 @@ class _Stage:
   deletes: list[Path] = field(default_factory=list)
   config: dict | None = None
   templates: dict[str, str] = field(default_factory=dict)
+  prompts: dict[str, str | None] = field(default_factory=dict)
 
 
 class LazySlices(MutableMapping[str, Slice]):
@@ -457,6 +470,10 @@ class State:
   def templates_dir(self) -> Path:
     return self.dir / TEMPLATES_DIR
 
+  @property
+  def prompts_dir(self) -> Path:
+    return self.dir / PROMPTS_DIR
+
   def slice_path(self, item_id: str) -> Path:
     """Where a slice's JSON lives, following its recorded status.
 
@@ -516,6 +533,26 @@ class State:
       self._stage.templates[name] = text
       return
     jsonio.write_text(self.templates_dir / name, text)
+
+  def prompt_exact(self, name: str) -> str | None:
+    """The stored override, or the text a staged write would give it."""
+    if self._stage is not None and name in self._stage.prompts:
+      return self._stage.prompts[name]
+    return read_prompt_exact(self.root, name)
+
+  def save_prompt(self, name: str, text: str) -> None:
+    """Hold a prompt write until the render gate passes, when staged."""
+    if self._stage is not None:
+      self._stage.prompts[name] = text
+      return
+    jsonio.write_text(self.prompts_dir / f"{name}.md", text)
+
+  def delete_prompt(self, name: str) -> None:
+    """Remove an override so future slicer versions supply their own default."""
+    if self._stage is not None:
+      self._stage.prompts[name] = None
+      return
+    (self.prompts_dir / f"{name}.md").unlink(missing_ok=True)
 
   def save_index(self) -> None:
     # Stamp the schema this build writes so an older slicer refuses the file
@@ -674,6 +711,11 @@ class State:
     # Nothing names a template, so no write has to precede it; history stays last.
     for name, text in stage.templates.items():
       jsonio.write_text(self.templates_dir / name, text)
+    for name, text in stage.prompts.items():
+      if text is None:
+        self.delete_prompt(name)
+      else:
+        self.save_prompt(name, text)
     try:
       for entry in stage.logs:
         jsonio.append_jsonl(self.dir / LOG_NAME, entry.to_dict())

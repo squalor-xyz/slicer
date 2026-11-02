@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from slicer import ai, feedback, ops, render, store, sync, vcs, verify
+from slicer import ai, feedback, jsonio, ops, render, store, sync, vcs, verify
 from slicer.store import State
 
 
@@ -89,10 +89,32 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
   if legacy is not None:
     report.warnings.append(legacy)
   report.warnings.extend(_gitignore_lines(state))
+  report.warnings.extend(_prompt_warnings(state))
   pin = ai.pin_mismatch(state.config.relay_contract)
   if pin is not None:
     report.warnings.append(pin)
   return report, expected, diff
+
+
+def _prompt_warnings(state: State) -> list[str]:
+  """Prompt files merge as plain text; warn about typos and unresolved conflicts."""
+  warnings = []
+  known = {f"{name}.md": name for name in ai.PROMPT_NAMES}
+  for path in sorted(state.prompts_dir.glob("*")):
+    if not path.is_file():
+      continue
+    name = known.get(path.name)
+    if name is None:
+      warnings.append(
+        f"{path}: unknown prompt file; choose {', '.join(ai.PROMPT_NAMES)}; "
+        "use `slicer ai show NAME` and `slicer ai set NAME --file FILE`"
+      )
+    elif jsonio.has_conflict_markers(path):
+      warnings.append(
+        f"{path}: prompt holds Git conflict markers; inspect with `slicer ai show {name}` "
+        f"and replace with `slicer ai set {name} --file FILE`"
+      )
+  return warnings
 
 
 def _gitignore_lines(state: State) -> list[str]:

@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Added
 
+- Per-project overrides for `ai getting-started` and `ai build-roadmap`: `slicer ai set NAME --file FILE` or `--stdin`, `ai show NAME [--default]`, and `ai reset NAME` manage literal UTF-8 text in `.slicer/prompts/NAME.md`. Resetting or setting the built-in deletes the override so upgrades supply the current default; unchanged text writes and logs nothing. Blank text is refused (`bad_prompt`), unsupported names are `unknown_prompt`, and `check` warns on unknown files or conflict markers without failing. Prompt reads now return `{name, prompt, customized}`; `ai show` returns `{name, text, customized}`, writes `{name, changed, customized}`.
+
 - `slicer ai getting-started` and `slicer ai build-roadmap` print short prompts for a first agent session and for building a roadmap from project documentation. Both point at `slicer ai instructions --rest`, stop for owner direction or agreement, and need no project, lock or write. `--json` returns `{name, prompt}` in that order.
 
 ## [1.17.0] - 2026-10-30

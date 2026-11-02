@@ -32,7 +32,7 @@ class AiPromptTests(unittest.TestCase):
   def test_AiBuildRoadmap_Text_PrintsTheBuiltInPrompt(self) -> None:
     self._check_text("build-roadmap", ai.BUILD_ROADMAP)
 
-  def test_AiPrompt_Json_IsNameThenPrompt(self) -> None:
+  def test_AiPrompt_Json_IsNameThenPromptThenCustomized(self) -> None:
     self.assertEqual(ai.PROMPT_NAMES, ("build-roadmap", "getting-started"))
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       for name in ai.PROMPT_NAMES:
@@ -40,8 +40,8 @@ class AiPromptTests(unittest.TestCase):
           code, out, err = repo.run("ai", name, "--json")
           self.assertEqual((code, err), (0, ""))
           payload = json.loads(out)
-          self.assertEqual(list(payload), ["name", "prompt"])
-          self.assertEqual(payload, {"name": name, "prompt": ai.PROMPTS[name]})
+          self.assertEqual(list(payload), ["name", "prompt", "customized"])
+          self.assertEqual(payload, {"name": name, "prompt": ai.PROMPTS[name], "customized": False})
           self.assertEqual(ai.prompt_text(name), ai.PROMPTS[name])
 
   def test_AiPrompt_WritesNothingAndTakesNoLock(self) -> None:

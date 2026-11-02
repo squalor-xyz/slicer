@@ -475,10 +475,60 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
+def _ai_prompt_text(args: argparse.Namespace, name: str) -> tuple[str, bool]:
+  """Read project overrides only when its config is usable, silently falling back."""
+  default = ai.prompt_text(name)
+  if getattr(args, "default", False):
+    return default, False
+  try:
+    root = store.discover(Path(args.root).resolve() if args.root else None)
+    Config.load(root / store.DIR_NAME / CONFIG_NAME)
+  except (OSError, SlicerError):
+    return default, False
+  override = store.read_prompt_exact(root, name)
+  return (default, False) if override is None else (override, True)
+
+
 def cmd_ai_prompt(args: argparse.Namespace) -> int:
-  text = ai.prompt_text(args.prompt_name)
-  _emit(args, {"name": args.prompt_name, "prompt": text}, text.rstrip("\n"))
+  text, customized = _ai_prompt_text(args, args.prompt_name)
+  if args.json:
+    _emit(args, {"name": args.prompt_name, "prompt": text, "customized": customized}, "")
+  else:
+    sys.stdout.write(text)
   return OK
+
+
+def cmd_ai_show(args: argparse.Namespace) -> int:
+  name = ops.require_prompt(args.name)
+  text, customized = _ai_prompt_text(args, name)
+  if args.json:
+    _emit(args, {"name": name, "text": text, "customized": customized}, "")
+  else:
+    sys.stdout.write(text)
+  return OK
+
+
+def _prompt_write(args: argparse.Namespace, change: ops.PromptChange) -> int:
+  if not change.changed:
+    args._no_change = True
+    text = f"{change.name} is already " + ("that text" if change.customized else "the default")
+  else:
+    verb = "reset" if not change.customized else "replaced"
+    text = f"{verb} {change.name}"
+  _emit(args, {"name": change.name, "changed": change.changed,
+               "customized": change.customized}, text)
+  return OK
+
+
+def cmd_ai_set(args: argparse.Namespace) -> int:
+  name = ops.require_prompt(args.name)
+  text = _template_source(args, noun="prompt")
+  return _prompt_write(args, ops.prompt_set(_state(args), name, text))
+
+
+def cmd_ai_reset(args: argparse.Namespace) -> int:
+  name = ops.require_prompt(args.name)
+  return _prompt_write(args, ops.prompt_reset(_state(args), name))
 
 
 def cmd_ai_relay(args: argparse.Namespace) -> int:
@@ -3251,8 +3301,8 @@ def cmd_template_show(args: argparse.Namespace) -> int:
   return OK
 
 
-def _template_source(args: argparse.Namespace) -> str:
-  """The new template text from exactly one of --file or --stdin, newlines untouched."""
+def _template_source(args: argparse.Namespace, *, noun: str = "template") -> str:
+  """The new text from exactly one of --file or --stdin, newlines untouched."""
   if args.file is not None and args.stdin:
     raise StateError("choose only one of --file or --stdin", code="usage")
   if args.file is not None:
@@ -3262,10 +3312,12 @@ def _template_source(args: argparse.Namespace) -> str:
       raise StateError(f"{args.file}: not valid UTF-8: {exc}", code="io") from None
   if args.stdin:
     try:
+      if noun == "prompt" and hasattr(sys.stdin, "buffer"):
+        return sys.stdin.buffer.read().decode("utf-8")
       return sys.stdin.read()
     except UnicodeDecodeError as exc:
       raise StateError(f"stdin: not valid UTF-8: {exc}", code="io") from None
-  raise StateError("give the template text with --file or --stdin", code="usage")
+  raise StateError(f"give the {noun} text with --file or --stdin", code="usage")
 
 
 def _template_write(args: argparse.Namespace, change: ops.TemplateChange) -> int:
@@ -3929,12 +3981,24 @@ def build_parser() -> argparse.ArgumentParser:
       name, help=help_text,
       description=(
         help_text[0].upper() + help_text[1:] + ". Does not lock or write. "
-        "--json returns {name, prompt} in that key order."
+        "--json returns {name, prompt, customized} in that key order."
       ),
       parents=[common],
     )
     _json_flags(inner, suppress=True)
     inner.set_defaults(func=cmd_ai_prompt, prompt_name=name)
+  for name, fn in (("show", cmd_ai_show), ("set", cmd_ai_set), ("reset", cmd_ai_reset)):
+    inner = aisub.add_parser(name, help=f"{name} a project prompt override", parents=[common])
+    inner.set_defaults(func=fn if name == "show" else _mutating(fn))
+    _json_flags(inner, suppress=True)
+    inner.add_argument("name", help=", ".join(ai.PROMPT_NAMES))
+    if name == "show":
+      inner.add_argument("--default", action="store_true", help="print the built-in prompt")
+    else:
+      _check_flag(_strict_flag(_render_flag(inner)))
+    if name == "set":
+      inner.add_argument("--file", help="read the new text from this file, exactly")
+      inner.add_argument("--stdin", action="store_true", help="read the new text from stdin")
   inner = aisub.add_parser(
     "skill", help="print or install the agent skill for Claude Code, Codex, and Grok",
     description=(

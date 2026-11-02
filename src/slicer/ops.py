@@ -1098,6 +1098,56 @@ def template_reset(state: State, name: str) -> TemplateChange:
   return template_set(state, name, templates.default(name))
 
 
+# ---- prompt overrides ------------------------------------------------------
+
+PROMPT_ACTION = "prompt"
+
+
+@dataclass
+class PromptChange:
+  name: str
+  changed: bool
+  customized: bool
+
+
+def require_prompt(name: str) -> str:
+  if name not in ai.PROMPT_NAMES:
+    raise StateError(
+      f"unknown prompt {name!r}; choose {', '.join(ai.PROMPT_NAMES)}",
+      code="unknown_prompt",
+    )
+  return name
+
+
+def prompt_set(state: State, name: str, text: str) -> PromptChange:
+  """Replace a prompt literally, keeping the built-in text unpinned on disk."""
+  require_prompt(name)
+  if not text.strip():
+    raise StateError(
+      f"{name}: prompt text must not be blank; use `slicer ai reset {name}` "
+      "to restore the built-in; nothing was written", code="bad_prompt",
+    )
+  if text == ai.prompt_text(name):
+    return prompt_reset(state, name)
+  before = state.prompt_exact(name)
+  if before == text:
+    return PromptChange(name, False, True)
+  state.save_prompt(name, text)
+  _record(state, f"prompt.{name}", PROMPT_ACTION,
+          frm="default" if before is None else "custom", to="custom")
+  return PromptChange(name, True, True)
+
+
+def prompt_reset(state: State, name: str) -> PromptChange:
+  """Delete an override rather than pinning today's built-in text."""
+  require_prompt(name)
+  if state.prompt_exact(name) is None:
+    return PromptChange(name, False, False)
+  state.delete_prompt(name)
+  _record(state, f"prompt.{name}", PROMPT_ACTION, frm="custom", to="default")
+  return PromptChange(name, True, False)
+
+
 def relay_brief(
   state: State, item_id: str, *, worktree: str, branch: str, run: str,
   step: str, parallel: Sequence[str], well_specified: bool, split: bool,

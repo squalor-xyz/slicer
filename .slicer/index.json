@@ -17380,12 +17380,27 @@
       "id": "s437",
       "title": "Per-project prompt overrides: ai set, reset and show",
       "short_title": "ai set, reset and show prompt overrides",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s436"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "ec573c51-7ff3-4430-8cef-c71c37bb2db8",
+          "kind": "",
+          "text": "**2026-11-02** — Ready for review: s437 adds slicer ai set, reset and show prompt overrides over .slicer/prompts; full suite 3124 tests OK; reviewer VERDICT: PASS.",
+          "created_at": "2026-11-02T14:42:15Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -17409,7 +17424,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
