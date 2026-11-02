@@ -2569,3 +2569,5 @@
 {"when": "2026-11-02T18:14:09Z", "item": "s434", "action": "note", "from": "", "to": "", "note": "Ready for review: s434 lists every open question in the rela", "by": "Jon Robbins"}
 {"when": "2026-11-02T18:14:10Z", "item": "s434", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-02T18:14:19Z", "item": "s434", "action": "status", "from": "review", "to": "done", "note": "Landed: relay-run step JSON lists every open question (questions, in order) and the text counts open questions; full suite 3181 OK; gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T18:17:22Z", "item": "s443", "action": "add", "from": "", "to": "open", "note": "Apply a change set to the relay role matrix in one atomic write"}
+{"when": "2026-11-02T18:17:22Z", "item": "s444", "action": "add", "from": "", "to": "open", "note": "Replace the whole relay role matrix through relay-roles apply"}
