@@ -6,6 +6,7 @@ import copy
 import io
 import json
 import os
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -152,6 +153,71 @@ class AiHooksTests(unittest.TestCase):
                           for event, groups in ai.hooks_settings()["hooks"].items()}}
     self.assertEqual(jsonio.read(self.target), expected)
 
+  def mixed(self) -> dict:
+    snippet = ai.hooks_settings()["hooks"]["PreToolUse"][0]
+    old = {"type": "command", "command": "slicer ai guard", "timeout": 99}
+    return {"hooks": {"PreToolUse": [
+      {"matcher": snippet["matcher"], "hooks": [self.lint, old]}]}}
+
+  lint = {"type": "command", "command": "my-lint"}
+
+  def test_AiHooksInstall_ForceMixedGroup_KeepsUserHandlers(self) -> None:
+    self.settings(self.mixed())
+    self.assertEqual(self.install("--force")[0], 0)
+    snippet = ai.hooks_settings()["hooks"]
+    self.assertEqual(jsonio.read(self.target), {"hooks": {
+      "PreToolUse": [{"matcher": "Read|Grep|Edit|Write", "hooks": [self.lint]},
+                     *snippet["PreToolUse"]],
+      "SessionStart": snippet["SessionStart"]}})
+
+  def test_AiHooksInstall_ForceWithExactGroup_RemovesOtherSlicerHandlersWithoutDuplicating(
+      self) -> None:
+    snippet = ai.hooks_settings()["hooks"]
+    bash = {"matcher": "Bash", "hooks": [
+      {"type": "command", "command": "slicer ai guard", "timeout": 5}]}
+    self.settings({"hooks": {"PreToolUse": [*snippet["PreToolUse"], bash],
+                             "SessionStart": snippet["SessionStart"]}})
+    self.assertEqual(self.install("--force")[0], 0)
+    self.assertEqual(jsonio.read(self.target), {"hooks": snippet})
+
+  def test_AiHooksInstall_ForceTwice_IsIdempotent(self) -> None:
+    self.settings(self.mixed())
+    self.assertEqual(self.install("--force")[0], 0)
+    self.assertIn("my-lint", self.target.read_text())
+    before = self.snapshot()
+    for flags in (("--force",), ()):
+      with self.subTest(flags=flags):
+        code, out, _ = self.install(*flags, "--json")
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out)["written"], [])
+        self.assertEqual(self.snapshot(), before)
+
+  def test_AiHooksInstall_SymlinkedSettingsFile_IsStateAndWritesNothing(self) -> None:
+    with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as outside:
+      real = Path(outside) / "real.json"
+      real.write_text('{"keep": true}\n')
+      (self.repo.root / ".claude").mkdir()
+      self.target.symlink_to(real)
+      for flags in ((), ("--force",)):
+        with self.subTest(flags=flags):
+          code, out, err = self.install(*flags, "--json")
+          self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "state"))
+          self.assertIn(str(self.target), err)
+          self.assertEqual(real.read_text(), '{"keep": true}\n')
+          self.assertTrue(self.target.is_symlink())
+
+  def test_AiHooksInstall_DirectoryAtSettingsPath_IsStateAndWritesNothing(self) -> None:
+    self.target.mkdir(parents=True)
+    before = self.snapshot()
+    for flags in ((), ("--force",)):
+      with self.subTest(flags=flags):
+        code, out, err = self.install(*flags, "--json")
+        self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "state"))
+        self.assertIn(str(self.target), err)
+        self.assertIn("nothing was written", err)
+        self.assertEqual(self.snapshot(), before)
+        self.assertTrue(self.target.is_dir())
+
   def test_AiHooksInstall_EqualHandlers_IsAlreadyInstalled(self) -> None:
     settings = ai.hooks_settings()
     for groups in settings["hooks"].values():
@@ -259,6 +325,21 @@ class AiGuardTests(unittest.TestCase):
     for glob in ("*.md", "**/*.txt", "*.jsonl", "*.json.bak", "*.{md,txt}"):
       with self.subTest(glob=glob):
         self.check(self.payload("Grep", ".slicer/templates", glob=glob), False)
+
+  def test_AiGuard_GlobJudgement_IsTheTailRule(self) -> None:
+    for glob in ("*.json", "**/*.json", "s[0-9]*.[j]son", "*", "config.*", "????.json",
+                 "*.{md,json}", "**/*.{js,{md,json}}", "*.[!j]son", "config.json", "**/index.json"):
+      with self.subTest(glob=glob):
+        self.assertTrue(ai._glob_could_match_json(glob))
+    for glob in ("*.md", "**/*.txt", "*.jsonl", "*.json.bak", "*.{md,txt}", "a.md", "*.js"):
+      with self.subTest(glob=glob):
+        self.assertFalse(ai._glob_could_match_json(glob))
+    many = "{" + ",".join(f"a{i}" for i in range(65)) + "}.md"
+    self.assertTrue(ai._glob_could_match_json(many))
+    for glob in ("{a,b", "{{", "*.{md", "}{"):  # an unclosed brace leans toward a match
+      with self.subTest(glob=glob):
+        self.assertTrue(ai._glob_could_match_json(glob))
+    self.assertFalse(ai._glob_could_match_json("a}"))
 
   def test_AiGuard_ReadTemplateOrPrompt_Allows(self) -> None:
     for tool in ("Read", "Grep", "Edit", "Write"):

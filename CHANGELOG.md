@@ -20,6 +20,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - `check` no longer warns about dotfiles in `.slicer/prompts/` such as `.DS_Store` or editor swap files; other unknown files still warn (s441).
 
+- `ai hooks --install --force` removes only the other slicer handlers from a conflicting group, keeps its non-slicer handlers, and never adds a second snippet group, so repeating it changes nothing. A directory at `.claude/settings.json` is refused with `state` (exit 2, nothing written) instead of failing with `io`. The guard's Grep `glob` check is a shorter conservative rule; it may now deny a few odd globs such as `*.[!j]son` that it allowed before (s442).
+
 ## [1.18.0] - 2026-11-02
 
 ### Added

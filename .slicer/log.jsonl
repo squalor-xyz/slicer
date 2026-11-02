@@ -2579,3 +2579,6 @@
 {"when": "2026-11-02T19:02:28Z", "item": "s441", "action": "note", "from": "", "to": "", "note": "Ready for review: s441 makes check ignore dotfiles in .slice", "by": "Jon Robbins"}
 {"when": "2026-11-02T19:02:35Z", "item": "s441", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-02T19:02:56Z", "item": "s441", "action": "status", "from": "review", "to": "done", "note": "Landed s441: check ignores dotfiles in .slicer/prompts/; non-UTF-8 buffered-stdin test for ai set --stdin. Suite 3188 OK, gate PASS.", "by": "Jon Robbins"}
+{"when": "2026-11-02T19:04:02Z", "item": "s442", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-02T21:01:48Z", "item": "s442", "action": "note", "from": "", "to": "", "note": "Ready for review: s442 makes ai hooks --install --force keep", "by": "Jon Robbins"}
+{"when": "2026-11-02T21:01:54Z", "item": "s442", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

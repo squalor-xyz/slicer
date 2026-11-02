@@ -63,13 +63,18 @@ exit 2 as a block. The guard command remains exactly `slicer ai guard`:
 
 `--install` needs a project and merges into its `.claude/settings.json` only, creating
 parents when needed; it never targets `~/.claude` or `.claude/settings.local.json`.
-Symlinked `.claude` directories or settings files are refused with `state`.
+Symlinked `.claude` directories or settings files, and a directory at
+`.claude/settings.json`, are refused with `state` and nothing is written.
 Other keys, events and groups retain their content and order. An event group with
 exactly the snippet's handlers is already installed, even with a different matcher.
 A different group containing a command with `slicer ai getting-started` or
 `slicer ai guard` conflicts: exit 2, code `state`, naming the file and events, with
-nothing written. `--force` replaces those groups in place; otherwise each missing
-group is appended. Invalid JSON, a non-object settings or hooks value, or a non-list
+nothing written. With `--force`, each conflicting group loses only its slicer handlers
+(its other handlers, matcher and keys keep their content and order; a group left with
+no handlers is removed), and the snippet group takes the first conflicting group's
+place, directly after it if the group survived. When an exact snippet group already
+exists none is added, so forcing never duplicates the slicer group; otherwise the
+missing group is appended. Invalid JSON, a non-object settings or hooks value, or a non-list
 target event is also `state` and writes nothing. Changed settings use indent 2 and a
 trailing newline; unchanged settings retain their bytes and mtime. Text lists the path
 written or says already installed. `--force` without `--install` is `usage`.

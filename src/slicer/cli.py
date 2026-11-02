@@ -1080,6 +1080,46 @@ def _write_skill(targets: list[Path], content: str, *, force: bool) -> list[str]
   return [str(path) for path in unique]
 
 
+def _is_slicer_hook_handler(handler: object) -> bool:
+  return (isinstance(handler, dict) and isinstance(handler.get("command"), str)
+          and any(command in handler["command"]
+                  for command in ("slicer ai getting-started", "slicer ai guard")))
+
+
+def _merge_hook_groups(groups: list, wanted: dict, *, force: bool) -> bool:
+  """Put the snippet group into one event's groups; say whether other slicer groups conflict.
+
+  A conflicting group holds a slicer handler but is not the snippet's handler list.
+  Without `force` the groups stay as they were and the caller refuses. With it each
+  conflicting group loses only its slicer handlers, and the snippet group takes the
+  first one's place unless an exact group already exists.
+  """
+  def handlers(group: object) -> object:
+    return group.get("hooks", []) if isinstance(group, dict) else []
+
+  exact = any(handlers(group) == wanted["hooks"] for group in groups)
+  conflicting = [i for i, group in enumerate(groups)
+                 if handlers(group) != wanted["hooks"] and isinstance(handlers(group), list)
+                 and any(_is_slicer_hook_handler(h) for h in handlers(group))]
+  if not conflicting:
+    if not exact:
+      groups.append(copy.deepcopy(wanted))
+    return False
+  if force:
+    merged: list = []
+    for i, group in enumerate(groups):
+      if i in conflicting:
+        kept = [h for h in group["hooks"] if not _is_slicer_hook_handler(h)]
+        if kept:
+          merged.append({**group, "hooks": kept})
+      else:
+        merged.append(group)
+      if i == conflicting[0] and not exact:
+        merged.append(copy.deepcopy(wanted))
+    groups[:] = merged
+  return True
+
+
 def cmd_ai_hooks(args: argparse.Namespace) -> int:
   if args.force and not args.install:
     raise StateError("--force needs --install", code="usage")
@@ -1091,6 +1131,8 @@ def cmd_ai_hooks(args: argparse.Namespace) -> int:
   target = project / ".claude/settings.json"
   if target.parent.is_symlink() or target.is_symlink():
     raise StateError(f"{target}: refusing a symlink settings path; nothing was written")
+  if target.exists() and not target.is_file():
+    raise StateError(f"{target}: not a regular file; nothing was written", code="state")
   try:
     existing = jsonio.read(target) if target.exists() else {}
   except StateError as exc:
@@ -1104,27 +1146,12 @@ def cmd_ai_hooks(args: argparse.Namespace) -> int:
     groups = hooks.setdefault(event, [])
     if not isinstance(groups, list):
       raise StateError(f"{target}: hooks.{event} must be a list; nothing was written")
-    installed = False
-    for i, group in enumerate(groups):
-      handlers = group.get("hooks", []) if isinstance(group, dict) else []
-      if handlers == wanted[0]["hooks"]:
-        installed = True
-      elif isinstance(handlers, list) and any(
-        isinstance(handler, dict) and isinstance(handler.get("command"), str)
-        and any(command in handler["command"] for command in (
-          "slicer ai getting-started", "slicer ai guard"))
-        for handler in handlers
-      ):
-        conflicts.append(event)
-        if args.force:
-          groups[i] = copy.deepcopy(wanted[0])
-          installed = True
-    if not installed:
-      groups.extend(wanted)
+    if _merge_hook_groups(groups, wanted[0], force=args.force):
+      conflicts.append(event)
   if conflicts and not args.force:
     raise StateError(
       f"different slicer hooks already exist at {target} ({', '.join(dict.fromkeys(conflicts))}); "
-      "pass --force to replace them. Nothing was written.", code="state",
+      "pass --force to remove the other slicer handlers. Nothing was written.", code="state",
     )
   written: list[str] = []
   if settings != existing:
@@ -4108,7 +4135,8 @@ def build_parser() -> argparse.ArgumentParser:
     description=(
       "Print the Claude Code hooks snippet. --install merges it into the project's "
       ".claude/settings.json; stdout lists the path written. Conflicting slicer hooks "
-      "are refused unless --force. Does not take a project lock. "
+      "are refused unless --force, which removes the other slicer handlers and keeps every "
+      "other handler. Does not take a project lock. "
       "The PreToolUse guard hook needs slicer 1.18 or later on PATH: an older slicer "
       "exits 2 on the unknown subcommand, and Claude Code treats exit 2 as a block."
     ), parents=[common],
@@ -4118,7 +4146,7 @@ def build_parser() -> argparse.ArgumentParser:
   inner.add_argument("--install", action="store_true",
                      help="merge hooks into .claude/settings.json under the project root")
   inner.add_argument("--force", action="store_true",
-                     help="replace conflicting slicer hook groups (needs --install)")
+                     help="remove other slicer handlers from conflicting groups (needs --install)")
   inner = aisub.add_parser(
     "guard", help="judge a Claude Code PreToolUse payload from stdin",
     description=(

@@ -6,7 +6,6 @@ import re
 import shlex
 import textwrap
 from collections.abc import Mapping
-from fnmatch import fnmatchcase
 from pathlib import Path
 
 from slicer.relayrun import OUTCOMES, QUESTION_VALUE_RULE
@@ -31,48 +30,42 @@ def hooks_settings() -> dict:
   }}
 
 
-def _glob_could_match_json(pattern: str) -> bool:
-  """Match a possible `.json` suffix without enumerating files or reading state.
+def _expand_braces(pattern: str, limit: int = 64) -> list[str] | None:
+  """Expand `{a,b}` alternatives, nested ones included.
 
-  Work backwards through glob tokens; once the suffix matches, the remaining
-  tokens can match a filename prefix. Stars consume suffix characters; brace
-  alternatives share position sets so nested alternatives do not expand exponentially.
+  None when there are more than `limit` alternatives or a `{` is never closed.
   """
-  tokens: list[str] = []
-  i = 0
-  while i < len(pattern):
-    end = i + 1
-    if pattern[i] == "[":
-      if end < len(pattern) and pattern[end] == "!":
-        end += 1
-      if end < len(pattern) and pattern[end] == "]":
-        end += 1
-      end = pattern.find("]", end) + 1
-      if not end:
-        end = i + 1
-    tokens.append(pattern[i:end])
-    i = end
-  suffix = ".json"[::-1]
-  positions = {0}
-  alternatives: list[tuple[set[int], set[int]]] = []
-  for token in reversed(tokens):
-    if token == "}":
-      alternatives.append((positions.copy(), set()))
-    elif token == "," and alternatives:
-      start, ends = alternatives[-1]
-      ends.update(positions)
-      positions = start.copy()
-    elif token == "{" and alternatives:
-      _start, ends = alternatives.pop()
-      positions.update(ends)
-    elif token == "*":
-      positions = {j for p in positions for j in range(p, len(suffix) + 1)}
+  stack: list[tuple[list[str], list[str]]] = []  # (text before a brace, its alternatives)
+  current = [""]
+  for char in pattern:
+    if char == "{":
+      stack.append((current, []))
+      current = [""]
+    elif char in ",}" and stack:
+      before, alternatives = stack[-1]
+      alternatives += current
+      if char == ",":
+        current = [""]
+      else:
+        stack.pop()
+        current = [head + tail for head in before for tail in alternatives]
     else:
-      positions = {p + 1 for p in positions if p < len(suffix)
-                   and fnmatchcase(suffix[p], token)}
-    if len(suffix) in positions:
-      return True
-  return False
+      current = [text + char for text in current]
+    if len(current) > limit:
+      return None
+  return None if stack else current
+
+
+def _glob_could_match_json(pattern: str) -> bool:
+  """Say whether a Grep glob could match a `.json` file, leaning toward yes.
+
+  Each brace alternative is cut to the text after its last wildcard character;
+  that tail must end with `.json` or be a suffix of it. It never lists files.
+  """
+  alternatives = _expand_braces(pattern)
+  tails = [re.split(r"[*?\[\]]", text)[-1] for text in alternatives or []]
+  return alternatives is None or any(
+    tail.endswith(".json") or ".json".endswith(tail) for tail in tails)
 
 
 def guard_decision(payload: Mapping, root: Path) -> str | None:
