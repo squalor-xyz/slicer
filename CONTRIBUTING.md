@@ -25,10 +25,11 @@ with the owner first; a row without a slice needs a specification and promotion.
 Read and change tracking state through slicer commands, never by opening or editing
 files under `.slicer/`.
 
-Use the [architecture map](ARCHITECTURE.md#shape) to find the subsystem: `cli.py`
-and `tui.py` handle interaction, `ops.py` owns roadmap mutations, `store.py` and
-`jsonio.py` persist state, and `render.py`, `sync.py`, `check.py` and `verify.py`
-handle projections and validation. Read the relevant invariants when your change
+Use the [architecture map](ARCHITECTURE.md#shape) to find the subsystem: `cli.py`,
+`cli_parser.py`, `cli_common.py`, the `cli_*.py` handler modules and `tui.py` handle
+interaction, `ops.py` owns roadmap mutations and `queries.py` the read-only queries,
+`store.py` and `jsonio.py` persist state, and `render.py`, `sync.py`, `check.py` and
+`verify.py` handle projections and validation. Read the relevant invariants when your change
 touches one; the slice's named files and their tests are the starting point.
 
 ## Isolate the work, then claim it

@@ -1,10 +1,9 @@
 """`ai` commands: the agent-facing text the project serves, and the files that install it.
 
-Onboarding, the relay, the skill, the prompt overrides, the hooks and the guard all print
-or install text from `ai.py`, which imports no state module; these handlers add the
-project's policy to it. Each handler is imported by `cli.py` and attached to its
-subparser in `cli_parser`; shared helpers come from `cli_common`, and nothing here
-imports `cli`.
+Onboarding, the relay, the skill, the prompt overrides, the hooks and the guard all print or
+install text from `ai.py`, which imports no state module; these handlers add the project's
+policy to it. Each handler is attached to its subparser in `cli_parser`; shared helpers come
+from `cli_common`, and nothing here imports `cli`.
 """
 
 from __future__ import annotations

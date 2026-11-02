@@ -1,9 +1,9 @@
 """Setup commands: `init`, `setup-git` and the two merge drivers git runs.
 
-These create or repair a project's `.slicer/` directory and its git wiring rather than
-read or track slices, so they sit apart from the tracking handlers. Each handler is
-imported by `cli.py` and attached to its subparser in `cli_parser`; shared helpers come from
-`cli_common`, and nothing here imports `cli`.
+These create or repair a project's `.slicer/` directory and its git wiring rather than read
+or track slices, so they sit apart from the tracking handlers. Each handler is attached to
+its subparser in `cli_parser`; shared helpers come from `cli_common`, and nothing here
+imports `cli`.
 """
 
 from __future__ import annotations

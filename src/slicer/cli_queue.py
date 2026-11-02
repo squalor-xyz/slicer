@@ -1,10 +1,10 @@
 """Tracking-read commands: `next`, `plan-parallel`, `list`, `find`, `deps`, `show` and `status`.
 
 They only read the roadmap (the one write among them is `next --start`, which claims an item
-through `ops`), and the ranking itself is in `queries.py`. Each handler is imported by
-`cli.py` and attached to its subparser in `cli_parser`; shared helpers come from
-`cli_common`, and nothing here imports `cli` or `cli_track`. Tests patch `datetime` here for the
-note-pack clock, and `_heal_render` is called as `cli_common._heal_render`.
+through `ops`), and the ranking itself is in `queries.py`. Each handler is attached to its
+subparser in `cli_parser`; shared helpers come from `cli_common`, and nothing here imports
+`cli` or `cli_track`. Tests patch `datetime` here for the note-pack clock, and
+`_heal_render` is called as `cli_common._heal_render`.
 """
 
 from __future__ import annotations

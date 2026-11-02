@@ -106,7 +106,9 @@ python3 -m unittest discover -s tests -t tests -k '*RoundTrips*'
 - **Stdlib only.** `dependencies = []` and it stays that way. Python 3.11+.
 - **Nothing in `src/slicer/` may hardcode a path, status or heading belonging to one
   project.** It goes in `.slicer/config.json`.
-- **All mutations go through `ops.py`**, never straight into `cli.py` or `tui.py`.
+- **All mutations go through `ops.py`**, never straight into the CLI modules (`cli.py`,
+  `cli_*.py`) or `tui.py`. `queries.py` is the read-only half and stays that way
+  (`test_Ops_QueryModule_WritesNothing`).
   `legacy.py` and `outline.py` are pure parsers: text in, dataclasses out, no I/O.
 - **The git allowlist in `vcs.py` stays closed.** slicer does not commit, push or tag.
 - **Import and migration stay all-or-nothing**: every problem is collected and the

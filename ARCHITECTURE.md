@@ -22,25 +22,53 @@ model · config · jsonio · ids · templates   data, defaults, atomic IO, id ru
 ai.py                                      project-independent agent instructions
 store                                       discovery and the on-disk layout
 graph · vcs · github · prose · legacy · outline  edges, git, gh, prose, the two input formats
-ops · render · sync · verify · migrator     behaviour
+queries                                     read-only ranking, readiness and removal previews
+ops · render · sync · verify · migrator     behaviour (ops is the single mutation path)
 check                                       composes render + sync + verify
-cli · tui · tui_style.py                  front ends and terminal presentation
+cli · cli_parser · cli_common · cli_<family>  command line: entry point, parser, shared helpers, handlers
+tui · tui_style.py                          interactive front end and terminal presentation
 ```
+
+The command line is split so no one file holds every command. All of these sit in
+`src/slicer/`:
+
+- `cli.py` is the entry point (`pyproject.toml` and `__main__.py` point at it): `main`, the
+  error envelope, the cached parser and the code-location warning.
+- `cli_parser.py` holds `build_parser`: every subcommand, its flags and the handler it runs,
+  in `add_parser` order, which is the order `--help` lists them.
+- `cli_common.py` holds what every handler shares: exit codes, the shared flags, output
+  buffering for `--strict`, the `--render` wrappers (`_mutating` and friends), `_state` and
+  the small parsing and lookup helpers.
+- `cli_ai.py`: the `ai` commands. `cli_relay.py`: `relay-roles` and `relay-run`.
+  `cli_setup.py`: `init`, `setup-git` and the merge drivers. `cli_prose.py`: `prose`,
+  `template`, `config`, `sections`, `goals` and `catalog`. `cli_track.py`: the commands that
+  change items, notes and lifecycle, plus `import` and `migrate`. `cli_queue.py`: `next`,
+  `plan-parallel`, `list`, `find`, `deps`, `show` and `status`. `cli_report.py`: `render`,
+  `sync`, `verify`, `refs`, `check`, `stats`, `snapshot`, `log` and `tui`.
+- `queries.py` holds the read-only half of what `ops.py` once held: the ranking behind
+  `next` and `plan-parallel`, the readiness and path helpers, and the removal preview. It
+  imports no writer, and `test_Ops_QueryModule_WritesNothing` fails if it imports a
+  module that writes or calls anything that writes.
 
 The main paths below show calls and persistence, not an exhaustive import graph:
 
 ```mermaid
 flowchart TD
-  cli["cli.py"] --> ops["ops.py: roadmap mutations"]
+  cli["cli.py: entry point"] --> parser["cli_parser.py: build_parser"]
+  parser --> handlers["cli_*.py: command handlers"]
+  handlers --> common["cli_common.py: shared helpers"]
+  handlers --> ops["ops.py: roadmap mutations"]
+  handlers --> queries["queries.py: read-only queries"]
+  ops --> queries
   tui["tui.py"] --> ops
   ops --> store["store.py: state and persistence"]
   store --> jsonio["jsonio.py: atomic JSON I/O"]
-  cli --> render["render.py: plan, compare, write"]
+  handlers --> render["render.py: plan, compare, write"]
   tui --> render
   ops -->|"render-gated mutations"| render
   render --> output["Generated Markdown and HTML"]
-  cli --> sync["sync.py: derived document lines"]
-  cli --> check["check.py: read-only gate"]
+  handlers --> sync["sync.py: derived document lines"]
+  handlers --> check["check.py: read-only gate"]
   check -->|"plan and compare"| render
   check -->|"check only"| sync
   check --> verify["verify.py: integrity checks"]
@@ -71,9 +99,12 @@ generated views back as state.
 For the meaning of state, readiness and lifecycle, see
 [How slicer works](docs/how-it-works.md).
 
-The one cycle is deliberate: `cli` imports `tui` lazily inside the `tui` subcommand, and
-`tui` imports `cli._via_editor` lazily inside `run()`, so a terminal-less environment
-never pays for curses.
+The CLI modules form a tree, not a cycle: `cli` imports `cli_parser`, which imports the
+handler modules, and every handler module imports `cli_common`. `cli_common` imports no
+`cli*` module when it loads; the one helper that needs the built parser, `_built_parser`,
+imports `cli` inside the function. The one cycle is deliberate: `cmd_tui` in `cli_report`
+imports `tui` lazily, and `tui` imports `cli_common._via_editor` lazily inside `run()`, so a
+terminal-less environment never pays for curses.
 
 ## On disk
 
@@ -248,8 +279,9 @@ behavior. There is no lock before a tracking directory exists, or on platforms w
 See [concurrency configuration](docs/configuration.md#concurrency) for the timeout.
 
 **`ops.py` is the single mutation path.** The CLI and the TUI both call it, so the two
-front ends cannot drift and both write the same log entries. A new command belongs in
-`ops.py`, not in `cli.py`.
+front ends cannot drift and both write the same log entries. A new command's behaviour
+belongs in `ops.py` (or in `queries.py` when it only reads), not in the CLI handler modules,
+which parse arguments, call it and print the result.
 
 **Sections are an ordered list, not a map.** Real slices carry headings no schema names,
 sometimes the same heading twice, and the order is part of the document. A dict would

@@ -8,6 +8,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `cli.py` is split into modules and `ops.py`'s read-only queries moved out of it, with no change in behaviour, output bytes or error codes: `cli_parser.py` builds the parser, `cli_common.py` holds the shared helpers, and the handlers sit in `cli_ai.py`, `cli_relay.py`, `cli_setup.py`, `cli_prose.py`, `cli_track.py`, `cli_queue.py` and `cli_report.py`. The ranking, readiness and removal-preview queries are now in `queries.py`, which a test keeps free of writers. `cli.py` is still the entry point, and the code-location warning still names its directory (s311).
+
 - `ai build-roadmap` uses distinct `OUTLINE` and `GOALS` file placeholders; `ai skill --help` names the jobs the skill routes, and the top-level `ai` help lists every subcommand (s440).
 
 - `relay-run list --json` includes each step's `questions`, oldest first, both open and answered, while `question` keeps the latest for compatibility (s434). The text list adds the open-question count when a step has more than one open question.

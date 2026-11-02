@@ -1,8 +1,8 @@
 """Relay commands: the `relay-roles` matrix editor and the `relay-run` ledger.
 
 Both groups serve the slice relay, so their handlers and the helpers only they use live
-together. Each handler is imported by `cli.py` and attached to its subparser in
-`cli_parser`; shared helpers come from `cli_common`, and nothing here imports `cli`.
+together. Each handler is attached to its subparser in `cli_parser`; shared helpers come
+from `cli_common`, and nothing here imports `cli`.
 """
 
 from __future__ import annotations

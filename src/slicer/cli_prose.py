@@ -1,11 +1,10 @@
 """Prose-side commands: `prose`, `template`, `config`, `sections`, `goals` and `catalog`.
 
-They read and edit the roadmap's own text, its render templates, its configuration and
-its catalog of requirements, constraints, decisions and assumptions, not the slice
-queue, so they sit together. Each handler is imported by `cli.py` and attached to its
-subparser in `cli_parser`; shared helpers come from `cli_common`, and nothing here imports
-`cli`. Tests patch `_read_user_file` and `_via_editor`, so they are called as
-`cli_common.<name>` and each keeps one lookup site.
+They read and edit the roadmap's own text, its render templates, its configuration and its
+catalog of requirements, constraints, decisions and assumptions, not the slice queue, so
+they sit together. Each handler is attached to its subparser in `cli_parser`; shared helpers
+come from `cli_common`, and nothing here imports `cli`. Tests patch `_read_user_file` and
+`_via_editor`, so they are called as `cli_common.<name>` and each keeps one lookup site.
 """
 
 from __future__ import annotations

@@ -2,9 +2,9 @@
 
 These change the roadmap's state, so `build_parser` marks them as mutating and `main` runs
 each under the project lock. The reads that rank or list items are in `cli_queue`. Each
-handler is imported by `cli.py` and attached to its subparser in `cli_parser`; shared helpers
-come from `cli_common`, and nothing here imports `cli`. Tests patch `_read_user_file`, so it is
-called as `cli_common._read_user_file`.
+handler is attached to its subparser in `cli_parser`; shared helpers come from `cli_common`,
+and nothing here imports `cli`. Tests patch `_read_user_file`, so it is called as
+`cli_common._read_user_file`.
 """
 
 from __future__ import annotations

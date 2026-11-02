@@ -1,10 +1,9 @@
 """Report commands: `render`, `sync`, `verify`, `refs`, `check`, `stats`, `snapshot`, `log` and `tui`.
 
-These compare, regenerate or summarise project state instead of tracking slices.
-`snapshot` builds the parser through `cli_common._built_parser`, and `tui` is imported
-inside `cmd_tui` so a terminal-less run never loads curses. Each handler is imported by
-`cli.py` and attached to its subparser in `cli_parser`; shared helpers come from
-`cli_common`, and nothing here imports `cli`.
+These compare, regenerate or summarise project state instead of tracking slices. `snapshot`
+builds the parser through `cli_common._built_parser`, and `tui` is imported inside `cmd_tui`
+so a terminal-less run never loads curses. Each handler is attached to its subparser in
+`cli_parser`; shared helpers come from `cli_common`, and nothing here imports `cli`.
 """
 
 from __future__ import annotations
