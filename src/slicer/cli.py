@@ -475,6 +475,12 @@ def cmd_ai_instructions(args: argparse.Namespace) -> int:
   return OK
 
 
+def cmd_ai_prompt(args: argparse.Namespace) -> int:
+  text = ai.prompt_text(args.prompt_name)
+  _emit(args, {"name": args.prompt_name, "prompt": text}, text.rstrip("\n"))
+  return OK
+
+
 def cmd_ai_relay(args: argparse.Namespace) -> int:
   """Print the slice relay. Same read-only policy as `ai instructions`, except
   `--init-roles`, which writes the example role matrix and renders."""
@@ -3894,7 +3900,7 @@ def build_parser() -> argparse.ArgumentParser:
       _json_flags(sp)
     return sp
 
-  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles", parents=[common])
+  sp = sub.add_parser("ai", help="agent onboarding: instructions, skill, relay, relay-roles, build-roadmap, getting-started", parents=[common])
   # A missing subcommand is `instructions`. `--json` here is that command's
   # flag, not a second payload. The subcommand copy suppresses its default.
   _json_flags(sp)
@@ -3913,6 +3919,22 @@ def build_parser() -> argparse.ArgumentParser:
   inner.set_defaults(func=cmd_ai_instructions)
   _json_flags(inner, suppress=True)
   _rest_flag(inner, suppress=True)
+  for name in ai.PROMPT_NAMES:
+    help_text = (
+      "print the first-session prompt for an agent (no project needed)"
+      if name == "getting-started" else
+      "print the prompt that builds the roadmap from the project's docs (no project needed)"
+    )
+    inner = aisub.add_parser(
+      name, help=help_text,
+      description=(
+        help_text[0].upper() + help_text[1:] + ". Does not lock or write. "
+        "--json returns {name, prompt} in that key order."
+      ),
+      parents=[common],
+    )
+    _json_flags(inner, suppress=True)
+    inner.set_defaults(func=cmd_ai_prompt, prompt_name=name)
   inner = aisub.add_parser(
     "skill", help="print or install the agent skill for Claude Code, Codex, and Grok",
     description=(

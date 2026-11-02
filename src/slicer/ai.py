@@ -1347,6 +1347,49 @@ def skill_text(finish: str = "done", required_note_kind: str = "") -> str:
   )
 
 
+# Entry prompts stop early and point at the guide rather than repeating INSTRUCTIONS.
+GETTING_STARTED = """\
+Get started with slicer in this project.
+
+1. Read the project's agent instructions (AGENTS.md, CLAUDE.md or similar) and its README.
+2. Run `slicer ai instructions --rest` for the planning, filing and claim rules. If the
+   slicer skill is not loaded, run `slicer ai instructions` instead.
+3. Read the roadmap through the CLI, never from .slicer/ files: `slicer goals --json --lean`,
+   `slicer status --json --lean` and `slicer next --ready --json --lean`.
+4. If there is no .slicer/ directory, the project has no roadmap yet: ask the owner before
+   running `slicer init`, then run `slicer ai build-roadmap`.
+5. Stop there. Summarize the goals, the next ready slice and anything blocked, and ask the
+   owner what to work on. Do not claim, edit or commit anything until the owner asks.
+"""
+
+BUILD_ROADMAP = """\
+Review the documentation for this project and use it to build the roadmap into slicer
+slices using the slicer CLI.
+
+1. Read the project's agent instructions, README, docs and source layout. Run
+   `slicer ai instructions --rest` for the filing rules and `slicer import --skeleton` for
+   this project's outline keys and sections. If there is no .slicer/ directory, ask the
+   owner before running `slicer init`.
+2. Read what is already tracked with `slicer goals --json --lean` and
+   `slicer list --json --lean`, so nothing is filed twice.
+3. Propose the goals the documentation states and the work it describes as bounded slices,
+   each with dependencies, acceptance checks and scores, citing the document it comes from.
+   Mark anything the documentation leaves open as a question; do not invent scope.
+4. Stop and show the owner the proposal. Once it is agreed, write it as one outline, run
+   `slicer import FILE --dry-run --json`, fix every problem, then
+   `slicer import FILE --render --json` and `slicer check --json`. Record agreed goals with
+   `slicer prose edit goals --file FILE --render`.
+5. Do not implement, commit or push.
+"""
+
+PROMPTS = {"build-roadmap": BUILD_ROADMAP, "getting-started": GETTING_STARTED}
+PROMPT_NAMES = ("build-roadmap", "getting-started")
+
+
+def prompt_text(name: str) -> str:
+  return PROMPTS[name]
+
+
 INTRO = """\
 # Getting started with slicer
 

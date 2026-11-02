@@ -17,6 +17,76 @@ import support
 from slicer import ai, cli, config, ops, relayrun, roles, store, templates
 
 
+class AiPromptTests(unittest.TestCase):
+  def _check_text(self, name: str, expected: str) -> None:
+    for initialized in (False, True):
+      with self.subTest(initialized=initialized), support.TempRepo() as repo, \
+           support.isolated_discovery(repo.root):
+        if initialized:
+          self.assertEqual(repo.run("init")[0], 0)
+        self.assertEqual(repo.run("ai", name), (0, expected, ""))
+
+  def test_AiGettingStarted_Text_PrintsTheBuiltInPrompt(self) -> None:
+    self._check_text("getting-started", ai.GETTING_STARTED)
+
+  def test_AiBuildRoadmap_Text_PrintsTheBuiltInPrompt(self) -> None:
+    self._check_text("build-roadmap", ai.BUILD_ROADMAP)
+
+  def test_AiPrompt_Json_IsNameThenPrompt(self) -> None:
+    self.assertEqual(ai.PROMPT_NAMES, ("build-roadmap", "getting-started"))
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      for name in ai.PROMPT_NAMES:
+        with self.subTest(name=name):
+          code, out, err = repo.run("ai", name, "--json")
+          self.assertEqual((code, err), (0, ""))
+          payload = json.loads(out)
+          self.assertEqual(list(payload), ["name", "prompt"])
+          self.assertEqual(payload, {"name": name, "prompt": ai.PROMPTS[name]})
+          self.assertEqual(ai.prompt_text(name), ai.PROMPTS[name])
+
+  def test_AiPrompt_WritesNothingAndTakesNoLock(self) -> None:
+    with support.TempRepo() as repo:
+      self.assertEqual(repo.run("init")[0], 0)
+      def snapshot():
+        return {p.relative_to(repo.root): p.read_bytes() if p.is_file() else None
+                for p in repo.root.rglob("*")}
+      before = snapshot()
+      with patch("slicer.cli.store.project_lock", side_effect=AssertionError("lock")), \
+           patch("slicer.cli._ai_project", side_effect=AssertionError("project read")):
+        for name in ("build-roadmap", "getting-started"):
+          for flags in ((), ("--json",)):
+            self.assertEqual(repo.run("ai", name, *flags)[0], 0)
+      self.assertEqual(snapshot(), before)
+
+  def test_AiPrompts_PointAtRestAndStayShort(self) -> None:
+    for text in (ai.GETTING_STARTED, ai.BUILD_ROADMAP):
+      with self.subTest(text=text):
+        self.assertIn("slicer ai instructions --rest", text)
+        self.assertLessEqual(len(text.splitlines()), 20)
+        self.assertLessEqual(len(text), 1400)
+        self.assertTrue(text.endswith("\n"))
+        self.assertFalse(text.endswith("\n\n"))
+        for block in (ai.TRACKING, ai.LOOP, ai.EXITS):
+          self.assertNotIn(block, text)
+
+  def test_AiBuildRoadmap_OpensWithTheOwnerSentence(self) -> None:
+    self.assertTrue(" ".join(ai.BUILD_ROADMAP.split()).startswith(
+      "Review the documentation for this project and use it to build the roadmap "
+      "into slicer slices using the slicer CLI."))
+
+  def test_AiPrompts_StopBeforeImplementingOrCommitting(self) -> None:
+    text = ai.GETTING_STARTED
+    self.assertIn("ask the owner before", text)
+    self.assertIn("slicer init", text)
+    self.assertIn("Stop there.", text)
+    self.assertIn("Do not claim, edit or commit anything until the owner asks.", text)
+    text = ai.BUILD_ROADMAP
+    self.assertLess(text.index("Stop and show the owner the proposal"),
+                    text.index("slicer import FILE --dry-run --json"))
+    self.assertIn("Once it is agreed", text)
+    self.assertIn("Do not implement, commit or push.", text)
+
+
 class AiInstructionsTests(unittest.TestCase):
   def test_Instructions_UseOneCallSliceReadPath_AndPreserveReadBeforeStart(self) -> None:
     expected = "slicer next --ready --section \"Implement\" --section \"Check\" --json --lean"
@@ -515,7 +585,8 @@ class AiInstructionsTests(unittest.TestCase):
     self.assertNotIn("all projects", window.lower())
 
   def test_Instructions_CommandExamples_AreAcceptedByTheParser(self) -> None:
-    commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS + ai.skill_text())
+    commands = re.findall(r"`(slicer [^`]+)`", ai.INSTRUCTIONS + ai.skill_text()
+                           + ai.GETTING_STARTED + ai.BUILD_ROADMAP)
     self.assertTrue(commands)
     parser = cli.build_parser()
     for command in commands:

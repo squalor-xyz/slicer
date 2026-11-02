@@ -17333,10 +17333,25 @@
       "id": "s436",
       "title": "Getting-started and build-roadmap prompts",
       "short_title": "ai getting-started and build-roadmap",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "4d592da4-b357-43a1-8048-9642769e40e5",
+          "kind": "",
+          "text": "**2026-11-02** — Ready for review: s436 adds slicer ai getting-started and slicer ai build-roadmap (short built-in prompts, --json {name, prompt}); full suite 3092 tests OK; gate VERDICT: PASS.",
+          "created_at": "2026-11-02T13:48:04Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17358,7 +17373,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

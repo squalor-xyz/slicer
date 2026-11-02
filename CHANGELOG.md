@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `slicer ai getting-started` and `slicer ai build-roadmap` print short prompts for a first agent session and for building a roadmap from project documentation. Both point at `slicer ai instructions --rest`, stop for owner direction or agreement, and need no project, lock or write. `--json` returns `{name, prompt}` in that order.
+
 ## [1.17.0] - 2026-10-30
 
 ### Added

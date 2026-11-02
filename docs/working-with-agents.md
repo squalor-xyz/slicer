@@ -39,6 +39,8 @@ Choose how to implement it:
 
 ## Set up a relay
 
+For a new agent session, start with `slicer ai getting-started`.
+
 Read the generated [agent instructions and relay contracts](agents.md) from your
 installed slicer. These commands are the authoritative workflow for that version
 and project; this guide is an explanation, not a replacement:

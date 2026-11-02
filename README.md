@@ -49,7 +49,7 @@ uv, and unreleased main. The [contributor install](AGENTS.md#install) tracks a c
 - [AGENTS.md](AGENTS.md) — contributor rules, tests, and house style
 - [CHANGELOG.md](CHANGELOG.md) — changes by release
 
-Run `slicer --help` for the command list or `slicer ai instructions` for agent onboarding.
+Run `slicer --help` for the command list or `slicer ai getting-started` for a new agent session.
 Every command except `tui`, `ui`, `merge-index` and `merge-relay-roles` takes `--json`;
 see the [agent reference](docs/agents.md) for payloads and exit codes.
 To try slicer, follow [Getting started](docs/getting-started.md); to understand it first,
