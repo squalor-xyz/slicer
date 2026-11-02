@@ -17363,7 +17363,7 @@
       "id": "s434",
       "title": "Relay-run step JSON lists every open question",
       "short_title": "Step JSON questions list",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
