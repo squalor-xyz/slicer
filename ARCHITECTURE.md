@@ -46,9 +46,11 @@ The command line is split so no one file holds every command. All of these sit i
   `plan-parallel`, `list`, `find`, `deps`, `show` and `status`. `cli_report.py`: `render`,
   `sync`, `verify`, `refs`, `check`, `stats`, `snapshot`, `log` and `tui`.
 - `queries.py` holds the read-only half of what `ops.py` once held: the ranking behind
-  `next` and `plan-parallel`, the readiness and path helpers, and the removal preview. It
-  imports no writer, and `test_Ops_QueryModule_WritesNothing` fails if it imports a
-  module that writes or calls anything that writes.
+  `next` and `plan-parallel`, the readiness and path helpers, and the removal preview.
+  `queries.py` is the read-only side and `ops.py` the mutation path.
+  `test_Ops_QueryModule_WritesNothing` pins that `queries.py` imports none of a fixed list
+  of writer modules and calls none of a fixed list of write methods; it checks that
+  module's own imports and calls, not what another module it imports might do.
 
 The main paths below show calls and persistence, not an exhaustive import graph:
 
@@ -99,12 +101,12 @@ generated views back as state.
 For the meaning of state, readiness and lifecycle, see
 [How slicer works](docs/how-it-works.md).
 
-The CLI modules form a tree, not a cycle: `cli` imports `cli_parser`, which imports the
-handler modules, and every handler module imports `cli_common`. `cli_common` imports no
-`cli*` module when it loads; the one helper that needs the built parser, `_built_parser`,
-imports `cli` inside the function. The one cycle is deliberate: `cmd_tui` in `cli_report`
-imports `tui` lazily, and `tui` imports `cli_common._via_editor` lazily inside `run()`, so a
-terminal-less environment never pays for curses.
+The one deliberate cycle is among the CLI modules: `cli` imports `cli_parser`, which
+imports the handler modules, and every handler module imports `cli_common`. `cli_common`
+imports no `cli*` module when it loads; `_built_parser`, the one helper that needs the built
+parser, imports `cli` inside the function, so the loop closes only at call time. `tui` is
+a lazy import, not a cycle: `cli_report.cmd_tui` imports `tui` inside the function, and `tui`
+imports `cli_common` inside `run()`, so a terminal-less environment never pays for curses.
 
 ## On disk
 

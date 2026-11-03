@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-431 items · — 23 · done 395 · retired 12 · started 1
+431 items · — 23 · done 395 · retired 12 · review 1
 
 v1.20.0 release
 
@@ -61,7 +61,7 @@ v1.19.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 22 | [s311](slices/s311.md) | Split cli.py and ops.py | L | 3 | slicer | research/go-rewrite-evaluation.md, code review 3, 2026-10-15 | started |
+| 22 | [s311](slices/s311.md) | Split cli.py and ops.py | L | 3 | slicer | research/go-rewrite-evaluation.md, code review 3, 2026-10-15 | review |
 | 23 | [s414](slices/s414.md) | Readiness follow-ups | S | 1 | mergeindex, docs, tests | s400 relay review, 2026-10-26 · discovered from s400 | done |
 | 24 | [s416](slices/s416.md) | land --render, ready flag | S | 1 |  | squalify relay log 2026-10-27: 'slicer land' rejects --render unlike other mutations; 'slicer show ID --json' reported ready:false for a slice that list and next treated as ready (sq-16, 2026-10-26). | done |
 | 25 | [s426](slices/s426.md) | TUI note delete retracts instead of deleting | S | - |  | discovered from s393 | done |

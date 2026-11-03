@@ -1,8 +1,9 @@
 """Read-only queries over the roadmap: what to work on next and who holds what.
 
 These used to sit in `ops.py` beside the writers. They only read a `State`, so they
-live here, where no import can reach a writer: `ops.py` imports this module and not
-the other way round, and a test pins that this module calls nothing that writes.
+live here: `ops.py` imports this module and not the other way round, and a test pins that
+this module imports none of a fixed list of writer modules and calls none of a fixed list
+of write methods.
 The ranking behind `next`, `next --batch` and `plan-parallel`, the path and
 readiness helpers they share, and the actor and queue checks the lifecycle writers
 call before they change anything are here.
