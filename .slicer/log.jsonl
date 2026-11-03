@@ -2591,3 +2591,4 @@
 {"when": "2026-11-02T21:24:41Z", "item": "relay-roles.r17", "action": "relay-roles", "from": "", "to": "architect", "note": "add"}
 {"when": "2026-11-03T00:23:34Z", "item": "s311", "action": "note", "from": "", "to": "", "note": "Ready for review: s311 splits cli.py into cli_common, cli_pa", "by": "Jon Robbins"}
 {"when": "2026-11-03T00:23:37Z", "item": "s311", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-03T00:23:55Z", "item": "s311", "action": "status", "from": "review", "to": "done", "note": "Landed s311: cli.py split into cli_common, cli_parser and seven cli_* handler modules (cli.py stays the entry point); read-only queries moved from ops.py to queries.py. No behaviour, help output or error-code change. Suite 3195 OK, gate PASS.", "by": "Jon Robbins"}

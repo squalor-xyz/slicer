@@ -11308,7 +11308,7 @@
       "id": "s311",
       "title": "Split cli.py and ops.py",
       "short_title": "Split cli.py and ops.py",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
