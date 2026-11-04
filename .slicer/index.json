@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 450,
+  "next_id": 451,
   "preamble": "",
   "passes": [
     {
@@ -18118,6 +18118,34 @@
         "importance": 2,
         "urgency": 2,
         "effort": 3,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s450",
+      "title": "Keyed lookup for Index.get and CatalogRecord.get",
+      "short_title": "Keyed lookup for Index.get and CatalogRecord.get",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "s370's reviewer: Index.get is a linear scan per miss, and CatalogRecord.get the same; left out of s370 (owner note 2026-11-03). Change: build a dict keyed by item id once per Index/CatalogRecord (invalidated when items change) and use it in get. Acceptance: (1) get returns the same item or None as before for every existing caller, with a test for hit, miss and an id added after the first get; (2) a test shows a miss no longer scans all items (counts comparisons or accesses); (3) the lazy-load behavior of s312 and s361 is unchanged and their tests pass; (4) python3 -m unittest discover -s tests -t tests and slicer check pass.",
+        "discovered_from": "s370",
+        "parent": "",
+        "cites": [],
+        "key": "index-get-keyed-lookup",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 1,
         "attempts": 0
       }
     }
