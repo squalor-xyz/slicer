@@ -281,6 +281,24 @@ class _Stage:
   prompts: dict[str, str | None] = field(default_factory=dict)
 
 
+def _slice_gone(path: Path) -> StateError:
+  """The `corrupt` error for a slice file that vanished after the roadmap loaded."""
+  return StateError(
+    f"{path}: slice file is gone; it was moved or removed after the roadmap loaded"
+    " (reload and run `slicer verify`)", code="corrupt",
+  )
+
+
+def _relocate(root: Path, src: Path, dst: Path) -> None:
+  """`vcs.move` for a slice file, where a source that vanished since the load is `corrupt`."""
+  try:
+    vcs.move(root, src, dst)
+  except FileNotFoundError:
+    if src.exists():
+      raise
+    raise _slice_gone(src) from None
+
+
 class LazySlices(MutableMapping[str, Slice]):
   """Defer historical bodies while preserving eager dict order on enumeration."""
 
@@ -310,10 +328,7 @@ class LazySlices(MutableMapping[str, Slice]):
       except FileNotFoundError:
         # The path map was built at load; a file moved or removed since then
         # is a corrupt tree, not a raw OS error.
-        raise StateError(
-          f"{path}: slice file is gone; it was moved or removed after the roadmap loaded"
-          " (reload and run `slicer verify`)", code="corrupt"
-        ) from None
+        raise _slice_gone(path) from None
       self._read[stem] = _from_dict(
         path, lambda d: Slice.from_dict(d, boundary_marker=self._boundary), data
       )
@@ -643,7 +658,7 @@ class State:
     if self._stage is not None:
       self._stage.moves.append((src, dst))
       return
-    vcs.move(self.root, src, dst)
+    _relocate(self.root, src, dst)
     if isinstance(self.slices, LazySlices):
       self.slices.relocated(src, dst)
 
@@ -691,7 +706,7 @@ class State:
     # Moves and slice bodies before the index that names them, history last, so
     # a crash mid-flush lands where an unstaged mutation would have left it.
     for src, dst in stage.moves:
-      vcs.move(self.root, src, dst)
+      _relocate(self.root, src, dst)
       if isinstance(self.slices, LazySlices):
         self.slices.relocated(src, dst)
     for sl in stage.slices.values():
@@ -979,9 +994,11 @@ def load(root: Path | None = None) -> State:
     for path in sorted(folder.glob("*.json")):
       files[path.stem] = path
   def expects_body(sid: str) -> bool:
-    item = index.get(sid)
+    # Read the State's current index at lookup time: a publish swaps in a new Index object.
+    item = state.index.get(sid)
     return item is not None and item.has_slice
 
   slices = LazySlices(files, config.boundary, expects_body)
-  return State(root=base, config=config, index=index, slices=slices,
-               slice_files=SliceFiles(slices))
+  state = State(root=base, config=config, index=index, slices=slices,
+                slice_files=SliceFiles(slices))
+  return state

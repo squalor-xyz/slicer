@@ -147,7 +147,7 @@ class LazyStoreTests(unittest.TestCase):
           with self.assertRaisesRegex(OSError, "save failed"):
             ops.apply_outline(state, specs, promote_all=True)
       self.assertEqual(reads, [])
-      # A lookup miss does one full load before it reports not found.
+      # A miss on an id the index does not mark has_slice does no full load.
       self.assertIsNone(state.slices.get("S04"))
 
   def test_LazySlices_Move_UpdatesPathsWithoutReading(self) -> None:
@@ -187,6 +187,36 @@ class LazyStoreTests(unittest.TestCase):
       self.assertEqual(caught.exception.code, "corrupt")
       self.assertIn("S0001.json", str(caught.exception))
 
+  def test_MoveSlice_SourceGone_ReportsCorrupt(self) -> None:
+    for staged in (False, True):
+      with self.subTest(staged=staged), support.TempRepo() as repo:
+        support.many_done_slices(repo, 0, 1)
+        state = repo.state()
+        src = state.slice_path("S0001")
+        dst = src.parent / "done" / src.name
+        # The file vanishes between load and rename.
+        src.unlink()
+        with self.assertRaises(SlicerError) as caught:
+          if staged:
+            with state.staged():
+              state.move_slice(src, dst)
+          else:
+            state.move_slice(src, dst)
+        self.assertEqual(caught.exception.code, "corrupt")
+        self.assertIn("S0001.json", str(caught.exception))
+
+  def test_MoveSlice_RenameFailsSourceStillThere_KeepsRawError(self) -> None:
+    with support.TempRepo() as repo:
+      support.many_done_slices(repo, 0, 1)
+      state = repo.state()
+      src = state.slice_path("S0001")
+      dst = src.parent / "done" / src.name
+      # A failed rename with the source still on disk is not a vanished file.
+      with patch.object(store.vcs, "move", side_effect=FileNotFoundError("no dst parent")):
+        with self.assertRaises(FileNotFoundError):
+          state.move_slice(src, dst)
+      self.assertTrue(src.exists())
+
   def test_Lookup_IdOnlyInMisnamedFile_FoundAfterFullLoad(self) -> None:
     with support.TempRepo() as repo:
       support.many_done_slices(repo, 0, 1)
@@ -200,6 +230,25 @@ class LazyStoreTests(unittest.TestCase):
       self.assertEqual(state.slices.get("s6").title, "Mismatch")
       self.assertIn("s6", state.slices)
       self.assertEqual(state.slice_files["s6"].name, "s5.json")
+
+  def test_LazyMiss_AfterPublish_UsesCurrentIndex(self) -> None:
+    with support.TempRepo() as repo:
+      support.many_done_slices(repo, 0, 1)
+      # The misnamed file exists at load, so the path map a full load reads includes it.
+      repo.write(".slicer/slices/s5.json", json.dumps(Slice("s6", "Mismatch").to_dict()))
+      state = repo.state()
+      loaded = state.index
+      # Publishing an outline replaces State.index with a new Index object.
+      specs = outline.parse("## Published\n\n### Why\nPublished work.\n").items
+      ops.apply_outline(state, specs)
+      self.assertIsNot(state.index, loaded)
+      # The published index names s6 as has_slice; the loaded index never did.
+      state.index.items.append(Item(id="s6", title="Mismatch", status=state.config.open_status,
+                                    has_slice=True, importance=1, urgency=1, effort=1))
+      state.save_index()
+      found = state.slices.get("s6")
+      self.assertIsNotNone(found)
+      self.assertEqual(found.title, "Mismatch")
 
   def test_Lookup_UnknownId_StillNotFound(self) -> None:
     with support.TempRepo() as repo:

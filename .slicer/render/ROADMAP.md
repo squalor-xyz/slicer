@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-435 items · — 24 · done 399 · retired 12
+435 items · — 23 · done 399 · retired 12 · review 1
 
 v1.20.0 release
 
@@ -35,7 +35,7 @@ v1.20.0 release
 |---|---|---|---|---|---|---|---|
 | 1 | [s313](slices/s313.md) | State writes survive a crash | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 6, 2026-10-15 | done |
 | 2 | [s368](slices/s368.md) | Lane lines drop cells in order | S | 1 | slicer | s356 relay 2026-10-18: lane headers and step lines (`_fit`, tui.py) still skip a cell that does not fit and keep later ones, against docs/tui.md's "drops cells from the right, whole" | done |
-| 3 | [s370](slices/s370.md) | Lazy loading follow-ups | S | 1 | slicer | s361 relay 2026-10-18: `vcs.move` in move_slice/commit_stage raises a raw OS error when the source file is gone; the `expects_body` closure keeps the load-time Index after apply_outline publish or a TUI reload; tests/test_store_lazy.py:150 comment is stale; Index.get is a linear scan per miss | — |
+| 3 | [s370](slices/s370.md) | Lazy loading follow-ups | S | 1 | slicer | s361 relay 2026-10-18: `vcs.move` in move_slice/commit_stage raises a raw OS error when the source file is gone; the `expects_body` closure keeps the load-time Index after apply_outline publish or a TUI reload; tests/test_store_lazy.py:150 comment is stale; Index.get is a linear scan per miss | review |
 | 4 | [s371](slices/s371.md) | Queue prose rows align past 999 | S | 1 | slicer | s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long "left out:" notice has no cap | — |
 | 5 | [s372](slices/s372.md) | Docs mutating-command lists complete | S | 1 | slicer | s359 relay 2026-10-18: the docs/commands.md "Every command that changes state" list omits config, template, catalog, id-prefix, issues-pull, note-verify and relay-roles; docs/agents.md's "every mutating command takes --render ... except land" does not account for relay-run, feedback or init; s366 relay: docs/agents.md:370 says "backticked repo paths" for --disjoint where configuration.md says project paths | — |
 | 6 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | — |

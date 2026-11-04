@@ -14276,7 +14276,7 @@
       "id": "s370",
       "title": "Lazy loading follow-ups: moves, index staleness and a stale comment",
       "short_title": "Lazy loading follow-ups",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -14286,6 +14286,20 @@
           "text": "**2026-11-03** — Owner 2026-11-03 (ork session, interactive): the Index.get linear scan (src/slicer/model.py:736-740; CatalogRecord.get at :584-588 has the same shape) stays recorded in this slice's Findings and is not fixed in this slice's relay: the implementer was told to leave src/slicer/model.py alone. No separate slice was filed. Fixing it later means a keyed lookup in Index (and CatalogRecord.get); decide then whether to fold it here or file it.",
           "created_at": "2026-11-03T15:18:40Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "0770027c-7448-43db-af52-cb96f732421b",
+          "kind": "",
+          "text": "**2026-11-04** — Verified in the worktree: a slice move whose file vanished after the roadmap loaded reports corrupt with the file path, from move_slice and from staged moves (store.py _relocate). The has_slice miss guard in load() reads the State's current index, so a miss after an outline publish or TUI reload does its full load. The stale test comment at tests/test_store_lazy.py:150 is corrected, and the CHANGELOG Fixed entry is added. Full suite 3227 passed, 0 failed (1 skipped, pre-existing); slicer check passed; each new assertion went red under its own mutation. Added a guard test for the src.exists() re-raise branch. Changes are uncommitted for ork to commit.",
+          "created_at": "2026-11-04T15:53:54Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -14314,7 +14328,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
