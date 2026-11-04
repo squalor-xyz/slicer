@@ -6,23 +6,26 @@
 
 | ID | Role | When | Agent | Vendor | Model | Reasoning | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| r9 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | medium | sol medium, any slice: first choice (owner 2026-11-03); terra rows follow and the Claude rows are the fallback when Codex is out |
+| r21 | Implementer | effort 2, size M | Codex | OpenAI | gpt-6.1-terra | xhigh | terra xhigh, size M at effort 2 (owner 2026-11-03), ahead of terra high; Claude rows are the fallback |
+| r19 | Implementer | effort 1 or 2, size S or M | Codex | OpenAI | gpt-6.1-terra | high | terra high, size S or M at effort 1 or 2 (owner 2026-11-03), after sol; Claude rows are the fallback |
 | r8 | Implementer | sliver | Claude Code | Claude | haiku | xhigh | per sliver |
 | r1 | Implementer | well specified, whole slice, effort 1, size S or M | Claude Code | Claude | haiku | xhigh | - |
 | r2 | Implementer | well specified, whole slice, effort 2, size S | Claude Code | Claude | haiku | xhigh | - |
 | r3 | Implementer | whole slice | Claude Code | Claude | sonnet | high | anything the rows above do not match |
 | r7 | Implementer | split part | Claude Code | Claude | haiku | xhigh | per part of a split slice |
-| r9 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | medium | alternate implementer for any slice, split part or sliver |
+| r15 | Reviewer | every slice | Grok | xAI | grok-4.7 | medium | Grok reviewer, first choice (owner 2026-11-03); Claude opus (r4) is the fallback |
 | r4 | Reviewer | every slice | Claude Code | Claude | opus | medium | - |
+| r16 | Gate | every slice | Grok | xAI | grok-4.7 | medium | Grok gate, first choice (owner 2026-11-03); Claude opus (r5) is the fallback |
 | r5 | Gate | every slice | Claude Code | Claude | opus | medium | - |
+| r17 | Architect | size L | Grok | xAI | grok-4.7 | high | Grok architect, size L, first choice (owner 2026-11-03); Claude opus (r6) is the fallback |
 | r6 | Architect | size L | Claude Code | Claude | opus | high | - |
 | r10 | Orchestrator | every slice | Claude Code | Claude | opus | high | default orchestrator |
 | r11 | Orchestrator | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate orchestrator |
 | r12 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | low | alternate implementer, sol low, any slice |
 | r13 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate implementer, sol high, any slice |
 | r14 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | xhigh | alternate implementer, sol xhigh, any slice |
-| r15 | Reviewer | every slice | Grok | xAI | grok-4.7 | medium | alternate reviewer, grok medium, any slice |
-| r16 | Gate | every slice | Grok | xAI | grok-4.7 | medium | alternate gate, grok medium, any slice |
-| r17 | Architect | size L | Grok | xAI | grok-4.7 | high | alternate architect, grok high, size L |
+| r18 | Reviewer | every slice | Claude Code | Claude | sonnet | high | Spec check row (sonnet high) |
 
 ## Rules
 
@@ -35,3 +38,4 @@
 - u7: Sliver a slice only at effort 1, or at effort 2 when every sliver is effort 1; never at effort 3.
 - u8: Slivers with disjoint files and their own tests may run in parallel, at most 3 at once; the rest run in order.
 - u9: A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high).
+- u10: The spec check before a wave runs the Spec check row (r18): one read-only pass over every ticked slice, answered in one sitting. It is a reviewer row that no lineup uses.

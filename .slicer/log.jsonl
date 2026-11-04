@@ -2594,3 +2594,27 @@
 {"when": "2026-11-03T00:23:55Z", "item": "s311", "action": "status", "from": "review", "to": "done", "note": "Landed s311: cli.py split into cli_common, cli_parser and seven cli_* handler modules (cli.py stays the entry point); read-only queries moved from ops.py to queries.py. No behaviour, help output or error-code change. Suite 3195 OK, gate PASS.", "by": "Jon Robbins"}
 {"when": "2026-11-03T12:05:17Z", "item": "s443", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.20"}
 {"when": "2026-11-03T12:05:17Z", "item": "s444", "action": "set", "from": "", "to": "", "note": "pass_key -→v1.20"}
+{"when": "2026-11-03T12:36:21Z", "item": "relay-roles.r18", "action": "relay-roles", "from": "", "to": "reviewer", "note": "add"}
+{"when": "2026-11-03T12:36:25Z", "item": "relay-roles.u10", "action": "relay-roles", "from": "", "to": "", "note": "rule-add"}
+{"when": "2026-11-03T15:18:40Z", "item": "s370", "action": "note", "from": "", "to": "", "note": "Owner 2026-11-03 (ork session, interactive): the Index.get l", "by": "Jon Robbins"}
+{"when": "2026-11-03T15:34:38Z", "item": "relay-roles.r19", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
+{"when": "2026-11-03T15:34:38Z", "item": "relay-roles.r20", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
+{"when": "2026-11-03T15:34:43Z", "item": "relay-roles.r9", "action": "relay-roles", "from": "6", "to": "1", "note": "move"}
+{"when": "2026-11-03T15:34:44Z", "item": "relay-roles.r19", "action": "relay-roles", "from": "19", "to": "2", "note": "move"}
+{"when": "2026-11-03T15:34:44Z", "item": "relay-roles.r20", "action": "relay-roles", "from": "20", "to": "3", "note": "move"}
+{"when": "2026-11-03T15:34:44Z", "item": "relay-roles.r15", "action": "relay-roles", "from": "17", "to": "9", "note": "move"}
+{"when": "2026-11-03T15:34:44Z", "item": "relay-roles.r16", "action": "relay-roles", "from": "18", "to": "11", "note": "move"}
+{"when": "2026-11-03T15:34:44Z", "item": "relay-roles.r17", "action": "relay-roles", "from": "19", "to": "13", "note": "move"}
+{"when": "2026-11-03T15:34:44Z", "item": "relay-roles.r9", "action": "relay-roles", "from": "", "to": "note", "note": "set"}
+{"when": "2026-11-03T15:34:45Z", "item": "relay-roles.r15", "action": "relay-roles", "from": "", "to": "note", "note": "set"}
+{"when": "2026-11-03T15:34:45Z", "item": "relay-roles.r16", "action": "relay-roles", "from": "", "to": "note", "note": "set"}
+{"when": "2026-11-03T15:34:45Z", "item": "relay-roles.r17", "action": "relay-roles", "from": "", "to": "note", "note": "set"}
+{"when": "2026-11-03T15:37:29Z", "item": "relay-roles.r19", "action": "relay-roles", "from": "", "to": "note,size,effort", "note": "set"}
+{"when": "2026-11-03T15:37:30Z", "item": "relay-roles.r20", "action": "relay-roles", "from": "", "to": "note,size,effort", "note": "set"}
+{"when": "2026-11-03T15:38:54Z", "item": "relay-roles.r19", "action": "relay-roles", "from": "", "to": "reasoning,note", "note": "set"}
+{"when": "2026-11-03T15:38:54Z", "item": "relay-roles.r20", "action": "relay-roles", "from": "", "to": "implementer", "note": "remove"}
+{"when": "2026-11-03T15:38:54Z", "item": "relay-roles.r21", "action": "relay-roles", "from": "", "to": "implementer", "note": "add"}
+{"when": "2026-11-03T15:39:00Z", "item": "relay-roles.r21", "action": "relay-roles", "from": "20", "to": "2", "note": "move"}
+{"when": "2026-11-03T15:39:14Z", "item": "s445", "action": "add", "from": "", "to": "open", "note": "Default relay-roles matrix: add Codex terra rows for small, low-effort slices"}
+{"when": "2026-11-03T15:39:14Z", "item": "s445", "action": "set", "from": "", "to": "", "note": "findings -→Owner 2026-11-03 (ork session): update the default matrix that slicer relay-roles init writes (skeleton() in src/slicer/roles.py, rows r1-r11) to match the owner's current matrix: add Codex gpt-6.1-terra implementer rows after the sol row (r9) and before the Claude rows it falls back to: terra xhigh for a slice of size M at effort 2, then terra high for size S or M at effort 1 or 2 (a whole slice; sliver and split-part terra rows are a separate owner question). Terra is the Sonnet-class Codex model: it takes only small, low-effort slices; larger or effort-3 slices go from sol straight to the Claude rows. Open owner questions: (1) should the default also put Codex sol first for every slice and Grok first for reviewer, gate and architect with Claude opus as the fallback, as the owner's own matrices now do, or stay Claude-first because a new project may have neither vendor installed (recommend: stay Claude-first, add the terra rows as alternates after r9); (2) the sliver and split-part terra rows (medium, high) the ork matrix has. Reference: the ork project's matrix (slicer relay-roles show --root ../ork). Tests that pin the skeleton's rows change."}
+{"when": "2026-11-03T15:40:38Z", "item": "s445", "action": "note", "from": "", "to": "", "note": "Owner answers 2026-11-03 (ork session): Q1 yes: the default ", "by": "Jon Robbins"}
