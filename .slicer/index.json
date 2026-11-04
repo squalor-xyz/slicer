@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 445,
+  "next_id": 446,
   "preamble": "",
   "passes": [
     {
@@ -14235,7 +14235,22 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "d2ff1c47-4d86-4179-9b7a-e3e237115902",
+          "kind": "",
+          "text": "**2026-11-03** — Owner 2026-11-03 (ork session, interactive): the Index.get linear scan (src/slicer/model.py:736-740; CatalogRecord.get at :584-588 has the same shape) stays recorded in this slice's Findings and is not fixed in this slice's relay: the implementer was told to leave src/slicer/model.py alone. No separate slice was filed. Fixing it later means a keyed lookup in Index (and CatalogRecord.get); decide then whether to fold it here or file it.",
+          "created_at": "2026-11-03T15:18:40Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17904,6 +17919,49 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s445",
+      "title": "Default relay-roles matrix: add Codex terra rows for small, low-effort slices",
+      "short_title": "Default matrix: terra rows",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [
+        {
+          "id": "247edfe0-46eb-416d-a19e-8913eb0dbf6a",
+          "kind": "",
+          "text": "**2026-11-03** — Owner answers 2026-11-03 (ork session): Q1 yes: the default matrix also puts Codex sol first for every slice, with terra rows after it, and Grok first for reviewer, gate and architect, with the Claude rows as the fallback, as the owner's own matrices now do. The owner added that a new project might not have Claude either, so the default must not assume any one vendor is installed; how the default behaves when a vendor is missing (for example whether init detects installed vendors, or the first-match row is simply skipped when its agent is absent) is not decided: spec it and ask. Q2 yes: include the sliver and split-part terra rows (medium and high) as the ork matrix has them. Terra limits stay: whole-slice terra rows only for size S or M at effort 1 or 2, with terra xhigh for size M at effort 2.",
+          "created_at": "2026-11-03T15:40:38Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "Owner 2026-11-03 (ork session): update the default matrix that slicer relay-roles init writes (skeleton() in src/slicer/roles.py, rows r1-r11) to match the owner's current matrix: add Codex gpt-6.1-terra implementer rows after the sol row (r9) and before the Claude rows it falls back to: terra xhigh for a slice of size M at effort 2, then terra high for size S or M at effort 1 or 2 (a whole slice; sliver and split-part terra rows are a separate owner question). Terra is the Sonnet-class Codex model: it takes only small, low-effort slices; larger or effort-3 slices go from sol straight to the Claude rows. Open owner questions: (1) should the default also put Codex sol first for every slice and Grok first for reviewer, gate and architect with Claude opus as the fallback, as the owner's own matrices now do, or stay Claude-first because a new project may have neither vendor installed (recommend: stay Claude-first, add the terra rows as alternates after r9); (2) the sliver and split-part terra rows (medium, high) the ork matrix has. Reference: the ork project's matrix (slicer relay-roles show --root ../ork). Tests that pin the skeleton's rows change.",
+        "discovered_from": "s443",
+        "parent": "",
+        "cites": [],
+        "key": "default-matrix-terra",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }

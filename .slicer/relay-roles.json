@@ -2,6 +2,70 @@
   "version": 3,
   "rows": [
     {
+      "id": "r9",
+      "role": "implementer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
+      "reasoning": "medium",
+      "note": "sol medium, any slice: first choice (owner 2026-11-03); terra rows follow and the Claude rows are the fallback when Codex is out"
+    },
+    {
+      "id": "r21",
+      "role": "implementer",
+      "when": {
+        "size": [
+          "M"
+        ],
+        "effort": [
+          2
+        ],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-terra",
+      "reasoning": "xhigh",
+      "note": "terra xhigh, size M at effort 2 (owner 2026-11-03), ahead of terra high; Claude rows are the fallback"
+    },
+    {
+      "id": "r19",
+      "role": "implementer",
+      "when": {
+        "size": [
+          "S",
+          "M"
+        ],
+        "effort": [
+          1,
+          2
+        ],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-terra",
+      "reasoning": "high",
+      "note": "terra high, size S or M at effort 1 or 2 (owner 2026-11-03), after sol; Claude rows are the fallback"
+    },
+    {
       "id": "r8",
       "role": "implementer",
       "when": {
@@ -101,8 +165,8 @@
       "note": "per part of a split slice"
     },
     {
-      "id": "r9",
-      "role": "implementer",
+      "id": "r15",
+      "role": "reviewer",
       "when": {
         "size": [],
         "effort": [],
@@ -112,11 +176,11 @@
         "split": null,
         "sliver": null
       },
-      "agent": "Codex",
-      "vendor": "OpenAI",
-      "model": "gpt-6.1-sol",
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
       "reasoning": "medium",
-      "note": "alternate implementer for any slice, split part or sliver"
+      "note": "Grok reviewer, first choice (owner 2026-11-03); Claude opus (r4) is the fallback"
     },
     {
       "id": "r4",
@@ -137,6 +201,24 @@
       "note": ""
     },
     {
+      "id": "r16",
+      "role": "gate",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "medium",
+      "note": "Grok gate, first choice (owner 2026-11-03); Claude opus (r5) is the fallback"
+    },
+    {
       "id": "r5",
       "role": "gate",
       "when": {
@@ -153,6 +235,26 @@
       "model": "opus",
       "reasoning": "medium",
       "note": ""
+    },
+    {
+      "id": "r17",
+      "role": "architect",
+      "when": {
+        "size": [
+          "L"
+        ],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "high",
+      "note": "Grok architect, size L, first choice (owner 2026-11-03); Claude opus (r6) is the fallback"
     },
     {
       "id": "r6",
@@ -265,7 +367,7 @@
       "note": "alternate implementer, sol xhigh, any slice"
     },
     {
-      "id": "r15",
+      "id": "r18",
       "role": "reviewer",
       "when": {
         "size": [],
@@ -276,49 +378,11 @@
         "split": null,
         "sliver": null
       },
-      "agent": "Grok",
-      "vendor": "xAI",
-      "model": "grok-4.7",
-      "reasoning": "medium",
-      "note": "alternate reviewer, grok medium, any slice"
-    },
-    {
-      "id": "r16",
-      "role": "gate",
-      "when": {
-        "size": [],
-        "effort": [],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": null,
-        "sliver": null
-      },
-      "agent": "Grok",
-      "vendor": "xAI",
-      "model": "grok-4.7",
-      "reasoning": "medium",
-      "note": "alternate gate, grok medium, any slice"
-    },
-    {
-      "id": "r17",
-      "role": "architect",
-      "when": {
-        "size": [
-          "L"
-        ],
-        "effort": [],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": null,
-        "sliver": null
-      },
-      "agent": "Grok",
-      "vendor": "xAI",
-      "model": "grok-4.7",
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "sonnet",
       "reasoning": "high",
-      "note": "alternate architect, grok high, size L"
+      "note": "Spec check row (sonnet high)"
     }
   ],
   "rules": [
@@ -357,8 +421,12 @@
     {
       "id": "u9",
       "text": "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's check, moves to the next model up (haiku to sonnet high)."
+    },
+    {
+      "id": "u10",
+      "text": "The spec check before a wave runs the Spec check row (r18): one read-only pass over every ticked slice, answered in one sitting. It is a reviewer row that no lineup uses."
     }
   ],
-  "next_row": 18,
-  "next_rule": 10
+  "next_row": 22,
+  "next_rule": 11
 }
