@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 446,
+  "next_id": 447,
   "preamble": "",
   "passes": [
     {
@@ -17961,6 +17961,34 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
+        "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s446",
+      "title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
+      "short_title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "Owner 2026-11-03 (from ork): slicer and ork should both encourage well defined acceptance criteria for every slice. Fact: S102 (done) blocks `slicer next` only when Implement or Check is empty, and its Not in this slice says a short Check is not refused. Needed: an advisory (not a block) from slicer check, promote or show when a slice Check or Failing tests have no command, expected result or observable outcome; and the slice template and docs/agents.md guidance tell authors to write acceptance criteria that way. Open: what counts as vague, and whether it is a warning in check, in next, or only in the template.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 3,
         "effort": 1,
         "attempts": 0
       }
