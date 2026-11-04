@@ -17835,7 +17835,7 @@
       "id": "s443",
       "title": "Apply a change set to the relay role matrix in one atomic write",
       "short_title": "Relay roles apply",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-432 items · — 23 · done 396 · retired 12 · review 1
+432 items · — 23 · done 397 · retired 12
 
 v1.20.0 release
 
@@ -54,7 +54,7 @@ v1.20.0 release
 | 19 | [s432](slices/s432.md) | Remove stray root files | S | 1 | slicer | s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done) · discovered from s415 | — |
 | 20 | [s433](slices/s433.md) | Stats: fail-phase gate is a FAIL | S | 1 | slicer | s408 review 2026-10-30, later note: stats counts a gate FAIL by verdict, else by proxy (a fix round follows); a gate step closed with phase fail and no verdict is not counted unless a fix round follows · discovered from s408 | — |
 | 21 | [s435](slices/s435.md) | Gate role FAIL dedup | S | 1 | ai | s424 review 2026-10-30, later nit: the new `gate` Roles text "sends a FAIL back to the implementer" repeats the Gate section's "FAIL goes back to the implementer and then the gate again" · discovered from s424 | — |
-| 22 | [s443](slices/s443.md) | Relay roles apply | M | 2 | slicer | ork owner request 2026-11-02: unify settings across ork, slicer and adj; a tool sets up the matrix per project through slicer's own commands | review |
+| 22 | [s443](slices/s443.md) | Relay roles apply | M | 2 | slicer | ork owner request 2026-11-02: unify settings across ork, slicer and adj; a tool sets up the matrix per project through slicer's own commands | done |
 | 23 | [s444](slices/s444.md) | Relay roles replace | M | 2 | slicer | ork owner answer 2026-11-02 (interactive): the apply form also takes a complete matrix to replace the current one | — |
 | 24 | s445 | Default matrix: terra rows | S | 1 |  | Owner 2026-11-03 (ork session): update the default matrix that slicer relay-roles init writes (skeleton() in src/slicer/roles.py, rows r1-r11) to match the owner's current matrix: add Codex gpt-6.1-terra implementer rows after the sol row (r9) and before the Claude rows it falls back to: terra xhigh for a slice of size M at effort 2, then terra high for size S or M at effort 1 or 2 (a whole slice; sliver and split-part terra rows are a separate owner question). Terra is the Sonnet-class Codex model: it takes only small, low-effort slices; larger or effort-3 slices go from sol straight to the Claude rows. Open owner questions: (1) should the default also put Codex sol first for every slice and Grok first for reviewer, gate and architect with Claude opus as the fallback, as the owner's own matrices now do, or stay Claude-first because a new project may have neither vendor installed (recommend: stay Claude-first, add the terra rows as alternates after r9); (2) the sliver and split-part terra rows (medium, high) the ork matrix has. Reference: the ork project's matrix (slicer relay-roles show --root ../ork). Tests that pin the skeleton's rows change. · discovered from s443 | — |
 
