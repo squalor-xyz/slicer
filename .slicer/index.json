@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 448,
+  "next_id": 449,
   "preamble": "",
   "passes": [
     {
@@ -18018,6 +18018,34 @@
         "importance": 3,
         "urgency": 2,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s448",
+      "title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
+      "short_title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "The discover run (python3 -m unittest discover -s tests -t tests) takes about 9.5 min; about 84% is git subprocesses (109.5 s of 130 s in 5 modules, failed probes 76.7 s). vcs.is_repo and _current_worktree cache only yes answers and git_common_dir caches nothing (src/slicer/vcs.py:83-135, :399, :511); about 5 of 6 fixtures are not git repos. Change, in tests/support.py and test setup only unless a spec step finds production code must change: (b1) cache not-a-repo answers for non-git fixtures; (b2) set SLICER_NO_CODE_WARNING=1 for the suite except the code-location tests (cli.py:138 costs 2 git calls per CLI call); (b3) in-memory TUI tests do not ask git on each refresh. Acceptance: (1) the unittest discover test count is unchanged and none is removed or skipped; (2) the code-location tests still run with the warning on; (3) wall time of python3 -m unittest discover -s tests -t tests drops by at least 3 minutes, quoted before and after on the same machine; (4) the git call budget tests still pass; (5) slicer check is clean. Source: ork .scratch/v11/test-trim-proposal.md b1-b3. Land with or after s447.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "tests-git-probe-cache",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 3,
+        "effort": 2,
         "attempts": 0
       }
     }
