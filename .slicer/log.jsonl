@@ -2635,3 +2635,4 @@
 {"when": "2026-11-04T11:48:35Z", "item": "s447", "action": "add", "from": "", "to": "open", "note": "Tests: stub fsync outside tests/test_jsonio.py"}
 {"when": "2026-11-04T13:02:28Z", "item": "s448", "action": "add", "from": "", "to": "open", "note": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite"}
 {"when": "2026-11-04T13:23:44Z", "item": "s313", "action": "status", "from": "review", "to": "done", "note": "Landed s313", "by": "Jon Robbins"}
+{"when": "2026-11-04T20:00:05Z", "item": "s449", "action": "add", "from": "", "to": "open", "note": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)"}
