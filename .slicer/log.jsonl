@@ -2644,3 +2644,4 @@
 {"when": "2026-11-04T15:53:56Z", "item": "s370", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-04T14:51:50Z", "item": "s449", "action": "add", "from": "", "to": "open", "note": "Release target (was pass) and an owner-set wave inside it"}
 {"when": "2026-11-04T15:25:46Z", "item": "s450", "action": "add", "from": "", "to": "open", "note": "Keyed lookup for Index.get and CatalogRecord.get"}
+{"when": "2026-11-04T16:03:53Z", "item": "s370", "action": "status", "from": "review", "to": "done", "note": "Landed s370", "by": "Jon Robbins"}

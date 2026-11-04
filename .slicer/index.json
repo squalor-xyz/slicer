@@ -14276,7 +14276,7 @@
       "id": "s370",
       "title": "Lazy loading follow-ups: moves, index staleness and a stale comment",
       "short_title": "Lazy loading follow-ups",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
