@@ -2628,3 +2628,7 @@
 {"when": "2026-11-03T15:40:38Z", "item": "s445", "action": "note", "from": "", "to": "", "note": "Owner answers 2026-11-03 (ork session): Q1 yes: the default ", "by": "Jon Robbins"}
 {"when": "2026-11-04T02:26:07Z", "item": "s443", "action": "status", "from": "review", "to": "done", "note": "Landed s443", "by": "Jon Robbins"}
 {"when": "2026-11-04T03:41:32Z", "item": "s446", "action": "add", "from": "", "to": "open", "note": "Vague Check section: warn when a slice has no verifiable acceptance criteria"}
+{"when": "2026-11-03T14:56:30Z", "item": "s313", "action": "note", "from": "", "to": "", "note": "Owner answers 2026-11-03 (interactive): (1) On darwin, also ", "by": "Jon Robbins"}
+{"when": "2026-11-04T13:08:45Z", "item": "s313", "action": "note", "from": "", "to": "", "note": "Verified: write_bytes fsyncs the temp file before the rename", "by": "Jon Robbins"}
+{"when": "2026-11-04T13:08:52Z", "item": "s313", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-04T13:08:53Z", "item": "s313", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

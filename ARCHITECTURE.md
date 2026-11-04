@@ -267,9 +267,14 @@ Staged moves keep the old path until the rename is flushed. `render`,
 `check` and `verify` inspect all bodies and still fail on corruption.
 There is no cross-process cache or on-disk layout change.
 
-**Individual JSON writes are atomic.** `jsonio.write` goes through `mkstemp` in the destination
+**Individual JSON writes are atomic and durable.** `jsonio.write` goes through `mkstemp` in the destination
 directory then `os.replace`, and restores the umask default mode, because `mkstemp`
-makes 0600 files and these are ordinary tracked project files.
+makes 0600 files and these are ordinary tracked project files. The temporary file is
+fsynced before the rename; on macOS it also gets `F_FULLFSYNC`, because `fsync` there
+stops short of the drive's cache. The directory is fsynced after the rename (skipped on
+Windows). An `EINVAL` or `ENOTSUP` from that directory fsync, meaning the filesystem cannot
+sync a directory, is ignored; any other error is raised. A power loss should therefore not
+leave an empty state file (s313).
 
 **CLI writers serialize across a command.** `cli.main` takes `store.project_lock`
 around mutating handlers, including their optional render. The advisory lock on

@@ -1,15 +1,22 @@
 """Deterministic JSON on disk.
 
 Writes go through a temp file in the same directory plus `os.replace`, so a
-crash mid-write cannot leave a half-written index. Formatting is fixed
-(`indent=2`, `ensure_ascii=False`, trailing newline) because `slicer check`
-compares bytes and a formatting drift would read as a spurious change.
+crash mid-write cannot leave a half-written index. The temporary file is fsynced
+before the rename (with F_FULLFSYNC on macOS, where fsync does not reach the
+drive's cache). The directory is fsynced after the rename, except on Windows,
+where a directory cannot be opened for fsync; an `EINVAL` or `ENOTSUP` from that
+fsync is ignored, and any other error is raised. So a power loss should not
+leave an empty state file. Formatting is fixed (`indent=2`, `ensure_ascii=False`,
+trailing newline) because `slicer check` compares bytes and a formatting drift
+would read as a spurious change.
 """
 
 from __future__ import annotations
 
+import errno
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -46,11 +53,39 @@ def write_bytes(path: Path, data: bytes) -> None:
   try:
     with os.fdopen(fd, "wb") as fh:
       fh.write(data)
+      fh.flush()
+      os.fsync(fh.fileno())
+      if sys.platform == "darwin":
+        _full_fsync_darwin(fh.fileno())
     os.chmod(tmp, _default_mode())
     os.replace(tmp, path)
   except BaseException:
     Path(tmp).unlink(missing_ok=True)
     raise
+  _fsync_dir(path.parent)
+
+
+def _full_fsync_darwin(fd: int) -> None:
+  """On macOS `fsync` stops short of the drive's cache; `F_FULLFSYNC` writes it out."""
+  import fcntl  # imported here: fcntl is not available on Windows
+
+  fcntl.fcntl(fd, fcntl.F_FULLFSYNC)
+
+
+def _fsync_dir(directory: Path) -> None:
+  """Persist the rename: the new directory entry is durable only once the directory is synced."""
+  if os.name == "nt":  # a directory cannot be opened for fsync on Windows
+    return
+  fd = os.open(directory, os.O_RDONLY)
+  try:
+    os.fsync(fd)
+  except OSError as exc:
+    # A filesystem that cannot sync a directory fails with EINVAL or ENOTSUP. The rename has
+    # already happened, so any other failure is raised for the caller to see.
+    if exc.errno not in (errno.EINVAL, errno.ENOTSUP):
+      raise
+  finally:
+    os.close(fd)
 
 
 def read(path: Path) -> Any:
