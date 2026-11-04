@@ -2628,3 +2628,4 @@
 {"when": "2026-11-03T15:40:38Z", "item": "s445", "action": "note", "from": "", "to": "", "note": "Owner answers 2026-11-03 (ork session): Q1 yes: the default ", "by": "Jon Robbins"}
 {"when": "2026-11-04T02:26:07Z", "item": "s443", "action": "status", "from": "review", "to": "done", "note": "Landed s443", "by": "Jon Robbins"}
 {"when": "2026-11-04T03:41:32Z", "item": "s446", "action": "add", "from": "", "to": "open", "note": "Vague Check section: warn when a slice has no verifiable acceptance criteria"}
+{"when": "2026-11-04T11:48:35Z", "item": "s447", "action": "add", "from": "", "to": "open", "note": "Tests: stub fsync outside tests/test_jsonio.py"}
