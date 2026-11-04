@@ -14186,7 +14186,7 @@
       "id": "s368",
       "title": "Relay board lane and step lines drop cells from the right, whole",
       "short_title": "Lane lines drop cells in order",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
