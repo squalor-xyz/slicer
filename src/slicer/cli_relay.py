@@ -14,7 +14,9 @@ from pathlib import Path
 
 from slicer import ops, relayrun, store, vcs
 from slicer import roles as role_matrix
-from slicer.cli_common import OK, _dump_json, _emit, _log_timestamp, _state, _write_out
+from slicer.cli_common import (
+  OK, _dump_json, _emit, _log_timestamp, _read_user_file, _state, _write_out,
+)
 from slicer.errors import StateError
 
 
@@ -47,6 +49,7 @@ def cmd_relay_roles_show(args: argparse.Namespace) -> int:
     "relay_roles": text,
     "rows": [row.to_dict() for row in matrix.rows],
     "rules": [rule.to_dict() for rule in matrix.rules],
+    "revision": role_matrix.revision(matrix),
   }
   _emit(args, payload, text.rstrip("\n"), keep_empty=("rows", "rules"))
   return OK
@@ -166,6 +169,46 @@ def cmd_relay_roles_rule_remove(args: argparse.Namespace) -> int:
   state = _state(args)
   rule = ops.rule_remove(state, args.id)
   _emit(args, rule.to_dict(), f"removed {rule.id}")
+  return OK
+
+
+def _change_set_text(args: argparse.Namespace) -> str:
+  """The change set from exactly one of `--file` and `--stdin`."""
+  if args.file is not None and args.stdin:
+    raise StateError("choose only one of --file or --stdin", code="usage")
+  if args.stdin:
+    return sys.stdin.read()
+  if args.file is None:
+    raise StateError("give the change set with --file or --stdin", code="usage")
+  path = Path(args.file)
+  if not path.is_absolute():
+    path = Path(args.root or ".").resolve() / path
+  return _read_user_file(path)
+
+
+_STEP_WORDS = {
+  "add": "added", "remove": "removed", "move": "moved", "set": "set",
+  "rule-add": "added", "rule-remove": "removed", "rule-edit": "edited",
+}
+
+
+def cmd_relay_roles_apply(args: argparse.Namespace) -> int:
+  """Check a change set against a copy of the matrix, then save it once (see `ops.roles_apply`)."""
+  change_set = role_matrix.parse_change_set(_change_set_text(args))
+  result = ops.roles_apply(_state(args), change_set, dry_run=args.dry_run)
+  if not result.changed:
+    args._no_change = True
+  lines = [
+    f"{_STEP_WORDS[step['op']]} {step['id']}" if step["changed"] else f"{step['id']} unchanged"
+    for step in result.steps
+  ]
+  if args.dry_run:
+    lines.append("dry run: nothing was written")
+  lines.append(
+    f"revision {result.revision}" if result.changed
+    else f"revision {result.revision} (unchanged)"
+  )
+  _emit(args, result.to_dict(), "\n".join(lines), keep_empty=("steps", "rows", "rules"))
   return OK
 
 

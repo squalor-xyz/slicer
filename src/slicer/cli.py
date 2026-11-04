@@ -152,10 +152,18 @@ def _warn_code_mismatch(args: argparse.Namespace) -> None:
     print(f"slicer: {message}", file=sys.stderr)
 
 
+def _reads_only(args: argparse.Namespace) -> bool:
+  """A dry run that is promised no lock: it loads the project and writes nothing."""
+  return (
+    args.command == "relay-roles" and getattr(args, "relay_roles_command", "") == "apply"
+    and args.dry_run
+  )
+
+
 def _changes_state(args: argparse.Namespace) -> bool:
   if args.command == "init":
     return True
-  if not getattr(args.func, "mutates", False):
+  if not getattr(args.func, "mutates", False) or _reads_only(args):
     return False
   if args.command in ("import", "migrate", "remove", "retire") and args.dry_run:
     return False
@@ -193,7 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     # A mutating command holds an advisory lock for its whole run, so two
     # writers serialise instead of racing (a duplicated id, a half-applied
     # outline). Read-only commands need no lock.
-    if getattr(args.func, "mutates", False):
+    if getattr(args.func, "mutates", False) and not _reads_only(args):
       # A create-path migrate targets its own new .slicer/, not an ancestor's.
       # There is no target project lock until that directory exists.
       creating_migrate = (

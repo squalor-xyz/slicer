@@ -7,6 +7,7 @@ does, because `slicer relay-roles` is the only way to change it.
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import re
@@ -1229,7 +1230,7 @@ class RelayRolesShowAndRenderTests(RelayRolesCase):
   def test_Show_Json_ReturnsTextRowsAndRules(self) -> None:
     repo = self.with_matrix()
     payload = json.loads(self.ok(repo, "relay-roles", "show", "--json"))
-    self.assertEqual(list(payload), ["relay_roles", "rows", "rules"])
+    self.assertEqual(list(payload), ["relay_roles", "rows", "rules", "revision"])
     data = self.matrix(repo)
     self.assertEqual(payload["rows"], data["rows"])
     self.assertEqual(payload["rules"], data["rules"])
@@ -1283,6 +1284,356 @@ class RelayRolesShowAndRenderTests(RelayRolesCase):
   def test_Plan_NoMatrix_HasNoRelayRolesFile(self) -> None:
     repo = self.project()
     self.assertNotIn("RELAY-ROLES.md", render.plan(repo.state()))
+
+
+class RelayRolesApplyTests(RelayRolesCase):
+  """`relay-roles apply`: a change set checked against a copy, then saved once (s443)."""
+
+  def revision(self, repo: support.TempRepo) -> str:
+    return json.loads(self.ok(repo, "relay-roles", "show", "--json"))["revision"]
+
+  def apply(self, repo: support.TempRepo, change_set: object, *flags: str) -> tuple[int, str, str]:
+    text = change_set if isinstance(change_set, str) else json.dumps(change_set)
+    with patch("sys.stdin", io.StringIO(text)):
+      return repo.run("relay-roles", "apply", "--stdin", *flags)
+
+  def applied(self, repo: support.TempRepo, change_set: object, *flags: str) -> dict:
+    code, out, err = self.apply(repo, change_set, "--json", *flags)
+    self.assertEqual(code, 0, f"{out} {err}")
+    return json.loads(out)
+
+  def refused(self, repo: support.TempRepo, change_set: object, code: int, error: str) -> dict:
+    got, out, err = self.apply(repo, change_set, "--json")
+    self.assertEqual(got, code, f"{out} {err}")
+    payload = json.loads(out)["error"]
+    self.assertEqual(payload["code"], error)
+    return payload
+
+  GROK = {
+    "op": "add", "role": "reviewer", "agent": "Grok", "vendor": "xAI", "model": "latest",
+    "ref": "g",
+  }
+
+  def test_RelayRolesShow_Json_HasARevisionThatChangesWithEveryWrite(self) -> None:
+    repo = self.with_matrix()
+    first = self.revision(repo)
+    self.assertRegex(first, r"^[0-9a-f]{12}$")
+    self.ok(repo, "relay-roles", "set", "r1", "--model", "x")
+    second = self.revision(repo)
+    self.assertNotEqual(second, first)
+    self.ok(repo, "relay-roles", "set", "r1", "--model", "x")
+    self.assertEqual(self.revision(repo), second)
+    lean = json.loads(self.ok(repo, "relay-roles", "show", "--json", "--lean"))
+    self.assertEqual(lean["revision"], second)
+
+  def test_RelayRolesApply_AddThenMoveByRef_OneSaveOneHistoryEntryPerStep(self) -> None:
+    repo = self.with_matrix()
+    seen = len(self.history(repo))
+    saves = []
+    real = store.State.save_roles
+    with patch.object(
+      store.State, "save_roles", autospec=True,
+      side_effect=lambda state: (saves.append(1), real(state))[1],
+    ):
+      result = self.applied(repo, {"ops": [self.GROK, {"op": "move", "id": "@g", "before": "r8"}]})
+    self.assertEqual(len(saves), 1)
+    new_id = result["steps"][0]["id"]
+    self.assertEqual(new_id, "r12")
+    self.assertEqual(
+      result["steps"],
+      [{"op": "add", "id": "r12", "changed": True}, {"op": "move", "id": "r12", "changed": True}],
+    )
+    rows = self.matrix(repo)["rows"]
+    self.assertEqual(rows[0]["id"], "r12")
+    self.assertEqual((rows[0]["agent"], rows[0]["vendor"], rows[0]["model"]), ("Grok", "xAI", "latest"))
+    self.assertEqual(result["rows"], rows)
+    self.assertEqual(result["revision"], self.revision(repo))
+    self.assertFalse(result["dry_run"])
+    self.assertTrue(result["changed"])
+    new = self.history(repo)[seen:]
+    self.assertEqual([(e.item, e.note) for e in new], [
+      ("relay-roles.r12", "add"), ("relay-roles.r12", "move"),
+    ])
+
+  def test_RelayRolesApply_EveryOpKind_ChangesTheMatrixLikeTheSingleVerbs(self) -> None:
+    repo = self.with_matrix()
+    result = self.applied(repo, {"ops": [
+      {"op": "set", "id": "r1", "model": "x", "effort": [1, "2"], "well_specified": "yes"},
+      {"op": "remove", "id": "r2"},
+      {"op": "move", "id": "r3", "last": True},
+      {"op": "rule-add", "text": "New rule.", "ref": "n"},
+      {"op": "rule-edit", "id": "@n", "text": "Edited rule."},
+      {"op": "rule-remove", "id": "u1"},
+      {"op": "set", "id": "r4", "role": "architect"},
+    ]})
+    self.assertEqual(
+      [(s["op"], s["id"], s["changed"]) for s in result["steps"]],
+      [("set", "r1", True), ("remove", "r2", True), ("move", "r3", True),
+       ("rule-add", "u9", True), ("rule-edit", "u9", True), ("rule-remove", "u1", True),
+       ("set", "r4", True)],
+    )
+    data = self.matrix(repo)
+    self.assertEqual(next(r for r in data["rows"] if r["id"] == "r4")["role"], "architect")
+    row = next(r for r in data["rows"] if r["id"] == "r1")
+    self.assertEqual((row["model"], row["when"]["effort"], row["when"]["well_specified"]),
+                     ("x", [1, 2], True))
+    self.assertNotIn("r2", [r["id"] for r in data["rows"]])
+    self.assertEqual(data["rows"][-1]["id"], "r3")
+    self.assertEqual(data["rules"][-1], {"id": "u9", "text": "Edited rule."})
+    self.assertNotIn("u1", [r["id"] for r in data["rules"]])
+    self.assertEqual(result["rules"], data["rules"])
+
+  def test_RelayRolesApply_AnyString_ClearsAListCondition(self) -> None:
+    repo = self.with_matrix()
+    self.ok(repo, "relay-roles", "set", "r1", "--size", "S,M", "--effort", "1,2", "--urgency", "3")
+    row = next(r for r in self.matrix(repo)["rows"] if r["id"] == "r1")
+    self.assertEqual((row["when"]["size"], row["when"]["effort"]), (["S", "M"], [1, 2]))
+    result = self.applied(repo, {"ops": [
+      {"op": "set", "id": "r1", "size": "any", "effort": "any", "urgency": []},
+    ]})
+    self.assertTrue(result["steps"][0]["changed"])
+    when = next(r for r in self.matrix(repo)["rows"] if r["id"] == "r1")["when"]
+    self.assertEqual((when["size"], when["effort"], when["urgency"]), ([], [], []))
+    added = self.applied(repo, {"ops": [{"op": "add", "role": "gate", "size": "any"}]})
+    self.assertEqual(added["rows"][-1]["when"]["size"], [])
+
+  def test_RelayRolesApply_OneBadStep_RefusesTheWholeSetAndWritesNothing(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    error = self.refused(repo, {"ops": [
+      {"op": "set", "id": "r1", "model": "x"}, {"op": "remove", "id": "r99"},
+    ]}, 2, "unknown_role_row")
+    self.assertIn("ops[1]", error["message"])
+    self.assertIn("r99", error["message"])
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_CollectsEveryProblem(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    error = self.refused(repo, {"ops": [
+      {"op": "remove", "id": "r99"},
+      {"op": "set", "id": "r1", "model": "ok"},
+      {"op": "rule-remove", "id": "u99"},
+    ]}, 2, "unknown_role_row")
+    message = error["message"]
+    self.assertIn("ops[0]", message)
+    self.assertIn("ops[2]", message)
+    self.assertNotIn("ops[1]", message)
+    self.assertLess(message.index("ops[0]"), message.index("ops[2]"))
+    self.assertIn("u99", message)
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_LaterStepsSeeEarlierSteps(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    # r1 is gone by step 1, so step 2 is refused against the copy, not the file.
+    error = self.refused(repo, {"ops": [
+      {"op": "remove", "id": "r1"}, {"op": "set", "id": "r1", "model": "x"},
+    ]}, 2, "unknown_role_row")
+    self.assertIn("ops[1]", error["message"])
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_StaleExpect_IsRefusedBeforeAnyStep(self) -> None:
+    repo = self.with_matrix()
+    seen = self.revision(repo)
+    self.ok(repo, "relay-roles", "set", "r1", "--model", "other", "--render")
+    before = self.snapshot(repo)
+    error = self.refused(repo, {
+      "expect": seen, "ops": [{"op": "set", "id": "r2", "model": "x"}, {"op": "remove", "id": "r99"}],
+    }, 2, "stale_revision")
+    self.assertNotIn("r99", error["message"])  # no step ran, so none was checked
+    self.assertEqual(self.snapshot(repo), before)
+    current = self.revision(repo)
+    result = self.applied(repo, {"expect": current, "ops": [{"op": "set", "id": "r2", "model": "x"}]})
+    self.assertEqual(result["revision_before"], current)
+    self.assertTrue(result["changed"])
+
+  def test_RelayRolesApply_DryRun_ReturnsTheResultAndWritesNothing(self) -> None:
+    repo = self.with_matrix()
+    seen = len(self.history(repo))
+    before = self.snapshot(repo)
+    revision = self.revision(repo)
+    change_set = {"ops": [self.GROK, {"op": "move", "id": "@g", "before": "r8"}]}
+    with patch.dict(os.environ, {"SLICER_LOCK_TIMEOUT": "0"}), store.project_lock(repo.root):
+      result = self.applied(repo, change_set, "--dry-run")
+    self.assertTrue(result["dry_run"])
+    self.assertTrue(result["changed"])
+    self.assertEqual(result["revision_before"], revision)
+    self.assertNotEqual(result["revision"], revision)
+    self.assertEqual(result["rows"][0]["id"], "r12")
+    self.assertEqual(self.snapshot(repo), before)
+    self.assertEqual(len(self.history(repo)), seen)
+    real = self.applied(repo, change_set)
+    self.assertEqual(real["revision"], result["revision"])
+    self.assertEqual(real["rows"], result["rows"])
+
+  def test_RelayRolesApply_DryRun_StaleExpectIsStillRefused(self) -> None:
+    repo = self.with_matrix()
+    code, out, err = self.apply(repo, {"expect": "0" * 12, "ops": [
+      {"op": "set", "id": "r1", "model": "x"}]}, "--dry-run", "--json")
+    self.assertEqual(code, 2)
+    self.assertEqual(json.loads(out)["error"]["code"], "stale_revision")
+
+  def test_RelayRolesApply_SameSetTwice_SecondIsNoChange(self) -> None:
+    repo = self.with_matrix()
+    change_set = {"ops": [
+      {"op": "set", "id": "r1", "model": "x"}, {"op": "move", "id": "r2", "last": True},
+      {"op": "rule-edit", "id": "u1", "text": "Edited."},
+    ]}
+    first = self.applied(repo, change_set, "--render")
+    self.assertTrue(first["changed"])
+    seen = len(self.history(repo))
+    before = self.snapshot(repo)
+    saves = []
+    with patch.object(store.State, "save_roles", side_effect=lambda: saves.append(1)):
+      second = self.applied(repo, change_set)
+    self.assertFalse(second["changed"])
+    self.assertEqual([s["changed"] for s in second["steps"]], [False, False, False])
+    self.assertEqual(second["revision"], second["revision_before"])
+    self.assertEqual(saves, [])
+    self.assertEqual(len(self.history(repo)), seen)
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_MixedSet_RecordsOnlyTheChangedSteps(self) -> None:
+    repo = self.with_matrix()
+    seen = len(self.history(repo))
+    result = self.applied(repo, {"ops": [
+      {"op": "set", "id": "r1", "model": "haiku"},  # already the model
+      {"op": "set", "id": "r2", "model": "x"},
+    ]})
+    self.assertEqual([s["changed"] for s in result["steps"]], [False, True])
+    self.assertEqual([(e.item, e.note) for e in self.history(repo)[seen:]],
+                     [("relay-roles.r2", "set")])
+
+  def test_RelayRolesApply_SameValidationAsTheSingleVerbs(self) -> None:
+    repo = self.with_matrix()
+    cases = (
+      ({"op": "add", "role": "janitor"}, ("add", "--role", "janitor")),
+      ({"op": "set", "id": "r1", "role": "janitor"}, ("set", "r1", "--role", "janitor")),
+      ({"op": "add", "role": "gate", "effort": [4]}, ("add", "--role", "gate", "--effort", "4")),
+      ({"op": "set", "id": "r1", "well_specified": "maybe"},
+       ("set", "r1", "--well-specified", "maybe")),
+      ({"op": "rule-add", "text": "  "}, ("rule-add", "  ")),
+      ({"op": "set", "id": "r1", "note": "a\nb"}, ("set", "r1", "--note", "a\nb")),
+      ({"op": "rule-edit", "id": "u1", "text": "a\nb"}, ("rule-edit", "u1", "a\nb")),
+      ({"op": "move", "id": "r1", "before": "r1"}, ("move", "r1", "--before", "r1")),
+    )
+    for step, argv in cases:
+      with self.subTest(step=step):
+        got, out, err = repo.run("relay-roles", *argv, "--json")
+        self.assertEqual(got, 2)
+        want = json.loads(out)["error"]["code"]
+        error = self.refused(repo, {"ops": [step]}, 2, want)
+        self.assertIn("ops[0]", error["message"])
+
+  def test_RelayRolesApply_MalformedSet_IsUsage(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    bad = {
+      "not json": "{nope",
+      "not an object": "[]",
+      "no ops": {},
+      "empty ops": {"ops": []},
+      "ops not a list": {"ops": {"op": "remove"}},
+      "unknown top key": {"ops": [{"op": "remove", "id": "r1"}], "extra": 1},
+      "expect not text": {"expect": 5, "ops": [{"op": "remove", "id": "r1"}]},
+      "step not an object": {"ops": ["remove"]},
+      "no op": {"ops": [{"id": "r1"}]},
+      "unknown op": {"ops": [{"op": "rename", "id": "r1"}]},
+      "unknown key": {"ops": [{"op": "set", "id": "r1", "color": "red"}]},
+      "key of another op": {"ops": [{"op": "remove", "id": "r1", "model": "x"}]},
+      "missing id": {"ops": [{"op": "remove"}]},
+      "move with both": {"ops": [{"op": "move", "id": "r1", "before": "r2", "last": True}]},
+      "move with neither": {"ops": [{"op": "move", "id": "r1"}]},
+      "unknown ref": {"ops": [{"op": "move", "id": "@x", "last": True}]},
+      "ref before its add": {"ops": [
+        {"op": "move", "id": "@g", "last": True}, dict(self.GROK)]},
+      "duplicate ref": {"ops": [dict(self.GROK), dict(self.GROK)]},
+      "row ref for a rule": {"ops": [dict(self.GROK), {"op": "rule-remove", "id": "@g"}]},
+      "effort not a list": {"ops": [{"op": "set", "id": "r1", "effort": 2}]},
+      "model not text": {"ops": [{"op": "set", "id": "r1", "model": 3}]},
+      "add without role": {"ops": [{"op": "add", "model": "x"}]},
+    }
+    for name, change_set in bad.items():
+      with self.subTest(name=name):
+        self.refused(repo, change_set, 2, "usage")
+        self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_Source_NeedsExactlyOneOfFileAndStdin(self) -> None:
+    repo = self.with_matrix()
+    repo.write("set.json", json.dumps({"ops": [{"op": "set", "id": "r1", "model": "x"}]}))
+    before = self.snapshot(repo)
+    for argv, want in (
+      (("--file", "set.json", "--stdin"), (2, "usage")), ((), (2, "usage")),
+      (("--file", "missing.json"), (3, "io")),  # an unreadable path, as for `import`
+    ):
+      with self.subTest(argv=argv), patch("sys.stdin", io.StringIO("{}")):
+        code, out, err = repo.run("relay-roles", "apply", *argv, "--json")
+        self.assertEqual((code, json.loads(out)["error"]["code"]), want, out)
+        self.assertEqual(self.snapshot(repo), before)
+    self.ok(repo, "relay-roles", "apply", "--file", "set.json")
+    row = next(r for r in self.matrix(repo)["rows"] if r["id"] == "r1")
+    self.assertEqual(row["model"], "x")
+
+  def test_RelayRolesApply_Lean_KeepsStepsRowsAndRulesWhenEmpty(self) -> None:
+    repo = self.with_matrix()
+    for row_id in ("r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11"):
+      self.ok(repo, "relay-roles", "remove", row_id)
+    for rule_id in ("u1", "u2", "u3", "u4", "u5", "u6", "u7", "u8"):
+      self.ok(repo, "relay-roles", "rule-remove", rule_id)
+    result = self.applied(repo, {"ops": [{"op": "rule-add", "text": "x"}, {"op": "rule-remove", "id": "u9"}]}, "--lean")
+    self.assertEqual(result["rows"], [])
+    self.assertEqual(result["rules"], [])
+    self.assertEqual(len(result["steps"]), 2)
+
+  def test_RelayRolesApply_Text_ListsOneLinePerStepAndTheRevision(self) -> None:
+    repo = self.with_matrix()
+    code, out, err = self.apply(repo, {"ops": [
+      self.GROK, {"op": "move", "id": "@g", "before": "r8"},
+      {"op": "set", "id": "r5", "model": "claude-reviewer-model"},
+      {"op": "set", "id": "r5", "model": "claude-reviewer-model"},
+    ]})
+    self.assertEqual(code, 0, err)
+    lines = out.splitlines()
+    self.assertEqual(lines[:4], ["added r12", "moved r12", "set r5", "r5 unchanged"])
+    self.assertIn(self.revision(repo), lines[-1])
+
+  def test_RelayRolesApply_Render_LikeOtherWrites(self) -> None:
+    repo = self.with_matrix()
+    change_set = {"ops": [self.GROK]}
+    writes = []
+    real = render.write
+    with patch("slicer.render.write", side_effect=lambda *a, **k: (writes.append(1), real(*a, **k))[1]):
+      code, out, err = self.apply(repo, change_set, "--render")
+    self.assertEqual(code, 0, err)
+    self.assertEqual(len(writes), 1)
+    self.assertIn("Grok", repo.read(RENDER))
+    self.assertEqual(repo.run("check", "--json")[0], 0)
+
+  def test_RelayRolesApply_Strict_RenderFailureRollsTheWholeSetBack(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    with patch("slicer.render.write_atomic", side_effect=OSError("boom")):
+      code, out, err = self.apply(repo, {"ops": [self.GROK]}, "--render", "--strict")
+    self.assertNotEqual(code, 0)
+    self.assertEqual(self.snapshot(repo), before)
+    code, out, err = self.apply(repo, {"ops": [self.GROK]}, "--render", "--strict")
+    self.assertEqual(code, 0, err)
+    self.assertIn("Grok", repo.read(JSON))
+    self.assertIn("Grok", repo.read(RENDER))
+
+  def test_RelayRolesApply_NoMatrix_IsNoRelayRoles(self) -> None:
+    repo = self.project()
+    self.refused(repo, {"ops": [{"op": "rule-add", "text": "x"}]}, 2, "no_relay_roles")
+
+  def test_RelayRolesApply_HoldsTheProjectLock(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    with store.project_lock(repo.root), patch.dict(os.environ, {"SLICER_LOCK_TIMEOUT": "0"}):
+      code, out, err = self.apply(repo, {"ops": [self.GROK]}, "--json")
+    self.assertEqual(code, 3)
+    self.assertEqual(json.loads(out)["error"]["code"], "locked")
+    self.assertEqual(self.snapshot(repo), before)
 
 
 class RelayRolesLegacyTests(RelayRolesCase):

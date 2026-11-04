@@ -31,7 +31,8 @@ from slicer.cli_queue import (
   cmd_deps, cmd_find, cmd_list, cmd_next, cmd_plan_parallel, cmd_show, cmd_status,
 )
 from slicer.cli_relay import (
-  cmd_ai_relay_roles, cmd_relay_roles_add, cmd_relay_roles_init, cmd_relay_roles_move,
+  cmd_ai_relay_roles, cmd_relay_roles_add, cmd_relay_roles_apply, cmd_relay_roles_init,
+  cmd_relay_roles_move,
   cmd_relay_roles_recommend, cmd_relay_roles_remove, cmd_relay_roles_rule_add,
   cmd_relay_roles_rule_edit, cmd_relay_roles_rule_remove, cmd_relay_roles_set,
   cmd_relay_roles_show, cmd_relay_run_answer, cmd_relay_run_ask, cmd_relay_run_begin,
@@ -855,6 +856,27 @@ def _add_relay_roles(sub: argparse._SubParsersAction, common: argparse.ArgumentP
   inner.add_argument("text")
 
   radd("rule-remove", cmd_relay_roles_rule_remove, "drop a rule", mutate=True).add_argument("id")
+
+  inner = radd(
+    "apply", cmd_relay_roles_apply,
+    "apply a JSON change set of edit steps in one atomic write", mutate=True,
+  )
+  inner.description = (
+    'Read {"expect": REVISION?, "ops": [OP, ...]}, where each OP is one of add, set, remove, '
+    "move, rule-add, rule-edit or rule-remove as an object (see docs/commands.md). Every step "
+    "is checked against a copy of the matrix; if any step is refused, all problems are "
+    "reported and nothing is written. Otherwise the matrix is saved once under the project "
+    "lock. `expect` is the `revision` that `relay-roles show --json` printed; a matrix that "
+    "has changed since is refused with code stale_revision. A step may name an earlier "
+    '`add` or `rule-add` that gave "ref": "NAME" as "@NAME". --dry-run prints the result '
+    "without taking the lock or writing anything."
+  )
+  inner.add_argument("--file", help="read the change set from this file; cannot combine with --stdin")
+  inner.add_argument("--stdin", action="store_true", help="read the change set from stdin; cannot combine with --file")
+  inner.add_argument(
+    "--dry-run", action="store_true",
+    help="check the change set and print the result; no lock, no write, no history",
+  )
 
 
 def _add_relay_run(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:

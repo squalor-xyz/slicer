@@ -10,9 +10,12 @@ state: only the `relay-roles` commands change it, and the Markdown in
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Mapping
 
+from slicer import jsonio
 from slicer.errors import StateError, reject_future_schema
 
 if TYPE_CHECKING:
@@ -281,6 +284,167 @@ class RoleMatrix:
       f"no such relay role rule: {rule_id}; `slicer relay-roles show` lists them",
       code="unknown_role_rule",
     )
+
+
+def revision(matrix: RoleMatrix) -> str:
+  """Twelve hex digits that name this exact matrix: rows, rules, their order and both counters.
+
+  Same digest as `snapshot.revision` (which this module cannot import), so a tool that reads
+  `relay-roles show --json` can name what it read as `expect` in a change set.
+  """
+  return hashlib.sha256(jsonio.dumps(matrix.to_dict()).encode("utf-8")).hexdigest()[:12]
+
+
+# ---- change sets --------------------------------------------------------------
+# `relay-roles apply` takes one JSON object: {"expect": REVISION?, "ops": [OP, ...]}. Each OP
+# is one of the single edit verbs as an object. This half only reads the shape; `ops.py`
+# checks the values against a copy of the matrix and applies them.
+
+SCORE_FIELDS = ("effort", "importance", "urgency")
+LIST_FIELDS = ("size",) + SCORE_FIELDS
+YES_NO_ANY_FIELDS = ("well_specified", "split", "sliver")
+TEXT_FIELDS = ("agent", "vendor", "model", "reasoning", "note")
+ROW_FIELDS = LIST_FIELDS + YES_NO_ANY_FIELDS + TEXT_FIELDS
+# Per op: the required keys, then the optional ones. Every other key is refused.
+_OP_KEYS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+  "add": (("role",), ("ref",) + ROW_FIELDS),
+  "set": (("id",), ("role",) + ROW_FIELDS),
+  "remove": (("id",), ()),
+  "move": (("id",), ("before", "last")),
+  "rule-add": (("text",), ("ref",)),
+  "rule-edit": (("id", "text"), ()),
+  "rule-remove": (("id",), ()),
+}
+_RULE_OPS = ("rule-add", "rule-edit", "rule-remove")
+CHANGE_SET_KEYS = ("expect", "ops")
+
+
+@dataclass
+class RoleOp:
+  """One step of a change set. `problem` is set when its shape is wrong; it is then not run."""
+
+  op: str
+  args: dict[str, Any] = field(default_factory=dict)
+  ref: str | None = None
+  problem: str | None = None
+
+
+@dataclass
+class ChangeSet:
+  expect: str | None
+  ops: list[RoleOp]
+
+
+def _usage(message: str) -> StateError:
+  return StateError(message, code="usage")
+
+
+def parse_change_set(text: str) -> ChangeSet:
+  """Read the JSON text of a change set. A shape problem of the whole set raises `usage`.
+
+  A shape problem of one step does not raise: it is kept on the step so that every step's
+  problem can be reported together, in order, with the problems the values give.
+  """
+  try:
+    data = json.loads(text)
+  except ValueError as exc:
+    raise _usage(f"the change set is not JSON: {exc}") from None
+  if not isinstance(data, dict):
+    raise _usage('the change set must be one JSON object, {"expect": ..., "ops": [...]}')
+  unknown = [key for key in data if key not in CHANGE_SET_KEYS]
+  if unknown:
+    raise _usage(
+      f"the change set has unknown key(s): {', '.join(unknown)}; "
+      f"its keys are {', '.join(CHANGE_SET_KEYS)}"
+    )
+  expect = data.get("expect")
+  if expect is not None and not isinstance(expect, str):
+    raise _usage("expect must be a revision such as the one `relay-roles show --json` prints")
+  steps = data.get("ops")
+  if not isinstance(steps, list) or not steps:
+    raise _usage('the change set needs "ops": a non-empty list of steps')
+  refs: dict[str, str] = {}  # ref name -> "row" or "rule", for the refs defined so far
+  return ChangeSet(expect=expect, ops=[_parse_op(step, refs) for step in steps])
+
+
+def _parse_op(step: Any, refs: dict[str, str]) -> RoleOp:
+  if not isinstance(step, dict):
+    return RoleOp(op="", problem="a step must be a JSON object with an \"op\" key")
+  name = step.get("op")
+  if not isinstance(name, str) or name not in _OP_KEYS:
+    return RoleOp(op=str(name) if isinstance(name, str) else "", problem=(
+      f"unknown op {name!r}; the ops are {', '.join(_OP_KEYS)}" if name is not None
+      else f"a step needs an \"op\" key; the ops are {', '.join(_OP_KEYS)}"
+    ))
+  required, optional = _OP_KEYS[name]
+  op = RoleOp(op=name)
+  # A valid ref is taken even when the step has another problem, so a later `@NAME` does not
+  # report a second, derived problem.
+  ref = step.get("ref")
+  kind = "rule" if name in _RULE_OPS else "row"
+  if "ref" in step:
+    if not isinstance(ref, str) or not ref:
+      return _bad(op, '"ref" must be a non-empty name')
+    if ref in refs:
+      return _bad(op, f'"ref" {ref!r} is already used by an earlier step')
+    refs[ref] = kind
+    op.ref = ref
+  unknown = [key for key in step if key != "op" and key not in required + optional]
+  if unknown:
+    return _bad(op, f"{name} has unknown key(s): {', '.join(unknown)}")
+  missing = [key for key in required if key not in step]
+  if missing:
+    return _bad(op, f"{name} needs {', '.join(missing)}")
+  for key in required + optional:
+    if key not in step or key == "ref":
+      continue
+    value = step[key]
+    problem = _check_value(name, key, value, refs)
+    if problem:
+      return _bad(op, problem)
+    op.args[key] = _normalize(key, value)
+  if name == "move":
+    last = op.args.get("last", False)
+    if ("before" in op.args) == bool(last):
+      return _bad(op, 'move needs exactly one of "before" or "last": true')
+  return op
+
+
+def _bad(op: RoleOp, problem: str) -> RoleOp:
+  op.problem = problem
+  return op
+
+
+def _normalize(key: str, value: Any) -> Any:
+  if key in LIST_FIELDS and isinstance(value, str):
+    return []  # "any" clears the condition, as the flag does
+  return value
+
+
+def _check_value(op: str, key: str, value: Any, refs: dict[str, str]) -> str | None:
+  """Why `value` has the wrong type for `key`, or None. Whether it is a good value is `ops.py`'s."""
+  if key in ("id", "before"):
+    if not isinstance(value, str) or not value.strip():
+      return f'"{key}" must be an id'
+    if value.startswith("@"):
+      wanted = "rule" if op in _RULE_OPS else "row"
+      if refs.get(value[1:]) != wanted:
+        return f'"{key}" {value!r} names no earlier {wanted} step with that "ref"'
+    return None
+  if key == "last":
+    return None if isinstance(value, bool) else '"last" must be true or false'
+  if key in LIST_FIELDS:
+    if isinstance(value, str) and value.strip().casefold() == "any":
+      return None
+    if not isinstance(value, list):
+      return f'"{key}" must be a list, or "any" to clear it'
+    allowed = (str,) if key == "size" else (str, int)
+    if any(isinstance(n, bool) or not isinstance(n, allowed) for n in value):
+      return f'"{key}" must hold only {"text" if key == "size" else "numbers or text"}'
+    return None
+  if not isinstance(value, str):
+    return f'"{key}" must be text'
+  return None
 
 
 @dataclass

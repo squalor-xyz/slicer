@@ -17820,10 +17820,39 @@
       "id": "s443",
       "title": "Apply a change set to the relay role matrix in one atomic write",
       "short_title": "Relay roles apply",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "18d86b43-ff0f-47b4-af1d-6727b307a04a",
+          "kind": "",
+          "text": "**2026-11-03** — Review FAIL: Plan mode blocked writing /Users/jon/.local/state/ork/runs/ork-20261103-130954-d060/gate-3-attempt-2.md, so the whole report is in this message. Diff under review: the uncommitted working-tree diff of /Users/jon/code/squalor-xyz/slicer/.worktrees/s443 against HEAD 35dcc87. - Earlier blockers resolved with a proving test: yes. B1 is covered by tests/test_relay_roles.py:1386-1398. B2 is covered by tests/test_relay_roles.py:1367 and :1512. D is fixed at docs/commands.md:824. - No fix finding: NOT met. `PYTHONPATH=<worktree>/src python3 -m slicer --root <worktree> check` fails on s443 / Why. I re-...",
+          "created_at": "2026-11-03T14:50:19Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "f2665982-749e-46f9-a4b9-685c915295cb",
+          "kind": "",
+          "text": "**2026-11-04** — relay-roles apply implemented: atomic change sets with a revision guard (show --json revision, apply --file/--stdin/--dry-run, stale_revision). Full suite 3216 tests OK (1 skipped), slicer check and git diff --check clean, six mutations each turned a named test red, reviewer PASS including its scratch-project run of the add-then-move set.",
+          "created_at": "2026-11-04T02:10:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -17843,7 +17872,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -2670,15 +2670,31 @@ def roles_init(
   return [path], removed
 
 
-def role_add(
-  state: State, role: str, *, size: list[str] | None = None,
+@dataclass
+class _RoleChange:
+  """What one matrix edit did, with what its history entry records. No I/O produced it."""
+
+  op: str  # the history note: add, set, remove, move, rule-add, rule-edit or rule-remove
+  id: str
+  target: RoleRow | RoleRule
+  changed: bool = True
+  frm: str = ""
+  to: str = ""
+
+
+def _record_change(state: State, change: _RoleChange) -> None:
+  if change.changed:
+    _record_role(state, change.id, change.op, frm=change.frm, to=change.to)
+
+
+def _matrix_add(
+  matrix: RoleMatrix, role: str, *, size: list[str] | None = None,
   effort: list[str | int] | None = None, importance: list[str | int] | None = None,
   urgency: list[str | int] | None = None, well_specified: str | None = None,
   split: str | None = None, sliver: str | None = None, agent: str = "", vendor: str = "",
   model: str = "", reasoning: str = "", note: str = "",
-) -> RoleRow:
-  """Append a row with the next id. The counter only moves forward."""
-  matrix = _require_roles(state)
+) -> _RoleChange:
+  """Check a new row, then append it with the next id. Nothing changes if a check fails."""
   _check_role(role)
   when = RoleWhen(
     size=_parse_sizes(size or []),
@@ -2697,21 +2713,38 @@ def role_add(
   )
   matrix.next_row += 1
   matrix.rows.append(row)
+  return _RoleChange("add", row.id, row, to=role)
+
+
+def role_add(
+  state: State, role: str, *, size: list[str] | None = None,
+  effort: list[str | int] | None = None, importance: list[str | int] | None = None,
+  urgency: list[str | int] | None = None, well_specified: str | None = None,
+  split: str | None = None, sliver: str | None = None, agent: str = "", vendor: str = "",
+  model: str = "", reasoning: str = "", note: str = "",
+) -> RoleRow:
+  """Append a row with the next id. The counter only moves forward."""
+  change = _matrix_add(
+    _require_roles(state), role, size=size, effort=effort, importance=importance,
+    urgency=urgency, well_specified=well_specified, split=split, sliver=sliver, agent=agent,
+    vendor=vendor, model=model, reasoning=reasoning, note=note,
+  )
   state.save_roles()
-  _record_role(state, row.id, "add", to=role)
-  return row
+  _record_change(state, change)
+  assert isinstance(change.target, RoleRow)
+  return change.target
 
 
-def role_set(
-  state: State, row_id: str, *, role: str | None = None, size: list[str] | None = None,
+def _matrix_set(
+  matrix: RoleMatrix, row_id: str, *, role: str | None = None, size: list[str] | None = None,
   effort: list[str | int] | None = None, importance: list[str | int] | None = None,
   urgency: list[str | int] | None = None, well_specified: str | None = None,
   split: str | None = None, sliver: str | None = None, agent: str | None = None,
   vendor: str | None = None, model: str | None = None, reasoning: str | None = None,
   note: str | None = None,
-) -> tuple[RoleRow, list[str]]:
-  """Change only the fields given. Returns the row and the names that changed."""
-  row = _require_roles(state).row(row_id)
+) -> tuple[_RoleChange, list[str]]:
+  """Check and apply only the fields given. Returns the change and the names that changed."""
+  row = matrix.row(row_id)
   if role is not None:
     _check_role(role)
   when = RoleWhen.from_dict(row.when.to_dict())
@@ -2739,32 +2772,59 @@ def role_set(
     name for name, value in when.to_dict().items() if value != row.when.to_dict()[name]
   ]
   if not changed and not when_changed:
-    return row, []
+    return _RoleChange("set", row.id, row, changed=False), []
   for name in changed:
     setattr(row, name, wanted[name])
   row.when = when
   changed += when_changed
-  state.save_roles()
-  _record_role(state, row.id, "set", to=",".join(changed))
-  return row, changed
+  return _RoleChange("set", row.id, row, to=",".join(changed)), changed
+
+
+def role_set(
+  state: State, row_id: str, *, role: str | None = None, size: list[str] | None = None,
+  effort: list[str | int] | None = None, importance: list[str | int] | None = None,
+  urgency: list[str | int] | None = None, well_specified: str | None = None,
+  split: str | None = None, sliver: str | None = None, agent: str | None = None,
+  vendor: str | None = None, model: str | None = None, reasoning: str | None = None,
+  note: str | None = None,
+) -> tuple[RoleRow, list[str]]:
+  """Change only the fields given. Returns the row and the names that changed."""
+  change, names = _matrix_set(
+    _require_roles(state), row_id, role=role, size=size, effort=effort, importance=importance,
+    urgency=urgency, well_specified=well_specified, split=split, sliver=sliver, agent=agent,
+    vendor=vendor, model=model, reasoning=reasoning, note=note,
+  )
+  if change.changed:
+    state.save_roles()
+    _record_change(state, change)
+  assert isinstance(change.target, RoleRow)
+  return change.target, names
+
+
+def _matrix_remove(matrix: RoleMatrix, row_id: str) -> _RoleChange:
+  row = matrix.row(row_id)
+  matrix.rows.remove(row)
+  return _RoleChange("remove", row.id, row, to=row.role)
 
 
 def role_remove(state: State, row_id: str) -> RoleRow:
-  matrix = _require_roles(state)
-  row = matrix.row(row_id)
-  matrix.rows.remove(row)
+  change = _matrix_remove(_require_roles(state), row_id)
   state.save_roles()
-  _record_role(state, row.id, "remove", to=row.role)
-  return row
+  _record_change(state, change)
+  assert isinstance(change.target, RoleRow)
+  return change.target
 
 
-def role_move(
-  state: State, row_id: str, *, before: str | None = None, last: bool = False,
-) -> tuple[RoleRow, bool]:
-  """Place a row before another, or at the end. Returns the row and whether it moved."""
+def _check_move_choice(before: str | None, last: bool) -> None:
   if (before is None) == (not last):
     raise StateError("choose exactly one of --before or --last", code="usage")
-  matrix = _require_roles(state)
+
+
+def _matrix_move(
+  matrix: RoleMatrix, row_id: str, *, before: str | None = None, last: bool = False,
+) -> _RoleChange:
+  """Place a row before another, or at the end. `changed` says whether it moved."""
+  _check_move_choice(before, last)
   row = matrix.row(row_id)
   anchor = matrix.row(before) if before is not None else None
   if anchor is not None and anchor.id == row.id:
@@ -2774,47 +2834,186 @@ def role_move(
   at = len(rest) if anchor is None else [r.id for r in rest].index(anchor.id)
   rest.insert(at, row)
   if [r.id for r in rest] == old_order:
-    return row, False
+    return _RoleChange("move", row.id, row, changed=False)
   matrix.rows = rest
-  state.save_roles()
-  _record_role(
-    state, row.id, "move", frm=str(old_order.index(row.id) + 1),
+  return _RoleChange(
+    "move", row.id, row, frm=str(old_order.index(row.id) + 1),
     to=str([r.id for r in rest].index(row.id) + 1),
   )
-  return row, True
 
 
-def rule_add(state: State, text: str) -> RoleRule:
-  matrix = _require_roles(state)
+def role_move(
+  state: State, row_id: str, *, before: str | None = None, last: bool = False,
+) -> tuple[RoleRow, bool]:
+  """Place a row before another, or at the end. Returns the row and whether it moved."""
+  _check_move_choice(before, last)  # before the matrix is looked up, as a usage error is
+  change = _matrix_move(_require_roles(state), row_id, before=before, last=last)
+  if change.changed:
+    state.save_roles()
+    _record_change(state, change)
+  assert isinstance(change.target, RoleRow)
+  return change.target, change.changed
+
+
+def _matrix_rule_add(matrix: RoleMatrix, text: str) -> _RoleChange:
   text = _rule_text(text)
   rule = RoleRule(
     id=_allocate_role_id("u", matrix.next_rule, {r.id for r in matrix.rules}), text=text,
   )
   matrix.next_rule += 1
   matrix.rules.append(rule)
+  return _RoleChange("rule-add", rule.id, rule)
+
+
+def rule_add(state: State, text: str) -> RoleRule:
+  change = _matrix_rule_add(_require_roles(state), text)
   state.save_roles()
-  _record_role(state, rule.id, "rule-add")
-  return rule
+  _record_change(state, change)
+  assert isinstance(change.target, RoleRule)
+  return change.target
+
+
+def _matrix_rule_edit(matrix: RoleMatrix, rule_id: str, text: str) -> _RoleChange:
+  rule = matrix.rule(rule_id)
+  text = _rule_text(text)
+  if text == rule.text:
+    return _RoleChange("rule-edit", rule.id, rule, changed=False)
+  rule.text = text
+  return _RoleChange("rule-edit", rule.id, rule)
 
 
 def rule_edit(state: State, rule_id: str, text: str) -> tuple[RoleRule, bool]:
-  rule = _require_roles(state).rule(rule_id)
-  text = _rule_text(text)
-  if text == rule.text:
-    return rule, False
-  rule.text = text
-  state.save_roles()
-  _record_role(state, rule.id, "rule-edit")
-  return rule, True
+  change = _matrix_rule_edit(_require_roles(state), rule_id, text)
+  if change.changed:
+    state.save_roles()
+    _record_change(state, change)
+  assert isinstance(change.target, RoleRule)
+  return change.target, change.changed
+
+
+def _matrix_rule_remove(matrix: RoleMatrix, rule_id: str) -> _RoleChange:
+  rule = matrix.rule(rule_id)
+  matrix.rules.remove(rule)
+  return _RoleChange("rule-remove", rule.id, rule)
 
 
 def rule_remove(state: State, rule_id: str) -> RoleRule:
-  matrix = _require_roles(state)
-  rule = matrix.rule(rule_id)
-  matrix.rules.remove(rule)
+  change = _matrix_rule_remove(_require_roles(state), rule_id)
   state.save_roles()
-  _record_role(state, rule.id, "rule-remove")
-  return rule
+  _record_change(state, change)
+  assert isinstance(change.target, RoleRule)
+  return change.target
+
+
+@dataclass
+class RolesApplied:
+  """The outcome of a change set: what each step did, and the matrix it leaves."""
+
+  dry_run: bool
+  changed: bool
+  revision_before: str
+  revision: str
+  steps: list[dict[str, object]]
+  rows: list[dict[str, object]]
+  rules: list[dict[str, object]]
+
+  def to_dict(self) -> dict[str, object]:
+    return {
+      "dry_run": self.dry_run,
+      "changed": self.changed,
+      "revision_before": self.revision_before,
+      "revision": self.revision,
+      "steps": self.steps,
+      "rows": self.rows,
+      "rules": self.rules,
+    }
+
+
+def _run_role_op(matrix: RoleMatrix, step: roles.RoleOp, ids: dict[str, str]) -> _RoleChange | None:
+  """Run one step on the copy. None when it names a ref whose `add` was itself refused."""
+  args = dict(step.args)
+  for key in ("id", "before"):
+    value = args.get(key)
+    if isinstance(value, str) and value.startswith("@"):
+      if value[1:] not in ids:
+        return None
+      args[key] = ids[value[1:]]
+  fields = {k: v for k, v in args.items() if k in roles.ROW_FIELDS}
+  if step.op == "add":
+    return _matrix_add(matrix, args["role"], **fields)
+  if step.op == "set":
+    return _matrix_set(matrix, args["id"], role=args.get("role"), **fields)[0]
+  if step.op == "remove":
+    return _matrix_remove(matrix, args["id"])
+  if step.op == "move":
+    return _matrix_move(
+      matrix, args["id"], before=args.get("before"), last=bool(args.get("last", False)),
+    )
+  if step.op == "rule-add":
+    return _matrix_rule_add(matrix, args["text"])
+  if step.op == "rule-edit":
+    return _matrix_rule_edit(matrix, args["id"], args["text"])
+  return _matrix_rule_remove(matrix, args["id"])
+
+
+def roles_apply(
+  state: State, change_set: roles.ChangeSet, *, dry_run: bool = False,
+) -> RolesApplied:
+  """Check every step of a change set against a copy of the matrix; then save it once.
+
+  All-or-nothing, like `import`: every problem is collected and the whole set refused, each
+  naming its step (`ops[3]: ...`), and the refusal carries the code of the first one. A set
+  that names a stale `expect` is refused before any step runs. A set whose steps all change
+  nothing saves nothing. A dry run stops before the save and records nothing; the caller
+  takes no lock for it.
+  """
+  matrix = _require_roles(state)
+  before = roles.revision(matrix)
+  if change_set.expect is not None and change_set.expect != before:
+    raise StateError(
+      f"the matrix is at revision {before}, not {change_set.expect}; it changed after it was "
+      "read. Run `slicer relay-roles show --json` again and rebuild the change set. "
+      "Nothing was written.",
+      code="stale_revision",
+    )
+  work = RoleMatrix.from_dict(matrix.to_dict())
+  ids: dict[str, str] = {}  # ref name -> the id the step that named it was given
+  problems: list[tuple[str, str]] = []
+  done: list[tuple[roles.RoleOp, _RoleChange]] = []
+  for i, step in enumerate(change_set.ops):
+    if step.problem:
+      problems.append(("usage", f"ops[{i}]: {step.problem}"))
+      continue
+    try:
+      change = _run_role_op(work, step, ids)
+    except StateError as exc:
+      problems.append((exc.code, f"ops[{i}]: {exc}"))
+      continue
+    if change is None:
+      continue  # its cause is reported at the step that failed
+    if step.ref:
+      ids[step.ref] = change.id
+    done.append((step, change))
+  if problems:
+    noun = "problem" if len(problems) == 1 else "problems"
+    raise StateError(
+      f"the change set has {len(problems)} {noun}; nothing was written:\n"
+      + "\n".join(f"  {message}" for _, message in problems),
+      code=problems[0][0],
+    )
+  changed = any(change.changed for _, change in done)
+  result = RolesApplied(
+    dry_run=dry_run, changed=changed, revision_before=before, revision=roles.revision(work),
+    steps=[{"op": step.op, "id": change.id, "changed": change.changed} for step, change in done],
+    rows=[row.to_dict() for row in work.rows], rules=[rule.to_dict() for rule in work.rules],
+  )
+  if dry_run or not changed:
+    return result
+  state.roles = work
+  state.save_roles()
+  for _, change in done:
+    _record_change(state, change)
+  return result
 
 
 # ---- relay run ledger -----------------------------------------------------

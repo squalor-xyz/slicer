@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- *Proposed.* `relay-roles apply (--file PATH | --stdin) [--dry-run]` applies a JSON change set of the existing edit verbs (`add`, `set`, `remove`, `move`, `rule-add`, `rule-edit`, `rule-remove`) to the relay role matrix in one atomic write. Every step is checked against a copy of the matrix and all problems are reported by step (`ops[3]: ...`) before anything is written; a step can name an earlier `add` as `@NAME`; the history gets the entry each single verb writes; `--dry-run` takes no lock and writes nothing. `relay-roles show --json` gains `revision`, and a change set that names it as `expect` is refused with the new code `stale_revision` if the matrix has changed since. The single verbs, the file schema and the merge driver are unchanged (s443).
+
 ### Changed
 
 - `cli.py` is split into modules and `ops.py`'s read-only queries moved out of it, with no change in behaviour, output bytes or error codes: `cli_parser.py` builds the parser, `cli_common.py` holds the shared helpers, and the handlers sit in `cli_ai.py`, `cli_relay.py`, `cli_setup.py`, `cli_prose.py`, `cli_track.py`, `cli_queue.py` and `cli_report.py`. The ranking, readiness and removal-preview queries are now in `queries.py`, which a test keeps free of writers. `cli.py` is still the entry point, and the code-location warning still names its directory (s311).

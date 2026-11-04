@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-431 items · — 23 · done 396 · retired 12
+431 items · — 22 · done 396 · retired 12 · review 1
 
 v1.20.0 release
 
@@ -54,7 +54,7 @@ v1.20.0 release
 | 19 | [s432](slices/s432.md) | Remove stray root files | S | 1 | slicer | s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done) · discovered from s415 | — |
 | 20 | [s433](slices/s433.md) | Stats: fail-phase gate is a FAIL | S | 1 | slicer | s408 review 2026-10-30, later note: stats counts a gate FAIL by verdict, else by proxy (a fix round follows); a gate step closed with phase fail and no verdict is not counted unless a fix round follows · discovered from s408 | — |
 | 21 | [s435](slices/s435.md) | Gate role FAIL dedup | S | 1 | ai | s424 review 2026-10-30, later nit: the new `gate` Roles text "sends a FAIL back to the implementer" repeats the Gate section's "FAIL goes back to the implementer and then the gate again" · discovered from s424 | — |
-| 22 | [s443](slices/s443.md) | Relay roles apply | M | 2 | slicer | ork owner request 2026-11-02: unify settings across ork, slicer and adj; a tool sets up the matrix per project through slicer's own commands | — |
+| 22 | [s443](slices/s443.md) | Relay roles apply | M | 2 | slicer | ork owner request 2026-11-02: unify settings across ork, slicer and adj; a tool sets up the matrix per project through slicer's own commands | review |
 | 23 | [s444](slices/s444.md) | Relay roles replace | M | 2 | slicer | ork owner answer 2026-11-02 (interactive): the apply form also takes a complete matrix to replace the current one | — |
 
 ---
