@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-435 items · — 25 · done 397 · retired 12 · review 1
+435 items · — 25 · done 398 · retired 12
 
 v1.20.0 release
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s313](slices/s313.md) | State writes survive a crash | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 6, 2026-10-15 | review |
+| 1 | [s313](slices/s313.md) | State writes survive a crash | S | 1 | slicer | research/go-rewrite-evaluation.md, code review 6, 2026-10-15 | done |
 | 2 | [s368](slices/s368.md) | Lane lines drop cells in order | S | 1 | slicer | s356 relay 2026-10-18: lane headers and step lines (`_fit`, tui.py) still skip a cell that does not fit and keep later ones, against docs/tui.md's "drops cells from the right, whole" | — |
 | 3 | [s370](slices/s370.md) | Lazy loading follow-ups | S | 1 | slicer | s361 relay 2026-10-18: `vcs.move` in move_slice/commit_stage raises a raw OS error when the source file is gone; the `expects_body` closure keeps the load-time Index after apply_outline publish or a TUI reload; tests/test_store_lazy.py:150 comment is stale; Index.get is a linear scan per miss | — |
 | 4 | [s371](slices/s371.md) | Queue prose rows align past 999 | S | 1 | slicer | s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long "left out:" notice has no cap | — |

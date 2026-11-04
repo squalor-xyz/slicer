@@ -11398,7 +11398,7 @@
       "id": "s313",
       "title": "State writes survive a crash",
       "short_title": "State writes survive a crash",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
