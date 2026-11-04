@@ -14186,10 +14186,25 @@
       "id": "s368",
       "title": "Relay board lane and step lines drop cells from the right, whole",
       "short_title": "Lane lines drop cells in order",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c623322e-b3d2-4538-b401-618aa0c7a59a",
+          "kind": "",
+          "text": "**2026-11-04** — Lane headers and step lines drop whole cells from the right on a narrow board: the lane title and freshness lines, the orchestrator row, the step rows and the other row now pass ordered=True, so no later cell shows beside a dropped one. Wide layouts are unchanged. Both new tests and the full suite pass (3224 passed, 0 failed), slicer check passes, and each new assertion's mutation went red for the right reason.",
+          "created_at": "2026-11-04T14:35:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14209,7 +14224,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

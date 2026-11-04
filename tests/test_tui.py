@@ -1952,6 +1952,45 @@ class RelayBoardLinesTests(unittest.TestCase):
       self.assertEqual(line_with(lines, "ended 2m04s ago") is not None, width == 80)
       self.assertTrue(any(line.text.endswith("...") for line in lines))
 
+  def test_BoardLines_LaneHeaderNarrow_NoCellAfterDropped(self) -> None:
+    run = nested_run(board_step("2", "implementer", parent="1"))
+    run.worktree = "/work/s1"
+    wide = line_with(tui.board_lines([run], 0, NOW, 100), "last heard")
+    self.assertEqual(wide.text, "  last heard 2m04s ago  orchestrator sonnet/high  wt s1")
+    # At 29 the orchestrator cell (24) does not fit beside the freshness cell (22). The worktree
+    # cell after it (5) would fit, but cells drop from the right, whole, so it must not show.
+    narrow = line_with(tui.board_lines([run], 0, NOW, 29), "last heard")
+    self.assertEqual(narrow.text, "  last heard 2m04s ago")
+    # The first line drops the same way: at 12 the state cell (6) does not fit beside the slice
+    # id (6), and the elapsed cell after it (2) must not show.
+    started = nested_run(board_step("2", "implementer", parent="1"))
+    started.begun_at = "2026-10-14T12:12:00Z"
+    self.assertEqual(tui.board_lines([started], 0, NOW, 100)[0].text, "● s283  active  4s")
+    self.assertEqual(tui.board_lines([started], 0, NOW, 12)[0].text, "● s283")
+
+  def test_BoardLines_StepLineNarrow_NoCellAfterDropped(self) -> None:
+    run = board_run(board_step("1", "reviewer", agent="a-long-agent-name", vendor="", model="sonnet"))
+    wide = row_for_role(tui.board_lines([run], 0, NOW, 100), "reviewer")
+    self.assertEqual(wide, "  [|] reviewer     2m04s  a-long-agent-name  sonnet high")
+    # At 40 the agent cell (43 beside the elapsed cell) does not fit. The model cell after it (37)
+    # would fit, but cells drop from the right, whole, so it must not show beside the dropped agent.
+    narrow = row_for_role(tui.board_lines([run], 0, NOW, 40), "reviewer")
+    self.assertEqual(narrow, "  [|] reviewer     2m04s")
+    # The orchestrator row: at 32 the marker (3) does not fit beside its role cell (28), and the
+    # elapsed cell after it (2) must not show.
+    orchestrated = board_run(board_step("1", "orchestrator", begun="2026-10-14T12:12:00Z"))
+    self.assertEqual(line_with(tui.board_lines([orchestrated], 0, NOW, 100), "└ orchestrator").text,
+                     "  └ orchestrator sonnet/high  [|]  4s")
+    self.assertEqual(line_with(tui.board_lines([orchestrated], 0, NOW, 32), "└ orchestrator").text,
+                     "  └ orchestrator sonnet/high")
+    # The `other:` line: at 20 the first role cell (15) does not fit beside `other:` (8), and the
+    # second cell (8), which would fit after it, must not show.
+    split = board_run(board_step("1", "longpart", begun="2026-10-14T12:12:00Z"),
+                      board_step("2", "p", begun="2026-10-14T12:12:00Z"))
+    self.assertEqual(line_with(tui.board_lines([split], 0, NOW, 100), "other:").text,
+                     "  other:  longpart [|] 4s  p [|] 4s")
+    self.assertEqual(line_with(tui.board_lines([split], 0, NOW, 20), "other:").text, "  other:")
+
   def test_BoardLines_NoRuns_SaysNothingRunningAndNamesRelayRun(self) -> None:
     lines = tui.board_lines([], 0, NOW, 80)
     text = board_text(lines)
@@ -1999,8 +2038,8 @@ class RelayBoardLinesTests(unittest.TestCase):
 
 class PlaceCellsTests(unittest.TestCase):
   def test_Place_DefaultDropsACellThatDoesNotFit_KeepsALaterOneThatFits(self) -> None:
-    # Lane headers and step lines rely on this: a cell that does not fit is skipped,
-    # and a later one that fits still goes in.
+    # The default keeps a later cell that fits after one that does not. Board lines pass
+    # `ordered`, so this rule is no longer theirs.
     self.assertEqual(tui._place(["a", "bbbb", "cc"], 5), ("a  cc", {0: 0, 2: 3}))
 
   def test_Place_Ordered_DropsEveryCellAfterOneThatDoesNotFit(self) -> None:

@@ -30,6 +30,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - `ai hooks --install --force` removes only the other slicer handlers from a conflicting group, keeps its non-slicer handlers, and never adds a second snippet group, so repeating it changes nothing. A directory at `.claude/settings.json` is refused with `state` (exit 2, nothing written) instead of failing with `io`. The guard's Grep `glob` check is a shorter conservative rule; it may now deny a few odd globs such as `*.[!j]son` that it allowed before (s442).
 
+- Relay board lane headers and step lines drop a cell that does not fit, whole, and no longer show a later, shorter cell beside it, as `docs/tui.md` describes for every board line. A board wide enough for every cell is unchanged (s368).
+
 ## [1.18.0] - 2026-11-02
 
 ### Added
