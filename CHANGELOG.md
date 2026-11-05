@@ -30,6 +30,9 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 - `ai hooks --install --force` removes only the other slicer handlers from a conflicting group, keeps its non-slicer handlers, and never adds a second snippet group, so repeating it changes nothing. A directory at `.claude/settings.json` is refused with `state` (exit 2, nothing written) instead of failing with `io`. The guard's Grep `glob` check is a shorter conservative rule; it may now deny a few odd globs such as `*.[!j]son` that it allowed before (s442).
 
+- Relay board lane headers and step lines drop a cell that does not fit, whole, and no longer show a later, shorter cell beside it, as `docs/tui.md` describes for every board line. A board wide enough for every cell is unchanged (s368).
+- A slice move whose file vanished after the roadmap loaded, in `move_slice` and in a staged change's moves, reports `corrupt` with the file's path, as a read of that file already does, instead of a raw OS error. A lookup for an id the index marks `has_slice` reads the State's current index, so a miss after a publish or a TUI reload settles it with a full load; the test comment that said every miss does one is corrected (s370).
+
 ## [1.18.0] - 2026-11-02
 
 ### Added

@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 450,
+  "next_id": 451,
   "preamble": "",
   "passes": [
     {
@@ -14186,10 +14186,25 @@
       "id": "s368",
       "title": "Relay board lane and step lines drop cells from the right, whole",
       "short_title": "Lane lines drop cells in order",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c623322e-b3d2-4538-b401-618aa0c7a59a",
+          "kind": "",
+          "text": "**2026-11-04** — Lane headers and step lines drop whole cells from the right on a narrow board: the lane title and freshness lines, the orchestrator row, the step rows and the other row now pass ordered=True, so no later cell shows beside a dropped one. Wide layouts are unchanged. Both new tests and the full suite pass (3224 passed, 0 failed), slicer check passes, and each new assertion's mutation went red for the right reason.",
+          "created_at": "2026-11-04T14:35:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14209,7 +14224,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -14261,7 +14276,7 @@
       "id": "s370",
       "title": "Lazy loading follow-ups: moves, index staleness and a stale comment",
       "short_title": "Lazy loading follow-ups",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -14271,6 +14286,20 @@
           "text": "**2026-11-03** — Owner 2026-11-03 (ork session, interactive): the Index.get linear scan (src/slicer/model.py:736-740; CatalogRecord.get at :584-588 has the same shape) stays recorded in this slice's Findings and is not fixed in this slice's relay: the implementer was told to leave src/slicer/model.py alone. No separate slice was filed. Fixing it later means a keyed lookup in Index (and CatalogRecord.get); decide then whether to fold it here or file it.",
           "created_at": "2026-11-03T15:18:40Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "0770027c-7448-43db-af52-cb96f732421b",
+          "kind": "",
+          "text": "**2026-11-04** — Verified in the worktree: a slice move whose file vanished after the roadmap loaded reports corrupt with the file path, from move_slice and from staged moves (store.py _relocate). The has_slice miss guard in load() reads the State's current index, so a miss after an outline publish or TUI reload does its full load. The stale test comment at tests/test_store_lazy.py:150 is corrected, and the CHANGELOG Fixed entry is added. Full suite 3227 passed, 0 failed (1 skipped, pre-existing); slicer check passed; each new assertion went red under its own mutation. Added a guard test for the src.exists() re-raise branch. Changes are uncommitted for ork to commit.",
+          "created_at": "2026-11-04T15:53:54Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -14299,7 +14328,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -18080,29 +18109,57 @@
     },
     {
       "id": "s449",
-      "title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
-      "short_title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
+      "title": "Release target (was pass) and an owner-set wave inside it",
+      "short_title": "Release target (was pass) and an owner-set wave inside it",
       "status": "open",
       "has_slice": false,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
-        "size": "M",
+        "size": "L",
         "flags": [],
         "trees": [],
         "trees_literal": false,
-        "findings": "Owner 2026-11-04 (ork S289 Q3, accepted): ork's landing paused on a merge conflict in a slice's own .slicer/slices/U26.json (run-state and notes edited on both the slice branch and the base). slicer ships merge drivers for log.jsonl, index.json, render/* and relay-roles.json but none for slices/*.json; the owner resolved it by hand (took the base copy, git add, ork retry). Wanted: a slicer-owned driver that merges notes by id and sections by heading, installed with the other drivers. Not verified: which fields conflicted on U26, and whether taking one side can drop a note that exists only on the other.",
+        "findings": "Owner 2026-11-04 (interview in the ork session): rename pass to release target, and add a wave so mini slices can target a version release and that release can be split into waves to execute. Owner decisions: (1) the stored wave is an owner label, a number within an item's release target, like pass today; plan-parallel (s376, s377) keeps computing what can run in parallel from dependencies and Files paths and works inside one wave; docs must name the two apart (planned wave vs parallel set). (2) The release target is the main name (flag --release-target, JSON field release_target, by_release_target in stats); --pass, the pass field and by_pass keep working as aliases with a deprecation note; existing keys (v1.1, v1.20) stay unchanged. Spec step to confirm: the flag name for the wave (for example --wave N), how list, move, render, roadmap and TUI group by release target then wave, whether items with no wave sort last, and how plan-parallel treats an item whose dependency sits in a later wave (flag it). Acceptance: (1) slicer add/set accept --release-target and --wave N; --pass still works and prints one deprecation note; (2) JSON output carries release_target and wave, and still carries pass as an alias; (3) list, roadmap render and the TUI group by release target, then wave, and show the wave; (4) plan-parallel output is unchanged for items without a wave, and flags an item scheduled in an earlier wave than its dependency; (5) existing .slicer data loads unchanged, with a test that loads a fixture holding only pass; (6) slicer check is clean and the docs and ai instructions use the new words. Follow-up: ork reads release target and wave (see the ork slice filed with this one).",
         "discovered_from": "",
         "parent": "",
         "cites": [],
-        "key": "",
+        "key": "release-target-and-wave",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 3,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s450",
+      "title": "Keyed lookup for Index.get and CatalogRecord.get",
+      "short_title": "Keyed lookup for Index.get and CatalogRecord.get",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "s370's reviewer: Index.get is a linear scan per miss, and CatalogRecord.get the same; left out of s370 (owner note 2026-11-03). Change: build a dict keyed by item id once per Index/CatalogRecord (invalidated when items change) and use it in get. Acceptance: (1) get returns the same item or None as before for every existing caller, with a test for hit, miss and an id added after the first get; (2) a test shows a miss no longer scans all items (counts comparisons or accesses); (3) the lazy-load behavior of s312 and s361 is unchanged and their tests pass; (4) python3 -m unittest discover -s tests -t tests and slicer check pass.",
+        "discovered_from": "s370",
+        "parent": "",
+        "cites": [],
+        "key": "index-get-keyed-lookup",
         "pass": "v1.20",
         "group": "",
         "reason": "",
         "importance": 1,
         "urgency": 1,
-        "effort": 2,
+        "effort": 1,
         "attempts": 0
       }
     }

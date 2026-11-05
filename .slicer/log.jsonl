@@ -2635,4 +2635,13 @@
 {"when": "2026-11-04T11:48:35Z", "item": "s447", "action": "add", "from": "", "to": "open", "note": "Tests: stub fsync outside tests/test_jsonio.py"}
 {"when": "2026-11-04T13:02:28Z", "item": "s448", "action": "add", "from": "", "to": "open", "note": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite"}
 {"when": "2026-11-04T13:23:44Z", "item": "s313", "action": "status", "from": "review", "to": "done", "note": "Landed s313", "by": "Jon Robbins"}
-{"when": "2026-11-04T20:00:05Z", "item": "s449", "action": "add", "from": "", "to": "open", "note": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)"}
+{"when": "2026-11-04T13:38:35Z", "item": "s368", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-04T14:35:00Z", "item": "s368", "action": "note", "from": "", "to": "", "note": "Lane headers and step lines drop whole cells from the right ", "by": "Jon Robbins"}
+{"when": "2026-11-04T14:35:01Z", "item": "s368", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-04T14:35:14Z", "item": "s368", "action": "status", "from": "review", "to": "done", "note": "Landed s368", "by": "Jon Robbins"}
+{"when": "2026-11-03T14:50:10Z", "item": "s370", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-04T15:53:54Z", "item": "s370", "action": "note", "from": "", "to": "", "note": "Verified in the worktree: a slice move whose file vanished a", "by": "Jon Robbins"}
+{"when": "2026-11-04T15:53:56Z", "item": "s370", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-04T14:51:50Z", "item": "s449", "action": "add", "from": "", "to": "open", "note": "Release target (was pass) and an owner-set wave inside it"}
+{"when": "2026-11-04T15:25:46Z", "item": "s450", "action": "add", "from": "", "to": "open", "note": "Keyed lookup for Index.get and CatalogRecord.get"}
+{"when": "2026-11-04T16:03:53Z", "item": "s370", "action": "status", "from": "review", "to": "done", "note": "Landed s370", "by": "Jon Robbins"}

@@ -1555,9 +1555,12 @@ def _parse_stamp(text: str) -> datetime:
   return datetime.fromisoformat(text)
 
 
-def _fit(cells: list[str], width: int) -> str:
-  """Join cells with two spaces. The first is clipped to fit; a later one that does not fit is dropped."""
-  return _place(cells, width)[0]
+def _fit(cells: list[str], width: int, ordered: bool = False) -> str:
+  """Join cells with two spaces. The first is clipped to fit; a later one that does not fit is dropped.
+
+  With `ordered`, the first one that does not fit drops every later one too (see `_place`).
+  """
+  return _place(cells, width, ordered)[0]
 
 
 def _place(cells: list[str], width: int, ordered: bool = False) -> tuple[str, dict[int, int]]:
@@ -1658,7 +1661,7 @@ def _lane_header(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles
   head = f"{'●' if live else '~'} {', '.join(run.items)}"
   tail = [run.state, elapsed_text(run.begun_at, now if live else _parse_stamp(run.updated_at))]
   title = _title_cell(head, titles.get(run.items[0], "") if run.items else "", tail, width)
-  lines = [PanelLine(_fit([head, title] + tail, width), role="heading" if live else "dim")]
+  lines = [PanelLine(_fit([head, title] + tail, width, ordered=True), role="heading" if live else "dim")]
   orchestrator = lane.get("orchestrator")
   worktree = run.worktree.rstrip("/").rsplit("/", 1)[-1]
   # The freshness comes first: on a narrow screen it is the cell worth keeping.
@@ -1675,7 +1678,7 @@ def _lane_header(run: relayrun.Run, lane: dict[str, list[relayrun.Step]], titles
     role = "started"
   else:
     role = "dim"
-  lines.append(PanelLine(_fit(cells, width), role=role))
+  lines.append(PanelLine(_fit(cells, width, ordered=True), role=role))
   return lines
 
 
@@ -1739,7 +1742,8 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
   pipeline with its round, and a row per role, under the orchestrator when the run has one.
   Ended summaries use `statuses` (item id to configured label) and show a check only when
   every item's label equals the configured `done_label` and the run passed.
-  `width` is the cells available. A row drops a cell that does not fit rather than cutting it.
+  `width` is the cells available. A row drops whole cells from the first one that does not fit,
+  rather than cutting it.
   Only a running step in an active run animates; a stale lane is dimmed throughout, bar the
   freshness line, which turns to the error role.
   """
@@ -1789,7 +1793,7 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
         f"  └ orchestrator {_model_effort(step)}".rstrip(), f"[{marker}]",
         *_waiting_cells(step, now),
         _step_elapsed(step, run, now),
-      ], width), role=role if live else "dim"))
+      ], width, ordered=True), role=role if live else "dim"))
     for at, name in enumerate(names):
       last = at == len(names) - 1
       # A row under the orchestrator hangs on a tree; a flat run keeps its plain indent.
@@ -1812,7 +1816,7 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
         f"{subagents} subagent{'s' if subagents != 1 else ''}" if subagents else "",
         step.agent,
         f"{model} {step.reasoning}".strip(),
-      ], width), role=role))
+      ], width, ordered=True), role=role))
       if step.task and not (name == "gate" and step.phase == "fail"):  # the FAIL line carries it
         lines.append(PanelLine(_ellipsis(f"{below}{step.task}", width), role=role))
       if name == "gate":
@@ -1823,7 +1827,7 @@ def board_lines(runs: list[relayrun.Run], tick: int, now: datetime, width: int,
       for step in others:
         marker, _ = _marker(step, run, tick)
         cells.append(f"{step.role} [{marker}] {_step_elapsed(step, run, now)}")
-      lines.append(PanelLine(_fit(cells, width), role=dim))
+      lines.append(PanelLine(_fit(cells, width, ordered=True), role=dim))
   return lines
 
 
