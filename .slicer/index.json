@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 451,
+  "next_id": 452,
   "preamble": "",
   "passes": [
     {
@@ -18160,6 +18160,34 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s451",
+      "title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
+      "short_title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "Owner 2026-11-04 (ork S289 Q3, accepted): ork's landing paused on a merge conflict in a slice's own .slicer/slices/U26.json (run-state and notes edited on both the slice branch and the base). slicer ships merge drivers for log.jsonl, index.json, render/* and relay-roles.json but none for slices/*.json; the owner resolved it by hand (took the base copy, git add, ork retry). Wanted: a slicer-owned driver that merges notes by id and sections by heading, installed with the other drivers. Not verified: which fields conflicted on U26, and whether taking one side can drop a note that exists only on the other.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 1,
+        "urgency": 1,
+        "effort": 2,
         "attempts": 0
       }
     }

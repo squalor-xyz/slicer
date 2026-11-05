@@ -2645,3 +2645,4 @@
 {"when": "2026-11-04T14:51:50Z", "item": "s449", "action": "add", "from": "", "to": "open", "note": "Release target (was pass) and an owner-set wave inside it"}
 {"when": "2026-11-04T15:25:46Z", "item": "s450", "action": "add", "from": "", "to": "open", "note": "Keyed lookup for Index.get and CatalogRecord.get"}
 {"when": "2026-11-04T16:03:53Z", "item": "s370", "action": "status", "from": "review", "to": "done", "note": "Landed s370", "by": "Jon Robbins"}
+{"when": "2026-11-05T15:51:04Z", "item": "s451", "action": "add", "from": "", "to": "open", "note": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)"}
