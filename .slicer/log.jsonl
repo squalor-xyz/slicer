@@ -2647,3 +2647,4 @@
 {"when": "2026-11-04T16:03:53Z", "item": "s370", "action": "status", "from": "review", "to": "done", "note": "Landed s370", "by": "Jon Robbins"}
 {"when": "2026-11-05T15:51:04Z", "item": "s451", "action": "add", "from": "", "to": "open", "note": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)"}
 {"when": "2026-11-06T04:17:00Z", "item": "s452", "action": "add", "from": "", "to": "open", "note": "check: a backtick slicer command ends at the first shell operator"}
+{"when": "2026-11-06T04:30:09Z", "item": "s446", "action": "promote", "from": "", "to": "", "note": ""}

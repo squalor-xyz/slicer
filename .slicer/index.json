@@ -18028,7 +18028,7 @@
       "title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
       "short_title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,

@@ -1,0 +1,41 @@
+{
+  "id": "s446",
+  "title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
+  "lead": [
+    "An advisory, never a block: `slicer check` and `slicer promote` warn when a live slice's Check section has no backticked command line and no `[HUMAN CHECK]` line, or its Failing tests section names no backticked test. The slice template and `docs/agents.md` tell authors to write each check as a command with its expected result, or a `[HUMAN CHECK]` that says what to look at and what to see."
+  ],
+  "depends_note": null,
+  "findings_note": "Owner 2026-11-03 (from ork): slicer and ork should both encourage well defined acceptance criteria for every slice. Fact: S102 (done) blocks `slicer next` only when Implement or Check is empty, and its Not in this slice says a short Check is not refused. Needed: an advisory (not a block) from slicer check, promote or show when a slice Check or Failing tests have no command, expected result or observable outcome; and the slice template and docs/agents.md guidance tell authors to write acceptance criteria that way. Open: what counts as vague, and whether it is a warning in check, in next, or only in the template.",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Owner 2026-11-03 (from ork): slicer and ork should both encourage well defined acceptance criteria for every slice. ork's side landed as ork S278 (its spec check asks the owner to tighten a vague Check). S102 (done) holds a slice back from `slicer next` only when Implement or Check is empty, and its Not in this slice says a short Check is not refused, so a Check of \"tests pass\" or \"works as described\" goes through.\n\nOwner decisions, 2026-11-05 (interview in the ork session):\n\n1. Vague means: the Check section has no line that holds a backticked command and no line that holds `[HUMAN CHECK]`; or the Failing tests section names no backticked test. Text only; slicer does not judge whether a command's expected result is written.\n2. Where: a warning in `slicer check` (exit status unchanged) and in `slicer promote` output for that slice, plus the slice template and `docs/agents.md` guidance. It stays advisory everywhere.\n\nWhat the code shows (read 2026-11-05): `check` gathers warnings in `src/slicer/check.py:81-96` (offline findings at level warn, then sibling collisions, gitignore lines, prompt warnings and the pin mismatch); warnings never change the exit status. `promote` prints one line, \"promoted ID -> PATH\" (`src/slicer/cli_track.py:287-298`). The slice template is `src/slicer/templates/slice.md`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/check.py:81-96` (append the vague-section warnings after `_prompt_warnings`) and a new helper beside `_prompt_warnings` at `:99`.\n- `src/slicer/cli_track.py:287-298` (`cmd_promote`: in text mode, print the same warning lines for the promoted slice after the \"promoted\" line; JSON output stays the slice object, unchanged).\n- `src/slicer/templates/slice.md` or the outline guidance the template draws from (one line under Check and Failing tests: a command with its expected result, or a `[HUMAN CHECK]` that says what to look at).\n- `docs/agents.md` (the \"Rules for an agent working in a slicer project\" section near `:909`: one short paragraph on acceptance criteria and the new warning).\n- `tests/test_check.py` (new tests), and the promote tests (find with `rg -n \"def test_.*promote\" tests`).\n- `CHANGELOG.md` (one Unreleased line)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "In `tests/test_check.py`:\n\n- `test_check_warns_on_a_check_section_with_no_command_or_human_check`: a live slice whose Check section is \"- Tests pass.\" gets a warning line naming the item and the section, `check` still exits 0, and the JSON `warnings` list holds the same line. Fails first: no warning.\n- `test_check_accepts_a_backticked_command_or_a_human_check`: a Check with one line holding `` `python3 -m unittest discover -s tests -t tests` `` and another slice whose only Check line holds `[HUMAN CHECK]` get no warning. Fails first: passes before the change; it guards the rule and must stay green after it.\n- `test_check_warns_on_failing_tests_with_no_backticked_test`: a Failing tests section of plain prose (\"add tests for the new flag\") gets a warning; one naming `` `test_new_flag` `` does not. Fails first: no warning.\n- `test_check_skips_done_retired_and_slices_without_the_section`: a done slice, a retired slice and a slice with no Check or Failing tests heading get no vague warning (S102 owns empty or missing sections). Fails first: passes before the change; guard.\n\nIn the promote tests:\n\n- `test_promote_prints_the_vague_check_warning`: promoting an outline whose Check is \"- Works.\" prints \"promoted ...\" and then the warning line; with `--json` the output is exactly the slice object with no warning key. Fails first: no warning line."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Tests first from the failing list; confirm each fails (or, for the guards, passes) for the reason given.\n2. Add one helper that, for one slice, returns the warning lines: Check has no line with a backtick span and no line with `[HUMAN CHECK]`; Failing tests has no backtick span. Use the headings `Check` and `Failing tests` as written; a slice without the heading gets nothing. Skip done and retired items, as `_slice_flag_problems` does (`src/slicer/cli_common.py:550-585`).\n3. Wording, one line each, deterministic order by item id then section: `ID / Check: no command or [HUMAN CHECK] line; say how to tell the slice is done` and `ID / Failing tests: no backticked test name`.\n4. `check` appends the lines to `report.warnings`; `promote` prints them in text mode only.\n5. Add the template and `docs/agents.md` guidance; add the CHANGELOG line.\n6. Do not make it a problem or a block; do not change `next`, S102's empty-section rule or any JSON shape."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest tests.test_check -v` and the promote test module: the new tests pass.\n- `python3 -m unittest discover -s tests -t tests` passes, `slicer check` passes, `git diff --check` prints nothing.\n- `slicer check` on this repository prints the new warning only for live slices that really lack a command or `[HUMAN CHECK]` (list them in the report; none is changed by this slice).\n- Mutation: return no lines from the helper; `test_check_warns_on_a_check_section_with_no_command_or_human_check` goes red.\n- [HUMAN CHECK] [AFTER LAND] Promote an outline whose Check says only \"Works.\" and see the warning after the \"promoted\" line."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch: \"check and promote warn on a Check with no command or human check\"."
+    }
+  ],
+  "notes": []
+}
