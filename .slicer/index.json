@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 452,
+  "next_id": 453,
   "preamble": "",
   "passes": [
     {
@@ -18188,6 +18188,34 @@
         "importance": 1,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s452",
+      "title": "check: a backtick slicer command ends at the first shell operator",
+      "short_title": "check: a backtick slicer command ends at the first shell operator",
+      "status": "open",
+      "has_slice": false,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "Found from ork, 2026-11-05 (ork friction F48, while promoting ork S280): a Why section held the backticked text slicer goals --json --lean && echo '---LIST---' && ... (quoting a command a Grok role ran). slicer check failed with 'S280 / Why: unknown flag ---LIST--- in ...'. Fact: _slice_flag_problems (src/slicer/cli_common.py:550-585) shlex-splits the whole span and passes every token after 'slicer' to the parser, so the tokens after && (echo and its argument) are read as flags of the slicer command. Needed: cut the tokens at the first shell control operator (&&, ||, ;, |) before parsing, so only the slicer command's own words are checked; a later slicer command in the same span after the operator may be checked on its own. Test: a slice whose section holds that span passes check, and slicer goals --bogus && echo x still reports --bogus. Related: S116, s183.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 1,
         "attempts": 0
       }
     }
