@@ -648,7 +648,7 @@ class OpsTests(unittest.TestCase):
     with self.repo() as repo:
       path = repo.state().find_slice_file("S02")
       before = path.read_bytes()
-      repo.run("set", "S02", "--pass", "9")
+      repo.run("set", "S02", "--release-target", "9")
       self.assertEqual(path.read_bytes(), before)
 
   def test_Set_OnAnUnpromotedItem_ChangesTheRowAndNothingElse(self) -> None:
@@ -693,7 +693,7 @@ class OpsTests(unittest.TestCase):
 
   def test_Add_NewlineInAnyOneLineField_IsRefused(self) -> None:
     with self.repo() as repo:
-      for flag in ("--size", "--findings", "--pass"):
+      for flag in ("--size", "--findings", "--release-target"):
         with self.subTest(flag):
           self.assertEqual(repo.run("add", "ok", flag, "a\nb")[0], 2)
 

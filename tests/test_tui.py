@@ -223,7 +223,7 @@ class TuiFilteringTests(InMemoryTuiTests):
                                importance={'1', '3'}, urgency={'2', '3'})
     view.refresh(state)
     self.assertEqual(item_ids(view), ['S02', 'S03'])
-    view.filters.values['pass'] = {'one'}
+    view.filters.values['release target'] = {'one'}
     view.refresh(state)
     self.assertEqual(item_ids(view), ['S02'])
     self.assertTrue(view.listing[0].text.lstrip().startswith('1'))
@@ -255,6 +255,50 @@ class TuiFilteringTests(InMemoryTuiTests):
     view.handle(state, "\n")
     self.assertEqual(item_ids(view), ["S02"])
 
+  def test_TuiFilter_WaveGroup_FiltersItems(self) -> None:
+    state = example()
+    state.index.require("S02").wave = 2
+    state.index.require("S03").wave = 10
+    state.index.require("S04").wave = 2
+    waves = [value for group, value in tui.filter_choices(state) if group == "wave"]
+    self.assertEqual(waves, [None, "", "2", "10"])
+    view = tui.View(tui.Filters())
+    view.filters.values["wave"] = {"2"}
+    view.refresh(state)
+    self.assertEqual(sorted(item_ids(view)), ["S02", "S04"])
+    view.filters.values["wave"] = {""}
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S01"])
+    view.filters.values.update(wave={"2", "10"}, status={"open", "parked"})
+    view.refresh(state)
+    self.assertEqual(item_ids(view), ["S02", "S03"])
+    self.assertIn("wave=10,2", view.filters.summary())
+
+  def test_Panel_Wave_ShowsTheFieldAndTheReleaseTarget(self) -> None:
+    state = sliced_example()
+    state.index.require("S02").wave = 2
+    texts = [l.text for l in tui.panel(state, "S02")]
+    self.assertIn("wave".ljust(16) + "2", texts)
+    self.assertIn("release target".ljust(16) + "one", texts)
+    self.assertIn("wave".ljust(16) + "-", [l.text for l in tui.panel(state, "S04")])
+    entry = next(e for e in tui.entries(state, "S02") if e.name == "wave")
+    self.assertEqual(entry.body, "2")
+
+  def test_Panel_WaveEdit_SetsRejectsAndEmptyClears(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "One", "--wave", "2")
+      state = repo.state()
+      request = tui.EditRequest(kind="field", target="S01", name="wave", body="2")
+      self.assertEqual(tui.apply_edit_result(state, request, "3").severity, "success")
+      self.assertEqual(repo.state().index.require("S01").wave, 3)
+      result = tui.apply_edit_result(repo.state(), request, "0")
+      self.assertEqual(result.severity, "error")
+      self.assertIn("wave", result.message)
+      self.assertEqual(repo.state().index.require("S01").wave, 3)
+      tui.apply_edit_result(repo.state(), request, "")
+      self.assertIsNone(repo.state().index.require("S01").wave)
+
   def test_Filters_MissingTreeAndPass_AreSelectable(self) -> None:
     state = example()
     view = tui.View(tui.Filters())
@@ -262,11 +306,11 @@ class TuiFilteringTests(InMemoryTuiTests):
     view.refresh(state)
     self.assertEqual(item_ids(view), ['S04'])
     view.filters.values['tree'].clear()
-    view.filters.values['pass'] = {''}
+    view.filters.values['release target'] = {''}
     view.refresh(state)
     self.assertEqual(item_ids(view), ['S01', 'S03'])
     self.assertIn(('tree', ''), tui.filter_choices(state))
-    self.assertIn(('pass', ''), tui.filter_choices(state))
+    self.assertIn(('release target', ''), tui.filter_choices(state))
 
   def test_Filters_Priority_UsesAssignedAxesNotInheritedScore(self) -> None:
     state = example()
@@ -1452,19 +1496,19 @@ class DetailFieldsTests(InMemoryTuiTests):
     item.attempts = 3
     item.discovered_from = "S01"
     texts = [l.text for l in tui.panel(state, "S02")]
-    for expected in ("%sone" % pad("pass"), "%srisky, ui" % pad("flags"), "%salpha" % pad("group"),
+    for expected in ("%sone" % pad("release target"), "%srisky, ui" % pad("flags"), "%salpha" % pad("group"),
                      "%s3" % pad("attempts"), "%sS01" % pad("discovered from"),
                      "%sFind things" % pad("short title")):
       self.assertIn(expected, texts)
     # Every value starts in the same column, whatever the label's length.
     texts = [l.text for l in tui.panel(state, "S02")]
-    values = {"pass": "one", "discovered from": "S01", "short title": "Find things"}
+    values = {"release target": "one", "discovered from": "S01", "short title": "Find things"}
 
     def column(label: str) -> int:
       return next(t for t in texts if t.startswith(label)).index(values[label])
 
-    self.assertEqual(column("discovered from"), column("pass"))
-    self.assertEqual(column("short title"), column("pass"))
+    self.assertEqual(column("discovered from"), column("release target"))
+    self.assertEqual(column("short title"), column("release target"))
     plain = [l.text for l in tui.panel(state, "S04")]
     for expected in ("%s-" % pad("flags"), "%s-" % pad("group"), "%s-" % pad("short title"),
                      "%s-" % pad("cites"), "%s0" % pad("attempts"), "%s-" % pad("discovered from")):
@@ -1548,7 +1592,7 @@ class DetailFieldsTests(InMemoryTuiTests):
     with support.TempRepo() as repo:
       repo.run("init")
       repo.run("add", "Item")
-      request = tui.EditRequest(kind="field", target="S01", name="pass", body="")
+      request = tui.EditRequest(kind="field", target="S01", name="release target", body="")
       result = tui.apply_edit_result(repo.state(), request, " v2 ")
       self.assertEqual(result.severity, "success")
       self.assertEqual(repo.state().index.require("S01").pass_key, "v2")

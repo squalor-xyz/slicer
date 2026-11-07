@@ -1538,6 +1538,12 @@ headings. For a row with no spec, use
 dependencies with repeated `--depends-on ID`. To give an existing row its spec, use
 `slicer promote ID --stdin --render --json` with a one-item outline for its lead and
 sections.
+Name an item's release target, the release it is aimed at, with `--release-target KEY`
+(`--pass` is its deprecated name) and plan its stage inside the release target with
+`--wave N`, an integer from 1.
+A planned wave is the owner's label; `slicer plan-parallel` computes parallel sets from
+dependencies and Files paths, and reports an item planned in an earlier wave than a
+dependency in the same release target under `wave_conflicts`.
 Flag an open owner decision with `slicer set ID --add-flag needs-owner` instead of
 only writing prose. Configured `hold_flags` keep it out of `next` and list it under
 `held`; `status` and `list --held` show the waiting work. Record the owner's answer

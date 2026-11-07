@@ -5,9 +5,9 @@
 In the TUI, the queue opens in the same ranked order as `slicer list`: eligible
 started items, then eligible open items, then the other visible rows, with parked
 items last. Within each group, declared
-pass order precedes effective score, with stored queue-order ties. Empty passes
-merge by score; named undeclared passes follow declared passes. Ascending reverses
-readiness groups, pass direction, and score direction, keeping queue-order ties.
+release-target order precedes the planned wave (numbered waves first, items with no wave last), then effective score, with stored queue-order ties. Items with no release target
+merge by score; named undeclared release targets follow declared ones and merge by score among themselves, ignoring waves. Ascending reverses
+readiness groups, release-target and wave direction, and score direction, keeping queue-order ties.
 Done and retired stay hidden until
 you clear the filter or ask for them. `o` sorts that view by ranked order, ID, title, status, size,
 importance, urgency, effective score, or effort, ascending or descending. The
@@ -19,7 +19,7 @@ search is active.
 
 `tab` moves between the queue and the detail pane, `e` opens `$EDITOR` on
 whatever is selected there — an item field (title, size, trees, findings, depends, importance,
-urgency, effort, short title, pass, flags), a slice's lead, a slice section, its scope boundary, a note (edit it, or empty to retract it: a prompt asks for the reason, and the note stays on the record marked retracted; the
+urgency, effort, short title, release target, wave, flags), a slice's lead, a slice section, its scope boundary, a note (edit it, or empty to retract it: a prompt asks for the reason, and the note stays on the record marked retracted; the
 `+ add a note` line adds one; an edit that changes the text clears its verification), or a prose block — `s` starts the selected item and `a` adds a
 new one. Press `w` for the guided roadmap wizard; an empty roadmap offers it once
 when the TUI starts.
@@ -87,7 +87,7 @@ The TUI initially hides the project's configured done status. View controls:
 | Key | Action |
 |---|---|
 | `/` | Search IDs, full titles, and short titles as you type; Enter accepts, Esc cancels |
-| `f` | Filter by status, tree, pass, importance, and urgency. Opening it shows the current view's statuses checked; applying it drops the view name and keeps the checks |
+| `f` | Filter by status, tree, release target, wave, importance, and urgency. Opening it shows the current view's statuses checked; applying it drops the view name and keeps the checks |
 | `v` | Cycle the status preset: unfinished, then in-work, then review, then the initial unfinished set. Search and the other filters stay. The status line shows `view=in-work` or `view=review`. A disabled role is skipped. If neither role is configured, `v` does nothing and says so. `J` and `K` stay disabled while a preset is active |
 | `c` | Clear search and all filters, including the default hide-done filter and any view preset |
 | `g` | Jump to an ID; hidden targets are revealed by clearing search and filters |
@@ -106,7 +106,7 @@ The TUI initially hides the project's configured done status. View controls:
 | `?` | Open help; arrows or `j/k` scroll, `?` or Esc closes |
 
 In the filter panel, arrows or `j/k` navigate, Space toggles choices, Enter applies,
-and Esc cancels. Each group offers Any; tree and pass also offer `(none)`. Multiple
+and Esc cancels. Each group offers Any; tree, release target and wave also offer `(none)`. Multiple
 choices within a group match any selected value; different groups must all match.
 Importance and urgency use the item's assigned values (1–3), not inherited priority.
 Search is case-insensitive literal text and combines with the filters.

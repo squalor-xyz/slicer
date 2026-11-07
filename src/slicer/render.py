@@ -341,6 +341,24 @@ def display_groups(index: Index, cfg: Config) -> list[DisplayGroup]:
   return groups
 
 
+def wave_tables(shown: DisplayGroup) -> list[tuple[str, list[Item]]]:
+  """A release target's rows as `(heading, rows)` tables, one per planned wave.
+
+  Waves ascend and the rows with no wave come last, under `No wave`. Rows keep
+  queue order inside a table. A table with no heading is the whole group: a
+  release target no item gave a wave, and any group with no release target, render
+  as one table, byte for byte as before waves existed.
+  """
+  if not shown.key or not any(it.wave is not None for it in shown.members):
+    return [("", shown.members)]
+  waves = sorted({it.wave for it in shown.members if it.wave is not None})
+  tables = [(f"Wave {wave}", [it for it in shown.members if it.wave == wave]) for wave in waves]
+  loose = [it for it in shown.members if it.wave is None]
+  if loose:
+    tables.append(("No wave", loose))
+  return tables
+
+
 def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) -> bytes:
   # Effort is a placeholder a template may adopt. One that never names it keeps
   # the previous seven columns, so an existing row.md still renders.
@@ -358,7 +376,6 @@ def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) 
   position = 0
   for shown in display_groups(index, cfg):
     info = index.pass_info(shown.key) if shown.prose else None
-    members = shown.members
     lines: list[str] = []
     if info is not None and info.heading:
       lines.append(info.heading)
@@ -366,17 +383,20 @@ def render_roadmap(index: Index, cfg: Config, template: str, row_template: str) 
       lines.append(f"## {shown.key}")
     if info is not None and info.intro:
       lines.append(info.intro)
-    rows: list[str] = []
-    group = ""
-    for item in members:
-      position += 1
-      if item.group and item.group != group:
-        group = item.group
-        rows.append(f"| {cell(group)} {group_gap}")
-      rows.append(render_row(item, position, cfg, row_template, index))
-    for row in rows:
-      _check_row(row, header)
-    lines.append("\n".join([header, sep, *rows]))
+    for title, table in wave_tables(shown):
+      rows: list[str] = []
+      group = ""
+      for item in table:
+        position += 1
+        if item.group and item.group != group:
+          group = item.group
+          rows.append(f"| {cell(group)} {group_gap}")
+        rows.append(render_row(item, position, cfg, row_template, index))
+      for row in rows:
+        _check_row(row, header)
+      if title:
+        lines.append(f"### {title}")
+      lines.append("\n".join([header, sep, *rows]))
     if info is not None and info.outro:
       lines.append(info.outro)
     chunks.append("\n\n".join(lines))
@@ -550,34 +570,36 @@ def render_html(index: Index, cfg: Config) -> bytes:
   position = 0
   for shown in display_groups(index, cfg):
     info = index.pass_info(shown.key) if shown.prose else None
-    members = shown.members
     if info is not None and info.heading:
       parts.append(f"<h2>{e(info.heading)}</h2>")
     elif shown.key:
       parts.append(f"<h2>{e(shown.key)}</h2>")
     if info is not None and info.intro:
       parts.append(f'<div class="prose">{_prose_html(info.intro)}</div>')
-    parts.append(
-      "<table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th>"
-      "<th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>"
-    )
-    group = ""
-    for item in members:
-      position += 1
-      if item.group and item.group != group:
-        group = item.group
-        parts.append(f'<tr class="group"><td></td><td colspan="7"><strong>{e(group)}</strong></td></tr>')
-      size = item.size + "".join(f" [{f}]" for f in item.flags)
-      findings = _row_findings(item, index)
-      title = item.display_title() or f"(untitled {item.id})"
+    for wave_title, table in wave_tables(shown):
+      if wave_title:
+        parts.append(f"<h3>{e(wave_title)}</h3>")
       parts.append(
-        f'<tr class="{_status_class(item.status, cfg)}"><td>{position}</td>'
-        f"<td>{e(item.id)}</td><td>{e(title)}</td><td>{e(size)}</td>"
-        f"<td>{'-' if item.effort is None else item.effort}</td>"
-        f'<td>{e(", ".join(item.trees))}</td><td>{e(findings)}</td>'
-        f'<td class="status">{e(cfg.status_label(item.status))}</td></tr>'
+        "<table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th>"
+        "<th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>"
       )
-    parts.append("</tbody></table>")
+      group = ""
+      for item in table:
+        position += 1
+        if item.group and item.group != group:
+          group = item.group
+          parts.append(f'<tr class="group"><td></td><td colspan="7"><strong>{e(group)}</strong></td></tr>')
+        size = item.size + "".join(f" [{f}]" for f in item.flags)
+        findings = _row_findings(item, index)
+        title = item.display_title() or f"(untitled {item.id})"
+        parts.append(
+          f'<tr class="{_status_class(item.status, cfg)}"><td>{position}</td>'
+          f"<td>{e(item.id)}</td><td>{e(title)}</td><td>{e(size)}</td>"
+          f"<td>{'-' if item.effort is None else item.effort}</td>"
+          f'<td>{e(", ".join(item.trees))}</td><td>{e(findings)}</td>'
+          f'<td class="status">{e(cfg.status_label(item.status))}</td></tr>'
+        )
+      parts.append("</tbody></table>")
     if info is not None and info.outro:
       parts.append(f'<div class="prose">{_prose_html(info.outro)}</div>')
 

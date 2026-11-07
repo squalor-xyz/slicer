@@ -191,7 +191,7 @@ These signposts preserve links from earlier versions of this guide.
 - <a id="priority"></a> [Priority](commands.md#priority)
 - <a id="relay-roles"></a> [Relay roles](commands.md#relay-roles) — the `.slicer/relay-roles.json` matrix is managed through commands.
 - <a id="batch-changes"></a> [Batch changes](commands.md#batch-changes)
-- <a id="7-passes-if-you-want-them"></a> [Passes and flags](commands.md#passes-and-flags)
+- <a id="7-passes-if-you-want-them"></a> [Release targets, waves and flags](commands.md#release-targets-waves-and-flags)
 - <a id="goals-and-non-goals"></a> [Goals and non-goals](commands.md#goals-and-non-goals)
 - <a id="8-wire-it-into-ci"></a> [Continuous integration](commands.md#continuous-integration)
 - <a id="9-when-something-goes-wrong"></a> [Troubleshooting](commands.md#troubleshooting)

@@ -214,6 +214,7 @@ def offline(state: State) -> VerifyReport:
 
   report.findings.extend(_catalog_findings(index))
   report.findings.extend(_undeclared_pass_findings(state))
+  report.findings.extend(_wave_findings(state))
   return report
 
 
@@ -230,10 +231,33 @@ def _undeclared_pass_findings(state: State) -> list[Finding]:
     count = sum(1 for it in live if it.pass_key == pass_key)
     findings.append(Finding(
       "warn", "",
-      f"pass {pass_key} is not declared, and {count} item(s) not done or retired sit in it; "
-      f"the queue orders its items by score among other undeclared passes; declare it with "
-      f"`slicer prose add-pass {pass_key} --after <pass>`.",
+      f"release target {pass_key} is not declared, and {count} item(s) not done or retired sit in it; "
+      f"the queue orders its items by score among other undeclared release targets; declare it with "
+      f"`slicer prose add-pass {pass_key} --after <release target>`.",
     ))
+  return findings
+
+
+def _wave_findings(state: State) -> list[Finding]:
+  """A warn for an item planned in an earlier wave than a dependency it waits on in the
+  same release target, and for a wave on an item with no release target, which nothing groups by."""
+  findings = [
+    Finding(
+      "warn", row["id"],
+      f"planned in wave {row['wave']} but depends on {row['depends_on']}, planned in wave "
+      f"{row['depends_wave']} of the same release target; `plan-parallel` lists it under wave_conflicts. Move one of them "
+      f"with `slicer set <id> --wave N`.",
+    )
+    for row in graph.wave_conflicts(state.index, state.config)
+  ]
+  finished = state.config.finished_statuses()
+  for item in state.index.items:
+    if item.wave is not None and not item.pass_key and item.status not in finished:
+      findings.append(Finding(
+        "warn", item.id,
+        f"has wave {item.wave} but no release target, so no listing groups it by wave; "
+        f"set one with `slicer set {item.id} --release-target <key>`.",
+      ))
   return findings
 
 

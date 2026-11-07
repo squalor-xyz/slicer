@@ -331,6 +331,14 @@ class Item:
   cites: list[str] = field(default_factory=list)
   # The latest spec-check verdict, or None. Absent from the JSON while unset.
   readiness: Readiness | None = None
+  # The owner's planned wave inside the release target: an integer >= 1, or None.
+  # A label the owner sets, not the parallel sets `plan-parallel` computes.
+  wave: int | None = None
+
+  @property
+  def release_target(self) -> str:
+    """The person-facing name of `pass_key`: the release this item is aimed at."""
+    return self.pass_key
 
   @property
   def notes(self) -> list[str]:
@@ -344,6 +352,11 @@ class Item:
     data = self.to_dict()
     del data["notes"]
     data["note_records"] = [n.persisted_dict() for n in self.note_records]
+    # The stored key stays `pass`, so the output-only alias is not written, and
+    # `wave` appears only once set: an index with no waves is byte-identical.
+    del data["fields"]["release_target"]
+    if self.wave is None:
+      del data["fields"]["wave"]
     return data
 
   def display_title(self) -> str:
@@ -406,6 +419,8 @@ class Item:
       "cites": list(self.cites),
       "key": self.key,
       "pass": self.pass_key,
+      "release_target": self.pass_key,
+      "wave": self.wave,
       "group": self.group,
       "reason": self.reason,
       "importance": self.importance,
@@ -443,6 +458,7 @@ class Item:
       cites=_string_list(f.get("cites", []), "cites"),
       key=_stored_key(f.get("key", "")),
       pass_key=f.get("pass", ""),
+      wave=_optional_wave(f["wave"]) if "wave" in f else None,
       group=f.get("group", ""),
       reason=f.get("reason", ""),
       importance=int(f.get("importance", 2)),
@@ -456,6 +472,15 @@ def _discovered_from(value: object) -> str:
   """Historical items have no source; stored references must be strings."""
   if not isinstance(value, str):
     raise StateError("discovered_from must be a string", code="corrupt")
+  return value
+
+
+def _optional_wave(value: object) -> int | None:
+  """A stored wave is an integer >= 1; anything else is a corrupt index."""
+  if value is None:
+    return None
+  if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+    raise StateError(f"wave must be an integer >= 1, not {value!r}", code="corrupt")
   return value
 
 

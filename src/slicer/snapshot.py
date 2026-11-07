@@ -24,6 +24,7 @@ def build(state: State, parts: list[str], read: Callable[[str], object]) -> dict
       rows.append({
         "id": item.id, "short_title": item.short_title, "status": item.status,
         "claim": item.claim_owner or None, "pass": item.pass_key,
+        "release_target": item.release_target, "wave": item.wave,
         "size": item.size, "effort": item.effort, "score": item.score,
         "quadrant": item.quadrant, "held": bool(queries.held_flags(state, item)),
         "blocked": bool(graph.pending(state.index, item, state.config)),

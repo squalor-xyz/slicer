@@ -150,9 +150,9 @@ def _ranked_pool(
   an implementation attempt.
 
   With `prefer_ready`, items whose readiness is `True` move ahead of the rest
-  within their group: the same tier (started before open) and the same pass, or
-  for a custom `queue` the same claimed-or-not side. It never moves an item across
-  passes. It only reorders: no item enters or leaves the pool, and a stale or
+  within their group: the same tier (started before open), the same release target
+  and the same planned wave, or for a custom `queue` the same claimed-or-not side.
+  It never moves an item across release targets or waves. It only reorders: no item enters or leaves the pool, and a stale or
   missing record counts as not ready.
   """
   if max_attempts is not None and (isinstance(max_attempts, bool)
@@ -235,11 +235,14 @@ def _ranked_pool(
     ranked = [it for it in graph.ranked_order(state.index, cfg, visible) if it.id in eligible]
   if prefer_ready:
     if queue is not None:
-      def group(item: Item) -> tuple[int, int]:
-        return (0 if item.claim_owner else 1, 0)
+      def group(item: Item) -> tuple[int, ...]:
+        return (0 if item.claim_owner else 1, 0, 0)
     else:
-      def group(item: Item) -> tuple[int, int]:
-        return (graph.tier(state.index, cfg, item), graph.pass_rank(state.index, item))
+      def group(item: Item) -> tuple[int, ...]:
+        return (
+          graph.tier(state.index, cfg, item), graph.pass_rank(state.index, item),
+          graph.wave_rank(state.index, item),
+        )
     ranked = _ready_first(state, ranked, group)
   return _NextPool(
     items=ranked, blocked=blocked, held=held, unspecified=unspecified,
@@ -248,7 +251,7 @@ def _ranked_pool(
 
 
 def _ready_first(
-  state: State, ranked: list[Item], group: Callable[[Item], tuple[int, int]],
+  state: State, ranked: list[Item], group: Callable[[Item], tuple[int, ...]],
 ) -> list[Item]:
   """Reorder `ranked` so ready items lead inside each group, and nothing else moves.
 
@@ -256,7 +259,7 @@ def _ready_first(
   those slots changes, ready items first and each side in its old order. An item
   therefore never crosses a group, and an item of another group never shifts.
   """
-  slots: dict[tuple[int, int], list[int]] = {}
+  slots: dict[tuple[int, ...], list[int]] = {}
   for at, item in enumerate(ranked):
     slots.setdefault(group(item), []).append(at)
   verdict = {item.id: ready_state(state, item) is True for item in ranked}
@@ -403,9 +406,12 @@ def next_batch(
 
 @dataclass
 class ParallelPlan:
-  """Waves of items that can run side by side, plus the skip lists `next` reports.
+  """Parallel sets of items that can run side by side, plus the skip lists `next` reports.
 
-  Each wave is a list of `{id, title, reason}` rows; `reason` is empty for an
+  `waves` is the field and JSON key's old name for those sets; they are computed from
+  dependencies and Files paths, and are not the owner's planned waves (`Item.wave`).
+  `wave_conflicts` reports items planned ahead of a dependency, and changes nothing
+  else. Each set is a list of `{id, title, reason}` rows; `reason` is empty for an
   item that was ready from the start. `in_flight` is the started work whose
   paths hold wave 1.
   """
@@ -420,9 +426,10 @@ class ParallelPlan:
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
   claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
+  wave_conflicts: list[dict[str, str | int]] = field(default_factory=list)
 
   def to_dict(self) -> dict[str, object]:
-    return {
+    out: dict[str, object] = {
       "width": self.width,
       "waves": [
         {"wave": at, "items": [dict(row) for row in rows]}
@@ -432,6 +439,11 @@ class ParallelPlan:
       "unplaced": [dict(row) for row in self.unplaced],
       "blocked": [{"id": item_id, "waiting_on": waiting} for item_id, waiting in self.blocked],
     }
+    # Only when the owner planned an item ahead of its dependency, so a roadmap with
+    # no waves gets the same JSON it always did.
+    if self.wave_conflicts:
+      out["wave_conflicts"] = [dict(row) for row in self.wave_conflicts]
+    return out
 
 
 def plan_parallel(
@@ -441,7 +453,10 @@ def plan_parallel(
   max_attempts: int | None = None,
   flags: list[str] | None = None, no_flags: list[str] | None = None,
 ) -> ParallelPlan:
-  """Lay the open work out in waves of at most `width` items that can run in parallel.
+  """Lay the open work out in parallel sets of at most `width` items that can run in parallel.
+
+  The owner's planned wave (`Item.wave`) is not used to place anything; a dependency
+  planned in a later wave is only reported, in `wave_conflicts`.
 
   Started items are in flight: their paths count as taken for wave 1 only. Each
   wave then fills greedily in `next` order with items not yet placed whose
@@ -551,6 +566,7 @@ def plan_parallel(
     unspecified=pool.unspecified,
     elsewhere=pool.elsewhere,
     capped=pool.capped,
+    wave_conflicts=graph.wave_conflicts(state.index, cfg),
   )
 
 

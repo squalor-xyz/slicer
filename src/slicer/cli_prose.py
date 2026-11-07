@@ -407,7 +407,7 @@ def cmd_prose_add_pass(args: argparse.Namespace) -> int:
   text = (
     f"created pass {info.key} for {item_count} existing item(s)"
     if item_count
-    else f"created pass {info.key} (no items yet); file items with `slicer add --pass {info.key}`"
+    else f"created pass {info.key} (no items yet); file items with `slicer add --release-target {info.key}`"
   )
   _emit(
     args,

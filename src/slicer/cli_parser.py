@@ -19,7 +19,7 @@ from slicer.cli_ai import (
 )
 from slicer.cli_common import (
   _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _check_flag, _json_flags, _mutating,
-  _nonnegative_int, _positive_int, _recursive_flag, _render_flag, _rest_flag, _strict_flag,
+  _nonnegative_int, _positive_int, _release_target_flags, _recursive_flag, _render_flag, _rest_flag, _strict_flag,
 )
 from slicer.cli_prose import (
   cmd_catalog_add, cmd_catalog_cite, cmd_catalog_edit, cmd_catalog_list, cmd_catalog_move,
@@ -334,9 +334,10 @@ def _add_next(add) -> None:
                   help="also print the slice file path (text only; JSON is unchanged)")
 
   sp = add("plan-parallel", cmd_plan_parallel,
-           "waves of items that can run in parallel, from dependencies and files_section paths")
+           "parallel sets of items that can run side by side, from dependencies and files_section "
+           "paths (not the owner's --wave); flags an item planned ahead of its dependency")
   sp.add_argument("--width", type=_positive_int, default=4, metavar="N",
-                  help="at most N items per wave (default 4)")
+                  help="at most N items per parallel set (default 4)")
   sp.add_argument("--max-attempts", type=_positive_int, default=None, metavar="N",
                   help="skip fresh implementation pickups at N attempts; started work stays in flight")
   sp.add_argument("--tree", help="only items in this tree (one tree; not repeatable)")
@@ -358,7 +359,7 @@ def _add_next(add) -> None:
 
 def _add_browse(add) -> None:
   """`list`, `deps`, `find`, `show`, `sections`, `config` and `recommended-workflow`."""
-  sp = _recursive_flag(add("list", cmd_list, "list by readiness, pass and score; empty passes merge by score; omit done and retired unless asked"))
+  sp = _recursive_flag(add("list", cmd_list, "list by readiness, release target, wave and score; items with no release target merge by score; omit done and retired unless asked"))
   sp.add_argument("--envelope", action="store_true",
                   help="with --json, wrap items and sibling-only rows in an object")
   sp.add_argument("--all", action="store_true",
@@ -373,7 +374,8 @@ def _add_browse(add) -> None:
   sp.add_argument("--discovered-from", help="filter by exact source item ID")
   sp.add_argument("--parent", help="only slivers of this item ID")
   sp.add_argument("--tree", action="append", help="filter by tree (repeatable)")
-  sp.add_argument("--pass", dest="pass_key", help="filter by pass")
+  _release_target_flags(sp, help_="filter by release target")
+  sp.add_argument("--wave", metavar="N", help="filter by planned wave (an integer >= 1)")
   sp.add_argument("--flag", action="append",
                   help="filter by flag (repeatable; an item matches if it has any of them)")
   sp.add_argument("--sort", choices=["score", "effort"],
@@ -445,8 +447,11 @@ def _add_item_writes(add) -> None:
   sp.add_argument("--tree", action="append")
   sp.add_argument("--findings")
   sp.add_argument("--status")
-  sp.add_argument("--pass", dest="pass_key",
-                  help="file the item under this pass group (default: the previous item's pass; '' for none)")
+  _release_target_flags(
+    sp, help_="file the item under this release target (default: the previous item's; '' for none)",
+  )
+  sp.add_argument("--wave", metavar="N",
+                  help="the owner's planned wave inside the release target, an integer >= 1 (default: none)")
   sp.add_argument("--importance", type=int, help="1-3; how important (default 2)")
   sp.add_argument("--urgency", type=int, help="1-3; how urgent (default 2)")
   sp.add_argument("--effort", type=int, help="1-3; optional estimate, omit to leave unset")
@@ -478,7 +483,9 @@ def _add_item_writes(add) -> None:
   sp.add_argument("--findings")
   sp.add_argument("--depends-on", dest="depends_on", action="append",
                   help="dependency id (repeatable; replaces the list)")
-  sp.add_argument("--pass", dest="pass_key", help="move the item to this pass group")
+  _release_target_flags(sp, help_="move the item to this release target")
+  sp.add_argument("--wave", metavar="N",
+                  help="the owner's planned wave inside the release target, an integer >= 1; --wave '' clears it")
   sp.add_argument("--flag", dest="flag", action="append", help="set a flag (repeatable; replaces the list)")
   sp.add_argument("--add-flag", action="append", help="add a flag without replacing the list (repeatable)")
   sp.add_argument("--remove-flag", action="append", help="remove a flag without replacing the list (repeatable)")
@@ -637,12 +644,12 @@ def _add_prose_and_template(sub: argparse._SubParsersAction, common: argparse.Ar
   inner.add_argument("--file")
   inner.add_argument("--stdin", action="store_true")
 
-  inner = _strict_flag(_render_flag(padd("add-pass", _mutating(cmd_prose_add_pass), "declare a new pass group")))
+  inner = _strict_flag(_render_flag(padd("add-pass", _mutating(cmd_prose_add_pass), "declare a new release target (a pass group)")))
   inner.add_argument("key")
   inner.add_argument("--heading", help="the markdown heading for the group")
   inner.add_argument("--after", help="insert after this pass instead of at the end")
 
-  _strict_flag(_render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty pass group"))).add_argument("key")
+  _strict_flag(_render_flag(padd("drop-pass", _mutating(cmd_prose_drop_pass), "remove an empty release target (a pass group)"))).add_argument("key")
 
   sp = sub.add_parser("template", help="show, replace and reset the render templates", parents=[common])
   tsub = sp.add_subparsers(dest="template_command", required=True)
@@ -1024,7 +1031,7 @@ def _add_relay_run(sub: argparse._SubParsersAction, common: argparse.ArgumentPar
 
 def _add_reports(sub: argparse._SubParsersAction, add) -> None:
   """`stats`, `snapshot`, `status`, `log` and `tui`."""
-  _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and pass"))
+  _recursive_flag(add("stats", cmd_stats, "counts by status, size, tree and release target"))
 
   sp = sub.add_parser("snapshot", help="compact dashboard reads across projects")
   sp.set_defaults(func=cmd_snapshot)

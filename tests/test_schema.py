@@ -104,6 +104,49 @@ class SchemaGuardTests(unittest.TestCase):
       self.assertEqual(code, 3)
       self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
 
+  def test_Load_IndexWithOnlyPass_LoadsUnchangedAndRoundTrips(self) -> None:
+    with self._repo() as repo:
+      repo.run("add", "One", "--release-target", "v1.20")
+      path = repo.root / DIR_NAME / INDEX_NAME
+      before = path.read_bytes()
+      stored = json.loads(before)["items"][0]["fields"]
+      self.assertEqual(stored["pass"], "v1.20")
+      self.assertNotIn("wave", stored)
+      self.assertNotIn("release_target", stored)
+      state = store.load(repo.root)
+      item = state.index.require("S01")
+      self.assertEqual(item.release_target, "v1.20")
+      self.assertIsNone(item.wave)
+      state.save_index()
+      self.assertEqual(path.read_bytes(), before)
+      code, out, err = repo.run("show", "S01", "--json")
+      self.assertEqual(code, 0, err)
+      fields = json.loads(out)["fields"]
+      self.assertEqual((fields["pass"], fields["release_target"], fields["wave"]), ("v1.20", "v1.20", None))
+
+  def test_Save_ItemWithWave_StoresWaveAndNotReleaseTarget(self) -> None:
+    with self._repo() as repo:
+      repo.run("add", "One", "--release-target", "v1.20", "--wave", "2")
+      stored = json.loads((repo.root / DIR_NAME / INDEX_NAME).read_text(encoding="utf-8"))
+      fields = stored["items"][0]["fields"]
+      self.assertEqual((fields["pass"], fields["wave"]), ("v1.20", 2))
+      self.assertNotIn("release_target", fields)
+      self.assertEqual(stored["version"], INDEX_SCHEMA_VERSION)
+      self.assertEqual(store.load(repo.root).index.require("S01").wave, 2)
+
+  def test_Index_BadWave_IsCorrupt(self) -> None:
+    with self._repo() as repo:
+      repo.run("add", "One")
+      path = repo.root / DIR_NAME / INDEX_NAME
+      for bad in (True, 0, "2", 1.5):
+        with self.subTest(wave=bad):
+          data = json.loads(path.read_text(encoding="utf-8"))
+          data["items"][0]["fields"]["wave"] = bad
+          path.write_text(json.dumps(data), encoding="utf-8")
+          code, out, _ = repo.run("list", "--json")
+          self.assertEqual(code, 3)
+          self.assertEqual(json.loads(out)["error"]["code"], "corrupt")
+
   def test_Cli_FutureVersion_ExitsSchemaTooNew(self) -> None:
     with self._repo() as repo:
       _set_version(repo, f"{DIR_NAME}/{INDEX_NAME}", INDEX_SCHEMA_VERSION + 1)

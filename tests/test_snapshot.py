@@ -85,7 +85,7 @@ class SnapshotTests(unittest.TestCase):
       item = repo.state().index.require(row["id"])
       expected.append({"id": item.id, "short_title": item.short_title,
         "status": item.status, "claim": "Ada" if item.id == "S01" else None, "pass": item.pass_key,
-        "size": item.size, "effort": item.effort, "score": item.score,
+        "release_target": item.pass_key, "wave": None, "size": item.size, "effort": item.effort, "score": item.score,
         "quadrant": item.quadrant, "held": item.id == "S01", "blocked": item.id == "S02"})
     self.assertEqual(rows, expected)
     self.assertEqual([row["id"] for row in listed], ["S01", ready, "S02"])
@@ -93,7 +93,7 @@ class SnapshotTests(unittest.TestCase):
     by_id = {row["id"]: row for row in rows}
     self.assertFalse(by_id["S02"]["held"])
     self.assertFalse(by_id[ready]["blocked"])
-    self.assertTrue(all(len(row) == 11 for row in rows))
+    self.assertTrue(all(len(row) == 13 for row in rows))
     status = self.snapshot(repo)["projects"][0]["parts"]["status"]["value"]
     next_code, next_out, _ = repo.run("next", "--json")
     self.assertEqual(next_code, 0)

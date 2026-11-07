@@ -307,5 +307,89 @@ class PlanParallelTests(unittest.TestCase):
       self.assertEqual(self.snapshot(repo), before)
 
 
+  def test_PlanParallel_NoWaves_OutputUnchanged(self) -> None:
+    # Guard: the bytes below were captured before the wave field existed.
+    with self.repo() as repo:
+      self.file_item(repo, "first", "- `src/a.py`\n- `docs/x.md`")
+      self.file_item(repo, "overlaps first", "- `src/b.py:12`\n- `docs/x.md`")
+      dependent = self.file_item(repo, "dependent", "- `src/c.py`")
+      repo.run("set", dependent, "--depends-on", "S01")
+      self.assertEqual(
+        repo.run("plan-parallel", "--json")[1],
+        '{\n  "width": 4,\n  "waves": [\n    {\n      "wave": 1,\n      "items": [\n'
+        '        {\n          "id": "S01",\n          "title": "first",\n          "reason": ""\n'
+        '        }\n      ]\n    },\n    {\n      "wave": 2,\n      "items": [\n'
+        '        {\n          "id": "S02",\n          "title": "overlaps first",\n'
+        '          "reason": "shares: S01 docs/x.md"\n        },\n'
+        '        {\n          "id": "S03",\n          "title": "dependent",\n'
+        '          "reason": "after: S01"\n        }\n      ]\n    }\n  ],\n'
+        '  "in_flight": [],\n  "unplaced": [],\n  "blocked": []\n}\n',
+      )
+      self.assertEqual(
+        repo.run("plan-parallel")[1],
+        "wave 1\n  S01  first\nwave 2\n  S02  overlaps first  shares: S01 docs/x.md\n"
+        "  S03  dependent       after: S01\n",
+      )
+
+  def test_PlanParallel_ItemInEarlierWaveThanDependency_IsFlagged(self) -> None:
+    with self.repo() as repo:
+      base = self.file_item(repo, "dependency", "- `src/a.py`")
+      early = self.file_item(repo, "planned too early", "- `src/b.py`")
+      fine = self.file_item(repo, "planned in order", "- `src/c.py`")
+      repo.run("set", early, "--depends-on", base, "--wave", "1")
+      repo.run("set", base, "--wave", "2")
+      repo.run("set", fine, "--depends-on", base, "--wave", "3")
+      payload = self.plan(repo)
+      self.assertEqual(
+        payload["wave_conflicts"],
+        [{"id": early, "wave": 1, "depends_on": base, "depends_wave": 2}],
+      )
+      # Both stay where the parallel sets put them: nothing is silently reordered.
+      self.assertEqual(_waves(payload), [[base], [early, fine]])
+      self.assertEqual(
+        list(payload), ["width", "waves", "in_flight", "unplaced", "blocked", "wave_conflicts"],
+      )
+      text = repo.run("plan-parallel")[1]
+      self.assertIn(f"wave conflict: {early} (wave 1) depends on {base} (wave 2)", text)
+
+  def test_PlanParallel_DependencyWithNoWaveOrDone_NoConflict(self) -> None:
+    with self.repo() as repo:
+      base = self.file_item(repo, "dependency", "- `src/a.py`")
+      other = self.file_item(repo, "other", "- `src/b.py`")
+      dependent = self.file_item(repo, "dependent", "- `src/c.py`")
+      self.assertEqual(repo.run("set", dependent, "--depends-on", base, "--wave", "1")[0], 0)
+      self.assertNotIn("wave_conflicts", self.plan(repo))
+      self.assertEqual(repo.run("set", base, "--wave", "2")[0], 0)
+      self.assertEqual(repo.run("set", other, "--wave", "1")[0], 0)
+      self.assertEqual(repo.state().index.require(base).wave, 2)
+      self.assertEqual(len(self.plan(repo)["wave_conflicts"]), 1)
+      repo.run("start", base)
+      repo.run("done", base)
+      self.assertNotIn("wave_conflicts", self.plan(repo))
+
+  def test_PlanParallel_DependencyInOtherReleaseTarget_NoConflict(self) -> None:
+    with self.repo() as repo:
+      for key in ("v1", "v2"):
+        self.assertEqual(repo.run("prose", "add-pass", key)[0], 0)
+      base = self.file_item(repo, "dependency", "- `src/a.py`")
+      item = self.file_item(repo, "dependent", "- `src/b.py`")
+      for args in (
+        ("set", base, "--release-target", "v1", "--wave", "3"),
+        ("set", item, "--release-target", "v2", "--wave", "1", "--depends-on", base),
+      ):
+        code, _, err = repo.run(*args)
+        self.assertEqual(code, 0, err)
+      payload = self.plan(repo)
+      self.assertNotIn("wave_conflicts", payload)
+      self.assertEqual(_waves(payload), [[base], [item]])
+      self.assertNotIn("wave conflict", repo.run("plan-parallel")[1])
+      repo.run("render")
+      warnings = json.loads(repo.run("check", "--json")[1])["warnings"]
+      self.assertFalse([w for w in warnings if "planned in wave" in w], warnings)
+      # Control: the same two waves inside one release target are a conflict.
+      self.assertEqual(repo.run("set", item, "--release-target", "v1")[0], 0)
+      self.assertEqual(len(self.plan(repo)["wave_conflicts"]), 1)
+
+
 if __name__ == "__main__":
   unittest.main()

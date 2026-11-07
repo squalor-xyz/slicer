@@ -192,7 +192,7 @@ class ImportTests(unittest.TestCase):
     # `ops.add` inherits the previous item's pass; a bulk load must not,
     # or every entry lands in whichever pass the queue happened to end on.
     with self.repo() as repo:
-      repo.run("add", "Existing work", "--pass", "6")
+      repo.run("add", "Existing work", "--release-target", "6")
       repo.write("r.md", "## A new thing\n")
       repo.run("import", "r.md")
       self.assertEqual(repo.state().index.require("S02").pass_key, "")

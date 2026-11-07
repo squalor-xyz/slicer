@@ -86,7 +86,7 @@ class PullFilingTests(PullBase):
 
   def test_FirstPull_FilesOneUnscoredOpenRowPerIssueInNumberOrder(self) -> None:
     repo = self.repo()
-    self.assertEqual(repo.run("add", "Earlier", "--pass", "v9")[0], 0)
+    self.assertEqual(repo.run("add", "Earlier", "--release-target", "v9")[0], 0)
     gh = FakeGh([issue(7, "  Seven  "), issue(3, "Three")])
     code, out, err = self.pull(repo, gh, "--repo", REPO, "--json")
     self.assertEqual(code, 0, err)
@@ -116,7 +116,7 @@ class PullFilingTests(PullBase):
     repo = self.repo()
     self.assertEqual(self.pull(repo, FakeGh([issue(1, "One")]), "--repo", REPO)[0], 0)
     self.assertEqual(repo.run("set", self.keyed(repo)[f"github:{REPO}#1"].id,
-                              "--importance", "3", "--pass", "v2")[0], 0)
+                              "--importance", "3", "--release-target", "v2")[0], 0)
     self.assertEqual(repo.run("render")[0], 0)
     before = self.tracked(repo)
     gh = FakeGh([issue(1, "Renamed on GitHub")])

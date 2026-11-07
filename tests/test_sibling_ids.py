@@ -383,13 +383,13 @@ class OnlyInSiblingTests(unittest.TestCase):
 
   def test_ListJson_Envelope_RespectsFiltersSortsAndLean(self) -> None:
     with self.repo() as repo:
-      repo.run("set", "S01", "--tree", "core", "--pass", "v1", "--effort", "3")
-      repo.run("add", "two", "--tree", "cli", "--pass", "v2", "--effort", "1")
+      repo.run("set", "S01", "--tree", "core", "--release-target", "v1", "--effort", "3")
+      repo.run("add", "two", "--tree", "cli", "--release-target", "v2", "--effort", "1")
       repo.run("set", "S02", "--status", "done")
       self.sibling(repo, "other")
       views = [(), ("--all",), ("--status", "done"), ("--tree", "core"),
-               ("--pass", "v1"), ("--sort", "score"), ("--sort", "effort"),
-               ("--all", "--tree", "cli", "--pass", "v2", "--sort", "effort"),
+               ("--release-target", "v1"), ("--sort", "score"), ("--sort", "effort"),
+               ("--all", "--tree", "cli", "--release-target", "v2", "--sort", "effort"),
                ("--tree", "missing")]
       for flags in views:
         for lean in [(), ("--lean",)]:

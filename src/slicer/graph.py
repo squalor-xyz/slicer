@@ -7,6 +7,7 @@ raise RecursionError.
 
 from __future__ import annotations
 
+import sys
 from typing import Collection
 
 from slicer.config import Config
@@ -195,6 +196,46 @@ def pass_rank(index: Index, item: Item) -> int:
   return len(index.passes)
 
 
+def wave_rank(index: Index, item: Item) -> int:
+  """Where `ranked_order` files an item's planned wave inside its release target:
+  the wave itself, after every numbered wave when it has none. A wave is a number inside
+  one release target, so ranking uses it only where it can tell the targets apart: not
+  with none declared, not for an item with no release target, and not for one whose
+  release target nobody declared (those merge by score, as before waves), so every
+  such item shares rank 0."""
+  if not index.passes or not item.pass_key or index.pass_info(item.pass_key) is None:
+    return 0
+  return item.wave if item.wave is not None else sys.maxsize
+
+
+def wave_conflicts(index: Index, cfg: Config) -> list[dict[str, str | int]]:
+  """Items planned in an earlier wave than a dependency, in the same release target,
+  that is still to do.
+
+  `{id, wave, depends_on, depends_wave}` in queue order, one row per such edge. A wave
+  is a number inside one release target, so a dependency in another release target
+  is not compared. Waves are the owner's labels, so a conflict is reported, never
+  resolved. An item or dependency with no wave, or already done or retired, conflicts
+  with nothing.
+  """
+  finished = cfg.finished_statuses()
+  out: list[dict[str, str | int]] = []
+  for item in index.items:
+    if item.wave is None or item.status in finished:
+      continue
+    for dep in item.depends_on:
+      other = index.get(dep)
+      if other is None or other.wave is None or other.status in finished:
+        continue
+      if other.pass_key != item.pass_key:
+        continue
+      if other.wave > item.wave:
+        out.append({
+          "id": item.id, "wave": item.wave, "depends_on": other.id, "depends_wave": other.wave,
+        })
+  return out
+
+
 def ranked_order(
   index: Index, cfg: Config, items: list[Item], *, descending: bool = True,
   by_pass: bool = True,
@@ -203,8 +244,9 @@ def ranked_order(
 
   Unblocked in-work items precede unblocked open items, then other visible
   rows, with parked items last. Each group uses descending effective score.
-  With by_pass, declared pass order precedes score within each group;
-  empty keys merge by score; undeclared named keys follow declared passes.
+  With by_pass, declared pass order precedes score within each group, and inside
+  one release target the owner's wave order (numbered waves, then none) precedes
+  score; empty keys merge by score; undeclared named keys follow declared passes.
   Ascending reverses groups, passes and scores. Ties keep stored queue order.
   """
   eff = effective_scores(index)
@@ -217,9 +259,10 @@ def ranked_order(
   def score_key(item: Item) -> tuple[int, int]:
     return (-eff[item.id] if descending else eff[item.id], place[item.id])
 
-  def named_key(item: Item) -> tuple[int, int, int]:
+  def named_key(item: Item) -> tuple[int, int, int, int]:
     rank = passes.get(item.pass_key, len(passes))
-    return (rank if descending else -rank, *score_key(item))
+    wave = wave_rank(index, item)
+    return (rank if descending else -rank, wave if descending else -wave, *score_key(item))
 
   out: list[Item] = []
   for group in sorted({tier_of(it) for it in items}, reverse=not descending):

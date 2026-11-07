@@ -167,7 +167,7 @@ class ReadinessTests(unittest.TestCase):
   def test_Ready_ThenSchedulingFieldEdits_StaysTrue(self) -> None:
     with self.repo(2) as repo:
       self.mark(repo)
-      for argv in (("--size", "L"), ("--pass", "P2"), ("--effort", "3"), ("--importance", "3"),
+      for argv in (("--size", "L"), ("--release-target", "P2"), ("--effort", "3"), ("--importance", "3"),
                    ("--depends-on", "S02"), ("--tree", "alpha"), ("--flag", "held")):
         code, _, err = repo.run("set", "S01", *argv)
         self.assertEqual(code, 0, (argv, err))
@@ -543,7 +543,7 @@ class NextOrderTests(unittest.TestCase):
     for key in ("p1", "p2"):
       self.assertEqual(repo.run("prose", "add-pass", key)[0], 0)
     for item_id, key in specs:
-      self.assertEqual(repo.run("set", item_id, "--pass", key)[0], 0)
+      self.assertEqual(repo.run("set", item_id, "--release-target", key)[0], 0)
 
   def test_NextReady_ReadyInLaterPass_DoesNotPassEarlierPassItems(self) -> None:
     with self.repo() as repo:
@@ -551,6 +551,16 @@ class NextOrderTests(unittest.TestCase):
       ReadinessTests().mark(repo, "S03")
       self.assertEqual(self.picks(repo, "--ready"), ["S01", "S02", "S03"])
       self.assertEqual(self.picks(repo), ["S01", "S02", "S03"])
+
+  def test_NextReady_ReadyInLaterWave_DoesNotPassEarlierWaveItems(self) -> None:
+    with self.repo() as repo:
+      self.passes(repo, ("S01", "p1"), ("S02", "p1"), ("S03", "p1"))
+      for item_id, wave in (("S01", "1"), ("S02", "1"), ("S03", "2")):
+        self.assertEqual(repo.run("set", item_id, "--wave", wave)[0], 0)
+      ReadinessTests().mark(repo, "S03")
+      self.assertEqual(self.picks(repo, "--ready"), ["S01", "S02", "S03"])
+      ReadinessTests().mark(repo, "S02")
+      self.assertEqual(self.picks(repo, "--ready"), ["S02", "S01", "S03"])
 
   def test_NextReady_ReadyInSamePass_ComesBeforeUnreadyInThatPass(self) -> None:
     with self.repo() as repo:
@@ -591,7 +601,7 @@ class NextOrderTests(unittest.TestCase):
     # With no declared pass the ranking ignores pass keys, so ready leads across them.
     with self.repo() as repo:
       for item_id, key in (("S01", "a"), ("S02", "b"), ("S03", "b")):
-        repo.run("set", item_id, "--pass", key)
+        repo.run("set", item_id, "--release-target", key)
       ReadinessTests().mark(repo, "S02")
       self.assertEqual(self.picks(repo), ["S01", "S02", "S03"])
       self.assertEqual(self.picks(repo, "--ready"), ["S02", "S01", "S03"])
@@ -600,7 +610,7 @@ class NextOrderTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("prose", "add-pass", "p1")
       for item_id, key in (("S01", "zz"), ("S02", "yy"), ("S03", "p1")):
-        repo.run("set", item_id, "--pass", key)
+        repo.run("set", item_id, "--release-target", key)
       ReadinessTests().mark(repo, "S02")
       self.assertEqual(self.picks(repo), ["S03", "S01", "S02"])
       self.assertEqual(self.picks(repo, "--ready"), ["S03", "S02", "S01"])

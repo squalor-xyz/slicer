@@ -460,7 +460,7 @@ def _cmd_next_batch(
 
 
 def cmd_plan_parallel(args: argparse.Namespace) -> int:
-  """The waves of work that can run side by side. Read-only, like `next`."""
+  """The parallel sets of work that can run side by side. Read-only, like `next`."""
   state = _state(args)
   elsewhere = store.in_work_elsewhere(state.root, state.index)
   plan = queries.plan_parallel(
@@ -490,6 +490,11 @@ def cmd_plan_parallel(args: argparse.Namespace) -> int:
   blocked = _blocked_payload(plan.blocked)
   if blocked:
     _append_blocked(lines, blocked)
+  for row in plan.wave_conflicts:
+    lines.append(
+      f"wave conflict: {row['id']} (wave {row['wave']}) depends on "
+      f"{row['depends_on']} (wave {row['depends_wave']})"
+    )
   _note_skips(payload, lines, plan)
   _emit(args, payload, "\n".join(lines) or "nothing to plan",
         keep_empty=("waves", "in_flight", "unplaced", "blocked"))
@@ -518,12 +523,20 @@ def _status_width(
 
 
 def _pass_width(index: model.Index, items: list[model.Item]) -> int | None:
-  """The PASS column's width, or None when the roadmap uses no passes at all
-  (none declared and none named by an item), so such a project keeps the
+  """The TARGET column's width, or None when the roadmap uses no release targets
+  at all (none declared and none named by an item), so such a project keeps the
   table without the column."""
   if not any(index.pass_keys()):
     return None
-  return max([len("PASS"), *(len(i.pass_key or "-") for i in items)])
+  return max([len("TARGET"), *(len(i.pass_key or "-") for i in items)])
+
+
+def _wave_width(index: model.Index, items: list[model.Item]) -> int | None:
+  """The WAVE column's width, or None until some item has a planned wave, so a
+  roadmap that plans none keeps the table it always had."""
+  if not any(i.wave is not None for i in index.items):
+    return None
+  return max([len("WAVE"), *(len(str(i.wave)) if i.wave is not None else 1 for i in items)])
 
 
 def _item_rows(
@@ -532,6 +545,7 @@ def _item_rows(
   pass_w: int | None = None,
   status_w: int | None = None,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
+  wave_w: int | None = None,
 ) -> list[str]:
   """The shared queue-listing row format used by `list`, `find` and `deps`.
 
@@ -540,7 +554,8 @@ def _item_rows(
   number marks an item that waits on an unfinished dependency, as the TUI queue
   does; it takes the space the row leaves there, so the columns do not move. The
   claim column names the owner, or `*` when the item is in progress and unclaimed.
-  The pass column appears only when the roadmap uses passes.
+  The target column appears only when the roadmap uses release targets, and the
+  wave column only when some item has a planned wave.
   """
   cfg = state.config
   eff = graph.effective_scores(state.index)
@@ -551,11 +566,15 @@ def _item_rows(
     pass_w = _pass_width(state.index, items)
   if status_w is None:
     status_w = _status_width(cfg, items, elsewhere)
+  if wave_w is None:
+    wave_w = _wave_width(state.index, items)
   rows = []
   for n, item in enumerate(items, 1):
     score = str(eff[item.id]) + ("^" if eff[item.id] > item.score else "")
     effort = "-" if item.effort is None else str(item.effort)
     pass_cell = "" if pass_w is None else f"{item.pass_key or '-':<{pass_w}} "
+    if wave_w is not None:
+      pass_cell += f"{'-' if item.wave is None else item.wave!s:<{wave_w}} "
     label = cfg.status_label(store.displayed_status(cfg, item, elsewhere.get(item.id, [])))
     mark = "!" if graph.pending(state.index, item, cfg) else " "
     rows.append(
@@ -628,6 +647,12 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if set(args.tree) & set(i.trees)]
   if args.pass_key:
     items = [i for i in items if i.pass_key == args.pass_key]
+  if args.wave is not None:
+    # Validation only: `valid_wave` is pure and writes nothing.
+    wave = ops.valid_wave(args.wave)
+    if wave is None:
+      raise StateError("--wave needs an integer >= 1 to filter by", code="usage")
+    items = [i for i in items if i.wave == wave]
   if args.flag:
     items = [i for i in items if set(args.flag) & set(i.flags)]
   if args.held:
@@ -661,13 +686,17 @@ def cmd_list(args: argparse.Namespace) -> int:
   claim_w = _claim_width(state.config, items, elsewhere)
   pass_w = _pass_width(state.index, items)
   status_w = _status_width(state.config, items, elsewhere)
-  pass_head = "" if pass_w is None else f"{'PASS':<{pass_w}} "
+  wave_w = _wave_width(state.index, items)
+  pass_head = "" if pass_w is None else f"{'TARGET':<{pass_w}} "
+  if wave_w is not None:
+    pass_head += f"{'WAVE':<{wave_w}} "
   header = (
     f"{'#':>3}  {'ID':<5} {'STATUS':<{status_w}} {'CLAIM':<{claim_w}} {pass_head}{'SIZE':<4} "
     f"{'EFFORT':<6} {'SCORE':<5} {'QUADRANT':<9} TITLE"
   )
   lines = [header, *_item_rows(
     state, items, claim_w=claim_w, pass_w=pass_w, status_w=status_w, elsewhere=elsewhere,
+    wave_w=wave_w,
   )]
   if not items:
     lines = ["no matching items"]

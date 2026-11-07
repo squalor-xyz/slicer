@@ -202,6 +202,26 @@ def _clean(value: object) -> object:
   return value
 
 
+def valid_wave(value: object) -> int | None:
+  """A wave as stored: an integer >= 1, or None for none.
+
+  The CLI and the TUI hand over text, an outline hands over an integer. Empty
+  text clears the wave, as `--effort` has `--no-effort`; anything else that is
+  not a whole number >= 1 is a usage error, raised before any state changes.
+  """
+  if value is None:
+    return None
+  if isinstance(value, str):
+    text = value.strip()
+    if not text:
+      return None
+    if text.isascii() and text.isdigit():
+      value = int(text)
+  if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+    raise StateError(f"wave must be an integer >= 1, not {value!r}; '' clears it", code="usage")
+  return value
+
+
 def _reject_bad_text(**fields: object) -> None:
   """Refuse text that cannot survive a roadmap row. Call before mutating.
 
@@ -367,6 +387,7 @@ def add(
   if existing is not None:
     return existing
   _reject_bad_text(title=title, **fields)
+  wave = valid_wave(fields.get("wave"))
   discovered_from = fields.get("discovered_from") or ""
   if discovered_from:
     state.index.require(discovered_from)
@@ -393,6 +414,7 @@ def add(
     discovered_from=discovered_from,
     parent=parent,
     pass_key=str(pass_key),
+    wave=wave,
     depends_on=_clean(list(fields.get("depends_on") or [])),
     importance=_valid_score("importance", fields["importance"]) if fields.get("importance") is not None else 2,
     urgency=_valid_score("urgency", fields["urgency"]) if fields.get("urgency") is not None else 2,
@@ -742,6 +764,7 @@ _SOURCE_FIELD_DEFAULTS = {
   "trees": [],
   "findings": "",
   "pass_key": "",
+  "wave": None,
   "group": "",
   "status": "",
   "depends": [],
@@ -761,7 +784,8 @@ _SOURCE_FIELD_COMMANDS = {
   "size": "set --size",
   "trees": "set --tree",
   "findings": "set --findings",
-  "pass_key": "set --pass",
+  "pass_key": "set --release-target",
+  "wave": "set --wave",
   "group": "set --group",
   "status": "set --status",
   "depends": "set --depends-on",
@@ -1275,18 +1299,20 @@ def set_fields_many(
   add_flags = list(_clean(add_flags or []))
   remove_flags = list(_clean(remove_flags or []))
   items = _batch_items(state, item_ids)
-  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "parent", "discovered_from", "importance", "urgency", "effort", "attempts"}
+  known = {"title", "short_title", "status", "size", "trees", "findings", "pass_key", "depends_on", "flags", "group", "parent", "discovered_from", "importance", "urgency", "effort", "attempts", "wave"}
   _reject_bad_text(**fields)
   values = {}
   for key, value in fields.items():
     if key not in known:
       raise StateError(f"unknown field {key!r}; known: {sorted(known)}")
-    if value is None and key != "effort":
+    if value is None and key not in ("effort", "wave"):
       raise StateError(f"{key} cannot be null", code="state")
     if key == "status" and value not in state.config.statuses:
       raise StateError(f"unknown status {value!r}; known: {sorted(state.config.statuses)}")
     elif key in ("importance", "urgency", "effort") and value is not None:
       value = _valid_score(key, value)
+    elif key == "wave":
+      value = valid_wave(value)
     elif key == "attempts" and (isinstance(value, bool) or not isinstance(value, int) or value < 0):
       raise StateError(f"attempts must be an integer >= 0, not {value!r}", code="usage")
     values[key] = _clean(value)
@@ -2051,7 +2077,7 @@ def add_pass(
 
 
 def drop_pass(state: State, key: str) -> None:
-  """Remove an empty pass group. Refuses while anything still points at it."""
+  """Remove an empty release target (pass group). Refuses while anything still points at it."""
   if state.index.pass_info(key) is None:
     known = ", ".join(p.key for p in state.index.passes) or "none"
     raise StateError(f"no pass {key!r}; declared passes: {known}")
@@ -2060,7 +2086,7 @@ def drop_pass(state: State, key: str) -> None:
     shown = ", ".join(members[:5]) + ("\u2026" if len(members) > 5 else "")
     raise StateError(
       f"pass {key!r} still has {len(members)} item(s): {shown}. "
-      f"Move them first with `slicer set <id> --pass <other>`."
+      f"Move them first with `slicer set <id> --release-target <other>`."
     )
   state.index.passes = [p for p in state.index.passes if p.key != key]
   state.save_index()
@@ -2441,6 +2467,7 @@ def apply_outline(
       # entries belong, and silently filing them under the tail item's pass
       # would be wrong in exactly the case bulk loading is for.
       pass_key=spec.pass_key,
+      wave=spec.wave,
       group=spec.group,
       depends_on=[by_title.get(d, d) for d in report.depends[id(spec)]],
       importance=spec.importance,

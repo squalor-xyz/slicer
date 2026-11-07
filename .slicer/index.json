@@ -18303,7 +18303,7 @@
       "id": "s449",
       "title": "Release target (was pass) and an owner-set wave inside it",
       "short_title": "Release target (was pass) and an owner-set wave inside it",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -18313,6 +18313,34 @@
           "text": "**2026-11-07** — Owner decisions, 2026-11-07: all the recommended options are chosen. Flag `--wave N`. Grouping: sub-groups per wave in the roadmap and a wave column in `list`. Items with no wave sort last. In `plan-parallel`, an item scheduled in an earlier wave than its dependency goes in a `wave_conflicts` list and `check` warns. Stored shape: keep `fields.pass` and add `wave` only when set, with no schema bump. The `waves` key of `plan-parallel` stays and the docs call that output \"parallel sets\". The slice stays whole (size L, architect runs).",
           "created_at": "2026-11-07T14:41:06Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "b4895c3a-e226-4796-ab37-a0713da5ad19",
+          "kind": "",
+          "text": "**2026-11-07** — Human checks at approval (s449):\n- later: `slicer list` and the roadmap render show items grouped by release target, then wave, with the wave visible; `slicer tui` offers a wave filter.",
+          "created_at": "2026-11-07T19:47:08Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "07170cda-ebb4-4740-9d1b-32a6a74a05f7",
+          "kind": "",
+          "text": "**2026-11-07** — Verified: release target is the main name (--release-target, release_target, by_release_target); --pass, pass and by_pass stay as deprecated aliases with one stderr note. Owner-set --wave N (int >= 1, '' clears) is stored only once set, so an index with no waves is byte-identical and the schema is unchanged. list, next, the TUI and the roadmap group by release target then wave (no wave last); plan-parallel keeps its output for wave-less items and adds wave_conflicts (same release target only) with a matching check warning. Full suite 3302 passed, 0 failed, 1 skipped; slicer check passes; git diff --check clean; ai instructions names release target.",
+          "created_at": "2026-11-07T19:47:16Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -18345,7 +18373,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 3,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -186,7 +186,7 @@ class PassGroupTests(unittest.TestCase):
 
   def test_AddPass_ItemsAlreadyInPass_TextCountsThem(self) -> None:
     with self.repo() as repo:
-      code, _, err = repo.run("set", "S01", "--pass", "vX")
+      code, _, err = repo.run("set", "S01", "--release-target", "vX")
       self.assertEqual(code, 0, err)
       code, out, err = repo.run("prose", "add-pass", "vX")
       self.assertEqual(code, 0, err)
@@ -199,7 +199,7 @@ class PassGroupTests(unittest.TestCase):
       code, out, err = repo.run("prose", "add-pass", "vX")
       self.assertEqual(code, 0, err)
       self.assertIn(
-        "created pass vX (no items yet); file items with `slicer add --pass vX`",
+        "created pass vX (no items yet); file items with `slicer add --release-target vX`",
         out,
       )
 
@@ -216,7 +216,7 @@ class PassGroupTests(unittest.TestCase):
   def test_AddPass_ThenAddItemWithPassFlag_PlacesItInThatGroup(self) -> None:
     with self.repo() as repo:
       repo.run("prose", "add-pass", "9", "--heading", "# Pass nine")
-      code, _, err = repo.run("add", "a ninth-pass idea", "--pass", "9")
+      code, _, err = repo.run("add", "a ninth-pass idea", "--release-target", "9")
       self.assertEqual(code, 0, err)
       self.assertEqual(repo.state().index.require("S05").pass_key, "9")
 
@@ -242,7 +242,7 @@ class PassGroupTests(unittest.TestCase):
       code, _, err = repo.run("prose", "drop-pass", "1")
       self.assertEqual(code, 2)
       self.assertIn("still has 2 item(s)", err)
-      self.assertIn("--pass", err)
+      self.assertIn("--release-target", err)
 
   def test_DropPass_Empty_RemovesIt(self) -> None:
     with self.repo() as repo:
@@ -254,7 +254,7 @@ class PassGroupTests(unittest.TestCase):
     with self.repo() as repo:
       repo.run("prose", "add-pass", "9")
       for item_id in ("S01", "S02"):
-        repo.run("set", item_id, "--pass", "9")
+        repo.run("set", item_id, "--release-target", "9")
       self.assertEqual(repo.run("prose", "drop-pass", "1")[0], 0)
       self.assertEqual(repo.state().index.require("S01").pass_key, "9")
 

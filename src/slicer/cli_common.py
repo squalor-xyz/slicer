@@ -388,6 +388,35 @@ def _nonnegative_int(value: str) -> int:
   return number
 
 
+class _PassAlias(argparse.Action):
+  """`--pass`, the deprecated spelling of `--release-target`.
+
+  It stores the same value; `main` prints the deprecation note once for the run,
+  so a command that takes the flag twice, or a recursive one, still says it once.
+  """
+
+  def __call__(self, parser, namespace, values, option_string=None) -> None:
+    setattr(namespace, self.dest, values)
+    namespace.pass_alias_used = True
+
+
+PASS_ALIAS_NOTE = (
+  "slicer: --pass is deprecated; use --release-target (same value). "
+  "The `pass` JSON field and `by_pass` stay as aliases of `release_target` and `by_release_target`."
+)
+
+
+PASS_KEY_ALIAS_NOTE = (
+  "slicer: the `pass:` outline key is deprecated; use `release_target:` (same value)."
+)
+
+
+def _release_target_flags(sp: argparse.ArgumentParser, *, help_: str) -> None:
+  """`--release-target`, plus `--pass` as its deprecated alias, both into `pass_key`."""
+  sp.add_argument("--release-target", dest="pass_key", help=help_)
+  sp.add_argument("--pass", dest="pass_key", action=_PassAlias, help=argparse.SUPPRESS)
+
+
 def _positive_int(value: str) -> int:
   try:
     number = int(value)
@@ -430,10 +459,11 @@ def _item_lookup(state: store.State, item_ids: list[str]) -> Iterator[None]:
 
 
 def _undeclared_pass_line(key: str) -> str:
-  """The stderr line for a pass key no `prose add-pass` declared yet."""
+  """The stderr line for a release target no `prose add-pass` declared yet."""
   return (
-    f"slicer: pass {key} is not declared, so the queue orders its items by score among other "
-    f"undeclared passes; declare it with `slicer prose add-pass {key} --after <pass>`."
+    f"slicer: release target {key} is not declared, so the queue orders its items by score "
+    f"among other undeclared release targets; declare it with "
+    f"`slicer prose add-pass {key} --after <release target>`."
   )
 
 
@@ -651,6 +681,7 @@ def _census(state: store.State) -> dict:
     "by_status": model.counts(items, "status"),
     "by_size": model.counts(items, "size"),
     "by_tree": model.counts(items, "trees"),
+    "by_release_target": model.counts(items, "pass_key"),
     "by_pass": model.counts(items, "pass_key"),
     "by_tree_status": by_tree_status,
   }

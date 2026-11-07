@@ -36,7 +36,9 @@ SKELETON_HEAD = """\
               (`trees:` is the same key)
     findings: a reference back to whatever raised this
     status:   {statuses}
-    pass:     a group key, if the project uses passes
+    release_target: the release this item is aimed at, if the project uses them
+              (`pass:` is the deprecated name for the same key)
+    wave:     the owner's planned wave inside the release target, an integer >= 1
     group:    a phase label rendered above the item
     discovered_from: the ID of the existing item whose work raised this one
     parent:   the ID of an existing item, or the title of another entry here, that
@@ -116,6 +118,7 @@ def cmd_import(args: argparse.Namespace) -> int:
   parsed = outline.parse(cli_common._read_user_file(path), path=str(path))
   specs = parsed.items
   preamble = parsed.preamble or None
+  alias_used = any(spec.used_pass_key for spec in specs)
 
   if args.dry_run:
     report = ops.outline_report(
@@ -153,12 +156,16 @@ def cmd_import(args: argparse.Namespace) -> int:
   if args.dry_run:
     lines.append("nothing written; drop --dry-run to apply")
     _emit(args, report.to_dict(), "\n".join(lines))
+    if alias_used:
+      _write_err(args, cli_common.PASS_KEY_ALIAS_NOTE)
     return OK
 
   if _render_hint(args):
     lines.append(f"now {_render_hint(args)}")
   _emit(args, report.to_dict(), "\n".join(lines))
   filed = [state.index.require(entry["id"]) for entry in report.entries if not entry["existing"]]
+  if alias_used:
+    _write_err(args, cli_common.PASS_KEY_ALIAS_NOTE)
   for pass_key in state.index.undeclared_pass_keys(filed):
     _write_err(args, _undeclared_pass_line(pass_key))
   return OK
@@ -270,14 +277,14 @@ def cmd_add(args: argparse.Namespace) -> int:
   item = ops.add(
     state, args.title, item_id=args.id, size=args.size or "",
     trees=args.tree or [], findings=args.findings or "", status=args.status,
-    pass_key=args.pass_key, importance=args.importance, urgency=args.urgency,
+    pass_key=args.pass_key, wave=args.wave, importance=args.importance, urgency=args.urgency,
     effort=args.effort, depends_on=args.depends_on, short_title=args.short_title, key=args.key,
     id_floor=_id_floor(state), discovered_from=args.discovered_from,
     parent=args.parent,
   )
   text = item.id if args.print_id else f"added {item.id}  {item.display_title()}"
   if item.pass_key and not args.print_id:
-    text += f" (pass: {item.pass_key})"
+    text += f" (release target: {item.pass_key})"
   _emit(args, item.to_dict() | {"existing": False}, text)
   if item.unscored and item.status in (state.config.open_status, state.config.started_status):
     _write_err(args, (
@@ -336,7 +343,7 @@ def cmd_set(args: argparse.Namespace) -> int:
   fields = dict(
     title=args.title, short_title=args.short_title, status=args.status,
     size=args.size, trees=args.tree, findings=args.findings, depends_on=args.depends_on,
-    pass_key=args.pass_key, flags=flags, group=args.group, parent=args.parent,
+    pass_key=args.pass_key, wave=args.wave, flags=flags, group=args.group, parent=args.parent,
     discovered_from=args.discovered_from,
     importance=args.importance, urgency=args.urgency,
     effort=args.effort, attempts=args.attempts,

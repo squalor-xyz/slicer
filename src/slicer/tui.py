@@ -122,7 +122,8 @@ FIELD_SPEC: dict[str, tuple[str, object]] = {
   "urgency": ("urgency", lambda b: b.strip()),
   "effort": ("effort", _effort_edit),
   "short title": ("short_title", lambda b: b.strip()),
-  "pass": ("pass_key", lambda b: b.strip()),
+  "release target": ("pass_key", lambda b: b.strip()),
+  "wave": ("wave", lambda b: b.strip()),
   "flags": ("flags", _csv),
 }
 
@@ -136,6 +137,8 @@ def _field_current(item, label: str) -> str:
     return ", ".join(item.flags)
   if label in ("importance", "urgency"):
     return str(getattr(item, label))
+  if label == "wave":
+    return "" if item.wave is None else str(item.wave)
   return getattr(item, FIELD_SPEC[label][0]) or ""
 
 # One label column for every detail line, so values align whatever the label.
@@ -678,7 +681,7 @@ def apply_edit(state: State, request: EditRequest, body: str) -> str:
   return apply_edit_result(state, request, body).message
 
 
-FILTER_GROUPS = ("status", "tree", "pass", "importance", "urgency", "flag")
+FILTER_GROUPS = ("status", "tree", "release target", "wave", "importance", "urgency", "flag")
 
 
 @dataclass
@@ -712,7 +715,8 @@ class Filters:
       return False
     candidates = {
       "status": {item.status, displayed_status or item.status}, "tree": set(item.trees) or {""},
-      "pass": {item.pass_key}, "importance": {str(item.importance)},
+      "release target": {item.pass_key},
+      "wave": {"" if item.wave is None else str(item.wave)}, "importance": {str(item.importance)},
       "urgency": {str(item.urgency)},
       "flag": set(item.flags) or {""},
     }
@@ -767,12 +771,13 @@ def filtered_rows(
 
 
 def filter_choices(state: State) -> list[tuple[str, str | None]]:
-  """None is Any; the empty string is an item with no tree, pass, or flag."""
+  """None is Any; the empty string is an item with no tree, release target, wave, or flag."""
   items = state.index.items
   values = {
     "status": list(state.config.statuses),
     "tree": [""] + sorted({tree for it in items for tree in it.trees}),
-    "pass": [""] + sorted({it.pass_key for it in items if it.pass_key}),
+    "release target": [""] + sorted({it.pass_key for it in items if it.pass_key}),
+    "wave": [""] + [str(w) for w in sorted({it.wave for it in items if it.wave is not None})],
     "importance": ["1", "2", "3"], "urgency": ["1", "2", "3"],
     "flag": [""] + sorted({flag for it in items for flag in it.flags}),
   }

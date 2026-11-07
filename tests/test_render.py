@@ -56,6 +56,39 @@ class RenderTests(unittest.TestCase):
       self.assertIn("- a goal", roadmap)
       self.assertIn("- a non-goal", roadmap)
 
+  def test_Render_Roadmap_ShowsWaveWithinReleaseTarget(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "Loose", "--release-target", "v1.20", "--short-title", "loose")
+      repo.run("add", "Second", "--release-target", "v1.20", "--wave", "2", "--short-title", "second")
+      repo.run("add", "First", "--release-target", "v1.20", "--wave", "1", "--short-title", "first")
+      repo.run("add", "Plain", "--release-target", "v1.19", "--short-title", "plain")
+      code, _, err = repo.run("render")
+      self.assertEqual(code, 0, err)
+      roadmap = repo.read(".slicer/render/ROADMAP.md")
+      order = [roadmap.index(text) for text in (
+        "## v1.20", "### Wave 1", "| first ", "### Wave 2", "| second ", "### No wave",
+        "| loose ", "## v1.19", "| plain ",
+      )]
+      self.assertEqual(order, sorted(order))
+      # A release target no item gave a wave keeps its single table.
+      self.assertEqual(roadmap.count("### "), 3)
+      self.assertEqual(roadmap.count("## v1.19\n\n| #"), 1)
+      positions = [int(line.split("|")[1]) for line in roadmap.splitlines() if line.startswith("| ") and line.split("|")[1].strip().isdigit()]
+      self.assertEqual(positions, [1, 2, 3, 4])
+      html = repo.read(".slicer/render/ROADMAP.html")
+      self.assertIn("<h3>Wave 1</h3>", html)
+      self.assertIn("<h3>No wave</h3>", html)
+      self.assertEqual(repo.run("check")[0], 0)
+
+  def test_Render_Roadmap_NoWaves_HasNoWaveHeadings(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.run("add", "One", "--release-target", "v1.20")
+      repo.run("render")
+      self.assertNotIn("### ", repo.read(".slicer/render/ROADMAP.md"))
+      self.assertNotIn("<h3>", repo.read(".slicer/render/ROADMAP.html"))
+
   def test_Expand_UnknownPlaceholder_RaisesNamingTheKey(self) -> None:
     with self.assertRaises(RenderError) as caught:
       render.expand("hello {{nope}}", {"other": "x"})

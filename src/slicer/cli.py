@@ -21,7 +21,7 @@ from pathlib import Path
 from slicer import store, vcs
 from slicer import __url__, __version__
 from slicer.cli_common import (
-  INTERNAL, OK, USAGE, _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _ParserError, _begin_write,
+  INTERNAL, OK, PASS_ALIAS_NOTE, USAGE, _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _ParserError, _begin_write,
   _dump_json, _emit, _exit_for, _json_flags, _write_out,
 )
 from slicer.cli_parser import build_parser
@@ -190,6 +190,8 @@ def main(argv: list[str] | None = None) -> int:
       }, f"slicer {__version__}\n{_DESCRIPTION}\nSource: {__url__}\nIssues: {_ISSUES_URL}")
       return OK
     parser.parse_args(argv, namespace=args)
+    if getattr(args, "pass_alias_used", False):
+      print(PASS_ALIAS_NOTE, file=sys.stderr)
     if args.command == "snapshot":
       return cmd_snapshot(args)
     root = Path(args.root) if args.root else Path.cwd()

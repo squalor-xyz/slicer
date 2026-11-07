@@ -38,6 +38,34 @@ class OutlineParseTests(unittest.TestCase):
     self.assertEqual(spec.pass_key, "2")
     self.assertEqual(spec.group, "Phase 0")
 
+  def test_Outline_ReleaseTargetAndWaveKeys_Import(self) -> None:
+    spec = self.parse("## T\nrelease_target: v1.20\nwave: 2\n")[0]
+    self.assertEqual((spec.pass_key, spec.wave), ("v1.20", 2))
+    self.assertEqual(self.parse("## T\npass: v1.20\n")[0].pass_key, "v1.20")
+    self.assertIsNone(self.parse("## T\npass: v1.20\n")[0].wave)
+    self.assertTrue(self.parse("## T\npass: v1.20\n")[0].used_pass_key)
+    self.assertFalse(spec.used_pass_key)
+    data = spec.to_dict()
+    self.assertEqual((data["pass"], data["release_target"], data["wave"]), ("v1.20", "v1.20", 2))
+
+  def test_Outline_ReleaseTargetAndWaveKeys_ImportThroughTheCli(self) -> None:
+    with support.TempRepo() as repo:
+      repo.run("init")
+      repo.write(
+        "draft.md",
+        "## New\nrelease_target: v1.20\nwave: 2\n\n## Old\npass: v1.20\n",
+      )
+      code, _, err = repo.run("import", "draft.md")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(len([l for l in err.splitlines() if "deprecated" in l]), 1, err)
+      state = repo.state()
+      self.assertEqual([(i.pass_key, i.wave) for i in state.index.items], [("v1.20", 2), ("v1.20", None)])
+      # A refused outline writes nothing and says nothing, deprecated key or not.
+      repo.write("refused.md", "## Bad\npass: v1\nstatus: nope\n")
+      code, _, err = repo.run("import", "refused.md")
+      self.assertNotEqual(code, 0)
+      self.assertNotIn("deprecated", err)
+
   def test_Outline_ShortTitleKey_Parsed(self) -> None:
     specs = self.parse("## A long descriptive title\nshort_title: Short one\n")
     self.assertEqual(specs[0].short_title, "Short one")
@@ -108,6 +136,16 @@ class OutlineRefusalTests(unittest.TestCase):
     with self.assertRaises(OutlineError) as caught:
       outline.parse(text, path="out.md")
     self.assertIn(fragment, str(caught.exception))
+
+  def test_Parse_BadWave_NamesTheLine(self) -> None:
+    for bad in ("0", "x", "-1", "1.5"):
+      with self.subTest(wave=bad):
+        self.assertRefuses(f"## T\nsize: M\nwave: {bad}\n", "out.md:3")
+        self.assertRefuses(f"## T\nwave: {bad}\n", "wave must be an integer >= 1")
+
+  def test_Parse_ReleaseTargetAndPassDisagree_Refuses(self) -> None:
+    self.assertRefuses("## T\nrelease_target: v1\npass: v2\n", "release_target")
+    outline.parse("## T\nrelease_target: v1\npass: v1\n", path="out.md")
 
   def test_Parse_UnknownKey_NamesTheKeyAndTheKnownSet(self) -> None:
     self.assertRefuses("## T\nsizes: M\n", "unknown key 'sizes'")

@@ -133,7 +133,7 @@ class FindTests(unittest.TestCase):
       plain = repo.run("find", "off-schema")
       self.assertEqual(
         plain[1],
-        "  1  S03   parked  -     2    L    -      22    -         Third thing\n"
+        "  1  S03   parked  -     2      L    -      22    -         Third thing\n"
         "      matched in body: …yet, but this heading is off-schema. Check None. Git none.\n",
       )
       self.assertEqual(repo.run("find", "off-schema", "--lean"), plain)

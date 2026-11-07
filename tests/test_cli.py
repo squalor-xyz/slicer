@@ -589,12 +589,12 @@ class ListDoneDefaultTests(unittest.TestCase):
     repo.run("init")
     repo.run("prose", "add-pass", "now")
     repo.run("prose", "add-pass", "next")
-    repo.run("add", "open item", "--tree", "alpha", "--pass", "now", "--importance", "1", "--urgency", "1")
-    repo.run("add", "done item", "--tree", "alpha", "--pass", "now", "--importance", "3", "--urgency", "3")
-    repo.run("add", "parked item", "--tree", "beta", "--pass", "now")
-    repo.run("add", "later item", "--tree", "alpha", "--pass", "next")
-    repo.run("add", "started item", "--tree", "beta", "--pass", "next")
-    repo.run("add", "retired item", "--tree", "alpha", "--pass", "now")
+    repo.run("add", "open item", "--tree", "alpha", "--release-target", "now", "--importance", "1", "--urgency", "1")
+    repo.run("add", "done item", "--tree", "alpha", "--release-target", "now", "--importance", "3", "--urgency", "3")
+    repo.run("add", "parked item", "--tree", "beta", "--release-target", "now")
+    repo.run("add", "later item", "--tree", "alpha", "--release-target", "next")
+    repo.run("add", "started item", "--tree", "beta", "--release-target", "next")
+    repo.run("add", "retired item", "--tree", "alpha", "--release-target", "now")
     repo.run("done", "S02")
     repo.run("park", "S03")
     repo.run("set", "S04", "--status", "later")
@@ -625,7 +625,7 @@ class ListDoneDefaultTests(unittest.TestCase):
       code, out, err = repo.run("list")
       self.assertEqual((code, err), (0, ""))
       lines = out.splitlines()
-      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "CLAIM", "PASS", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
+      self.assertEqual(lines[0].split(), ["#", "ID", "STATUS", "CLAIM", "TARGET", "SIZE", "EFFORT", "SCORE", "QUADRANT", "TITLE"])
       self.assertTrue(any(line[lines[0].index("EFFORT")] == "-" for line in lines[1:-1]))
       self.assertEqual(lines[-1], "2 items hidden (done or retired); use --all to show them")
       self.assertEqual([item["id"] for item in json.loads(repo.run("list", "--json")[1])],
@@ -635,7 +635,7 @@ class ListDoneDefaultTests(unittest.TestCase):
     with self.repo() as repo:
       out = repo.run("list", "--tree", "beta")[1]
       self.assertNotIn("items hidden", out)
-      out = repo.run("list", "--pass", "now")[1]
+      out = repo.run("list", "--release-target", "now")[1]
       self.assertIn("2 items hidden", out)
 
   def test_List_Text_ExplicitStatusAndAllDoNotReportHiddenRows(self) -> None:
@@ -649,8 +649,8 @@ class ListDoneDefaultTests(unittest.TestCase):
       self.assertEqual(self.ids(repo, "--all"), ["S05", "S01", "S02", "S06", "S04", "S03"])
       self.assertEqual(self.ids(repo, "--all", "--tree", "alpha"), ["S01", "S02", "S06", "S04"])
       self.assertEqual(self.ids(repo, "--tree", "alpha"), ["S01", "S04"])
-      self.assertEqual(self.ids(repo, "--all", "--pass", "now"), ["S01", "S02", "S06", "S03"])
-      self.assertEqual(self.ids(repo, "--pass", "now"), ["S01", "S03"])
+      self.assertEqual(self.ids(repo, "--all", "--release-target", "now"), ["S01", "S02", "S06", "S03"])
+      self.assertEqual(self.ids(repo, "--release-target", "now"), ["S01", "S03"])
       self.assertEqual(self.ids(repo, "--all", "--sort", "score")[0], "S02")
       scored = self.ids(repo, "--sort", "score")
       self.assertNotIn("S02", scored)
@@ -805,10 +805,10 @@ class ListQueueTests(unittest.TestCase):
       repo.run("start", "S02")
       repo.run("set", "S01", "--flag", "security")
       repo.run("prose", "add-pass", "now")
-      repo.run("set", "S02", "--pass", "now")
+      repo.run("set", "S02", "--release-target", "now")
       self.assertEqual(self.ids(repo, "--in-work", "--tree", "beta"), ["S01"])
       self.assertEqual(self.ids(repo, "--in-work", "--flag", "security"), ["S01"])
-      self.assertEqual(self.ids(repo, "--in-work", "--pass", "now"), ["S02"])
+      self.assertEqual(self.ids(repo, "--in-work", "--release-target", "now"), ["S02"])
       self.assertEqual(self.ids(repo, "--in-work", "--sort", "score")[0], "S02")
 
 
@@ -822,10 +822,10 @@ class PassColumnTests(unittest.TestCase):
     repo.run("init")
     if passes:
       repo.run("prose", "add-pass", self.LONG)
-    repo.run("add", "first", *(("--pass", self.LONG) if passes else ()))
+    repo.run("add", "first", *(("--release-target", self.LONG) if passes else ()))
     repo.run("add", "second")
     if passes:
-      repo.run("set", "S02", "--pass", "")  # add inherits the previous pass
+      repo.run("set", "S02", "--release-target", "")  # add inherits the previous pass
     return repo
 
   def test_List_WithPasses_ShowsKeyOrDashAligned(self) -> None:
@@ -833,8 +833,8 @@ class PassColumnTests(unittest.TestCase):
       code, out, err = repo.run("list")
       self.assertEqual((code, err), (0, ""))
       header, first, second = out.splitlines()
-      self.assertEqual(header.split()[:6], ["#", "ID", "STATUS", "CLAIM", "PASS", "SIZE"])
-      col = header.index("PASS")
+      self.assertEqual(header.split()[:6], ["#", "ID", "STATUS", "CLAIM", "TARGET", "SIZE"])
+      col = header.index("TARGET")
       self.assertEqual(first[col:].split()[0], self.LONG)
       self.assertEqual(second[col:].split()[0], "-")
       # The widest key sets the column, so later columns line up with the header.
@@ -859,7 +859,7 @@ class PassColumnTests(unittest.TestCase):
     with self.repo(passes=True) as repo:
       items = json.loads(repo.run("list", "--json")[1])
       self.assertEqual([i["fields"]["pass"] for i in items], [self.LONG, ""])
-      self.assertNotIn("PASS", repo.run("list", "--json")[1])
+      self.assertNotIn("TARGET", repo.run("list", "--json")[1])
 
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ from slicer.errors import OutlineError
 
 # Keys an entry may carry. Anything else is an error naming this set, because
 # a silently ignored key is a roadmap item that quietly lost its size.
-KEYS = ("key", "short_title", "size", "tree", "trees", "findings", "status", "pass", "group", "depends", "discovered_from", "parent", "importance", "urgency", "effort")
+KEYS = ("key", "short_title", "size", "tree", "trees", "findings", "status", "release_target", "pass", "wave", "group", "depends", "discovered_from", "parent", "importance", "urgency", "effort")
 LIST_KEYS = ("tree", "trees", "depends")
 
 KEY_RE = re.compile(r"^(?P<key>[a-z][a-z_-]*)\s*:\s*(?P<value>.*)$")
@@ -76,6 +76,11 @@ class ItemSpec:
   parent: str = ""
   status: str = ""
   pass_key: str = ""
+  # The planned wave inside the release target: an integer >= 1, or None.
+  wave: int | None = None
+  # Set when the entry spelled the release target with the deprecated `pass:` key,
+  # so the importer can say so once; the parser itself does no I/O.
+  used_pass_key: bool = False
   group: str = ""
   # One raw value per `depends:` line, in declared order and not yet split on
   # commas; `ops` resolves them against the known titles.
@@ -102,6 +107,8 @@ class ItemSpec:
       "parent": self.parent,
       "status": self.status,
       "pass": self.pass_key,
+      "release_target": self.pass_key,
+      "wave": self.wave,
       "group": self.group,
       "depends": list(self.depends),
       "sections": [s.heading for s in self.sections],
@@ -243,8 +250,18 @@ def _assign(spec: ItemSpec, key: str, value: str, *, path: str, line: int) -> No
     raise OutlineError(f"{path}:{line}: {key!r} has no value")
   if key == "key" and spec.key:
     raise OutlineError(f"{path}:{line}: key may appear only once per item")
-  if key == "pass":
+  if key in ("pass", "release_target"):
+    if spec.pass_key and spec.pass_key != value:
+      raise OutlineError(
+        f"{path}:{line}: release_target and pass name different values "
+        f"({spec.pass_key!r} and {value!r}); `pass` is the old name for release_target, give one"
+      )
     spec.pass_key = value
+    spec.used_pass_key = spec.used_pass_key or key == "pass"
+  elif key == "wave":
+    if not (value.isascii() and value.isdigit()) or int(value) < 1:
+      raise OutlineError(f"{path}:{line}: wave must be an integer >= 1, not {value!r}")
+    spec.wave = int(value)
   elif key in ("importance", "urgency", "effort"):
     if value not in ("1", "2", "3"):
       raise OutlineError(f"{path}:{line}: {key} must be 1, 2 or 3, not {value!r}")

@@ -158,7 +158,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
     ("status", payload["by_status"]),
     ("size", payload["by_size"]),
     ("tree", payload["by_tree"]),
-    ("pass", payload["by_pass"]),
+    ("target", payload["by_release_target"]),
   )
   done = payload["completion"]
   lines = [f"{payload['total']} items · {done['done']} done ({done['percent']}%)"]

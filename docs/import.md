@@ -86,7 +86,8 @@ status: parked
 | `tree` | Which part of the codebase. Comma-separated, or repeat the key |
 | `findings` | A reference back to whatever raised this |
 | `status` | Any status key your config defines. Defaults to open |
-| `pass` | A pass group key, if the project uses passes |
+| `release_target` | The release this item is aimed at, if the project uses release targets (`pass` is the deprecated name for the same key; an entry that gives both must give one value; a `pass:` key prints one deprecation line on stderr) |
+| `wave` | The owner's planned wave inside the release target: an integer >= 1 |
 | `group` | A phase label rendered above the item |
 | `discovered_from` | One existing item ID, in any status; never a title or a prospective outline item |
 | `parent` | The item this one is a sliver of: a **title** (of an entry in this file or an existing item, as `depends` reads it), else an existing item ID. One level only |
@@ -188,8 +189,8 @@ A reference that matches neither a title nor an existing ID refuses the whole fi
 dry run and the import count and save the same edges. `slicer promote` refuses a source that
 sets `depends:`, as it does every item-level key.
 
-**Passes are not inherited.** `slicer add` without `--pass` files a new item under the
-previous item's pass (`--pass ''` opts out); import does not, because an outline says where its own entries belong.
+**Release targets are not inherited.** `slicer add` without `--release-target` files a new item under the
+previous item's release target (`--release-target ''` opts out); import does not, because an outline says where its own entries belong.
 
 ## When it refuses
 
@@ -199,7 +200,7 @@ Import is all-or-nothing. Everything is validated before a byte is written.
 
 ```console
 $ slicer import roadmap.md
-slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: key, short_title, size, tree, trees, findings, status, pass, group, depends, discovered_from, parent, importance, urgency, effort
+slicer: ~/code/my-project/roadmap.md:7: unknown key 'sizes'; known: key, short_title, size, tree, trees, findings, status, release_target, pass, wave, group, depends, discovered_from, parent, importance, urgency, effort
 ```
 
 **Anything the outline says that does not fit the project** is collected, reported
