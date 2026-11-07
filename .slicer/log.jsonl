@@ -2735,3 +2735,5 @@
 {"when": "2026-11-07T19:47:08Z", "item": "s449", "action": "note", "from": "", "to": "", "note": "Human checks at approval (s449):", "by": "Jon Robbins"}
 {"when": "2026-11-07T19:47:16Z", "item": "s449", "action": "note", "from": "", "to": "", "note": "Verified: release target is the main name (--release-target,", "by": "Jon Robbins"}
 {"when": "2026-11-07T19:47:18Z", "item": "s449", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-07T19:37:19Z", "item": "s453", "action": "add", "from": "", "to": "open", "note": "Relay report shape: a Tool feedback section every role can fill"}
+{"when": "2026-11-07T19:37:19Z", "item": "s453", "action": "promote", "from": "", "to": "", "note": ""}

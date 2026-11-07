@@ -1,0 +1,39 @@
+{
+  "id": "s453",
+  "title": "Relay report shape: a Tool feedback section every role can fill",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Roles hit friction in slicer and ork, and see features that would cut agent calls or tokens, or checks that code could do instead of an AI call. Today that has no home, so it is lost. The relay contract gets an optional, machine-readable Tool feedback section in every role report (tool, kind: friction|feature|deterministic-check, one-line proposal, evidence). Contract side only; ork consumes it (see the ork slice). Human use stays first: suggestions never change code in the slice."
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
