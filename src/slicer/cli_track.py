@@ -13,6 +13,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from slicer import check as check_mod
 from slicer import cli_common, feedback, github, ids, jsonio, land, migrator, model, ops, outline
 from slicer import queries, render, store, vcs
 from slicer.cli_common import (
@@ -52,6 +53,10 @@ SKELETON_HEAD = """\
   the scope boundary, not lead prose; put that paragraph in the lead or in
   one section, not both. Each `### ` heading is a section of the slice; an
   item with no sections is a roadmap row only.
+
+  Write each Check line as a backticked command with its expected result (or put the
+  commands in a fenced code block), or as a `[HUMAN CHECK]` that says what to look at
+  and what to see, and name each Failing test in backticks. `slicer check` and `slicer promote` warn when a section has none.
 
   This project's configured sections are:
     {sections}
@@ -295,7 +300,10 @@ def cmd_promote(args: argparse.Namespace) -> int:
     source = sys.stdin.read()
     source_path = "<stdin>"
   sl = ops.promote(state, args.id, force=args.force, source=source, source_path=source_path, boundary=args.boundary)
-  _emit(args, sl.to_dict(), f"promoted {sl.id} -> {state.slice_path(sl.id)}")
+  text = f"promoted {sl.id} -> {state.slice_path(sl.id)}"
+  # Advisory, and only in the text: the JSON stays the slice object.
+  vague = [f"warn: {line}" for line in check_mod.vague_acceptance(state, sl.id)]
+  _emit(args, sl.to_dict(), "\n".join([text, *vague]))
   return OK
 
 

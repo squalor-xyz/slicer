@@ -2687,6 +2687,20 @@
 {"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r15", "action": "relay-roles", "from": "10", "to": "20", "note": "move"}
 {"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r16", "action": "relay-roles", "from": "10", "to": "20", "note": "move"}
 {"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r17", "action": "relay-roles", "from": "11", "to": "20", "note": "move"}
+{"when": "2026-11-07T15:35:54Z", "item": "s445", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-07T15:44:35Z", "item": "s445", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-07T15:44:35Z", "item": "s445", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-07T16:30:17Z", "item": "s445", "action": "note", "from": "", "to": "", "note": "Review FAIL: - Earlier findings resolved with a proving test", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:50:42Z", "item": "s445", "action": "note", "from": "", "to": "", "note": "Human checks at approval (s445):", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:50:52Z", "item": "s445", "action": "note", "from": "", "to": "", "note": "Verified: relay-roles init writes the owner's lineup (20 row", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:50:54Z", "item": "s445", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-07T15:25:37Z", "item": "s446", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-07T15:30:12Z", "item": "s446", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-07T15:30:13Z", "item": "s446", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-07T16:29:25Z", "item": "s446", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-07T16:46:16Z", "item": "s446", "action": "note", "from": "", "to": "", "note": "Human checks at approval (s446):", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:46:25Z", "item": "s446", "action": "note", "from": "", "to": "", "note": "Verified: slicer check and promote (text mode) warn, advisor", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:46:27Z", "item": "s446", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-07T15:39:32Z", "item": "s452", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-11-07T15:40:02Z", "item": "s452", "action": "edit", "from": "", "to": "", "note": "Files"}
 {"when": "2026-11-07T16:25:01Z", "item": "s452", "action": "note", "from": "", "to": "", "note": "Verified: a backticked slicer command in a live slice now en", "by": "Jon Robbins"}
@@ -2704,3 +2718,6 @@
 {"when": "2026-11-07T18:34:46Z", "item": "s448", "action": "note", "from": "", "to": "", "note": "Human checks at approval (s448):", "by": "Jon Robbins"}
 {"when": "2026-11-07T18:34:58Z", "item": "s448", "action": "note", "from": "", "to": "", "note": "Verified: the suite remembers not-a-repo answers from vcs.is", "by": "Jon Robbins"}
 {"when": "2026-11-07T18:35:00Z", "item": "s448", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:45:51Z", "item": "s448", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-11-07T16:50:20Z", "item": "s446", "action": "status", "from": "review", "to": "done", "note": "Landed s446", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:53:09Z", "item": "s445", "action": "status", "from": "review", "to": "done", "note": "Landed s445", "by": "Jon Robbins"}
