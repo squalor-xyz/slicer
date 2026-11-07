@@ -2679,3 +2679,11 @@
 {"when": "2026-11-07T14:41:21Z", "item": "s449", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
 {"when": "2026-11-07T14:58:50Z", "item": "s445", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-11-07T14:58:50Z", "item": "s445", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T15:12:59Z", "item": "relay-roles.r3", "action": "relay-roles", "from": "7", "to": "4", "note": "move"}
+{"when": "2026-11-07T15:12:59Z", "item": "relay-roles.r9", "action": "relay-roles", "from": "1", "to": "8", "note": "move"}
+{"when": "2026-11-07T15:12:59Z", "item": "relay-roles.r21", "action": "relay-roles", "from": "1", "to": "8", "note": "move"}
+{"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r19", "action": "relay-roles", "from": "1", "to": "8", "note": "move"}
+{"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r4", "action": "relay-roles", "from": "10", "to": "9", "note": "move"}
+{"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r15", "action": "relay-roles", "from": "10", "to": "20", "note": "move"}
+{"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r16", "action": "relay-roles", "from": "10", "to": "20", "note": "move"}
+{"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r17", "action": "relay-roles", "from": "11", "to": "20", "note": "move"}

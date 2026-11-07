@@ -2,7 +2,7 @@
   "version": 3,
   "rows": [
     {
-      "id": "r9",
+      "id": "r3",
       "role": "implementer",
       "when": {
         "size": [],
@@ -10,60 +10,14 @@
         "importance": [],
         "urgency": [],
         "well_specified": null,
-        "split": null,
+        "split": false,
         "sliver": null
       },
-      "agent": "Codex",
-      "vendor": "OpenAI",
-      "model": "gpt-6.1-sol",
-      "reasoning": "medium",
-      "note": "sol medium, any slice: first choice (owner 2026-11-03); terra rows follow and the Claude rows are the fallback when Codex is out"
-    },
-    {
-      "id": "r21",
-      "role": "implementer",
-      "when": {
-        "size": [
-          "M"
-        ],
-        "effort": [
-          2
-        ],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": null,
-        "sliver": null
-      },
-      "agent": "Codex",
-      "vendor": "OpenAI",
-      "model": "gpt-6.1-terra",
-      "reasoning": "xhigh",
-      "note": "terra xhigh, size M at effort 2 (owner 2026-11-03), ahead of terra high; Claude rows are the fallback"
-    },
-    {
-      "id": "r19",
-      "role": "implementer",
-      "when": {
-        "size": [
-          "S",
-          "M"
-        ],
-        "effort": [
-          1,
-          2
-        ],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": null,
-        "sliver": null
-      },
-      "agent": "Codex",
-      "vendor": "OpenAI",
-      "model": "gpt-6.1-terra",
+      "agent": "Claude Code",
+      "vendor": "Claude",
+      "model": "sonnet",
       "reasoning": "high",
-      "note": "terra high, size S or M at effort 1 or 2 (owner 2026-11-03), after sol; Claude rows are the fallback"
+      "note": "anything the rows above do not match"
     },
     {
       "id": "r8",
@@ -129,24 +83,6 @@
       "note": ""
     },
     {
-      "id": "r3",
-      "role": "implementer",
-      "when": {
-        "size": [],
-        "effort": [],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": false,
-        "sliver": null
-      },
-      "agent": "Claude Code",
-      "vendor": "Claude",
-      "model": "sonnet",
-      "reasoning": "high",
-      "note": "anything the rows above do not match"
-    },
-    {
       "id": "r7",
       "role": "implementer",
       "when": {
@@ -165,8 +101,8 @@
       "note": "per part of a split slice"
     },
     {
-      "id": "r15",
-      "role": "reviewer",
+      "id": "r9",
+      "role": "implementer",
       "when": {
         "size": [],
         "effort": [],
@@ -176,11 +112,57 @@
         "split": null,
         "sliver": null
       },
-      "agent": "Grok",
-      "vendor": "xAI",
-      "model": "grok-4.7",
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-sol",
       "reasoning": "medium",
-      "note": "Grok reviewer, first choice (owner 2026-11-03); Claude opus (r4) is the fallback"
+      "note": "sol medium, any slice: first choice (owner 2026-11-03); terra rows follow and the Claude rows are the fallback when Codex is out"
+    },
+    {
+      "id": "r21",
+      "role": "implementer",
+      "when": {
+        "size": [
+          "M"
+        ],
+        "effort": [
+          2
+        ],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-terra",
+      "reasoning": "xhigh",
+      "note": "terra xhigh, size M at effort 2 (owner 2026-11-03), ahead of terra high; Claude rows are the fallback"
+    },
+    {
+      "id": "r19",
+      "role": "implementer",
+      "when": {
+        "size": [
+          "S",
+          "M"
+        ],
+        "effort": [
+          1,
+          2
+        ],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Codex",
+      "vendor": "OpenAI",
+      "model": "gpt-6.1-terra",
+      "reasoning": "high",
+      "note": "terra high, size S or M at effort 1 or 2 (owner 2026-11-03), after sol; Claude rows are the fallback"
     },
     {
       "id": "r4",
@@ -201,24 +183,6 @@
       "note": ""
     },
     {
-      "id": "r16",
-      "role": "gate",
-      "when": {
-        "size": [],
-        "effort": [],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": null,
-        "sliver": null
-      },
-      "agent": "Grok",
-      "vendor": "xAI",
-      "model": "grok-4.7",
-      "reasoning": "medium",
-      "note": "Grok gate, first choice (owner 2026-11-03); Claude opus (r5) is the fallback"
-    },
-    {
       "id": "r5",
       "role": "gate",
       "when": {
@@ -235,26 +199,6 @@
       "model": "opus",
       "reasoning": "medium",
       "note": ""
-    },
-    {
-      "id": "r17",
-      "role": "architect",
-      "when": {
-        "size": [
-          "L"
-        ],
-        "effort": [],
-        "importance": [],
-        "urgency": [],
-        "well_specified": null,
-        "split": null,
-        "sliver": null
-      },
-      "agent": "Grok",
-      "vendor": "xAI",
-      "model": "grok-4.7",
-      "reasoning": "high",
-      "note": "Grok architect, size L, first choice (owner 2026-11-03); Claude opus (r6) is the fallback"
     },
     {
       "id": "r6",
@@ -383,6 +327,62 @@
       "model": "sonnet",
       "reasoning": "high",
       "note": "Spec check row (sonnet high)"
+    },
+    {
+      "id": "r15",
+      "role": "reviewer",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "medium",
+      "note": "Grok reviewer, first choice (owner 2026-11-03); Claude opus (r4) is the fallback"
+    },
+    {
+      "id": "r16",
+      "role": "gate",
+      "when": {
+        "size": [],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "medium",
+      "note": "Grok gate, first choice (owner 2026-11-03); Claude opus (r5) is the fallback"
+    },
+    {
+      "id": "r17",
+      "role": "architect",
+      "when": {
+        "size": [
+          "L"
+        ],
+        "effort": [],
+        "importance": [],
+        "urgency": [],
+        "well_specified": null,
+        "split": null,
+        "sliver": null
+      },
+      "agent": "Grok",
+      "vendor": "xAI",
+      "model": "grok-4.7",
+      "reasoning": "high",
+      "note": "Grok architect, size L, first choice (owner 2026-11-03); Claude opus (r6) is the fallback"
     }
   ],
   "rules": [

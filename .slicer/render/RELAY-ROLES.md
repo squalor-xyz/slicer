@@ -6,19 +6,16 @@
 
 | ID | Role | When | Agent | Vendor | Model | Reasoning | Note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| r9 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | medium | sol medium, any slice: first choice (owner 2026-11-03); terra rows follow and the Claude rows are the fallback when Codex is out |
-| r21 | Implementer | effort 2, size M | Codex | OpenAI | gpt-6.1-terra | xhigh | terra xhigh, size M at effort 2 (owner 2026-11-03), ahead of terra high; Claude rows are the fallback |
-| r19 | Implementer | effort 1 or 2, size S or M | Codex | OpenAI | gpt-6.1-terra | high | terra high, size S or M at effort 1 or 2 (owner 2026-11-03), after sol; Claude rows are the fallback |
+| r3 | Implementer | whole slice | Claude Code | Claude | sonnet | high | anything the rows above do not match |
 | r8 | Implementer | sliver | Claude Code | Claude | haiku | xhigh | per sliver |
 | r1 | Implementer | well specified, whole slice, effort 1, size S or M | Claude Code | Claude | haiku | xhigh | - |
 | r2 | Implementer | well specified, whole slice, effort 2, size S | Claude Code | Claude | haiku | xhigh | - |
-| r3 | Implementer | whole slice | Claude Code | Claude | sonnet | high | anything the rows above do not match |
 | r7 | Implementer | split part | Claude Code | Claude | haiku | xhigh | per part of a split slice |
-| r15 | Reviewer | every slice | Grok | xAI | grok-4.7 | medium | Grok reviewer, first choice (owner 2026-11-03); Claude opus (r4) is the fallback |
+| r9 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | medium | sol medium, any slice: first choice (owner 2026-11-03); terra rows follow and the Claude rows are the fallback when Codex is out |
+| r21 | Implementer | effort 2, size M | Codex | OpenAI | gpt-6.1-terra | xhigh | terra xhigh, size M at effort 2 (owner 2026-11-03), ahead of terra high; Claude rows are the fallback |
+| r19 | Implementer | effort 1 or 2, size S or M | Codex | OpenAI | gpt-6.1-terra | high | terra high, size S or M at effort 1 or 2 (owner 2026-11-03), after sol; Claude rows are the fallback |
 | r4 | Reviewer | every slice | Claude Code | Claude | opus | medium | - |
-| r16 | Gate | every slice | Grok | xAI | grok-4.7 | medium | Grok gate, first choice (owner 2026-11-03); Claude opus (r5) is the fallback |
 | r5 | Gate | every slice | Claude Code | Claude | opus | medium | - |
-| r17 | Architect | size L | Grok | xAI | grok-4.7 | high | Grok architect, size L, first choice (owner 2026-11-03); Claude opus (r6) is the fallback |
 | r6 | Architect | size L | Claude Code | Claude | opus | high | - |
 | r10 | Orchestrator | every slice | Claude Code | Claude | opus | high | default orchestrator |
 | r11 | Orchestrator | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate orchestrator |
@@ -26,6 +23,9 @@
 | r13 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | high | alternate implementer, sol high, any slice |
 | r14 | Implementer | every slice | Codex | OpenAI | gpt-6.1-sol | xhigh | alternate implementer, sol xhigh, any slice |
 | r18 | Reviewer | every slice | Claude Code | Claude | sonnet | high | Spec check row (sonnet high) |
+| r15 | Reviewer | every slice | Grok | xAI | grok-4.7 | medium | Grok reviewer, first choice (owner 2026-11-03); Claude opus (r4) is the fallback |
+| r16 | Gate | every slice | Grok | xAI | grok-4.7 | medium | Grok gate, first choice (owner 2026-11-03); Claude opus (r5) is the fallback |
+| r17 | Architect | size L | Grok | xAI | grok-4.7 | high | Grok architect, size L, first choice (owner 2026-11-03); Claude opus (r6) is the fallback |
 
 ## Rules
 
