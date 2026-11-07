@@ -18026,9 +18026,9 @@
       "claim": null,
       "readiness": {
         "by": "claude spec check, owner-confirmed 2026-11-07",
-        "at": "2026-11-07T14:41:21Z",
+        "at": "2026-11-07T14:58:50Z",
         "note": "",
-        "digest": "sha256:1553a8f7791a4acee84a178c7200580461605678676cd0a8294d62bafb93475f"
+        "digest": "sha256:993fc29d6848baf6335860231dccadfc8bc98337c971700d686095aaab30fd3d"
       },
       "fields": {
         "size": "M",

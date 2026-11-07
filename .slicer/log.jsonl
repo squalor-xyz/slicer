@@ -2677,3 +2677,5 @@
 {"when": "2026-11-07T14:41:21Z", "item": "s445", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
 {"when": "2026-11-07T14:41:21Z", "item": "s452", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
 {"when": "2026-11-07T14:41:21Z", "item": "s449", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:58:50Z", "item": "s445", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-11-07T14:58:50Z", "item": "s445", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
