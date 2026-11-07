@@ -14365,7 +14365,7 @@
       "id": "s372",
       "title": "Docs list every command that takes --render",
       "short_title": "Docs mutating-command lists complete",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
