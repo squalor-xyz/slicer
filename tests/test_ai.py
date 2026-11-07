@@ -2239,12 +2239,12 @@ class AiRelayRolesTests(unittest.TestCase):
     data = json.loads(repo.read(self.ROLES))
     self.assertEqual(
       [(row["role"], row["agent"]) for row in data["rows"]],
-      [("implementer", "Claude Code")] * 5
-      + [("implementer", "Codex"), ("reviewer", "Claude Code"), ("gate", "Claude Code"),
-         ("architect", "Claude Code"), ("orchestrator", "Claude Code"),
-         ("orchestrator", "Codex")],
+      [("implementer", "Codex")] * 7 + [("implementer", "Claude Code")] * 5
+      + [("reviewer", "Grok"), ("reviewer", "Claude Code"), ("gate", "Grok"),
+         ("gate", "Claude Code"), ("architect", "Grok"), ("architect", "Claude Code"),
+         ("orchestrator", "Claude Code"), ("orchestrator", "Codex")],
     )
-    self.assertEqual(len(data["rules"]), 8)
+    self.assertEqual(len(data["rules"]), 9)
     self.assertEqual(repo.run("check")[0], 0)
 
   def test_RelayInitRoles_FileExists_RefusesWithoutForce(self) -> None:
@@ -2261,7 +2261,7 @@ class AiRelayRolesTests(unittest.TestCase):
     self.assertEqual(repo.run("relay-roles", "remove", "r1")[0], 0)
     code, out, err = repo.run("ai", "relay", "--init-roles", "--force")
     self.assertEqual((code, err), (0, ""))
-    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 11)
+    self.assertEqual(len(json.loads(repo.read(self.ROLES))["rows"]), 20)
 
   def test_RelayInitRoles_ForceWithoutInitRoles_IsUsageError(self) -> None:
     repo = self.project()
@@ -2501,11 +2501,11 @@ class AiRelayBriefTests(unittest.TestCase):
 
   def test_AiRelayBrief_MatrixChange_UsesRecommendRows(self):
     repo = self.project()
-    repo.run("relay-roles", "set", "r3", "--model", "changed-model")
+    repo.run("relay-roles", "set", "r9", "--model", "changed-model")
     payload = self.payload(repo)
     recommended = json.loads(repo.run("relay-roles", "recommend", "S01", "--well-specified", "yes", "--split", "no", "--json")[1])
     self.assertEqual(payload["roles"], recommended["roles"])
-    for expected in ("changed-model", "no architect", "orchestrator: r10", "reviewer: r5", "gate: r6", "Claude Code", "Claude", "high"):
+    for expected in ("changed-model", "no architect", "orchestrator: r10", "reviewer: r18", "gate: r19", "Claude Code", "Claude", "high"):
       self.assertIn(expected, payload["brief"])
 
   def test_AiRelayBrief_PreferredAgent_UsesAcceptedRows(self):

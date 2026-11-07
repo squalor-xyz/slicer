@@ -575,12 +575,18 @@ def recommend(
 
 
 def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
-  """The example matrix `relay-roles init` writes.
+  """The example matrix `relay-roles init` writes: the owner's lineup, vendor by vendor.
 
-  Claude Code rows pick every role by matrix order. The Codex implementer (r9) and
-  orchestrator (r11) are alternatives; the Claude orchestrator (r10) is the default.
-  The architect row (r7) matches size L only, so a smaller slice has no architect.
+  Implementers: Codex sol (r9) first for every slice, then Codex terra rows for small,
+  low-effort work (whole slice r12-r13, sliver r14-r15, split part r16-r17), then the
+  Claude rows (r8, r1-r4) as the fallback. Reviewer, gate and architect: Grok first
+  (r18-r20), Claude opus (r5-r7) after it. The architect rows match size L only, so a
+  smaller slice has no architect. The orchestrator is Claude (r10), with Codex (r11) as
+  the alternate. Nothing here assumes a vendor is installed: every row is written, and
+  rule u9 sends a role to its next matching row when a row's agent is missing.
 
+  The first eleven ids (r1-r11) keep the meaning they had before the lineup grew; the rows
+  added since take r12 on and are listed where the lineup wants them, not in id order.
   Rows and rules are numbered from `first_row` and `first_rule`, so replacing a
   matrix that has issued ids never hands one out again.
   """
@@ -593,31 +599,60 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
       model=model, reasoning=reasoning, note=note,
     )
 
+  def terra(n: int, reasoning: str, when: RoleWhen, note: str) -> RoleRow:
+    return row(n, "implementer", "gpt-6.1-terra", reasoning, when=when, agent="Codex",
+               vendor="OpenAI", note=note)
+
+  def grok(n: int, role: str, reasoning: str, note: str, when: RoleWhen | None = None) -> RoleRow:
+    return row(n, role, "grok-4.7", reasoning, when=when, agent="Grok", vendor="xAI", note=note)
+
   rows = [
-    # Numbered last so r1-r3 keep their meaning, but listed first: the first matching row
-    # wins, so a sliver reaches this row before the general implementer rows.
-    row(8, "implementer", "haiku", "xhigh", when=RoleWhen(sliver=True), note="per sliver"),
-    row(1, "implementer", "haiku", "xhigh",
-        when=RoleWhen(size=["S", "M"], effort=[1], well_specified=True, split=False)),
-    row(2, "implementer", "haiku", "xhigh",
-        when=RoleWhen(size=["S"], effort=[2], well_specified=True, split=False)),
-    row(3, "implementer", "sonnet", "high", when=RoleWhen(split=False),
-        note="anything the rows above do not match"),
-    row(4, "implementer", "haiku", "xhigh", when=RoleWhen(split=True),
-        note="per part of a split slice"),
-    # Listed after the Claude implementer rows, so a Claude row still matches first.
+    # Codex implementers first: the first matching row wins, so sol takes every slice
+    # and the terra rows are the next choices for small, low-effort work.
     row(9, "implementer", "gpt-6.1-sol", "medium", agent="Codex", vendor="OpenAI",
-        note="alternate implementer for any slice, split part or sliver"),
-    row(5, "reviewer", "opus", "medium"),
-    row(6, "gate", "opus", "medium"),
-    row(7, "architect", "opus", "high", when=RoleWhen(size=["L"])),
+        note="sol medium, any slice, split part or sliver: first choice; terra rows follow "
+             "and the Claude rows are the fallback"),
+    terra(12, "xhigh", RoleWhen(size=["M"], effort=[2], split=False, sliver=False),
+          "terra xhigh, size M at effort 2, ahead of terra high; Claude rows are the fallback"),
+    terra(13, "high", RoleWhen(size=["S", "M"], effort=[1, 2], split=False, sliver=False),
+          "terra high, size S or M at effort 1 or 2, after sol; Claude rows are the fallback"),
+    terra(14, "medium", RoleWhen(sliver=True),
+          "terra medium per sliver: Haiku-class Codex model; Claude rows are the fallback"),
+    terra(15, "high", RoleWhen(sliver=True),
+          "terra high per sliver: Haiku-class Codex model; Claude rows are the fallback"),
+    terra(16, "medium", RoleWhen(split=True),
+          "terra medium per part of a split slice; Claude rows are the fallback"),
+    terra(17, "high", RoleWhen(split=True),
+          "terra high per part of a split slice; Claude rows are the fallback"),
+    # Claude implementers, the fallback. Numbered last so r1-r3 keep their meaning, but
+    # the sliver row leads them: a sliver reaches it before the general rows.
+    row(8, "implementer", "haiku", "xhigh", when=RoleWhen(sliver=True),
+        note="per sliver; fallback when Codex is out"),
+    row(1, "implementer", "haiku", "xhigh",
+        when=RoleWhen(size=["S", "M"], effort=[1], well_specified=True, split=False),
+        note="fallback when Codex is out"),
+    row(2, "implementer", "haiku", "xhigh",
+        when=RoleWhen(size=["S"], effort=[2], well_specified=True, split=False),
+        note="fallback when Codex is out"),
+    row(3, "implementer", "sonnet", "high", when=RoleWhen(split=False),
+        note="anything the rows above do not match; fallback when Codex is out"),
+    row(4, "implementer", "haiku", "xhigh", when=RoleWhen(split=True),
+        note="per part of a split slice; fallback when Codex is out"),
+    grok(18, "reviewer", "medium", "Grok reviewer, first choice; Claude opus (r5) is the fallback"),
+    row(5, "reviewer", "opus", "medium", note="fallback when Grok is out"),
+    grok(19, "gate", "medium", "Grok gate, first choice; Claude opus (r6) is the fallback"),
+    row(6, "gate", "opus", "medium", note="fallback when Grok is out"),
+    grok(20, "architect", "high", "Grok architect, size L, first choice; Claude opus (r7) "
+         "is the fallback", when=RoleWhen(size=["L"])),
+    row(7, "architect", "opus", "high", when=RoleWhen(size=["L"]), note="fallback when Grok is out"),
     row(10, "orchestrator", "opus", "high", note="default orchestrator"),
     row(11, "orchestrator", "gpt-6.1-sol", "high", agent="Codex", vendor="OpenAI",
         note="alternate orchestrator"),
   ]
   texts = [
     "A reviewer never wrote code in the slice it reviews.",
-    "No cross-vendor reviewer unless the owner asks.",
+    "Rows for any role may be selected across vendors, automatically or by the owner; "
+    "u1 still holds, so nobody who wrote code in a slice reviews or gates it.",
     "Roles on the orchestrator's own agent run as subagents; a role on another agent "
     "runs headless in the slice worktree with the same brief.",
     "\"well specified\" means the slice names its files, failing tests, implementation "
@@ -630,6 +665,7 @@ def skeleton(first_row: int = 1, first_rule: int = 1) -> RoleMatrix:
     "once; the rest run in order.",
     "A sliver that fails its gate twice, or whose diff falls short of the orchestrator's "
     "check, moves to the next model up (haiku to sonnet high).",
+    "A row whose agent is not installed is skipped; the role takes its next matching row.",
   ]
   rules = [RoleRule(id=f"u{n}", text=text) for n, text in enumerate(texts, first_rule)]
   return RoleMatrix(

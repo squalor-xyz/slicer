@@ -316,12 +316,18 @@ landing, or answer the other Setup questions. The harness the owner launched the
 changes nothing by itself. Routing is unchanged: a role on the orchestrator's own harness runs
 as a native subagent, and a role on another harness runs as a headless session in the slice
 worktree with the same brief. The
-example matrix from `relay-roles init` has its whole-slice implementer rows on `--split no`,
-a per-part implementer row (haiku, xhigh) on `--split yes`, and a sliver row (haiku, xhigh,
-listed first among the implementers) that matches an item with a parent; `recommend` infers the
-sliver from the item's parent, so there is no flag for it. A Codex implementer alternative (`r9`,
-listed after the Claude implementer rows) matches any item. Without the file, Setup
-names `slicer relay-roles init` instead.
+example matrix from `relay-roles init` is the owner's lineup. Its first implementer row is
+Codex sol (`r9`), which matches any item. Codex terra rows follow for small, low-effort work:
+whole slice on `--split no` and not a sliver (xhigh for size M at effort 2, high for size S or M at effort 1 or 2),
+a sliver (medium, high) and a part of a split slice on `--split yes` (medium, high). The Claude
+implementer rows come last, as the fallback: a sliver row (haiku, xhigh) that matches an item with
+a parent, whole-slice rows on `--split no` and a per-part row on `--split yes`; `recommend` infers
+the sliver from the item's parent, so there is no flag for it. Reviewer, gate and architect have
+a Grok row first and a Claude opus row after it. Every row is written whether or not its agent is
+installed, and `recommend` reads nothing from the machine; rule `u9` tells the orchestrator that a
+row whose agent is not installed is skipped and the role takes its next matching row (the relay's
+`role_fallback` already moves a role whose agent process exits with an error to the next matching
+row). Without the file, Setup names `slicer relay-roles init` instead.
 `slicer ai relay-roles` is `slicer relay-roles show`; `--json` returns the Markdown under
 `relay_roles` and the structured `rows` and `rules`. A missing file is exit 2 with code
 `no_relay_roles`; a malformed one is `corrupt` and one from a newer slicer is
@@ -334,7 +340,7 @@ matrix loads without a write and its orchestrator is `unmatched` until a row is 
 `relay-roles add --role orchestrator`; the next mutation stamps schema 3, which an older slicer
 refuses (`schema_too_new`). The example matrix from `relay-roles init` has a Claude Code orchestrator
 row (`r10`, the default) and a Codex one (`r11`), so `recommend` resolves the orchestrator on a fresh
-project. Its architect row (`r7`) matches size L only, so a smaller slice has no architect row.
+project. Its architect rows (`r20` Grok, `r7` Claude) match size L only, so a smaller slice has no architect row.
 
 Companion launch tooling (agents repo, not this repository). `relay v11` only selects rows; it
 launches nothing, inspects no installed harness or credential, and has not been verified to

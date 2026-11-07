@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- `relay-roles init` writes the owner's lineup as its example matrix: twenty rows and nine rules. Implementers run Codex sol first for every slice (`r9`), then Codex terra rows for small, low-effort work (whole slice, not a sliver, `r12`, `r13`; sliver `r14`, `r15`; split part `r16`, `r17`), then the Claude rows as the fallback; reviewer, gate and architect run Grok first (`r18`-`r20`) with Claude opus after it. Rows `r1`-`r11` keep their meaning and the new rows take `r12` on. Rule `u2` now says rows for any role may be selected across vendors while `u1` still holds, in place of "No cross-vendor reviewer unless the owner asks", since the lineup pairs a Codex implementer with a Grok reviewer. A new rule `u9` says a row whose agent is not installed is skipped and the role takes its next matching row; `init` and `recommend` still read nothing from the machine. A fresh example's `recommend` now names Codex sol and Grok where it named Claude. A matrix that already exists is not changed unless `relay-roles init --force` replaces it (s445).
+
 ## [1.19.0] - 2026-11-07
 
 ### Added
