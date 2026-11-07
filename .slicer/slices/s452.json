@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/cli_common.py:551-587` (`_slice_flag_problems`: split the span into commands at `&&`, `||`, `;`, `|`; check each command that starts with the word `slicer`).\n- `tests/test_cli.py` (`SliceCommandFlagCheckTests`, from `:728`: new tests beside the existing ones).\n- `CHANGELOG.md` (one Unreleased line)."
+      "body": "- `src/slicer/cli_common.py:551-587` (`_slice_flag_problems`: split the span into commands at `&&`, `||`, `;`, `|`; check each command that starts with the word `slicer`).\n- `tests/test_cli.py` (`SliceCommandFlagCheckTests`, from `:1729`: new tests beside the existing ones).\n- `CHANGELOG.md` (one Unreleased line)."
     },
     {
       "heading": "Failing tests",

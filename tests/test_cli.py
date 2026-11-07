@@ -1823,6 +1823,59 @@ class SliceCommandFlagCheckTests(unittest.TestCase):
       self.assertEqual(code, 0, out)
       self.assertEqual(json.loads(out)["problems"], [])
 
+  def test_Check_ChainedCommandAfterAndAnd_NotAProblem(self) -> None:
+    with self._promoted() as repo:
+      repo.run("edit", "S01", "--section", "Why",
+               "--text", "Ran `slicer goals --json --lean && echo '---LIST---'`.", "--render")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_UnknownFlagBeforeOperator_StillFails(self) -> None:
+    with self._promoted() as repo:
+      self._implement(repo, "Run `slicer goals --bogus && echo x`.")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 1)
+      problems = json.loads(out)["problems"]
+      self.assertTrue(any("unknown flag --bogus" in p for p in problems), problems)
+      self.assertFalse(any("unknown flag x" in p for p in problems), problems)
+
+  def test_Check_SecondSlicerCommandAfterOperator_IsCheckedOnItsOwn(self) -> None:
+    with self._promoted() as repo:
+      self._implement(repo, "Run `slicer goals --json; slicer next --require-render`.")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 1)
+      problems = json.loads(out)["problems"]
+      self.assertEqual(len(problems), 1, problems)
+      self.assertIn("unknown flag --require-render", problems[0])
+
+  def test_Check_OperatorGluedToAWord_IsStillACut(self) -> None:
+    with self._promoted() as repo:
+      self._implement(repo, "Run `slicer goals --lean&&echo ---x`.")
+      code, out, _ = repo.run("check", "--json")
+      self.assertEqual(code, 0, out)
+      self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_EachOperator_CutsTheCommand(self) -> None:
+    for operator in ("||", ";", "|"):
+      with self.subTest(operator=operator):
+        with self._promoted() as repo:
+          self._implement(repo, f"Run `slicer goals --lean {operator} echo ---y`.")
+          code, out, _ = repo.run("check", "--json")
+          self.assertEqual(code, 0, out)
+          self.assertEqual(json.loads(out)["problems"], [])
+
+  def test_Check_HashInsideAWord_StillChecked(self) -> None:
+    # shlex.split has no comment character; the operator-aware lexer must not add one.
+    for span in ("slicer goals a#b --bogus", "slicer goals # --bogus"):
+      with self.subTest(span=span):
+        with self._promoted() as repo:
+          self._implement(repo, f"Run `{span}`.")
+          code, out, _ = repo.run("check", "--json")
+          self.assertEqual(code, 1, out)
+          problems = json.loads(out)["problems"]
+          self.assertTrue(any("unknown flag --bogus" in p for p in problems), problems)
+
 
 class ColorRobustnessTests(unittest.TestCase):
   """slicer's usage/help/errors stay plain even when the environment forces color,

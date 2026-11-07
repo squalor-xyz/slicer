@@ -2687,3 +2687,7 @@
 {"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r15", "action": "relay-roles", "from": "10", "to": "20", "note": "move"}
 {"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r16", "action": "relay-roles", "from": "10", "to": "20", "note": "move"}
 {"when": "2026-11-07T15:13:00Z", "item": "relay-roles.r17", "action": "relay-roles", "from": "11", "to": "20", "note": "move"}
+{"when": "2026-11-07T15:39:32Z", "item": "s452", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-07T15:40:02Z", "item": "s452", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-07T16:25:01Z", "item": "s452", "action": "note", "from": "", "to": "", "note": "Verified: a backticked slicer command in a live slice now en", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:25:03Z", "item": "s452", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

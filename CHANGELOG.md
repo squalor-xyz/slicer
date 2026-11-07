@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `check` ends a backticked `slicer ...` command at the first shell operator (`&&`, `||`, `;`, `|`), so the words of a chained command are no longer reported as unknown flags; each `slicer` command in the span is checked on its own (s452).
+
 ## [1.19.0] - 2026-11-07
 
 ### Added
