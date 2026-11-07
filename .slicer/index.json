@@ -18303,7 +18303,7 @@
       "id": "s449",
       "title": "Release target (was pass) and an owner-set wave inside it",
       "short_title": "Release target (was pass) and an owner-set wave inside it",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
