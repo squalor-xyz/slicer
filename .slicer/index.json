@@ -18053,7 +18053,7 @@
       "id": "s446",
       "title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
       "short_title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
