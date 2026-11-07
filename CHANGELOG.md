@@ -6,9 +6,11 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-11-07
+
 ### Added
 
-- *Proposed.* `relay-roles apply (--file PATH | --stdin) [--dry-run]` applies a JSON change set of the existing edit verbs (`add`, `set`, `remove`, `move`, `rule-add`, `rule-edit`, `rule-remove`) to the relay role matrix in one atomic write. Every step is checked against a copy of the matrix and all problems are reported by step (`ops[3]: ...`) before anything is written; a step can name an earlier `add` as `@NAME`; the history gets the entry each single verb writes; `--dry-run` takes no lock and writes nothing. `relay-roles show --json` gains `revision`, and a change set that names it as `expect` is refused with the new code `stale_revision` if the matrix has changed since. The single verbs, the file schema and the merge driver are unchanged (s443).
+- `relay-roles apply (--file PATH | --stdin) [--dry-run]` applies a JSON change set of the existing edit verbs (`add`, `set`, `remove`, `move`, `rule-add`, `rule-edit`, `rule-remove`) to the relay role matrix in one atomic write. Every step is checked against a copy of the matrix and all problems are reported by step (`ops[3]: ...`) before anything is written; a step can name an earlier `add` as `@NAME`; the history gets the entry each single verb writes; `--dry-run` takes no lock and writes nothing. `relay-roles show --json` gains `revision`, and a change set that names it as `expect` is refused with the new code `stale_revision` if the matrix has changed since. The single verbs, the file schema and the merge driver are unchanged (s443).
 
 ### Changed
 
