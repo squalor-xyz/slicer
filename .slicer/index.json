@@ -18223,7 +18223,7 @@
       "id": "s448",
       "title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
       "short_title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s447"
