@@ -14335,7 +14335,7 @@
       "id": "s371",
       "title": "Queue prose rows align with wide row numbers",
       "short_title": "Queue prose rows align past 999",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
