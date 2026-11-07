@@ -17952,7 +17952,7 @@
       "id": "s444",
       "title": "Replace the whole relay role matrix through relay-roles apply",
       "short_title": "Relay roles replace",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s443"
