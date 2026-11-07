@@ -2764,3 +2764,4 @@
 {"when": "2026-11-07T20:18:15Z", "item": "s372", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-11-07T20:51:40Z", "item": "s372", "action": "note", "from": "", "to": "", "note": "Verified: docs/commands.md render list now matches the parse", "by": "Jon Robbins"}
 {"when": "2026-11-07T20:51:45Z", "item": "s372", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-07T20:51:23Z", "item": "s371", "action": "edit", "from": "", "to": "", "note": "Implement"}
