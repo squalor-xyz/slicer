@@ -2738,3 +2738,24 @@
 {"when": "2026-11-07T19:37:19Z", "item": "s453", "action": "add", "from": "", "to": "open", "note": "Relay report shape: a Tool feedback section every role can fill"}
 {"when": "2026-11-07T19:37:19Z", "item": "s453", "action": "promote", "from": "", "to": "", "note": ""}
 {"when": "2026-11-07T19:48:49Z", "item": "s449", "action": "status", "from": "review", "to": "done", "note": "Landed s449", "by": "Jon Robbins"}
+{"when": "2026-11-07T20:15:41Z", "item": "s453", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s371", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s372", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s374", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s375", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s377", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s381", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s386", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s388", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s389", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s390", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s413", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s427", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s428", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s429", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s430", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s432", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s433", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s435", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s450", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
+{"when": "2026-11-07T20:15:41Z", "item": "s451", "action": "set", "from": "", "to": "", "note": "pass_key v1.20→v1.21"}
