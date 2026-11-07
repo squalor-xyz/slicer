@@ -531,8 +531,34 @@ def _unknown_flags(parser: argparse.ArgumentParser, tokens: list[str]) -> list[s
   return [tok for tok in extras if tok.startswith("-") and tok != "-"]
 
 
+_SHELL_OPERATOR_CHARS = frozenset("&|;")
+
+
+def _shell_commands(command: str) -> list[list[str]]:
+  """The words of each command in `command`, cut at shell control operators.
+
+  `punctuation_chars` makes shlex split `&&`, `||`, `;` and `|` out as their own
+  tokens even when glued to a word (`--lean&&echo`); a token made only of those
+  characters (so `;;` and `|&` too) ends the command. Raises ValueError on
+  unbalanced quotes, as `shlex.split` does.
+  """
+  lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+  lexer.whitespace_split = True
+  lexer.commenters = ""  # like shlex.split: `#` is an ordinary character
+  commands: list[list[str]] = [[]]
+  for token in lexer:
+    if token and set(token) <= _SHELL_OPERATOR_CHARS:
+      commands.append([])
+    else:
+      commands[-1].append(token)
+  return [words for words in commands if words]
+
+
 def _slice_flag_problems(state: store.State) -> list[str]:
   """`slicer ...` examples in live slices whose flags the parser rejects.
+
+  A span that chains commands is cut at the first shell operator (`&&`, `||`,
+  `;`, `|`); each command that starts with `slicer` is checked on its own.
 
   A removed or renamed flag can sit in a slice's Failing tests until an agent
   copies it into a real command; `check` catches it first. Done and retired
@@ -559,13 +585,16 @@ def _slice_flag_problems(state: store.State) -> list[str]:
         if not command.startswith("slicer "):
           continue
         try:
-          tokens = shlex.split(command)
+          commands = _shell_commands(command)
         except ValueError:
           continue  # unbalanced quotes -- not a flag problem
-        for flag in _unknown_flags(parser, tokens[1:]):
-          problems.append(
-            f"{item.id} / {section.heading}: unknown flag {flag} in `{command}`"
-          )
+        for tokens in commands:
+          if tokens[0] != "slicer":
+            continue
+          for flag in _unknown_flags(parser, tokens[1:]):
+            problems.append(
+              f"{item.id} / {section.heading}: unknown flag {flag} in `{command}`"
+            )
   return problems
 
 

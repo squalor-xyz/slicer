@@ -16,7 +16,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import support  # noqa: F401 - puts src/ on sys.path
+import support
 from slicer import jsonio
 
 
@@ -40,6 +40,14 @@ def _dir_fsync_failing_with(code: int, dir_fsyncs: list[int]):
 
 
 class WriteBytesDurabilityTests(unittest.TestCase):
+  def setUp(self) -> None:
+    # The suite stubs the syncs (support.py); these tests prove the real calls are made.
+    self.enterContext(support.real_syncs())
+
+  def test_JsonioTests_RunAgainstTheRealSyncs(self) -> None:
+    self.assertIs(os.fsync, support.REAL_FSYNC)
+    self.assertIs(jsonio._full_fsync_darwin, support.REAL_FULL_FSYNC)
+
   def write_recording_calls(self) -> list[tuple[str, str]]:
     """Run `jsonio.write_bytes` and return its fsync and replace calls, in order.
 

@@ -9,6 +9,9 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Added
 
 - `check` and `promote` warn (advisory; exit status and JSON unchanged) when a live slice's non-empty Check section has no line with a backticked command or `[HUMAN CHECK]` and no non-blank line inside a fenced code block, or its non-empty Failing tests section names no backticked test. `import --skeleton` and `docs/agents.md` say how to write a Check that can be run or looked at (s446).
+### Fixed
+
+- `check` ends a backticked `slicer ...` command at the first shell operator (`&&`, `||`, `;`, `|`), so the words of a chained command are no longer reported as unknown flags; each `slicer` command in the span is checked on its own (s452).
 
 ## [1.19.0] - 2026-11-07
 
