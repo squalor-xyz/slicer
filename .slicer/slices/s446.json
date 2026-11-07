@@ -8,7 +8,7 @@
   "findings_note": "Owner 2026-11-03 (from ork): slicer and ork should both encourage well defined acceptance criteria for every slice. Fact: S102 (done) blocks `slicer next` only when Implement or Check is empty, and its Not in this slice says a short Check is not refused. Needed: an advisory (not a block) from slicer check, promote or show when a slice Check or Failing tests have no command, expected result or observable outcome; and the slice template and docs/agents.md guidance tell authors to write acceptance criteria that way. Open: what counts as vague, and whether it is a warning in check, in next, or only in the template.",
   "size": "S",
   "flags": [],
-  "trees_note": "",
+  "trees_note": "slicer",
   "trees_plural": false,
   "boundary": "**Not in this slice:**",
   "sections": [
@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/check.py:81-96` (append the vague-section warnings after `_prompt_warnings`) and a new helper beside `_prompt_warnings` at `:99`.\n- `src/slicer/cli_track.py:287-298` (`cmd_promote`: in text mode, print the same warning lines for the promoted slice after the \"promoted\" line; JSON output stays the slice object, unchanged).\n- `src/slicer/templates/slice.md` or the outline guidance the template draws from (one line under Check and Failing tests: a command with its expected result, or a `[HUMAN CHECK]` that says what to look at).\n- `docs/agents.md` (the \"Rules for an agent working in a slicer project\" section near `:909`: one short paragraph on acceptance criteria and the new warning).\n- `tests/test_check.py` (new tests), and the promote tests (find with `rg -n \"def test_.*promote\" tests`).\n- `CHANGELOG.md` (one Unreleased line)."
+      "body": "- `src/slicer/check.py:81-96` (append the vague-section warnings after `_prompt_warnings`) and a new helper beside `_prompt_warnings` at `:99`.\n- `src/slicer/cli_track.py:287-298` (`cmd_promote`: in text mode, print the same warning lines for the promoted slice after the \"promoted\" line; JSON output stays the slice object, unchanged).\n- `src/slicer/cli_track.py:92-102` (the `import --skeleton` text: one line under Check and Failing tests saying a command with its expected result, or a `[HUMAN CHECK]` that says what to look at). `src/slicer/templates/slice.md` is only `{{sections}}` and has no per-section text, so it is not edited.\n- `docs/agents.md` (the \"Rules for an agent working in a slicer project\" section near `:909`: one short paragraph on acceptance criteria and the new warning).\n- `tests/test_check.py` (new tests), and the promote tests (find with `rg -n \"def test_.*promote\" tests`).\n- `CHANGELOG.md` (one Unreleased line)."
     },
     {
       "heading": "Failing tests",

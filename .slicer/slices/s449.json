@@ -7,9 +7,7 @@
   "depends_note": null,
   "findings_note": "Owner 2026-11-04 (interview in the ork session): rename pass to release target, and add a wave so mini slices can target a version release and that release can be split into waves to execute. Owner decisions: (1) the stored wave is an owner label, a number within an item's release target, like pass today; plan-parallel (s376, s377) keeps computing what can run in parallel from dependencies and Files paths and works inside one wave; docs must name the two apart (planned wave vs parallel set). (2) The release target is the main name (flag --release-target, JSON field release_target, by_release_target in stats); --pass, the pass field and by_pass keep working as aliases with a deprecation note; existing keys (v1.1, v1.20) stay unchanged. Spec step to confirm: the flag name for the wave (for example --wave N), how list, move, render, roadmap and TUI group by release target then wave, whether items with no wave sort last, and how plan-parallel treats an item whose dependency sits in a later wave (flag it). Acceptance: (1) slicer add/set accept --release-target and --wave N; --pass still works and prints one deprecation note; (2) JSON output carries release_target and wave, and still carries pass as an alias; (3) list, roadmap render and the TUI group by release target, then wave, and show the wave; (4) plan-parallel output is unchanged for items without a wave, and flags an item scheduled in an earlier wave than its dependency; (5) existing .slicer data loads unchanged, with a test that loads a fixture holding only pass; (6) slicer check is clean and the docs and ai instructions use the new words. Follow-up: ork reads release target and wave (see the ork slice filed with this one).",
   "size": "L",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "",
   "trees_plural": false,
   "boundary": "**Not in this slice:** changing existing release-target keys (`v1.1`, `v1.20` stay); computing waves automatically; ork's reading of release target and wave (the ork slice filed with this one); removing the `pass` aliases.",

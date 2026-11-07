@@ -2662,3 +2662,18 @@
 {"when": "2026-11-07T14:21:56Z", "item": "s450", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
 {"when": "2026-11-07T14:21:56Z", "item": "s451", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
 {"when": "2026-11-07T14:22:16Z", "item": "s452", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-11-07T14:41:06Z", "item": "s446", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-07T14:41:06Z", "item": "s446", "action": "set", "from": "", "to": "", "note": "trees -→slicer"}
+{"when": "2026-11-07T14:41:06Z", "item": "s444", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-07T14:41:06Z", "item": "s444", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-11-07T14:41:06Z", "item": "s444", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-11-07T14:41:06Z", "item": "s445", "action": "decide", "from": "", "to": "", "note": "Owner decisions, 2026-11-07: a missing agent is handled by o", "by": "Jon Robbins"}
+{"when": "2026-11-07T14:41:06Z", "item": "s449", "action": "decide", "from": "", "to": "", "note": "Owner decisions, 2026-11-07: all the recommended options are", "by": "Jon Robbins"}
+{"when": "2026-11-07T14:41:14Z", "item": "s433", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-11-07T14:41:20Z", "item": "s446", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:41:20Z", "item": "s447", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:41:20Z", "item": "s448", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:41:21Z", "item": "s444", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:41:21Z", "item": "s445", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:41:21Z", "item": "s452", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}
+{"when": "2026-11-07T14:41:21Z", "item": "s449", "action": "ready", "from": "", "to": "", "note": "", "by": "claude spec check, owner-confirmed 2026-11-07"}

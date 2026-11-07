@@ -7,9 +7,7 @@
   "depends_note": null,
   "findings_note": "Owner 2026-11-03 (ork session): update the default matrix that slicer relay-roles init writes (skeleton() in src/slicer/roles.py, rows r1-r11) to match the owner's current matrix: add Codex gpt-6.1-terra implementer rows after the sol row (r9) and before the Claude rows it falls back to: terra xhigh for a slice of size M at effort 2, then terra high for size S or M at effort 1 or 2 (a whole slice; sliver and split-part terra rows are a separate owner question). Terra is the Sonnet-class Codex model: it takes only small, low-effort slices; larger or effort-3 slices go from sol straight to the Claude rows. Open owner questions: (1) should the default also put Codex sol first for every slice and Grok first for reviewer, gate and architect with Claude opus as the fallback, as the owner's own matrices now do, or stay Claude-first because a new project may have neither vendor installed (recommend: stay Claude-first, add the terra rows as alternates after r9); (2) the sliver and split-part terra rows (medium, high) the ork matrix has. Reference: the ork project's matrix (slicer relay-roles show --root ../ork). Tests that pin the skeleton's rows change.",
   "size": "M",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "",
   "trees_plural": false,
   "boundary": "**Not in this slice:** changing `resolve` or `recommend` to read the environment unless the owner picks that option; changing this repo's own matrix (`.slicer/relay-roles.json`), which the owner already maintains; the relay contract text beyond one rule line.",

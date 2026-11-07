@@ -17959,6 +17959,12 @@
       ],
       "note_records": [],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:21Z",
+        "note": "",
+        "digest": "sha256:82e4808816edd8e3067e967b449fba3e4be1713ee86339071bf5ad8331d8fc4f"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -18001,14 +18007,32 @@
           "retracted_by": "",
           "retracted_at": "",
           "retracted_reason": ""
+        },
+        {
+          "id": "323f477f-ead6-476b-bb55-02dcfaca2fc2",
+          "kind": "decision",
+          "text": "**2026-11-07** — Owner decisions, 2026-11-07: a missing agent is handled by option (c): the default matrix writes every row and a rule that names the missing-agent fallback, and the existing `role_fallback` does the skipping. Write `test_Skeleton_Rules_NameTheMissingAgentSkip` as the spec says. `init` does not detect installed agents and `resolve` does not skip absent agents in this slice.",
+          "created_at": "2026-11-07T14:41:06Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
         }
       ],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:21Z",
+        "note": "",
+        "digest": "sha256:1553a8f7791a4acee84a178c7200580461605678676cd0a8294d62bafb93475f"
+      },
       "fields": {
         "size": "M",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [],
         "trees_literal": false,
         "findings": "Owner 2026-11-03 (ork session): update the default matrix that slicer relay-roles init writes (skeleton() in src/slicer/roles.py, rows r1-r11) to match the owner's current matrix: add Codex gpt-6.1-terra implementer rows after the sol row (r9) and before the Claude rows it falls back to: terra xhigh for a slice of size M at effort 2, then terra high for size S or M at effort 1 or 2 (a whole slice; sliver and split-part terra rows are a separate owner question). Terra is the Sonnet-class Codex model: it takes only small, low-effort slices; larger or effort-3 slices go from sol straight to the Claude rows. Open owner questions: (1) should the default also put Codex sol first for every slice and Grok first for reviewer, gate and architect with Claude opus as the fallback, as the owner's own matrices now do, or stay Claude-first because a new project may have neither vendor installed (recommend: stay Claude-first, add the terra rows as alternates after r9); (2) the sliver and split-part terra rows (medium, high) the ork matrix has. Reference: the ork project's matrix (slicer relay-roles show --root ../ork). Tests that pin the skeleton's rows change.",
@@ -18034,10 +18058,18 @@
       "depends_on": [],
       "note_records": [],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:20Z",
+        "note": "",
+        "digest": "sha256:f0f56582450fed3456bb29479c68996e08d45c8a5e348e091174d229bfc3c447"
+      },
       "fields": {
         "size": "S",
         "flags": [],
-        "trees": [],
+        "trees": [
+          "slicer"
+        ],
         "trees_literal": false,
         "findings": "Owner 2026-11-03 (from ork): slicer and ork should both encourage well defined acceptance criteria for every slice. Fact: S102 (done) blocks `slicer next` only when Implement or Check is empty, and its Not in this slice says a short Check is not refused. Needed: an advisory (not a block) from slicer check, promote or show when a slice Check or Failing tests have no command, expected result or observable outcome; and the slice template and docs/agents.md guidance tell authors to write acceptance criteria that way. Open: what counts as vague, and whether it is a warning in check, in next, or only in the template.",
         "discovered_from": "",
@@ -18062,6 +18094,12 @@
       "depends_on": [],
       "note_records": [],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:20Z",
+        "note": "",
+        "digest": "sha256:cea80926b0b88e63253711f2d005b4a83e7c46992f3de5040bf1ca8ea1a3d3a3"
+      },
       "fields": {
         "size": "S",
         "flags": [],
@@ -18092,6 +18130,12 @@
       ],
       "note_records": [],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:20Z",
+        "note": "",
+        "digest": "sha256:3431861b1feea33b973d6ace5385268bc53e273e2990a8b3ce69f035bed28b7f"
+      },
       "fields": {
         "size": "M",
         "flags": [],
@@ -18118,13 +18162,32 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "2dd3cb00-152b-4839-9fab-7051204e7cfc",
+          "kind": "decision",
+          "text": "**2026-11-07** — Owner decisions, 2026-11-07: all the recommended options are chosen. Flag `--wave N`. Grouping: sub-groups per wave in the roadmap and a wave column in `list`. Items with no wave sort last. In `plan-parallel`, an item scheduled in an earlier wave than its dependency goes in a `wave_conflicts` list and `check` warns. Stored shape: keep `fields.pass` and add `wave` only when set, with no schema bump. The `waves` key of `plan-parallel` stays and the docs call that output \"parallel sets\". The slice stays whole (size L, architect runs).",
+          "created_at": "2026-11-07T14:41:06Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:21Z",
+        "note": "",
+        "digest": "sha256:6a5019fd0b5e7c5c71c89edd489922ac987122c0c903536bba1a34018fe96358"
+      },
       "fields": {
         "size": "L",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [],
         "trees_literal": false,
         "findings": "Owner 2026-11-04 (interview in the ork session): rename pass to release target, and add a wave so mini slices can target a version release and that release can be split into waves to execute. Owner decisions: (1) the stored wave is an owner label, a number within an item's release target, like pass today; plan-parallel (s376, s377) keeps computing what can run in parallel from dependencies and Files paths and works inside one wave; docs must name the two apart (planned wave vs parallel set). (2) The release target is the main name (flag --release-target, JSON field release_target, by_release_target in stats); --pass, the pass field and by_pass keep working as aliases with a deprecation note; existing keys (v1.1, v1.20) stay unchanged. Spec step to confirm: the flag name for the wave (for example --wave N), how list, move, render, roadmap and TUI group by release target then wave, whether items with no wave sort last, and how plan-parallel treats an item whose dependency sits in a later wave (flag it). Acceptance: (1) slicer add/set accept --release-target and --wave N; --pass still works and prints one deprecation note; (2) JSON output carries release_target and wave, and still carries pass as an alias; (3) list, roadmap render and the TUI group by release target, then wave, and show the wave; (4) plan-parallel output is unchanged for items without a wave, and flags an item scheduled in an earlier wave than its dependency; (5) existing .slicer data loads unchanged, with a test that loads a fixture holding only pass; (6) slicer check is clean and the docs and ai instructions use the new words. Follow-up: ork reads release target and wave (see the ork slice filed with this one).",
@@ -18210,6 +18273,12 @@
       "depends_on": [],
       "note_records": [],
       "claim": null,
+      "readiness": {
+        "by": "claude spec check, owner-confirmed 2026-11-07",
+        "at": "2026-11-07T14:41:21Z",
+        "note": "",
+        "digest": "sha256:9b7e369c14a6877f7c5b0fb600597b4de24df71606fade40b187b64b63ff3bcb"
+      },
       "fields": {
         "size": "S",
         "flags": [],

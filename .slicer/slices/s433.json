@@ -14,7 +14,7 @@
   "sections": [
     {
       "heading": "Why",
-      "body": "A run stopped after a failed gate (no fix round) undercounts gate FAILs in `stats`, and stats and the board disagree about the same step."
+      "body": "A run stopped after a failed gate (no fix round) undercounts gate FAILs in `stats`, and stats and the board disagree about the same step.\n\nOwner decisions, 2026-11-07: a gate step closed with phase fail, no verdict and no reason counts as a gate FAIL. One with a vendor or error reason is a rerun, as the implementer branch at relayrun.py:966 already treats it, and is not counted."
     },
     {
       "heading": "Files",
