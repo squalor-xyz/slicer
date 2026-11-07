@@ -18089,7 +18089,7 @@
       "id": "s447",
       "title": "Tests: stub fsync outside tests/test_jsonio.py",
       "short_title": "Tests: stub fsync outside tests/test_jsonio.py",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
