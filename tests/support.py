@@ -140,6 +140,10 @@ def _install_sync_stubs() -> tuple:
 
 REAL_FSYNC, REAL_FULL_FSYNC = _install_sync_stubs()
 
+# `cli.main` probes git twice per call for a code-location warning (S120). Only
+# tests/test_code_location.py tests the warning and turns it back on.
+os.environ["SLICER_NO_CODE_WARNING"] = "1"
+
 
 @contextmanager
 def real_syncs() -> Iterator[None]:
@@ -152,6 +156,50 @@ def real_syncs() -> Iterator[None]:
     yield
   finally:
     os.fsync, jsonio._full_fsync_darwin = stubs
+
+
+# Production remembers only a yes from git, so a `git init` is seen at once. About five
+# in six fixtures are not repos, and every command on one asks git again, which was most
+# of the suite's time. A fixture is a throwaway directory, so the suite also remembers
+# the no answers of the three probes that start git, keyed as the production memo is
+# (`vcs._key`). `vcs.clear_cache` forgets them, and so does a fixture's own `git init`.
+# `vcs._run` is patched by `count_git_calls`, so these wrappers sit above it.
+_NOT_A_REPO: set[tuple[str, object]] = set()
+_PROBES = ("is_repo", "_current_worktree", "git_common_dir")
+
+
+def _install_not_a_repo_memo() -> None:
+  from slicer import vcs
+
+  if getattr(vcs.clear_cache, "_slicer_not_a_repo_memo", False):
+    return
+  real_clear = vcs.clear_cache
+
+  def clear_cache() -> None:
+    real_clear()
+    _NOT_A_REPO.clear()
+
+  def remembering(name: str, real):
+    def probe(root: Path, *rest, **kwargs):
+      # `is_repo` takes no env; the other two take it positionally or by keyword.
+      key = (name, vcs._key(root, kwargs.get("env", rest[0] if rest else None)))
+      if key in _NOT_A_REPO:
+        return False if name == "is_repo" else None
+      answer = real(root, *rest, **kwargs)
+      if not answer:
+        _NOT_A_REPO.add(key)
+      return answer
+
+    probe._slicer_not_a_repo_memo = True
+    return probe
+
+  clear_cache._slicer_not_a_repo_memo = True
+  vcs.clear_cache = clear_cache
+  for name in _PROBES:
+    setattr(vcs, name, remembering(name, getattr(vcs, name)))
+
+
+_install_not_a_repo_memo()
 
 
 def remove_temp_repo(directory: Path) -> None:
@@ -239,6 +287,9 @@ class TempRepo:
       self._git("config", "maintenance.auto", "false")
 
   def _git(self, *args: str) -> subprocess.CompletedProcess[str]:
+    if args[:1] == ("init",):
+      # The suite remembers a no from git for this directory; it is a repo now.
+      _NOT_A_REPO.clear()
     return subprocess.run(
       ["git", *args], cwd=str(self.root), capture_output=True, text=True, check=False
     )

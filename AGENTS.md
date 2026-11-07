@@ -66,6 +66,14 @@ ancestor slicer configs and stop Git discovery above the fixture. Discovery with
 the fixture stays real; the helper restores its patches on exit. Keep it scoped to
 those tests rather than changing production discovery or using it suite-wide.
 
+`tests/support.py` also remembers a not-a-repo answer from `vcs.is_repo`,
+`vcs._current_worktree` and `vcs.git_common_dir` until `vcs.clear_cache()` or a
+`TempRepo._git("init", ...)`; a test that turns a directory into a repo any other way
+calls `vcs.clear_cache()` after. It sets `SLICER_NO_CODE_WARNING=1` for the suite;
+`tests/test_code_location.py` removes it for the tests of the warning. A TUI test class
+on an in-memory state derives from `InMemoryTuiTests` in `tests/test_tui.py`, which
+patches `store.sibling_work`; a test of sibling cells patches it itself.
+
 The suite refuses any write the test process makes into this repository's own git
 common dir: `tests/support.py` raises an `AssertionError` naming the path. A test that
 needs a real common dir builds a fixture that is its own git repo.

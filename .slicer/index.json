@@ -18152,12 +18152,41 @@
       "id": "s448",
       "title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
       "short_title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s447"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9271a85b-2f93-4490-8b88-9961acb40ce3",
+          "kind": "",
+          "text": "**2026-11-07** — Human checks at approval (s448):\n- later: The handoff note quotes the wall time of `python3 -m unittest discover -s tests -t tests` before and after on one machine; it drops by at least 3 minutes.",
+          "created_at": "2026-11-07T18:34:46Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "b7aaa048-947b-4769-b902-ad41d58862fe",
+          "kind": "",
+          "text": "**2026-11-07** — Verified: the suite remembers not-a-repo answers from vcs.is_repo, vcs._current_worktree and vcs.git_common_dir (cleared by vcs.clear_cache and TempRepo._git init), sets SLICER_NO_CODE_WARNING=1 except in CodeMismatchWarningTests, and in-memory TUI test classes patch store.sibling_work via InMemoryTuiTests. Nothing under src/ changed. python3 -m unittest discover -s tests -t tests: before 88.5 s (Ran 3238 tests, skipped=1; second baseline 92.1 s), after 68.0 s (Ran 3242 tests, skipped=1; other runs 62.5 to 68.7 s), same machine and TMPDIR; after/before 0.77, under the owner's 0.8. Test count is 3238 plus the 4 new tests. test_git_calls, test_code_location, test_support pass; slicer check and git diff --check clean. Six mutations each turned the intended test red.",
+          "created_at": "2026-11-07T18:34:58Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "readiness": {
         "by": "claude spec check, owner-confirmed 2026-11-07",
@@ -18181,7 +18210,7 @@
         "importance": 2,
         "urgency": 3,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

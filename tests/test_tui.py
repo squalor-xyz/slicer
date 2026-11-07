@@ -45,7 +45,32 @@ def item_ids(view: tui.View) -> list[str]:
   return [r.target for r in view.listing if r.kind == tui.ITEM]
 
 
-class TuiSortTests(unittest.TestCase):
+class InMemoryTuiTests(unittest.TestCase):
+  """Base for tests on an in-memory state, which have no sibling worktrees to show.
+
+  Every `View.refresh` asks `store.sibling_work`, which starts git to list worktrees; the
+  suite spent a large share of its time there. Tests of sibling cells or claims patch
+  `store.sibling_work` themselves, or use a real repo, and do not derive from this class.
+  """
+
+  def setUp(self) -> None:
+    patcher = patch.object(store, "sibling_work", return_value=({}, []))
+    patcher.start()
+    self.addCleanup(patcher.stop)
+
+
+class TuiSortTests(InMemoryTuiTests):
+  def test_TuiView_InMemoryRefresh_StartsNoGitProcess(self) -> None:
+    # Every refresh asks store.sibling_work, which lists worktrees through git; an
+    # in-memory fixture has no siblings to show, so it must not start a process.
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      state = example()
+      state.root = repo.root
+      with support.count_git_calls() as calls:
+        view = tui.View.initial(state)
+        view.refresh(state)
+      self.assertEqual(calls, [])
+
   def test_InitialOrder_MatchesListRank(self) -> None:
     state = example()
     state.index.items[1].status = "started"
@@ -166,7 +191,7 @@ def type_keys(view: tui.View, state: State, text: str) -> None:
     view.handle(state, key)
 
 
-class TuiFilteringTests(unittest.TestCase):
+class TuiFilteringTests(InMemoryTuiTests):
   def test_InitialView_Defaults_HidesDoneAndRetired(self) -> None:
     state = example()
     state.index.items.append(Item('S05', 'Old idea', 'retired', importance=3, urgency=3))
@@ -311,7 +336,7 @@ class TuiFilteringTests(unittest.TestCase):
     self.assertEqual(item_ids(view), ['S04', 'S02', 'S01', 'S03'])
 
 
-class TuiNavigationTests(unittest.TestCase):
+class TuiNavigationTests(InMemoryTuiTests):
   def test_Jump_VisibleAndHiddenIds_SelectAndReveal(self) -> None:
     state = example()
     view = tui.View.initial(state)
@@ -538,7 +563,7 @@ class Screen:
     self.writes.append((y, text[:count]))
 
 
-class TuiDrawingTests(unittest.TestCase):
+class TuiDrawingTests(InMemoryTuiTests):
   def test_Draw_NormalView_CommonShortcutsPersistWithFeedback(self) -> None:
     hints = ['Tab panes', 'e edit', 'a add', 's start', 'd done', 'h handoff',
              '/ search', 'f filters', 'c show all', 'g jump', 'j/k move', '? help', 'q quit', 'v view', 'b board']
@@ -654,7 +679,7 @@ class TuiDrawingTests(unittest.TestCase):
     self.assertIn('Search (Enter accepts, Esc cancels): no match', output)
 
 
-class NotesPanelTests(unittest.TestCase):
+class NotesPanelTests(InMemoryTuiTests):
   def test_Entries_IncludeANotePerNotePlusATrailingAddEntry(self) -> None:
     state = example()
     item = state.index.require("S02")
@@ -749,7 +774,7 @@ class SiblingReviewDisplayTests(unittest.TestCase):
     self.assertEqual(store.displayed_status(state.config, item, [{"status": "review"}]), "open")
 
 
-class ClaimDisplayTests(unittest.TestCase):
+class ClaimDisplayTests(InMemoryTuiTests):
   def test_Panel_ClaimOwnerOrDash_IsNotAnEntry(self) -> None:
     state = example()
     state.index.require("S02").claim_owner = "Ada Lovelace"
@@ -952,7 +977,7 @@ class SiblingClaimQueueTests(unittest.TestCase):
     self.assertIn("S09", text.split())
 
 
-class QueueViewTests(unittest.TestCase):
+class QueueViewTests(InMemoryTuiTests):
   def test_View_CyclesInWorkAndReview_AndReturnsToTheInitialSet(self) -> None:
     state = example()
     view = tui.View.initial(state)
@@ -1040,7 +1065,7 @@ class QueueViewTests(unittest.TestCase):
     self.assertTrue(any(line.startswith("v ") and "Cycle" in line for line in tui.help_lines()))
 
 
-class TuiStatusLineTests(unittest.TestCase):
+class TuiStatusLineTests(InMemoryTuiTests):
   def rendered_repo(self, repo: support.TempRepo) -> None:
     repo.run('init')
     repo.run('add', 'First')
@@ -1183,7 +1208,7 @@ class TuiStatusLineTests(unittest.TestCase):
         self.assertEqual(compare.call_count, 1)
 
 
-class ReviewKeyTests(unittest.TestCase):
+class ReviewKeyTests(InMemoryTuiTests):
   def repo_with_started(self, repo: support.TempRepo, *titles: str) -> None:
     repo.run('init')
     for title in titles:
@@ -1380,7 +1405,7 @@ def sliced_example() -> State:
   return state
 
 
-class DetailFieldsTests(unittest.TestCase):
+class DetailFieldsTests(InMemoryTuiTests):
   def test_Panel_SliceWithLead_ShowsLeadBeforeBoundary(self) -> None:
     state = sliced_example()
     panel = tui.panel(state, "S02")
@@ -1608,7 +1633,7 @@ class CellAttrScreen(Screen):
       cell += tui_style.cell_width(char)
 
 
-class RelayBoardLinesTests(unittest.TestCase):
+class RelayBoardLinesTests(InMemoryTuiTests):
   def test_BoardLines_OneRun_ShowsPipelineWithActiveRoleSpinner(self) -> None:
     lines = tui.board_lines([pipeline_run()], 0, NOW, 100)
     text = board_text(lines)
@@ -2036,7 +2061,7 @@ class RelayBoardLinesTests(unittest.TestCase):
     self.assertEqual(narrow.spans, ())
 
 
-class PlaceCellsTests(unittest.TestCase):
+class PlaceCellsTests(InMemoryTuiTests):
   def test_Place_DefaultDropsACellThatDoesNotFit_KeepsALaterOneThatFits(self) -> None:
     # The default keeps a later cell that fits after one that does not. Board lines pass
     # `ordered`, so this rule is no longer theirs.
@@ -2046,7 +2071,7 @@ class PlaceCellsTests(unittest.TestCase):
     self.assertEqual(tui._place(["a", "bbbb", "cc"], 5, ordered=True), ("a", {0: 0}))
 
 
-class RelayBoardElapsedTests(unittest.TestCase):
+class RelayBoardElapsedTests(InMemoryTuiTests):
   def test_ElapsedText_Spans_UseTheShortestUnitPair(self) -> None:
     start = "2026-10-14T12:00:00Z"
     for seconds, text in ((0, "0s"), (59, "59s"), (60, "1m00s"), (3599, "59m59s"),
@@ -2056,7 +2081,7 @@ class RelayBoardElapsedTests(unittest.TestCase):
       self.assertEqual(tui.elapsed_text(start, at), text, seconds)
 
 
-class RelayBoardViewTests(unittest.TestCase):
+class RelayBoardViewTests(InMemoryTuiTests):
   def board(self, *results) -> tuple[tui.View, State, list]:
     state = example()
     view = tui.View.initial(state)
@@ -2338,7 +2363,7 @@ class RelayBoardViewTests(unittest.TestCase):
                       (2, 0, "second line", palette.attr("dim"))])
 
 
-class RelayBoardLoopTests(unittest.TestCase):
+class RelayBoardLoopTests(InMemoryTuiTests):
   def test_Run_BoardOpen_WakesOnATimerAndOtherViewsBlock(self) -> None:
     script = iter(["b", curses.error, curses.error, "b", curses.error, "q"])
     timeouts: list[int] = []
@@ -2386,7 +2411,7 @@ def texts(lines: list[tui.PanelLine]) -> list[str]:
   return [line.text for line in lines]
 
 
-class DetailPaneTests(unittest.TestCase):
+class DetailPaneTests(InMemoryTuiTests):
   def history_repo(self, repo: support.TempRepo) -> None:
     repo.run("init")
     repo.run("add", "First")
@@ -2684,7 +2709,7 @@ class DetailPaneTests(unittest.TestCase):
     self.assertIn("i detail", "  ".join(tui.shortcut_lines(160)))
 
 
-class RolesTests(unittest.TestCase):
+class RolesTests(InMemoryTuiTests):
   def setup_roles(self, repo, *, matrix=True):
     repo.run("init")
     repo.run("add", "Role selection", "--size", "S", "--effort", "1")
@@ -2784,7 +2809,7 @@ class RolesTests(unittest.TestCase):
         self.assertEqual((view.mode, view.quit, snapshot()), ("normal", False, before))
 
 
-class RelayRequestTests(unittest.TestCase):
+class RelayRequestTests(InMemoryTuiTests):
   def setup_request(self, repo):
     repo.run("init")
     for title in ("First", "Second", "Third"):
@@ -3099,7 +3124,7 @@ class RelayRequestTests(unittest.TestCase):
       self.assertEqual(snapshot(), before)
 
 
-class QueueColumnsConfigTests(unittest.TestCase):
+class QueueColumnsConfigTests(InMemoryTuiTests):
   """`tui.columns` picks which of claim, size and score the queue row shows, and their order."""
 
   def sized(self, columns: list[str] | None = None) -> tuple[State, Item]:
@@ -3157,7 +3182,7 @@ class QueueColumnsConfigTests(unittest.TestCase):
     self.assertEqual(row.text, "  1  S02   —       Find things")
 
 
-class CatalogTests(unittest.TestCase):
+class CatalogTests(InMemoryTuiTests):
   def setup_catalog(self, repo):
     repo.run("init")
     repo.run("add", "Catalog consumer", "--effort", "1")
