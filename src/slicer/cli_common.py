@@ -502,32 +502,15 @@ def _template_source(args: argparse.Namespace, *, noun: str = "template") -> str
 
 
 _BACKTICK_SPAN = re.compile(r"`([^`\n]+)`")
-_FENCE_OPEN = re.compile(r"(`{3,}|~{3,})")
 
 
 def _outside_fences(body: str) -> str:
   """`body` with every line of a fenced code block blanked, fence lines included.
 
-  Lines are blanked rather than dropped so line numbers stay put. A fence closes
-  on a later line of at least as many of the same character and nothing else; an
-  unclosed fence runs to the end, as CommonMark renders it.
+  Lines are blanked rather than dropped so line numbers stay put. The fence rules are
+  `check.fence_lines`'s.
   """
-  out: list[str] = []
-  fence = ""
-  for line in body.split("\n"):
-    text = line.strip()
-    if not fence:
-      opened = _FENCE_OPEN.match(text)
-      if opened:
-        fence = opened.group(1)
-        out.append("")
-      else:
-        out.append(line)
-      continue
-    out.append("")
-    if text.startswith(fence) and not text.strip(fence[0]):
-      fence = ""
-  return "\n".join(out)
+  return "\n".join(line if kind == "text" else "" for line, kind in check_mod.fence_lines(body))
 
 
 def _unknown_flags(parser: argparse.ArgumentParser, tokens: list[str]) -> list[str]:

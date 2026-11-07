@@ -924,6 +924,17 @@ about X?" — and see why each hit matched — before creating one. To dedupe on
 `slicer find --title-exact "Full title" --json` returns only items whose stored title equals it
 character for character (case and Unicode form matter; no PATTERN or `--in`).
 
+**Write acceptance criteria that can be run or looked at.** Each line of a slice's Check is a
+backticked command with its expected result (``- `python3 -m unittest discover -s tests -t tests`
+passes``; a fenced code block of commands counts too), or a `[HUMAN CHECK]` that says what to
+look at and what to see. Failing tests name each test in backticks. `slicer check` warns (`ID / Check: ...`, `ID / Failing tests: ...`; the
+exit status is unchanged), and so does `slicer promote` in text output, when a live slice's
+non-empty Check has no line with a backticked command or `[HUMAN CHECK]` and no non-blank
+line inside a fenced code block, or its non-empty
+Failing tests names no backticked test. The warning looks at the text only; it does not judge
+whether the expected result is written, and it is not a block: `next` and an empty section are
+governed by their own rules.
+
 **Create a dependent item in one call.** For example,
 `slicer add "Implement the new loader" --short-title "New loader" --importance 3 --urgency 2 --effort 2 --depends-on S01 --render`.
 Score what you file rather than leaving the 2/2 defaults, and say why in your reply.

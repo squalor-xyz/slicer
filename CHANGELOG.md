@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Added
+
+- `check` and `promote` warn (advisory; exit status and JSON unchanged) when a live slice's non-empty Check section has no line with a backticked command or `[HUMAN CHECK]` and no non-blank line inside a fenced code block, or its non-empty Failing tests section names no backticked test. `import --skeleton` and `docs/agents.md` say how to write a Check that can be run or looked at (s446).
+
 ## [1.19.0] - 2026-11-07
 
 ### Added
