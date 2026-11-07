@@ -18297,7 +18297,7 @@
       "id": "s452",
       "title": "check: a backtick slicer command ends at the first shell operator",
       "short_title": "check: a backtick slicer command ends at the first shell operator",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
