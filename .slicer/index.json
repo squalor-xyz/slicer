@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 453,
+  "next_id": 454,
   "preamble": "",
   "passes": [
     {
@@ -18455,6 +18455,34 @@
         "urgency": 2,
         "effort": 1,
         "attempts": 1
+      }
+    },
+    {
+      "id": "s453",
+      "title": "Relay report shape: a Tool feedback section every role can fill",
+      "short_title": "Relay report shape: a Tool feedback section every role can fill",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "ork-new-4eee2ae06579c53f",
+        "pass": "v1.20",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
       }
     }
   ],

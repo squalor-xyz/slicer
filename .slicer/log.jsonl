@@ -2727,3 +2727,5 @@
 {"when": "2026-11-07T19:04:00Z", "item": "s444", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-07T18:36:13Z", "item": "s448", "action": "status", "from": "review", "to": "done", "note": "Landed s448", "by": "Jon Robbins"}
 {"when": "2026-11-07T19:05:19Z", "item": "s444", "action": "status", "from": "review", "to": "done", "note": "Landed s444", "by": "Jon Robbins"}
+{"when": "2026-11-07T19:37:19Z", "item": "s453", "action": "add", "from": "", "to": "open", "note": "Relay report shape: a Tool feedback section every role can fill"}
+{"when": "2026-11-07T19:37:19Z", "item": "s453", "action": "promote", "from": "", "to": "", "note": ""}
