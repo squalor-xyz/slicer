@@ -16,11 +16,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `docs/commands.md`, `docs/agents.md` (also the --disjoint sentence near 370: \"project paths\", as docs/configuration.md says).\n- `tests/test_docs.py` (or the existing docs test module): a test that every parser with `--render` is named in the list, and every listed command has it.\n- `CHANGELOG.md`."
+      "body": "- `docs/commands.md`, `docs/agents.md` (also the --disjoint sentence near 370: \"project paths\", as docs/configuration.md says).\n- `tests/test_docs_coverage.py` (the existing docs test module): `CommandsDocTests`, a test that every parser with `--render` is named in the list, and every listed command has it.\n- `CHANGELOG.md`."
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_CommandsDoc_RenderList_MatchesParser`"
+      "body": "- `test_CommandsDoc_RenderList_MatchesParser` (`tests/test_docs_coverage.py`)"
     },
     {
       "heading": "Implement",

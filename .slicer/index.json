@@ -14365,10 +14365,25 @@
       "id": "s372",
       "title": "Docs list every command that takes --render",
       "short_title": "Docs mutating-command lists complete",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "21cb1217-271a-4ee8-aee4-09e27cb393e1",
+          "kind": "",
+          "text": "**2026-11-07** — Verified: docs/commands.md render list now matches the parser (new CommandsDocTests.test_CommandsDoc_RenderList_MatchesParser, red before and green after, three mutations caught); docs/agents.md names the commands that take no --render and says project paths for --disjoint; CHANGELOG entry added. Full suite 3303 tests OK (1 skipped); slicer check passes.",
+          "created_at": "2026-11-07T20:51:40Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14388,7 +14403,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

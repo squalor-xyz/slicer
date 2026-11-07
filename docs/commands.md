@@ -213,11 +213,16 @@ prose. Exit codes: `0` fine, `1` drift or a failed check, `2` usage, validation,
 See the [agent reference](agents.md) for every payload.
 
 Every command that changes state — `add`, `set`, `start`, `release`, `done`, `handoff`, `reject`,
-`decide`, `move`, `sort`, `promote`, `edit`, `note`, `remove`, `retire`, `park`, `unpark`, `import`,
-`migrate`, and the `prose` edits — takes `--render`
+`decide`, `move`, `sort`, `promote`, `edit`, `note`, `note-verify`, `note-attest`, `note-retract`,
+`remove`, `retire`, `park`, `unpark`, `import`, `migrate`, `refs`, `config`, `id-prefix`,
+`issues-pull`, `land`, `next`, `ai set`, `ai reset`, `template`, `catalog`, `prose`, and
+`relay-roles` (a group name stands for its subcommands that change state, not the read-only
+ones such as list or show) — takes `--render`
 to regenerate `.slicer/render/` in the same step, so a mutation and its render are one
-command. `land` changes state too but takes no `--render`; it renders through `done` (see its row
-in the command table). By default the change is saved first and rendered after; add `--strict` to require
+command. `land` takes it only for symmetry: it always renders through `done` (see its row
+in the command table), and `next` takes it only with `--start`. `init`, `feedback` and the `relay-run` commands that
+record a run write outside the roadmap state (`.slicer/` setup, the feedback log, the relay-run
+ledger), so they take no `--render`. By default the change is saved first and rendered after; add `--strict` to require
 the render to succeed first, so a change that cannot be rendered is rolled back rather than
 landed (this is how `done --render` already behaves). The agent loop passes
 `--render --strict` on `start` and on slice edits. `done` and `handoff` take

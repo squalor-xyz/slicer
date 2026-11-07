@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- `docs/commands.md` lists every command that takes `--render` (it had omitted `config`, `template`, `catalog`, `id-prefix`, `issues-pull`, `note-verify`, `relay-roles` and others), and `docs/agents.md` names the commands that write elsewhere and take none (`init`, `feedback`, `feedback-report`, `setup-git`, `sync`, `relay-run`, the merge drivers) and no longer says `land` takes no flag. A test derives the list from the parser, so it cannot drift again. `docs/agents.md` calls the `--disjoint` paths project paths, as `docs/configuration.md` does (s372).
+
 ## [1.20.0] - 2026-11-07
 
 ### Changed
