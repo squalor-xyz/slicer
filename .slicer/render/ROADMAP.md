@@ -27,13 +27,13 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-440 items · — 21 · done 407 · retired 12
+440 items · — 20 · done 407 · retired 12 · review 1
 
 ## v1.21
 
 | # | Slice | Title | Size | Effort | Trees | Findings | Status |
 |---|---|---|---|---|---|---|---|
-| 1 | [s371](slices/s371.md) | Queue prose rows align past 999 | S | 1 | slicer | s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long "left out:" notice has no cap | — |
+| 1 | [s371](slices/s371.md) | Queue prose rows align past 999 | S | 1 | slicer | s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long "left out:" notice has no cap | review |
 | 2 | [s372](slices/s372.md) | Docs mutating-command lists complete | S | 1 | slicer | s359 relay 2026-10-18: the docs/commands.md "Every command that changes state" list omits config, template, catalog, id-prefix, issues-pull, note-verify and relay-roles; docs/agents.md's "every mutating command takes --render ... except land" does not account for relay-run, feedback or init; s366 relay: docs/agents.md:370 says "backticked repo paths" for --disjoint where configuration.md says project paths | — |
 | 3 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | — |
 | 4 | [s375](slices/s375.md) | Order names one-pass fix round | S | 1 | slicer | s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained "a small fix round is reviewed and gated in one pass", but Order step 2 still reads "review, then accepted findings back to the implementer for each fix round, ... then the gate" with no pointer to that exception | — |

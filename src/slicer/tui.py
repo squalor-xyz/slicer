@@ -156,6 +156,8 @@ SIBLING = "sibling"
 CLAIM_CELL_CAP = 8
 # Below this queue-pane width the claim and size columns go, so the title keeps room.
 NARROW_PANE = 50
+# The `Q` notice names this many left-out ids, in queue order, then "and N more".
+LEFT_OUT_NAMED = 5
 
 
 @dataclass
@@ -281,6 +283,28 @@ def _queue_claim(cell: str) -> str:
   return tui_style.clipped(cell, CLAIM_CELL_CAP - 1) + "…"
 
 
+def number_width(count: int) -> int:
+  """The number slot of a view with `count` item rows: as wide as the longest number, never under 3."""
+  return max(3, len(str(count)))
+
+
+def prose_indent(count: int) -> int:
+  """Cells before the id on an item row (number slot, marker, space), so other rows start there too."""
+  return number_width(count) + 2
+
+
+def prose_rows(state: State, indent: int) -> list[Row]:
+  """The roadmap's own prose blocks under a separator; empty when there are none."""
+  refs = prose.refs(state.index)
+  if not refs:
+    return []
+  out = [Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20)]
+  for ref in refs:
+    lines, preview = prose.summary(state.index, ref, width=30)
+    out.append(Row(kind=PROSE, target=ref, text=f"{'':<{indent}}{ref:<22} {lines:>3}  {preview}"))
+  return out
+
+
 def item_rows(
   state: State, items: list,
   elsewhere: dict[str, list[dict[str, str]]] | None = None,
@@ -307,9 +331,9 @@ def item_rows(
   # The same CLAIM column `slicer list` prints: at least its header, as wide as the longest cell.
   claim_w = max([len("CLAIM"), *(len(claim) for claim in claims.values())])
   out: list[Row] = []
-  # Every number in this view gets the same slot: as wide as the longest one, never under 3.
-  # A slot that grew per row would shift the ids of rows past 999 one cell right.
-  number_w = max(3, len(str(len(items))))
+  # Every number in this view gets the same slot. A slot that grew per row would shift the
+  # ids of rows past 999 one cell right.
+  number_w = number_width(len(items))
   for n, item in enumerate(items, 1):
     pending = graph.pending(state.index, item, cfg)
     marker = "!" if pending else " "
@@ -345,13 +369,7 @@ def item_rows(
 def rows(state: State) -> list[Row]:
   """The queue in ranked order, then the roadmap's own prose blocks."""
   out = item_rows(state, graph.ranked_order(state.index, state.config, list(state.index.items)))
-  refs = prose.refs(state.index)
-  if refs:
-    out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
-    for ref in refs:
-      lines, preview = prose.summary(state.index, ref, width=30)
-      out.append(Row(kind=PROSE, target=ref, text=f"     {ref:<22} {lines:>3}  {preview}"))
-  return out
+  return out + prose_rows(state, prose_indent(len(out)))
 
 
 def row_for(state: State, target: str) -> Row | None:
@@ -731,9 +749,10 @@ class Filters:
     return "  ".join(parts) or "all items"
 
 
-def sibling_only_rows(only_sibling: list[dict[str, str]]) -> list[Row]:
+def sibling_only_rows(only_sibling: list[dict[str, str]], indent: int = 5) -> list[Row]:
   """The `Only in a sibling` block as `slicer list` lists it: a separator, then
-  `ID  worktree  title` rows that cannot be selected. Empty when there are none."""
+  `ID  worktree  title` rows that cannot be selected, indented `indent` cells to sit
+  under the item rows' ids. Empty when there are none."""
   if not only_sibling:
     return []
   id_w = max(len(row["id"]) for row in only_sibling)
@@ -742,7 +761,7 @@ def sibling_only_rows(only_sibling: list[dict[str, str]]) -> list[Row]:
   for row in only_sibling:
     out.append(Row(
       kind=SIBLING, target=row["id"],
-      text=f"     {row['id']:<{id_w}}  {row['worktree']:<{tree_w}}  {row['title']}",
+      text=f"{'':<{indent}}{row['id']:<{id_w}}  {row['worktree']:<{tree_w}}  {row['title']}",
     ))
   return out
 
@@ -759,14 +778,10 @@ def filtered_rows(
   )]
   ordered = sort_items(state, visible, sort_field, descending, elsewhere)
   out = item_rows(state, ordered, elsewhere, pane_width=pane_width, marks=marks)
-  refs = prose.refs(state.index)
-  if refs:
-    out.append(Row(kind=SEPARATOR, target="", text="─ roadmap prose " + "─" * 20))
-    for ref in refs:
-      lines, preview = prose.summary(state.index, ref, width=30)
-      out.append(Row(kind=PROSE, target=ref, text=f"     {ref:<22} {lines:>3}  {preview}"))
+  indent = prose_indent(len(out))
+  out.extend(prose_rows(state, indent))
   # Like `list`, the sibling-only block ignores the item filters and comes last.
-  out.extend(sibling_only_rows(only_sibling or []))
+  out.extend(sibling_only_rows(only_sibling or [], indent))
   return out
 
 
@@ -1160,6 +1175,8 @@ class View:
         wanted = {self.target}
     named = [f"{item.id} ({state.config.status_label(item.status)})"
              for item in queue if item.id in left_out]
+    if len(named) > LEFT_OUT_NAMED:
+      named = [*named[:LEFT_OUT_NAMED], f"and {len(named) - LEFT_OUT_NAMED} more"]
     notice = f"left out: {', '.join(named)}" if named else ""
 
     def say(message: str, severity: str = "info") -> None:

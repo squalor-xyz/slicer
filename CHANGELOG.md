@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- The TUI queue's prose rows and `Only in a sibling` rows start under the item rows' ids once the view has more than 999 rows, where the number slot widens; they sat one cell left. The `Q` notice names the first five ids it left out, in queue order, then `, and N more` (s371).
+
 ## [1.20.0] - 2026-11-07
 
 ### Changed

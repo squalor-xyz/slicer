@@ -3126,6 +3126,42 @@ class RelayRequestTests(InMemoryTuiTests):
         columns = {row.text.index(row.target) for row in rows}
         self.assertEqual(columns, {rows[0].text.index(rows[0].target)})
 
+  def test_ItemRows_Over999_ProseRowAligned(self):
+    only = [{"id": "S9999", "title": "Sibling only", "worktree": "other", "status": "open"}]
+    for count in (999, 1000):
+      state = example()
+      state.index = Index(items=[Item(f"S{n:04d}", f"Item {n}", "open") for n in range(1, count + 1)],
+                          preamble="Project context")
+      with self.subTest(count=count):
+        item_row = tui.item_rows(state, state.index.items)[0]
+        column = item_row.text.index(item_row.target)
+        listed = tui.filtered_rows(state, tui.Filters(), only_sibling=only)
+        prose_row = next(row for row in listed if row.kind == tui.PROSE)
+        sibling_row = next(row for row in listed if row.kind == tui.SIBLING)
+        self.assertEqual(prose_row.text.index("preamble"), column)
+        self.assertEqual(sibling_row.text.index("S9999"), column)
+        ranked = next(row for row in tui.rows(state) if row.kind == tui.PROSE)
+        self.assertEqual(ranked.text.index("preamble"), column)
+
+  def test_RelayRequest_ManyDropped_NoticeCapped(self):
+    with support.TempRepo() as repo:
+      state, view = self.setup_request(repo)
+      for n in range(4, 11):
+        repo.run("add", f"Item {n}", "--size", "S", "--effort", "1")
+      repo.run("promote", "S10")
+      state = repo.state()
+      view.refresh(state)
+      for n in range(1, 10):
+        view.select((tui.ITEM, f"S{n:02d}"))
+        view.handle(state, "m")
+        state.index.get(f"S{n:02d}").status = "done"
+      view.refresh(state)
+      view.select((tui.ITEM, "S10"))
+      view.handle(state, "Q")
+      named = ", ".join(f"S{n:02d} (done)" for n in range(1, 6))
+      self.assertEqual(view.message, f"left out: {named}, and 4 more")
+      view.handle(state, "\x1b")
+
   def test_RelayRequest_HeadingMatchesPromptState(self):
     with support.TempRepo() as repo:
       state, view = self.setup_request(repo)

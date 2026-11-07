@@ -158,9 +158,10 @@ or retired is left out of the request, as if unmarked. Its `[x]` stays, and reop
 the item brings it back into requests. Marks on parked items and on items in review
 stay in the request. When every mark is done or retired, `Q` uses the selected item;
 a selected item that is done or retired is left out the same way, and when nothing is
-left to request the key says so and opens no request. Every id left out is named in
-the message with its status, for example `left out: S03 (done)`, or
-`nothing to request; left out: S02 (done)`. Every item must have a slice; otherwise
+left to request the key says so and opens no request. Ids left out are named in
+the message with their status, for example `left out: S03 (done)`, or
+`nothing to request; left out: S02 (done)`. The first five are named, in queue order,
+then `, and N more` (`left out: S01 (done), ..., S05 (done), and 4 more`). Every item must have a slice; otherwise
 the message names the items to promote first (`n`). A role matrix is required,
 just as for `R`.
 
