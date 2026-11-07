@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; watch them go red.\n2. Share the number width; cap the notice.\n3. CHANGELOG; mutation-check."
+      "body": "1. Write the tests; watch them go red.\n2. Share the number width; cap the notice.\n3. CHANGELOG; mutation-check.\n\nOwner decisions (2026-11-07): How many left-out ids does the `Q` notice name before \"and N more\"? -> five ids: name the first 5 in queue order, then append `, and N more` (e.g. `left out: S01 (done), S02 (done), S03 (done), S04 (done), S05 (done), and 4 more`); the test marks 9 done items and asserts exactly that text [tui.relay-notice-cap]."
     },
     {
       "heading": "Check",

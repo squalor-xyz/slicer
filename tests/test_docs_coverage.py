@@ -179,6 +179,51 @@ class AgentsDocTests(unittest.TestCase):
                          "name exactly the commands the parser builds without --json")
 
 
+RENDER_SENTENCE = re.compile(r"Every command that changes state — (.+?) — takes `--render`")
+
+
+def _leaf_commands() -> dict[str, argparse.ArgumentParser]:
+  """Each leaf command the real parser builds, keyed by its words."""
+  found: dict[str, argparse.ArgumentParser] = {}
+
+  def walk(parser: argparse.ArgumentParser, words: tuple[str, ...]) -> None:
+    groups = [a for a in parser._actions if isinstance(a, argparse._SubParsersAction)]
+    if not groups:
+      found[" ".join(words)] = parser
+      return
+    for name, sub in groups[0].choices.items():
+      walk(sub, (*words, name))
+
+  walk(cli.build_parser(), ())
+  return found
+
+
+def _render_commands() -> list[str]:
+  return sorted(
+    words for words, parser in _leaf_commands().items()
+    if any("--render" in a.option_strings for a in parser._actions)
+  )
+
+
+class CommandsDocTests(unittest.TestCase):
+  def test_CommandsDoc_RenderList_MatchesParser(self) -> None:
+    """The sentence in docs/commands.md names every command with --render and only those.
+    A group name such as `prose` stands for each of its leaves that takes the flag."""
+    text = " ".join(REFERENCE.read_text(encoding="utf-8").split())
+    matches = RENDER_SENTENCE.findall(text)
+    self.assertEqual(len(matches), 1, "keep one 'Every command that changes state — ... — takes `--render`' sentence")
+    leaves = _render_commands()
+    named: list[str] = []
+    unknown: list[str] = []
+    for name in re.findall(r"`([^`]+)`", matches[0]):
+      expanded = [leaf for leaf in leaves if leaf == name or leaf.startswith(name + " ")]
+      named.extend(expanded)
+      if not expanded:
+        unknown.append(name)
+    self.assertEqual(unknown, [], "each name listed must take --render")
+    self.assertEqual(sorted(named), leaves, "name exactly the commands the parser builds with --render")
+
+
 ARCHITECTURE = ROOT / "ARCHITECTURE.md"
 ALLOWLIST_SENTENCE = re.compile(r"`vcs\.ALLOWED` is (.+?)\. ")
 
