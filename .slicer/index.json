@@ -17985,7 +17985,7 @@
       "title": "Default relay-roles matrix: add Codex terra rows for small, low-effort slices",
       "short_title": "Default matrix: terra rows",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [
         {
@@ -18005,8 +18005,10 @@
       ],
       "claim": null,
       "fields": {
-        "size": "S",
-        "flags": [],
+        "size": "M",
+        "flags": [
+          "needs-owner"
+        ],
         "trees": [],
         "trees_literal": false,
         "findings": "Owner 2026-11-03 (ork session): update the default matrix that slicer relay-roles init writes (skeleton() in src/slicer/roles.py, rows r1-r11) to match the owner's current matrix: add Codex gpt-6.1-terra implementer rows after the sol row (r9) and before the Claude rows it falls back to: terra xhigh for a slice of size M at effort 2, then terra high for size S or M at effort 1 or 2 (a whole slice; sliver and split-part terra rows are a separate owner question). Terra is the Sonnet-class Codex model: it takes only small, low-effort slices; larger or effort-3 slices go from sol straight to the Claude rows. Open owner questions: (1) should the default also put Codex sol first for every slice and Grok first for reviewer, gate and architect with Claude opus as the fallback, as the owner's own matrices now do, or stay Claude-first because a new project may have neither vendor installed (recommend: stay Claude-first, add the terra rows as alternates after r9); (2) the sliver and split-part terra rows (medium, high) the ork matrix has. Reference: the ork project's matrix (slicer relay-roles show --root ../ork). Tests that pin the skeleton's rows change.",
@@ -18019,7 +18021,7 @@
         "reason": "",
         "importance": 2,
         "urgency": 2,
-        "effort": 1,
+        "effort": 2,
         "attempts": 0
       }
     },
@@ -18056,7 +18058,7 @@
       "title": "Tests: stub fsync outside tests/test_jsonio.py",
       "short_title": "Tests: stub fsync outside tests/test_jsonio.py",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
@@ -18084,8 +18086,10 @@
       "title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
       "short_title": "Tests: cache not-a-repo git answers and drop per-call git warnings in the suite",
       "status": "open",
-      "has_slice": false,
-      "depends_on": [],
+      "has_slice": true,
+      "depends_on": [
+        "s447"
+      ],
       "note_records": [],
       "claim": null,
       "fields": {
@@ -18112,13 +18116,15 @@
       "title": "Release target (was pass) and an owner-set wave inside it",
       "short_title": "Release target (was pass) and an owner-set wave inside it",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
         "size": "L",
-        "flags": [],
+        "flags": [
+          "needs-owner"
+        ],
         "trees": [],
         "trees_literal": false,
         "findings": "Owner 2026-11-04 (interview in the ork session): rename pass to release target, and add a wave so mini slices can target a version release and that release can be split into waves to execute. Owner decisions: (1) the stored wave is an owner label, a number within an item's release target, like pass today; plan-parallel (s376, s377) keeps computing what can run in parallel from dependencies and Files paths and works inside one wave; docs must name the two apart (planned wave vs parallel set). (2) The release target is the main name (flag --release-target, JSON field release_target, by_release_target in stats); --pass, the pass field and by_pass keep working as aliases with a deprecation note; existing keys (v1.1, v1.20) stay unchanged. Spec step to confirm: the flag name for the wave (for example --wave N), how list, move, render, roadmap and TUI group by release target then wave, whether items with no wave sort last, and how plan-parallel treats an item whose dependency sits in a later wave (flag it). Acceptance: (1) slicer add/set accept --release-target and --wave N; --pass still works and prints one deprecation note; (2) JSON output carries release_target and wave, and still carries pass as an alias; (3) list, roadmap render and the TUI group by release target, then wave, and show the wave; (4) plan-parallel output is unchanged for items without a wave, and flags an item scheduled in an earlier wave than its dependency; (5) existing .slicer data loads unchanged, with a test that loads a fixture holding only pass; (6) slicer check is clean and the docs and ai instructions use the new words. Follow-up: ork reads release target and wave (see the ork slice filed with this one).",
@@ -18140,13 +18146,15 @@
       "title": "Keyed lookup for Index.get and CatalogRecord.get",
       "short_title": "Keyed lookup for Index.get and CatalogRecord.get",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
         "size": "S",
-        "flags": [],
+        "flags": [
+          "needs-owner"
+        ],
         "trees": [],
         "trees_literal": false,
         "findings": "s370's reviewer: Index.get is a linear scan per miss, and CatalogRecord.get the same; left out of s370 (owner note 2026-11-03). Change: build a dict keyed by item id once per Index/CatalogRecord (invalidated when items change) and use it in get. Acceptance: (1) get returns the same item or None as before for every existing caller, with a test for hit, miss and an id added after the first get; (2) a test shows a miss no longer scans all items (counts comparisons or accesses); (3) the lazy-load behavior of s312 and s361 is unchanged and their tests pass; (4) python3 -m unittest discover -s tests -t tests and slicer check pass.",
@@ -18168,13 +18176,15 @@
       "title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
       "short_title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,
       "fields": {
         "size": "M",
-        "flags": [],
+        "flags": [
+          "needs-owner"
+        ],
         "trees": [],
         "trees_literal": false,
         "findings": "Owner 2026-11-04 (ork S289 Q3, accepted): ork's landing paused on a merge conflict in a slice's own .slicer/slices/U26.json (run-state and notes edited on both the slice branch and the base). slicer ships merge drivers for log.jsonl, index.json, render/* and relay-roles.json but none for slices/*.json; the owner resolved it by hand (took the base copy, git add, ork retry). Wanted: a slicer-owned driver that merges notes by id and sections by heading, installed with the other drivers. Not verified: which fields conflicted on U26, and whether taking one side can drop a note that exists only on the other.",
@@ -18196,7 +18206,7 @@
       "title": "check: a backtick slicer command ends at the first shell operator",
       "short_title": "check: a backtick slicer command ends at the first shell operator",
       "status": "open",
-      "has_slice": false,
+      "has_slice": true,
       "depends_on": [],
       "note_records": [],
       "claim": null,

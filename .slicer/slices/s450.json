@@ -1,0 +1,43 @@
+{
+  "id": "s450",
+  "title": "Keyed lookup for Index.get and CatalogRecord.get",
+  "lead": [
+    "`Index.get` and `Catalog.get` (the finding's \"CatalogRecord.get\"; `CatalogRecord` has no `get`) answer from a dict keyed by id instead of scanning the list on every call. The answers stay exactly what the scan gives today, for every caller."
+  ],
+  "depends_note": null,
+  "findings_note": "s370's reviewer: Index.get is a linear scan per miss, and CatalogRecord.get the same; left out of s370 (owner note 2026-11-03). Change: build a dict keyed by item id once per Index/CatalogRecord (invalidated when items change) and use it in get. Acceptance: (1) get returns the same item or None as before for every existing caller, with a test for hit, miss and an id added after the first get; (2) a test shows a miss no longer scans all items (counts comparisons or accesses); (3) the lazy-load behavior of s312 and s361 is unchanged and their tests pass; (4) python3 -m unittest discover -s tests -t tests and slicer check pass.",
+  "size": "S",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** `Index.position`, `by_status` or any other scan; the lazy slice map (`store.LazySlices`, s312, s361); changing `items` or `records` from a plain list.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "s370's reviewer: `Index.get` is a linear scan per call and a miss walks the whole list; `Catalog.get` is the same. Left out of s370 (owner note 2026-11-03).\n\nWhat the code shows (read 2026-11-06): `Index.get` (`src/slicer/model.py:736-740`) and `Catalog.get` (`src/slicer/model.py:584-588`) loop over `self.items` and `self.records`; `require` wraps each. There are 38 call sites of `index.get(` or `catalog.get(` under `src/slicer/` (`rg -n \"index\\.get\\(|catalog\\.get\\(\" src/slicer`). Both lists are public and mutated in place outside the class: `append` (`src/slicer/ops.py:405`, `:476`, `:2450`, `src/slicer/migrator.py:259`), `pop` and `insert` in `move` (`src/slicer/ops.py:801-815`), `sort` (`:830`, `:833`) and reassignment (`:562`, `:2121`). Item and record ids are not rewritten in place (`set_id_prefix`, `src/slicer/ops.py:841`, changes only the prefix new ids get).\n\nOpen owner question: how the cache learns that the list changed.\n\n- (a) Fingerprint: rebuild the dict when `(id(list), len(list))` differs from the last build, and verify a hit (`found.id == item_id`). Cheap and needs no change at the mutation sites, but a same-length swap of one item for another (a `pop` then `append` of a different item) would leave a stale miss; none exists today (audit above).\n- (b) Explicit invalidation: add `Index.invalidate()` / `Catalog.invalidate()` and call it at every mutation site listed above. Exact, but a future mutation site that forgets it returns stale answers.\n- (c) Make `items` and `records` a small list subclass that drops the dict on every mutating method. Exact and automatic, but changes the type of a public field that `to_dict`, tests and copies rely on.\n\nRecommendation: (a), plus a test that pins each mutation pattern used today, and a docstring line on `items` and `records` saying a same-length replacement must go through reassignment."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/model.py:576-595` (`Catalog`: private cache fields with `field(default=None, init=False, repr=False, compare=False)`; `get`).\n- `src/slicer/model.py:721-745` (`Index`: the same).\n- `src/slicer/ops.py` only under option (b).\n- `tests/test_store.py` or a new `tests/test_model_lookup.py` (new tests)."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "In `tests/test_model_lookup.py` (new):\n\n- `test_IndexGet_HitMissAndAddedAfterFirstGet_SameAsScan`: build an `Index` with three items; `get` a present id, a missing id, then append a fourth item and `get` it; results equal a linear scan's. Guard: passes before the change and must stay green.\n- `test_IndexGet_AfterMoveSortAndReassign_SameAsScan`: after `ops.move`, `items.sort(...)` and `index.items = [...]` without one item, `get` for every id (and the removed one) equals a scan. Guard.\n- `test_IndexGet_RepeatedMiss_DoesNotScanTheItems`: with 1000 items, wrap `index.items` iteration (for example a list subclass counting `__iter__` in the test only) and call `get(\"missing\")` twice; the second call iterates nothing. Fails first: each miss iterates the list.\n- `test_CatalogGet_HitMissAddedAndRemoved_SameAsScan` and `test_CatalogGet_RepeatedMiss_DoesNotScanTheRecords`: the same for `Catalog`. The second fails first.\n- `test_Index_ToDictAndEquality_IgnoreTheCache`: `Index.to_dict()` bytes and `==` between two indexes are unchanged after a `get`. Guard."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Get the owner's answer to the open question, then write the tests; confirm the \"fails first\" ones fail.\n2. Add the cache to `Index` and `Catalog` per the chosen option. The cache must not appear in `to_dict`, `__eq__` or `repr`, and `copy.deepcopy` of a draft state must not share it (a fresh build on first `get` after copy is fine).\n3. Keep `require`, `position` and every caller unchanged.\n4. Run the lazy-load tests (`tests/test_store_lazy.py`), which pin s312 and s361."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest tests.test_model_lookup tests.test_store_lazy -v` passes.\n- `python3 -m unittest discover -s tests -t tests` passes; `PYTHONPATH=src python3 -m slicer check` passes; `git diff --check` prints nothing.\n- `PYTHONPATH=src python3 -m slicer render` leaves `git status --short .slicer/render` empty (output unchanged).\n- Mutation: return the cached value without verifying `found.id == item_id` (option a) or skip one invalidation (option b); `test_IndexGet_AfterMoveSortAndReassign_SameAsScan` or the add test goes red."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch: \"model: keyed lookup for Index.get and Catalog.get\"."
+    }
+  ],
+  "notes": []
+}
