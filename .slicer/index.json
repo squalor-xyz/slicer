@@ -17990,7 +17990,7 @@
       "id": "s445",
       "title": "Default relay-roles matrix: add Codex terra rows for small, low-effort slices",
       "short_title": "Default matrix: terra rows",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
