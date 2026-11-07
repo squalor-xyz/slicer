@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import support
-from slicer import jsonio
+from slicer import jsonio, vcs
 from support import TempRepo
 
 
@@ -97,3 +97,49 @@ class FsyncStubTests(unittest.TestCase):
         raise RuntimeError("boom")
     self.assertIs(os.fsync, stub_fsync)
     self.assertIs(jsonio._full_fsync_darwin, stub_full)
+
+
+class NotARepoMemoTests(unittest.TestCase):
+  """The suite remembers a no answer from git for a fixture that is not a repo (s448).
+
+  Production keeps only yes answers so a `git init` is seen at once; fixtures are
+  throwaway directories, so the suite keeps the no answers and forgets them at
+  `vcs.clear_cache` and at a fixture's own `git init`.
+  """
+
+  def test_Support_NotARepoFixture_IsRepoAskedOnce(self) -> None:
+    probes = {
+      "is_repo": lambda root: vcs.is_repo(root),
+      "_current_worktree": lambda root: vcs._current_worktree(root),
+      "git_common_dir": lambda root: vcs.git_common_dir(root),
+    }
+    for name, probe in probes.items():
+      with self.subTest(probe=name), support.TempRepo() as repo, support.isolated_discovery(repo.root):
+        with support.count_git_calls() as calls:
+          first, second = probe(repo.root), probe(repo.root)
+        self.assertFalse(first)
+        self.assertFalse(second)
+        self.assertEqual(len(calls), 1, calls)
+        self.assertEqual(calls[0][0], "rev-parse")
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      with support.count_git_calls() as calls:
+        self.assertFalse(vcs.is_repo(repo.root))
+        self.assertFalse(vcs.is_repo(repo.root))
+        self.assertEqual(calls, [("rev-parse", "--is-inside-work-tree")])
+        vcs.clear_cache()  # the session's reload point forgets a no answer too
+        self.assertFalse(vcs.is_repo(repo.root))
+      self.assertEqual(len(calls), 2, calls)
+
+  def test_Support_NotARepoMemo_ForgottenAfterGitInit(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      self.assertFalse(vcs.is_repo(repo.root))
+      self.assertIsNone(vcs._current_worktree(repo.root))
+      self.assertIsNone(vcs.git_common_dir(repo.root))
+      repo._git("init", "-q")
+      self.assertTrue(vcs.is_repo(repo.root))
+      self.assertEqual(vcs._current_worktree(repo.root), repo.root)
+      self.assertEqual(vcs.git_common_dir(repo.root), repo.root / ".git")
+
+  def test_Support_CodeWarning_OffForTheSuite(self) -> None:
+    # tests/test_code_location.py is the only module that turns the warning back on.
+    self.assertEqual(os.environ.get("SLICER_NO_CODE_WARNING"), "1")

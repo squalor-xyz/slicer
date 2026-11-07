@@ -99,6 +99,13 @@ class ForeignWorktreeTests(unittest.TestCase):
 
 
 class CodeMismatchWarningTests(unittest.TestCase):
+  def setUp(self) -> None:
+    # tests/support.py silences the warning for the suite; these tests are about it.
+    env = patch.dict(os.environ)
+    env.start()
+    self.addCleanup(env.stop)
+    os.environ.pop(cli._CODE_WARNING_ENV, None)
+
   def _repo(self) -> support.TempRepo:
     repo = support.TempRepo()
     repo.run("init")
