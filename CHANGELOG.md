@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-11-07
+
 ### Changed
 
 - A pass is now called a release target: `--release-target` (on `add`, `set` and `list`), the outline key `release_target:`, `release_target` in item JSON and `by_release_target` in `stats` are the main names. `--pass`, `pass:`, `pass` and `by_pass` keep working with the same values; `--pass` and `pass:` print one deprecation line on stderr, never in JSON on stdout. The stored key stays `pass`, so an existing `.slicer/` loads and saves byte for byte. The `list` column is `TARGET`, the TUI filter and field are `release target`, and the `add` confirmation reads `(release target: KEY)`; `prose add-pass` and `prose drop-pass` keep their names (s449).
