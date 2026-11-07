@@ -195,6 +195,26 @@ class OpsTests(unittest.TestCase):
       self.assertEqual(sl.section("Implement").body, "Do the thing.")
       self.assertEqual(sl.section("Files").body, "")
 
+  def test_promote_prints_the_vague_check_warning(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "a new idea")
+      repo.run("add", "another idea")
+      draft = "## a new idea\n\n### Check\n- Works.\n"
+      repo.write("draft.md", draft)
+      code, out, err = repo.run("promote", "S05", "--file", str(repo.root / "draft.md"))
+      self.assertEqual(code, 0, err)
+      lines = out.splitlines()
+      self.assertTrue(lines[0].startswith("promoted S05 -> "), out)
+      self.assertEqual(
+        lines[1:],
+        ["warn: S05 / Check: no command or [HUMAN CHECK] line; say how to tell the slice is done"],
+      )
+      repo.write("draft.md", draft.replace("a new idea", "another idea"))
+      code, out, err = repo.run("promote", "S06", "--file", str(repo.root / "draft.md"), "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out), repo.state().slices["S06"].to_dict())
+      self.assertNotIn("warn", out)
+
   def test_Promote_SourceWithLeadingProse_RefusesAndLeavesThePreamble(self) -> None:
     with self.repo() as repo:
       repo.run("add", "a new idea")

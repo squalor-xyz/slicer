@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import render, sync, verify
+from slicer import check, render, sync, verify
 
 MERGE_HINT = (
   "only the roadmap render is stale, as a merge leaves it; "
@@ -197,6 +197,98 @@ class CheckTests(unittest.TestCase):
       self.assertEqual(code, 1)
       self.assertIn("orphan render: slices/S99.md", out)
       self.assertNotIn("only the roadmap render is stale", out)
+
+
+class VagueAcceptanceTests(unittest.TestCase):
+  """A Check with no command or `[HUMAN CHECK]`, or Failing tests with no backticked test, warns."""
+
+  CHECK_LINE = (
+    "S02 / Check: no command or [HUMAN CHECK] line; say how to tell the slice is done"
+  )
+  TESTS_LINE = "S02 / Failing tests: no backticked test name"
+
+  def _fresh(self) -> support.TempRepo:
+    repo = support.TempRepo()
+    repo.run("init")
+    repo.run("add", "a thing")
+    repo.run("add", "another thing")
+    return repo
+
+  def _promote(self, repo: support.TempRepo, item_id: str, **sections: str) -> None:
+    body = "".join(f"### {name.replace('_', ' ')}\n{text}\n\n" for name, text in sections.items())
+    repo.write("draft.md", f"## a thing\n\n{body}")
+    code, _, err = repo.run("promote", item_id, "--file", str(repo.root / "draft.md"), "--render")
+    self.assertEqual(code, 0, err)
+
+  def _warnings(self, repo: support.TempRepo) -> list[str]:
+    code, out, err = repo.run("check", "--json")
+    self.assertEqual(code, 0, out + err)
+    return json.loads(out)["warnings"]
+
+  def test_check_warns_on_a_check_section_with_no_command_or_human_check(self) -> None:
+    with self._fresh() as repo:
+      self._promote(repo, "S02", Check="- Tests pass.")
+      code, out, _ = repo.run("check")
+      self.assertEqual(code, 0, out)
+      self.assertIn(f"warn: {self.CHECK_LINE}", out)
+      self.assertEqual(self._warnings(repo), [self.CHECK_LINE])
+
+  def test_check_accepts_a_backticked_command_or_a_human_check(self) -> None:
+    with self._fresh() as repo:
+      self._promote(
+        repo, "S01",
+        Check="- Tests pass: `python3 -m unittest discover -s tests -t tests` exits 0.",
+      )
+      self._promote(repo, "S02", Check="- [HUMAN CHECK] Open the page and see the table.")
+      self.assertEqual(self._warnings(repo), [])
+
+  def test_check_warns_on_failing_tests_with_no_backticked_test(self) -> None:
+    with self._fresh() as repo:
+      self._promote(repo, "S02", Failing_tests="- add tests for the new flag")
+      self.assertEqual(self._warnings(repo), [self.TESTS_LINE])
+      self._promote_again(repo, "S02", "- `test_new_flag`: fails first, no flag.")
+      self.assertEqual(self._warnings(repo), [])
+
+  def _promote_again(self, repo: support.TempRepo, item_id: str, text: str) -> None:
+    repo.write("note.md", text)
+    code, _, err = repo.run(
+      "edit", item_id, "--section", "Failing tests", "--file", str(repo.root / "note.md"),
+      "--render",
+    )
+    self.assertEqual(code, 0, err)
+
+  def test_check_accepts_a_check_that_is_a_fenced_command_block(self) -> None:
+    with self._fresh() as repo:
+      self._promote(
+        repo, "S02",
+        Check="```sh\npython3 -m unittest discover -s tests -t tests\n```",
+      )
+      self.assertEqual(self._warnings(repo), [])
+
+  def test_check_warns_on_prose_plus_an_empty_fence(self) -> None:
+    with self._fresh() as repo:
+      self._promote(repo, "S02", Check="- Tests pass.\n\n```sh\n```")
+      self.assertEqual(self._warnings(repo), [self.CHECK_LINE])
+
+  def test_check_skips_done_retired_and_slices_without_the_section(self) -> None:
+    with self._fresh() as repo:
+      repo.run("add", "third thing")
+      repo.run("add", "fourth thing")
+      self._promote(repo, "S01", Check="- Works.", Failing_tests="- prose only")
+      self._promote(repo, "S02", Check="- Works.", Failing_tests="- prose only")
+      self._promote(repo, "S03", Why="Because.")
+      for item_id, status in (("S01", "done"), ("S02", "retired")):
+        code, _, err = repo.run("set", item_id, "--status", status, "--render")
+        self.assertEqual(code, 0, err)
+      self.assertEqual(self._warnings(repo), [])
+      # A slice whose sections lack the headings altogether: promote always writes every
+      # configured section, so drop them in memory.
+      self._promote(repo, "S04", Check="- Works.", Failing_tests="- prose only")
+      state = repo.state()
+      self.assertEqual(len(check.vague_acceptance(state, "S04")), 2)
+      sl = state.slices["S04"]
+      sl.sections = [s for s in sl.sections if s.heading not in ("Check", "Failing tests")]
+      self.assertEqual(check.vague_acceptance(state, "S04"), [])
 
 
 if __name__ == "__main__":

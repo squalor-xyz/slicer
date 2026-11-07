@@ -18095,10 +18095,39 @@
       "id": "s446",
       "title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
       "short_title": "Vague Check section: warn when a slice has no verifiable acceptance criteria",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "8ac4efee-054b-4042-adc8-3f4a58af7f2a",
+          "kind": "",
+          "text": "**2026-11-07** — Human checks at approval (s446):\n- later: [AFTER LAND] Promote an outline whose Check says only \"Works.\" and see the warning after the \"promoted\" line.",
+          "created_at": "2026-11-07T16:46:16Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "f349aa6f-6dee-48f8-b7e1-84d7a223a308",
+          "kind": "",
+          "text": "**2026-11-07** — Verified: slicer check and promote (text mode) warn, advisory only, when a live slice's non-empty Check has no backticked command line, no [HUMAN CHECK] line and no non-blank line in a fenced block, or its non-empty Failing tests names no backticked test; done and retired slices, and empty or missing sections, are skipped. check exit status and all JSON shapes are unchanged. Full suite passed (3234 passed, 0 failed, 1 existing skip); each new assertion was mutation-checked; slicer check exits 0 with warnings only for s374 and s432 Failing tests. import --skeleton, docs/agents.md and CHANGELOG describe the rule. Human check left for after landing: promote an outline whose Check says only Works. and see the warning after the promoted line.",
+          "created_at": "2026-11-07T16:46:25Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "readiness": {
         "by": "claude spec check, owner-confirmed 2026-11-07",
@@ -18124,17 +18153,46 @@
         "importance": 3,
         "urgency": 3,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
       "id": "s447",
       "title": "Tests: stub fsync outside tests/test_jsonio.py",
       "short_title": "Tests: stub fsync outside tests/test_jsonio.py",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "20250c6f-3c74-4fa0-ae0b-b70fe6eeee21",
+          "kind": "",
+          "text": "**2026-11-07** — Human checks at approval (s447):\n- later: The handoff note quotes the before and after wall time of the full discover on one machine; on darwin the after-time is within about 10% of 386.5 s.",
+          "created_at": "2026-11-07T16:03:30Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "9440c3a4-4494-435c-8c05-e56b46dab797",
+          "kind": "",
+          "text": "**2026-11-07** — Verified: the suite stubs os.fsync and jsonio._full_fsync_darwin at import in tests/support.py (REAL_FSYNC, REAL_FULL_FSYNC, real_syncs()); tests/test_jsonio.py restores the real calls in setUp and all 8 of its tests pass against them. Full discover on Linux: 3232 tests, OK (skipped=1), 86.5 s with the stubs against 106.8 s with the stub install disabled (same machine, not idle); test count was 3228 before, 4 new tests. slicer check passes, git diff --check is clean, nothing under src/ changed. Darwin timing (within about 10% of 386.5 s) not measured: this machine is Linux; left as the human check.",
+          "created_at": "2026-11-07T16:03:40Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "readiness": {
         "by": "claude spec check, owner-confirmed 2026-11-07",
@@ -18158,7 +18216,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -18310,10 +18368,25 @@
       "id": "s452",
       "title": "check: a backtick slicer command ends at the first shell operator",
       "short_title": "check: a backtick slicer command ends at the first shell operator",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "7ae0d35b-b3eb-4574-864d-609f1596d574",
+          "kind": "",
+          "text": "**2026-11-07** — Verified: a backticked slicer command in a live slice now ends at the first shell operator (&&, ||, ;, |); each slicer command in the span is checked on its own, and an unknown flag before the operator is still reported. Lexer keeps # as an ordinary character like shlex.split. Full suite 3234 passed, 0 failed, 1 skipped; slicer check passes.",
+          "created_at": "2026-11-07T16:25:01Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "readiness": {
         "by": "claude spec check, owner-confirmed 2026-11-07",
@@ -18337,7 +18410,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     }
   ],

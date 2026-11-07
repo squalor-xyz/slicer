@@ -120,6 +120,40 @@ def _install_git_dir_guard() -> None:
 _install_git_dir_guard()
 
 
+# jsonio.write_bytes syncs the file, the macOS drive cache and the directory on every
+# write (s313); on macOS that made the suite about 48% slower. Every test but
+# tests/test_jsonio.py gets no-op syncs; that module restores the real ones with
+# `real_syncs()`. A second import of this module must not wrap the stubs again.
+def _install_sync_stubs() -> tuple:
+  from slicer import jsonio
+
+  if getattr(os.fsync, "_slicer_sync_stub", False):
+    return os.fsync._slicer_real, jsonio._full_fsync_darwin._slicer_real
+  real_fsync, real_full = os.fsync, jsonio._full_fsync_darwin
+  fsync_stub = lambda fd: None  # noqa: E731
+  full_stub = lambda fd: None  # noqa: E731
+  fsync_stub._slicer_sync_stub = full_stub._slicer_sync_stub = True
+  fsync_stub._slicer_real, full_stub._slicer_real = real_fsync, real_full
+  os.fsync, jsonio._full_fsync_darwin = fsync_stub, full_stub
+  return real_fsync, real_full
+
+
+REAL_FSYNC, REAL_FULL_FSYNC = _install_sync_stubs()
+
+
+@contextmanager
+def real_syncs() -> Iterator[None]:
+  """Put the real `os.fsync` and `jsonio._full_fsync_darwin` back; restore the stubs on exit."""
+  from slicer import jsonio
+
+  stubs = os.fsync, jsonio._full_fsync_darwin
+  os.fsync, jsonio._full_fsync_darwin = REAL_FSYNC, REAL_FULL_FSYNC
+  try:
+    yield
+  finally:
+    os.fsync, jsonio._full_fsync_darwin = stubs
+
+
 def remove_temp_repo(directory: Path) -> None:
   """Bound retries for locks that Git creates or removes during teardown."""
   for attempt in range(3):

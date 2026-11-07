@@ -7,10 +7,41 @@ code to read.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from slicer import ai, feedback, jsonio, ops, render, store, sync, vcs, verify
 from slicer.store import State
+
+_BACKTICK_SPAN = re.compile(r"`[^`\n]+`")
+_HUMAN_CHECK = "[HUMAN CHECK]"
+_FENCE_OPEN = re.compile(r"(`{3,}|~{3,})")
+
+
+def fence_lines(body: str) -> list[tuple[str, str]]:
+  """Each line of `body` with its kind: `text`, `fence` (an opening or closing line) or `code`.
+
+  A fence closes on a later line of at least as many of the same character and nothing
+  else; an unclosed fence runs to the end, as CommonMark renders it. `check` and
+  `cli_common._outside_fences` share this one parser.
+  """
+  out: list[tuple[str, str]] = []
+  fence = ""
+  for line in body.split("\n"):
+    text = line.strip()
+    if not fence:
+      opened = _FENCE_OPEN.match(text)
+      if opened:
+        fence = opened.group(1)
+        out.append((line, "fence"))
+      else:
+        out.append((line, "text"))
+    elif text.startswith(fence) and not text.strip(fence[0]):
+      fence = ""
+      out.append((line, "fence"))
+    else:
+      out.append((line, "code"))
+  return out
 
 
 @dataclass
@@ -90,10 +121,48 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
     report.warnings.append(legacy)
   report.warnings.extend(_gitignore_lines(state))
   report.warnings.extend(_prompt_warnings(state))
+  report.warnings.extend(_vague_acceptance_warnings(state))
   pin = ai.pin_mismatch(state.config.relay_contract)
   if pin is not None:
     report.warnings.append(pin)
   return report, expected, diff
+
+
+def vague_acceptance(state: State, item_id: str) -> list[str]:
+  """Advisory lines for one live slice whose Check or Failing tests give nothing to run.
+
+  Text only: a Check needs a line holding a backticked command or `[HUMAN CHECK]`, or a
+  non-blank line inside a fenced code block, and Failing tests needs a backticked name. Whether a command states its expected result is
+  not judged. A missing or empty section is the empty-section rule's business, not this
+  one's, and done and retired slices keep their history as written.
+  """
+  cfg = state.config
+  skip = {cfg.done_status}
+  if cfg.retired_status:
+    skip.add(cfg.retired_status)
+  item = state.index.get(item_id)
+  sl = state.slices.get(item_id)
+  if item is None or sl is None or item.status in skip:
+    return []
+  lines: list[str] = []
+  check = sl.section("Check")
+  if check is not None and check.body.strip() and not any(
+    (kind == "code" and line.strip())
+    or _BACKTICK_SPAN.search(line)
+    or _HUMAN_CHECK in line
+    for line, kind in fence_lines(check.body)
+  ):
+    lines.append(
+      f"{item_id} / Check: no command or {_HUMAN_CHECK} line; say how to tell the slice is done"
+    )
+  tests = sl.section("Failing tests")
+  if tests is not None and tests.body.strip() and not _BACKTICK_SPAN.search(tests.body):
+    lines.append(f"{item_id} / Failing tests: no backticked test name")
+  return lines
+
+
+def _vague_acceptance_warnings(state: State) -> list[str]:
+  return [line for item in state.index.items for line in vague_acceptance(state, item.id)]
 
 
 def _prompt_warnings(state: State) -> list[str]:
