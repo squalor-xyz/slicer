@@ -2674,7 +2674,9 @@ def roles_init(
 class _RoleChange:
   """What one matrix edit did, with what its history entry records. No I/O produced it."""
 
-  op: str  # the history note: add, set, remove, move, rule-add, rule-edit or rule-remove
+  # the history note: add, set, remove, move, rule-add, rule-edit or rule-remove, or the
+  # rule-move that only a replace derives
+  op: str
   id: str
   target: RoleRow | RoleRule
   changed: bool = True
@@ -2891,6 +2893,24 @@ def rule_edit(state: State, rule_id: str, text: str) -> tuple[RoleRule, bool]:
   return change.target, change.changed
 
 
+def _matrix_rule_move(matrix: RoleMatrix, rule_id: str, *, before: str) -> _RoleChange:
+  """Place a rule before another. Only a replace derives this step; no verb or `ops` step has it."""
+  rule = matrix.rule(rule_id)
+  anchor = matrix.rule(before)
+  if anchor.id == rule.id:
+    raise StateError("a rule cannot be moved before itself", code="usage")
+  old_order = [r.id for r in matrix.rules]
+  rest = [r for r in matrix.rules if r.id != rule.id]
+  rest.insert([r.id for r in rest].index(anchor.id), rule)
+  if [r.id for r in rest] == old_order:
+    return _RoleChange("rule-move", rule.id, rule, changed=False)
+  matrix.rules = rest
+  return _RoleChange(
+    "rule-move", rule.id, rule, frm=str(old_order.index(rule.id) + 1),
+    to=str([r.id for r in rest].index(rule.id) + 1),
+  )
+
+
 def _matrix_rule_remove(matrix: RoleMatrix, rule_id: str) -> _RoleChange:
   rule = matrix.rule(rule_id)
   matrix.rules.remove(rule)
@@ -2953,6 +2973,8 @@ def _run_role_op(matrix: RoleMatrix, step: roles.RoleOp, ids: dict[str, str]) ->
     return _matrix_rule_add(matrix, args["text"])
   if step.op == "rule-edit":
     return _matrix_rule_edit(matrix, args["id"], args["text"])
+  if step.op == "rule-move":
+    return _matrix_rule_move(matrix, args["id"], before=args["before"])
   return _matrix_rule_remove(matrix, args["id"])
 
 
@@ -2966,6 +2988,10 @@ def roles_apply(
   that names a stale `expect` is refused before any step runs. A set whose steps all change
   nothing saves nothing. A dry run stops before the save and records nothing; the caller
   takes no lock for it.
+
+  A set with `replace` has no steps of its own: `roles.replace_steps` derives them from the
+  matrix as it is, once `expect` has held, and they run through this same path, named by the
+  part of the replace at fault (`replace.rows[3]: ...`).
   """
   matrix = _require_roles(state)
   before = roles.revision(matrix)
@@ -2980,14 +3006,19 @@ def roles_apply(
   ids: dict[str, str] = {}  # ref name -> the id the step that named it was given
   problems: list[tuple[str, str]] = []
   done: list[tuple[roles.RoleOp, _RoleChange]] = []
-  for i, step in enumerate(change_set.ops):
+  steps = (
+    change_set.ops if change_set.replace is None
+    else roles.replace_steps(matrix, change_set.replace)
+  )
+  for i, step in enumerate(steps):
+    where = step.where or f"ops[{i}]"
     if step.problem:
-      problems.append(("usage", f"ops[{i}]: {step.problem}"))
+      problems.append(("usage", f"{where}: {step.problem}"))
       continue
     try:
       change = _run_role_op(work, step, ids)
     except StateError as exc:
-      problems.append((exc.code, f"ops[{i}]: {exc}"))
+      problems.append((exc.code, f"{where}: {exc}"))
       continue
     if change is None:
       continue  # its cause is reported at the step that failed

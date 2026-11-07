@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/roles.py` (the replace parser and the diff to steps, pure; `parse_change_set` is at `:342`).\n- `src/slicer/ops.py` (`roles_apply` at `:2959` accepts a replace and runs the derived steps through the same path).\n- `src/slicer/cli_relay.py` (`cmd_relay_roles_apply` at `:195`: the text form says `replace: N steps`).\n- `tests/test_relay_roles.py`\n- `docs/commands.md` (the Relay roles section at `:754`) and `docs/agents.md` (the `apply` row at `:586`).\n- `CHANGELOG.md`"
+      "body": "- `src/slicer/roles.py` (the replace parser and the diff to steps, pure; `parse_change_set` is at `:342`, `CHANGE_SET_KEYS` at `:319`).\n- `src/slicer/ops.py` (`roles_apply` at `:2959` accepts a replace and runs the derived steps through the same path; `_run_role_op` at `:2932` and the `_matrix_*` helpers gain an internal `rule-move` step for rule order).\n- `src/slicer/cli_relay.py` (`cmd_relay_roles_apply` at `:195`: the text form says `replace: N steps`; `_STEP_WORDS` at `:189` gains `rule-move`).\n- `tests/test_relay_roles.py` (`RelayRolesApplyTests` at `:1436`).\n- `docs/commands.md` (the Relay roles section at `:754`, the `relay-roles apply` row at `:76` and the Change sets subsection at `:794`) and `docs/agents.md` (the `relay-roles show` row at `:587` names `apply`; the `stale_revision` and `bad_role_field` rows at `:848`).\n- `CHANGELOG.md`"
     },
     {
       "heading": "Failing tests",

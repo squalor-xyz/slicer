@@ -297,8 +297,10 @@ def revision(matrix: RoleMatrix) -> str:
 
 # ---- change sets --------------------------------------------------------------
 # `relay-roles apply` takes one JSON object: {"expect": REVISION?, "ops": [OP, ...]}. Each OP
-# is one of the single edit verbs as an object. This half only reads the shape; `ops.py`
-# checks the values against a copy of the matrix and applies them.
+# is one of the single edit verbs as an object. Or, in place of `ops`, {"replace": {"rows":
+# [...], "rules": [...]}}: a whole matrix, which `replace_steps` turns into the same steps.
+# This half only reads the shape; `ops.py` checks the values against a copy of the matrix and
+# applies them.
 
 SCORE_FIELDS = ("effort", "importance", "urgency")
 LIST_FIELDS = ("size",) + SCORE_FIELDS
@@ -316,23 +318,56 @@ _OP_KEYS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
   "rule-remove": (("id",), ()),
 }
 _RULE_OPS = ("rule-add", "rule-edit", "rule-remove")
-CHANGE_SET_KEYS = ("expect", "ops")
+CHANGE_SET_KEYS = ("expect", "ops", "replace")
+# `rule-move` is a step a replace derives so the rules end in the order given. It is not in
+# `_OP_KEYS`, so a user's `ops` cannot name it: slicer has no verb that moves a rule.
+INTERNAL_OPS = ("rule-move",)
 
 
 @dataclass
 class RoleOp:
-  """One step of a change set. `problem` is set when its shape is wrong; it is then not run."""
+  """One step of a change set. `problem` is set when its shape is wrong; it is then not run.
+
+  `where` names the step in a problem: `replace.rows[3]` for a step a replace derived, empty
+  for a step of `ops`, which is named by its position (`ops[3]`).
+  """
 
   op: str
   args: dict[str, Any] = field(default_factory=dict)
   ref: str | None = None
   problem: str | None = None
+  where: str = ""
+
+
+@dataclass
+class ReplaceRow:
+  """One row of a replace as given. `args` is complete: every field has a value."""
+
+  index: int
+  id: str | None = None
+  args: dict[str, Any] = field(default_factory=dict)
+  problem: str | None = None
+
+
+@dataclass
+class ReplaceRule:
+  index: int
+  id: str | None = None
+  text: str = ""
+  problem: str | None = None
+
+
+@dataclass
+class Replace:
+  rows: list[ReplaceRow]
+  rules: list[ReplaceRule]
 
 
 @dataclass
 class ChangeSet:
   expect: str | None
   ops: list[RoleOp]
+  replace: Replace | None = None
 
 
 def _usage(message: str) -> StateError:
@@ -360,9 +395,15 @@ def parse_change_set(text: str) -> ChangeSet:
   expect = data.get("expect")
   if expect is not None and not isinstance(expect, str):
     raise _usage("expect must be a revision such as the one `relay-roles show --json` prints")
+  if "ops" in data and "replace" in data:
+    raise _usage('the change set has both "ops" and "replace"; give one: steps to run, or the whole matrix')
+  if "replace" in data:
+    return ChangeSet(expect=expect, ops=[], replace=_parse_replace(data["replace"]))
   steps = data.get("ops")
   if not isinstance(steps, list) or not steps:
-    raise _usage('the change set needs "ops": a non-empty list of steps')
+    raise _usage(
+      'the change set needs "ops" (a non-empty list of steps) or "replace" (a whole matrix)'
+    )
   refs: dict[str, str] = {}  # ref name -> "row" or "rule", for the refs defined so far
   return ChangeSet(expect=expect, ops=[_parse_op(step, refs) for step in steps])
 
@@ -413,6 +454,236 @@ def _parse_op(step: Any, refs: dict[str, str]) -> RoleOp:
 def _bad(op: RoleOp, problem: str) -> RoleOp:
   op.problem = problem
   return op
+
+
+# ---- replace --------------------------------------------------------------------
+# {"replace": {"rows": [ROW, ...], "rules": [RULE, ...]}} says what the matrix should be.
+# A ROW is what `relay-roles show --json` prints for a row (`id` optional) with the conditions
+# either in `when` or as the flat keys of an `add` step. A row or rule with an `id` is that
+# row or rule, kept; one without is new. `replace_steps` turns the set into steps.
+
+_REPLACE_KEYS = ("rows", "rules")
+_ROW_KEYS = ("id", "role", "when") + ROW_FIELDS
+_CONDITION_KEYS = LIST_FIELDS + YES_NO_ANY_FIELDS
+_FLAG_WORDS = {True: "yes", False: "no", None: "any"}
+
+
+def _parse_replace(data: Any) -> Replace:
+  """Read the shape of a replace. A problem of the whole raises `usage`; a problem of one
+  row or rule stays on it, so every one is reported together with the problems of values."""
+  if not isinstance(data, dict):
+    raise _usage('"replace" must be an object, {"rows": [...], "rules": [...]}')
+  unknown = [key for key in data if key not in _REPLACE_KEYS]
+  if unknown:
+    raise _usage(
+      f"replace has unknown key(s): {', '.join(unknown)}; its keys are {', '.join(_REPLACE_KEYS)}"
+    )
+  for key in _REPLACE_KEYS:
+    if key not in data:
+      raise _usage(f'replace needs "{key}": the whole list, `[]` to have none (replace.{key})')
+    if not isinstance(data[key], list):
+      raise _usage(f'"replace.{key}" must be a list')
+  rows = [_parse_replace_row(i, raw) for i, raw in enumerate(data["rows"])]
+  rules = [_parse_replace_rule(i, raw) for i, raw in enumerate(data["rules"])]
+  for items, name in ((rows, "rows"), (rules, "rules")):
+    first: dict[str, int] = {}
+    for item in items:
+      if item.id is None or item.problem:
+        continue
+      if item.id in first:
+        item.problem = f'"id" {item.id!r} is also at replace.{name}[{first[item.id]}]; give it once'
+      else:
+        first[item.id] = item.index
+  return Replace(rows=rows, rules=rules)
+
+
+def _replace_id(raw: dict[str, Any]) -> tuple[str | None, str | None]:
+  """The row's or rule's `id` and a problem with it. `@` names a ref, which a replace has none of."""
+  if "id" not in raw:
+    return None, None
+  value = raw["id"]
+  if not isinstance(value, str) or not value.strip():
+    return None, '"id" must be an id'
+  if value.startswith("@"):
+    return None, f'"id" {value!r} is not an id; a replace has no refs'
+  return value, None
+
+
+def _parse_replace_row(index: int, raw: Any) -> ReplaceRow:
+  row = ReplaceRow(index=index)
+  if not isinstance(raw, dict):
+    row.problem = "a row must be a JSON object"
+    return row
+  unknown = [key for key in raw if key not in _ROW_KEYS]
+  if unknown:
+    row.problem = f"a row has unknown key(s): {', '.join(unknown)}"
+    return row
+  row.id, row.problem = _replace_id(raw)
+  if row.problem:
+    return row
+  if "role" not in raw:
+    row.problem = "a row needs role"
+    return row
+  conditions: Any = {key: raw[key] for key in _CONDITION_KEYS if key in raw}
+  if "when" in raw:
+    if conditions:
+      row.problem = (
+        f"a row gives its conditions in \"when\" or as flat keys, not both "
+        f"(flat: {', '.join(conditions)})"
+      )
+      return row
+    conditions = raw["when"]
+    if not isinstance(conditions, dict):
+      row.problem = '"when" must be an object'
+      return row
+    unknown = [key for key in conditions if key not in _CONDITION_KEYS]
+    if unknown:
+      row.problem = f"when has unknown key(s): {', '.join(unknown)}"
+      return row
+  args: dict[str, Any] = {"role": raw["role"]}
+  for key in ("role",) + TEXT_FIELDS:
+    if key in raw:
+      problem = _check_value("add", key, raw[key], {})
+      if problem:
+        row.problem = problem
+        return row
+  for key in _CONDITION_KEYS:
+    value = conditions.get(key)
+    if key in YES_NO_ANY_FIELDS:
+      value = _FLAG_WORDS[value] if isinstance(value, bool) or value is None else value
+    elif key not in conditions:
+      value = []
+    problem = _check_value("add", key, value, {})
+    if problem:
+      row.problem = problem
+      return row
+    args[key] = _normalize(key, value)
+  for key in TEXT_FIELDS:
+    args[key] = raw.get(key, "")
+  row.args = args
+  return row
+
+
+def _parse_replace_rule(index: int, raw: Any) -> ReplaceRule:
+  rule = ReplaceRule(index=index)
+  if not isinstance(raw, dict):
+    rule.problem = "a rule must be a JSON object"
+    return rule
+  unknown = [key for key in raw if key not in ("id", "text")]
+  if unknown:
+    rule.problem = f"a rule has unknown key(s): {', '.join(unknown)}"
+    return rule
+  rule.id, rule.problem = _replace_id(raw)
+  if rule.problem:
+    return rule
+  if not isinstance(raw.get("text"), str):
+    rule.problem = 'a rule needs "text"'
+    return rule
+  rule.text = raw["text"]
+  return rule
+
+
+def _row_is(row: RoleRow, args: dict[str, Any]) -> bool:
+  """Whether the row already has exactly the fields a replace gives, so no step is derived."""
+  when = row.when.to_dict()
+  return (
+    args["role"] == row.role
+    and all(args[key] == when[key] for key in LIST_FIELDS)
+    and all(args[key] == _FLAG_WORDS[when[key]] for key in YES_NO_ANY_FIELDS)
+    and all(args[key] == getattr(row, key) for key in TEXT_FIELDS)
+  )
+
+
+def _order_steps(
+  current: list[str], wanted: list[str], op: str, where: dict[str, str],
+) -> list[RoleOp]:
+  """Moves that leave `current` in the order `wanted`, one per item that is out of place.
+
+  Each puts the next item due before the one standing in its place, so an order that is
+  already right derives nothing and a single item moved ahead derives one step. Nothing is
+  derived unless `wanted` holds exactly the items of `current`: a replace that names an id
+  the matrix lacks, or has a problem, is refused whatever its order.
+  """
+  if sorted(current) != sorted(wanted):
+    return []
+  steps: list[RoleOp] = []
+  order = list(current)
+  for at, item in enumerate(wanted):
+    if order[at] == item:
+      continue
+    steps.append(RoleOp(op=op, args={"id": item, "before": order[at]}, where=where[item]))
+    order.remove(item)
+    order.insert(at, item)
+  return steps
+
+
+def replace_steps(matrix: RoleMatrix, replace: Replace) -> list[RoleOp]:
+  """The steps that make `matrix` what `replace` says. Pure: it reads, and changes nothing.
+
+  Order: removes, sets, adds, moves so the rows end in the order given, then rule removes,
+  rule edits, rule adds and rule moves. A row or rule with an id is kept and its fields become
+  exactly the ones given; one without an id is added with the next id; one the replace leaves
+  out is removed. A row or rule with an id the matrix does not hold gets a step that
+  refuses it (`unknown_role_row`, `unknown_role_rule`), so no id is reused or invented. A
+  shape problem stays on its step. An item that already is what the replace says derives no
+  step, so a replace equal to the matrix derives none.
+  """
+  steps: list[RoleOp] = []
+  have_rows = {row.id: row for row in matrix.rows}
+  given_rows = {row.id for row in replace.rows if row.id is not None}
+  for row in matrix.rows:
+    if row.id not in given_rows:
+      steps.append(RoleOp(op="remove", args={"id": row.id}, where="replace.rows"))
+  added: list[ReplaceRow] = []
+  for item in replace.rows:
+    where = f"replace.rows[{item.index}]"
+    op = "set" if item.id is not None else "add"
+    if item.problem:
+      steps.append(RoleOp(op=op, problem=item.problem, where=where))
+    elif item.id is None:
+      added.append(item)
+    elif item.id not in have_rows or not _row_is(have_rows[item.id], item.args):
+      steps.append(RoleOp(op="set", args={"id": item.id, **item.args}, where=where))
+  for item in added:
+    steps.append(RoleOp(
+      op="add", args=dict(item.args), ref=f"rows[{item.index}]", where=f"replace.rows[{item.index}]",
+    ))
+  wanted_rows = [item.id or f"@rows[{item.index}]" for item in replace.rows]
+  steps += _order_steps(
+    [row.id for row in matrix.rows if row.id in given_rows]
+    + [f"@rows[{item.index}]" for item in added],
+    wanted_rows, "move",
+    {name: f"replace.rows[{item.index}]" for name, item in zip(wanted_rows, replace.rows)},
+  )
+  have_rules = {rule.id: rule for rule in matrix.rules}
+  given_rules = {rule.id for rule in replace.rules if rule.id is not None}
+  for rule in matrix.rules:
+    if rule.id not in given_rules:
+      steps.append(RoleOp(op="rule-remove", args={"id": rule.id}, where="replace.rules"))
+  new_rules: list[ReplaceRule] = []
+  for item in replace.rules:
+    where = f"replace.rules[{item.index}]"
+    if item.problem:
+      steps.append(RoleOp(
+        op="rule-edit" if item.id is not None else "rule-add", problem=item.problem, where=where,
+      ))
+    elif item.id is None:
+      new_rules.append(item)
+    elif item.id not in have_rules or have_rules[item.id].text != item.text:
+      steps.append(RoleOp(op="rule-edit", args={"id": item.id, "text": item.text}, where=where))
+  for item in new_rules:
+    steps.append(RoleOp(
+      op="rule-add", args={"text": item.text}, ref=f"rules[{item.index}]",
+      where=f"replace.rules[{item.index}]",
+    ))
+  wanted_rules = [item.id or f"@rules[{item.index}]" for item in replace.rules]
+  steps += _order_steps(
+    [rule.id for rule in matrix.rules if rule.id in given_rules]
+    + [f"@rules[{item.index}]" for item in new_rules],
+    wanted_rules, "rule-move",
+    {name: f"replace.rules[{item.index}]" for name, item in zip(wanted_rules, replace.rules)},
+  )
+  return steps
 
 
 def _normalize(key: str, value: Any) -> Any:

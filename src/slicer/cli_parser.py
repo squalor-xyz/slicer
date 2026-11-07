@@ -863,7 +863,9 @@ def _add_relay_roles(sub: argparse._SubParsersAction, common: argparse.ArgumentP
   )
   inner.description = (
     'Read {"expect": REVISION?, "ops": [OP, ...]}, where each OP is one of add, set, remove, '
-    "move, rule-add, rule-edit or rule-remove as an object (see docs/commands.md). Every step "
+    "move, rule-add, rule-edit or rule-remove as an object (see docs/commands.md). Or, in "
+    'place of "ops", {"replace": {"rows": [...], "rules": [...]}}: a whole matrix that '
+    "replaces the current one; slicer derives the steps. Every step "
     "is checked against a copy of the matrix; if any step is refused, all problems are "
     "reported and nothing is written. Otherwise the matrix is saved once under the project "
     "lock. `expect` is the `revision` that `relay-roles show --json` printed; a matrix that "

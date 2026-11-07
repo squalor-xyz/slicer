@@ -73,7 +73,7 @@ requiring a subcommand or project. `--about --json` returns `name`, `version`,
 | `relay-roles rule-add TEXT` | append a rule with the next id (`u9` in a fresh example matrix, ...). Blank text exits 2 with `blank_title`, text with a newline with `newline_in_field` |
 | `relay-roles rule-edit ID TEXT` | replace a rule's text. An unknown ID exits 2 with code `unknown_role_rule` |
 | `relay-roles rule-remove ID` | drop a rule |
-| `relay-roles apply (--file PATH \| --stdin) [--dry-run]` | *proposed.* Apply a JSON change set of edit steps to the matrix in one atomic write: every step is checked against a copy, and either the whole set is refused with every problem named by its step (`ops[3]: no such relay role row: r99`) and nothing is written, or the matrix is saved once under the project lock. See [Change sets](#change-sets) |
+| `relay-roles apply (--file PATH \| --stdin) [--dry-run]` | *proposed.* Apply a JSON change set of edit steps, or a whole matrix as `replace`, to the matrix in one atomic write: every step is checked against a copy, and either the whole set is refused with every problem named by its step (`ops[3]: no such relay role row: r99`) and nothing is written, or the matrix is saved once under the project lock. See [Change sets](#change-sets) |
 | `relay-run begin ID [ID ...] [--worktree PATH]` | start a slice-relay run on these items and print its id (`run-YYYYMMDD-HHMMSS-xxxx`). `--worktree` is recorded by its directory name; the default is the checkout whose ledger the run goes in. Appends to the local ledger only, under the project lock; no roadmap state, history or render changes. A blank item, or one with whitespace, exits 2 with code `bad_run_field`. See [Relay run ledger](#relay-run-ledger) |
 | `relay-run step RUN --role R --agent A [--vendor V] [--model M] [--reasoning E] --phase start\|done\|fail\|wait [--waiting-on owner\|approval] [--reason TEXT] [--verdict pass\|fail] [--task TEXT] [--parent STEP] [--step STEP]` | record an agent's step in a run and print its step id (`1`, `2`, ...; a step the fallback records in the checkout's own file gets a prefixed id, see [Sandboxes](#sandboxes)). A new step needs `--role` and `--agent`. `--role` is one of implementer, reviewer, gate, architect, orchestrator, `ui` (the UI pass) or `spec-check` (the spec check); the last two have no matrix row, and `relay-roles` refuses them. `--parent` nests a subagent under the step that spawned it, and counts it as a subagent. `--step STEP` updates a step already in the run instead (for example `--step 1 --phase done`): only the fields given change, and `--parent` is refused there. A `--task` on an update must match the task the step was recorded with, except that a step recorded without one can be given its first; a different one is refused, and a new task needs a new step without `--step`. An unknown `RUN` exits 2 with code `unknown_run`, an ended one with `run_ended`; a phase outside the four, a `--waiting-on` other than `owner` or `approval`, a role outside those seven, a role or agent missing on a new step, a `--parent` or `--step` not in the run, a `--task` on an update that differs from the task its step was recorded with, or a value with a newline is `bad_run_field`. Nothing is appended when it refuses. `relay-run step RUN --step N --phase start` re-records a step that is still running and acts as a heartbeat, so a step that takes longer than 30 minutes does not make its run go stale. A heartbeat passes no `--task`, so the step keeps the task it was recorded with. `--phase wait` says the step waits on the owner, for an approval or an answer: `--waiting-on` names which (`owner`, the default, or `approval`), and a run with a waiting step is never stale, however long it waits. Any later `--phase start`, `done` or `fail` on that step ends the wait; the run's 30 minutes then count from that event. `--waiting-on` with another phase exits 2 with code `usage`, and writes nothing. `--reason TEXT` goes with `--phase fail` and says why the step failed, such as a classified vendor limit (a rate limit or out of credits), after which the relay reruns the round on the role's next matching row; `relay-run list` shows it after the step and `--json` adds `reason` to every step (`""` when none); `--reason` with another phase exits 2 with code `usage`, and writes nothing. `--verdict pass\|fail` closes a gate round: it goes with `--phase done` on a gate step and is stored on the step event and as `verdict`, the last key of every step (`""` when none, and after a later event of the step); on any other role, with another phase or with another value it is `bad_run_field`, and nothing is written. `relay-run stats` counts the recorded verdicts. See [Waiting](#waiting-on-the-owner) |
 | `relay-run ask RUN --step STEP --title TITLE --option LABEL:SUMMARY --option LABEL:SUMMARY [--option ...] [--recommend LABEL] [--blocker] [--key AREA.TOPIC] [--reasoning TEXT]` | ask the owner a question on a step of the run, and print its id (`q1`, `q2`, ...). With `--blocker` the step goes into the owner wait (phase `wait`, `waiting_on` `owner`), so the run is never stale while it waits, and the orchestrator ends its turn with `waiting on: owner QUESTION_ID`. Without it the question is only recorded: the step keeps running, nothing waits, and the orchestrator goes on. The fields are those of the run report's `owner needed` line, in its order: 2 to 4 options with distinct labels (the label ends at the first `:`), `--recommend` naming one of them, `--blocker` when the slice cannot go on without the answer, an `AREA.TOPIC` key without whitespace, and `--reasoning`. No value but `--reasoning` holds a `|`, no label or summary holds a `;` (the run report's value rule), and every value is one line. `--step` must be a step of the run that is still running or waiting on the owner (a `--blocker` question on a step waiting on an `approval` is `bad_run_field`: end that wait first, while a question without `--blocker` leaves that wait as it is); a `--blocker` question on a step already waiting on the owner with an unanswered blocker is `question_open`, and any number of questions without `--blocker` may be open at once. Any other refusal of a value is `bad_run_field`, an unknown run `unknown_run`, an ended one `run_ended`; nothing is appended when it refuses. See [Asking the owner](#asking-the-owner) |
@@ -842,6 +842,52 @@ matrix with `relay-roles show --json`, build a change set from it, preview it wi
   given, and `rows` and `rules` are the matrix after the set, as in `show`. `--lean` keeps
   `steps`, `rows` and `rules` when empty. The text form prints a line per step (`added r12`,
   `moved r12`, `r5 unchanged`) and the new revision.
+
+#### Replacing the whole matrix
+
+A tool that holds the matrix it wants, not the edits to reach it (a matrix copied from another
+project, or one kept as a file), gives `replace` in place of `ops`. Give both, or neither, and
+the set is `usage`. `expect`, `--dry-run`, `--render`, `--strict`, the atomic write, the history
+entries and the `--json` result are those of an `ops` set.
+
+```json
+{"expect": "3f9a1c0d2b7e", "replace": {
+  "rows": [
+    {"id": "r9", "role": "implementer", "agent": "Codex", "vendor": "OpenAI", "model": "gpt-6.1-sol",
+     "reasoning": "high", "note": "first choice"},
+    {"role": "reviewer", "agent": "Grok", "vendor": "xAI", "model": "latest", "size": ["L"]}
+  ],
+  "rules": [{"id": "u1", "text": "A reviewer never wrote code in the slice it reviews."},
+            {"text": "A new rule."}]
+}}
+```
+
+- `replace.rows` is the whole ordered list of rows and `replace.rules` the whole ordered list of
+  rules (`{"id"?, "text"}`). Both keys are required: `"rows": []` removes every row, and a
+  `replace` without `rows` or without `rules` is `usage`, so a partial file never empties a list.
+- A row is an object with the keys `show --json` prints: `role` (required), `agent`, `vendor`,
+  `model`, `reasoning`, `note`, the conditions in `when` (`size`, `effort`, `importance`,
+  `urgency` as lists; `well_specified`, `split`, `sliver` as `true`, `false` or `null`), and an
+  optional `id`. The conditions may instead be the flat keys of an `add` step (`size`,
+  `well_specified: "yes"`, ...), but not both in one row. Any other key is `usage`.
+- A row or rule with an `id` that the matrix holds is kept under that id, and its fields become
+  exactly the ones given: a missing text field is `""` and a missing condition is any. A row or
+  rule without an `id` is added with the next id; the counters never move backwards. An `id` the
+  matrix does not hold is refused (`unknown_role_row`, `unknown_role_rule`), so a replace can
+  neither reuse nor invent an id; an id given twice is `usage`. A row or rule the replace leaves
+  out is removed. To copy a matrix from another project, drop the `id` keys: every row and rule
+  is then added under this project's own ids, in the order given.
+- slicer derives the steps and runs them as an `ops` set: removes, sets, adds, then `move` steps
+  so the rows end in the order given, then rule removes, rule edits, rule adds and rule moves. A
+  kept row or rule that already is what the replace says derives no step, so a replace equal to
+  the matrix (the `rows` and `rules` of `show --json`) changes nothing, writes nothing and exits
+  0. Rules have no move command; a replace orders them with an internal `rule-move` step that
+  keeps every rule's id and that `ops` cannot name (`usage`).
+- A problem names the part of the replace at fault, `replace.rows[3]: ...` or
+  `replace.rules[1]: ...`, with the code the single verb gives for the same value
+  (`bad_role_field`, `newline_in_field`, `blank_title`, `unknown_role_row`, ...).
+  `steps` in the result lists the derived steps with `changed`, and the text form starts with
+  `replace: N steps`.
 
 ### History and render
 

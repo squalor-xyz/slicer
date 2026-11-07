@@ -2715,3 +2715,7 @@
 {"when": "2026-11-07T16:45:51Z", "item": "s448", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-11-07T16:50:20Z", "item": "s446", "action": "status", "from": "review", "to": "done", "note": "Landed s446", "by": "Jon Robbins"}
 {"when": "2026-11-07T16:53:09Z", "item": "s445", "action": "status", "from": "review", "to": "done", "note": "Landed s445", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:55:54Z", "item": "s444", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-07T16:57:25Z", "item": "s444", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-07T19:03:56Z", "item": "s444", "action": "note", "from": "", "to": "", "note": "relay-roles apply takes a whole matrix as replace (rows and ", "by": "Jon Robbins"}
+{"when": "2026-11-07T19:04:00Z", "item": "s444", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

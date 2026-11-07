@@ -17952,12 +17952,27 @@
       "id": "s444",
       "title": "Replace the whole relay role matrix through relay-roles apply",
       "short_title": "Relay roles replace",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s443"
       ],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "47d99bc1-6d9e-49fa-b11f-81bb78e31c40",
+          "kind": "",
+          "text": "**2026-11-07** — relay-roles apply takes a whole matrix as replace (rows and rules): slicer derives removes, sets, adds, row moves, rule removes, edits, adds and an internal rule-move, and runs them through the same atomic ops path, so validation, expect, --dry-run, history and the result shape are unchanged and problems name replace.rows[N]. Verified: nine named tests plus eight extras, 22 mutations each red, full suite 3269 tests OK (1 skipped), slicer check and git diff --check clean, scratch project dry-run and real apply, reviewer and gate PASS.",
+          "created_at": "2026-11-07T19:03:56Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "readiness": {
         "by": "claude spec check, owner-confirmed 2026-11-07",
@@ -17983,7 +17998,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

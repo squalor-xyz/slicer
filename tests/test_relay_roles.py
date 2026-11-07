@@ -1782,6 +1782,364 @@ class RelayRolesApplyTests(RelayRolesCase):
     self.assertEqual(json.loads(out)["error"]["code"], "locked")
     self.assertEqual(self.snapshot(repo), before)
 
+  # ---- replace: a whole matrix turned into the steps an `ops` set has (s444) ----
+
+  def shown(self, repo: support.TempRepo) -> tuple[list[dict], list[dict], str]:
+    payload = json.loads(self.ok(repo, "relay-roles", "show", "--json"))
+    return payload["rows"], payload["rules"], payload["revision"]
+
+  @staticmethod
+  def bare(items: list[dict]) -> list[dict]:
+    return [{k: v for k, v in item.items() if k != "id"} for item in items]
+
+  def ids(self, repo: support.TempRepo, key: str = "rows") -> list[str]:
+    return [item["id"] for item in self.matrix(repo)[key]]
+
+  def notes(self, repo: support.TempRepo, seen: int) -> list[tuple[str, str]]:
+    return [(e.item, e.note) for e in self.history(repo)[seen:]]
+
+  NEW_ROW = {"role": "reviewer", "agent": "Grok", "vendor": "xAI", "model": "latest"}
+
+  def test_RelayRolesApply_ReplaceWithShowOutput_IsNoChange(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, revision = self.shown(repo)
+    seen = len(self.history(repo))
+    before = self.snapshot(repo)
+    saves = []
+    with patch.object(store.State, "save_roles", side_effect=lambda: saves.append(1)):
+      result = self.applied(repo, {"expect": revision, "replace": {"rows": rows, "rules": rules}})
+    self.assertFalse(result["changed"])
+    self.assertEqual(result["steps"], [])
+    self.assertEqual(result["revision"], revision)
+    self.assertEqual((result["rows"], result["rules"]), (rows, rules))
+    self.assertEqual(saves, [])
+    self.assertEqual(len(self.history(repo)), seen)
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_Replace_KeepsIdsAddsNewRemovesAbsent(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    seen = len(self.history(repo))
+    given = [dict(rows[0], model="brand-new-model")] + rows[2:] + [dict(self.NEW_ROW)]
+    dropped, first = rows[1]["id"], rows[0]["id"]  # the second row of the example is dropped
+    result = self.applied(repo, {"replace": {"rows": given, "rules": rules}})
+    self.assertTrue(result["changed"])
+    data = self.matrix(repo)
+    kept = [r["id"] for r in data["rows"]]
+    self.assertEqual(kept, [r["id"] for r in rows if r["id"] != dropped] + ["r21"])
+    self.assertEqual(self.row_of(data, first)["model"], "brand-new-model")
+    self.assertNotIn(dropped, kept)
+    self.assertEqual(self.row_of(data, "r21")["agent"], "Grok")
+    self.assertEqual(data["next_row"], 22)
+    self.assertEqual(
+      [(s["op"], s["id"], s["changed"]) for s in result["steps"]],
+      [("remove", dropped, True), ("set", first, True), ("add", "r21", True)],
+    )
+    self.assertEqual(
+      self.notes(repo, seen),
+      [(f"relay-roles.{dropped}", "remove"), (f"relay-roles.{first}", "set"),
+       ("relay-roles.r21", "add")],
+    )
+
+  def test_RelayRolesApply_Replace_OrdersRowsAsGiven(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    order = [r["id"] for r in rows]
+    cases = {
+      "one row ahead": [rows[2]] + rows[:2] + rows[3:],
+      "reversed": list(reversed(rows)),
+      "new row first": [dict(self.NEW_ROW)] + rows,
+    }
+    for name, given in cases.items():
+      with self.subTest(name=name):
+        case = self.with_matrix()
+        seen = len(self.history(case))
+        result = self.applied(case, {"replace": {"rows": given, "rules": rules}})
+        want = [r.get("id", "r21") for r in given]
+        self.assertEqual(self.ids(case), want)
+        moves = [s for s in result["steps"] if s["op"] == "move"]
+        self.assertTrue(moves)
+        self.assertEqual(
+          [n for _, n in self.notes(case, seen)].count("move"), len(moves),
+        )
+        if name == "one row ahead":
+          self.assertEqual(moves, [{"op": "move", "id": order[2], "changed": True}])
+          self.assertEqual([s["op"] for s in result["steps"]], ["move"])
+        if name == "new row first":
+          self.assertEqual([s["op"] for s in result["steps"]], ["add", "move"])
+
+  def test_RelayRolesApply_Replace_OrdersRulesAsGiven_KeepingIds(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    seen = len(self.history(repo))
+    given = [{"text": "A new first rule."}, rules[1], dict(rules[0], text="Edited u1.")] + rules[2:]
+    result = self.applied(repo, {"replace": {"rows": rows, "rules": given}})
+    data = self.matrix(repo)
+    self.assertEqual([r["id"] for r in data["rules"]], ["u10", "u2", "u1"] + [f"u{n}" for n in range(3, 10)])
+    self.assertEqual(data["rules"][0]["text"], "A new first rule.")
+    self.assertEqual(data["rules"][2]["text"], "Edited u1.")
+    self.assertEqual(data["next_rule"], 11)
+    self.assertEqual(
+      [s["op"] for s in result["steps"]], ["rule-edit", "rule-add", "rule-move", "rule-move"],
+    )
+    self.assertEqual(
+      self.notes(repo, seen),
+      [("relay-roles.u1", "rule-edit"), ("relay-roles.u10", "rule-add"),
+       ("relay-roles.u10", "rule-move"), ("relay-roles.u2", "rule-move")],
+    )
+    self.assertEqual(result["rules"], data["rules"])
+
+  def test_RelayRolesApply_Ops_RuleMove_IsNotAUserStep(self) -> None:
+    repo = self.with_matrix()
+    before = self.snapshot(repo)
+    error = self.refused(
+      repo, {"ops": [{"op": "rule-move", "id": "u2", "before": "u1"}]}, 2, "usage",
+    )
+    self.assertIn("rule-move", error["message"])
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_Replace_UnknownId_IsRefused(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    before = self.snapshot(repo)
+    error = self.refused(
+      repo, {"replace": {"rows": rows[:3] + [dict(rows[3], id="r99")], "rules": rules}},
+      2, "unknown_role_row",
+    )
+    self.assertIn("replace.rows[3]", error["message"])
+    self.assertIn("r99", error["message"])
+    error = self.refused(
+      repo, {"replace": {"rows": rows, "rules": rules[:2] + [dict(rules[2], id="u99")]}},
+      2, "unknown_role_rule",
+    )
+    self.assertIn("replace.rules[2]", error["message"])
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_Replace_SameValidation(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    cases = (
+      ("add: bad role", {"role": "janitor"}, ("add", "--role", "janitor"), 20),
+      ("set: bad role", dict(rows[0], role="janitor"), ("set", "r1", "--role", "janitor"), 0),
+      ("effort of 4", dict(self.NEW_ROW, effort=[4]),
+       ("add", "--role", "gate", "--effort", "4"), 20),
+      ("newline in a note", dict(rows[0], note="a\nb"), ("set", "r1", "--note", "a\nb"), 0),
+      ("maybe", dict(rows[0], when=dict(rows[0]["when"], well_specified="maybe")),
+       ("set", "r1", "--well-specified", "maybe"), 0),
+    )
+    for name, row, argv, at in cases:
+      with self.subTest(name=name):
+        got, out, err = repo.run("relay-roles", *argv, "--json")
+        self.assertEqual(got, 2)
+        want = json.loads(out)["error"]["code"]
+        given = [row] + rows[1:] if at == 0 else rows + [row]
+        error = self.refused(repo, {"replace": {"rows": given, "rules": rules}}, 2, want)
+        self.assertIn(f"replace.rows[{at}]", error["message"])
+        self.assertNotIn("ops[", error["message"])
+    for name, given, argv, at in (
+      ("blank rule", rules + [{"text": "  "}], ("rule-add", "  "), 9),
+      ("newline in a rule", [dict(rules[0], text="a\nb")] + rules[1:],
+       ("rule-edit", "u1", "a\nb"), 0),
+    ):
+      with self.subTest(name=name):
+        got, out, err = repo.run("relay-roles", *argv, "--json")
+        want = json.loads(out)["error"]["code"]
+        error = self.refused(repo, {"replace": {"rows": rows, "rules": given}}, 2, want)
+        self.assertIn(f"replace.rules[{at}]", error["message"])
+
+  def test_RelayRolesApply_Replace_CollectsEveryProblem(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    before = self.snapshot(repo)
+    given = [dict(rows[0], id="r99"), rows[1], dict(rows[2], note="a\nb")] + rows[3:]
+    error = self.refused(repo, {"replace": {"rows": given, "rules": rules}}, 2, "unknown_role_row")
+    message = error["message"]
+    self.assertIn("replace.rows[0]", message)
+    self.assertIn("replace.rows[2]", message)
+    self.assertNotIn("replace.rows[1]", message)
+    self.assertLess(message.index("replace.rows[0]"), message.index("replace.rows[2]"))
+    self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_Replace_StaleExpect_IsRefused(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, seen = self.shown(repo)
+    self.ok(repo, "relay-roles", "set", "r1", "--model", "other", "--render")
+    before = self.snapshot(repo)
+    replace = {"rows": [dict(rows[0], id="r99")] + rows[1:], "rules": rules}
+    error = self.refused(repo, {"expect": seen, "replace": replace}, 2, "stale_revision")
+    self.assertNotIn("r99", error["message"])  # no step was derived or checked
+    self.assertEqual(self.snapshot(repo), before)
+    code, out, err = self.apply(repo, {"expect": seen, "replace": replace}, "--dry-run", "--json")
+    self.assertEqual((code, json.loads(out)["error"]["code"]), (2, "stale_revision"))
+    rows, rules, current = self.shown(repo)
+    result = self.applied(repo, {"expect": current, "replace": {
+      "rows": [dict(rows[1], model="x")] + [rows[0]] + rows[2:], "rules": rules,
+    }})
+    self.assertEqual(result["revision_before"], current)
+    self.assertTrue(result["changed"])
+
+  def test_RelayRolesApply_Replace_DryRun_ListsTheDerivedSteps(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, revision = self.shown(repo)
+    seen = len(self.history(repo))
+    before = self.snapshot(repo)
+    change_set = {"replace": {
+      "rows": [dict(self.NEW_ROW)] + rows[1:], "rules": rules[:-1],
+    }}
+    with patch.dict(os.environ, {"SLICER_LOCK_TIMEOUT": "0"}), store.project_lock(repo.root):
+      result = self.applied(repo, change_set, "--dry-run")
+    self.assertTrue(result["dry_run"])
+    self.assertTrue(result["changed"])
+    self.assertEqual(result["revision_before"], revision)
+    self.assertNotEqual(result["revision"], revision)
+    self.assertEqual(
+      [(s["op"], s["id"]) for s in result["steps"]],
+      [("remove", rows[0]["id"]), ("add", "r21"), ("move", "r21"), ("rule-remove", "u9")],  # r9 leads
+    )
+    self.assertEqual(result["rows"][0]["id"], "r21")
+    self.assertEqual(result["rows"][0]["agent"], "Grok")
+    self.assertEqual(len(result["rules"]), 8)
+    self.assertEqual(self.snapshot(repo), before)
+    self.assertEqual(len(self.history(repo)), seen)
+    real = self.applied(repo, change_set)
+    self.assertEqual((real["revision"], real["rows"], real["rules"]),
+                     (result["revision"], result["rows"], result["rules"]))
+    self.assertEqual(self.matrix(repo)["rows"], real["rows"])
+
+  def test_RelayRolesApply_ReplaceAndOps_IsUsage(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    before = self.snapshot(repo)
+    whole = {"rows": rows, "rules": rules}
+    self.assertFalse(self.applied(repo, {"replace": whole})["changed"])  # the form itself is valid
+    both = self.refused(repo, {"ops": [{"op": "remove", "id": "r1"}], "replace": whole}, 2, "usage")
+    self.assertIn("ops", both["message"])
+    self.assertIn("replace", both["message"])
+    no_rows = self.refused(repo, {"replace": {"rules": rules}}, 2, "usage")
+    self.assertIn("replace.rows", no_rows["message"])
+    bad = {
+      "both keys": {"ops": [{"op": "remove", "id": "r1"}], "replace": whole},
+      "replace without rows": {"replace": {"rules": rules}},
+      "replace without rules": {"replace": {"rows": rows}},
+      "replace not an object": {"replace": rows},
+      "replace unknown key": {"replace": dict(whole, extra=1)},
+      "rows not a list": {"replace": {"rows": {}, "rules": rules}},
+      "rules not a list": {"replace": {"rows": rows, "rules": "u1"}},
+      "row not an object": {"replace": {"rows": ["r1"], "rules": rules}},
+      "row without role": {"replace": {"rows": [{"model": "x"}], "rules": rules}},
+      "row unknown key": {"replace": {"rows": [dict(rows[0], color="red")], "rules": rules}},
+      "row model not text": {"replace": {"rows": [dict(rows[0], model=3)], "rules": rules}},
+      "row id not text": {"replace": {"rows": [dict(rows[0], id=1)], "rules": rules}},
+      "row id is a ref": {"replace": {"rows": [dict(rows[0], id="@r1")], "rules": rules}},
+      "when and flat keys": {"replace": {"rows": [dict(rows[0], size=["S"])], "rules": rules}},
+      "when unknown key": {"replace": {
+        "rows": [dict(rows[0], when=dict(rows[0]["when"], color=1))], "rules": rules}},
+      "effort not a list": {"replace": {
+        "rows": [dict(self.NEW_ROW, effort=2)], "rules": rules}},
+      "same row id twice": {"replace": {"rows": [rows[0], rows[0]], "rules": rules}},
+      "rule not an object": {"replace": {"rows": rows, "rules": ["x"]}},
+      "rule without text": {"replace": {"rows": rows, "rules": [{"id": "u1"}]}},
+      "rule unknown key": {"replace": {"rows": rows, "rules": [{"text": "x", "color": 1}]}},
+      "same rule id twice": {"replace": {"rows": rows, "rules": [rules[0], rules[0]]}},
+    }
+    for name, change_set in bad.items():
+      with self.subTest(name=name):
+        self.refused(repo, change_set, 2, "usage")
+        self.assertEqual(self.snapshot(repo), before)
+
+  def test_RelayRolesApply_Replace_EmptyLists_RemoveEverything(self) -> None:
+    repo = self.with_matrix()
+    result = self.applied(repo, {"replace": {"rows": [], "rules": []}})
+    self.assertEqual((result["rows"], result["rules"]), ([], []))
+    self.assertEqual(len(result["steps"]), 29)
+    data = self.matrix(repo)
+    self.assertEqual((data["next_row"], data["next_rule"]), (21, 10))
+    again = self.applied(repo, {"replace": {"rows": [], "rules": []}})
+    self.assertFalse(again["changed"])
+
+  def test_RelayRolesApply_Replace_KeptRowMissingFields_BecomeEmpty(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    self.assertTrue(rows[0]["model"] and rows[0]["note"])
+    given = [{"id": rows[0]["id"], "role": "gate"}] + rows[1:]
+    self.applied(repo, {"replace": {"rows": given, "rules": rules}})
+    row = self.row_of(self.matrix(repo), rows[0]["id"])
+    self.assertEqual(
+      row,
+      {"id": rows[0]["id"], "role": "gate", "when": {
+        "size": [], "effort": [], "importance": [], "urgency": [],
+        "well_specified": None, "split": None, "sliver": None},
+       "agent": "", "vendor": "", "model": "", "reasoning": "", "note": ""},
+    )
+
+  def test_RelayRolesApply_Replace_FlatConditionKeys_LikeAnAddStep(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    flat = {"role": "gate", "size": ["M", "S"], "effort": [2, "1"], "well_specified": "yes",
+            "split": "no", "sliver": "any", "model": "m"}
+    with_when = {"role": "gate", "model": "m", "when": {
+      "size": ["S", "M"], "effort": [1, 2], "importance": [], "urgency": [],
+      "well_specified": True, "split": False, "sliver": None}}
+    for name, row in (("flat", flat), ("when", with_when)):
+      with self.subTest(name=name):
+        case = self.with_matrix()
+        result = self.applied(case, {"replace": {"rows": rows + [row], "rules": rules}})
+        added = result["rows"][-1]
+        self.assertEqual(added["when"], with_when["when"])
+        self.assertEqual((added["id"], added["role"], added["model"]), ("r21", "gate", "m"))
+
+  def test_RelayRolesApply_Replace_FromAnotherProject(self) -> None:
+    source = self.with_matrix()
+    self.ok(source, "relay-roles", "set", "r1", "--model", "other-model")
+    self.ok(source, "relay-roles", "remove", "r2")
+    self.ok(source, "relay-roles", "add", "--role", "gate", "--agent", "Grok", "--size", "L")
+    self.ok(source, "relay-roles", "move", "r5", "--last")
+    self.ok(source, "relay-roles", "rule-remove", "u3")
+    self.ok(source, "relay-roles", "rule-add", "A project rule.")
+    rows, rules, _ = self.shown(source)
+    target = self.with_matrix()
+    result = self.applied(target, {"replace": {
+      "rows": self.bare(rows), "rules": self.bare(rules),
+    }})
+    self.assertTrue(result["changed"])
+    data = self.matrix(target)
+    self.assertEqual(self.bare(data["rows"]), self.bare(rows))
+    self.assertEqual(self.bare(data["rules"]), self.bare(rules))
+    self.assertEqual([r["id"] for r in data["rows"]], [f"r{n}" for n in range(21, 21 + len(rows))])
+    self.assertEqual([r["id"] for r in data["rules"]], [f"u{n}" for n in range(10, 10 + len(rules))])
+    self.assertEqual((data["next_row"], data["next_rule"]), (21 + len(rows), 10 + len(rules)))
+    # The source project is untouched by being read.
+    self.assertEqual(self.shown(source)[:2], (rows, rules))
+
+  def test_RelayRolesApply_Replace_Text_SaysHowManyStepsAndListsThem(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    code, out, err = self.apply(repo, {"replace": {
+      "rows": [dict(rows[0], model="x")] + rows[1:] + [dict(self.NEW_ROW)],
+      "rules": [rules[1], rules[0]] + rules[2:],
+    }})
+    self.assertEqual(code, 0, err)
+    lines = out.splitlines()
+    self.assertEqual(lines[:4], ["replace: 3 steps", "set r9", "added r21", "moved u2"])
+    self.assertIn(self.revision(repo), lines[-1])
+    rows, rules, _ = self.shown(repo)
+    code, out, err = self.apply(repo, {"replace": {"rows": rows, "rules": rules}})
+    self.assertEqual(code, 0, err)
+    self.assertEqual(out.splitlines()[0], "replace: 0 steps")
+
+  def test_RelayRolesApply_Replace_StrictRenderFailure_RollsTheWholeReplaceBack(self) -> None:
+    repo = self.with_matrix()
+    rows, rules, _ = self.shown(repo)
+    before = self.snapshot(repo)
+    change_set = {"replace": {"rows": [dict(self.NEW_ROW)] + rows, "rules": rules}}
+    with patch("slicer.render.write_atomic", side_effect=OSError("boom")):
+      code, out, err = self.apply(repo, change_set, "--render", "--strict")
+    self.assertNotEqual(code, 0)
+    self.assertEqual(self.snapshot(repo), before)
+    code, out, err = self.apply(repo, change_set, "--render", "--strict")
+    self.assertEqual(code, 0, err)
+    self.assertEqual(self.ids(repo)[0], "r21")  # the failed run did not use the id
+
 
 class RelayRolesLegacyTests(RelayRolesCase):
   def test_Check_LeftoverMarkdownBesideJson_WarnsToRemoveItAndKeepTheMatrix(self) -> None:

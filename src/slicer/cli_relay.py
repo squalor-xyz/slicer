@@ -188,7 +188,7 @@ def _change_set_text(args: argparse.Namespace) -> str:
 
 _STEP_WORDS = {
   "add": "added", "remove": "removed", "move": "moved", "set": "set",
-  "rule-add": "added", "rule-remove": "removed", "rule-edit": "edited",
+  "rule-add": "added", "rule-remove": "removed", "rule-edit": "edited", "rule-move": "moved",
 }
 
 
@@ -202,6 +202,9 @@ def cmd_relay_roles_apply(args: argparse.Namespace) -> int:
     f"{_STEP_WORDS[step['op']]} {step['id']}" if step["changed"] else f"{step['id']} unchanged"
     for step in result.steps
   ]
+  if change_set.replace is not None:
+    count = len(result.steps)
+    lines.insert(0, f"replace: {count} {'step' if count == 1 else 'steps'}")
   if args.dry_run:
     lines.append("dry run: nothing was written")
   lines.append(
