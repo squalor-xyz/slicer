@@ -136,6 +136,28 @@ class SnapshotTests(unittest.TestCase):
     self.assertIn("usage", err)
     self.assertIn("unknown,other", err)
 
+  def test_Snapshot_EmptyPartName_UsageNamesIt(self):
+    repo = self.fixture()
+    for value in ("", "items,", ",items", "items,,health"):
+      with self.subTest(parts=value):
+        code, out, err = repo.run("snapshot", "--json", "--parts", value)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("usage", err)
+        self.assertIn("empty snapshot part name", err)
+        self.assertNotIn("unknown", err)
+
+  def test_Snapshot_RepeatedPart_Usage(self):
+    repo = self.fixture()
+    for value, repeated in (("items,items", "items"), ("items,health,items", "items"),
+                            ("health,items,health,items", "health,items"),
+                            ("items,items,items", "items")):
+      with self.subTest(parts=value):
+        code, out, err = repo.run("snapshot", "--json", "--parts", value)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("usage", err)
+        self.assertIn("repeated snapshot part(s) " + repeated + ";", err)
+        self.assertNotIn("unknown", err)
+
   def test_Snapshot_Revision_ChangesOnlyWithItsPart(self):
     repo = self.fixture()
     before = self.snapshot(repo)["projects"][0]

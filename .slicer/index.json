@@ -15117,10 +15117,25 @@
       "id": "s388",
       "title": "snapshot --parts refuses an empty or repeated part name",
       "short_title": "snapshot --parts validation",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "24099265-98cb-435a-b45e-a03c9426bee6",
+          "kind": "",
+          "text": "**2026-11-08** — Verified: snapshot --parts now refuses an empty part name (--parts '', items, and doubled commas) and a repeated one (items,items) as usage, exit 2, with 'empty snapshot part name' or 'repeated snapshot part(s) NAME' on stderr, nothing on stdout, before any project is read. Order of checks: empty, unknown, repeated. Owner decision snapshot.parts-repeat: refuse, do not collapse. Change is in cmd_snapshot (src/slicer/cli_report.py); docs/agents.md and CHANGELOG updated. Both new tests were red before the code and each assertion was mutation-checked. Full suite 3317 tests OK (1 skipped); slicer check passes with two warnings unrelated to this slice.",
+          "created_at": "2026-11-08T15:47:17Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -15140,7 +15155,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

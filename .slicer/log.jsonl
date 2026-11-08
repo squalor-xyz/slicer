@@ -2791,3 +2791,8 @@
 {"when": "2026-11-08T15:27:24Z", "item": "s377", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:27:30Z", "item": "s377", "action": "status", "from": "review", "to": "done", "note": "Landed s377", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:29:09Z", "item": "s386", "action": "status", "from": "review", "to": "done", "note": "Landed s386", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:37:05Z", "item": "s388", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:37:33Z", "item": "s388", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-08T15:37:35Z", "item": "s388", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-08T15:47:17Z", "item": "s388", "action": "note", "from": "", "to": "", "note": "Verified: snapshot --parts now refuses an empty part name (-", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:47:18Z", "item": "s388", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

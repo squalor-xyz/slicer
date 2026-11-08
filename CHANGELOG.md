@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `slicer snapshot --parts` refuses an empty part name (`--parts ''`, `items,`) and a repeated one (`items,items`) as `usage` (exit 2) with a stderr line that says `empty snapshot part name` or `repeated snapshot part(s) items`, where an empty name read `unknown snapshot part(s) ` with nothing after it and a repeat was merged without a word. Nothing is written to stdout and no project is read (s388).
 - `slicer list` and `slicer find` end their text rows with a legend line, `! waits on a dependency not yet met: S01 (S02)`, when a printed row carries the `!` marker; it names each marked item in row order with its unmet dependencies. A list with no marked row is unchanged, `--json` carries no legend, and the legend comes before the `N items hidden` line (s386).
 - The orchestrator text's Order step 2 now says a small fix round is checked and gated in one pass, with a pointer to the rule in Rules, so an orchestrator that reads Order alone no longer runs a separate gate round after every fix round. Wording only: both rules are unchanged and `RELAY_CONTRACT` stays 11 (s375).
 

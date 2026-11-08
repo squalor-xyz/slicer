@@ -738,8 +738,9 @@ same discovery, exclusions and sorted path order described above; it never walks
 
 `slicer` is the running package version; `contract` is the running `ai.RELAY_CONTRACT`.
 The default part order is `items`, `goals`, `runs`, `status`, `health`. `--parts` selects only
-its comma-separated names, in that order. Unknown or empty names are `usage` (exit 2),
-with a diagnostic on stderr and no stdout. Without `--json`, snapshot is `usage` too.
+its comma-separated names, in that order. An empty name (`--parts ''`, a trailing or doubled
+comma), an unknown name and a repeated name (`--parts items,items`) are each `usage` (exit 2),
+checked before any project is read, with a diagnostic on stderr that names the problem and no stdout. Without `--json`, snapshot is `usage` too.
 The fixed schema retains nulls and empty containers even with `--lean`.
 
 - `items`: default `list` rows in the same order, excluding done and retired. Each row has

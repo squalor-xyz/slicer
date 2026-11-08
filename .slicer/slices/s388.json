@@ -16,11 +16,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/cli.py` (`cmd_snapshot`, where `args.parts` is split).\n- `tests/test_snapshot.py`, next to the existing unknown-part test.\n- `docs/agents.md` (the `snapshot` contract, if it describes `--parts` errors), `CHANGELOG.md` under Changed."
+      "body": "- `src/slicer/cli_report.py` (`cmd_snapshot`, where `args.parts` is split; the spec named `cli.py`).\n- `tests/test_snapshot.py`, next to `test_Snapshot_Parts_OnlyNamedParts`.\n- `docs/agents.md` (the `snapshot` contract, the `--parts` errors), `CHANGELOG.md` under Changed."
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_Snapshot_EmptyPartName_UsageNamesIt`: `snapshot --json --parts ''` and `--parts items,` exit 2 with a usage message that says the part name is empty, and print nothing on stdout.\n- `test_Snapshot_RepeatedPart_Usage`: `--parts items,items` exits 2 with a usage message naming `items` as repeated, and prints nothing on stdout. (Owner may prefer to accept repeats and collapse them; the spec proposes refusing, to match the empty-name case. Settle at claim.)"
+      "body": "- `test_Snapshot_EmptyPartName_UsageNamesIt`: `snapshot --json --parts ''` and `--parts items,` exit 2 with a usage message that says the part name is empty, and print nothing on stdout.\n- `test_Snapshot_RepeatedPart_Usage`: `--parts items,items` exits 2 with a usage message naming `items` as repeated, and prints nothing on stdout. The owner settled it on 2026-11-08: refuse, do not collapse."
     },
     {
       "heading": "Implement",
