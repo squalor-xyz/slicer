@@ -14470,10 +14470,25 @@
       "id": "s374",
       "title": "Find why fresh worktrees found no affected map to borrow",
       "short_title": "Worktrees miss the borrowed affected map",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "df46bd56-e69c-428a-a5d2-1c0b5828527b",
+          "kind": "",
+          "text": "**2026-11-08** — Cause found: a slice's clean affected map is recorded in its own worktree (relay Land step 6) and removed with it (step 10), and nothing records one on main, so a fresh worktree has nothing to borrow. Reproduced in the fresh worktree: no map on main, 'no other worktree has a readable, clean map'. The recorder wrote a clean map on a clean tree, and borrow rules already cover ancestor maps, so tests/affected.py is unchanged. Per owner decision affected.mainmap (option 1): docs/landing.md gains 'After landing: a clean map on main', AGENTS.md Commands points to it, CHANGELOG entry added. MainMapDocsTests (2 tests) were red before the docs and green after, and three mutations went red. Full suite 3307 passed, 0 failed (1 skipped); affected.py --run and slicer check pass. Not reproduced from the sandbox: a discover on main and the repeats after a merge and a done commit. The slicer ai relay Land steps (src/slicer/ai.py) do not list the new step.",
+          "created_at": "2026-11-08T15:05:28Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14493,7 +14508,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

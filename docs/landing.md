@@ -108,6 +108,25 @@ confirmed is shown with a warning and does not block landing.
 10. Commit `.slicer` on main with the command `land` printed, push only when the owner authorizes
     it, then remove the worktree and the branch with the commands `land` printed.
 
+## After landing: a clean map on main
+
+Both flows end the same way for `tests/affected.py`. A worktree cut from `main` borrows another
+checkout's map only when that map is clean (`.venv/affected-map.json`, recorded at HEAD or an
+ancestor of it; see [AGENTS.md](../AGENTS.md#commands)). The clean map a slice leaves is the one
+its own full suite recorded in its worktree, and `git worktree remove` deletes that worktree's
+`.venv/`, so `main` ends up with no map and the next worktree runs the whole suite. Once the
+worktree and branch are removed and `main` is committed, on `main`, run the full discover once:
+
+```sh
+python3 -m unittest discover -s tests -t tests
+```
+
+A passing run writes `.venv/affected-map.json` for `main`'s HEAD with `"clean": true`, provided
+`main` has no uncommitted changes under `src/` or `tests/` when it starts (changes under
+`.slicer/` do not count). A map at an earlier commit of `main` still serves worktrees cut later,
+so one run per landing is enough, and it can wait until the next worktree is about to be cut.
+slicer runs no part of this.
+
 ## Schema bumps
 
 A slice bumps the index schema when its CHANGELOG entry names a new index schema or its

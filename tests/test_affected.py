@@ -1233,6 +1233,39 @@ class AffectedTests(unittest.TestCase):
     self.assertEqual(after, before)
 
 
+class MainMapDocsTests(unittest.TestCase):
+  """s374: a worktree's clean map dies with it, so landing records one on main."""
+
+  ROOT = Path(__file__).resolve().parents[1]
+
+  def test_LandingDoc_AfterLanding_RecordsACleanMapOnMain(self) -> None:
+    landing = (self.ROOT / "docs" / "landing.md").read_text(encoding="utf-8")
+    heading = "\n## After landing: a clean map on main\n"
+    self.assertIn(heading, landing)
+    section = " ".join(landing.split(heading, 1)[1].split("\n## ", 1)[0].split())
+    for phrase in (
+      "`git worktree remove`",
+      "`.venv/affected-map.json`",
+      "on `main`, run the full discover once",
+      DISCOVER,
+      '`"clean": true`',
+      "`src/` or `tests/`",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, section)
+
+  def test_AgentsGuide_Commands_SendsALandingToTheMainMapStep(self) -> None:
+    text = (self.ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    section = " ".join(text.split("## Commands", 1)[1].split("\n## ", 1)[0].split())
+    for phrase in (
+      "run the full discover once on a clean `main`",
+      "docs/landing.md",
+      "removed with its worktree",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, section)
+
+
 if affected.entrypoint_is_full_discover():
   affected.install_discover_hook()
 

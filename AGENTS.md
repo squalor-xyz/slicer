@@ -58,6 +58,10 @@ whose directory no test reads.
 Run the full discover once before done. The exception is a diff that touches
 nothing under `src/` or `tests/`:
 `python3 tests/affected.py --run`, `slicer check` and `git diff --check` replace it.
+A map recorded in a slice's worktree is removed with its worktree, and `main` has none
+unless someone records it, so after a landing run the full discover once on a clean `main`
+([docs/landing.md](docs/landing.md#after-landing-a-clean-map-on-main)); the next worktree
+cut from `main` then borrows it.
 
 The temporary directory does not require creating a virtual environment. Tests
 that need an outside-project fixture, including any test that asserts behaviour

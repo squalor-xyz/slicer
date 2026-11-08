@@ -16,11 +16,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `tests/affected.py` (borrow lookup and its stderr), `tests/test_affected.py`.\n- `AGENTS.md` (Commands) if the rule or its wording changes; `CHANGELOG.md`."
+      "body": "- `docs/landing.md` (new section \"After landing: a clean map on main\"), `AGENTS.md` (Commands), `CHANGELOG.md`.\n- `tests/test_affected.py` (`MainMapDocsTests`). `tests/affected.py` is unchanged: its borrow lookup (`sibling_map`, `select`) is correct."
     },
     {
       "heading": "Failing tests",
-      "body": "- A test that reproduces the miss, named after the cause once found."
+      "body": "- `test_LandingDoc_AfterLanding_RecordsACleanMapOnMain` and `test_AgentsGuide_Commands_SendsALandingToTheMainMapStep` (`MainMapDocsTests` in `tests/test_affected.py`): the docs name the post-landing full discover on a clean main, the cause being that a worktree's clean map is removed with the worktree."
     },
     {
       "heading": "Implement",
