@@ -14605,7 +14605,7 @@
       "id": "s377",
       "title": "plan-parallel blocked names the right dependencies",
       "short_title": "plan-parallel blocked waiting_on",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
