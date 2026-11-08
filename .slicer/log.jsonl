@@ -2807,3 +2807,4 @@
 {"when": "2026-11-08T15:55:42Z", "item": "s389", "action": "note", "from": "", "to": "", "note": "snapshot now runs _warn_code_mismatch once per root it reads", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:55:44Z", "item": "s389", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:48:43Z", "item": "s388", "action": "status", "from": "review", "to": "done", "note": "Landed s388", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:57:05Z", "item": "s389", "action": "status", "from": "review", "to": "done", "note": "Landed s389", "by": "Jon Robbins"}

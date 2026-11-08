@@ -15177,7 +15177,7 @@
       "id": "s389",
       "title": "snapshot warns when the running code is another worktree's",
       "short_title": "snapshot code-mismatch warning",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
