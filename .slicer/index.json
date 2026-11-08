@@ -15132,7 +15132,7 @@
       "id": "s388",
       "title": "snapshot --parts refuses an empty or repeated part name",
       "short_title": "snapshot --parts validation",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
