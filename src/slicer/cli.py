@@ -25,7 +25,7 @@ from slicer.cli_common import (
   _dump_json, _emit, _exit_for, _json_flags, _write_out,
 )
 from slicer.cli_parser import build_parser
-from slicer.cli_report import cmd_snapshot
+from slicer.cli_report import cmd_snapshot, snapshot_roots
 from slicer.config import CONFIG_NAME
 from slicer.errors import SlicerError, StateError
 
@@ -135,16 +135,18 @@ def _cached_parser() -> argparse.ArgumentParser:
 _CODE_WARNING_ENV = "SLICER_NO_CODE_WARNING"
 
 
-def _warn_code_mismatch(args: argparse.Namespace) -> None:
+def _warn_code_mismatch(args: argparse.Namespace, start: str | None = None) -> None:
   """Warn on stderr when slicer's own code and the project it discovers are
   different worktrees of one repo -- an editable install run from a sibling
   checkout, whose own `src/` edits are therefore not what runs. Purely advisory:
   it never raises, never touches stdout or the exit code, and is silenced by
-  the SLICER_NO_CODE_WARNING environment variable."""
+  the SLICER_NO_CODE_WARNING environment variable. `start` names the directory to
+  discover from when it is not `args.root`; `snapshot` passes each of its roots."""
   if os.environ.get(_CODE_WARNING_ENV):
     return
   try:
-    root = store.discover(Path(args.root) if getattr(args, "root", None) else None)
+    start = start or getattr(args, "root", None)
+    root = store.discover(Path(start) if start else None)
     message = vcs.foreign_worktree(root, Path(__file__).resolve().parent)
   except Exception:
     return  # no project here, or any probe failure -- stay silent
@@ -193,6 +195,8 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(args, "pass_alias_used", False):
       print(PASS_ALIAS_NOTE, file=sys.stderr)
     if args.command == "snapshot":
+      for snapshot_root in snapshot_roots(args):
+        _warn_code_mismatch(args, snapshot_root)
       return cmd_snapshot(args)
     root = Path(args.root) if args.root else Path.cwd()
     if getattr(args, "recursive", False):

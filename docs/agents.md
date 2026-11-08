@@ -742,6 +742,11 @@ its comma-separated names, in that order. Unknown or empty names are `usage` (ex
 with a diagnostic on stderr and no stdout. Without `--json`, snapshot is `usage` too.
 The fixed schema retains nulls and empty containers even with `--lean`.
 
+Like every other command, snapshot prints the editable-install code warning on stderr (see
+[commands.md](commands.md#troubleshooting)) when slicer's own code is another worktree of the repo.
+It checks each root once, in argument order, never once per part or per project found by `-r`,
+and `SLICER_NO_CODE_WARNING` silences it. Stdout and the exit code are unchanged.
+
 - `items`: default `list` rows in the same order, excluding done and retired. Each row has
   `id`, `short_title`, `status`, `claim` (owner string or null), `pass`, `release_target` (the same value), `wave` (integer or null), `size`, `effort`,
   `score` (base importance/urgency score), `quadrant`, `held`, `blocked`. Hold flags and

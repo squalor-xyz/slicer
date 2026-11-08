@@ -410,7 +410,7 @@ index only for a sibling with a shared id whose title differs or whose id differ
 only in case, even when the titles match. `main` also runs a
 code-location hint before each command, except `--about` and `--recursive` runs, and not
 when `SLICER_NO_CODE_WARNING` is set (`vcs.foreign_worktree`, called from
-`cli._warn_code_mismatch`); it asks git only when slicer's own code is not under the
+`cli._warn_code_mismatch`); `snapshot` runs it once per root it reads; it asks git only when slicer's own code is not under the
 project. A checkout with no sibling worktree gives `check` no history to read, which is why
 it, and not `verify`, is the CI gate.
 `slicer verify` additionally reads `git log --all` to compare the index against

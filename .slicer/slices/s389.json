@@ -16,11 +16,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/cli.py` (`cmd_snapshot`, `_warn_code_mismatch`).\n- `tests/test_snapshot.py`, plus the existing code-warning tests in `tests/test_cli.py` for the fixture to reuse.\n- `docs/commands.md` or `docs/agents.md` where the warning is described, `CHANGELOG.md` under Changed."
+      "body": "- `src/slicer/cli.py` (`main`'s snapshot branch, `_warn_code_mismatch`) and `src/slicer/cli_report.py` (`cmd_snapshot` lives here; new `snapshot_roots`).\n- `tests/test_snapshot.py`, plus the existing code-warning tests in `tests/test_code_location.py` for the fixture to reuse.\n- `docs/commands.md` and `docs/agents.md` where snapshot is described, `ARCHITECTURE.md` where the code-location hint is described, `CHANGELOG.md` under Changed."
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_Snapshot_ForeignWorktreeCode_WarnsOnStderr`: with the foreign-worktree probe reporting a mismatch, `snapshot --json` prints the warning on stderr, the same JSON on stdout, and exits as before.\n- `test_Snapshot_CodeWarningEnv_StaysSilent`: with `SLICER_NO_CODE_WARNING=1` it prints nothing on stderr.\n- `test_Snapshot_SeveralRoots_WarnsOncePerMismatch`: two roots with a mismatch each print one warning apiece, never one per part."
+      "body": "- `test_Snapshot_ForeignWorktreeCode_WarnsOnStderr` (tests/test_snapshot.py): with the foreign-worktree probe reporting a mismatch, `snapshot --json` prints the warning on stderr, the same JSON on stdout, and exits as before.\n- `test_Snapshot_CodeWarningEnv_StaysSilent` (tests/test_snapshot.py): with `SLICER_NO_CODE_WARNING=1` it prints nothing on stderr and never runs the probe.\n- `test_Snapshot_SeveralRoots_WarnsOncePerMismatch` (tests/test_snapshot.py): two roots with a mismatch each print one warning apiece, never one per part."
     },
     {
       "heading": "Implement",

@@ -175,6 +175,13 @@ def cmd_stats(args: argparse.Namespace) -> int:
   return OK
 
 
+def snapshot_roots(args: argparse.Namespace) -> list[str | None]:
+  """The roots `snapshot` reads, in the order given; `[None]` means the current
+  directory. `main` asks too, so the code-mismatch warning sees the same roots."""
+  roots = ([args.root] if args.root else []) + (args.snapshot_roots or [])
+  return roots or [None]
+
+
 def cmd_snapshot(args: argparse.Namespace) -> int:
   if not args.json:
     raise StateError("snapshot requires --json", code="usage")
@@ -184,12 +191,9 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
     print("slicer: usage: unknown snapshot part(s) " + ",".join(unknown)
           + "; choose " + ",".join(snapshot.PARTS), file=sys.stderr)
     return USAGE
-  roots = ([args.root] if args.root else []) + (args.snapshot_roots or [])
-  if not roots:
-    roots = [None]
   projects = []
   exit_code = OK
-  for root in roots:
+  for root in snapshot_roots(args):
     start = (Path(root) if root else Path.cwd()).resolve()
     if args.recursive:
       found, unreadable = store.discover_all(start)
