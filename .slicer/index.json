@@ -15025,7 +15025,7 @@
       "id": "s386",
       "title": "slicer list: explain the ! dependency marker in its output",
       "short_title": "slicer list: explain the ! dependency marker in its output",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
