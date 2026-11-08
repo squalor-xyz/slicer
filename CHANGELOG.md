@@ -6,6 +6,10 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+### Changed
+
+- The orchestrator text's Order step 2 now says a small fix round is checked and gated in one pass, with a pointer to the rule in Rules, so an orchestrator that reads Order alone no longer runs a separate gate round after every fix round. Wording only: both rules are unchanged and `RELAY_CONTRACT` stays 11 (s375).
+
 ### Fixed
 
 - The TUI queue's prose rows and `Only in a sibling` rows start under the item rows' ids once the view has more than 999 rows, where the number slot widens; they sat one cell left. The `Q` notice names the first five ids it left out, in queue order, then `, and N more` (s371).

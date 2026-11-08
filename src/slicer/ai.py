@@ -504,8 +504,9 @@ The implementer runs `slicer start ID --render --strict`, red tests and
    implementation."""),
   (2, """\
 Review; on a slice the project marks as UI, the UI pass runs in parallel with the
-   reviewer. Then accepted findings back to the implementer for each fix round,
-   then the architect, when the owner chose one, then the gate, which still decides."""),
+   reviewer. Then accepted findings back to the implementer for each fix round (a small
+   fix round is checked and gated in one pass; see Rules), then the architect, when
+   the owner chose one, then the gate, which still decides."""),
   (3, """\
 Only after `VERDICT: PASS`, the implementer runs the closing note and finish step:
    {finish_step}"""),

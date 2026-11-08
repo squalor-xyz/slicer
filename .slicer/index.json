@@ -14500,10 +14500,25 @@
       "id": "s375",
       "title": "The orchestrator's Order names the one-pass fix round",
       "short_title": "Order names one-pass fix round",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "a5ce32a7-1819-4940-af19-bd20fcded2bb",
+          "kind": "",
+          "text": "**2026-11-08** — Order step 2 of the orchestrator and session texts now says '(a small fix round is checked and gated in one pass; see Rules)', matching the Rules bullet; both rules and RELAY_CONTRACT (11) are unchanged. test_OrchestratorText_OrderStep2_PointsToOnePassFixRound was red before the change and is green after; mutation-checked (10 failures with the old wording). tests/fixtures/relay-contract-v11.json regenerated for the 8 orchestrator and session entries; CHANGELOG entry added. Full suite 3306 ran, OK (skipped=1); affected.py --run exits 0; slicer check passes.",
+          "created_at": "2026-11-08T15:07:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14523,7 +14538,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

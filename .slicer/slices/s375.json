@@ -16,7 +16,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/ai.py` (`ORCHESTRATOR_RULES`, Order step 2).\n- `tests/test_ai.py`; `CHANGELOG.md` under Changed."
+      "body": "- `src/slicer/ai.py` (`ORCHESTRATOR_STEPS`, step 2; both the orchestrator and session texts read it; `ORCHESTRATOR_RULES` is unchanged).\n- `tests/test_ai.py`; `tests/fixtures/relay-contract-v11.json` (the eight orchestrator and session entries, pinned byte for byte); `CHANGELOG.md` under Changed."
     },
     {
       "heading": "Failing tests",

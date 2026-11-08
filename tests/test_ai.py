@@ -1045,6 +1045,16 @@ class AiRelayTests(unittest.TestCase):
     self.assertTrue(bullet, f"no rule starting {name!r}")
     return " ".join(bullet.split())
 
+  def test_OrchestratorText_OrderStep2_PointsToOnePassFixRound(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        text = ai.orchestrator_text(finish)
+        order = text.split("## Order\n\n", 1)[1].split("\n## ", 1)[0]
+        step2 = order.split("\n2. ", 1)[1].split("\n3. ", 1)[0]
+        self.assertIn(
+          "(a small fix round is checked and gated in one pass; see Rules)", " ".join(step2.split()))
+        self.rule(finish, "A small fix round")  # the rule the step points to exists
+
   def test_OrchestratorText_SmallFixRound_ReviewAndGateInOnePass(self) -> None:
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
