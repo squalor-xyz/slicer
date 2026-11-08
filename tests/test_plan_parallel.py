@@ -168,6 +168,17 @@ class PlanParallelTests(unittest.TestCase):
       self.assertEqual(_waves(payload), [[free]])
       self.assertEqual(payload["blocked"], [{"id": waits, "waiting_on": [parked]}])
 
+  def test_PlanParallel_OneDependencyPlacedOneNot_WaitingOnNamesOnlyTheUnplaced(self) -> None:
+    with self.repo() as repo:
+      placed = self.file_item(repo, "placed", "- `src/a.py`")
+      parked = self.file_item(repo, "parked", "- `src/b.py`")
+      waits = self.file_item(repo, "waits on both", "- `src/c.py`")
+      repo.run("set", waits, "--depends-on", placed, "--depends-on", parked)
+      repo.run("park", parked)
+      payload = self.plan(repo)
+      self.assertEqual(_waves(payload), [[placed]])
+      self.assertEqual(payload["blocked"], [{"id": waits, "waiting_on": [parked]}])
+
   def test_PlanParallel_HeldAndUnspecified_ReportedLikeNext(self) -> None:
     with self.repo() as repo:
       held = self.file_item(repo, "held", "- `src/a.py`")

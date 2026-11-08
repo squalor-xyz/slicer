@@ -14605,10 +14605,25 @@
       "id": "s377",
       "title": "plan-parallel blocked names the right dependencies",
       "short_title": "plan-parallel blocked waiting_on",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "7081b2ea-e2ec-4926-8286-04d0b96cf105",
+          "kind": "",
+          "text": "**2026-11-08** — Ready for review: added test_PlanParallel_OneDependencyPlacedOneNot_WaitingOnNamesOnlyTheUnplaced (guard test; red under the mutation that reports pending instead of unmet in plan_parallel's leftover branch, green after revert) and reworded the plan-parallel blocked sentence in docs/agents.md: a left-over item lists only its never-placed dependencies; a capped, unspecified or sibling-held item lists every dependency, as next --batch --disjoint does. Full suite 3309 tests OK (1 skipped); slicer check passes; no change under src/.",
+          "created_at": "2026-11-08T15:27:20Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -14628,7 +14643,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
