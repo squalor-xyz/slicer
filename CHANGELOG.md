@@ -11,6 +11,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 - The TUI queue's prose rows and `Only in a sibling` rows start under the item rows' ids once the view has more than 999 rows, where the number slot widens; they sat one cell left. The `Q` notice names the first five ids it left out, in queue order, then `, and N more` (s371).
 - `docs/commands.md` lists every command that takes `--render` (it had omitted `config`, `template`, `catalog`, `id-prefix`, `issues-pull`, `note-verify`, `relay-roles` and others), and `docs/agents.md` names the commands that write elsewhere and take none (`init`, `feedback`, `feedback-report`, `setup-git`, `sync`, `relay-run`, the merge drivers) and no longer says `land` takes no flag. A test derives the list from the parser, so it cannot drift again. `docs/agents.md` calls the `--disjoint` paths project paths, as `docs/configuration.md` does (s372).
 
+- Contributor docs: a fresh worktree found no `tests/affected.py` map to borrow because `main` had none. The only clean map a slice records is in its own worktree, and landing removes that worktree and its `.venv/` with it. `docs/landing.md` gains "After landing: a clean map on main" (run the full discover once on a clean `main`) and AGENTS.md Commands points to it. The borrow rules, `tests/affected.py` and the `slicer ai relay` Land steps are unchanged (s374).
+
 ## [1.20.0] - 2026-11-07
 
 ### Changed
