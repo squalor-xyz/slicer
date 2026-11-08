@@ -3158,8 +3158,8 @@ class RelayRequestTests(InMemoryTuiTests):
       view.refresh(state)
       view.select((tui.ITEM, "S10"))
       view.handle(state, "Q")
-      named = ", ".join(f"S{n:02d} (done)" for n in range(1, 6))
-      self.assertEqual(view.message, f"left out: {named}, and 4 more")
+      named = ", ".join(f"S{n:02d} (done)" for n in range(1, 4))
+      self.assertEqual(view.message, f"left out: {named}, and 6 more")
       view.handle(state, "\x1b")
 
   def test_RelayRequest_HeadingMatchesPromptState(self):
