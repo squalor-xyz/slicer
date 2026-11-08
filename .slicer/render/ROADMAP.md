@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-440 items · — 14 · done 413 · retired 12 · review 1
+440 items · — 14 · done 414 · retired 12
 
 ## v1.21
 
@@ -38,7 +38,7 @@
 | 3 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | done |
 | 4 | [s375](slices/s375.md) | Order names one-pass fix round | S | 1 | slicer | s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained "a small fix round is reviewed and gated in one pass", but Order step 2 still reads "review, then accepted findings back to the implementer for each fix round, ... then the gate" with no pointer to that exception | done |
 | 5 | [s377](slices/s377.md) | plan-parallel blocked waiting_on | S | 1 | slicer | s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies "never placed", but a capped, unspecified or sibling-held item keeps its full pending list · discovered from s376 | done |
-| 6 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | review |
+| 6 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | done |
 | 7 | [s386](slices/s386.md) | slicer list: explain the ! dependency marker in its output | S | 1 | slicer | owner filing 2026-10-20 | done |
 | 8 | [s388](slices/s388.md) | snapshot --parts validation | S | 1 | slicer | s383 relay report 2026-10-22, later note: `--parts ''` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently · discovered from s383 | — |
 | 9 | [s389](slices/s389.md) | snapshot code-mismatch warning | S | 1 | slicer | s383 relay report 2026-10-22, later note: `snapshot` dispatches before `_warn_code_mismatch`, so the editable-install warning every other command prints is skipped · discovered from s383 | — |

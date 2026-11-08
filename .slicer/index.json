@@ -14799,7 +14799,7 @@
       "id": "s381",
       "title": "set refuses an item as its own discovery source",
       "short_title": "set --discovered-from self",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
