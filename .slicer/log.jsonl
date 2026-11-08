@@ -2775,3 +2775,4 @@
 {"when": "2026-11-08T05:10:42Z", "item": "s374", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-11-08T15:05:28Z", "item": "s374", "action": "note", "from": "", "to": "", "note": "Cause found: a slice's clean affected map is recorded in its", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:05:30Z", "item": "s374", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:06:49Z", "item": "s374", "action": "status", "from": "review", "to": "done", "note": "Landed s374", "by": "Jon Robbins"}

@@ -14470,7 +14470,7 @@
       "id": "s374",
       "title": "Find why fresh worktrees found no affected map to borrow",
       "short_title": "Worktrees miss the borrowed affected map",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

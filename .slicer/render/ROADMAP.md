@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-440 items · — 18 · done 409 · retired 12 · review 1
+440 items · — 18 · done 410 · retired 12
 
 ## v1.21
 
@@ -35,7 +35,7 @@
 |---|---|---|---|---|---|---|---|
 | 1 | [s371](slices/s371.md) | Queue prose rows align past 999 | S | 1 | slicer | s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long "left out:" notice has no cap | done |
 | 2 | [s372](slices/s372.md) | Docs mutating-command lists complete | S | 1 | slicer | s359 relay 2026-10-18: the docs/commands.md "Every command that changes state" list omits config, template, catalog, id-prefix, issues-pull, note-verify and relay-roles; docs/agents.md's "every mutating command takes --render ... except land" does not account for relay-run, feedback or init; s366 relay: docs/agents.md:370 says "backticked repo paths" for --disjoint where configuration.md says project paths | done |
-| 3 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | review |
+| 3 | [s374](slices/s374.md) | Worktrees miss the borrowed affected map | S | 1 | slicer | v1.15 relays 2026-10-18: implementers in fresh worktrees cut from main reported `affected.py` found no map to borrow and ran the full suite instead, although full suites had passed on main; cause not established | done |
 | 4 | [s375](slices/s375.md) | Order names one-pass fix round | S | 1 | slicer | s373 relay review 2026-10-18: v7's ORCHESTRATOR_RULES gained "a small fix round is reviewed and gated in one pass", but Order step 2 still reads "review, then accepted findings back to the implementer for each fix round, ... then the gate" with no pointer to that exception | — |
 | 5 | [s377](slices/s377.md) | plan-parallel blocked waiting_on | S | 1 | slicer | s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies "never placed", but a capped, unspecified or sibling-held item keeps its full pending list · discovered from s376 | — |
 | 6 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | — |
