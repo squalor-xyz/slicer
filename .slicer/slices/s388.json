@@ -24,7 +24,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; watch them go red.\n2. In `cmd_snapshot`, refuse an empty name and a repeated name before any project is read, as exit 2 with `usage`, in the same stderr form as the unknown-part message.\n3. Update `docs/agents.md` and the CHANGELOG.\n4. Mutation-check each new test."
+      "body": "1. Write the tests; watch them go red.\n2. In `cmd_snapshot`, refuse an empty name and a repeated name before any project is read, as exit 2 with `usage`, in the same stderr form as the unknown-part message.\n3. Update `docs/agents.md` and the CHANGELOG.\n4. Mutation-check each new test.\n\nOwner decisions (2026-11-08): Should `--parts items,items` be refused or collapsed? -> refuse: exit 2 with a usage message naming the repeated part, and write nothing [snapshot.parts-repeat]."
     },
     {
       "heading": "Check",
