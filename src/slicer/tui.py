@@ -157,7 +157,7 @@ CLAIM_CELL_CAP = 8
 # Below this queue-pane width the claim and size columns go, so the title keeps room.
 NARROW_PANE = 50
 # The `Q` notice names this many left-out ids, in queue order, then "and N more".
-LEFT_OUT_NAMED = 5
+LEFT_OUT_NAMED = 3
 
 
 @dataclass
