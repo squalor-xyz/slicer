@@ -1323,7 +1323,14 @@ def set_fields_many(
       _check_parent(state, item.id, values["parent"])
   # The same check `add` makes: an empty source clears it, any other must exist.
   if values.get("discovered_from"):
-    state.index.require(values["discovered_from"])
+    source = values["discovered_from"]
+    if any(item.id == source for item in items):
+      raise StateError(
+        f"{source} cannot be its own discovery source; name the item it was found "
+        f"while working on, or clear it with `set {source} --discovered-from ''`",
+        code="discovered_from_self",
+      )
+    state.index.require(source)
 
   # Every explicit set syncs duplicated slice fields. Refuse unreadable targets
   # before changing any status or moving any file in the batch.

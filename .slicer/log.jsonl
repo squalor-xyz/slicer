@@ -2785,3 +2785,6 @@
 {"when": "2026-11-08T15:27:20Z", "item": "s377", "action": "note", "from": "", "to": "", "note": "Ready for review: added test_PlanParallel_OneDependencyPlace", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:27:24Z", "item": "s377", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:27:30Z", "item": "s377", "action": "status", "from": "review", "to": "done", "note": "Landed s377", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:28:25Z", "item": "s381", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:39:59Z", "item": "s381", "action": "note", "from": "", "to": "", "note": "Verified: set refuses an item as its own discovery source (s", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:40:01Z", "item": "s381", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

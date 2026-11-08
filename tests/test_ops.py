@@ -1017,6 +1017,47 @@ class SetFlagGroupTests(unittest.TestCase):
       self.assertEqual(json.loads(out)["error"]["code"], "no_such_item")
       self.assertEqual(repo.read(".slicer/index.json"), before)
 
+  def test_Set_DiscoveredFromSelf_RefusesAndWritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "another")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("set", "S01", "--discovered-from", "S01", "--json")
+      self.assertEqual(code, 2, err)
+      error = json.loads(out)["error"]
+      self.assertEqual(error["code"], "discovered_from_self")
+      self.assertIn("set S01 --discovered-from ''", error["message"])
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      # One id in the batch naming itself refuses the whole batch.
+      for ids in (("S01", "S02"), ("S02", "S01")):
+        code, out, err = repo.run("set", *ids, "--discovered-from", "S01", "--json")
+        self.assertEqual(code, 2, err)
+        self.assertEqual(json.loads(out)["error"]["code"], "discovered_from_self")
+        self.assertEqual(repo.read(".slicer/index.json"), before)
+        self.assertEqual(repo.state().index.require("S02").discovered_from, "")
+
+  def test_Set_DiscoveredFromSeveralIds_SetsEach(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "second")
+      repo.run("add", "third")
+      code, _, err = repo.run("set", "S02", "S03", "--discovered-from", "S01")
+      self.assertEqual(code, 0, err)
+      index = repo.state().index
+      self.assertEqual(index.require("S02").discovered_from, "S01")
+      self.assertEqual(index.require("S03").discovered_from, "S01")
+
+  def test_Set_DiscoveredFromUnknownInBatch_WritesNothing(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "second")
+      repo.run("add", "third")
+      before = repo.read(".slicer/index.json")
+      code, out, err = repo.run("set", "S02", "S03", "--discovered-from", "S99", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(json.loads(out)["error"]["code"], "no_such_item")
+      self.assertEqual(repo.read(".slicer/index.json"), before)
+      index = repo.state().index
+      self.assertEqual(index.require("S02").discovered_from, "")
+      self.assertEqual(index.require("S03").discovered_from, "")
+
   def test_Set_Flag_IsStored(self) -> None:
     with self.repo() as repo:
       repo.run("set", "S01", "--flag", "OWNER")

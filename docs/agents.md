@@ -804,6 +804,7 @@ when the meaning does. Branch on the code. A refusal takes its specific code whe
 |---|---|
 | `no_such_item` | No item with that id, from any command, including a `--depends-on`, `--discovered-from` or `--parent` id |
 | `parent_self` | `set --parent` named the item itself |
+| `discovered_from_self` | `set --discovered-from` named an item in the batch as its own source; nothing is written |
 | `parent_nested` | `add --parent` or `set --parent` would make a second level: the parent is itself a sliver, or the item being given a parent already has slivers. Exit 2, nothing written |
 | `slivers_open` | `handoff` or `done` named a parent while a sliver is short of what that finish needs: for `handoff` every sliver must be handed off, being reviewed, done or retired, whatever `implement_finish` is; for `done`, done or retired. A sliver named in the same call counts. The message lists each short sliver with its status. Exit 2, nothing written; there is no `--force`. A sliver's own finish is unaffected |
 | `contract_mismatch` | The project's `relay_contract` pin differs from the relay contract this slicer serves (`ai.RELAY_CONTRACT`), and `ai relay`, `ai relay-orchestrator` or `ai relay-brief` refused to print it. Exit 2, nothing printed or written; the message names the pinned and the running version, `slicer config relay_contract N` and installing a slicer that serves the pinned version. `check` reports the same mismatch as a warning and exits as it otherwise would. It is also the code for a pin that is present in `config.json` but not a whole number from 1 to 9999 when the config cannot be loaded; the message then says the pin could not be read and to fix the file by hand (`config --unset` cannot load it either). `ai relay --init-roles` is a write and is not refused |
@@ -811,7 +812,7 @@ when the meaning does. Branch on the code. A refusal takes its specific code whe
 | `unspecified` | `ai relay-brief` named an item whose slice has an empty required section. Exit 2, nothing written |
 | `no_such_section` | `show --section` named a heading the slice does not have |
 | `bad_promote_source` | A `promote` source is not one item, or names no sections |
-| `field_in_promote_source` | A `promote` source set an item field; those belong on `add`/`set` |
+| `field_in_promote_source` | A `promote` source set an item field; the message names the `set` flag that changes it |
 | `already_exists` | `init` on an initialised project |
 | `state` | The operation does not apply — unknown status, already promoted, a self, cycle, or retired dependency, and similar |
 | `config` | `.slicer/config.json` is missing, malformed or self-contradictory |
@@ -948,7 +949,8 @@ governed by their own rules.
 Score what you file rather than leaving the 2/2 defaults, and say why in your reply.
 `add --discovered-from ID` records an existing source item in
 `fields.discovered_from`, with any status allowed. `set ID --discovered-from ID`
-sets it on a filed item and `--discovered-from ''` clears it. `list --discovered-from ID`
+sets it on a filed item and `--discovered-from ''` clears it; an item cannot be its own
+source (`discovered_from_self`, whole batch refused). `list --discovered-from ID`
 filters by exact source and combines with other filters; an unknown ID is
 `no_such_item`, and zero matches succeeds. Outline input uses the single-value
 `discovered_from: ID` key and refuses unknown or prospective sources before
