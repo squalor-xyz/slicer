@@ -585,6 +585,22 @@ def _item_rows(
   return rows
 
 
+def _blocked_legend(state: store.State, items: list[model.Item]) -> list[str]:
+  """The line that says what `!` means, or nothing when no printed row carries it.
+
+  It names each marked item with the dependencies it still waits on, in row order,
+  so a reader need not run `show` on every marked row.
+  """
+  waits = [
+    f"{item.id} ({', '.join(pending)})"
+    for item in items
+    if (pending := graph.pending(state.index, item, state.config))
+  ]
+  if not waits:
+    return []
+  return [f"! waits on a dependency not yet met: {', '.join(waits)}"]
+
+
 def _list_in_priority_order(state: store.State, items: list[model.Item]) -> list[model.Item]:
   """Use shared readiness and pass ranking, merging empty passes by score."""
   return graph.ranked_order(state.index, state.config, items, by_pass=True)
@@ -700,6 +716,7 @@ def cmd_list(args: argparse.Namespace) -> int:
   )]
   if not items:
     lines = ["no matching items"]
+  lines.extend(_blocked_legend(state, items))
   if hidden_count:
     noun = "item" if hidden_count == 1 else "items"
     lines.append(f"{hidden_count} {noun} hidden (done or retired); use --all to show them")
@@ -816,9 +833,10 @@ def _emit_find(
     payload = [i.to_dict() | {"match": {"field": f, "snippet": s}} for i, f, s in hits]
   elsewhere = store.in_work_elsewhere(state.root, state.index) if not args.json else {}
   rows = _item_rows(state, [i for i, _, _ in hits], elsewhere=elsewhere)
-  text = "\n".join(
-    f"{row}\n      matched in {f}: {s}" for row, (_, f, s) in zip(rows, hits)
-  ) or "no matching items"
+  text = "\n".join([
+    *(f"{row}\n      matched in {f}: {s}" for row, (_, f, s) in zip(rows, hits)),
+    *_blocked_legend(state, [i for i, _, _ in hits]),
+  ]) or "no matching items"
   _emit(args, payload, text)
 
 

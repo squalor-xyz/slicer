@@ -946,6 +946,71 @@ class ListBlockedMarkerTests(unittest.TestCase):
       rows = json.loads(repo.run("list", "--json")[1])
       # Blocked and unblocked rows alike carry these keys, in this order.
       self.assertEqual([list(row) for row in rows], [keys, keys])
+      self.assertNotIn("waits on a dependency", repo.run("list", "--json")[1])
+
+  def test_Find_Json_BlockedRow_CarriesNoLegend(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("find", "waiting", "--json")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual([row["id"] for row in json.loads(out)], ["S01"])
+      self.assertNotIn("waits on a dependency", out)
+
+  LEGEND_START = "! waits on a dependency not yet met: "
+
+  def test_List_Text_BlockedRow_EndsWithLegend(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      lines = out.splitlines()
+      legend = "! waits on a dependency not yet met: S01 (S02)"
+      self.assertEqual(lines.count(legend), 1)
+      # The legend follows the last row.
+      self.assertEqual(lines[-1], legend)
+      self.assertEqual(lines[-2].split()[1], "S01")
+
+  def test_List_Text_NoBlockedRow_NoLegend(self) -> None:
+    with self.repo() as repo:
+      repo.run("done", "S02", "--render")
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      self.assertEqual([line for line in out.splitlines() if line.startswith("! ")], [])
+
+  def test_List_Text_Legend_BeforeHiddenCount(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "finished")
+      repo.run("done", "S03", "--render")
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      lines = out.splitlines()
+      self.assertEqual(lines[-2], "! waits on a dependency not yet met: S01 (S02)")
+      self.assertTrue(lines[-1].startswith("1 item hidden"), lines[-1])
+
+  def test_List_Text_Legend_SeveralBlocked_InRowOrder(self) -> None:
+    with self.repo() as repo:
+      repo.run("add", "second waiting")
+      repo.run("add", "second blocker")
+      repo.run("set", "S01", "--depends-on", "S02", "--depends-on", "S04")
+      repo.run("set", "S03", "--depends-on", "S02")
+      code, out, err = repo.run("list")
+      self.assertEqual((code, err), (0, ""))
+      marked = [line.split()[1] for line in out.splitlines()[1:] if line[3:4] == "!"]
+      self.assertEqual(sorted(marked), ["S01", "S03"])
+      deps = {"S01": "S02, S04", "S03": "S02"}
+      expected = self.LEGEND_START + ", ".join(f"{i} ({deps[i]})" for i in marked)
+      self.assertEqual(out.splitlines()[-1], expected)
+      self.assertEqual(expected.count("S02"), 2)
+      self.assertIn("S01 (S02, S04)", expected)
+
+  def test_Find_Text_BlockedRow_EndsWithLegend(self) -> None:
+    with self.repo() as repo:
+      code, out, err = repo.run("find", "waiting")
+      self.assertEqual((code, err), (0, ""))
+      lines = out.splitlines()
+      self.assertTrue(lines[-2].lstrip().startswith("matched in "), lines[-2])
+      self.assertEqual(lines[-1], "! waits on a dependency not yet met: S01 (S02)")
+      self.assertEqual(out.count("waits on a dependency"), 1)
+      # A search that returns only the unblocked row prints no legend.
+      self.assertNotIn("waits on a dependency", repo.run("find", "blocker")[1])
 
 
 class TuiHelpTests(unittest.TestCase):
