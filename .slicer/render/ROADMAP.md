@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-440 items · — 13 · done 414 · retired 12 · review 1
+440 items · — 12 · done 415 · retired 12 · review 1
 
 ## v1.21
 
@@ -40,7 +40,7 @@
 | 5 | [s377](slices/s377.md) | plan-parallel blocked waiting_on | S | 1 | slicer | s376 relay report 2026-10-18: no test covers an item with one dependency placed and one never placed; docs/agents.md says `blocked` lists dependencies "never placed", but a capped, unspecified or sibling-held item keeps its full pending list · discovered from s376 | done |
 | 6 | [s381](slices/s381.md) | set --discovered-from self | S | 1 | slicer | s369 relay review 2026-10-19: `set S01 --discovered-from S01` is accepted; `add` cannot create a self reference, and one makes `remove --purge` need `--force` and keeps the id from being reclaimed · discovered from s369 | done |
 | 7 | [s386](slices/s386.md) | slicer list: explain the ! dependency marker in its output | S | 1 | slicer | owner filing 2026-10-20 | done |
-| 8 | [s388](slices/s388.md) | snapshot --parts validation | S | 1 | slicer | s383 relay report 2026-10-22, later note: `--parts ''` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently · discovered from s383 | — |
+| 8 | [s388](slices/s388.md) | snapshot --parts validation | S | 1 | slicer | s383 relay report 2026-10-22, later note: `--parts ''` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently · discovered from s383 | done |
 | 9 | [s389](slices/s389.md) | snapshot code-mismatch warning | S | 1 | slicer | s383 relay report 2026-10-22, later note: `snapshot` dispatches before `_warn_code_mismatch`, so the editable-install warning every other command prints is skipped · discovered from s383 | review |
 | 10 | [s390](slices/s390.md) | Post-merge hook polish | S | 1 | slicer | s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only "run slicer check", and no test runs the printed install command · discovered from s384 | — |
 | 11 | [s413](slices/s413.md) | show --json paths edge cases | S | 1 | paths, ops, docs, tests | s395 relay review, 2026-10-26 · discovered from s395 | — |

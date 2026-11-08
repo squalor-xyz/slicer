@@ -186,10 +186,18 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
   if not args.json:
     raise StateError("snapshot requires --json", code="usage")
   parts = args.parts.split(",")
+  choose = "; choose " + ",".join(snapshot.PARTS)
+  if "" in parts:
+    print("slicer: usage: empty snapshot part name in --parts " + repr(args.parts) + choose, file=sys.stderr)
+    return USAGE
   unknown = [name for name in parts if name not in snapshot.PARTS]
   if unknown:
-    print("slicer: usage: unknown snapshot part(s) " + ",".join(unknown)
-          + "; choose " + ",".join(snapshot.PARTS), file=sys.stderr)
+    print("slicer: usage: unknown snapshot part(s) " + ",".join(unknown) + choose, file=sys.stderr)
+    return USAGE
+  repeated = [name for index, name in enumerate(parts) if name in parts[:index]]
+  if repeated:
+    print("slicer: usage: repeated snapshot part(s) " + ",".join(dict.fromkeys(repeated)) + choose,
+          file=sys.stderr)
     return USAGE
   projects = []
   exit_code = OK
