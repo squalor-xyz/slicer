@@ -286,9 +286,12 @@ release target (only when the roadmap declares or names one), wave (only once an
 quadrant, and title. `find` and `deps` rows use the same columns without the header. An unset
 effort appears as `-`. A `!` right after the row number marks an item that waits on a
 dependency not yet met (in `done_status` or `satisfies_dependencies`), as the TUI queue
-does; it takes a space the row already has, so the columns do not move. `deps` lists only
-unblocked items, so its rows never carry it. When the
-default status filter hides done or retired items, a final line counts the
+does; it takes a space the row already has, so the columns do not move. When a printed row
+carries it, `list` and `find` end their rows with one legend line, `! waits on a dependency
+not yet met: S01 (S02, S04), S03 (S02)`, naming each marked item in row order with its unmet
+dependencies in `depends_on` order; no marked row, no line, and `--json` never carries it.
+`deps` lists only unblocked items, so its rows never carry it. When the
+default status filter hides done or retired items, a final line (after the legend) counts the
 matching hidden rows and points to `--all`. `--all` and `--status` suppress that
 notice; `--json` remains an array of the visible item records.
 `slicer next --ready` is a bounded pickup of that same item: `id`, `title`,
@@ -1064,9 +1067,10 @@ $ slicer list
   #  ID    STATUS  CLAIM SIZE EFFORT SCORE QUADRANT  TITLE
   1  S01   —       -     M    -      22    -         Parse the config file
   2! S02   —       -     S    -      22    -         Fail loudly on a missing key
+! waits on a dependency not yet met: S02 (S01)
 ```
 
-The `!` after a row number marks an item that waits on an unfinished dependency, so row 2 waits on S01.
+The `!` after a row number marks an item that waits on an unfinished dependency, so row 2 waits on S01. The last line is the legend: it names each marked row and the dependencies it still waits on.
 
 The SCORE and QUADRANT columns are the priority score and quadrant (see
 [Priority](#priority)); a fresh item sits at a neutral 2/2.

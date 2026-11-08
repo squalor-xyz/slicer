@@ -9,6 +9,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 ### Changed
 
 - `set ID --discovered-from ID` refuses an item as its own discovery source with `discovered_from_self`, as `--parent` does with `parent_self`; in a batch, one id naming itself refuses the whole batch and nothing is written. The message says to clear it with `set ID --discovered-from ''`. Tests now cover `set --discovered-from` across several ids and a batch that names an unknown source (s381).
+- `slicer list` and `slicer find` end their text rows with a legend line, `! waits on a dependency not yet met: S01 (S02)`, when a printed row carries the `!` marker; it names each marked item in row order with its unmet dependencies. A list with no marked row is unchanged, `--json` carries no legend, and the legend comes before the `N items hidden` line (s386).
 - The orchestrator text's Order step 2 now says a small fix round is checked and gated in one pass, with a pointer to the rule in Rules, so an orchestrator that reads Order alone no longer runs a separate gate round after every fix round. Wording only: both rules are unchanged and `RELAY_CONTRACT` stays 11 (s375).
 
 ### Fixed
