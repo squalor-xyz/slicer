@@ -2801,9 +2801,15 @@
 {"when": "2026-11-08T15:47:18Z", "item": "s388", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:36:59Z", "item": "s388", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-11-08T15:42:52Z", "item": "s381", "action": "status", "from": "review", "to": "done", "note": "Landed s381", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:43:46Z", "item": "s389", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:45:21Z", "item": "s389", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-08T15:45:22Z", "item": "s389", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-08T15:55:42Z", "item": "s389", "action": "note", "from": "", "to": "", "note": "snapshot now runs _warn_code_mismatch once per root it reads", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:55:44Z", "item": "s389", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:48:43Z", "item": "s388", "action": "status", "from": "review", "to": "done", "note": "Landed s388", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:50:44Z", "item": "s390", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
 {"when": "2026-11-08T15:52:09Z", "item": "s390", "action": "edit", "from": "", "to": "", "note": "Files"}
 {"when": "2026-11-08T15:52:10Z", "item": "s390", "action": "edit", "from": "", "to": "", "note": "Why"}
 {"when": "2026-11-09T06:30:31Z", "item": "s390", "action": "note", "from": "", "to": "", "note": "Verified: the post-merge hook printed by setup-git --hook no", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:30:34Z", "item": "s390", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-08T15:57:05Z", "item": "s389", "action": "status", "from": "review", "to": "done", "note": "Landed s389", "by": "Jon Robbins"}

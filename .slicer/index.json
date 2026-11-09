@@ -15177,10 +15177,25 @@
       "id": "s389",
       "title": "snapshot warns when the running code is another worktree's",
       "short_title": "snapshot code-mismatch warning",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "46db0e15-b576-4f97-bb31-a298b0a98d07",
+          "kind": "",
+          "text": "**2026-11-08** — snapshot now runs _warn_code_mismatch once per root it reads (cli.main, via new cli_report.snapshot_roots; _warn_code_mismatch takes an optional start), so the editable-install code warning reaches stderr as for other commands; stdout, exit code and locking are unchanged and SLICER_NO_CODE_WARNING silences it. Three new tests in tests/test_snapshot.py were red before and are green; each was mutation-checked. Full suite 3321 passed, 0 failed, 1 skipped; slicer check passed. Docs: commands.md, agents.md, ARCHITECTURE.md, CHANGELOG.",
+          "created_at": "2026-11-08T15:55:42Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -15200,7 +15215,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

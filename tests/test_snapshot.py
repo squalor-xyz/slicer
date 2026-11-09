@@ -8,10 +8,11 @@ import os
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
 import support
 from test_recursive import make_project, slicer
-from slicer import __version__, ai, jsonio
+from slicer import __version__, ai, cli, jsonio, vcs
 
 
 class SnapshotTests(unittest.TestCase):
@@ -273,3 +274,47 @@ class SnapshotTests(unittest.TestCase):
         proc.communicate(timeout=10)
     after = {p.relative_to(repo.root): p.read_bytes() for p in repo.root.rglob("*") if p.is_file()}
     self.assertEqual(after, before)
+
+  def warned(self, *argv, silenced=False, probe=None):
+    """Run `snapshot --json` with the foreign-worktree probe patched; return what it
+    printed. tests/support.py silences the warning for the suite, so lift that here."""
+    with patch.dict(os.environ, {cli._CODE_WARNING_ENV: "1"} if silenced else {}):
+      if not silenced:
+        os.environ.pop(cli._CODE_WARNING_ENV, None)
+      with patch.object(vcs, "foreign_worktree",
+                        side_effect=probe or (lambda root, code: "code is over there")) as seen:
+        return slicer("snapshot", "--json", *argv), seen
+
+  def test_Snapshot_ForeignWorktreeCode_WarnsOnStderr(self):
+    repo = self.fixture()
+    (quiet_code, quiet_out, quiet_err), _ = self.warned("--root", str(repo.root), silenced=True)
+    (code, out, err), seen = self.warned("--root", str(repo.root))
+    self.assertEqual(err.splitlines(), ["slicer: code is over there"])
+    self.assertEqual((code, out), (quiet_code, quiet_out))
+    self.assertEqual(quiet_err, "")
+    self.assertEqual(code, 0)
+    self.assertEqual(json.loads(out)["projects"][0]["root"], str(repo.root))
+    self.assertEqual([call.args[0] for call in seen.call_args_list], [repo.root])
+
+  def test_Snapshot_CodeWarningEnv_StaysSilent(self):
+    repo = self.fixture()
+    (_, _, loud), _ = self.warned("--root", str(repo.root))
+    self.assertIn("slicer: code is over there", loud)
+    (code, out, err), seen = self.warned("--root", str(repo.root), silenced=True)
+    self.assertEqual((code, err), (0, ""))
+    json.loads(out)
+    seen.assert_not_called()  # silenced before the probe runs, as for every other command
+
+  def test_Snapshot_SeveralRoots_WarnsOncePerMismatch(self):
+    repo = self.fixture()
+    other = repo.root / "other"
+    make_project(other, "Other")
+    (code, out, err), seen = self.warned(
+      "--root", str(other), "--root", str(repo.root),
+      probe=lambda root, code: f"code is over there from {root.name}")
+    self.assertEqual(code, 0)
+    self.assertEqual(len(json.loads(out)["projects"]), 2)
+    # Five parts per project, yet one warning per root, in the order given.
+    self.assertEqual(err.splitlines(), [f"slicer: code is over there from {other.name}",
+                                        f"slicer: code is over there from {repo.root.name}"])
+    self.assertEqual([call.args[0] for call in seen.call_args_list], [other, repo.root])
