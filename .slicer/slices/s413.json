@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Write the tests; watch the three fail.\n2. The `./` rule in `extract`; the short-circuit in `item_file_paths`.\n3. Docs and CHANGELOG. Run `-k '*Overlap*'` and `-k '*Disjoint*'` to confirm that `deps --overlap` and `next --batch --disjoint` still pass with the shared rule."
+      "body": "1. Write the tests; watch the three fail.\n2. The `./` rule in `extract`; the short-circuit in `item_file_paths`.\n3. Docs and CHANGELOG. Run `-k '*Overlap*'` and `-k '*Disjoint*'` to confirm that `deps --overlap` and `next --batch --disjoint` still pass with the shared rule.\n\nOwner decisions (2026-11-09): Does a leading `./` mark a Files span as a path, or is the limitation only documented? -> dot-slash rule: a ./-prefixed backtick span is a path whatever its root match or extension; a bare NEWS.md still needs a root match; plan-parallel, next --batch --disjoint and deps --overlap share the rule [paths.dot-slash-root-marker]."
     },
     {
       "heading": "Check",
