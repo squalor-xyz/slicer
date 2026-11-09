@@ -632,7 +632,8 @@ In `list --json` the step's `phase` is `wait` and its `waiting_on` names what it
 for any other phase), and `counts.waiting` counts the waiting steps, in addition to `running`,
 which counts only `start`ed ones. In the text, a waiting run's line reads `active  waiting
 owner` after the state, shows `0 running, 1 waiting`, and its step line shows the phase as
-`wait:owner` and how long the wait has run as of now (`wait:owner 2h00m`).
+`wait:owner` and how long the wait has run as of now (`wait:owner 2h00m`), or as of the run's
+last event once the run has ended without `--close-steps`.
 
 `waiting_since` in the step JSON is the UTC stamp of the event that began the current wait. A
 repeat of the same wait keeps it, a wait on another `waiting_on` starts a new one, and a

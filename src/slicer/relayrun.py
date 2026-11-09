@@ -416,6 +416,11 @@ class Run:
   # The stamp of the end event, else "". Not serialized: `stats` reads it.
   ended_at: str = ""
 
+  def clock(self, now: datetime) -> datetime:
+    """The time a duration inside the run is measured to: `now` while the run is open, the
+    stamp of its last event once it has ended, so a wait left open by `end` stops growing."""
+    return _parse_stamp(self.updated_at) if self.outcome else now
+
   def in_lane(self, step: Step) -> bool:
     """Whether the step is drawn in the lane: nothing spawned it, or the orchestrator did. A step
     that any other role spawned is that role's subagent, counted under its parent and not a lane
