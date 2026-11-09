@@ -2856,3 +2856,6 @@
 {"when": "2026-11-09T07:31:29Z", "item": "s435", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-09T07:26:39Z", "item": "s433", "action": "status", "from": "review", "to": "done", "note": "Landed s433", "by": "Jon Robbins"}
 {"when": "2026-11-09T07:32:40Z", "item": "s435", "action": "status", "from": "review", "to": "done", "note": "Landed s435", "by": "Jon Robbins"}
+{"when": "2026-11-09T07:33:04Z", "item": "s450", "action": "set", "from": "", "to": "", "note": "pass_key v1.21→v1.22"}
+{"when": "2026-11-09T07:33:04Z", "item": "s451", "action": "set", "from": "", "to": "", "note": "pass_key v1.21→v1.22"}
+{"when": "2026-11-09T07:33:04Z", "item": "s453", "action": "set", "from": "", "to": "", "note": "pass_key v1.21→v1.22"}
