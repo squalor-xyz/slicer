@@ -1586,7 +1586,8 @@ class AiRelayTests(unittest.TestCase):
         text, ai.relay_text("handoff", "implementation report", in_project=True),
       )
       self.assertIn("slicer handoff ID --render --check", text)
-      self.assertIn(ai.handoff_policy_text("implementation report").strip(), text)
+      # The relay wraps the sentence at 88 columns (s427): the words stay, the breaks move.
+      self.assertIn(" ".join(ai.handoff_policy_text("implementation report").split()), " ".join(text.split()))
       # `--phase done` is a relay-run phase, not the finish command.
       self.assertNotIn("slicer done", text)
       self.assertNotIn("run done", text)
@@ -2087,6 +2088,35 @@ class AiRelayTests(unittest.TestCase):
               if len(line) > 88:
                 long.append(f"{number} ({len(line)}): {line}")
             self.assertEqual(long, [])
+
+  def test_RelayTexts_NoteKindSet_ProseLinesFitIn88Columns(self):
+    """s427: with `handoff_requires_note_kind` set, the policy sentence wraps like the rest
+    of both relay texts. The exemptions are those of the test above."""
+    for finish in ("done", "handoff"):
+      for command in (("relay",), ("relay-orchestrator",), ("relay-orchestrator", "--session")):
+        with self.subTest(command=" ".join(command), finish=finish), support.TempRepo() as repo:
+          for argv in (
+            ("init",),
+            ("config", "implement_finish", finish),
+            ("config", "handoff_requires_note_kind", "implementation report"),
+          ):
+            code, out, err = repo.run(*argv)
+            self.assertEqual((code, err), (0, ""), out)
+          code, out, err = repo.run("ai", *command)
+          self.assertEqual((code, err), (0, ""), out)
+          self.assertIn("handoff_requires_note_kind", out)
+          long, fenced, in_matrix = [], False, False
+          for number, line in enumerate(out.splitlines(), 1):
+            if line.startswith("## "):
+              in_matrix = line == "## Roles matrix"
+            if line.startswith("```"):
+              fenced = not fenced
+              continue
+            if fenced or in_matrix or re.fullmatch(r"\s*`slicer [^`]+`[,.;:]?", line):
+              continue
+            if len(line) > 88:
+              long.append(f"{number} ({len(line)}): {line}")
+          self.assertEqual(long, [])
 
   def test_RunReport_QuestionValueRule_IsTheSentenceAskEnforces(self):
     for finish in ("done", "handoff"):

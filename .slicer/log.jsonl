@@ -2815,3 +2815,6 @@
 {"when": "2026-11-08T15:57:05Z", "item": "s389", "action": "status", "from": "review", "to": "done", "note": "Landed s389", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:30:13Z", "item": "s413", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-11-09T06:33:18Z", "item": "s390", "action": "status", "from": "review", "to": "done", "note": "Landed s390", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:34:21Z", "item": "s427", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:50:30Z", "item": "s427", "action": "note", "from": "", "to": "", "note": "Relay texts wrap the handoff note-kind sentence at 88 column", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:50:32Z", "item": "s427", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

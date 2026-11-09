@@ -17362,10 +17362,25 @@
       "id": "s427",
       "title": "Relay texts wrap the handoff note-kind sentence at 88 columns",
       "short_title": "Wrap handoff policy text",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "c2f6e228-b231-4213-a4a0-e6401a0c2de0",
+          "kind": "",
+          "text": "**2026-11-09** — Relay texts wrap the handoff note-kind sentence at 88 columns when handoff_requires_note_kind is set: relay_shared_sections fills handoff_policy_text with _fill. Words unchanged (reviewer compared HEAD vs worktree output, whitespace collapsed, 8/8 identical); ai skill and ai instructions unchanged. New test test_RelayTexts_NoteKindSet_ProseLinesFitIn88Columns was red (426-column line) before the change; full suite 3326 tests OK (1 skipped), affected 355 OK, slicer check passes.",
+          "created_at": "2026-11-09T06:50:30Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17385,7 +17400,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -8,6 +8,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Changed
 
+- `ai relay` and `ai relay-orchestrator` wrap the note-kind sentence that `handoff_policy_text` prints at 88 columns when `handoff_requires_note_kind` is set, as the rest of both texts is (s427; s412 left it one line of about 430 columns). Only line breaks change: no word changed. `ai skill` and `ai instructions` print the sentence unwrapped as before.
 - The `setup-git --hook` post-merge hook prints `slicer: slicer was not found on PATH; install it or add it to PATH, then run slicer check.` when `slicer` is not on PATH (shell status 127), where it told the person to run `slicer check`, the very command that was missing. It still exits 0 and renders nothing. A test now runs the printed install command through `sh`, with and without `core.hooksPath` (s390).
 - `slicer snapshot` now prints the editable-install code warning on stderr, once for each root it reads (never once per part), as every other command does; it had dispatched before the check. `SLICER_NO_CODE_WARNING` silences it, and stdout and the exit code are unchanged (s389).
 - `slicer snapshot --parts` refuses an empty part name (`--parts ''`, `items,`) and a repeated one (`items,items`) as `usage` (exit 2) with a stderr line that says `empty snapshot part name` or `repeated snapshot part(s) items`, where an empty name read `unknown snapshot part(s) ` with nothing after it and a repeat was merged without a word. Nothing is written to stdout and no project is read (s388).

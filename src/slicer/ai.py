@@ -1050,7 +1050,7 @@ def relay_shared_sections(required_note_kind: str = "") -> str:
     )
     + "\n\n"
     + RELAY_FALLBACK + "\n\n"
-    + handoff_policy_text(required_note_kind)
+    + (_fill(handoff_policy_text(required_note_kind)) + "\n\n" if required_note_kind else "")
     + RELAY_CONFORMANCE_SECTION
   )
 
