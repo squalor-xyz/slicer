@@ -6,6 +6,8 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-09
+
 ### Changed
 
 - TUI writes heal a stale or conflicted `.slicer/render/` before they save, as every locked CLI write does, and the status message says which files were regenerated (`regenerated stale render files before this write: ROADMAP.md`) instead of printing to stderr. Every TUI save and key write does it, the wizard's included; none does during a Git merge, and a heal that cannot write is a warning that does not stop the save. Before, a merge followed by TUI-only edits left the render stale until a CLI write or the `r` key. The relay-run ledger, `feedback`, `init`, `setup-git --attributes` and `ai relay --init-roles` still do not heal (s429).
