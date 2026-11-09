@@ -1176,7 +1176,8 @@ chmod +x "$(git rev-parse --git-path hooks/post-merge)"
 exist. The hook needs only `sh` and `slicer` on PATH. It checks `slicer check --json`
 and runs `slicer render` only for `stale_render_kind: roadmap_only`, leaving the
 rewritten files unstaged for you to review and commit. A current render is left alone;
-other check failures say to run `slicer check`. The hook always exits 0, including
+a `slicer` that is not on PATH (shell status 127) is named as not found on PATH; other
+check failures say to run `slicer check`. The hook always exits 0, including
 when rendering fails. Git does not run `post-merge` when a merge stops on conflicts:
 after resolving them, run `slicer render` and `slicer check` by hand before committing.
 Git also skips `post-merge` for `git merge --no-commit`; after committing the merge,
