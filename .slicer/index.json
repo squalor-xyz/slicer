@@ -17377,7 +17377,7 @@
       "id": "s427",
       "title": "Relay texts wrap the handoff note-kind sentence at 88 columns",
       "short_title": "Wrap handoff policy text",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

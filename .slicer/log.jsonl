@@ -2825,3 +2825,4 @@
 {"when": "2026-11-09T06:50:30Z", "item": "s427", "action": "note", "from": "", "to": "", "note": "Relay texts wrap the handoff note-kind sentence at 88 column", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:50:32Z", "item": "s427", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:44:57Z", "item": "s413", "action": "status", "from": "review", "to": "done", "note": "Landed s413", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:51:45Z", "item": "s427", "action": "status", "from": "review", "to": "done", "note": "Landed s427", "by": "Jon Robbins"}
