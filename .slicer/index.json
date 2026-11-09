@@ -17646,10 +17646,25 @@
       "id": "s433",
       "title": "relay-run stats counts a failed gate step with no verdict as a FAIL",
       "short_title": "Stats: fail-phase gate is a FAIL",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "84019848-a973-4d73-b6d6-517de62994c7",
+          "kind": "",
+          "text": "**2026-11-09** — Ready for review: relay-run stats counts a gate step closed with phase fail, no verdict and no reason as a gate FAIL; a fail with a reason is a rerun and is not counted. Verdict is checked first, then the fail phase, then the fix-round proxy; JSON keys unchanged. Tests GateFailPhaseNoVerdict_CountsAsFail and GateFailPhaseWithReason_IsARerunNotAFail added and mutation-checked; full suite 3346 OK (1 skipped); docs/commands.md and docs/agents.md updated.",
+          "created_at": "2026-11-09T07:25:24Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17669,7 +17684,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

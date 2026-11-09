@@ -987,6 +987,8 @@ def _measure(run: Run) -> dict[str, object]:
     if step.verdict:
       with_verdict += 1
       gate_fails += step.verdict == "fail"
+    elif step.phase == "fail":
+      gate_fails += not step.reason  # a vendor or error reason is a rerun, not a FAIL
     else:
       gate_fails += sent_back
   role_seconds: dict[str, list[int]] = {}
