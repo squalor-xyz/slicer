@@ -17512,7 +17512,7 @@
       "id": "s430",
       "title": "Waited time stops at the end of an ended run",
       "short_title": "Waited time in ended runs",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
