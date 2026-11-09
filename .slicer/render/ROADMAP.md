@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-440 items · — 8 · done 419 · retired 12 · review 1
+440 items · — 8 · done 420 · retired 12
 
 ## v1.21
 
@@ -45,7 +45,7 @@
 | 10 | [s390](slices/s390.md) | Post-merge hook polish | S | 1 | slicer | s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only "run slicer check", and no test runs the printed install command · discovered from s384 | done |
 | 11 | [s413](slices/s413.md) | show --json paths edge cases | S | 1 | paths, ops, docs, tests | s395 relay review, 2026-10-26 · discovered from s395 | done |
 | 12 | [s427](slices/s427.md) | Wrap handoff policy text | S | 1 | slicer | s412 review 2026-10-30, later note: with handoff_requires_note_kind set, ai relay prints a ~394-430 column line from handoff_policy_text · discovered from s412 | done |
-| 13 | [s428](slices/s428.md) | Merge-index churn after schema 11 | S | 1 | slicer | s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note · discovered from s393 | review |
+| 13 | [s428](slices/s428.md) | Merge-index churn after schema 11 | S | 1 | slicer | s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note · discovered from s393 | done |
 | 14 | [s429](slices/s429.md) | TUI writes heal render | S | 1 | slicer | s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/ · discovered from s417 | — |
 | 15 | [s430](slices/s430.md) | Waited time in ended runs | S | 1 | slicer | s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now · discovered from s411 | — |
 | 16 | [s432](slices/s432.md) | Remove stray root files | S | 1 | slicer | s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done) · discovered from s415 | — |
