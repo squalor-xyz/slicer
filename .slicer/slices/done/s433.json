@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/relayrun.py`: `stats` / `_measure`. A gate step whose phase is `fail` and whose verdict is empty counts as a FAIL.\n- `tests/test_relay_run.py`: a run whose last gate step failed with no verdict and no fix round after it.\n- `docs/commands.md`: the `relay-run stats` row's gate rule."
+      "body": "- `src/slicer/relayrun.py`: `stats` / `_measure`. A gate step whose phase is `fail`, whose verdict is empty and whose reason is empty counts as a FAIL.\n- `tests/test_relay_run.py`: a run whose last gate step failed with no verdict and no fix round after it; one that failed with a reason.\n- `docs/commands.md`: the `relay-run stats` row's gate rule.\n- `docs/agents.md`: the `gates.fails` description in the `relay-run stats` contract."
     },
     {
       "heading": "Failing tests",

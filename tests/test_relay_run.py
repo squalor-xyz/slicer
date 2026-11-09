@@ -3337,6 +3337,23 @@ class StatsTests(RelayRunCase):
     row = self.row(got, run)
     self.assertEqual((row["fix_rounds"], row["gate_rounds"], row["gate_fails"]), (3, 3, 2))
 
+  def test_RelayRunStats_GateFailPhaseNoVerdict_CountsAsFail(self) -> None:
+    repo = self.project()
+    run = self.chain(repo, 0, ["implementer", "reviewer", ("gate", {"phase": "fail"})])
+    got = self.stats(repo)
+    self.assertEqual(got["gates"], {"rounds": 1, "fails": 1, "with_verdict": 0, "by_proxy": 1})
+    row = self.row(got, run)
+    self.assertEqual((row["gate_rounds"], row["gate_fails"]), (1, 1))
+
+  def test_RelayRunStats_GateFailPhaseWithReason_IsARerunNotAFail(self) -> None:
+    repo = self.project()
+    limit = {"phase": "fail", "reason": "rate limit"}
+    run = self.chain(
+      repo, 0, ["implementer", "reviewer", ("gate", limit), "implementer", "gate"],
+    )
+    row = self.row(self.stats(repo), run)
+    self.assertEqual((row["fix_rounds"], row["gate_rounds"], row["gate_fails"]), (1, 2, 0))
+
   def test_RelayRunStats_VendorLimitRerun_IsTheSameRound(self) -> None:
     repo = self.project()
     limit = {"phase": "fail", "reason": "rate limit"}
