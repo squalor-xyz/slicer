@@ -17616,10 +17616,25 @@
       "id": "s432",
       "title": "Remove the stray tracked root files True and unspecified",
       "short_title": "Remove stray root files",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "78a8972e-b1d6-4d98-992c-6fbe5debbbb4",
+          "kind": "",
+          "text": "**2026-11-09** — Removed the stray root files True and unspecified with git rm. They were added by 5716ab7 (s367 done) and hold one line of probe output each (M2 is_customized missing-, M1 no_slice-). Nothing in src/ writes that format, so a hand-run shell redirect wrote them and no regression test is owed. git ls-files True unspecified prints nothing, slicer check passes, and the full suite ran 3342 tests OK (1 skipped).",
+          "created_at": "2026-11-09T07:18:07Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17639,7 +17654,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
