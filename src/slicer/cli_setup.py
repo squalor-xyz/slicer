@@ -47,6 +47,10 @@ status=$?
 if [ "$status" -eq 0 ]; then
   exit 0
 fi
+if [ "$status" -eq 127 ]; then
+  printf '%s\n' 'slicer: slicer was not found on PATH; install it or add it to PATH, then run slicer check.' >&2
+  exit 0
+fi
 case "$status:$report" in
   1:*'
   "stale_render_kind": "roadmap_only",

@@ -6,6 +6,7 @@ import io
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import unittest
@@ -2113,6 +2114,54 @@ class PostMergeHookTests(unittest.TestCase):
       self.assertIn('"$(git rev-parse --git-path hooks/post-merge)"', payload["install"])
       self.assertIn("slicer setup-git --hook", payload["install"])
       self.assertIn("chmod +x", payload["install"])
+
+  def test_SetupGit_HookInstall_CommandInstallsExecutableHook(self) -> None:
+    # Run the printed command itself, so a quoting slip in it fails here.
+    for hooks_path in (None, "customhooks"):
+      with self.subTest(hooks_path=hooks_path), support.TempRepo(git=True) as repo:
+        env = self._shim(repo)
+        with support.isolated_discovery(repo.root):
+          code, out, err = repo.run("setup-git", "--hook", "--json")
+        self.assertEqual(code, 0, err)
+        payload = json.loads(out)
+        hooks = repo.root / (hooks_path or ".git/hooks")
+        hooks.mkdir(exist_ok=True)  # the docs say the hooks directory must exist
+        if hooks_path:
+          self.assertEqual(repo._git("config", "core.hooksPath", hooks_path).returncode, 0)
+        proc = self._shell(repo, payload["install"], env)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        named = repo._git("rev-parse", "--git-path", "hooks/post-merge").stdout.strip()
+        installed = repo.root / named
+        self.assertEqual(installed, hooks / "post-merge")
+        self.assertTrue(installed.is_file())
+        self.assertTrue(os.access(installed, os.X_OK))
+        self.assertEqual(installed.read_text(encoding="utf-8"), payload["hook"])
+        if hooks_path:
+          self.assertFalse((repo.root / ".git/hooks/post-merge").exists())
+
+  def test_PostMergeHook_SlicerNotOnPath_NamesTheMissingCommand(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      hook = self._hook(repo)
+      repo.run("init")
+      repo.run("render")
+      roadmap = repo.root / ".slicer/render/ROADMAP.md"
+      roadmap.write_bytes(roadmap.read_bytes() + b"stale\n")  # a render slicer would repair
+      empty = repo.root / "empty-bin"
+      empty.mkdir()
+      env = dict(os.environ, PATH=str(empty), SLICER_NO_CODE_WARNING="1")
+      before = {p: p.read_bytes() for p in repo.root.rglob("*")
+                if p.is_file() and ".git" not in p.relative_to(repo.root).parts}
+      proc = subprocess.run([shutil.which("sh") or "/bin/sh"], input=hook, cwd=repo.root,
+                            env=env, capture_output=True, text=True)
+      self.assertEqual(proc.returncode, 0, proc.stderr)
+      # The shell's own "slicer: not found" line must not be what satisfies this.
+      self.assertTrue(any(line.startswith("slicer: ") and "slicer was not found on PATH" in line
+                          for line in proc.stderr.splitlines()), proc.stderr)
+      self.assertNotIn("merge check needs attention", proc.stderr)
+      self.assertEqual(proc.stdout, "")
+      after = {p: p.read_bytes() for p in repo.root.rglob("*")
+               if p.is_file() and ".git" not in p.relative_to(repo.root).parts}
+      self.assertEqual(before, after)
 
   def test_SetupGit_Hook_NeedsNoProjectAndWritesNothing(self) -> None:
     with support.TempRepo(git=True) as repo, support.isolated_discovery(repo.root):
