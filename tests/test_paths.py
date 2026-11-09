@@ -58,6 +58,18 @@ class PathsTests(unittest.TestCase):
       with self.subTest(token=token):
         self.assertEqual(paths.extract(f"`{token}`", top_level=top_level), expected)
 
+  def test_Extract_DotSlashRootName_IsAPathWithoutARootMatch(self) -> None:
+    self.assertEqual(
+      paths.extract("`./NEWS.md` `./Makefile` `NEWS.md`", top_level=set()),
+      ["NEWS.md", "Makefile"],
+    )
+    # The dedup above would hide a bare name being admitted, so check it alone.
+    self.assertEqual(paths.extract("`NEWS.md` `Makefile`", top_level=set()), [])
+
+  def test_Extract_SurroundingSpaces_AreTrimmed(self) -> None:
+    self.assertEqual(paths.extract("` src/a.py `"), ["src/a.py"])
+    self.assertEqual(paths.extract("`src/a b.py`"), [])
+
   def test_Paths_NoBackticks_ReturnsEmpty(self) -> None:
     self.assertEqual(paths.extract(""), [])
     self.assertEqual(paths.extract("only prose, src/a.py"), [])
