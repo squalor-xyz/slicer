@@ -227,10 +227,10 @@ def _emit_run(args: argparse.Namespace, payload: dict[str, object], text: str) -
     _write_out(args, text)
 
 
-def _step_line(step: relayrun.Step) -> str:
+def _step_line(step: relayrun.Step, run: relayrun.Run) -> str:
   phase = f"{step.phase}:{step.waiting_on}" if step.waiting_on else step.phase
-  if step.waiting and step.waiting_since:  # how long the wait has run, as of now
-    phase += f" {relayrun.elapsed_text(step.waiting_since, relayrun.utcnow())}"
+  if step.waiting and step.waiting_since:  # how long the wait has run, as of now or the run's end
+    phase += f" {relayrun.elapsed_text(step.waiting_since, run.clock(relayrun.utcnow()))}"
   cells = [step.role, step.agent, step.model, step.reasoning, phase, step.task]
   line = ("    " if step.parent else "  ") + f"{step.id}  " + "  ".join(c or "-" for c in cells)
   return f"{line}  reason: {step.reason}" if step.reason else line
@@ -412,7 +412,7 @@ def cmd_relay_run_list(args: argparse.Namespace) -> int:
       f"{_count_of(counts['subagents'], 'subagent')}"
     )
     for step in run.steps:
-      lines.append(_step_line(step))
+      lines.append(_step_line(step, run))
       question = _question_line(step)
       if question:
         lines.append(question)

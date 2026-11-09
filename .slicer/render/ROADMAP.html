@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">440 items · — 8 · done 420 · retired 12</p>
+<p class="summary">440 items · — 7 · done 420 · retired 12 · review 1</p>
 <h2>v1.21</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>s371</td><td>Queue prose rows align past 999</td><td>S</td><td>1</td><td>slicer</td><td>s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long &quot;left out:&quot; notice has no cap</td><td class="status">done</td></tr>
@@ -61,7 +61,7 @@
 <tr class="done"><td>12</td><td>s427</td><td>Wrap handoff policy text</td><td>S</td><td>1</td><td>slicer</td><td>s412 review 2026-10-30, later note: with handoff_requires_note_kind set, ai relay prints a ~394-430 column line from handoff_policy_text · discovered from s412</td><td class="status">done</td></tr>
 <tr class="done"><td>13</td><td>s428</td><td>Merge-index churn after schema 11</td><td>S</td><td>1</td><td>slicer</td><td>s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note · discovered from s393</td><td class="status">done</td></tr>
 <tr class="open"><td>14</td><td>s429</td><td>TUI writes heal render</td><td>S</td><td>1</td><td>slicer</td><td>s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/ · discovered from s417</td><td class="status">—</td></tr>
-<tr class="open"><td>15</td><td>s430</td><td>Waited time in ended runs</td><td>S</td><td>1</td><td>slicer</td><td>s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now · discovered from s411</td><td class="status">—</td></tr>
+<tr class="other"><td>15</td><td>s430</td><td>Waited time in ended runs</td><td>S</td><td>1</td><td>slicer</td><td>s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now · discovered from s411</td><td class="status">review</td></tr>
 <tr class="open"><td>16</td><td>s432</td><td>Remove stray root files</td><td>S</td><td>1</td><td>slicer</td><td>s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done) · discovered from s415</td><td class="status">—</td></tr>
 <tr class="open"><td>17</td><td>s433</td><td>Stats: fail-phase gate is a FAIL</td><td>S</td><td>1</td><td>slicer</td><td>s408 review 2026-10-30, later note: stats counts a gate FAIL by verdict, else by proxy (a fix round follows); a gate step closed with phase fail and no verdict is not counted unless a fix round follows · discovered from s408</td><td class="status">—</td></tr>
 <tr class="open"><td>18</td><td>s435</td><td>Gate role FAIL dedup</td><td>S</td><td>1</td><td>ai</td><td>s424 review 2026-10-30, later nit: the new `gate` Roles text &quot;sends a FAIL back to the implementer&quot; repeats the Gate section&#x27;s &quot;FAIL goes back to the implementer and then the gate again&quot; · discovered from s424</td><td class="status">—</td></tr>

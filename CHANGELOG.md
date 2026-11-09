@@ -19,6 +19,7 @@ update the changelog; unreleased changes belong under `[Unreleased]`.
 
 ### Fixed
 
+- `relay-run list` text measures a waiting step's time to the run's last event once the run has ended, so a wait left open by `end` without `--close-steps` no longer keeps growing (s430).
 - `slicer merge-index` compares note records with fields a newer schema added (`by`, `verified_*`, `stale_after`, `retracted_*`) filled in at their empty values, so a branch cut before schema 11 that edits or verifies an existing note no longer conflicts at `items/ID/note_records` when the other side only restamped that note. The merged notes carry every current field in the current key order (s428).
 - The TUI queue's prose rows and `Only in a sibling` rows start under the item rows' ids once the view has more than 999 rows, where the number slot widens; they sat one cell left. The `Q` notice names the first three ids it left out, in queue order, then `, and N more` (s371).
 - `docs/commands.md` lists every command that takes `--render` (it had omitted `config`, `template`, `catalog`, `id-prefix`, `issues-pull`, `note-verify`, `relay-roles` and others), and `docs/agents.md` names the commands that write elsewhere and take none (`init`, `feedback`, `feedback-report`, `setup-git`, `sync`, `relay-run`, the merge drivers) and no longer says `land` takes no flag. A test derives the list from the parser, so it cannot drift again. `docs/agents.md` calls the `--disjoint` paths project paths, as `docs/configuration.md` does (s372).

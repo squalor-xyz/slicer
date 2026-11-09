@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/tui.py`: `_waiting_cells` (about lines 1608-1615) measures to the run's `updated_at` when the run is ended.\n- `src/slicer/cli.py`: `_step_line` (about lines 687-688) does the same.\n- `tests/test_relay_run.py`, `tests/test_tui.py`: an ended run with a waiting step."
+      "body": "- `src/slicer/cli_relay.py`: `_step_line` (the `waiting_since` elapsed text) measures to `relayrun.utcnow()`; it takes the run and uses `Run.clock`. (The slice named `cli.py` lines 687-688; the function is in `cli_relay.py`.)\n- `src/slicer/relayrun.py`: `Run.clock(now)`, the run's last event stamp when ended, else `now`.\n- `src/slicer/tui.py`: `_waiting_cells` measures to `now`; `board_lines` draws an ended run as one `_ended_line`, so no wait cell shows for it and nothing changes here.\n- `tests/test_relay_run.py`: an ended run with a waiting step."
     },
     {
       "heading": "Failing tests",
@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Pass the end time (the run's last event stamp when the run is ended, else now) to `relayrun.elapsed_text` in both places."
+      "body": "1. `Run.clock(now)` returns the run's last event stamp when the run is ended, else now.\n2. `_step_line` in `src/slicer/cli_relay.py` takes the run and passes `run.clock(relayrun.utcnow())` to `relayrun.elapsed_text`. `tui.py` does not change: `board_lines` draws an ended run as one `_ended_line` and never calls `_waiting_cells` for it, so the board has no wait cell to stop."
     },
     {
       "heading": "Check",

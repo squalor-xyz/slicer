@@ -2160,6 +2160,28 @@ class WaitTests(RelayRunCase):
     final = got["run"]["steps"][0]
     self.assertEqual((final["phase"], final["waiting_on"]), ("fail", ""))
 
+  def test_Wait_EndedRun_WaitTimeStopsAtTheEnd(self) -> None:
+    """A step left in `wait` by an `end` without `--close-steps` shows the wait up to the end
+    stamp, however late `list` runs."""
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 10)
+    ops.relay_run_end(repo.root, run, "stopped", now=minutes(40))
+    with patch("slicer.relayrun.utcnow", return_value=minutes(600)):
+      code, out, err = repo.run("relay-run", "list")
+    self.assertEqual(code, 0, out)
+    self.assertIn("wait:owner 30m00s", out)
+    self.assertNotIn("wait:owner 9h50m", out)
+
+  def test_Wait_ListText_RunNotEnded_StillMeasuresToNow(self) -> None:
+    repo = self.project()
+    run, step = self.started(repo)
+    self.wait(repo, run, step, 10)
+    with patch("slicer.relayrun.utcnow", return_value=minutes(600)):
+      code, out, err = repo.run("relay-run", "list")
+    self.assertEqual(code, 0, out)
+    self.assertIn("wait:owner 9h50m", out)
+
   def test_Wait_EndWithoutCloseSteps_NamesTheWaitingStep(self) -> None:
     repo = self.project()
     run = self.begin(repo, "s1")
