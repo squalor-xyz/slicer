@@ -15222,7 +15222,7 @@
       "id": "s390",
       "title": "The post-merge hook says when slicer is missing, and a test runs its install command",
       "short_title": "Post-merge hook polish",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

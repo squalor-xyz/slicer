@@ -44,7 +44,7 @@
   happens through git, not a live shared service.<br>
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical<br>
   state directory; canonical state stays in git-tracked JSON inside the checkout.</p></div></section>
-<p class="summary">440 items · — 11 · done 416 · retired 12 · review 1</p>
+<p class="summary">440 items · — 11 · done 417 · retired 12</p>
 <h2>v1.21</h2>
 <table><thead><tr><th>#</th><th>ID</th><th>Title</th><th>Size</th><th>Effort</th><th>Trees</th><th>Findings</th><th>Status</th></tr></thead><tbody>
 <tr class="done"><td>1</td><td>s371</td><td>Queue prose rows align past 999</td><td>S</td><td>1</td><td>slicer</td><td>s363 relay 2026-10-18: prose and sibling-only queue rows use a fixed 5-cell indent (tui.py ~347, 737, 757), one cell left of item rows once the number slot widens past 999 rows; a long &quot;left out:&quot; notice has no cap</td><td class="status">done</td></tr>
@@ -56,7 +56,7 @@
 <tr class="done"><td>7</td><td>s386</td><td>slicer list: explain the ! dependency marker in its output</td><td>S</td><td>1</td><td>slicer</td><td>owner filing 2026-10-20</td><td class="status">done</td></tr>
 <tr class="done"><td>8</td><td>s388</td><td>snapshot --parts validation</td><td>S</td><td>1</td><td>slicer</td><td>s383 relay report 2026-10-22, later note: `--parts &#x27;&#x27;` or a trailing comma gives a usage message naming an empty part, and `--parts items,items` merges silently · discovered from s383</td><td class="status">done</td></tr>
 <tr class="done"><td>9</td><td>s389</td><td>snapshot code-mismatch warning</td><td>S</td><td>1</td><td>slicer</td><td>s383 relay report 2026-10-22, later note: `snapshot` dispatches before `_warn_code_mismatch`, so the editable-install warning every other command prints is skipped · discovered from s383</td><td class="status">done</td></tr>
-<tr class="other"><td>10</td><td>s390</td><td>Post-merge hook polish</td><td>S</td><td>1</td><td>slicer</td><td>s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only &quot;run slicer check&quot;, and no test runs the printed install command · discovered from s384</td><td class="status">review</td></tr>
+<tr class="done"><td>10</td><td>s390</td><td>Post-merge hook polish</td><td>S</td><td>1</td><td>slicer</td><td>s384 relay report 2026-10-22, later notes 1 and 3: when slicer is not on PATH the hook prints only &quot;run slicer check&quot;, and no test runs the printed install command · discovered from s384</td><td class="status">done</td></tr>
 <tr class="open"><td>11</td><td>s413</td><td>show --json paths edge cases</td><td>S</td><td>1</td><td>paths, ops, docs, tests</td><td>s395 relay review, 2026-10-26 · discovered from s395</td><td class="status">—</td></tr>
 <tr class="open"><td>12</td><td>s427</td><td>Wrap handoff policy text</td><td>S</td><td>1</td><td>slicer</td><td>s412 review 2026-10-30, later note: with handoff_requires_note_kind set, ai relay prints a ~394-430 column line from handoff_policy_text · discovered from s412</td><td class="status">—</td></tr>
 <tr class="open"><td>13</td><td>s428</td><td>Merge-index churn after schema 11</td><td>S</td><td>1</td><td>slicer</td><td>s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note · discovered from s393</td><td class="status">—</td></tr>
