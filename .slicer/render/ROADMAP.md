@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-440 items · — 5 · done 422 · retired 12 · review 1
+440 items · — 5 · done 423 · retired 12
 
 ## v1.21
 
@@ -48,7 +48,7 @@
 | 13 | [s428](slices/s428.md) | Merge-index churn after schema 11 | S | 1 | slicer | s393 review 2026-10-30, later note: after the schema-11 restamp, a branch cut before s393 that edits or verifies an existing note conflicts on that note · discovered from s393 | done |
 | 14 | [s429](slices/s429.md) | TUI writes heal render | S | 1 | slicer | s417 review 2026-10-30, later note: TUI saves do not regenerate a stale or conflicted render/ · discovered from s417 | done |
 | 15 | [s430](slices/s430.md) | Waited time in ended runs | S | 1 | slicer | s411 review 2026-10-30, later note: a step left in wait by relay-run end without --close-steps keeps counting its wait up to now · discovered from s411 | done |
-| 16 | [s432](slices/s432.md) | Remove stray root files | S | 1 | slicer | s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done) · discovered from s415 | review |
+| 16 | [s432](slices/s432.md) | Remove stray root files | S | 1 | slicer | s415 review 2026-10-30, later note: the repository root tracks files named True and unspecified, added by 5716ab7 (s367 done) · discovered from s415 | done |
 | 17 | [s433](slices/s433.md) | Stats: fail-phase gate is a FAIL | S | 1 | slicer | s408 review 2026-10-30, later note: stats counts a gate FAIL by verdict, else by proxy (a fix round follows); a gate step closed with phase fail and no verdict is not counted unless a fix round follows · discovered from s408 | — |
 | 18 | [s435](slices/s435.md) | Gate role FAIL dedup | S | 1 | ai | s424 review 2026-10-30, later nit: the new `gate` Roles text "sends a FAIL back to the implementer" repeats the Gate section's "FAIL goes back to the implementer and then the gate again" · discovered from s424 | — |
 | 19 | [s450](slices/s450.md) | Keyed lookup for Index.get and CatalogRecord.get | S `[needs-owner]` | 1 |  | s370's reviewer: Index.get is a linear scan per miss, and CatalogRecord.get the same; left out of s370 (owner note 2026-11-03). Change: build a dict keyed by item id once per Index/CatalogRecord (invalidated when items change) and use it in get. Acceptance: (1) get returns the same item or None as before for every existing caller, with a test for hit, miss and an id added after the first get; (2) a test shows a miss no longer scans all items (counts comparisons or accesses); (3) the lazy-load behavior of s312 and s361 is unchanged and their tests pass; (4) python3 -m unittest discover -s tests -t tests and slicer check pass. · discovered from s370 | — |

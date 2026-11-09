@@ -17616,7 +17616,7 @@
       "id": "s432",
       "title": "Remove the stray tracked root files True and unspecified",
       "short_title": "Remove stray root files",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
