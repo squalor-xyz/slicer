@@ -34,7 +34,7 @@ from typing import Any
 
 from slicer import graph, ids as idscheme, jsonio, vcs
 from slicer.errors import StateError
-from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, Index, successor_cycles
+from slicer.model import CATALOG_ACTIVE, CATALOG_RETIRED, Index, NoteRecord, successor_cycles
 
 _MISSING: Any = object()
 
@@ -44,6 +44,17 @@ _COUNTER = re.compile(r'^  "next_id": (\d+)(,?)$', re.MULTILINE)
 
 class _Unreadable(Exception):
   """An input that is not an index this driver can merge by identity."""
+
+
+def _current_note(note: dict[str, Any]) -> dict[str, Any]:
+  """`note` with every persisted field present, missing ones at their empty default, in
+  the current key order and then any unknown keys. A branch cut before a schema added
+  fields still counts as unchanged on them, so the first save of the newer schema on the
+  other side does not read as an edit of every note."""
+  fields = NoteRecord("", "", "", "", None).persisted_dict()
+  return {key: note.get(key, default) for key, default in fields.items()} | {
+    key: value for key, value in note.items() if key not in fields
+  }
 
 
 def _same(a: Any, b: Any) -> bool:
@@ -138,8 +149,9 @@ class _Merge:
     union of the three by note id, ordered by created_at (ties keep ours first, then the
     notes only theirs has). A note one side removed stays removed only when the other
     side left it as it was in the base; a note both sides changed differently conflicts
-    at the note list. A list that is not a plain list of id-keyed notes is atomic, like
-    any other list."""
+    at the note list. Notes compare in the current field set, so a side that predates
+    a field and a side that stores it empty agree. A list that is not a plain list of
+    id-keyed notes is atomic, like any other list."""
     base, ours, theirs = sides
     if _same(ours, theirs) or _same(ours, base) or _same(theirs, base):
       return self._value(*sides, path)
@@ -151,7 +163,7 @@ class _Merge:
       for side in lists
     ):
       return self._value(*sides, path)
-    by_id = [{n["id"]: n for n in side} for side in lists]
+    by_id = [{n["id"]: _current_note(n) for n in side} for side in lists]
     merged: list[dict[str, Any]] = []
     for note_id in dict.fromkeys([*by_id[1], *by_id[2], *by_id[0]]):
       b, o, t = (side.get(note_id, _MISSING) for side in by_id)

@@ -1194,7 +1194,10 @@ coalesce; new ids from both sides are kept, yours first. A readiness record merg
 one value. An item's notes are append-only
 records with unique ids, so two branches that each added notes keep both, ordered by
 creation time, with notes that share a time kept yours first, then theirs (a note
-removed on one side stays removed only if the other side left it unchanged). Other lists
+removed on one side stays removed only if the other side left it unchanged). Notes are
+compared with every field a newer schema added filled in at its empty value, so a branch
+cut before that schema, which lacks the fields, does not conflict on a note the other
+side only restamped. Other lists
 (dependencies, flags) and prose are never combined, and the shared items' order follows
 whichever side reordered it, so these still conflict when both sides changed them
 differently:

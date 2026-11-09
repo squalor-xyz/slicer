@@ -13,6 +13,7 @@ from unittest.mock import patch
 import support
 from slicer import jsonio, store, vcs
 from slicer.errors import StateError
+from slicer.model import NoteRecord
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 
@@ -175,6 +176,47 @@ class MergeIndexCommandTests(unittest.TestCase):
       self.assertEqual(len(records), 2)
       self.assertEqual((records[0]["retracted_by"], records[0]["retracted_reason"]), ("relay", "not a failure"))
       self.assertEqual(records[1]["retracted_by"], "")
+
+  def _schema_10(self, text: str) -> str:
+    """`text` as a pre-schema-11 index: no retraction keys on any note record."""
+    doc = json.loads(text)
+    doc["version"] = 10
+    for item in doc["items"]:
+      for note in item["note_records"]:
+        for key in ("retracted_by", "retracted_at", "retracted_reason"):
+          note.pop(key, None)
+    return jsonio.dumps(doc)
+
+  def _restamped(self, text: str) -> str:
+    """`text` as the schema-11 save writes it: every note carries every persisted field."""
+    doc = json.loads(text)
+    doc["version"] = 11
+    for item in doc["items"]:
+      item["note_records"] = [
+        NoteRecord.from_dict(note).persisted_dict() for note in item["note_records"]
+      ]
+    return jsonio.dumps(doc)
+
+  def test_MergeIndex_OlderSideEditsNote_TheirsOnlyRestamped_MergesClean(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      base = self._schema_10(_notes_index({"s01": [("n1", "2026-01-01")]}))
+      edited = json.loads(base)
+      edited["items"][0]["note_records"][0]["text"] = "edited text"
+      ours = jsonio.dumps(edited)
+      theirs = self._restamped(base)
+      code, _, err, merged = self._merge(repo, base, ours, theirs)
+      self.assertEqual((code, err), (0, ""))
+      self.assertNotIn("<<<<<<<", merged)
+      doc = json.loads(merged)
+      self.assertEqual(doc["version"], 11)
+      note = doc["items"][0]["note_records"][0]
+      self.assertEqual(note["text"], "edited text")
+      self.assertEqual(
+        note,
+        NoteRecord("n1", "", "edited text", "2026-01-01", None).persisted_dict(),
+      )
+      self.assertEqual(list(note), list(NoteRecord("", "", "", "", None).persisted_dict()))
 
   def test_MergeIndex_NoCounterLine_IsMergedAsItIs(self) -> None:
     with support.TempRepo(git=True) as repo:
