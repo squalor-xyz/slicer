@@ -280,7 +280,9 @@ class TuiFeedbackTests(unittest.TestCase):
 
   def test_Errors_MessageWording_DoesNotControlSeverity(self) -> None:
     state = example()
-    with patch.object(tui.ops, "start", side_effect=StateError("success")):
+    # An in-memory state has no render/ to heal; the write itself is what this test is about.
+    with patch.object(tui.ops, "heal_render", return_value=[]), \
+        patch.object(tui.ops, "start", side_effect=StateError("success")):
       result = tui.act(state, "s", "S02")
       self.assertEqual((result.message, result.severity), ("success", "error"))
     with patch.object(tui.render, "plan", side_effect=OSError("render failed")):

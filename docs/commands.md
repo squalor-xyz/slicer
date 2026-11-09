@@ -1134,11 +1134,13 @@ write: ROADMAP.html, ROADMAP.md`). A render with conflict markers is healed the 
 retry or a refusal after the lock is taken leaves state and history untouched, but not
 `render/`. The read-only commands, `render` and `sync` never heal. These writes do not heal
 either: `init` (also `init --relay-roles`), `ai relay --init-roles`, `setup-git --attributes`,
-the `feedback` commands and the `relay-run` ledger (which write no roadmap state), and the
-TUI, whose own writes leave it to its `r` key. The heal costs one render comparison per
-write, and a project with no `render/` directory is left alone. It does nothing while Git
-has a merge in progress (those writes are refused), and
-it cannot help `index.json` or `relay-roles.json`: with markers in `index.json` a write
+the `feedback` commands and the `relay-run` ledger (which write no roadmap state). The TUI
+heals too, on each of its saves and key writes, and puts the same line in its status message
+(`regenerated stale render files before this write: ROADMAP.md`) where the CLI prints it on
+stderr; a heal that cannot write is a warning in that message and the save still lands. The
+heal costs one render comparison per write, and a project with no `render/` directory is
+left alone. It does nothing while Git has a merge in progress (those writes are refused),
+and it cannot help `index.json` or `relay-roles.json`: with markers in `index.json` a write
 is refused (`corrupt`) and the message names `slicer setup-git`; with markers in
 `relay-roles.json` the message gives the `git checkout --ours|--theirs` route instead of
 a hand edit. So the `slicer-generated`

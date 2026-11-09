@@ -2826,3 +2826,8 @@
 {"when": "2026-11-09T06:50:32Z", "item": "s427", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:44:57Z", "item": "s413", "action": "status", "from": "review", "to": "done", "note": "Landed s413", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:51:45Z", "item": "s427", "action": "status", "from": "review", "to": "done", "note": "Landed s427", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:52:37Z", "item": "s429", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:58:43Z", "item": "s429", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-09T06:58:43Z", "item": "s429", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-09T07:09:01Z", "item": "s429", "action": "note", "from": "", "to": "", "note": "TUI writes now heal a stale or conflicted render/ before sav", "by": "Jon Robbins"}
+{"when": "2026-11-09T07:09:03Z", "item": "s429", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

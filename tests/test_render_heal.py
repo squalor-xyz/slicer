@@ -9,13 +9,18 @@ matter: with conflict markers in it nothing can be rebuilt, so the write is refu
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import unittest
+from unittest.mock import patch
 
 import support
+from test_tui_wizard import draft, save
 
-from slicer import render
+from slicer import render, tui
+from slicer.errors import StateError
 
 HEAL_LINE = "slicer: regenerated stale render files before this write: "
 MARKERS = "<<<<<<< HEAD\nours\n=======\ntheirs\n>>>>>>> feature\n"
@@ -252,6 +257,181 @@ class RenderHealTests(unittest.TestCase):
       code, out, _ = repo.run("check")
       self.assertIn("holds merge conflict markers", out)
       self.assertIn("any slicer write regenerates it", out)
+
+
+TUI_HEAL = "regenerated stale render files before this write: "
+
+
+class TuiRenderHealTests(unittest.TestCase):
+  """A TUI write heals `render/` as a CLI write does, and says so in the status line (s429)."""
+
+  def repo(self, *, git: bool = False) -> support.TempRepo:
+    repo = support.TempRepo(git=git)
+    repo.run("init")
+    repo.run("add", "a thing", "--effort", "1")
+    repo.run("add", "another", "--effort", "1")
+    repo.run("render")
+    return repo
+
+  def _tamper(self, repo: support.TempRepo) -> None:
+    path = repo.root / ".slicer/render/ROADMAP.md"
+    path.write_text(path.read_text(encoding="utf-8") + "tampered\n", encoding="utf-8", newline="\n")
+
+  def _assert_healed(self, repo: support.TempRepo, before: dict[str, bytes], message: str) -> None:
+    self.assertIn(TUI_HEAL + "ROADMAP.md", message)
+    # Healed from the state before the write, as the CLI does; the write's own change waits for `r`.
+    self.assertEqual((repo.root / ".slicer/render/ROADMAP.md").read_bytes(), before["ROADMAP.md"])
+
+  def test_Tui_WriteWithStaleRender_HealsAndSaysSo(self) -> None:
+    with self.repo() as repo:
+      before = render.plan(repo.state())
+      self._tamper(repo)
+      state = repo.state()
+      err = io.StringIO()
+      with contextlib.redirect_stderr(err):
+        result = tui.apply_edit_result(state, tui.EditRequest("note_new", "S01", "add a note", ""), "tried X")
+      self.assertEqual(result.severity, "success", result.message)
+      self.assertTrue(repo.state().index.require("S01").notes[-1].endswith("tried X"))
+      self._assert_healed(repo, before, result.message)
+      self.assertEqual(err.getvalue(), "")
+      view = tui.View.initial(state)
+      view.accept(result)
+      self.assertIn(TUI_HEAL + "ROADMAP.md", view.feedback())
+
+  def test_Tui_FreshRender_SaysNothingExtra(self) -> None:
+    with self.repo() as repo:
+      files, times = _render_bytes(repo), _mtimes(repo)
+      result = tui.apply_edit_result(
+        repo.state(), tui.EditRequest("note_new", "S01", "add a note", ""), "tried X")
+      self.assertEqual(result.message, "added note; press r to render")
+      self.assertEqual((_render_bytes(repo), _mtimes(repo)), (files, times))
+
+  def test_Tui_KeyWriteWithStaleRender_HealsAndSaysSo(self) -> None:
+    with self.repo() as repo:
+      before = render.plan(repo.state())
+      self._tamper(repo)
+      state = repo.state()
+      result = tui.act(state, "s", "S01")
+      self.assertEqual(result.severity, "success", result.message)
+      self.assertTrue(result.message.startswith("S01 started"), result.message)
+      self._assert_healed(repo, before, result.message)
+
+  def _prompt_view(self, repo: support.TempRepo, *setup: tuple[str, ...]) -> tuple[object, tui.View]:
+    """Run CLI `setup` commands, render, tamper with the render and open a view on S01."""
+    for command in setup:
+      repo.run(*command)
+    repo.run("render")
+    self._tamper(repo)
+    state = repo.state()
+    view = tui.View.initial(state)
+    view.filters = tui.Filters()  # a move is refused while a filter is active
+    view.refresh(state)
+    view.select((tui.ITEM, "S01"))
+    return state, view
+
+  def test_Tui_PromptWritesWithStaleRender_HealAndSaySo(self) -> None:
+    for name, setup, keys in (
+      ("move", (), "M2\n"),
+      ("handoff", (("promote", "S01"), ("start", "S01")), "h\n"),
+      ("catalog", (("catalog", "add", "--kind", "goal", "Keep it simple"),), "C "),
+    ):
+      with self.subTest(prompt=name), self.repo() as repo:
+        state, view = self._prompt_view(repo, *setup)
+        before = render.plan(repo.state())
+        for key in keys:
+          view.handle(state, key)
+        self._assert_healed(repo, before, view.message)
+
+  def test_Tui_RetractWithStaleRender_HealsAndSaysSo(self) -> None:
+    with self.repo() as repo:
+      state, view = self._prompt_view(repo, ("note", "S01", "--text", "wrong"))
+      before = render.plan(repo.state())
+      record = state.index.require("S01").note_records[0]
+      view.accept(tui.ActResult("give a reason", retract=("S01", record.id)))
+      for key in "typo\n":
+        view.handle(state, key)
+      self.assertTrue(repo.state().index.require("S01").note_records[0].retracted)
+      self._assert_healed(repo, before, view.message)
+
+  def test_Tui_WizardSaveWithStaleRender_HealsAndSaysSo(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      view = tui.View.initial(state)
+      wizard = draft(list(state.config.sections))
+      view.wizard, view.mode = wizard, "wizard"
+      self._tamper(repo)
+      save(view, state)
+      self.assertEqual(view.mode, "normal", view.message)
+      self.assertIn(TUI_HEAL + "ROADMAP.md", view.message)
+      self.assertTrue(view.message.startswith("saved 1 item(s) and slices"), view.message)
+      self.assertEqual(repo.run("check")[0], 0)  # the wizard's own render follows the heal
+
+  def test_Tui_WizardSaveThatRaisesAfterHeal_StillSaysItHealed(self) -> None:
+    with self.repo() as repo:
+      state = repo.state()
+      view = tui.View.initial(state)
+      view.wizard, view.mode = draft(list(state.config.sections)), "wizard"
+      self._tamper(repo)
+      with patch("slicer.ops.apply_outline", side_effect=StateError("boom")):
+        save(view, state)
+      self.assertIsNotNone(view.wizard)
+      self.assertTrue(view.wizard.error.startswith("boom; "), view.wizard.error)
+      self.assertIn(TUI_HEAL + "ROADMAP.md", view.wizard.error)
+
+  def _stale_state(self, repo: support.TempRepo) -> object:
+    """S01 promoted with a note, S02 beside it, the render current, then ROADMAP.md tampered with."""
+    repo.run("promote", "S01")
+    repo.run("note", "S01", "--text", "first")
+    repo.run("render")
+    self._tamper(repo)
+    return repo.state()
+
+  def test_Tui_EveryKeyWrite_WithStaleRender_HealsAndSaysSo(self) -> None:
+    for key, target in (("l", "S01"), ("J", "S01"), ("K", "S02"), ("T", "S02"), ("n", "S02"),
+                        ("p", "S01"), ("d", "S01")):
+      with self.subTest(key=key), self.repo() as repo:
+        state = self._stale_state(repo)
+        result = tui.act(state, key, target)
+        self.assertNotEqual(result.severity, "error", result.message)
+        self.assertIn(TUI_HEAL + "ROADMAP.md", result.message)
+
+  def test_Tui_EveryEditKind_WithStaleRender_HealsAndSaysSo(self) -> None:
+    section = "Why"
+    for request, body in (
+      (tui.EditRequest("new", "", "new item", ""), "a third thing"),
+      (tui.EditRequest(tui.PROSE, "preamble", "preamble", ""), "new context"),
+      (tui.EditRequest("lead", "S01", "lead", ""), "A lead."),
+      (tui.EditRequest("boundary", "S01", "boundary", ""), "Not in this slice: x."),
+      (tui.EditRequest("field", "S01", "size", ""), "L"),
+      (tui.EditRequest("note", "S01", "note 1", "first", index=0), "revised"),
+      (tui.EditRequest("note_new", "S01", "add a note", ""), "second"),
+      (tui.EditRequest("section", "S01", section, ""), "Because."),
+    ):
+      with self.subTest(kind=request.kind), self.repo() as repo:
+        state = self._stale_state(repo)
+        result = tui.apply_edit_result(state, request, body)
+        self.assertEqual(result.severity, "success", result.message)
+        self.assertIn(TUI_HEAL + "ROADMAP.md", result.message)
+
+  def test_Tui_WriteDuringMerge_DoesNotHeal(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      _conflicted_merge(repo)
+      files = _render_bytes(repo)
+      state = repo.state()
+      result = tui.apply_edit_result(state, tui.EditRequest("note_new", "S01", "add a note", ""), "x")
+      self.assertEqual(result.severity, "error", result.message)
+      self.assertNotIn(TUI_HEAL, result.message)
+      self.assertEqual(_render_bytes(repo), files)
+
+  def test_Tui_HealThatCannotWrite_StillLandsTheWriteAndWarns(self) -> None:
+    with self.repo() as repo:
+      self._tamper(repo)
+      state = repo.state()
+      with patch("slicer.render.write_atomic", side_effect=OSError("disk full")):
+        result = tui.apply_edit_result(state, tui.EditRequest("note_new", "S01", "add a note", ""), "x")
+      self.assertEqual(result.severity, "success", result.message)
+      self.assertIn("could not regenerate the stale render: disk full", result.message)
+      self.assertTrue(repo.state().index.require("S01").notes[-1].endswith("x"))
 
 
 if __name__ == "__main__":
