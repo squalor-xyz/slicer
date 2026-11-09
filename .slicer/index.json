@@ -17751,7 +17751,7 @@
       "id": "s435",
       "title": "Relay gate role text stops repeating the Gate section's FAIL rule",
       "short_title": "Gate role FAIL dedup",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
