@@ -542,10 +542,59 @@ def render_drifted(state: State) -> bool:
     return True
 
 
+def heal_render(state: State) -> str:
+  """Regenerate a stale or conflicted `render/`, as every locked CLI write does first (s417).
+
+  Returns the status-line text for what it wrote, or "" when `render/` was current. A render
+  that cannot be written is a warning, not a refusal: the write itself can still land.
+  """
+  try:
+    healed = ops.heal_render(state)
+  except (SlicerError, OSError) as exc:
+    return f"could not regenerate the stale render: {exc}; press r"
+  if not healed:
+    return ""
+  return f"regenerated stale render files before this write: {', '.join(healed)}"
+
+
+def begin_write(state: State) -> str:
+  """The start of every TUI write: refuse during a merge, then heal `render/`.
+
+  Returns the heal text for the status line (see `heal_render`), "" when there is none.
+  """
+  vcs.require_no_merge(state.root)
+  return heal_render(state)
+
+
+def with_heal(message: str, line: str) -> str:
+  return f"{message}; {line}" if line else message
+
+
+class _Heal:
+  """Carries the heal text of one `act` or `apply_edit_result` call to its result."""
+
+  def __init__(self) -> None:
+    self.line = ""
+
+  def begin(self, state: State) -> None:
+    self.line = begin_write(state)
+
+  def tag(self, result: ActResult) -> ActResult:
+    result.message = with_heal(result.message, self.line)
+    return result
+
+
 def act(
   state: State, key: str, target: str, *, entry: int | None = None, focus: str = "left"
 ) -> ActResult:
   """Apply a keystroke. Every branch calls the same `ops` the CLI does."""
+  heal = _Heal()
+  return heal.tag(_act(state, key, target, heal, entry=entry, focus=focus))
+
+
+def _act(
+  state: State, key: str, target: str, heal: _Heal, *, entry: int | None = None, focus: str = "left"
+) -> ActResult:
   cfg = state.config
   is_prose = target in prose.refs(state.index)
   action = key_action(key)
@@ -589,7 +638,7 @@ def act(
     if action in ("start", "done", "park", "unpark"):
       item = state.index.require(target)
       previous = item.status
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       if action == "start":
         ops.start(state, target)
         message = f"{target} started"
@@ -605,7 +654,7 @@ def act(
       return ActResult(message, severity="success" if item.status != previous else "info")
     if action == "release":
       held = state.index.require(target).claim_owner
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.release(state, target)
       return ActResult(f"{target} released", severity="success") if held else ActResult(
         f"{target} has no claim"
@@ -613,25 +662,25 @@ def act(
     if action == "reorder_down":
       at = state.index.position(target)
       if at + 1 < len(state.index.items):
-        vcs.require_no_merge(state.root)
+        heal.begin(state)
         ops.move(state, target, after=state.index.items[at + 1].id)
         return ActResult(f"{target} moved down", severity="success")
       return ActResult("already last")
     if action == "reorder_up":
       at = state.index.position(target)
       if at > 0:
-        vcs.require_no_merge(state.root)
+        heal.begin(state)
         ops.move(state, target, before=state.index.items[at - 1].id)
         return ActResult(f"{target} moved up", severity="success")
       return ActResult("already first")
     if action == "reorder_top":
       if state.index.position(target) > 0:
-        vcs.require_no_merge(state.root)
+        heal.begin(state)
         ops.move(state, target, to=1)
         return ActResult(f"{target} moved to top", severity="success")
       return ActResult("already first")
     if action == "promote":
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.promote(state, target)
       return ActResult(f"{target} promoted", severity="success")
   except (SlicerError, OSError) as exc:
@@ -641,6 +690,11 @@ def act(
 
 def apply_edit_result(state: State, request: EditRequest, body: str | None) -> ActResult:
   """Carry editor outcomes explicitly instead of classifying message wording."""
+  heal = _Heal()
+  return heal.tag(_apply_edit(state, request, body, heal))
+
+
+def _apply_edit(state: State, request: EditRequest, body: str | None, heal: _Heal) -> ActResult:
   if body is None:
     return ActResult("editor exited non-zero; nothing changed", severity="error")
   if body == request.body:
@@ -650,29 +704,29 @@ def apply_edit_result(state: State, request: EditRequest, body: str | None) -> A
       title = body.strip()
       if not title:
         return ActResult("cancelled")
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       return ActResult(f"added {ops.add(state, title).id}", severity="success")
     if request.kind == PROSE:
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.edit_prose(state, request.target, body)
     elif request.kind == "lead":
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       # The blank-line split `edit --lead` uses; an empty body clears the lead.
       ops.edit_lead(state, request.target, outline.blocks(body.split("\n")))
     elif request.kind == "boundary":
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.edit_boundary(state, request.target, body)
     elif request.kind == "field":
       kwarg, parse = FIELD_SPEC[request.name]
       item = state.index.require(request.target)
       before = item.to_dict()
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.set_fields(state, request.target, **{kwarg: parse(body)})
       if item.to_dict() == before:
         return ActResult(f"{request.name} unchanged")
     elif request.kind == "note":
       if body.strip():
-        vcs.require_no_merge(state.root)
+        heal.begin(state)
         ops.set_note(state, request.target, request.index, body)
         return ActResult("updated note; press r to render", severity="success")
       # An emptied note is retracted, never deleted: the reason comes from the note prompt.
@@ -683,11 +737,11 @@ def apply_edit_result(state: State, request: EditRequest, body: str | None) -> A
     elif request.kind == "note_new":
       if not body.strip():
         return ActResult("cancelled")
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.add_note(state, request.target, body)
       return ActResult("added note; press r to render", severity="success")
     else:
-      vcs.require_no_merge(state.root)
+      heal.begin(state)
       ops.edit_section(state, request.target, request.name, body)
   except (SlicerError, OSError) as exc:
     return ActResult(str(exc), severity="error")
@@ -1255,19 +1309,20 @@ class View:
       elif not records:
         self.notify("no catalog records")
       else:
+        healed = ""
         try:
-          vcs.require_no_merge(state.root)
+          healed = begin_write(state)
           record = records[self.catalog_at]
           item = state.index.require(self.target)
           if record.id in item.cites:
             ops.catalog_uncite(state, item.id, [record.id])
-            self.notify(f"{item.id} uncited {record.id}", "success")
+            self.notify(with_heal(f"{item.id} uncited {record.id}", healed), "success")
           else:
             ops.catalog_cite(state, item.id, [record.id])
-            self.notify(f"{item.id} cited {record.id}", "success")
+            self.notify(with_heal(f"{item.id} cited {record.id}", healed), "success")
           self.drift_due = True
         except (SlicerError, OSError) as exc:
-          self.notify(str(exc), "error")
+          self.notify(with_heal(str(exc), healed), "error")
     return ActResult()
 
   def _open_roles(self, state: State) -> None:
@@ -1314,12 +1369,14 @@ class View:
     wizard = self.wizard
     if wizard is None:
       return
+    healed = ""
     try:
       specs = wizard.specs()
       vcs.require_no_merge(state.root)
       with store.project_lock(state.root):
         vcs.require_no_merge(state.root)
         fresh = store.load(state.root)
+        healed = heal_render(fresh)
         warning = ""
         try:
           report = ops.apply_outline(
@@ -1331,7 +1388,7 @@ class View:
         except ops.OutlineCommittedError as exc:
           report, warning = exc.report, str(exc)
         if report.problems:
-          wizard.error = "; ".join(report.problems)
+          wizard.error = with_heal("; ".join(report.problems), healed)
           return
         # The index is committed. Close the draft before rendering so a later
         # failure cannot invite the user to add the same items a second time.
@@ -1347,11 +1404,11 @@ class View:
         self.drift_due = True
         if outcome.severity == "error":
           warning = "; ".join(filter(None, (warning, f"render failed: {outcome.message}; press r to retry")))
-        self.notify(f"saved {len(report.ids)} item(s) and slices" +
-                    (f"; {warning}" if warning else "; rendered roadmap"),
+        self.notify(with_heal(f"saved {len(report.ids)} item(s) and slices" +
+                              (f"; {warning}" if warning else "; rendered roadmap"), healed),
                     "error" if warning else "success")
     except (SlicerError, OSError) as exc:
-      wizard.error = str(exc)
+      wizard.error = with_heal(str(exc), healed)
 
   def _prompt(self, state: State, key: str) -> ActResult:
     if key == "\x1b":
@@ -1402,13 +1459,14 @@ class View:
       elif int(text) == state.index.position(self.target) + 1:
         self.notify(f"already at {text}")  # no-op: don't move, save or log
       else:
+        healed = ""
         try:
-          vcs.require_no_merge(state.root)
+          healed = begin_write(state)
           landed = ops.move(state, self.target, to=int(text))
           self.drift_due = True
-          self.notify(f"{self.target} moved to {landed}", "success")
+          self.notify(with_heal(f"{self.target} moved to {landed}", healed), "success")
         except (SlicerError, OSError) as exc:
-          self.notify(str(exc), "error")
+          self.notify(with_heal(str(exc), healed), "error")
       self.refresh(state)
     elif key in ("KEY_BACKSPACE", "\x7f", "\b"):
       self.text = self.text[:-1]
@@ -1428,28 +1486,30 @@ class View:
       if self.note_action in ("reject", "retract") and not note:
         self.notify("cancelled")
       elif self.note_action == "retract":
+        healed = ""
         try:
-          vcs.require_no_merge(state.root)
+          healed = begin_write(state)
           item_id, note_id = self.retract_target or ("", "")
           ops.retract_note(state, item_id, note_id, note, owner=None)
-          self.notify("note retracted; press r to render", "success")
+          self.notify(with_heal("note retracted; press r to render", healed), "success")
           self.drift_due = True
         except (SlicerError, OSError) as exc:
-          self.notify(str(exc), "error")
+          self.notify(with_heal(str(exc), healed), "error")
       elif not self.selected:
         self.notify("no item selected", "error")
       else:
+        healed = ""
         try:
-          vcs.require_no_merge(state.root)
+          healed = begin_write(state)
           if self.note_action == "handoff":
             ops.handoff(state, self.target, note=note)
-            self.notify(f"{self.target} handed off for review", "success")
+            self.notify(with_heal(f"{self.target} handed off for review", healed), "success")
           else:
             ops.reject(state, self.target, note=note)
-            self.notify(f"{self.target} rejected", "success")
+            self.notify(with_heal(f"{self.target} rejected", healed), "success")
           self.drift_due = True
         except (SlicerError, OSError) as exc:
-          self.notify(str(exc), "error")
+          self.notify(with_heal(str(exc), healed), "error")
       self.refresh(state)
     else:
       self.text, _ = tui_wizard.text_input(self.text, key)

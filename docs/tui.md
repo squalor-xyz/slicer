@@ -115,7 +115,10 @@ The status line shows matching/total item counts, the project's done percentage 
 figure `slicer stats` prints) and active restrictions. It adds `render stale` when
 `.slicer/render/` differs from what `r` would write. The check runs when the TUI opens
 and after each action that can write state, not on navigation; `r` clears the flag. A
-render that cannot be planned or read also shows as stale. Roadmap
+render that cannot be planned or read also shows as stale. A save or key write that finds
+`render/` stale or conflicted regenerates it first, as every CLI write does, and its
+message ends `regenerated stale render files before this write: ROADMAP.md`; nothing is
+regenerated during a Git merge, where writes are refused. Roadmap
 prose stays accessible below the items and is excluded from those counts. Filters
 last only for this session. `J/K` reorder down/up, `T` moves to the top and `M` moves to
 a numbered position; reordering requires clearing all restrictions with `c`. Filtering

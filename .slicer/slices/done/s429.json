@@ -18,11 +18,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/tui.py`: the save paths, including the wizard save (about line 1287), call `ops.heal_render(state)` before the write and show the heal line in the status bar.\n- `docs/commands.md`: drop the TUI from the list of writes that do not heal.\n- `tests/test_tui.py` or `tests/test_render_heal.py`: a TUI write with a stale render heals it."
+      "body": "- `src/slicer/tui.py`: `begin_write`/`heal_render` call `ops.heal_render(state)` after `vcs.require_no_merge`; `act`, `apply_edit_result`, the catalog cite, move, note (handoff, reject, retract) prompts and `View._save_wizard` use them and put the heal line in the status message.\n- `docs/commands.md`, `docs/tui.md`, `CHANGELOG.md`: drop the TUI from the list of writes that do not heal and describe the status-line message.\n- `tests/test_render_heal.py`: `TuiRenderHealTests`, a TUI write with a stale render heals it; `tests/test_tui_style.py`: an in-memory test patches `ops.heal_render`."
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_Tui_WriteWithStaleRender_HealsAndSaysSo`: a fixture with a stale ROADMAP.md, a TUI note save, and the render is current afterwards with the heal line in the status message. It fails today."
+      "body": "- `test_Tui_WriteWithStaleRender_HealsAndSaysSo` (in `tests/test_render_heal.py`): a fixture with a stale ROADMAP.md, a TUI note save, and the render matches the pre-write state afterwards with the heal line in the status message. It fails today."
     },
     {
       "heading": "Implement",
