@@ -27,7 +27,11 @@ def extract(body: str, *, top_level: Collection[str] = ()) -> list[str]:
   or a slash and a first component in the supplied project root names. A token
   without a slash needs both a file extension and a match in those names.
   This admits root files without treating bare directory names as paths.
-  A `:line` suffix is dropped and a leading `./` is not part of the name.
+  A span is trimmed of surrounding spaces; a space inside it is not a path.
+  A `:line` suffix is dropped and a leading `./` is not part of the name. A span
+  that starts with `./` marks a path outright, with no extension and no root
+  match needed, so a root file that is not there yet (or no longer) can be named
+  `./NEWS.md`; a bare `NEWS.md` still needs the root match.
   No filesystem I/O.
   """
   found: list[str] = []
@@ -35,10 +39,12 @@ def extract(body: str, *, top_level: Collection[str] = ()) -> list[str]:
     token = _LINE_SUFFIX.sub("", span.strip())
     if not _TOKEN.fullmatch(token):
       continue
-    if token.startswith("./"):
+    marked = token.startswith("./")
+    if marked:
       token = token[2:]
     if not token.strip("/") or not (
-      ("/" in token and _EXTENSION.search(token))
+      marked
+      or ("/" in token and _EXTENSION.search(token))
       or token.endswith("/")
       or (token.split("/", 1)[0] in top_level and ("/" in token or _EXTENSION.search(token)))
     ):

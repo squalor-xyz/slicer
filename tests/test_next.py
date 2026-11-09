@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import unittest
+from pathlib import Path
+from unittest import mock
 
 import support
 
@@ -552,6 +554,37 @@ class DisjointTests(unittest.TestCase):
                        ["src/a.py"])
       repo.run("config", "files_section", "")
       self.assertEqual(json.loads(repo.run("show", with_files, "--json")[1])["paths"], [])
+
+  def test_Show_NewRootFile_ListedWhenWrittenDotSlash(self) -> None:
+    with self.repo() as repo:
+      item = self.file_item(repo, "one", "- `./NEWS.md`\n- `NEWS.md`\n- `src/a.py`")
+      self.assertFalse((repo.root / "NEWS.md").exists())
+      payload = json.loads(repo.run("show", item, "--json")[1])
+      self.assertEqual(payload["paths"], ["NEWS.md", "src/a.py"])
+      bare = self.file_item(repo, "bare name", "- `NEWS.md`")
+      self.assertEqual(json.loads(repo.run("show", bare, "--json")[1])["paths"], [])
+
+  def test_Show_NoFilesToRead_DoesNotListTheRoot(self) -> None:
+    with self.repo() as repo:
+      bare = self.file_item(repo, "no slice", None)
+      no_files = json.loads(repo.run("add", "no files", "--json")[1])["id"]
+      repo.run("promote", no_files)
+      repo.run("edit", no_files, "--section", "Implement", "--text", "Do it.")
+      repo.run("edit", no_files, "--section", "Check", "--text", "It works.")
+      real_iterdir = Path.iterdir
+      root = repo.root.resolve()
+
+      def guarded(path: Path):
+        if path.resolve() == root:
+          raise AssertionError("listed the project root")
+        return real_iterdir(path)
+
+      with mock.patch.object(Path, "iterdir", guarded):
+        for item in (bare, no_files):
+          with self.subTest(item=item):
+            code, out, err = repo.run("show", item, "--json")
+            self.assertEqual(code, 0, err)
+            self.assertEqual(json.loads(out)["paths"], [])
 
   def test_Show_PathsKey_SitsAfterSliceBeforeCitations(self) -> None:
     with self.repo() as repo:
