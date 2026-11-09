@@ -17661,7 +17661,7 @@
       "id": "s433",
       "title": "relay-run stats counts a failed gate step with no verdict as a FAIL",
       "short_title": "Stats: fail-phase gate is a FAIL",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
