@@ -17407,10 +17407,25 @@
       "id": "s428",
       "title": "Merge-index keeps a pre-schema-11 note edit clean after the retraction restamp",
       "short_title": "Merge-index churn after schema 11",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "eae2d8ad-6a42-48da-8915-834cbf53b5be",
+          "kind": "",
+          "text": "**2026-11-09** — Verified: slicer-index merge driver now compares note records in the current field set (missing optional fields as empty defaults), so a schema-10 branch that edits a note merges clean against a schema-11 restamp and the output keeps the current key order. test_MergeIndex_OlderSideEditsNote_TheirsOnlyRestamped_MergesClean red before the fix, green after; full suite 3330 tests OK; slicer check passes.",
+          "created_at": "2026-11-09T06:56:51Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17430,7 +17445,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

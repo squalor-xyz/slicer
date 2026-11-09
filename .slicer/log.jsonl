@@ -2822,3 +2822,7 @@
 {"when": "2026-11-09T06:30:13Z", "item": "s413", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-11-09T06:33:18Z", "item": "s390", "action": "status", "from": "review", "to": "done", "note": "Landed s390", "by": "Jon Robbins"}
 {"when": "2026-11-09T06:44:57Z", "item": "s413", "action": "status", "from": "review", "to": "done", "note": "Landed s413", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:46:12Z", "item": "s428", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:46:16Z", "item": "s428", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-09T06:56:51Z", "item": "s428", "action": "note", "from": "", "to": "", "note": "Verified: slicer-index merge driver now compares note record", "by": "Jon Robbins"}
+{"when": "2026-11-09T06:56:53Z", "item": "s428", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

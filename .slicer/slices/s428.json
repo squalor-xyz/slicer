@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/mergeindex.py`: `_note_records` (about lines 125-160). Compare note records with absent retraction fields and empty ones as equal, so an older side that lacks the keys counts as unchanged on them.\n- `tests/test_merge_index.py`: a three-way case with a schema-10 base and ours, and a schema-11 theirs that only restamped."
+      "body": "- `src/slicer/mergeindex.py`: `_Merge._note_records` (about lines 136-169). Compare note records with absent optional fields (attempt, by, verified_*, stale_after, retracted_*) and their empty defaults as equal, so an older side that lacks the keys counts as unchanged on them.\n- `tests/test_merge_index.py`: a three-way case with a schema-10 base and ours, and a schema-11 theirs that only restamped."
     },
     {
       "heading": "Failing tests",
