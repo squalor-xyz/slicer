@@ -17467,7 +17467,7 @@
       "id": "s429",
       "title": "TUI writes heal a stale render like CLI writes",
       "short_title": "TUI writes heal render",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
