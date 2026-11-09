@@ -17736,10 +17736,25 @@
       "id": "s435",
       "title": "Relay gate role text stops repeating the Gate section's FAIL rule",
       "short_title": "Gate role FAIL dedup",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "6d4faaf4-ce98-42c1-944a-1273b09b1d1c",
+          "kind": "",
+          "text": "**2026-11-09** — Verified: the gate role text in ai relay (and roles[]) now points to Gate for what a FAIL does instead of restating it; test_AiRelay_Text_StatesEachRuleOnce counts the FAIL-goes-back rule once (red 2 != 1 before the reword); contract golden rebaselined, no contract bump; full suite 3344 tests OK, slicer check passes.",
+          "created_at": "2026-11-09T07:31:27Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -17759,7 +17774,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

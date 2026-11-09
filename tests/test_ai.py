@@ -3345,6 +3345,10 @@ class RelayV11Tests(unittest.TestCase):
         self.assertNotIn("Send the final run report once", flat)
         # Reviewer independence is stated once; the matrix rule is the other statement.
         self.assertEqual(flat.count("wrote code"), 1, "reviewer independence")
+        # What a FAIL does is stated in Gate only; the gate's role text points there.
+        self.assertEqual(
+          len(re.findall(r"FAIL (?:goes )?back to the implementer", flat)), 1, "FAIL routing",
+        )
 
   def test_AiRelay_Text_WaitingRuleIsAShortList(self) -> None:
     for finish in ("done", "handoff"):

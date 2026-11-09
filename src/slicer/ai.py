@@ -765,8 +765,8 @@ triaged suggestions, each tagged with a finding kind, and, where the project can
 render, the changed views. The gate still decides."""),
   ('gate', 'gate', """\
 The gate is read-only and decides. It checks the diff under review against the criteria
-in Gate, gives its verdict as the first line of its report, and sends a FAIL back to the
-implementer."""),
+in Gate and gives its verdict as the first line of its report; Gate says what a FAIL
+does."""),
   ('spec_check', 'spec-check', """\
 The spec check is optional, read-only and edits nothing. It runs before any worktree
 exists, on a batch of slices the owner picks. For each slice it returns `ready` or
