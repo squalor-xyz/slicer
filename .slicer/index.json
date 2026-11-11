@@ -18650,7 +18650,7 @@
       "id": "s450",
       "title": "Keyed lookup for Index.get and CatalogRecord.get",
       "short_title": "Keyed lookup for Index.get and CatalogRecord.get",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -18660,6 +18660,20 @@
           "text": "**2026-11-11** — Owner decisions (2026-11-11): cache invalidation option (a), fingerprint: rebuild the dict when (id(list), len(list)) differs from the last build and verify each hit (found.id == item_id); add a test pinning each mutation pattern used today and a docstring line on items and records saying a same-length replacement must go through reassignment.",
           "created_at": "2026-11-11T17:03:38Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "4c0f8021-6810-467b-99ef-28297d0e0950",
+          "kind": "",
+          "text": "**2026-11-11** — Index.get and Catalog.get answer from a dict keyed by id (option a: rebuilt when the list object or its length changes, each hit verified, first duplicate wins; cache out of to_dict, repr and ==). tests/test_model_lookup.py has 10 tests; the two repeated-miss tests failed first (2 != 1) and 7 mutations each turned the intended test red. Full suite 3415 tests OK (1 skipped), test_store_lazy unchanged and green, slicer check passes, git diff --check clean.",
+          "created_at": "2026-11-11T22:06:17Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -18686,7 +18700,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

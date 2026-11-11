@@ -599,18 +599,36 @@ class CatalogRecord:
 
 @dataclass
 class Catalog:
-  """The ordered project-knowledge records. Position is editorial, per kind."""
+  """The ordered project-knowledge records. Position is editorial, per kind.
+
+  `get` answers from a dict keyed by id, rebuilt when `records` is a different list
+  or has a different length. `append`, `pop`, `insert`, `sort` and reassignment all
+  keep it right; a same-length replacement of one record by another (a `pop` then
+  an `append` of a different record) must go through reassignment of `records`.
+  """
 
   next_id: int = 1
   id_prefix: str = "C"
   id_width: int = 2
   records: list[CatalogRecord] = field(default_factory=list)
+  # (the list, its length, id -> record) at the last build. Not state: out of
+  # `to_dict`, `==` and `repr`. Holding the list keeps its identity from being reused.
+  _lookup: tuple[list[CatalogRecord], int, dict[str, CatalogRecord]] | None = field(
+    default=None, init=False, repr=False, compare=False,
+  )
 
   def get(self, record_id: str) -> CatalogRecord | None:
-    for record in self.records:
-      if record.id == record_id:
-        return record
-    return None
+    lookup = self._lookup
+    if lookup is None or lookup[0] is not self.records or lookup[1] != len(self.records):
+      keyed: dict[str, CatalogRecord] = {}
+      for record in self.records:
+        keyed.setdefault(record.id, record)  # the first of a duplicate id, as a scan finds
+      lookup = self._lookup = (self.records, len(self.records), keyed)
+    found = lookup[2].get(record_id)
+    if found is not None and found.id != record_id:
+      self._lookup = None  # an id was rewritten in place; answer from a fresh build
+      return self.get(record_id)
+    return found
 
   def require(self, record_id: str) -> CatalogRecord:
     record = self.get(record_id)
@@ -744,7 +762,13 @@ class PassInfo:
 
 @dataclass
 class Index:
-  """The ordered queue. Position in `items` is the priority."""
+  """The ordered queue. Position in `items` is the priority.
+
+  `get` answers from a dict keyed by id, rebuilt when `items` is a different list or
+  has a different length. `append`, `pop`, `insert`, `sort` and reassignment all keep
+  it right; a same-length replacement of one item by another (a `pop` then an
+  `append` of a different item) must go through reassignment of `items`.
+  """
 
   next_id: int = 1
   id_prefix: str = "S"
@@ -757,12 +781,24 @@ class Index:
   non_goals: str = ""
   catalog: Catalog = field(default_factory=Catalog)
   version: int = SCHEMA_VERSION
+  # (the list, its length, id -> item) at the last build. Not state: out of
+  # `to_dict`, `==` and `repr`. Holding the list keeps its identity from being reused.
+  _lookup: tuple[list[Item], int, dict[str, Item]] | None = field(
+    default=None, init=False, repr=False, compare=False,
+  )
 
   def get(self, item_id: str) -> Item | None:
-    for it in self.items:
-      if it.id == item_id:
-        return it
-    return None
+    lookup = self._lookup
+    if lookup is None or lookup[0] is not self.items or lookup[1] != len(self.items):
+      keyed: dict[str, Item] = {}
+      for it in self.items:
+        keyed.setdefault(it.id, it)  # the first of a duplicate id, as a scan finds
+      lookup = self._lookup = (self.items, len(self.items), keyed)
+    found = lookup[2].get(item_id)
+    if found is not None and found.id != item_id:
+      self._lookup = None  # an id was rewritten in place; answer from a fresh build
+      return self.get(item_id)
+    return found
 
   def require(self, item_id: str) -> Item:
     it = self.get(item_id)
