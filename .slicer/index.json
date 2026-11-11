@@ -18813,10 +18813,25 @@
       "id": "s454",
       "title": "Per-slice changelog entries in landed-changed/, assembled into CHANGELOG.md",
       "short_title": "landed-changed changelog entries",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "b1d91d94-a4df-4f19-bbc2-8f59e22a1d52",
+          "kind": "",
+          "text": "**2026-11-11** — Verified: slicer changelog add, assemble and import write per-slice entries to landed-changed/ and assemble them into CHANGELOG.md; five changelog_* config keys; check reports entry-file problems; handoff and land warn on stderr when changelog_require_entry is on. Full suite 3405 run, OK (1 skipped); changelog tests 60 OK; slicer check exits 0; every new assertion mutation-checked. Gate VERDICT: PASS.",
+          "created_at": "2026-11-11T19:16:00Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -18834,7 +18849,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

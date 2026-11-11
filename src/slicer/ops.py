@@ -19,11 +19,11 @@ from pathlib import Path
 from typing import Callable, Iterator, Mapping, Sequence
 
 from slicer import (
-  ai, feedback, graph, ids, jsonio, outline, prose, refs, relayrun, render, roles, store, templates,
-  vcs, verify,
+  ai, changelog, feedback, graph, ids, jsonio, outline, prose, refs, relayrun, render, roles,
+  store, templates, vcs, verify,
 )
 from slicer.config import CONFIG_NAME, Config
-from slicer.errors import ConfigError, RenderError, StateError
+from slicer.errors import ChangelogError, ConfigError, RenderError, StateError
 from slicer.model import (
   CATALOG_ACTIVE, CATALOG_RETIRED, CatalogRecord, Index, Item, LogEntry, NoteRecord,
   PassInfo, Readiness, Section, Slice, canonical_kind, effort_rank, extract_boundary,
@@ -1062,6 +1062,300 @@ def config_set(state: State, key: str, value: str | None, *, unset: bool = False
     frm=_config_value_text(previous), to=_config_value_text(now),
   )
   return ConfigChange(key, previous, now, True)
+
+
+# ---- changelog entries -----------------------------------------------------
+#
+# These write files outside `.slicer/` (the entry files and the changelog), so they use
+# `jsonio.write_text`, which replaces a file atomically, and keep no history. `main` holds the
+# project lock around every `changelog` subcommand.
+
+
+@dataclass
+class ChangelogAdded:
+  id: str
+  path: str
+  category: str
+  replaced: bool
+
+
+@dataclass
+class ChangelogRun:
+  """What `changelog assemble` or `import` did, or with `dry_run` would do."""
+
+  changelog: str
+  dry_run: bool
+  entries: list[tuple[str, str]]  # (entry file, category), in the order the command acts
+  text: str  # the changelog's text after the change
+
+
+def _changelog_config(state: State) -> Config:
+  cfg = state.config
+  if not cfg.changelog_path:
+    raise StateError(
+      "the changelog entries are off for this project; set changelog_path to turn them on, "
+      "for example `slicer config changelog_path CHANGELOG.md`",
+      code="changelog_off",
+    )
+  return cfg
+
+
+def _entry_rel(cfg: Config, name: str) -> str:
+  """An entry file as a project-relative path with forward slashes."""
+  folder = cfg.changelog_entries_dir.replace("\\", "/").strip("/")
+  return f"{folder}/{name}{changelog.ENTRY_SUFFIX}"
+
+
+def _entries_dir(state: State) -> Path:
+  return state.root / state.config.changelog_entries_dir
+
+
+def _entry_path(state: State, name: str) -> Path:
+  return state.root / _entry_rel(state.config, name)
+
+
+def changelog_add(
+  state: State, item_id: str, *, category: str | None, text: str, replace: bool = False,
+) -> ChangelogAdded:
+  """Write one item's changelog entry. Every refusal comes before the write.
+
+  The text is parsed back the way `check` reads the file, so a layout `check` would call
+  malformed is never written. An entry that exists is kept unless `replace`; a file for the
+  same id in another case is never replaced, because the two would collide on merge.
+  """
+  cfg = _changelog_config(state)
+  state.index.require(item_id)
+  categories = cfg.changelog_categories
+  if categories and category not in categories:
+    shown = "none" if category is None else repr(category)
+    raise StateError(
+      f"changelog category must be one of {', '.join(categories)}, not {shown}; "
+      "pass --category", code="changelog_category",
+    )
+  if not categories and category is not None:
+    raise StateError(
+      "this project configures no changelog_categories, so an entry has no category; "
+      "leave --category out", code="changelog_category",
+    )
+  body = text.replace("\r\n", "\n").strip()
+  rel = _entry_rel(cfg, item_id)
+  content = changelog.format_entry(category or "", body)
+  changelog.parse_entry(item_id, content, categories, where=rel)
+  path = _entry_path(state, item_id)
+  folder = _entries_dir(state)
+  if folder.is_dir():
+    for other in sorted(folder.glob(f"*{changelog.ENTRY_SUFFIX}")):
+      if other.stem != item_id and other.stem.casefold() == item_id.casefold():
+        raise StateError(
+          f"{_entry_rel(cfg, other.stem)} is already the entry for this item in another case; "
+          "keep one file", code="changelog_entry_exists",
+        )
+  replaced = path.is_file()
+  if replaced and not replace:
+    raise StateError(
+      f"{rel} already exists; pass --replace to overwrite it", code="changelog_entry_exists",
+    )
+  jsonio.write_text(path, content)
+  return ChangelogAdded(item_id, rel, category or "", replaced)
+
+
+def _scan_entries(state: State) -> tuple[list[tuple[Path, changelog.Entry]], list[str]]:
+  """Every entry file, and every problem with the folder, as `FILE:LINE: message`.
+
+  A file is a problem when it is not named for an item (or `entry-NNN`), when two files
+  name one item in different case, and when its text does not parse. Only `*.md` files that
+  do not start with a dot are entries; anything else in the folder is left alone.
+  """
+  cfg = state.config
+  folder = _entries_dir(state)
+  if not folder.is_dir():
+    return [], []
+  files = sorted(
+    p for p in folder.glob(f"*{changelog.ENTRY_SUFFIX}")
+    if p.is_file() and not p.name.startswith(".")
+  )
+  known = {item.id for item in state.index.items}
+  problems: list[str] = []
+  by_fold: dict[str, list[Path]] = {}
+  for path in files:
+    by_fold.setdefault(path.stem.casefold(), []).append(path)
+  doubled: set[Path] = set()
+  for group in by_fold.values():
+    if len(group) > 1:
+      doubled.update(group)
+      problems.append(
+        f"{' and '.join(_entry_rel(cfg, p.stem) for p in group)} are two entries for one item "
+        "(ids that differ only in case); keep one"
+      )
+  found: list[tuple[Path, changelog.Entry]] = []
+  for path in files:
+    if path in doubled:
+      continue
+    name, rel = path.stem, _entry_rel(cfg, path.stem)
+    named = name in known or changelog.is_imported_name(name)
+    if not named:
+      problems.append(
+        f"{rel}: names no item; an entry file is named for its item id, or `entry-NNN` when "
+        "`slicer changelog import` made it"
+      )
+    try:
+      entry = changelog.parse_entry(
+        name, path.read_text(encoding="utf-8"), cfg.changelog_categories, where=rel,
+      )
+    except UnicodeDecodeError as exc:
+      problems.append(f"{rel}: not valid UTF-8: {exc}")
+    except ChangelogError as exc:
+      problems.append(str(exc))
+    else:
+      if named:
+        found.append((path, entry))
+  return found, problems
+
+
+def changelog_problems(state: State) -> list[str]:
+  """What `check` reports about the entry files; nothing while the feature is off."""
+  if not state.config.changelog_path:
+    return []
+  return _scan_entries(state)[1]
+
+
+def changelog_missing_entries(state: State, item_ids: list[str]) -> list[str]:
+  """Stderr lines for items with no entry file, when `changelog_require_entry` is on."""
+  cfg = state.config
+  if not (cfg.changelog_path and cfg.changelog_require_entry):
+    return []
+  lines: list[str] = []
+  for item_id in item_ids:
+    if _entry_path(state, item_id).is_file():
+      continue
+    category = " --category NAME" if cfg.changelog_categories else ""
+    lines.append(
+      f"slicer: {item_id} has no changelog entry {_entry_rel(cfg, item_id)}; write it with "
+      f"`slicer changelog add {item_id}{category} --text TEXT`"
+    )
+  return lines
+
+
+def _read_changelog(state: State) -> tuple[Path, str]:
+  cfg = state.config
+  path = state.root / cfg.changelog_path
+  try:
+    return path, path.read_bytes().decode("utf-8")
+  except FileNotFoundError:
+    raise StateError(
+      f"{cfg.changelog_path}: not found; changelog_path names the file the entries go into",
+      code="changelog_missing",
+    ) from None
+  except UnicodeDecodeError as exc:
+    raise StateError(f"{cfg.changelog_path}: not valid UTF-8: {exc}", code="io") from None
+
+
+def _unreleased(state: State, text: str) -> tuple[str, int]:
+  cfg = state.config
+  located = changelog.unreleased_body(text, cfg.changelog_unreleased_heading)
+  if located is None:
+    raise StateError(
+      f"{cfg.changelog_path}: no line is exactly {cfg.changelog_unreleased_heading!r}; add it "
+      "where the unreleased changes go, or set changelog_unreleased_heading",
+      code="changelog_no_heading",
+    )
+  return located
+
+
+def changelog_assemble(state: State, *, dry_run: bool = False) -> ChangelogRun:
+  """Write every entry file into the Unreleased section in one layout, then delete the files.
+
+  Refuses, before writing anything, a changelog with no Unreleased heading, an entry file
+  that is a problem, and an Unreleased section that already holds text (`import` first). The
+  changelog is replaced before the files go, so a failure part way leaves entries to assemble
+  again, never lost.
+  """
+  cfg = _changelog_config(state)
+  path, text = _read_changelog(state)
+  body, _ = _unreleased(state, text)
+  found, problems = _scan_entries(state)
+  if problems:
+    raise StateError("; ".join(problems) + ". Nothing was changed.", code="changelog_entry")
+  entries = [entry for _, entry in found]
+  if not entries:
+    return ChangelogRun(cfg.changelog_path, dry_run, [], text)
+  if body.strip():
+    raise StateError(
+      f"{cfg.changelog_path}: the Unreleased section already holds text; run "
+      "`slicer changelog import` to turn it into entry files first. Nothing was changed.",
+      code="changelog_unreleased_not_empty",
+    )
+  item_ids = {item.id for item in state.index.items}
+  ordered = changelog.ordered(entries, cfg.changelog_categories, item_ids)
+  new_text = changelog.replace_unreleased(
+    text, cfg.changelog_unreleased_heading,
+    changelog.format_unreleased(entries, cfg.changelog_categories, item_ids),
+  )
+  listed = [(_entry_rel(cfg, e.name), e.category) for e in ordered]
+  if not dry_run:
+    jsonio.write_text(path, new_text)
+    for file, _entry in found:
+      file.unlink()
+  return ChangelogRun(cfg.changelog_path, dry_run, listed, new_text)
+
+
+def changelog_import(state: State, *, dry_run: bool = False) -> ChangelogRun:
+  """Split the Unreleased section into one entry file per bullet, and leave the section empty.
+
+  A bullet that ends with the id of an item, in parentheses, is named for it, once; every
+  other bullet is `entry-NNN` in body order. Every problem (a bullet outside a configured
+  category, prose, an entry file that already exists) is collected and refuses the whole
+  import before anything is written. A write that fails removes the files it made.
+  """
+  cfg = _changelog_config(state)
+  path, text = _read_changelog(state)
+  body, first_line = _unreleased(state, text)
+  entries, found = changelog.split_unreleased(body, cfg.changelog_categories, first_line=first_line)
+  problems = [f"{cfg.changelog_path}:{line}" for line in found]
+  folder = _entries_dir(state)
+  taken = (
+    {p.stem.casefold() for p in folder.glob(f"*{changelog.ENTRY_SUFFIX}")}
+    if folder.is_dir() else set()
+  )
+  canonical = {item.id.casefold(): item.id for item in state.index.items}
+  used: set[str] = set()  # every stem chosen in this run, folded: no two bullets share a file
+  number = 0
+  planned: list[tuple[str, changelog.Entry]] = []
+  for entry in entries:
+    name = canonical.get(entry.name.casefold(), "") if entry.name else ""
+    if name and name.casefold() in used:
+      name = ""
+    if name:
+      if name.casefold() in taken:
+        problems.append(f"{_entry_rel(cfg, name)} already exists; import would overwrite it")
+    else:
+      # An `entry-NNN` that is an item id belongs to that item, so it is never a fallback.
+      while True:
+        number += 1
+        name = f"entry-{number:03d}"
+        if name.casefold() not in taken | used | canonical.keys():
+          break
+    used.add(name.casefold())
+    planned.append((name, entry))
+  if problems:
+    raise StateError("; ".join(problems) + ". Nothing was written.", code="changelog_import")
+  new_text = changelog.replace_unreleased(text, cfg.changelog_unreleased_heading, "")
+  listed = [(_entry_rel(cfg, name), entry.category) for name, entry in planned]
+  if not planned:
+    return ChangelogRun(cfg.changelog_path, dry_run, [], text)
+  if not dry_run:
+    made: list[Path] = []
+    try:
+      for name, entry in planned:
+        target = _entry_path(state, name)
+        jsonio.write_text(target, changelog.format_entry(entry.category, entry.text))
+        made.append(target)
+      jsonio.write_text(path, new_text)
+    except BaseException:
+      for target in made:
+        target.unlink(missing_ok=True)
+      raise
+  return ChangelogRun(cfg.changelog_path, dry_run, listed, new_text)
 
 
 # ---- templates -------------------------------------------------------------

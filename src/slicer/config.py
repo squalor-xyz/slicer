@@ -196,6 +196,16 @@ class Config:
   # every writer either patches the raw file or writes a fresh config, so an existing
   # key is never lost.
   relay_contract: int | None = None
+  # Per-slice changelog entries (`slicer changelog`). Empty `changelog_path` turns the
+  # feature off. Entries live one file per item under `changelog_entries_dir` until
+  # `changelog assemble` writes them under `changelog_unreleased_heading`, grouped by
+  # `changelog_categories` in that order (none: a flat list and no category line).
+  changelog_path: str = ""
+  changelog_entries_dir: str = "landed-changed"
+  changelog_unreleased_heading: str = "## [Unreleased]"
+  changelog_categories: list[str] = field(default_factory=list)
+  # `handoff` and `land` warn on stderr when an item has no entry file. No refusal.
+  changelog_require_entry: bool = False
 
   def in_work(self) -> set[str]:
     """Statuses that mean someone is on an item: started, or reviewing."""
@@ -248,6 +258,7 @@ class Config:
       not isinstance(path, str) or not path.strip() for path in self.overlap_ignore
     ):
       raise ConfigError("overlap_ignore must be a list of nonempty strings")
+    self._validate_changelog()
     if not isinstance(self.hold_flags, list) or any(
       not isinstance(flag, str) or not flag.strip() for flag in self.hold_flags
     ):
@@ -382,6 +393,37 @@ class Config:
           f"regular expression: {exc}"
         ) from None
 
+  def _validate_changelog(self) -> None:
+    for key in ("changelog_path", "changelog_entries_dir", "changelog_unreleased_heading"):
+      if not isinstance(getattr(self, key), str):
+        raise ConfigError(f"{key} must be a string")
+    for key in ("changelog_path", "changelog_entries_dir"):
+      value = getattr(self, key)
+      parts = value.replace("\\", "/").split("/")
+      if value.startswith(("/", "\\")) or ".." in parts or re.match(r"[A-Za-z]:", value):
+        raise ConfigError(f"{key} must be a path inside the project, relative to its root")
+    if not self.changelog_entries_dir.strip():
+      raise ConfigError("changelog_entries_dir may not be empty; it defaults to 'landed-changed'")
+    heading = self.changelog_unreleased_heading
+    if not re.fullmatch(r"#{1,6} +\S.*", heading) or "\n" in heading or "\r" in heading:
+      raise ConfigError(
+        "changelog_unreleased_heading must be one Markdown heading line, such as "
+        "'## [Unreleased]'"
+      )
+    cats = self.changelog_categories
+    if not isinstance(cats, list) or any(
+      not isinstance(name, str) or not name.strip() or name != name.strip() or "\n" in name
+      or "\r" in name for name in cats
+    ):
+      raise ConfigError(
+        "changelog_categories must be a list of nonempty strings, each on one line with no "
+        "leading or trailing space"
+      )
+    if len(set(cats)) != len(cats):
+      raise ConfigError("changelog_categories repeats a category")
+    if not isinstance(self.changelog_require_entry, bool):
+      raise ConfigError("changelog_require_entry must be true or false")
+
   def to_dict(self) -> dict[str, Any]:
     out = self._base_dict()
     if self.satisfies_dependencies is not None:
@@ -426,6 +468,11 @@ class Config:
       "issues_repo": self.issues_repo,
       "check_command": self.check_command,
       "tui": {"columns": list(self.tui_columns)},
+      "changelog_path": self.changelog_path,
+      "changelog_entries_dir": self.changelog_entries_dir,
+      "changelog_unreleased_heading": self.changelog_unreleased_heading,
+      "changelog_categories": list(self.changelog_categories),
+      "changelog_require_entry": self.changelog_require_entry,
     }
 
   @staticmethod
@@ -511,6 +558,11 @@ class Config:
       check_command=d.get("check_command", ""),
       tui_columns=_tui_columns(d),
       relay_contract=d.get("relay_contract"),
+      changelog_path=d.get("changelog_path", ""),
+      changelog_entries_dir=d.get("changelog_entries_dir", "landed-changed"),
+      changelog_unreleased_heading=d.get("changelog_unreleased_heading", "## [Unreleased]"),
+      changelog_categories=d.get("changelog_categories", []),
+      changelog_require_entry=d.get("changelog_require_entry", False),
     )
     cfg.validate()
     return cfg

@@ -1,8 +1,9 @@
 # Changelog
 
 Notable changes to slicer are recorded here. This file follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Release slices should
-update the changelog; unreleased changes belong under `[Unreleased]`.
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A slice does not edit this
+file: it writes its entry with `slicer changelog add` to its own file in `landed-changed/`,
+and the release step `slicer changelog assemble` writes those entries under `[Unreleased]`.
 
 ## [Unreleased]
 

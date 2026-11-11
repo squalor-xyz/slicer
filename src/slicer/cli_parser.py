@@ -17,6 +17,7 @@ from slicer.cli_ai import (
   cmd_ai_relay_orchestrator, cmd_ai_reset, cmd_ai_set, cmd_ai_show, cmd_ai_skill,
   cmd_recommended_workflow,
 )
+from slicer.cli_changelog import cmd_changelog_add, cmd_changelog_assemble, cmd_changelog_import
 from slicer.cli_common import (
   _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _check_flag, _json_flags, _mutating,
   _nonnegative_int, _positive_int, _release_target_flags, _recursive_flag, _render_flag, _rest_flag, _strict_flag,
@@ -674,6 +675,35 @@ def _add_prose_and_template(sub: argparse._SubParsersAction, common: argparse.Ar
        write=True).add_argument("name", help="slice.md, roadmap.md, row.md or relay-brief.md")
 
 
+def _add_changelog(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) -> None:
+  """`changelog`: one entry file per slice, assembled into the changelog at release."""
+  sp = sub.add_parser(
+    "changelog", help="write per-slice changelog entries and assemble them at release",
+    parents=[common],
+  )
+  csub = sp.add_subparsers(dest="changelog_command", required=True)
+
+  def cadd(name: str, fn, help_: str) -> argparse.ArgumentParser:
+    inner = csub.add_parser(name, help=help_, parents=[common])
+    inner.set_defaults(func=fn)
+    _json_flags(inner)
+    return inner
+
+  inner = cadd("add", cmd_changelog_add, "write one item's changelog entry file")
+  inner.add_argument("id", help="the item the entry is for; the file is named for it")
+  inner.add_argument("--category", help="one of the configured changelog_categories")
+  inner.add_argument("--text", help="the entry text in Markdown, with no leading bullet")
+  inner.add_argument("--stdin", action="store_true", help="read the entry text from stdin")
+  inner.add_argument("--replace", action="store_true", help="overwrite an entry that exists")
+  inner = cadd("assemble", cmd_changelog_assemble,
+               "write every entry under the Unreleased heading and delete the entry files")
+  inner.add_argument("--dry-run", action="store_true",
+                     help="print the changelog it would write; change nothing")
+  inner = cadd("import", cmd_changelog_import,
+               "split the current Unreleased section into one entry file per bullet")
+  inner.add_argument("--dry-run", action="store_true", help="list the files it would write; change nothing")
+
+
 def _add_remove(add) -> None:
   """`remove` and `retire`."""
   sp = _strict_flag(_render_flag(add("remove", _mutating(cmd_remove), "retire an obsolete item, or purge one outright")))
@@ -1090,6 +1120,7 @@ def build_parser() -> argparse.ArgumentParser:
   _add_notes_and_feedback(add)
   _add_lifecycle(add)
   _add_prose_and_template(sub, common)
+  _add_changelog(sub, common)
   _add_remove(add)
   _add_checks(add)
   _add_catalog(sub, common)

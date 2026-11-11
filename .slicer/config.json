@@ -58,5 +58,14 @@
   "files_section": "Files",
   "overlap_ignore": [
     "CHANGELOG.md"
+  ],
+  "changelog_path": "CHANGELOG.md",
+  "changelog_categories": [
+    "Added",
+    "Changed",
+    "Deprecated",
+    "Removed",
+    "Fixed",
+    "Security"
   ]
 }

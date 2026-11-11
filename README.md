@@ -67,6 +67,8 @@ No install step or dependencies. See [AGENTS.md](AGENTS.md) for fixtures and che
 
 slicer manages its own roadmap. Run `slicer status` for progress, `slicer goals` for
 its direction, and `slicer --version` for your installed version. The
-[changelog](CHANGELOG.md) records releases.
+[changelog](CHANGELOG.md) records releases. A slice does not edit it: it writes its entry with
+`slicer changelog add` to its own file in `landed-changed/`, and `slicer changelog assemble`
+collects the files into the changelog at release.
 
 Apache-2.0. Stdlib Python, no dependencies, and none planned.

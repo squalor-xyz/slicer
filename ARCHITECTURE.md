@@ -22,6 +22,7 @@ model · config · jsonio · ids · templates   data, defaults, atomic IO, id ru
 ai.py                                      project-independent agent instructions
 store                                       discovery and the on-disk layout
 graph · vcs · github · prose · legacy · outline  edges, git, gh, prose, the two input formats
+changelog                                   pure text in, entries out: changelog entry files
 queries                                     read-only ranking, readiness and removal previews
 ops · render · sync · verify · migrator     behaviour (ops is the single mutation path)
 check                                       composes render + sync + verify
@@ -44,7 +45,9 @@ The command line is split so no one file holds every command. All of these sit i
   `template`, `config`, `sections`, `goals` and `catalog`. `cli_track.py`: the commands that
   change items, notes and lifecycle, plus `import` and `migrate`. `cli_queue.py`: `next`,
   `plan-parallel`, `list`, `find`, `deps`, `show` and `status`. `cli_report.py`: `render`,
-  `sync`, `verify`, `refs`, `check`, `stats`, `snapshot`, `log` and `tui`.
+  `sync`, `verify`, `refs`, `check`, `stats`, `snapshot`, `log` and `tui`. `cli_changelog.py`:
+  `changelog`, which writes files outside `.slicer/` through `ops.py` and the pure
+  `changelog.py`.
 - `queries.py` holds the read-only half of what `ops.py` once held: the ranking behind
   `next` and `plan-parallel`, the readiness and path helpers, and the removal preview.
   `queries.py` is the read-only side and `ops.py` the mutation path.

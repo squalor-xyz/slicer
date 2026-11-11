@@ -695,6 +695,8 @@ def cmd_handoff(args: argparse.Namespace) -> int:
   items = ops.handoff_many(state, item_ids, note=args.note or "", owner=args.owner)
   _emit_items(args, items, batch,
               [f"{item.id} -> {state.config.status_label(item.status)}, unclaimed" for item in items])
+  for line in ops.changelog_missing_entries(state, item_ids):
+    _write_err(args, line)
   return OK
 
 
@@ -746,6 +748,8 @@ def cmd_land(args: argparse.Namespace) -> int:
     *landing.commands,
   ]
   _emit(args, landing.to_dict(), "\n".join(lines))
+  for line in ops.changelog_missing_entries(state, [args.id]):
+    _write_err(args, line)
   return _post_check(args, "land")
 
 

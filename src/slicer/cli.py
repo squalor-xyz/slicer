@@ -167,6 +167,8 @@ def _changes_state(args: argparse.Namespace) -> bool:
     return True
   if not getattr(args.func, "mutates", False) or _reads_only(args):
     return False
+  if args.command == "changelog":
+    return False  # the entry files and the changelog are not tracking state
   if args.command in ("import", "migrate", "remove", "retire") and args.dry_run:
     return False
   if args.command == "id-prefix" and (args.prefix is None or args.dry_run):

@@ -69,6 +69,12 @@ class OutlineError(SlicerError):
   code = "outline"
 
 
+class ChangelogError(SlicerError):
+  """A changelog entry file, or the text of an Unreleased section, could not be read."""
+
+  code = "changelog_entry"
+
+
 class RenderError(SlicerError):
   """A template referenced a placeholder that does not exist."""
 

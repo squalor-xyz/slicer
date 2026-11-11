@@ -2876,3 +2876,9 @@
 {"when": "2026-11-11T17:17:26Z", "item": "s453", "action": "edit", "from": "", "to": "", "note": "boundary"}
 {"when": "2026-11-11T17:17:31Z", "item": "s458", "action": "add", "from": "", "to": "open", "note": "Wave planning counts a slice with placeholder spec sections as specified"}
 {"when": "2026-11-11T17:17:31Z", "item": "s458", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-11T17:24:40Z", "item": "s454", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-11T17:29:25Z", "item": "config.changelog_path", "action": "config", "from": "", "to": "CHANGELOG.md", "note": ""}
+{"when": "2026-11-11T17:29:26Z", "item": "config.changelog_categories", "action": "config", "from": "[]", "to": "[\"Added\",\"Changed\",\"Deprecated\",\"Removed\",\"Fixed\",\"Security\"]", "note": ""}
+{"when": "2026-11-11T17:29:44Z", "item": "s454", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-11T19:16:00Z", "item": "s454", "action": "note", "from": "", "to": "", "note": "Verified: slicer changelog add, assemble and import write pe", "by": "Jon Robbins"}
+{"when": "2026-11-11T19:16:06Z", "item": "s454", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

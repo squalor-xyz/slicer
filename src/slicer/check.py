@@ -110,6 +110,7 @@ def run(state: State) -> tuple[CheckReport, dict[str, bytes], render.RenderDiff]
 
   offline = verify.offline(state)
   report.problems = [f"{f.item}: {f.message}" if f.item else f.message for f in offline.problems]
+  report.problems.extend(ops.changelog_problems(state))
   report.warnings = [
     f"{f.item}: {f.message}" if f.item else f.message
     for f in offline.findings
