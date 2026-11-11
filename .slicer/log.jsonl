@@ -2864,3 +2864,6 @@
 {"when": "2026-11-11T16:54:35Z", "item": "s456", "action": "add", "from": "", "to": "open", "note": "snapshot: a deps part, and an unchanged answer for parts the caller already holds"}
 {"when": "2026-11-11T16:54:35Z", "item": "s457", "action": "add", "from": "", "to": "open", "note": "snapshot: skip building a part whose inputs have not changed"}
 {"when": "2026-11-11T16:54:39Z", "item": "s457", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
+{"when": "2026-11-11T17:03:38Z", "item": "s450", "action": "decide", "from": "", "to": "", "note": "Owner decisions (2026-11-11): cache invalidation option (a),", "by": "Jon Robbins"}
+{"when": "2026-11-11T17:03:38Z", "item": "s451", "action": "decide", "from": "", "to": "", "note": "Owner decisions (2026-11-11): Q1 notes merge option (a), uni", "by": "Jon Robbins"}
+{"when": "2026-11-11T17:03:39Z", "item": "s457", "action": "decide", "from": "", "to": "", "note": "Owner decisions (2026-11-11): Q1 option (a): a new fingerpri", "by": "Jon Robbins"}

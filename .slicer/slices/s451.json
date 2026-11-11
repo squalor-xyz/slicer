@@ -7,9 +7,7 @@
   "depends_note": null,
   "findings_note": "Owner 2026-11-04 (ork S289 Q3, accepted): ork's landing paused on a merge conflict in a slice's own .slicer/slices/U26.json (run-state and notes edited on both the slice branch and the base). slicer ships merge drivers for log.jsonl, index.json, render/* and relay-roles.json but none for slices/*.json; the owner resolved it by hand (took the base copy, git add, ork retry). Wanted: a slicer-owned driver that merges notes by id and sections by heading, installed with the other drivers. Not verified: which fields conflicted on U26, and whether taking one side can drop a note that exists only on the other.",
   "size": "M",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "",
   "trees_plural": false,
   "boundary": "**Not in this slice:** merging `note_records` (they live in `index.json` and the `slicer-index` driver already merges them by id); relay run state (it lives in the run ledger, not in slice JSON); a driver for `.slicer/config.json`; running `git config` for the user (the allowlist stays closed; `setup-git` prints the commands).",

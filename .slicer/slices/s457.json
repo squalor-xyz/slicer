@@ -7,9 +7,7 @@
   "depends_note": null,
   "findings_note": "Follow-up the owner chose on 2026-11-11 while specifying the snapshot deps/--since item: --since drops an unchanged part's value but still loads the store and builds it, because a revision is a hash of the value.",
   "size": "M",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "",
   "trees_plural": false,
   "boundary": "**Not in this slice:**",
