@@ -18870,7 +18870,7 @@
       "id": "s455",
       "title": "Startup time: defer heavy imports so --version starts in about 20 ms",
       "short_title": "Lazy imports for fast startup",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
