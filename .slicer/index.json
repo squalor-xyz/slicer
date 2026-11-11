@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 459,
+  "next_id": 460,
   "preamble": "",
   "passes": [
     {
@@ -18978,6 +18978,36 @@
         "importance": 2,
         "urgency": 2,
         "effort": null,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s459",
+      "title": "snapshot: items and runs parts carry the fields that list and relay-run list give",
+      "short_title": "snapshot items and runs carry full fields",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [
+          "needs-owner"
+        ],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "ork owner 2026-11-11: ork's batched polling (ork S335) is held until slicer's snapshot carries the fields its dashboard reads from `slicer list --json --lean` and `slicer relay-run list --json`.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "slicer-snapshot-full-fields",
+        "pass": "v1.22",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
         "attempts": 0
       }
     }

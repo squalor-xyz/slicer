@@ -1,0 +1,43 @@
+{
+  "id": "s459",
+  "title": "snapshot: items and runs parts carry the fields that list and relay-run list give",
+  "lead": [
+    "*Proposed.* Filed 2026-11-11 from the ork relay session, with the ork owner's permission to write this item into slicer's store; left uncommitted for the owner. A dashboard can read every project in one `slicer snapshot` call only if the snapshot's parts hold the same fields as the per-project commands. Today the items and runs parts are reduced shapes, so ork keeps one `slicer list` and one `slicer relay-run list` process per project per poll."
+  ],
+  "depends_note": null,
+  "findings_note": "ork owner 2026-11-11: ork's batched polling (ork S335) is held until slicer's snapshot carries the fields its dashboard reads from `slicer list --json --lean` and `slicer relay-run list --json`.",
+  "size": "M",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "*Proposed.* Read on 2026-11-11 by ork's S335 spec check (`slicer snapshot --json --root . --parts items,runs,goals` on the ork repo):\n\n- Items: the snapshot gives `id, short_title, status, claim, pass, release_target, wave, size, effort, score, quadrant, held, blocked`. ork's item type (ork `internal/slicercli/types.go:85`) also reads `title`, `has_slice`, `depends_on`, `notes`, and `fields` as an object, which `slicer list --json --lean` gives.\n- Runs: steps carry only `id, role, phase, task, model, waiting_on, question`, and runs have no `begun_at`, `counts` or `outcome`. ork's run detail reads each step's vendor, reasoning effort and start time (ork `internal/tui/rolefacts.go:70-73`).\n- Goals: `records` is a flat list with `kind`; `slicer goals --json` gives `goal` and `non_goal` lists (ork `internal/slicercli/types.go:137`).\n- ork's owner chose to wait for this rather than probe revisions and re-read changed parts per project (ork adj 305, `poll.snapshot-gap` = wait-for-slicer).\n\nOpen owner questions (the owner answers before the relay starts):\n- Q1 the shape. (a) the items part's value is exactly what `slicer list --json --lean` gives for that root, the runs part's value is exactly what `slicer relay-run list --json` gives, and goals matches `slicer goals --json`, so a caller can decode either with one type (recommended). (b) add the missing fields to today's reduced shapes. (c) a `--full` flag that switches parts to (a), keeping today's shape as the default.\n- Q2 compatibility. (a) bump the snapshot's schema version and note the change in CHANGELOG.md (recommended). (b) keep the reduced shapes under their current names and add the full ones under new part names."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/` (the snapshot command and its parts; the implementer confirms the module paths)\n- `tests/`\n- `docs/`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Written for Q1 and Q2. At least: for a test store, the items part's value equals `slicer list --json --lean`, the runs part's value equals `slicer relay-run list --json`, and the goals part's value equals `slicer goals --json` for the same root."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Wait for Q1 and Q2, then write the steps."
+    },
+    {
+      "heading": "Check",
+      "body": "- The project's full test suite passes.\n- `slicer check` passes on this repo."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
