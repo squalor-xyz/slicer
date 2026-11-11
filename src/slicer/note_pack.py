@@ -5,11 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from slicer import vocab
 from slicer.errors import StateError
 from slicer.model import NoteRecord
 
 
-TRUST = ("unverified", "machine-confirmed", "human-reviewed")
+TRUST = vocab.TRUST
 
 
 @dataclass

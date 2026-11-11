@@ -5,10 +5,10 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Callable
 
-from slicer import check, graph, jsonio, queries, relayrun, vcs
+from slicer import check, graph, jsonio, queries, relayrun, vcs, vocab
 from slicer.store import State
 
-PARTS = ("items", "goals", "runs", "status", "health")
+PARTS = vocab.PARTS
 
 
 def revision(value: object) -> str:

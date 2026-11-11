@@ -11,23 +11,21 @@ Exit codes are stable because scripts depend on them:
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 import os
 import sys
-from contextlib import nullcontext
-from pathlib import Path
 
-from slicer import store, vcs
 from slicer import __url__, __version__
-from slicer.cli_common import (
-  INTERNAL, OK, PASS_ALIAS_NOTE, USAGE, _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _ParserError, _begin_write,
-  _dump_json, _emit, _exit_for, _json_flags, _write_out,
+from slicer.cli_args import (
+  INTERNAL, OK, PASS_ALIAS_NOTE, USAGE, _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _ParserError,
+  _exit_for, _json_flags,
 )
 from slicer.cli_parser import build_parser
-from slicer.cli_report import cmd_snapshot, snapshot_roots
-from slicer.config import CONFIG_NAME
 from slicer.errors import SlicerError, StateError
+
+# `store`, `vcs`, `cli_common`, `cli_report`, `config`, `copy` and `pathlib` are imported inside
+# the functions that use them (`pathlib` alone pulls in `urllib.parse` and `ipaddress`): `--version` and `--help` run none of those, and importing them
+# here would load `dataclasses`, the store, the checker and the renderer before a flag parses.
 
 
 def _recursive(args: argparse.Namespace) -> int:
@@ -38,6 +36,12 @@ def _recursive(args: argparse.Namespace) -> int:
   is reported in place and the rest still run. The exit is the worst any project
   returned. Nothing here takes the writer lock, because nothing is written.
   """
+  import copy
+  from pathlib import Path
+
+  from slicer import store
+  from slicer.cli_common import _dump_json, _write_out
+
   if args.command == "next":
     changes = [
       flag for flag, on in (
@@ -145,6 +149,10 @@ def _warn_code_mismatch(args: argparse.Namespace, start: str | None = None) -> N
   if os.environ.get(_CODE_WARNING_ENV):
     return
   try:
+    from pathlib import Path
+
+    from slicer import store, vcs
+
     start = start or getattr(args, "root", None)
     root = store.discover(Path(start) if start else None)
     message = vcs.foreign_worktree(root, Path(__file__).resolve().parent)
@@ -188,15 +196,21 @@ def main(argv: list[str] | None = None) -> int:
       about.add_argument("--root", default=None)
       _json_flags(about)
       about.parse_args(argv, namespace=args)
+      from slicer.cli_common import _emit
+
       _emit(args, {
         "name": "slicer", "version": __version__, "description": _DESCRIPTION,
         "url": __url__, "issues": _ISSUES_URL,
       }, f"slicer {__version__}\n{_DESCRIPTION}\nSource: {__url__}\nIssues: {_ISSUES_URL}")
       return OK
     parser.parse_args(argv, namespace=args)
+    from pathlib import Path
+
     if getattr(args, "pass_alias_used", False):
       print(PASS_ALIAS_NOTE, file=sys.stderr)
     if args.command == "snapshot":
+      from slicer.cli_report import cmd_snapshot, snapshot_roots
+
       for snapshot_root in snapshot_roots(args):
         _warn_code_mismatch(args, snapshot_root)
       return cmd_snapshot(args)
@@ -205,11 +219,19 @@ def main(argv: list[str] | None = None) -> int:
       return _recursive(args)
     _warn_code_mismatch(args)
     if _changes_state(args):
+      from slicer import vcs
+
       vcs.require_no_merge(root)
     # A mutating command holds an advisory lock for its whole run, so two
     # writers serialise instead of racing (a duplicated id, a half-applied
     # outline). Read-only commands need no lock.
     if getattr(args.func, "mutates", False) and not _reads_only(args):
+      from contextlib import nullcontext
+
+      from slicer import store
+      from slicer.cli_common import _begin_write
+      from slicer.config import CONFIG_NAME
+
       # A create-path migrate targets its own new .slicer/, not an ancestor's.
       # There is no target project lock until that directory exists.
       creating_migrate = (

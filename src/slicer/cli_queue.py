@@ -17,7 +17,7 @@ from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 
-from slicer import cli_common, graph, model, note_pack, ops, queries, render, store
+from slicer import cli_common, graph, model, note_pack, queries, store
 from slicer.cli_common import OK, USAGE, _census, _emit, _item_lookup, _mutating, _state, _status_tally
 from slicer.config import Config
 from slicer.errors import StateError
@@ -363,6 +363,8 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
   item = result.item
   _reject_unknown_sections(args, state, [item])
   if args.start:
+    from slicer import ops
+
     before = _claim_marks([item])
     with (nullcontext() if locked else store.project_lock(state.root)):
       if not locked:
@@ -386,6 +388,8 @@ def _select_next(args: argparse.Namespace, *, locked: bool) -> int:
     else:
       payload = payload | {"slice": sl.to_dict()}
       # The banner names the source file, which is the path this text keeps out.
+      from slicer import render
+
       lines.append(render.slice_body(
         sl, state.config, state.template("slice.md"), item.rendered_notes))
   _emit(args, payload, "\n".join(lines))
@@ -426,6 +430,8 @@ def _cmd_next_batch(
   _reject_unknown_sections(args, state, result.items)
   items = result.items
   if args.start:
+    from slicer import ops
+
     # Empty batches never start. Capped and rendered selection already hold
     # the lock; otherwise take it here. One staged start_many ensures that a
     # failure keeps every id unclaimed: no status, move, or log line.
@@ -665,6 +671,8 @@ def cmd_list(args: argparse.Namespace) -> int:
     items = [i for i in items if i.pass_key == args.pass_key]
   if args.wave is not None:
     # Validation only: `valid_wave` is pure and writes nothing.
+    from slicer import ops
+
     wave = ops.valid_wave(args.wave)
     if wave is None:
       raise StateError("--wave needs an integer >= 1 to filter by", code="usage")
@@ -958,6 +966,8 @@ def cmd_show(args: argparse.Namespace) -> int:
       "--section Implement. `slicer sections` lists the names",
       code="usage",
     )
+  from slicer import render
+
   resolved = render.citations(state.index, item)
   header = render.header_lines(state.index, item)
   kids = queries.slivers_of(state, item.id)
