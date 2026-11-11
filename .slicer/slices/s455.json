@@ -1,0 +1,41 @@
+{
+  "id": "s455",
+  "title": "Startup time: defer heavy imports so --version starts in about 20 ms",
+  "lead": [
+    "Every slicer process imports every command handler, the store, the checker and the renderer before it parses a flag. ork's dashboard runs slicer many times a minute, so this startup cost is most of what each call costs. This item resolves command handlers only when their command runs, so `--version` and `--help` import almost nothing and the read commands import only what they use. Behaviour and output stay byte for byte the same. The owner answered Q1 and Q2 on 2026-11-11 (both recommended options)."
+  ],
+  "depends_note": null,
+  "findings_note": "ork owner 2026-11-11: dashboards poll slicer often, and each call costs about 100 ms, almost all of it slicer's imports (python3 -c pass: 4 ms; import slicer.cli: 77 ms).",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** restructuring `slicer.store` itself, or removing `dataclasses` from modules that need it; a read command that loads the store still pays for both.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Measured on 2026-11-11 on main at `7b554fd1` (Linux, warm cache, best of five, `PYTHONPATH=src`): `python3 -c pass` 5 ms; `slicer --version` 80 ms; `slicer list --json --lean` 85 ms; `slicer snapshot --json` 129 ms.\n\n`python3 -X importtime -c 'import slicer.cli'` gives 67 ms cumulative. The largest pieces are `slicer.store` (35 ms, with `dataclasses` at 16 ms of it and `inspect` at 16 ms inside that), `slicer.cli_common` (12 ms) and `slicer.check` (12 ms).\n\nWhy `--version` pays for all of it: `src/slicer/cli.py:21-30` imports `store`, `vcs`, `cli_common`, `cli_parser` and `cli_report` at module level. `src/slicer/cli_parser.py:14-50` imports every `cli_*` handler module, plus `ai`, `note_pack` and `snapshot` for help text, so that each `set_defaults(func=cmd_x)` can name its handler. `src/slicer/cli_common.py:29-33` imports `check`, `ops`, `render` and `store`, and `cli_parser` needs `cli_common` for `_ArgumentParser` and the shared flag helpers. `--version` is an argparse action, so it runs only after the whole parser, and so every handler module, is built. Nearly every slicer module imports `dataclasses` (21 modules under `src/slicer/`), and `dataclasses` imports `inspect`.\n\nOwner decisions, 2026-11-11:\n\n- Q1 target: aim for `slicer --version` under 20 ms and `slicer list --json --lean` under 50 ms on this store. The guard is a test on module names, not on time, because time is not stable in CI.\n- Q2 scope: lazy imports in the CLI dispatch and in modules that import heavy modules only for rare paths; no restructuring of `slicer.store`."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/cli.py` (module-level imports at `:21-30`; `main` at `:177`).\n- `src/slicer/cli_parser.py` (handler imports at `:14-50`; each `set_defaults(func=...)` names the handler by module and function instead of by object).\n- `src/slicer/cli_common.py` (move `_ArgumentParser`, `_ParserError`, `_DESCRIPTION`, `_ISSUES_URL` and the flag helpers the parser uses into a light module that imports no `dataclasses`; `cli_common` re-exports them so existing imports keep working).\n- `src/slicer/snapshot.py:11` and the `ai` and `note_pack` constants the parser reads for help text (move them, or the strings, where importing them is cheap).\n- `tests/test_startup_imports.py` (new).\n- `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "In `tests/test_startup_imports.py`, each runs a subprocess with `PYTHONPATH` set to this checkout's `src/` and prints `sorted(sys.modules)` at exit:\n\n- `test_Version_ImportsNoHeavyModule`: after `main([\"--version\"])`, none of `dataclasses`, `inspect`, `slicer.store`, `slicer.check`, `slicer.ops`, `slicer.render` or any `slicer.cli_` handler module is in `sys.modules`. Fails first: all are.\n- `test_Help_ImportsNoHandlerModule`: after `main([\"--help\"])`, no `slicer.cli_` handler module and none of `slicer.store`, `slicer.check`, `slicer.ops` is loaded. Fails first.\n- `test_List_ImportsNoCheckOrRender`: after `main([\"list\", \"--json\", \"--lean\"])` on a fixture project, `slicer.check` and `slicer.render` are not loaded. Fails first. (The implementer confirms this holds once handlers are lazy; if `list` truly needs one of them, the test names only the ones it does not.)\n- `test_EveryCommand_ResolvesItsHandler`: for each subcommand in the built parser, the lazy reference resolves to a callable with the expected name. Guards against a typo in a module or function name.\n\nEvery existing test passes unchanged, and every command's stdout, stderr and exit code stay byte for byte the same."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Tests first; confirm each fails for the reason given.\n2. Run `python3 -X importtime -m slicer --version` and work from the largest cumulative entries down.\n3. Give `cli_parser` a lazy handler reference, for example a small callable that holds `\"slicer.cli_queue:cmd_list\"` and imports on first call. Keep anything that reads `args.func` working (`cli.py` and `cli_report.py:185-237` `cmd_snapshot`'s `read` helper call `sub.func(sub)`).\n4. Move the parser's base class and flag helpers out of `cli_common` into a light module; re-export from `cli_common`.\n5. Move `cli.py`'s module-level imports of `store`, `cli_report` and the heavy part of `cli_common` into the functions that use them.\n6. Measure again with the same method as in Why and record the numbers in the handoff note."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests -k StartupImports` passes.\n- `python3 -m unittest discover -s tests -t tests` passes.\n- `PYTHONPATH=src python3 -m slicer check` exits 0.\n- `PYTHONPATH=src python3 -m slicer --version` prints the same line as before.\n- [HUMAN CHECK] The handoff note gives before and after timings for `--version` and `list --json --lean`, measured best of five as in Why; `--version` is under 20 ms or the note says what is left and why."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch: \"cli: resolve command handlers lazily so --version and --help start fast\"."
+    }
+  ],
+  "notes": []
+}

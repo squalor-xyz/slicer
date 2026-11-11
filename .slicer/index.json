@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 454,
+  "next_id": 458,
   "preamble": "",
   "passes": [
     {
@@ -18779,6 +18779,122 @@
         "reason": "",
         "importance": 3,
         "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s454",
+      "title": "Per-slice changelog entries in landed-changed/, assembled into CHANGELOG.md",
+      "short_title": "landed-changed changelog entries",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "ork owner 2026-11-11: parallel slice branches that each add a line under Unreleased in CHANGELOG.md conflict at nearly every landing (ork runs S132, S173, S204, S226, S244, S255, S257, S263, S267, S223 on 2026-11-08 to 11-11). The owner asked that slicer own a per-slice entry folder named landed-changed and the step that assembles it.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "landed-changed-entries",
+        "pass": "v1.22",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s455",
+      "title": "Startup time: defer heavy imports so --version starts in about 20 ms",
+      "short_title": "Lazy imports for fast startup",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "ork owner 2026-11-11: dashboards poll slicer often, and each call costs about 100 ms, almost all of it slicer's imports (python3 -c pass: 4 ms; import slicer.cli: 77 ms).",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "slicer-lazy-imports",
+        "pass": "v1.22",
+        "group": "",
+        "reason": "",
+        "importance": 3,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s456",
+      "title": "snapshot: a deps part, and an unchanged answer for parts the caller already holds",
+      "short_title": "snapshot deps part and --since",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "ork owner 2026-11-11: ork polls items, deps and runs per project; snapshot already batches items, goals and runs across --root values with a revision per part, but has no deps part, and every reply carries every part's value.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "slicer-snapshot-deps-since",
+        "pass": "v1.22",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s457",
+      "title": "snapshot: skip building a part whose inputs have not changed",
+      "short_title": "snapshot input fingerprint",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [
+        "s456"
+      ],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "M",
+        "flags": [
+          "needs-owner"
+        ],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "Follow-up the owner chose on 2026-11-11 while specifying the snapshot deps/--since item: --since drops an unchanged part's value but still loads the store and builds it, because a revision is a hash of the value.",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "slicer-snapshot-input-fingerprint",
+        "pass": "v1.22",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 1,
         "effort": 2,
         "attempts": 0
       }

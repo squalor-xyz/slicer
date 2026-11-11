@@ -1,0 +1,41 @@
+{
+  "id": "s456",
+  "title": "snapshot: a deps part, and an unchanged answer for parts the caller already holds",
+  "lead": [
+    "A dashboard such as ork can read every project in one `slicer snapshot` call. Two gaps keep it calling slicer per project and parsing values it already holds: there is no `deps` part, and a caller cannot say which revisions it has. This item adds `deps` as an opt-in part and `--since FILE`, which takes a previous snapshot reply and answers `unchanged` for every part whose revision still matches. The owner answered on 2026-11-11 (recommended options throughout)."
+  ],
+  "depends_note": null,
+  "findings_note": "ork owner 2026-11-11: ork polls items, deps and runs per project; snapshot already batches items, goals and runs across --root values with a revision per part, but has no deps part, and every reply carries every part's value.",
+  "size": "M",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:** skipping the store load for an unchanged part. A revision is a hash of the built value, so slicer still loads and builds each part; that is the follow-up item filed alongside this one.",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Read on 2026-11-11 at `7b554fd1`:\n\n- `src/slicer/snapshot.py:11` `PARTS = (\"items\", \"goals\", \"runs\", \"status\", \"health\")`. There is no `deps`; ork runs `slicer deps --json` once per project.\n- `--parts` defaults to all of `PARTS` (`src/slicer/cli_parser.py:1042`), so adding `deps` to the default would change the reply for every caller that passes no `--parts`.\n- `revision(value)` is the first 12 hex digits of the SHA-256 of the value's `jsonio` text (`snapshot.py:14-15`), stored beside `value` (`:73`). The project revision hashes the part revisions (`:76`).\n- `slicer deps --json` with no ID prints the unblocked open items as full `to_dict` rows, highest effective score first (`src/slicer/cli_queue.py:895-901`). It works through `cmd_snapshot`'s `read` helper (`src/slicer/cli_report.py:221-227`) like `list`, `goals` and `status` do.\n- With three `--root` values and `--parts items,runs`, one call took 142 ms against 97 ms for one `slicer list`.\n\nOwner decisions, 2026-11-11:\n\n- Q1 the deps part's value is the same JSON `slicer deps --json` gives for the project.\n- Q2 `--since` drops the value of an unchanged part. It does not skip computing it.\n- Q3 the caller names its revisions with `--since FILE`: a previous snapshot reply (`-` reads stdin). slicer matches each project by its resolved `root` and each part by name. A key by part name alone would be wrong: if root B's part changes to equal root A's old value, the caller would get `unchanged` and no value for B.\n\nSettled in this spec (owner to confirm at review): `deps` is in `PARTS` but not in the default `--parts`, so a caller that passes no `--parts` gets the same bytes as today."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/snapshot.py` (`PARTS`, a `deps` reader in `build`, an optional `since` map consulted when a part's value is built).\n- `src/slicer/cli_report.py:185-237` (`cmd_snapshot`: read and validate `--since` before any project is read; pass each project's map to `build`).\n- `src/slicer/cli_parser.py:1036-1043` (`--since`; the default `--parts` stays the five parts it names today).\n- `tests/test_snapshot.py`.\n- `docs/agents.md:711` (Dashboard snapshot: the `deps` part, `--since`, the unchanged shape), `docs/commands.md:100`.\n- `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "In `tests/test_snapshot.py`, class `SnapshotTests`:\n\n- `test_Snapshot_DepsPart_EqualsDepsJson`: `snapshot --json --parts deps` gives a `deps` value equal to the parsed stdout of `deps --json` on the same fixture, and a revision equal to `snapshot.revision` of that value. Fails first: `unknown snapshot part(s) deps`.\n- `test_Snapshot_DefaultParts_StillFiveParts`: with no `--parts`, the parts are `items, goals, runs, status, health` in that order. Guard: passes before the change.\n- `test_Snapshot_Since_MatchingRevision_IsUnchangedWithNoValue`: run once, write the reply to a file, run again with `--since FILE`; every part is `{\"revision\": REV, \"unchanged\": true}` with keys in that order and no `value`, and the project revision is the same as in the first reply. Fails first: no such flag.\n- `test_Snapshot_Since_ChangedPart_GivesFullValue`: change one item's status between the runs; `items` and `status` carry a new revision and a `value`, and the untouched parts are unchanged.\n- `test_Snapshot_Since_MatchesByRoot`: two roots whose `goals` values differ; a `--since` file that holds root A's revisions under root B's `root` gives B its full value.\n- `test_Snapshot_Since_UnknownRootOrPart_GivesFullValue`: a project or part absent from the file, or present with `revision: null` or an `error`, gives the full value.\n- `test_Snapshot_Since_Stdin`: `--since -` reads the reply from stdin.\n- `test_Snapshot_Since_Unreadable_IsUsage`: a missing file, non-JSON, or JSON without a `projects` list exits 2 with a stderr line naming the file and nothing on stdout, and no project is read.\n- `test_Snapshot_NoSince_EveryPartHasAValue`: with no `--since`, every part has `revision` and `value` and none has `unchanged`. Guard: passes before the change. The existing `SnapshotTests` pass unchanged."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Tests first; confirm each fails (or the guard passes) for the reason given.\n2. `snapshot.py`: add `\"deps\"` to `PARTS`; add a `deps` reader that returns `read(\"deps\")`. Give `build` a `since: dict[str, str]` argument (part name to revision, empty by default); after a part's value is built, if its revision equals `since.get(name)`, store `{\"revision\": rev, \"unchanged\": True}`.\n3. `cli_parser.py`: keep the `--parts` default to the five existing names (spell them, or add a `DEFAULT_PARTS`), and add `--since FILE`.\n4. `cli_report.py`: before the loop over roots, load `--since` (file or stdin) and build `{root: {part: revision}}` from `projects[].root` and `projects[].parts.NAME.revision`, skipping projects with an error; refuse a bad file as `usage` with the file named. Pass each project's map by its resolved root.\n5. Update `docs/agents.md` and `docs/commands.md`, and add the CHANGELOG line."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests -k SnapshotTests` passes.\n- `python3 -m unittest discover -s tests -t tests` passes.\n- `PYTHONPATH=src python3 -m slicer check` exits 0.\n- `PYTHONPATH=src python3 -m slicer snapshot --json --parts deps` prints a `deps` part on this repository.\n- Mutation: compare `since` against the part name instead of the root's map; `test_Snapshot_Since_MatchesByRoot` goes red."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch: \"snapshot: a deps part, and --since FILE for unchanged parts\"."
+    }
+  ],
+  "notes": []
+}

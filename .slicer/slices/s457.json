@@ -1,0 +1,43 @@
+{
+  "id": "s457",
+  "title": "snapshot: skip building a part whose inputs have not changed",
+  "lead": [
+    "With `--since`, slicer still loads each project and builds each part before it can say `unchanged`, because a part's revision is a hash of its built value. A cheap fingerprint of the files a part reads would let slicer answer before the load, which is the time ork's polling spends. This is a row with an open question; it needs the owner's answers before it is specified."
+  ],
+  "depends_note": null,
+  "findings_note": "Follow-up the owner chose on 2026-11-11 while specifying the snapshot deps/--since item: --since drops an unchanged part's value but still loads the store and builds it, because a revision is a hash of the value.",
+  "size": "M",
+  "flags": [
+    "needs-owner"
+  ],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "- `src/slicer/snapshot.py:14-15` and `:73`: the revision is computed from the built value, so it cannot be known before the store is loaded.\n- Measured 2026-11-11: `slicer snapshot --json` takes 129 ms on this repository, against 80 ms for `--version`; the difference is the store load and the part builds.\n\nOpen owner questions:\n\n- Q1 the fingerprint. (a) a new `fingerprint` beside `revision`, a hash of `(path, mtime_ns, size)` for each file the part reads (`.slicer/index.json`, `.slicer/slices/`, the relay-run ledger, config), checked before the load; `revision` keeps its meaning (recommended). (b) redefine `revision` as the fingerprint, which changes what existing callers compare.\n- Q2 the fall-back when a part reads git state (`health` reads `vcs.merge_in_progress`): (a) such a part is always built (recommended). (b) include the git files it reads in the fingerprint."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/snapshot.py`, `src/slicer/cli_report.py`, `tests/test_snapshot.py`, `docs/agents.md`, `CHANGELOG.md`."
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- Written after Q1 and Q2."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Wait for the owner's answers to Q1 and Q2, then write the steps."
+    },
+    {
+      "heading": "Check",
+      "body": "- `python3 -m unittest discover -s tests -t tests` passes.\n- `PYTHONPATH=src python3 -m slicer check` exits 0."
+    },
+    {
+      "heading": "Git",
+      "body": "One commit on the slice branch."
+    }
+  ],
+  "notes": []
+}

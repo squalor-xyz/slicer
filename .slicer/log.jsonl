@@ -2859,3 +2859,8 @@
 {"when": "2026-11-09T07:33:04Z", "item": "s450", "action": "set", "from": "", "to": "", "note": "pass_key v1.21→v1.22"}
 {"when": "2026-11-09T07:33:04Z", "item": "s451", "action": "set", "from": "", "to": "", "note": "pass_key v1.21→v1.22"}
 {"when": "2026-11-09T07:33:04Z", "item": "s453", "action": "set", "from": "", "to": "", "note": "pass_key v1.21→v1.22"}
+{"when": "2026-11-11T16:54:35Z", "item": "s454", "action": "add", "from": "", "to": "open", "note": "Per-slice changelog entries in landed-changed/, assembled into CHANGELOG.md"}
+{"when": "2026-11-11T16:54:35Z", "item": "s455", "action": "add", "from": "", "to": "open", "note": "Startup time: defer heavy imports so --version starts in about 20 ms"}
+{"when": "2026-11-11T16:54:35Z", "item": "s456", "action": "add", "from": "", "to": "open", "note": "snapshot: a deps part, and an unchanged answer for parts the caller already holds"}
+{"when": "2026-11-11T16:54:35Z", "item": "s457", "action": "add", "from": "", "to": "open", "note": "snapshot: skip building a part whose inputs have not changed"}
+{"when": "2026-11-11T16:54:39Z", "item": "s457", "action": "set", "from": "", "to": "", "note": "flags -→needs-owner"}
