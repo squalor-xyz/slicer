@@ -2,7 +2,7 @@
   "version": 11,
   "id_prefix": "s",
   "id_width": 2,
-  "next_id": 458,
+  "next_id": 459,
   "preamble": "",
   "passes": [
     {
@@ -18935,6 +18935,34 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
+        "attempts": 0
+      }
+    },
+    {
+      "id": "s458",
+      "title": "Wave planning counts a slice with placeholder spec sections as specified",
+      "short_title": "Wave planning counts a slice with placeholder spec sections as specified",
+      "status": "open",
+      "has_slice": true,
+      "depends_on": [],
+      "note_records": [],
+      "claim": null,
+      "fields": {
+        "size": "S",
+        "flags": [],
+        "trees": [],
+        "trees_literal": false,
+        "findings": "",
+        "discovered_from": "",
+        "parent": "",
+        "cites": [],
+        "key": "ork-new-c9c0ba639a79ab41",
+        "pass": "v1.22",
+        "group": "",
+        "reason": "",
+        "importance": 2,
+        "urgency": 2,
+        "effort": null,
         "attempts": 0
       }
     }
