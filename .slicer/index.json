@@ -18813,7 +18813,7 @@
       "id": "s454",
       "title": "Per-slice changelog entries in landed-changed/, assembled into CHANGELOG.md",
       "short_title": "landed-changed changelog entries",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
