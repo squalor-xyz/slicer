@@ -26,7 +26,7 @@
     },
     {
       "heading": "Implement",
-      "body": "1. Get the owner's answer to the open question, then write the tests; confirm the \"fails first\" ones fail.\n2. Add the cache to `Index` and `Catalog` per the chosen option. The cache must not appear in `to_dict`, `__eq__` or `repr`, and `copy.deepcopy` of a draft state must not share it (a fresh build on first `get` after copy is fine).\n3. Keep `require`, `position` and every caller unchanged.\n4. Run the lazy-load tests (`tests/test_store_lazy.py`), which pin s312 and s361."
+      "body": "1. Get the owner's answer to the open question, then write the tests; confirm the \"fails first\" ones fail.\n2. Add the cache to `Index` and `Catalog` per the chosen option. The cache must not appear in `to_dict`, `__eq__` or `repr`, and `copy.deepcopy` of a draft state must not share it (a fresh build on first `get` after copy is fine).\n3. Keep `require`, `position` and every caller unchanged.\n4. Run the lazy-load tests (`tests/test_store_lazy.py`), which pin s312 and s361.\n\nOwner decisions (2026-11-11): How should the Mutation Check line say when it is done? -> tighten: replace it with \"drop `len(self.items)` from the fingerprint; `test_IndexGet_HitMissAndAddedAfterFirstGet_SameAsScan` goes red\". How should the `PYTHONPATH=src python3 -m slicer check` and `... render` Check lines be run? -> assign to orchestrator: as in s455's `check.orchestrator-env-prefix`."
     },
     {
       "heading": "Check",
