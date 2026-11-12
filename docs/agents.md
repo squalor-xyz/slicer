@@ -713,7 +713,7 @@ $ slicer check -r --json --lean
 
 ## Dashboard snapshot
 
-`slicer snapshot --json [--root PATH]... [-r] [--parts items,goals,runs,status,health]`
+`slicer snapshot --json [--root PATH]... [-r] [--parts items,goals,runs,status,health,deps] [--since FILE]`
 combines dashboard reads in one process. It loads each project once, reads only, and takes
 no writer lock. With no root, it discovers the current project. Repeated roots retain their
 argument order (a root before `snapshot` also participates). `-r` walks each root using the
@@ -740,7 +740,8 @@ same discovery, exclusions and sorted path order described above; it never walks
 ```
 
 `slicer` is the running package version; `contract` is the running `ai.RELAY_CONTRACT`.
-The default part order is `items`, `goals`, `runs`, `status`, `health`. `--parts` selects only
+The default part order is `items`, `goals`, `runs`, `status`, `health`; `deps` is opt-in, so a
+call with no `--parts` prints what it always did. `--parts` selects only
 its comma-separated names, in that order. An empty name (`--parts ''`, a trailing or doubled
 comma), an unknown name and a repeated name (`--parts items,items`) are each `usage` (exit 2),
 checked before any project is read, with a diagnostic on stderr that names the problem and no stdout. Without `--json`, snapshot is `usage` too.
@@ -765,12 +766,27 @@ and `SLICER_NO_CODE_WARNING` silences it. Stdout and the exit code are unchanged
   ids from the existing status reader's skipped candidates.
 - `health`: `render_stale` covers missing, differing or orphan render files from `check`;
   `merge_in_progress` comes from the checkout's Git merge state.
+- `deps` (opt-in, `--parts deps`): the value `slicer deps --json` prints for the project with
+  no ID, the unblocked open items as full `to_dict` rows, highest effective score first.
 
 Each part's revision is the first 12 hexadecimal digits of SHA-256 over its `value` encoded
 as UTF-8 using canonical `jsonio.dumps` (two-space indent, Unicode unescaped, trailing
 newline). The project revision hashes the ordered object mapping part names to their
 revisions in the same way. Unchanged reads print identical bytes while the values stay
 unchanged, including the active-run view.
+
+`--since FILE` takes a snapshot reply the caller already holds (`-` reads stdin). A part whose
+revision equals the one the file holds for the same project `root` and the same part name is
+printed as `{"revision": REV, "unchanged": true}`, with no `value`; every other part prints
+`{"revision": REV, "value": VALUE}` as before. The project `revision` is the same either way.
+A project is matched by its resolved `root`, never by part name alone: another project whose part
+happens to equal this one's old value is not `unchanged`. A project, or a part, the file does not
+hold, a project with an `error`, and a part with a `null` revision all print their full value.
+The file may be a reply that itself used `--since`: an `unchanged` part still names its revision.
+A missing or unreadable file, text that is not JSON, and JSON with no `projects` list are each
+`usage` (exit 2), checked before any project is read, with a stderr line that names the file
+(`stdin` for `-`) and no stdout. `--since` saves the caller parsing the value, not slicer
+computing it: a revision hashes the built value, so every part is still loaded and built.
 
 A project that fails has `revision: null`, `parts: {}` and
 `error: {code, message, command: "snapshot"}`. Unreadable recursive directories also get an

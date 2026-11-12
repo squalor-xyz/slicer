@@ -11,4 +11,4 @@ from __future__ import annotations
 
 PROMPT_NAMES = ("build-roadmap", "getting-started")
 TRUST = ("unverified", "machine-confirmed", "human-reviewed")
-PARTS = ("items", "goals", "runs", "status", "health")
+PARTS = ("items", "goals", "runs", "status", "health", "deps")

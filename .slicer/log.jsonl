@@ -2904,3 +2904,7 @@
 {"when": "2026-11-11T21:38:45Z", "item": "s450", "action": "edit", "from": "", "to": "", "note": "Implement"}
 {"when": "2026-11-11T22:07:46Z", "item": "s450", "action": "status", "from": "review", "to": "done", "note": "Landed s450", "by": "Jon Robbins"}
 {"when": "2026-11-11T23:54:29Z", "item": "s455", "action": "status", "from": "review", "to": "done", "note": "Landed s455", "by": "Jon Robbins"}
+{"when": "2026-11-11T23:57:30Z", "item": "s456", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-12T00:12:50Z", "item": "s456", "action": "note", "from": "", "to": "", "note": "Verified: snapshot --parts deps gives the deps --json value ", "by": "Jon Robbins"}
+{"when": "2026-11-12T00:19:52Z", "item": "s456", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-12T00:19:53Z", "item": "s456", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

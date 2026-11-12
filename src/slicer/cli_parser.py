@@ -1158,8 +1158,13 @@ def _add_reports(sub: argparse._SubParsersAction, add) -> None:
                   help="project root; repeat to read several projects in order")
   _json_flags(sp)
   _recursive_flag(sp)
-  sp.add_argument("--parts", default=",".join(PARTS),
-                  help="comma-separated dashboard parts: " + ",".join(PARTS))
+  # `deps` is opt-in: a caller that names no parts gets the reply it always did.
+  sp.add_argument("--parts", default="items,goals,runs,status,health",
+                  help="comma-separated dashboard parts: " + ",".join(PARTS)
+                  + " (default: all but deps)")
+  sp.add_argument("--since", metavar="FILE",
+                  help="a previous snapshot reply ('-' reads stdin); a part whose revision "
+                  "still matches, by project root and part name, answers `unchanged` and no value")
 
   _recursive_flag(add("status", cmd_status, "next item, progress, and blockers in one view"))
 

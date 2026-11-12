@@ -18927,10 +18927,25 @@
       "id": "s456",
       "title": "snapshot: a deps part, and an unchanged answer for parts the caller already holds",
       "short_title": "snapshot deps part and --since",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9c76310c-595d-49fb-a071-721ff76c6e13",
+          "kind": "",
+          "text": "**2026-11-12** — Verified: snapshot --parts deps gives the deps --json value with its revision, and is opt-in so the default stays the five parts. snapshot --since FILE (- for stdin) prints {revision, unchanged: true} with no value for each part whose revision the file holds for the same resolved root and part name; unknown roots or parts, null revisions and error projects get the full value; an unreadable file, non-JSON or JSON with no projects list is usage (exit 2) before any project is read. Full suite 3430 tests pass (1 skipped, as before), SnapshotTests 27 pass, slicer check exits 0, and the root-keyed mutation turns test_Snapshot_Since_MatchesByRoot red.",
+          "created_at": "2026-11-12T00:12:50Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -18948,7 +18963,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
