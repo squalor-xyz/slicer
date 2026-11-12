@@ -19128,7 +19128,7 @@
       "id": "s458",
       "title": "Wave planning counts a slice with placeholder spec sections as specified",
       "short_title": "Wave planning counts a slice with placeholder spec sections as specified",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
