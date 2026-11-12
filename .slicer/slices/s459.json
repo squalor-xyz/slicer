@@ -7,9 +7,7 @@
   "depends_note": null,
   "findings_note": "ork owner 2026-11-11: ork's batched polling (ork S335) is held until slicer's snapshot carries the fields its dashboard reads from `slicer list --json --lean` and `slicer relay-run list --json`.",
   "size": "M",
-  "flags": [
-    "needs-owner"
-  ],
+  "flags": [],
   "trees_note": "",
   "trees_plural": false,
   "boundary": "**Not in this slice:**",

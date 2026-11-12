@@ -11,3 +11,7 @@ Tick a box when the check is done, or delete the line. Write `-> SNNN` after a c
 ## s453 (run ork-20261111-213809-376f, 2026-11-12)
 
 - [ ] The new brief paragraph does not invite a role to change code, file items or run `slicer feedback` because of a suggestion.
+
+## s451 (run ork-20261111-213809-6e14, 2026-11-12)
+
+- [ ] [AFTER LAND] In a scratch clone with the driver configured, edit different sections of one slice on two branches with `slicer edit`, merge, and see no conflict and `slicer check` pass.
