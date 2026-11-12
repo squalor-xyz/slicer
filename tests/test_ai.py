@@ -1003,6 +1003,11 @@ class AiSkillWriteTests(unittest.TestCase):
       self.assertIn(flag, text)
 
 
+# The run report's tool feedback line names ork as a tool (s453, an owner decision), so the
+# "names no project" checks on the contract text leave this one string out.
+TOOL_FEEDBACK_TOOLS = "tool: slicer|ork|NAME"
+
+
 class AiRelayTests(unittest.TestCase):
   """`ai relay` prints the slice relay and writes nothing."""
 
@@ -1264,7 +1269,10 @@ class AiRelayTests(unittest.TestCase):
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         for token in ("tui-design", "frontend-design", "u10", "ork", "adj 165", "roles.ui-pass"):
-          self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
+          self.assertNotRegex(
+            flat.replace(TOOL_FEEDBACK_TOOLS, "").casefold(),
+            r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])",
+          )
 
   def test_OrchestratorText_OwnerFinding_BlocksOnlyWhenBlocker(self) -> None:
     for finish in ("done", "handoff"):
@@ -1323,6 +1331,56 @@ class AiRelayTests(unittest.TestCase):
           "`:` ends the label.",
           "With no question, the line is `owner needed: none`.",
           "`reasoning` is the last field and takes the rest of the line.",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RunReport_ToolFeedback_LineCarriesToolKindProposalEvidence(self) -> None:
+    lines = ai.relay_contract()["report"]["lines"]
+    keys = [line["key"] for line in lines]
+    self.assertIn("tool_feedback", keys)
+    template = lines[keys.index("tool_feedback")]["template"]
+    for field in (
+      "tool feedback: N. ROLE",
+      "tool: slicer|ork|NAME",
+      "kind: friction|feature|deterministic-check",
+      "proposal: TEXT",
+    ):
+      with self.subTest(field=field):
+        self.assertIn(field, template)
+    # Free text can hold `|`, so the free-text field is last and the template is format only.
+    self.assertTrue(template.endswith(" | evidence: TEXT"), template)
+    self.assertNotIn("OR none", template)
+    self.assertEqual(ai.RELAY_TOOL_FEEDBACK_KINDS, ("friction", "feature", "deterministic-check"))
+    self.assertIn("kind: " + "|".join(ai.RELAY_TOOL_FEEDBACK_KINDS), template)
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        self.assertIn(template, ai.orchestrator_text(finish).split("## Run report", 1)[1])
+
+  def test_RunReport_ToolFeedback_NoneWhenEmptyAtMostThreeCounted(self) -> None:
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        flat = " ".join(ai.orchestrator_text(finish).split("## Run report", 1)[1].split())
+        for phrase in (
+          "Each tool feedback entry is one line and counts toward the line limit.",
+          "Number the entries from 1, start each with the role it came from, and carry at most "
+          "3 in all: drop the rest.",
+          "`evidence` is the last field and takes the rest of the line.",
+          "With no entry, the line is `tool feedback: none`.",
+        ):
+          self.assertIn(phrase, flat)
+
+  def test_RelayEveryBrief_EveryRole_MayAddToolFeedbackAndNeverActsOnIt(self) -> None:
+    for label, flat in self.contract_texts():
+      with self.subTest(label=label):
+        for phrase in (
+          "Every role, the read-only ones included, may end its report with up to 3 tool "
+          "feedback lines in the run report's shape, about slicer or another tool: "
+          "`friction`, `feature` or `deterministic-check`.",
+          "The orchestrator carries them into its run report, each prefixed with the role, at "
+          "most 3 in all.",
+          "Tool feedback is advisory: it is not a finding, the gate never decides on it, and no "
+          "role changes code, files an item or runs `slicer feedback` in the slice because of it.",
+          "Put no secret in `evidence`.",
         ):
           self.assertIn(phrase, flat)
 
@@ -1505,12 +1563,15 @@ class AiRelayTests(unittest.TestCase):
         self.assertEqual(flat.lower().count("re-anchor"), expected)
 
   def test_RelaySpecCheck_Text_NamesNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 11)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 11)
+    self.assertEqual(ai.RELAY_CONTRACT, 12)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 12)
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         for token in ("ork", "adj", "s116", "s115", "roles.spec-check"):
-          self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
+          self.assertNotRegex(
+            flat.replace(TOOL_FEEDBACK_TOOLS, "").casefold(),
+            r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])",
+          )
 
   def test_AiRelayOrchestrator_Text_NamesParentDisputesGateResume(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
@@ -1564,7 +1625,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
       self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
-                       {"contract": "relay v11", "relay": text})
+                       {"contract": "relay v12", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -2185,7 +2246,7 @@ class AiRelayOrchestratorSessionTests(unittest.TestCase):
   def test_AiRelayOrchestratorSession_Json_CarriesSessionFlag(self) -> None:
     keys = [
       "contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes",
-      "gate", "finding_kinds", "conformance",
+      "gate", "finding_kinds", "conformance", "tool_feedback",
     ]
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       self.assertEqual(repo.run("init")[0], 0)
@@ -2627,6 +2688,20 @@ class AiRelayBriefTests(unittest.TestCase):
       stop,
     )
 
+  def test_AiRelayBrief_Rules_NameToolFeedback(self):
+    repo = self.project()
+    template = " ".join(templates.default("relay-brief.md").split())
+    rules = template.split("## Rules", 1)[1]
+    brief = " ".join(self.payload(repo)["brief"].split()).split("## Rules", 1)[1]
+    for text in (rules, brief):
+      self.assertIn(
+        "Carry any tool feedback the roles add to their reports into your run report's "
+        "`tool feedback` lines, each prefixed with the role, at most 3 in all, as "
+        "`slicer ai relay-orchestrator` says. It is advisory: do not gate on it or act on it "
+        "in the slice.",
+        text,
+      )
+
   def test_AiRelayBrief_Rules_ForbidBackgroundShell(self):
     repo = self.project()
     rules = " ".join(self.payload(repo)["brief"].split()).split("## Rules", 1)[1]
@@ -2667,7 +2742,7 @@ class RelayGoldenTests(unittest.TestCase):
 
   def check_golden(self, command, *flags):
     key = "-".join((command, *(flag.lstrip("-") for flag in flags)))
-    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v11.json").read_text())
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v12.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
         with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:
@@ -2989,7 +3064,7 @@ class RelayApproveLandTests(unittest.TestCase):
       self.assertEqual(
         list(payload),
         ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes",
-      "roles", "gate", "finding_kinds", "conformance"],
+      "roles", "gate", "finding_kinds", "conformance", "tool_feedback"],
       )
       self.assertEqual(payload["land"], self.land_steps())
       self.assertEqual(list(payload["land"][0]), ["step", "text"])
@@ -3011,11 +3086,11 @@ class RelayApproveLandTests(unittest.TestCase):
         parser.parse_args(shlex.split(command.strip("`"))[1:])
 
   def test_RelayContract_ApproveAndLand_NameNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 11)
+    self.assertEqual(ai.RELAY_CONTRACT, 12)
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         flat = " ".join(ai.relay_text(finish).split())
-        self.assertTrue(flat.startswith("Contract: relay v11"))
+        self.assertTrue(flat.startswith("Contract: relay v12"))
         for token in ("ork", "adj", "s118", "s119", "landing.in-ork"):
           self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
         if finish == "handoff":
@@ -3259,14 +3334,14 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           parser.parse_args(argv)
           self.assertEqual(cli_common._unknown_flags(parser, argv), [])
 
-  def test_RelayContract_Bundle_IsV11WithItsChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 11)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11])
-    self.assertEqual(ai.contract_line(), "relay v11")
+  def test_RelayContract_Bundle_IsV12WithItsChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 12)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11, 12])
+    self.assertEqual(ai.contract_line(), "relay v12")
 
   def test_RelayContract_OwnerQuestion_NamesNoProject(self) -> None:
     for text in (ai.relay_text(), ai.orchestrator_text()):
-      flat = " ".join(text.split()).casefold()
+      flat = " ".join(text.split()).replace(TOOL_FEEDBACK_TOOLS, "").casefold()
       for token in ("ork", "adj 165"):
         self.assertNotRegex(flat, r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
 
@@ -3422,17 +3497,16 @@ class RelayV11Tests(unittest.TestCase):
     self.assertNotIn("Expects:", source)
     self.assertNotIn("agents repo", source)
 
-  def test_AiRelay_Contract_IsV11WithChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 11)
+  def test_AiRelay_Contract_HasV11ChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 12)
     for label, text in (
       ("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text()),
       ("session", ai.orchestrator_text(session=True)),
     ):
       with self.subTest(label=label):
-        self.assertTrue(text.startswith("Contract: relay v11\n"))
-    version, entry = ai.RELAY_CHANGES[-1]
-    self.assertEqual(version, 11)
-    self.assertEqual([v for v, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11])
+        self.assertTrue(text.startswith("Contract: relay v12\n"))
+    entry = dict(ai.RELAY_CHANGES)[11]
+    self.assertEqual([v for v, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11, 12])
     self.assertNotIn("\n", entry)
     for phrase in (
       "the read-only ones included, uses absolute paths and `git -C` and never `cd`",
@@ -3458,8 +3532,25 @@ class RelayV11Tests(unittest.TestCase):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, entry)
     payload = self.payload("relay")
-    self.assertEqual(payload["contract"], "relay v11")
-    self.assertEqual(payload["changes"][-1], {"version": 11, "text": entry})
+    self.assertEqual(payload["contract"], "relay v12")
+    self.assertIn({"version": 11, "text": entry}, payload["changes"])
+
+  def test_AiRelay_Contract_HasV12ChangeEntryForToolFeedback(self) -> None:
+    version, entry = ai.RELAY_CHANGES[-1]
+    self.assertEqual(version, 12)
+    self.assertNotIn("\n", entry)
+    for phrase in (
+      "`tool feedback` line",
+      "before `role_steps`",
+      "friction",
+      "deterministic-check",
+      "at most 3",
+      "advisory",
+      "`tool_feedback` key",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, entry)
+    self.assertEqual(self.payload("relay")["changes"][-1], {"version": 12, "text": entry})
 
   def test_AiRelayOrchestratorSession_NonBlockerQuestion_AskedInTheLedgerAndReadBeforeFinish(self) -> None:
     for finish in ("done", "handoff"):

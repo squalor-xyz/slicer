@@ -46,5 +46,9 @@ branch with title `{{commit_title}}`. Do not merge or push.
   (repeated gate failures, a wrong specification, a permission denial or no
   eligible row) instead of guessing. A `blocker` owner question is not a
   stop: ask it and wait as the Owner questions rule says.
+- Carry any tool feedback the roles add to their reports into your run report's
+  `tool feedback` lines, each prefixed with the role, at most 3 in all, as
+  `slicer ai relay-orchestrator` says. It is advisory: do not gate on it or act on it
+  in the slice.
 - Hand back one final run report, or a stop that needs the owner. Never hand
   back while work you started is still running.

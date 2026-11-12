@@ -18785,10 +18785,81 @@
       "id": "s453",
       "title": "Relay report shape: a Tool feedback section every role can fill",
       "short_title": "Relay report shape: a Tool feedback section every role can fill",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "43a26aad-63a0-44cc-90c3-4be60631bcb8",
+          "kind": "",
+          "text": "**2026-11-11** — Review FAIL: Earlier blockers: the docs blocker is resolved. `docs/working-with-agents.md:181-184` now says `evidence` holds no secret, the orchestrator keeps at most 3 lines in all and drops the rest, and each line counts toward the 30. That matches `src/slicer/ai.py:1016-1019` and `src/slicer/ai.py:1468-1473`. No test reads that paragraph. The fixture blocker is open: `tests/test_ai.py:2745` and `tests/test_relay_roles.py:2987` still load `fixtures/relay-contract-v11.json`, and `tests/fixtures/` contains `relay-contract-v11.json` only. No [fix] finding: failed. One [fix] remains. No blocker owner finding...",
+          "created_at": "2026-11-11T22:04:24Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "56fbc19d-6c2b-4011-b3fb-df8de8b1cf58",
+          "kind": "",
+          "text": "**2026-11-11** — Review FAIL: Earlier blockers: the docs blocker stays resolved. `docs/working-with-agents.md:181-184` says `evidence` holds no secret, the orchestrator keeps at most 3 lines in all and drops the rest, and each line counts toward the 30. That matches `src/slicer/ai.py:1016-1019` and `src/slicer/ai.py:1468-1473`. No test reads that paragraph. The fixture blocker is still open. `tests/test_ai.py:2745` and `tests/test_relay_roles.py:2987` load `fixtures/relay-contract-v11.json`, and `tests/fixtures/` contains `relay-contract-v11.json` only. `git status --short` matches the round start, and this round changed n...",
+          "created_at": "2026-11-11T22:08:49Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "c272e05d-44ed-4612-b9b2-a63e6ba54640",
+          "kind": "",
+          "text": "**2026-11-11** — Review FAIL: Earlier blockers: the docs blocker stays resolved. `docs/working-with-agents.md:181-184` says `evidence` holds no secret, the orchestrator keeps at most 3 lines in all and drops the rest, and each line counts toward the 30. That matches `src/slicer/ai.py:1016-1019` and `src/slicer/ai.py:1468-1473`. No test reads that paragraph. The fixture blocker is still open. `tests/test_ai.py:2745` and `tests/test_relay_roles.py:2987` load `fixtures/relay-contract-v11.json`, and `tests/fixtures/` contains `relay-contract-v11.json` only. `git status --short` matches the round start. No [fix] finding: failed...",
+          "created_at": "2026-11-11T23:56:58Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "dc32decf-9e98-44c1-bc7c-9ae81d32ac5c",
+          "kind": "",
+          "text": "**2026-11-12** — Human checks at approval (s453):\n- later: The new brief paragraph does not invite a role to change code, file items or run `slicer feedback` because of a suggestion.",
+          "created_at": "2026-11-12T00:21:50Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "5c03f92a-308b-449b-ac5e-e57190e14365",
+          "kind": "",
+          "text": "**2026-11-12** — Verified: relay contract v12 adds an optional tool feedback line to every role report. The run report gains a tool_feedback line before role_steps (at most 3 entries, counted toward the 30 lines, tool feedback: none when empty, evidence last), and both ai relay --json payloads gain a tool_feedback key after conformance. The RELAY_BRIEF paragraph and the relay-brief.md Rules bullet say the feedback is advisory and never acted on in the slice. The golden fixture is relay-contract-v12.json. The full suite passed (3412 run, 1 skipped), slicer check passed, git diff --check was clean, and every new assertion was mutation-checked.",
+          "created_at": "2026-11-12T00:21:59Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -18806,7 +18877,7 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

@@ -175,6 +175,16 @@ round first. A question still open then goes on the report's owner-needed line.
 both open and answered; `question` keeps the latest. The text list shows the latest question
 and adds the count when more than one question on that step is open.
 
+Any role may also end its report with up to 3 lines of tool feedback: friction it hit in
+slicer or another tool (`friction`), a feature that would cut agent calls or tokens
+(`feature`), or a check that code could do instead of an AI call
+(`deterministic-check`), each with a one-line proposal and its evidence, which holds no
+secret. The orchestrator carries them into the run report as `tool feedback` lines, each
+prefixed with the role, or `tool feedback: none`. It keeps at most 3 lines in all, however
+many roles add some, and drops the rest; each line counts toward the report's 30 lines. It is
+advisory and yours to read: it is not a finding, never gates the slice, and no role changes
+code, files an item or runs `slicer feedback` because of it.
+
 ### Approval and landing
 
 Unless you stopped the run at the project's finish step, the outer session asks you to approve

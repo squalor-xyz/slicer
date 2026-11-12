@@ -14,8 +14,12 @@ import unittest
 import support
 from slicer import ai, cli, roles
 
-NEW_RELAY_KEYS = ["roles", "gate", "finding_kinds", "conformance"]
-NEW_ORCHESTRATOR_KEYS = ["gate", "finding_kinds", "conformance"]
+NEW_RELAY_KEYS = ["roles", "gate", "finding_kinds", "conformance", "tool_feedback"]
+NEW_ORCHESTRATOR_KEYS = ["gate", "finding_kinds", "conformance", "tool_feedback"]
+REPORT_KEYS = [
+  "contract", "slice", "worktree", "rounds", "tests", "diff_stat", "deviations", "later_notes",
+  "owner_needed", "tool_feedback", "role_steps", "nothing_left_running",
+]
 RELAY_KEYS = ["contract", "pinned", "check_command", "relay", "setup", "order", "land", "report", "outcomes", "stop", "changes"]
 ORCHESTRATOR_KEYS = ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes"]
 OBLIGATIONS = [
@@ -190,17 +194,53 @@ class ConformanceJsonTests(RelayConformanceCase):
     # The pin (s387) and check_command (s379) are built: `ai relay` carries both right
     # after contract, and `ai relay-orchestrator` carries the pin only.
     payload = self.payload("relay")
-    self.assertEqual(payload["contract"], "relay v11")
+    self.assertEqual(payload["contract"], "relay v12")
     self.assertEqual(list(payload)[:3], ["contract", "pinned", "check_command"])
     self.assertIsNone(payload["pinned"])
     self.assertEqual(payload["check_command"], "")
     orchestrator = self.payload("relay-orchestrator")
-    self.assertEqual(orchestrator["contract"], "relay v11")
+    self.assertEqual(orchestrator["contract"], "relay v12")
     self.assertEqual(list(orchestrator)[:2], ["contract", "pinned"])
     self.assertIsNone(orchestrator["pinned"])
     self.assertNotIn("check_command", orchestrator)
-    self.assertEqual(ai.RELAY_CONTRACT, 11)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 11)
+    self.assertEqual(ai.RELAY_CONTRACT, 12)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 12)
+
+  def test_AiRelayJson_ReportLines_ToolFeedbackBeforeRoleSteps(self) -> None:
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        keys = [line["key"] for line in self.payload(command)["report"]["lines"]]
+        self.assertEqual(keys, REPORT_KEYS)
+        self.assertEqual(keys.index("tool_feedback") + 1, keys.index("role_steps"))
+        self.assertEqual(keys[-1], "nothing_left_running")
+
+  def test_AiRelayJson_ToolFeedback_KindsAgreeWithTheProse(self) -> None:
+    expected = {
+      "max_entries": 3,
+      "kinds": ["friction", "feature", "deterministic-check"],
+      "fields": ["tool", "kind", "proposal", "evidence"],
+    }
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        self.assertEqual(self.payload(command)["tool_feedback"], expected)
+    session = self.payload("relay-orchestrator", "--session")
+    self.assertEqual(session["tool_feedback"], expected)
+    self.assertEqual(list(session)[-2:], ["tool_feedback", "session"])
+    kinds = ", ".join(f"`{kind}`" for kind in expected["kinds"][:-1]) + f" or `{expected['kinds'][-1]}`"
+    template = next(
+      line["template"] for line in ai.relay_contract()["report"]["lines"] if line["key"] == "tool_feedback"
+    )
+    self.assertIn("kind: " + "|".join(expected["kinds"]), template)
+    self.assertEqual(
+      [part.split(":")[0] for part in template.split(" | ")[1:]], expected["fields"],
+    )
+    for label, text in self.texts():
+      with self.subTest(label=label):
+        body = flat(text)
+        self.assertIn("may end its report with up to 3 tool feedback lines", body)
+        self.assertIn(f"about slicer or another tool: {kinds}.", body)
+        if not label.startswith("relay-"):
+          self.assertIn("carry at most 3 in all", body)
 
   def test_AiRelayJson_Conformance_ListsKeyAndTextForEachObligation(self) -> None:
     for command in ("relay", "relay-orchestrator"):
@@ -291,7 +331,7 @@ class ConformanceJsonTests(RelayConformanceCase):
   def test_AiRelayJson_SharedParts_IdenticalInBothContracts(self) -> None:
     relay = self.payload("relay")
     orchestrator = self.payload("relay-orchestrator")
-    for key in ("gate", "finding_kinds", "conformance"):
+    for key in ("gate", "finding_kinds", "conformance", "tool_feedback"):
       with self.subTest(key=key):
         self.assertEqual(relay[key], orchestrator[key])
 

@@ -255,7 +255,7 @@ def handoff_policy_text(kind: str) -> str:
 # `ai relay-orchestrator` and carried in their `--json`. Bump it when a rule an outer
 # session, orchestrator or role follows changes (order, gate, tracking order, waiting,
 # report shape), not for a rewording. Record each version's change in RELAY_CHANGES.
-RELAY_CONTRACT = 11
+RELAY_CONTRACT = 12
 
 RELAY_CHANGES = (
   (5, "Setup resolves the role lineup, orchestrator included, with "
@@ -309,6 +309,12 @@ RELAY_CHANGES = (
    "`roles` carries the gate with ledger role `gate`. The orchestrator always runs as a general-purpose "
    "agent briefed with `slicer ai relay-orchestrator`, never an agent type, and an unmatched orchestrator "
    "means the outer session orchestrates."),
+  (12, "Every role, the read-only ones included, may end its report with up to 3 tool feedback lines "
+   "about slicer or another tool (kind `friction`, `feature` or `deterministic-check`), and the "
+   "orchestrator carries them into the run report. The run report gains a `tool feedback` line per "
+   "entry before `role_steps` (`tool feedback: none` when empty, at most 3, counted toward the line "
+   "limit, `evidence` last), and `--json` gains a `tool_feedback` key after `conformance`. Tool "
+   "feedback is advisory: it is not a finding, is never gated and is never acted on in the slice."),
 )
 
 
@@ -516,6 +522,21 @@ After the finish step, commit on the slice branch only when your brief allows it
 
 RELAY_REPORT_MAX_LINES = 30
 
+# Tool feedback (s453): an optional note any role may add about slicer, ork or another tool.
+# It is advisory and never gated. The kinds, the entry limit and the field order are data, so
+# the run report line, the `RELAY_BRIEF` paragraph, the `## Run report` prose and the
+# `tool_feedback` key of `--json` are all rendered from them and cannot drift.
+RELAY_TOOL_FEEDBACK_KINDS = ("friction", "feature", "deterministic-check")
+RELAY_TOOL_FEEDBACK_MAX = 3
+RELAY_TOOL_FEEDBACK_FIELDS = ("tool", "kind", "proposal", "evidence")
+
+
+def _tool_feedback_kinds_text() -> str:
+  """The kinds as prose: `a`, `b` or `c`."""
+  *head, last = (f"`{kind}`" for kind in RELAY_TOOL_FEEDBACK_KINDS)
+  return ", ".join(head) + f" or {last}"
+
+
 RELAY_REPORT_LINES = (
   ('contract', """\
 Contract: {contract}"""),
@@ -535,6 +556,8 @@ deviations accepted: LIST OR none"""),
 later notes: LIST OR none"""),
   ('owner_needed', """\
 owner needed: N. TITLE | options: LABEL:SUMMARY; LABEL:SUMMARY | recommend: LABEL | blocker (optional) | key: AREA.TOPIC (optional) | reasoning: TEXT"""),
+  ('tool_feedback', "tool feedback: N. ROLE | tool: slicer|ork|NAME | kind: "
+   + "|".join(RELAY_TOOL_FEEDBACK_KINDS) + " | proposal: TEXT | evidence: TEXT"),
   ('role_steps', """\
 role steps: STEP IDS"""),
   ('nothing_left_running', """\
@@ -728,6 +751,11 @@ def relay_contract(finish: str = "done", *, orchestrator: bool = False, session:
   payload["gate"] = {"criteria": list(RELAY_GATE_CRITERIA), "verdicts": list(RELAY_GATE_VERDICTS)}
   payload["finding_kinds"] = [{"kind": kind, "text": flat(text)} for kind, text in RELAY_FINDING_KINDS]
   payload["conformance"] = [{"key": key, "text": flat(text)} for key, text in RELAY_CONFORMANCE]
+  payload["tool_feedback"] = {
+    "max_entries": RELAY_TOOL_FEEDBACK_MAX,
+    "kinds": list(RELAY_TOOL_FEEDBACK_KINDS),
+    "fields": list(RELAY_TOOL_FEEDBACK_FIELDS),
+  }
   if session:
     payload["session"] = True
   return payload
@@ -972,6 +1000,25 @@ Findings: every reviewer, UI pass and gate finding is tagged with one kind.
   "{kinds}", "\n".join(f"- `{kind}`: {text}" for kind, text in RELAY_FINDING_KINDS)
 )
 
+def _fill(text: str) -> str:
+  """Wrap a computed sentence at 88 columns, with no space inside a backticked span broken."""
+  masked = re.sub(r"`[^`]*`", lambda m: m.group(0).replace(" ", "\x00"), text)
+  wrapped = textwrap.fill(masked, width=88, break_long_words=False, break_on_hyphens=False)
+  return wrapped.replace("\x00", " ")
+
+
+# The Every brief paragraph on tool feedback. It says what the feedback may hold and that it is
+# advisory; the line's shape is the run report's, so it is not restated here.
+RELAY_TOOL_FEEDBACK_BRIEF = _fill(
+  f"Every role, the read-only ones included, may end its report with up to "
+  f"{RELAY_TOOL_FEEDBACK_MAX} tool feedback lines in the run report's shape, about slicer "
+  f"or another tool: {_tool_feedback_kinds_text()}. The orchestrator carries them into its "
+  f"run report, each prefixed with the role, at most {RELAY_TOOL_FEEDBACK_MAX} in all. Tool "
+  "feedback is advisory: it is not a finding, the gate never decides on it, and no role "
+  "changes code, files an item or runs `slicer feedback` in the slice because of it. Put no "
+  "secret in `evidence`."
+)
+
 RELAY_BRIEF = """\
 ## Every brief
 
@@ -1012,6 +1059,8 @@ not wait for it, and the orchestrator names it on the deviations line as
 step 6, after main is merged in; a failure goes back as a fix round. With end point
 `finish` or `commit`, it goes in the report's later notes instead.
 
+{tool_feedback}
+
 Start each agent with the model and reasoning effort its role row names, set
 explicitly rather than inherited from the session. Launch it by its row's agent: on
 the orchestrator's own harness as a native subagent, on another harness as a headless
@@ -1019,20 +1068,13 @@ session in the slice worktree with the same brief. Give each agent a short label
 `ID role`, for example `s279 implementer` or `s279 gate`, and pass the same label
 as the `--task` line of `relay-run step`.
 
-"""
+""".replace("{tool_feedback}", RELAY_TOOL_FEEDBACK_BRIEF)
 
 
 RELAY_CONFORMANCE_SECTION = (
   "## Conformance\n\n" + RELAY_CONFORMANCE_INTRO + "\n\n"
   + "\n".join(f"- {text}" for _key, text in RELAY_CONFORMANCE) + "\n\n"
 )
-
-
-def _fill(text: str) -> str:
-  """Wrap a computed sentence at 88 columns, with no space inside a backticked span broken."""
-  masked = re.sub(r"`[^`]*`", lambda m: m.group(0).replace(" ", "\x00"), text)
-  wrapped = textwrap.fill(masked, width=88, break_long_words=False, break_on_hyphens=False)
-  return wrapped.replace("\x00", " ")
 
 
 def relay_shared_sections(required_note_kind: str = "") -> str:
@@ -1372,7 +1414,11 @@ questions from 1 and give each 2 to 4 options.
 `reasoning` is the last field and takes the rest of the line. With no question, the line
 is `owner needed: none`. A role switched after a vendor limit or an error exit goes on
 the deviations line as `role switched: ROLE FROM to TO (REASON)`, so the report names it
-without a line of its own. Write the last line only after you check that nothing you
+without a line of its own.
+
+{tool_feedback_rule}
+
+Write the last line only after you check that nothing you
 started still runs.
 """
 
@@ -1418,6 +1464,13 @@ def orchestrator_text(
     report="\n".join(line["template"] for line in relay_contract(finish)["report"]["lines"]),
     question_rule=textwrap.fill(
       QUESTION_VALUE_RULE, width=88, break_long_words=False, break_on_hyphens=False,
+    ),
+    tool_feedback_rule=_fill(
+      "Each tool feedback entry is one line and counts toward the line limit. Number the "
+      f"entries from 1, start each with the role it came from, and carry at most "
+      f"{RELAY_TOOL_FEEDBACK_MAX} in all: drop the rest. Use no `|` in any value but "
+      "`evidence`. `evidence` is the last field and takes the rest of the line. With no "
+      "entry, the line is `tool feedback: none`."
     ),
     shared_sections=relay_shared_sections(required_note_kind),
   )
