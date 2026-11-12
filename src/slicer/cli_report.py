@@ -9,6 +9,7 @@ so a terminal-less run never loads curses. Each handler is attached to its subpa
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import sys
 from pathlib import Path
@@ -201,6 +202,7 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
           file=sys.stderr)
     return USAGE
   held: dict[str, dict[str, str]] = {}
+  held_prints: dict[str, dict[str, str]] = {}
   if args.since is not None:
     source = "stdin" if args.since == "-" else args.since
     try:
@@ -214,6 +216,7 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
             file=sys.stderr)
       return USAGE
     held = snapshot.held_revisions(reply)
+    held_prints = snapshot.held_fingerprints(reply)
   projects = []
   exit_code = OK
   for root in snapshot_roots(args):
@@ -232,16 +235,19 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
           raise failure
         if not path.is_dir():
           raise StateError(f"no project directory: {path}", code="no_project")
-        state = store.load(path)
+        project = store.discover(path)
+        state = functools.cache(lambda: store.load(project))  # not before a part needs it
 
         def read(command):
           sub = _built_parser().parse_args([command, "--json"])
-          sub._state = state
+          sub._state = state()
           sub._collect = []
           sub.func(sub)
           return sub._collect[-1]
 
-        projects.append(snapshot.build(state, parts, read, held.get(str(state.root.resolve()))))
+        key = str(project.resolve())
+        projects.append(snapshot.build(project, state, parts, read, held.get(key),
+                                       held_prints.get(key)))
       except (SlicerError, OSError) as exc:
         code = exc.code if isinstance(exc, SlicerError) else "io"
         exit_code = max(exit_code, _exit_for(code))

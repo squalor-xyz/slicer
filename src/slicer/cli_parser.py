@@ -1169,8 +1169,10 @@ def _add_reports(sub: argparse._SubParsersAction, add) -> None:
                   help="comma-separated dashboard parts: " + ",".join(PARTS)
                   + " (default: all but deps)")
   sp.add_argument("--since", metavar="FILE",
-                  help="a previous snapshot reply ('-' reads stdin); a part whose revision "
-                  "still matches, by project root and part name, answers `unchanged` and no value")
+                  help="a previous snapshot reply ('-' reads stdin); a part whose fingerprint "
+                  "or revision still matches, by project root and part name, answers "
+                  "`unchanged` and no value; a matching fingerprint skips that part's build, "
+                  "and the project load when no selected part needs the store")
 
   _recursive_flag(add("status", cmd_status, "next item, progress, and blockers in one view"))
 

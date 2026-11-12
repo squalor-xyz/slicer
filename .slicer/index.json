@@ -19069,7 +19069,7 @@
       "id": "s457",
       "title": "snapshot: skip building a part whose inputs have not changed",
       "short_title": "snapshot input fingerprint",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [
         "s456"
@@ -19081,6 +19081,20 @@
           "text": "**2026-11-11** — Owner decisions (2026-11-11): Q1 option (a): a new fingerprint field beside revision, a hash of (path, mtime_ns, size) for each file the part reads, checked before the load; revision keeps its meaning. Q2 option (a): a part that reads git state (health) is always built.",
           "created_at": "2026-11-11T17:03:39Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "3c4dbf33-41c3-46c1-bab7-71514a093b42",
+          "kind": "",
+          "text": "**2026-11-12** — Verified: snapshot --since answers goals, deps, items and status from a fingerprint (hash of version, part name and path/mtime_ns/size/ino of each input file, including sibling worktree index and config) before the project load; runs and health are always built with a null fingerprint; revision keeps its meaning. Full suite 3477 tests OK (1 skipped), 41 SnapshotTests OK, mutation checks red as intended, slicer check exits 0.",
+          "created_at": "2026-11-12T02:29:09Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -19107,7 +19121,7 @@
         "importance": 2,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

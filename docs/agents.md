@@ -729,8 +729,8 @@ $ slicer check -r --json --lean
 ## Dashboard snapshot
 
 `slicer snapshot --json [--root PATH]... [-r] [--parts items,goals,runs,status,health,deps] [--since FILE]`
-combines dashboard reads in one process. It loads each project once, reads only, and takes
-no writer lock. With no root, it discovers the current project. Repeated roots retain their
+combines dashboard reads in one process. It loads each project at most once (not at all when
+`--since` answers every part from its fingerprint), reads only, and takes no writer lock. With no root, it discovers the current project. Repeated roots retain their
 argument order (a root before `snapshot` also participates). `-r` walks each root using the
 same discovery, exclusions and sorted path order described above; it never walks upward.
 
@@ -743,11 +743,11 @@ same discovery, exclusions and sorted path order described above; it never walks
     "root": "ABS_PATH",
     "revision": "0123456789ab",
     "parts": {
-      "items": {"revision": "0123456789ab", "value": []},
-      "goals": {"revision": "0123456789ab", "value": {"goals": "", "non_goals": "", "records": []}},
-      "runs": {"revision": "0123456789ab", "value": []},
-      "status": {"revision": "0123456789ab", "value": {"next": null, "blocked": [], "held": []}},
-      "health": {"revision": "0123456789ab", "value": {"render_stale": false, "merge_in_progress": false}}
+      "items": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": []},
+      "goals": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": {"goals": "", "non_goals": "", "records": []}},
+      "runs": {"revision": "0123456789ab", "fingerprint": null, "value": []},
+      "status": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": {"next": null, "blocked": [], "held": []}},
+      "health": {"revision": "0123456789ab", "fingerprint": null, "value": {"render_stale": false, "merge_in_progress": false}}
     },
     "error": null
   }]
@@ -787,21 +787,46 @@ and `SLICER_NO_CODE_WARNING` silences it. Stdout and the exit code are unchanged
 Each part's revision is the first 12 hexadecimal digits of SHA-256 over its `value` encoded
 as UTF-8 using canonical `jsonio.dumps` (two-space indent, Unicode unescaped, trailing
 newline). The project revision hashes the ordered object mapping part names to their
-revisions in the same way. Unchanged reads print identical bytes while the values stay
-unchanged, including the active-run view.
+revisions in the same way. The part and project revisions stay the same while the values stay
+the same, including the active-run view. The reply bytes stay the same only while the
+fingerprints stay the same too: touching a file moves a fingerprint and leaves the value alone.
+
+Each part also carries a `fingerprint`, the second key, after `revision`. It is the first 12
+hexadecimal digits of SHA-256 over the same canonical encoding of the slicer version, the part
+name and `[path, mtime_ns, size, inode]` for each file the part reads, paths sorted. `goals` and
+`deps` read `.slicer/config.json` and `.slicer/index.json`. `items` and `status` read those, every
+file under `.slicer/slices/` at any depth, and the `.slicer/index.json` and `.slicer/config.json`
+of each other checkout of the repository; one `git worktree list` finds those checkouts, and git's
+state is not read. `runs` and `health` have a `null` fingerprint and are always built: `runs`
+follows the clock (a run goes stale after 30 minutes) and finds its ledger through git, and
+`health` reads the merge state from git. A part is also `null` when one of its files cannot be
+examined, and it is then built. The project's own missing index or config then fails in the
+load, with the error entry; a sibling checkout's file that is missing is skipped by the load, as
+`items` and `status` skip it, so the part is built with a `null` fingerprint and the project
+still succeeds. The fingerprint is a cheap guess at
+whether the value moved, so touching a file changes it without changing the value. A part's
+`revision` keeps its meaning, the hash of its `value`.
 
 `--since FILE` takes a snapshot reply the caller already holds (`-` reads stdin). A part whose
-revision equals the one the file holds for the same project `root` and the same part name is
-printed as `{"revision": REV, "unchanged": true}`, with no `value`; every other part prints
-`{"revision": REV, "value": VALUE}` as before. The project `revision` is the same either way.
+fingerprint equals the one the file holds for the same project `root` and the same part name, and
+whose held `revision` is a string, is printed as
+`{"revision": REV, "fingerprint": FP, "unchanged": true}` without being built; `REV` is the held
+revision. When no part needs the project (every one is answered from its fingerprint, or is
+`runs`, which needs only the root), the project is not loaded. Any other part is built. It is
+`unchanged` when its revision equals the one the file holds, and then carries the fresh
+fingerprint; otherwise it prints `{"revision": REV, "fingerprint": FP, "value": VALUE}`. A reply
+that has no fingerprints, such as one from an earlier slicer, is matched by revision alone. The
+project `revision` is the same however each part was answered.
 A project is matched by its resolved `root`, never by part name alone: another project whose part
 happens to equal this one's old value is not `unchanged`. A project, or a part, the file does not
 hold, a project with an `error`, and a part with a `null` revision all print their full value.
 The file may be a reply that itself used `--since`: an `unchanged` part still names its revision.
 A missing or unreadable file, text that is not JSON, and JSON with no `projects` list are each
 `usage` (exit 2), checked before any project is read, with a stderr line that names the file
-(`stdin` for `-`) and no stdout. `--since` saves the caller parsing the value, not slicer
-computing it: a revision hashes the built value, so every part is still loaded and built.
+(`stdin` for `-`) and no stdout. A part answered from its fingerprint saves slicer that part's
+build, not only the caller the parsing, and the load too when no selected part needs the store; a
+part whose fingerprint moved, and `runs` and `health`, are still built, because a revision hashes
+the built value. `health` needs the store, so a call that selects it loads the project.
 
 A project that fails has `revision: null`, `parts: {}` and
 `error: {code, message, command: "snapshot"}`. Unreadable recursive directories also get an

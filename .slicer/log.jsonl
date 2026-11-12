@@ -2941,3 +2941,6 @@
 {"when": "2026-11-12T01:02:22Z", "item": "s459", "action": "edit", "from": "", "to": "", "note": "Check"}
 {"when": "2026-11-12T01:02:22Z", "item": "s459", "action": "edit", "from": "", "to": "", "note": "Git"}
 {"when": "2026-11-12T01:02:22Z", "item": "s459", "action": "edit", "from": "", "to": "", "note": "boundary"}
+{"when": "2026-11-12T02:04:14Z", "item": "s457", "action": "status", "from": "open", "to": "started", "note": "", "by": "Jon Robbins"}
+{"when": "2026-11-12T02:29:09Z", "item": "s457", "action": "note", "from": "", "to": "", "note": "Verified: snapshot --since answers goals, deps, items and st", "by": "Jon Robbins"}
+{"when": "2026-11-12T02:29:11Z", "item": "s457", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}

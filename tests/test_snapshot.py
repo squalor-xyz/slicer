@@ -296,7 +296,7 @@ class SnapshotTests(unittest.TestCase):
     self.assertTrue(expected)
     part = self.snapshot(repo, "--parts", "deps")["projects"][0]["parts"]
     self.assertEqual(list(part), ["deps"])
-    self.assertEqual(list(part["deps"]), ["revision", "value"])
+    self.assertEqual(list(part["deps"]), ["revision", "fingerprint", "value"])
     self.assertEqual(part["deps"]["value"], expected)
     self.assertEqual(part["deps"]["revision"], snapshot_module.revision(expected))
 
@@ -311,7 +311,7 @@ class SnapshotTests(unittest.TestCase):
     self.assertEqual(len(parts), 6)
     for name, part in parts.items():
       with self.subTest(part=name):
-        self.assertEqual(list(part), ["revision", "value"])
+        self.assertEqual(list(part), ["revision", "fingerprint", "value"])
 
   def test_Snapshot_Since_MatchingRevision_IsUnchangedWithNoValue(self):
     repo = self.fixture()
@@ -324,8 +324,10 @@ class SnapshotTests(unittest.TestCase):
     self.assertEqual(list(project["parts"]), list(before["parts"]))
     for name, part in project["parts"].items():
       with self.subTest(part=name):
-        self.assertEqual(list(part), ["revision", "unchanged"])
-        self.assertEqual(part, {"revision": before["parts"][name]["revision"], "unchanged": True})
+        self.assertEqual(list(part), ["revision", "fingerprint", "unchanged"])
+        self.assertEqual(part, {"revision": before["parts"][name]["revision"],
+                                "fingerprint": before["parts"][name]["fingerprint"],
+                                "unchanged": True})
 
   def test_Snapshot_Since_ChangedPart_GivesFullValue(self):
     repo = self.fixture()
@@ -336,12 +338,17 @@ class SnapshotTests(unittest.TestCase):
     parts = self.snapshot(repo, "--since", path)["projects"][0]["parts"]
     for name in ("items", "status"):
       with self.subTest(part=name):
-        self.assertEqual(list(parts[name]), ["revision", "value"])
+        self.assertEqual(list(parts[name]), ["revision", "fingerprint", "value"])
         self.assertNotEqual(parts[name]["revision"], first["parts"][name]["revision"])
         self.assertEqual(parts[name]["revision"], snapshot_module.revision(parts[name]["value"]))
+    # `goals` reads the index that `set` rewrote, so its fingerprint moved and it was built;
+    # its revision still matched, so only the value is dropped.
+    self.assertNotEqual(parts["goals"]["fingerprint"], first["parts"]["goals"]["fingerprint"])
     for name in ("goals", "runs", "health"):
       with self.subTest(part=name):
-        self.assertEqual(parts[name], {"revision": first["parts"][name]["revision"], "unchanged": True})
+        self.assertEqual(list(parts[name]), ["revision", "fingerprint", "unchanged"])
+        self.assertEqual(parts[name]["revision"], first["parts"][name]["revision"])
+        self.assertTrue(parts[name]["unchanged"])
 
   def test_Snapshot_Since_MatchesByRoot(self):
     repo = self.fixture()
@@ -361,7 +368,7 @@ class SnapshotTests(unittest.TestCase):
     code, out, err = slicer("snapshot", "--json", "--root", str(other), "--since", path)
     self.assertEqual(code, 0, err)
     parts = json.loads(out)["projects"][0]["parts"]
-    self.assertEqual(list(parts["goals"]), ["revision", "value"])
+    self.assertEqual(list(parts["goals"]), ["revision", "fingerprint", "value"])
     self.assertEqual(parts["goals"]["value"]["goals"], "Other goals")
     # Two roots now hold equal goals. Only root A is in the file, so root B is not
     # unchanged merely because its part name and revision match root A's.
@@ -377,9 +384,11 @@ class SnapshotTests(unittest.TestCase):
     code, out, err = slicer("snapshot", "--json", "--parts", "goals", "--since", path, *roots)
     self.assertEqual(code, 0, err)
     b, a = (p["parts"]["goals"] for p in json.loads(out)["projects"])
-    self.assertEqual(list(b), ["revision", "value"])
+    self.assertEqual(list(b), ["revision", "fingerprint", "value"])
     self.assertEqual(b["value"]["goals"], "Same goals")
-    self.assertEqual(a, {"revision": held[str(repo.root)]["parts"]["goals"]["revision"], "unchanged": True})
+    self.assertEqual(a, {"revision": held[str(repo.root)]["parts"]["goals"]["revision"],
+                         "fingerprint": held[str(repo.root)]["parts"]["goals"]["fingerprint"],
+                         "unchanged": True})
 
   def test_Snapshot_Since_UnknownRootOrPart_GivesFullValue(self):
     repo = self.fixture()
@@ -404,13 +413,15 @@ class SnapshotTests(unittest.TestCase):
                             "--root", str(repo.root), "--root", str(other), "--root", str(third))
     self.assertEqual(code, 0, err)
     first, second, last = json.loads(out)["projects"]
-    self.assertEqual(list(first["parts"]["items"]), ["revision", "value"])
-    self.assertEqual(list(first["parts"]["status"]), ["revision", "value"])
-    self.assertEqual(first["parts"]["goals"], {"revision": here["parts"]["goals"]["revision"], "unchanged": True})
+    self.assertEqual(list(first["parts"]["items"]), ["revision", "fingerprint", "value"])
+    self.assertEqual(list(first["parts"]["status"]), ["revision", "fingerprint", "value"])
+    self.assertEqual(first["parts"]["goals"], {"revision": here["parts"]["goals"]["revision"],
+                                               "fingerprint": here["parts"]["goals"]["fingerprint"],
+                                               "unchanged": True})
     for project in (second, last):
       for name, part in project["parts"].items():
         with self.subTest(root=project["root"], part=name):
-          self.assertEqual(list(part), ["revision", "value"])
+          self.assertEqual(list(part), ["revision", "fingerprint", "value"])
 
   def test_Snapshot_Since_Stdin(self):
     repo = self.fixture()
@@ -421,7 +432,8 @@ class SnapshotTests(unittest.TestCase):
     self.assertEqual(list(second["projects"][0]["parts"]), names.split(","))
     for name, part in second["projects"][0]["parts"].items():
       with self.subTest(part=name):
-        self.assertEqual(part, {"revision": first["projects"][0]["parts"][name]["revision"],
+        held = first["projects"][0]["parts"][name]
+        self.assertEqual(part, {"revision": held["revision"], "fingerprint": held["fingerprint"],
                                 "unchanged": True})
 
   def test_Snapshot_Since_Unreadable_IsUsage(self):
@@ -443,6 +455,244 @@ class SnapshotTests(unittest.TestCase):
       code, out, err = repo.run("snapshot", "--json", "--since", "-")
     self.assertEqual((code, out), (2, ""))
     self.assertIn("stdin", err)
+
+  FINGERPRINTED = "goals,deps,items,status"
+  EVERY_PART = "items,goals,runs,status,health,deps"
+
+  def fingerprints(self, repo, names=EVERY_PART):
+    parts = self.snapshot(repo, "--parts", names)["projects"][0]["parts"]
+    return {name: part["fingerprint"] for name, part in parts.items()}
+
+  def bump_mtime(self, path):
+    stat = path.stat()
+    os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 10**9))
+
+  def loads(self):
+    """Run `store.load` for real while counting the calls."""
+    return patch.object(store, "load", wraps=store.load)
+
+  def test_Snapshot_Since_UnchangedInputs_SkipsStoreLoad(self):
+    repo = self.fixture()
+    first = self.snapshot(repo, "--parts", self.FINGERPRINTED)["projects"][0]["parts"]
+    path = self.scratch("reply.json", json.dumps({"projects": [
+      {"root": str(repo.root), "parts": first, "error": None}]}))
+    with patch.object(store, "load", side_effect=AssertionError("project read")):
+      second = self.snapshot(repo, "--parts", self.FINGERPRINTED, "--since", path)
+    parts = second["projects"][0]["parts"]
+    self.assertEqual(list(parts), self.FINGERPRINTED.split(","))
+    for name, part in parts.items():
+      with self.subTest(part=name):
+        self.assertRegex(first[name]["fingerprint"], r"^[0-9a-f]{12}$")
+        self.assertEqual(part, {"revision": first[name]["revision"],
+                                "fingerprint": first[name]["fingerprint"], "unchanged": True})
+
+  def test_Snapshot_Fingerprint_TouchedInputChanges(self):
+    repo = self.fixture()
+    before = self.fingerprints(repo)
+    self.bump_mtime(repo.root / ".slicer" / "index.json")  # content untouched
+    after = self.fingerprints(repo)
+    self.assertNotEqual(before["goals"], after["goals"])
+    self.assertEqual(self.fingerprints(repo), after)  # stable while nothing moves
+
+  def test_Snapshot_Fingerprint_SliceFileChangeChangesItems(self):
+    repo = self.fixture()
+    repo.write(".slicer/slices/sub/one.txt", "first")
+    before = self.fingerprints(repo)
+    repo.write(".slicer/slices/sub/one.txt", "second")  # nested, and a different size
+    after = self.fingerprints(repo)
+    for name in ("items", "status"):
+      with self.subTest(part=name):
+        self.assertNotEqual(before[name], after[name])
+    for name in ("goals", "deps"):
+      with self.subTest(part=name):
+        self.assertEqual(before[name], after[name])
+
+  def test_Snapshot_Fingerprint_SiblingWorktreeIndexChangesItems(self):
+    repo = self.fixture(git=True)
+    repo.commit("project")
+    sibling = repo.root / "siblings" / "other"
+    made = repo._git("worktree", "add", "-q", "-b", "other", str(sibling), "HEAD")
+    self.assertEqual(made.returncode, 0, made.stderr)
+    for name in ("index.json", "config.json"):
+      self.assertTrue((sibling / ".slicer" / name).is_file())
+    before = self.fingerprints(repo)
+    self.bump_mtime(sibling / ".slicer" / "index.json")
+    after = self.fingerprints(repo)
+    for name in ("items", "status"):
+      with self.subTest(part=name):
+        self.assertNotEqual(before[name], after[name])
+    for name in ("goals", "deps"):
+      with self.subTest(part=name):
+        self.assertEqual(before[name], after[name])
+    self.bump_mtime(sibling / ".slicer" / "config.json")
+    self.assertNotEqual(self.fingerprints(repo)["items"], after["items"])
+
+  def test_Snapshot_Fingerprint_SameSizeRewriteSameMtime_Changes(self):
+    repo = self.fixture()
+    before = self.fingerprints(repo)
+    index = repo.root / ".slicer" / "index.json"
+    stat = index.stat()
+    swap = index.with_name("index.swap")
+    swap.write_bytes(index.read_bytes())
+    os.utime(swap, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+    os.replace(swap, index)  # same path, size and mtime; a new file
+    moved = index.stat()
+    self.assertEqual((moved.st_size, moved.st_mtime_ns), (stat.st_size, stat.st_mtime_ns))
+    self.assertNotEqual(moved.st_ino, stat.st_ino)
+    after = self.fingerprints(repo)
+    for name in self.FINGERPRINTED.split(","):
+      with self.subTest(part=name):
+        self.assertNotEqual(before[name], after[name])
+
+  def test_Snapshot_Fingerprint_ChangesWithVersion(self):
+    repo = self.fixture()
+    before = self.fingerprints(repo)
+    with patch("slicer.__version__", "0.0.0-other"):
+      after = self.fingerprints(repo)
+    for name in self.FINGERPRINTED.split(","):
+      with self.subTest(part=name):
+        self.assertNotEqual(before[name], after[name])
+    self.assertEqual(self.fingerprints(repo), before)
+
+  def test_Snapshot_Fingerprint_ChangesWithPartName(self):
+    repo = self.fixture()
+    fingerprints = self.fingerprints(repo, self.FINGERPRINTED)
+    # `goals` and `deps` read the same two files, so only the part name tells them apart.
+    self.assertNotEqual(fingerprints["goals"], fingerprints["deps"])
+
+  def test_Snapshot_AlwaysBuiltParts_RunsAndHealth(self):
+    repo = self.fixture()
+    first = self.snapshot(repo, "--parts", self.EVERY_PART)["projects"][0]["parts"]
+    for name in ("runs", "health"):
+      self.assertIsNone(first[name]["fingerprint"])
+    for name in ("goals", "deps", "items", "status"):
+      self.assertIsInstance(first[name]["fingerprint"], str)
+    path = self.scratch("reply.json", json.dumps({"projects": [
+      {"root": str(repo.root), "parts": first, "error": None}]}))
+    self.assertFalse(first["health"]["value"]["merge_in_progress"])
+    with patch.object(vcs, "merge_in_progress", return_value=True):
+      with self.loads() as loaded:
+        second = self.snapshot(repo, "--parts", self.EVERY_PART, "--since", path)
+    parts = second["projects"][0]["parts"]
+    loaded.assert_called_once()  # the always-built parts need the store
+    self.assertEqual(parts["health"]["value"], {"render_stale": False, "merge_in_progress": True})
+    self.assertEqual(list(parts["health"]), ["revision", "fingerprint", "value"])
+    self.assertIsNone(parts["health"]["fingerprint"])
+    self.assertEqual(parts["runs"], {"revision": first["runs"]["revision"], "fingerprint": None,
+                                     "unchanged": True})
+
+  def test_Snapshot_Revision_MeaningUnchanged(self):
+    repo = self.fixture()
+    first = self.snapshot(repo, "--parts", self.EVERY_PART)
+    for name, part in first["projects"][0]["parts"].items():
+      with self.subTest(part=name):
+        self.assertEqual(part["revision"], snapshot_module.revision(part["value"]))
+    path = self.scratch("reply.json", json.dumps(first))
+    # Answered from the fingerprint once there is one, from the revision before; either way
+    # it carries the revision a run without `--since` prints.
+    answered = self.snapshot(repo, "--parts", self.FINGERPRINTED, "--since", path)
+    fresh = self.snapshot(repo, "--parts", self.FINGERPRINTED)
+    for part in answered["projects"][0]["parts"].values():
+      self.assertTrue(part["unchanged"])
+    for name, part in answered["projects"][0]["parts"].items():
+      with self.subTest(part=name):
+        self.assertEqual(part["revision"], fresh["projects"][0]["parts"][name]["revision"])
+        self.assertEqual(part["revision"], snapshot_module.revision(
+          fresh["projects"][0]["parts"][name]["value"]))
+
+  def test_Snapshot_Since_FingerprintFirstThenRevision(self):
+    repo = self.fixture()
+    names = "goals,items"
+    first = self.snapshot(repo, "--parts", names)["projects"][0]
+    def reply(**edits):
+      parts = {name: dict(part) for name, part in first["parts"].items()}
+      for name, change in edits.items():
+        parts[name].update(change)
+      return self.scratch("reply.json", json.dumps({"projects": [dict(first, parts=parts)]}))
+
+    # A wrong held fingerprint still reads the store, then falls back to the revision.
+    wrong = reply(goals={"fingerprint": "0" * 12})
+    with self.loads() as loaded:
+      parts = self.snapshot(repo, "--parts", names, "--since", wrong)["projects"][0]["parts"]
+    loaded.assert_called_once()
+    for name in ("goals", "items"):
+      self.assertEqual(parts[name], {"revision": first["parts"][name]["revision"],
+                                     "fingerprint": first["parts"][name]["fingerprint"],
+                                     "unchanged": True})
+    # Wrong fingerprint and wrong revision: the value comes back.
+    both = reply(goals={"fingerprint": "0" * 12, "revision": "0" * 12})
+    parts = self.snapshot(repo, "--parts", names, "--since", both)["projects"][0]["parts"]
+    self.assertEqual(list(parts["goals"]), ["revision", "fingerprint", "value"])
+    self.assertEqual(parts["goals"]["revision"], first["parts"]["goals"]["revision"])
+    # A matching fingerprint is not enough without a string revision to hand back.
+    for bad in (None, 5, ["x"]):
+      with self.subTest(revision=bad):
+        with self.loads() as loaded:
+          parts = self.snapshot(repo, "--parts", names,
+                                "--since", reply(goals={"revision": bad}))["projects"][0]["parts"]
+        loaded.assert_called_once()
+        self.assertEqual(list(parts["goals"]), ["revision", "fingerprint", "value"])
+        self.assertEqual(parts["goals"]["revision"], first["parts"]["goals"]["revision"])
+        self.assertEqual(list(parts["items"]), ["revision", "fingerprint", "unchanged"])
+    # A held fingerprint that is not a string never matches.
+    for bad in (None, 7):
+      with self.subTest(fingerprint=bad):
+        with self.loads() as loaded:
+          self.snapshot(repo, "--parts", names, "--since", reply(goals={"fingerprint": bad}))
+        loaded.assert_called_once()
+
+  def test_Snapshot_Since_ReplyWithoutFingerprint_UsesRevision(self):
+    repo = self.fixture()
+    first = self.snapshot(repo, "--parts", self.EVERY_PART)["projects"][0]
+    older = dict(first, parts={name: {"revision": part["revision"], "value": part["value"]}
+                               for name, part in first["parts"].items()})
+    path = self.scratch("s456.json", json.dumps({"projects": [older]}))
+    with self.loads() as loaded:
+      parts = self.snapshot(repo, "--parts", self.EVERY_PART, "--since", path)["projects"][0]["parts"]
+    loaded.assert_called_once()
+    for name, part in parts.items():
+      with self.subTest(part=name):
+        self.assertEqual(part, {"revision": first["parts"][name]["revision"],
+                                "fingerprint": first["parts"][name]["fingerprint"],
+                                "unchanged": True})
+
+  def test_Snapshot_EveryPart_CarriesFingerprintKey(self):
+    repo = self.fixture()
+    first = self.snapshot(repo, "--parts", self.EVERY_PART)
+    path = self.scratch("reply.json", json.dumps(first))
+    second = self.snapshot(repo, "--parts", self.EVERY_PART, "--since", path)
+    for reply, last in ((first, "value"), (second, "unchanged")):
+      for name, part in reply["projects"][0]["parts"].items():
+        with self.subTest(part=name, key=last):
+          self.assertEqual(list(part), ["revision", "fingerprint", last])
+    fingerprinted = {name for name, part in first["projects"][0]["parts"].items()
+                     if part["fingerprint"] is not None}
+    self.assertEqual(fingerprinted, set(self.FINGERPRINTED.split(",")))
+
+  def test_Snapshot_SiblingInputMissing_NullFingerprintAndPartStillBuilt(self):
+    repo = self.fixture(git=True)
+    repo.commit("project")
+    sibling = repo.root / "siblings" / "other"
+    made = repo._git("worktree", "add", "-q", "-b", "other", str(sibling), "HEAD")
+    self.assertEqual(made.returncode, 0, made.stderr)
+    (sibling / ".slicer" / "index.json").unlink()  # `store.sibling_work` skips this checkout
+    parts = self.snapshot(repo, "--parts", "goals,items,status")["projects"][0]["parts"]
+    self.assertIsInstance(parts["goals"]["fingerprint"], str)
+    for name in ("items", "status"):
+      with self.subTest(part=name):
+        self.assertEqual(list(parts[name]), ["revision", "fingerprint", "value"])
+        self.assertIsNone(parts[name]["fingerprint"])
+
+  def test_Snapshot_UnreadableInput_BuildsAndReportsTheError(self):
+    repo = self.fixture()
+    first = self.snapshot(repo, "--parts", "goals")
+    path = self.scratch("reply.json", json.dumps(first))
+    (repo.root / ".slicer" / "index.json").unlink()
+    code, out, _ = repo.run("snapshot", "--json", "--parts", "goals", "--since", path)
+    self.assertNotEqual(code, 0)
+    project = json.loads(out)["projects"][0]
+    self.assertEqual((project["parts"], project["error"]["command"]), ({}, "snapshot"))
+    self.assertIn("index.json", project["error"]["message"])
 
   def warned(self, *argv, silenced=False, probe=None):
     """Run `snapshot --json` with the foreign-worktree probe patched; return what it
