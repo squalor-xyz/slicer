@@ -18927,7 +18927,7 @@
       "id": "s456",
       "title": "snapshot: a deps part, and an unchanged answer for parts the caller already holds",
       "short_title": "snapshot deps part and --since",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
