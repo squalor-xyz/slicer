@@ -8,6 +8,7 @@ import textwrap
 from collections.abc import Mapping
 from pathlib import Path
 
+from slicer import vocab
 from slicer.relayrun import OUTCOMES, QUESTION_VALUE_RULE
 
 
@@ -1543,7 +1544,7 @@ slices using the slicer CLI.
 """
 
 PROMPTS = {"build-roadmap": BUILD_ROADMAP, "getting-started": GETTING_STARTED}
-PROMPT_NAMES = ("build-roadmap", "getting-started")
+PROMPT_NAMES = vocab.PROMPT_NAMES
 
 
 def prompt_text(name: str) -> str:

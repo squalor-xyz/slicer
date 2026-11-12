@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import support
 from test_recursive import make_project, slicer
-from slicer import __version__, ai, cli, jsonio, vcs
+from slicer import __version__, ai, cli, jsonio, store, vcs
+from slicer import snapshot as snapshot_module
 
 
 class SnapshotTests(unittest.TestCase):
@@ -274,6 +278,171 @@ class SnapshotTests(unittest.TestCase):
         proc.communicate(timeout=10)
     after = {p.relative_to(repo.root): p.read_bytes() for p in repo.root.rglob("*") if p.is_file()}
     self.assertEqual(after, before)
+
+  def scratch(self, name, text):
+    """A file outside the fixture project, so writing it changes no part's value."""
+    folder = tempfile.TemporaryDirectory()
+    self.addCleanup(folder.cleanup)
+    path = Path(folder.name) / name
+    path.write_text(text, encoding="utf-8")
+    return str(path)
+
+  def test_Snapshot_DepsPart_EqualsDepsJson(self):
+    repo = self.fixture()
+    self.assertEqual(repo.run("set", "S02", "--depends-on", "S01")[0], 0)
+    code, out, err = repo.run("deps", "--json")
+    self.assertEqual(code, 0, err)
+    expected = json.loads(out)
+    self.assertTrue(expected)
+    part = self.snapshot(repo, "--parts", "deps")["projects"][0]["parts"]
+    self.assertEqual(list(part), ["deps"])
+    self.assertEqual(list(part["deps"]), ["revision", "value"])
+    self.assertEqual(part["deps"]["value"], expected)
+    self.assertEqual(part["deps"]["revision"], snapshot_module.revision(expected))
+
+  def test_Snapshot_DefaultParts_StillFiveParts(self):
+    repo = self.fixture()
+    parts = self.snapshot(repo)["projects"][0]["parts"]
+    self.assertEqual(list(parts), ["items", "goals", "runs", "status", "health"])
+
+  def test_Snapshot_NoSince_EveryPartHasAValue(self):
+    repo = self.fixture()
+    parts = self.snapshot(repo, "--parts", "items,goals,runs,status,health,deps")["projects"][0]["parts"]
+    self.assertEqual(len(parts), 6)
+    for name, part in parts.items():
+      with self.subTest(part=name):
+        self.assertEqual(list(part), ["revision", "value"])
+
+  def test_Snapshot_Since_MatchingRevision_IsUnchangedWithNoValue(self):
+    repo = self.fixture()
+    first = self.snapshot(repo)
+    path = self.scratch("reply.json", json.dumps(first))
+    second = self.snapshot(repo, "--since", path)
+    project, before = second["projects"][0], first["projects"][0]
+    self.assertEqual(list(project), ["root", "revision", "parts", "error"])
+    self.assertEqual(project["revision"], before["revision"])
+    self.assertEqual(list(project["parts"]), list(before["parts"]))
+    for name, part in project["parts"].items():
+      with self.subTest(part=name):
+        self.assertEqual(list(part), ["revision", "unchanged"])
+        self.assertEqual(part, {"revision": before["parts"][name]["revision"], "unchanged": True})
+
+  def test_Snapshot_Since_ChangedPart_GivesFullValue(self):
+    repo = self.fixture()
+    first = self.snapshot(repo)["projects"][0]
+    path = self.scratch("reply.json", json.dumps({"projects": [first]}))
+    self.assertEqual(repo.run("set", "S01", "--status", "done")[0], 0)
+    self.assertEqual(repo.run("render")[0], 0)  # keeps `health` as it was
+    parts = self.snapshot(repo, "--since", path)["projects"][0]["parts"]
+    for name in ("items", "status"):
+      with self.subTest(part=name):
+        self.assertEqual(list(parts[name]), ["revision", "value"])
+        self.assertNotEqual(parts[name]["revision"], first["parts"][name]["revision"])
+        self.assertEqual(parts[name]["revision"], snapshot_module.revision(parts[name]["value"]))
+    for name in ("goals", "runs", "health"):
+      with self.subTest(part=name):
+        self.assertEqual(parts[name], {"revision": first["parts"][name]["revision"], "unchanged": True})
+
+  def test_Snapshot_Since_MatchesByRoot(self):
+    repo = self.fixture()
+    other = repo.root / "other"
+    make_project(other, "Other")
+    goals = self.scratch("goals.md", "Other goals")
+    self.assertEqual(slicer("--root", str(other), "prose", "edit", "goals", "--file", goals)[0], 0)
+    roots = ("--root", str(other), "--root", str(repo.root))
+    code, out, err = slicer("snapshot", "--json", *roots)
+    self.assertEqual(code, 0, err)
+    by_root = {p["root"]: p for p in json.loads(out)["projects"]}
+    self.assertNotEqual(by_root[str(other)]["parts"]["goals"]["value"],
+                        by_root[str(repo.root)]["parts"]["goals"]["value"])
+    # Root A's revisions, filed under root B's name: B gets every value.
+    swapped = {"projects": [{"root": str(other), "parts": by_root[str(repo.root)]["parts"]}]}
+    path = self.scratch("swapped.json", json.dumps(swapped))
+    code, out, err = slicer("snapshot", "--json", "--root", str(other), "--since", path)
+    self.assertEqual(code, 0, err)
+    parts = json.loads(out)["projects"][0]["parts"]
+    self.assertEqual(list(parts["goals"]), ["revision", "value"])
+    self.assertEqual(parts["goals"]["value"]["goals"], "Other goals")
+    # Two roots now hold equal goals. Only root A is in the file, so root B is not
+    # unchanged merely because its part name and revision match root A's.
+    goals = self.scratch("same.md", "Same goals")
+    for root in (other, repo.root):
+      self.assertEqual(slicer("--root", str(root), "prose", "edit", "goals", "--file", goals)[0], 0)
+    code, out, err = slicer("snapshot", "--json", "--parts", "goals", *roots)
+    self.assertEqual(code, 0, err)
+    held = {p["root"]: p for p in json.loads(out)["projects"]}
+    self.assertEqual(held[str(other)]["parts"]["goals"]["revision"],
+                     held[str(repo.root)]["parts"]["goals"]["revision"])
+    path = self.scratch("only-a.json", json.dumps({"projects": [held[str(repo.root)]]}))
+    code, out, err = slicer("snapshot", "--json", "--parts", "goals", "--since", path, *roots)
+    self.assertEqual(code, 0, err)
+    b, a = (p["parts"]["goals"] for p in json.loads(out)["projects"])
+    self.assertEqual(list(b), ["revision", "value"])
+    self.assertEqual(b["value"]["goals"], "Same goals")
+    self.assertEqual(a, {"revision": held[str(repo.root)]["parts"]["goals"]["revision"], "unchanged": True})
+
+  def test_Snapshot_Since_UnknownRootOrPart_GivesFullValue(self):
+    repo = self.fixture()
+    other = repo.root / "other"
+    third = repo.root / "third"
+    make_project(other, "Other")
+    make_project(third, "Third")
+    names = "items,goals,status"
+    code, out, err = slicer("snapshot", "--json", "--parts", names, "--root", str(repo.root),
+                            "--root", str(other), "--root", str(third))
+    self.assertEqual(code, 0, err)
+    here, there, _ = json.loads(out)["projects"]
+    shaped = dict(here["parts"])  # goals as held; the rest unusable
+    shaped["items"] = {"revision": None}
+    shaped["status"] = {"revision": 5}
+    shaped["bad"] = "not a part"
+    failed = dict(there, error={"code": "corrupt", "message": "x", "command": "snapshot"})
+    path = self.scratch("odd.json", json.dumps({"projects": [
+      dict(here, parts=shaped), failed, "not a project", {"parts": here["parts"]},
+    ]}))
+    code, out, err = slicer("snapshot", "--json", "--parts", names, "--since", path,
+                            "--root", str(repo.root), "--root", str(other), "--root", str(third))
+    self.assertEqual(code, 0, err)
+    first, second, last = json.loads(out)["projects"]
+    self.assertEqual(list(first["parts"]["items"]), ["revision", "value"])
+    self.assertEqual(list(first["parts"]["status"]), ["revision", "value"])
+    self.assertEqual(first["parts"]["goals"], {"revision": here["parts"]["goals"]["revision"], "unchanged": True})
+    for project in (second, last):
+      for name, part in project["parts"].items():
+        with self.subTest(root=project["root"], part=name):
+          self.assertEqual(list(part), ["revision", "value"])
+
+  def test_Snapshot_Since_Stdin(self):
+    repo = self.fixture()
+    names = "items,goals,runs,status,health,deps"
+    first = self.snapshot(repo, "--parts", names)
+    with patch("sys.stdin", io.StringIO(json.dumps(first))):
+      second = self.snapshot(repo, "--parts", names, "--since", "-")
+    self.assertEqual(list(second["projects"][0]["parts"]), names.split(","))
+    for name, part in second["projects"][0]["parts"].items():
+      with self.subTest(part=name):
+        self.assertEqual(part, {"revision": first["projects"][0]["parts"][name]["revision"],
+                                "unchanged": True})
+
+  def test_Snapshot_Since_Unreadable_IsUsage(self):
+    repo = self.fixture()
+    missing = str(repo.root.parent / "no-such-reply.json")
+    cases = [(missing, missing)]
+    for name, text in (("garbage.json", "garbage{"), ("empty.json", ""), ("list.json", "[]"),
+                       ("none.json", "{}"), ("scalar.json", '{"projects": 3}')):
+      path = self.scratch(name, text)
+      cases.append((path, path))
+    for path, named in cases:
+      with self.subTest(file=named):
+        with patch.object(store, "load", side_effect=AssertionError("project read")):
+          code, out, err = repo.run("snapshot", "--json", "--since", path)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("usage", err)
+        self.assertIn(named, err)
+    with patch("sys.stdin", io.StringIO("garbage{")):
+      code, out, err = repo.run("snapshot", "--json", "--since", "-")
+    self.assertEqual((code, out), (2, ""))
+    self.assertIn("stdin", err)
 
   def warned(self, *argv, silenced=False, probe=None):
     """Run `snapshot --json` with the foreign-worktree probe patched; return what it

@@ -18650,7 +18650,7 @@
       "id": "s450",
       "title": "Keyed lookup for Index.get and CatalogRecord.get",
       "short_title": "Keyed lookup for Index.get and CatalogRecord.get",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -18660,6 +18660,20 @@
           "text": "**2026-11-11** — Owner decisions (2026-11-11): cache invalidation option (a), fingerprint: rebuild the dict when (id(list), len(list)) differs from the last build and verify each hit (found.id == item_id); add a test pinning each mutation pattern used today and a docstring line on items and records saying a same-length replacement must go through reassignment.",
           "created_at": "2026-11-11T17:03:38Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "4c0f8021-6810-467b-99ef-28297d0e0950",
+          "kind": "",
+          "text": "**2026-11-11** — Index.get and Catalog.get answer from a dict keyed by id (option a: rebuilt when the list object or its length changes, each hit verified, first duplicate wins; cache out of to_dict, repr and ==). tests/test_model_lookup.py has 10 tests; the two repeated-miss tests failed first (2 != 1) and 7 mutations each turned the intended test red. Full suite 3415 tests OK (1 skipped), test_store_lazy unchanged and green, slicer check passes, git diff --check clean.",
+          "created_at": "2026-11-11T22:06:17Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -18686,7 +18700,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 1,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
@@ -18927,10 +18941,39 @@
       "id": "s455",
       "title": "Startup time: defer heavy imports so --version starts in about 20 ms",
       "short_title": "Lazy imports for fast startup",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "f50cd323-2b52-4ef3-b107-69eb812efe8c",
+          "kind": "",
+          "text": "**2026-11-11** — Human checks at approval (s455):\n- later: The handoff note gives before and after timings for `--version` and `list --json --lean`, measured best of five as in Why; `--version` is under 20 ms or the note says what is left and why.",
+          "created_at": "2026-11-11T22:13:08Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "70d79bad-0786-4f65-a54b-6d67a217ec64",
+          "kind": "",
+          "text": "**2026-11-11** — Ready for review: command handlers are resolved lazily (LazyHandler in new cli_args.py; parser table in cli_parser.py), the parser's light half moved to cli_args.py and the help name lists to vocab.py, and cli.py, cli_common.py and cli_queue.py import store, ops, render and check only inside the functions that use them. Verified: full suite 3411 run, OK (1 skipped, the SLICER_LEGACY_TREE test); tests/affected.py --run 2617 OK; slicer check exits 0 (two warnings not from this slice); slicer --version prints slicer 1.21.0 as before; gate VERDICT: PASS. Timings, best of five, subprocess wall time, this worktree's store: python3 -c pass 3.5 ms; slicer --version 80.5 ms before, 17.1 ms after (under the 20 ms target); list --json --lean 101.7 ms before, 86.6 ms after (50 ms target not met: what is left is the dataclasses, typing and pathlib imports of model and store, which this slice does not restructure, plus about 20 to 28 ms of real work in one list call); snapshot --json 179.9 ms before, 178.6 ms after (loads the checker and renderer by design). The before column ran the installed slicer (main's code), the after column python3 -m slicer from this worktree.",
+          "created_at": "2026-11-11T22:13:15Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -18948,17 +18991,32 @@
         "importance": 3,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
       "id": "s456",
       "title": "snapshot: a deps part, and an unchanged answer for parts the caller already holds",
       "short_title": "snapshot deps part and --since",
-      "status": "open",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9c76310c-595d-49fb-a071-721ff76c6e13",
+          "kind": "",
+          "text": "**2026-11-12** — Verified: snapshot --parts deps gives the deps --json value with its revision, and is opt-in so the default stays the five parts. snapshot --since FILE (- for stdin) prints {revision, unchanged: true} with no value for each part whose revision the file holds for the same resolved root and part name; unknown roots or parts, null revisions and error projects get the full value; an unreadable file, non-JSON or JSON with no projects list is usage (exit 2) before any project is read. Full suite 3430 tests pass (1 skipped, as before), SnapshotTests 27 pass, slicer check exits 0, and the root-keyed mutation turns test_Snapshot_Since_MatchesByRoot red.",
+          "created_at": "2026-11-12T00:12:50Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
@@ -18976,7 +19034,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

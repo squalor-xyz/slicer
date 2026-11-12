@@ -2,8 +2,10 @@
 
 Exit codes, the shared flags, output buffering for `--strict`, the `--render` wrappers
 and `_state` live here, along with the small parsing and lookup helpers several command
-groups use. This module imports no `cli*` module when it loads, so a handler module can
-import it without a cycle. The one thing it needs from `cli.py` is the built parser, and
+groups use. The parser's light half (the exit codes, the parser class, the flag helpers) lives in
+`cli_args`, so that `--version` need not load this module; it is re-exported here. This module
+imports no `cli*` module but `cli_args` when it loads, so a handler module can import it
+without a cycle. The one thing it needs from `cli.py` is the built parser, and
 `_built_parser` reaches it lazily. Helpers that tests patch (`_heal_render`,
 `_via_editor`, `_read_user_file`) are called as `cli_common.<name>` from other modules,
 so each has a single lookup site.
@@ -17,57 +19,21 @@ import json
 import os
 import re
 import shlex
-import shutil
 import subprocess
 import sys
-import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 
-from slicer import check as check_mod
-from slicer import ids, model, ops, render, store, vcs
-from slicer import __doc__ as _package_doc, __url__
+from slicer import ids, model, store, vcs
+from slicer.cli_args import (  # noqa: F401 -- the parser's light half, re-exported for the handler modules
+  DRIFT, INTERNAL, OK, PASS_ALIAS_NOTE, USAGE, _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _ParserError,
+  _PassAlias, _check_flag, _exit_for, _json_flags, _nonnegative_int, _positive_int, _recursive_flag,
+  _release_target_flags, _render_flag, _rest_flag, _strict_flag,
+)
 from slicer.config import Config
-from slicer.errors import ConfigError, SlicerError, StateError, is_internal
-
-
-OK, DRIFT, USAGE, INTERNAL = 0, 1, 2, 3
-_DESCRIPTION = _package_doc.splitlines()[0].split(" — ", 1)[1].removesuffix(".")
-_ISSUES_URL = __url__ + "/issues"
-
-
-def _json_flags(parser: argparse.ArgumentParser, *, suppress: bool = False) -> None:
-  """`--json` and `--lean`. A suppressed default does not overwrite an earlier one.
-
-  A flag typed before the subcommand is parsed by the parent. The copy on the
-  subcommand must not reset that value when the flag is absent there.
-  """
-  default = argparse.SUPPRESS if suppress else False
-  parser.add_argument("--json", action="store_true", default=default, help="machine-readable output")
-  parser.add_argument(
-    "--lean", action="store_true", default=default,
-    help="with --json, compact output that omits empty fields, a repeated short title, and an item path",
-  )
-
-
-def _rest_flag(parser: argparse.ArgumentParser, *, suppress: bool = False) -> None:
-  """`--rest` on `ai` and `ai instructions`, suppressed on the subcommand like `--json`."""
-  parser.add_argument(
-    "--rest", action="store_true", default=argparse.SUPPRESS if suppress else False,
-    help="print only what the slicer skill does not already carry",
-  )
-
-
-def _recursive_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  """`-r/--recursive` on the read-only reports: one result per nested project."""
-  sp.add_argument(
-    "-r", "--recursive", action="store_true",
-    help="report on every project at or below the start directory (--root or the working "
-    "directory), one result each; reads only and never walks up",
-  )
-  return sp
+from slicer.errors import ConfigError, SlicerError, StateError
 
 
 def _emit(
@@ -136,6 +102,8 @@ def _defer(args: argparse.Namespace, attr: str, line: str, stream: object) -> No
 
 def _render_after_mutation(args: argparse.Namespace) -> int:
   """Re-read and render the just-saved state; return how many files changed."""
+  from slicer import render
+
   state = _state(args)
   expected = render.plan(state)
   return len(render.write(expected, state.render_dir, render.compare(expected, state.render_dir)))
@@ -154,6 +122,8 @@ def _heal_render(args: argparse.Namespace, *, merge_checked: bool = False) -> No
   still land. Never during a Git merge: `merge_checked` says the caller has just refused
   one (`_begin_write`); the `next --start` sites have no such refusal and are checked here.
   """
+  from slicer import ops
+
   root = Path(args.root) if getattr(args, "root", None) else None
   try:
     if not merge_checked and vcs.merge_in_progress(store.discover(root)):
@@ -239,6 +209,8 @@ def _mutate_strict(fn, args: argparse.Namespace) -> int:
   are flushed; on failure the batch is discarded and the error propagates, so a
   change that cannot be rendered never lands and no success document is printed.
   """
+  from slicer import render
+
   args._defer_output = True
   state = _state(args)  # loads, caches on args, and begins the staging transaction
   try:
@@ -278,6 +250,10 @@ def _migrate_strict(fn, args: argparse.Namespace) -> int:
   staged State transaction used by ordinary mutations. Snapshot its exact
   target directory, never an ancestor found by project discovery.
   """
+  import shutil
+
+  from slicer import render
+
   base = Path(args.root or ".").resolve() / store.DIR_NAME
   existed = base.exists()
   directories = {
@@ -322,34 +298,6 @@ def _migrate_strict(fn, args: argparse.Namespace) -> int:
   return code
 
 
-def _render_flag(
-  sp: argparse.ArgumentParser, *, help: str = "render .slicer/render/ after the change",
-) -> argparse.ArgumentParser:
-  sp.add_argument("--render", action="store_true", help=help)
-  return sp
-
-
-def _check_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  """`--check` runs `slicer check` after a rendered change has landed."""
-  sp.add_argument(
-    "--check", action="store_true",
-    help="with --render, run slicer check after the change lands; exit 1 if it fails",
-  )
-  return sp
-
-
-def _strict_flag(sp: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  """`--strict` gates a mutation on its render (with `--render`): the change is
-  rolled back, and nothing printed, if the render fails. Offered on the
-  mutating commands, including import, migrate, remove, retire, and handoff.
-  `done --render` already behaves this way and does not take the flag."""
-  sp.add_argument(
-    "--strict", action="store_true",
-    help="with --render, require the render to succeed before the change lands",
-  )
-  return sp
-
-
 def _render_hint(args: argparse.Namespace) -> str:
   """The `run slicer render` reminder — empty when --render already rendered."""
   return "" if getattr(args, "render", False) else "run `slicer render`"
@@ -378,53 +326,9 @@ def _read_user_file(path: Path | str) -> str:
     raise StateError(f"{path}: not valid UTF-8: {e}", code="io") from None
 
 
-def _nonnegative_int(value: str) -> int:
-  try:
-    number = int(value)
-  except ValueError:
-    raise argparse.ArgumentTypeError("must be a nonnegative integer") from None
-  if number < 0:
-    raise argparse.ArgumentTypeError("must be a nonnegative integer")
-  return number
-
-
-class _PassAlias(argparse.Action):
-  """`--pass`, the deprecated spelling of `--release-target`.
-
-  It stores the same value; `main` prints the deprecation note once for the run,
-  so a command that takes the flag twice, or a recursive one, still says it once.
-  """
-
-  def __call__(self, parser, namespace, values, option_string=None) -> None:
-    setattr(namespace, self.dest, values)
-    namespace.pass_alias_used = True
-
-
-PASS_ALIAS_NOTE = (
-  "slicer: --pass is deprecated; use --release-target (same value). "
-  "The `pass` JSON field and `by_pass` stay as aliases of `release_target` and `by_release_target`."
-)
-
-
 PASS_KEY_ALIAS_NOTE = (
   "slicer: the `pass:` outline key is deprecated; use `release_target:` (same value)."
 )
-
-
-def _release_target_flags(sp: argparse.ArgumentParser, *, help_: str) -> None:
-  """`--release-target`, plus `--pass` as its deprecated alias, both into `pass_key`."""
-  sp.add_argument("--release-target", dest="pass_key", help=help_)
-  sp.add_argument("--pass", dest="pass_key", action=_PassAlias, help=argparse.SUPPRESS)
-
-
-def _positive_int(value: str) -> int:
-  try:
-    number = int(value)
-  except ValueError:
-    raise argparse.ArgumentTypeError("must be an integer >= 1") from None
-  if number < 1:
-    raise argparse.ArgumentTypeError("must be an integer >= 1")
-  return number
 
 
 def _id_floor(state: store.State) -> int:
@@ -469,6 +373,8 @@ def _undeclared_pass_line(key: str) -> str:
 
 def _via_editor(initial: str) -> str | None:
   """Open $EDITOR on `initial`; None means the editor failed, so change nothing."""
+  import tempfile  # only an editor session needs it, and it pulls in `random`
+
   editor = os.environ.get("EDITOR", "vi")
   with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as fh:
     fh.write(initial + "\n")
@@ -540,6 +446,8 @@ def _outside_fences(body: str) -> str:
   Lines are blanked rather than dropped so line numbers stay put. The fence rules are
   `check.fence_lines`'s.
   """
+  from slicer import check as check_mod
+
   return "\n".join(line if kind == "text" else "" for line, kind in check_mod.fence_lines(body))
 
 
@@ -630,6 +538,8 @@ def _slice_flag_problems(state: store.State) -> list[str]:
 
 def _check_report(state: store.State, *, show_diff: bool = False) -> tuple[check_mod.CheckReport, list[str]]:
   """The check report and its finding lines, without the final passed or failed line."""
+  from slicer import check as check_mod, render
+
   report, expected, diff = check_mod.run(state)
   # A removed flag in a slice's own `slicer ...` examples is drift too.
   report.problems.extend(_slice_flag_problems(state))
@@ -699,33 +609,6 @@ def _log_timestamp(value: str, where: str, *, code: str) -> datetime:
       f"{where}: invalid timestamp {value!r}; use an ISO8601 timestamp with "
       "a timezone, for example 2026-10-05T12:00:00Z.", code=code,
     ) from None
-
-
-class _ParserError(Exception):
-  """Keep argparse's diagnostic context until main can choose the output format."""
-
-  def __init__(self, parser: argparse.ArgumentParser, message: str) -> None:
-    super().__init__(message)
-    self.parser = parser
-
-
-class _ArgumentParser(argparse.ArgumentParser):
-  def __init__(self, *args: object, **kwargs: object) -> None:
-    # Python 3.14 colorizes usage/help/errors by default, and honors FORCE_COLOR
-    # even when output is piped -- which injects ANSI an agent then has to strip
-    # and makes slicer's diagnostics differ by environment. Keep them plain and
-    # deterministic. `color` is a 3.14+ argument, so only pass it there.
-    if sys.version_info >= (3, 14):
-      kwargs.setdefault("color", False)
-    super().__init__(*args, **kwargs)  # type: ignore[arg-type]
-
-  def error(self, message: str) -> None:
-    raise _ParserError(self, message)
-
-
-def _exit_for(code: str) -> int:
-  """Exit status for an error code: internal/state codes are 3, the rest 2."""
-  return INTERNAL if is_internal(code) else USAGE
 
 
 def _built_parser() -> argparse.ArgumentParser:

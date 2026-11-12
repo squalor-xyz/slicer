@@ -2,55 +2,144 @@
 
 `build_parser` declares each subcommand, its flags and the handler that runs it. It is a
 long table of declarations, so it has its own module: `cli.py` keeps `main`, error handling
-and the cached parser, and imports `build_parser` from here. This module imports the handler
-modules and `cli_common`, never `cli`, so the entry point can import it without a cycle.
+and the cached parser, and imports `build_parser` from here. This module imports no handler
+module: each handler is a `LazyHandler` that names `module:function` and is imported when its
+command runs, so `--version` and `--help` load none of them. It imports `cli_args` and `vocab`,
+which are light, and never `cli` or `cli_common`. A new command declares its handler in the
+table below and the test `test_EveryCommand_ResolvesItsHandler` resolves each entry.
 """
 
 from __future__ import annotations
 
 import argparse
-from typing import Callable
+from collections.abc import Callable  # not `typing`: importing it alone costs several ms
 
-from slicer import __url__, __version__, ai, note_pack, snapshot
-from slicer.cli_ai import (
-  cmd_ai_guard, cmd_ai_hooks, cmd_ai_instructions, cmd_ai_prompt, cmd_ai_relay, cmd_ai_relay_brief,
-  cmd_ai_relay_orchestrator, cmd_ai_reset, cmd_ai_set, cmd_ai_show, cmd_ai_skill,
-  cmd_recommended_workflow,
-)
-from slicer.cli_changelog import cmd_changelog_add, cmd_changelog_assemble, cmd_changelog_import
-from slicer.cli_common import (
-  _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _check_flag, _json_flags, _mutating,
+from slicer import __url__, __version__
+from slicer.cli_args import (
+  LazyHandler, _ArgumentParser, _DESCRIPTION, _ISSUES_URL, _check_flag, _json_flags,
   _nonnegative_int, _positive_int, _release_target_flags, _recursive_flag, _render_flag, _rest_flag, _strict_flag,
 )
-from slicer.cli_prose import (
-  cmd_catalog_add, cmd_catalog_cite, cmd_catalog_edit, cmd_catalog_list, cmd_catalog_move,
-  cmd_catalog_retire, cmd_catalog_show, cmd_catalog_uncite, cmd_config, cmd_goals,
-  cmd_prose_add_pass, cmd_prose_drop_pass, cmd_prose_edit, cmd_prose_list, cmd_prose_show,
-  cmd_sections, cmd_template_list, cmd_template_reset, cmd_template_set, cmd_template_show,
-)
-from slicer.cli_queue import (
-  cmd_deps, cmd_find, cmd_list, cmd_next, cmd_plan_parallel, cmd_show, cmd_status,
-)
-from slicer.cli_relay import (
-  cmd_ai_relay_roles, cmd_relay_roles_add, cmd_relay_roles_apply, cmd_relay_roles_init,
-  cmd_relay_roles_move,
-  cmd_relay_roles_recommend, cmd_relay_roles_remove, cmd_relay_roles_rule_add,
-  cmd_relay_roles_rule_edit, cmd_relay_roles_rule_remove, cmd_relay_roles_set,
-  cmd_relay_roles_show, cmd_relay_run_answer, cmd_relay_run_ask, cmd_relay_run_begin,
-  cmd_relay_run_end, cmd_relay_run_list, cmd_relay_run_stats, cmd_relay_run_step,
-)
-from slicer.cli_report import (
-  cmd_check, cmd_log, cmd_refs, cmd_render, cmd_snapshot, cmd_stats, cmd_sync, cmd_tui, cmd_verify,
-)
-from slicer.cli_setup import (
-  cmd_init, cmd_merge_index, cmd_merge_relay_roles, cmd_setup_git,
-)
-from slicer.cli_track import (
-  _status_cmd, cmd_add, cmd_decide, cmd_done, cmd_edit, cmd_feedback, cmd_feedback_report,
-  cmd_handoff, cmd_id_prefix, cmd_import, cmd_issues_pull, cmd_land, cmd_migrate, cmd_move,
-  cmd_next_id, cmd_note, cmd_note_retract, cmd_note_verify, cmd_park, cmd_promote, cmd_ready,
-  cmd_reject, cmd_release, cmd_remove, cmd_set, cmd_sort, cmd_start,
-)
+from slicer.vocab import PARTS, PROMPT_NAMES, TRUST
+
+
+def _lazy(ref: str, *, mutates: bool = False) -> LazyHandler:
+  """A handler that `main` imports when the command runs. `mutates`: it carries `.mutates` itself."""
+  return LazyHandler("slicer." + ref, mutates=mutates)
+
+
+def _mutating(handler: LazyHandler) -> LazyHandler:
+  """`cli_common._mutating` for a lazy handler: `--render` and `--strict` apply, and it takes the lock."""
+  return handler.mutating()
+
+
+cmd_ai_guard = _lazy("cli_ai:cmd_ai_guard")
+cmd_ai_hooks = _lazy("cli_ai:cmd_ai_hooks")
+cmd_ai_instructions = _lazy("cli_ai:cmd_ai_instructions")
+cmd_ai_prompt = _lazy("cli_ai:cmd_ai_prompt")
+cmd_ai_relay = _lazy("cli_ai:cmd_ai_relay")
+cmd_ai_relay_brief = _lazy("cli_ai:cmd_ai_relay_brief")
+cmd_ai_relay_orchestrator = _lazy("cli_ai:cmd_ai_relay_orchestrator")
+cmd_ai_reset = _lazy("cli_ai:cmd_ai_reset")
+cmd_ai_set = _lazy("cli_ai:cmd_ai_set")
+cmd_ai_show = _lazy("cli_ai:cmd_ai_show")
+cmd_ai_skill = _lazy("cli_ai:cmd_ai_skill")
+cmd_recommended_workflow = _lazy("cli_ai:cmd_recommended_workflow")
+
+cmd_changelog_add = _lazy("cli_changelog:cmd_changelog_add", mutates=True)
+cmd_changelog_assemble = _lazy("cli_changelog:cmd_changelog_assemble", mutates=True)
+cmd_changelog_import = _lazy("cli_changelog:cmd_changelog_import", mutates=True)
+
+cmd_catalog_add = _lazy("cli_prose:cmd_catalog_add")
+cmd_catalog_cite = _lazy("cli_prose:cmd_catalog_cite")
+cmd_catalog_edit = _lazy("cli_prose:cmd_catalog_edit")
+cmd_catalog_list = _lazy("cli_prose:cmd_catalog_list")
+cmd_catalog_move = _lazy("cli_prose:cmd_catalog_move")
+cmd_catalog_retire = _lazy("cli_prose:cmd_catalog_retire")
+cmd_catalog_show = _lazy("cli_prose:cmd_catalog_show")
+cmd_catalog_uncite = _lazy("cli_prose:cmd_catalog_uncite")
+cmd_config = _lazy("cli_prose:cmd_config")
+cmd_goals = _lazy("cli_prose:cmd_goals")
+cmd_prose_add_pass = _lazy("cli_prose:cmd_prose_add_pass")
+cmd_prose_drop_pass = _lazy("cli_prose:cmd_prose_drop_pass")
+cmd_prose_edit = _lazy("cli_prose:cmd_prose_edit")
+cmd_prose_list = _lazy("cli_prose:cmd_prose_list")
+cmd_prose_show = _lazy("cli_prose:cmd_prose_show")
+cmd_sections = _lazy("cli_prose:cmd_sections")
+cmd_template_list = _lazy("cli_prose:cmd_template_list")
+cmd_template_reset = _lazy("cli_prose:cmd_template_reset")
+cmd_template_set = _lazy("cli_prose:cmd_template_set")
+cmd_template_show = _lazy("cli_prose:cmd_template_show")
+
+cmd_deps = _lazy("cli_queue:cmd_deps")
+cmd_find = _lazy("cli_queue:cmd_find")
+cmd_list = _lazy("cli_queue:cmd_list")
+cmd_next = _lazy("cli_queue:cmd_next")
+cmd_plan_parallel = _lazy("cli_queue:cmd_plan_parallel")
+cmd_show = _lazy("cli_queue:cmd_show")
+cmd_status = _lazy("cli_queue:cmd_status")
+
+cmd_ai_relay_roles = _lazy("cli_relay:cmd_ai_relay_roles")
+cmd_relay_roles_add = _lazy("cli_relay:cmd_relay_roles_add")
+cmd_relay_roles_apply = _lazy("cli_relay:cmd_relay_roles_apply")
+cmd_relay_roles_init = _lazy("cli_relay:cmd_relay_roles_init")
+cmd_relay_roles_move = _lazy("cli_relay:cmd_relay_roles_move")
+cmd_relay_roles_recommend = _lazy("cli_relay:cmd_relay_roles_recommend")
+cmd_relay_roles_remove = _lazy("cli_relay:cmd_relay_roles_remove")
+cmd_relay_roles_rule_add = _lazy("cli_relay:cmd_relay_roles_rule_add")
+cmd_relay_roles_rule_edit = _lazy("cli_relay:cmd_relay_roles_rule_edit")
+cmd_relay_roles_rule_remove = _lazy("cli_relay:cmd_relay_roles_rule_remove")
+cmd_relay_roles_set = _lazy("cli_relay:cmd_relay_roles_set")
+cmd_relay_roles_show = _lazy("cli_relay:cmd_relay_roles_show")
+cmd_relay_run_answer = _lazy("cli_relay:cmd_relay_run_answer")
+cmd_relay_run_ask = _lazy("cli_relay:cmd_relay_run_ask")
+cmd_relay_run_begin = _lazy("cli_relay:cmd_relay_run_begin")
+cmd_relay_run_end = _lazy("cli_relay:cmd_relay_run_end")
+cmd_relay_run_list = _lazy("cli_relay:cmd_relay_run_list")
+cmd_relay_run_stats = _lazy("cli_relay:cmd_relay_run_stats")
+cmd_relay_run_step = _lazy("cli_relay:cmd_relay_run_step")
+
+cmd_check = _lazy("cli_report:cmd_check")
+cmd_log = _lazy("cli_report:cmd_log")
+cmd_refs = _lazy("cli_report:cmd_refs")
+cmd_render = _lazy("cli_report:cmd_render")
+cmd_snapshot = _lazy("cli_report:cmd_snapshot")
+cmd_stats = _lazy("cli_report:cmd_stats")
+cmd_sync = _lazy("cli_report:cmd_sync")
+cmd_tui = _lazy("cli_report:cmd_tui")
+cmd_verify = _lazy("cli_report:cmd_verify")
+
+cmd_init = _lazy("cli_setup:cmd_init")
+cmd_merge_index = _lazy("cli_setup:cmd_merge_index")
+cmd_merge_relay_roles = _lazy("cli_setup:cmd_merge_relay_roles")
+cmd_setup_git = _lazy("cli_setup:cmd_setup_git")
+
+cmd_add = _lazy("cli_track:cmd_add")
+cmd_decide = _lazy("cli_track:cmd_decide")
+cmd_done = _lazy("cli_track:cmd_done", mutates=True)
+cmd_edit = _lazy("cli_track:cmd_edit")
+cmd_feedback = _lazy("cli_track:cmd_feedback")
+cmd_feedback_report = _lazy("cli_track:cmd_feedback_report")
+cmd_handoff = _lazy("cli_track:cmd_handoff")
+cmd_id_prefix = _lazy("cli_track:cmd_id_prefix")
+cmd_import = _lazy("cli_track:cmd_import")
+cmd_issues_pull = _lazy("cli_track:cmd_issues_pull")
+cmd_land = _lazy("cli_track:cmd_land", mutates=True)
+cmd_migrate = _lazy("cli_track:cmd_migrate")
+cmd_move = _lazy("cli_track:cmd_move")
+cmd_next_id = _lazy("cli_track:cmd_next_id")
+cmd_note = _lazy("cli_track:cmd_note")
+cmd_note_retract = _lazy("cli_track:cmd_note_retract")
+cmd_note_verify = _lazy("cli_track:cmd_note_verify")
+cmd_park = _lazy("cli_track:cmd_park")
+cmd_promote = _lazy("cli_track:cmd_promote")
+cmd_ready = _lazy("cli_track:cmd_ready")
+cmd_reject = _lazy("cli_track:cmd_reject")
+cmd_release = _lazy("cli_track:cmd_release")
+cmd_remove = _lazy("cli_track:cmd_remove")
+cmd_set = _lazy("cli_track:cmd_set")
+cmd_sort = _lazy("cli_track:cmd_sort")
+cmd_start = _lazy("cli_track:cmd_start")
+cmd_unpark = _lazy("cli_track:cmd_unpark")
 
 
 def _make_add(
@@ -88,7 +177,7 @@ def _add_ai(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) ->
   inner.set_defaults(func=cmd_ai_instructions)
   _json_flags(inner, suppress=True)
   _rest_flag(inner, suppress=True)
-  for name in ai.PROMPT_NAMES:
+  for name in PROMPT_NAMES:
     help_text = (
       "print the first-session prompt for an agent (no project needed)"
       if name == "getting-started" else
@@ -108,7 +197,7 @@ def _add_ai(sub: argparse._SubParsersAction, common: argparse.ArgumentParser) ->
     inner = aisub.add_parser(name, help=f"{name} a project prompt override", parents=[common])
     inner.set_defaults(func=fn if name == "show" else _mutating(fn))
     _json_flags(inner, suppress=True)
-    inner.add_argument("name", help=", ".join(ai.PROMPT_NAMES))
+    inner.add_argument("name", help=", ".join(PROMPT_NAMES))
     if name == "show":
       inner.add_argument("--default", action="store_true", help="print the built-in prompt")
     else:
@@ -317,7 +406,7 @@ def _add_next(add) -> None:
   sp.add_argument("--show", action="store_true",
                   help="also include the item's full slice, as `show` returns it")
   sp.add_argument("--notes-kind", action="append", help="select exact note kinds (repeatable; requires --ready)")
-  sp.add_argument("--min-trust", choices=note_pack.TRUST,
+  sp.add_argument("--min-trust", choices=TRUST,
                   help="pack current notes at or above this verification tier")
   sp.add_argument("--notes-budget", type=int,
                   help="pack whole current notes within this nonnegative character budget")
@@ -410,7 +499,7 @@ def _add_browse(add) -> None:
     help="print only this section's body; repeat to select several",
   )
   sp.add_argument("--notes-kind", action="append", help="select exact note kinds (repeatable; empty selects untyped)")
-  sp.add_argument("--min-trust", choices=note_pack.TRUST,
+  sp.add_argument("--min-trust", choices=TRUST,
                   help="pack current notes at or above this verification tier")
   sp.add_argument("--notes-budget", type=int,
                   help="pack whole current notes within this nonnegative character budget")
@@ -620,7 +709,7 @@ def _add_lifecycle(add) -> None:
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
-  sp = _strict_flag(_render_flag(add("unpark", _mutating(_status_cmd("open_status")), "return a parked item to the queue")))
+  sp = _strict_flag(_render_flag(add("unpark", _mutating(cmd_unpark), "return a parked item to the queue")))
   sp.add_argument("id", nargs="+", help="item ids, or - alone to read whitespace-separated ids from stdin")
   sp.add_argument("--note", help="one line recorded in history (see `slicer note` for a durable note on the item)")
 
@@ -1069,8 +1158,13 @@ def _add_reports(sub: argparse._SubParsersAction, add) -> None:
                   help="project root; repeat to read several projects in order")
   _json_flags(sp)
   _recursive_flag(sp)
-  sp.add_argument("--parts", default=",".join(snapshot.PARTS),
-                  help="comma-separated dashboard parts: " + ",".join(snapshot.PARTS))
+  # `deps` is opt-in: a caller that names no parts gets the reply it always did.
+  sp.add_argument("--parts", default="items,goals,runs,status,health",
+                  help="comma-separated dashboard parts: " + ",".join(PARTS)
+                  + " (default: all but deps)")
+  sp.add_argument("--since", metavar="FILE",
+                  help="a previous snapshot reply ('-' reads stdin); a part whose revision "
+                  "still matches, by project root and part name, answers `unchanged` and no value")
 
   _recursive_flag(add("status", cmd_status, "next item, progress, and blockers in one view"))
 

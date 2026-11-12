@@ -18,7 +18,7 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/snapshot.py` (`PARTS`, a `deps` reader in `build`, an optional `since` map consulted when a part's value is built).\n- `src/slicer/cli_report.py:185-237` (`cmd_snapshot`: read and validate `--since` before any project is read; pass each project's map to `build`).\n- `src/slicer/cli_parser.py:1036-1043` (`--since`; the default `--parts` stays the five parts it names today).\n- `tests/test_snapshot.py`.\n- `docs/agents.md:711` (Dashboard snapshot: the `deps` part, `--since`, the unchanged shape), `docs/commands.md:100`.\n- `CHANGELOG.md`."
+      "body": "- `src/slicer/vocab.py:14` (`PARTS`, which `snapshot.PARTS` re-exports; gains `deps`), `src/slicer/snapshot.py` (a `deps` reader in `build`, `held_revisions`, an optional `since` map consulted when a part's value is built).\n- `src/slicer/cli_report.py:185-237` (`cmd_snapshot`: read and validate `--since` before any project is read; pass each project's map to `build`).\n- `src/slicer/cli_parser.py:1155-1167` (`_add_reports`: `--since`; the default `--parts` stays the five parts it names today, spelled out).\n- `tests/test_snapshot.py`.\n- `docs/agents.md:714` (Dashboard snapshot: the `deps` part, `--since`, the unchanged shape), `docs/commands.md:101`.\n- `landed-changed/s456.md` (the changelog entry, written with `slicer changelog add`)."
     },
     {
       "heading": "Failing tests",

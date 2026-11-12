@@ -9,6 +9,7 @@ so a terminal-less run never loads curses. Each handler is attached to its subpa
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -199,6 +200,20 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
     print("slicer: usage: repeated snapshot part(s) " + ",".join(dict.fromkeys(repeated)) + choose,
           file=sys.stderr)
     return USAGE
+  held: dict[str, dict[str, str]] = {}
+  if args.since is not None:
+    source = "stdin" if args.since == "-" else args.since
+    try:
+      text = sys.stdin.read() if args.since == "-" else Path(args.since).read_text(encoding="utf-8")
+      reply = json.loads(text)
+    except (OSError, ValueError) as exc:  # a missing file, bad UTF-8 or bad JSON
+      print(f"slicer: usage: --since {source}: cannot read a snapshot reply: {exc}", file=sys.stderr)
+      return USAGE
+    if not isinstance(reply, dict) or not isinstance(reply.get("projects"), list):
+      print(f"slicer: usage: --since {source}: not a snapshot reply: no `projects` list",
+            file=sys.stderr)
+      return USAGE
+    held = snapshot.held_revisions(reply)
   projects = []
   exit_code = OK
   for root in snapshot_roots(args):
@@ -226,7 +241,7 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
           sub.func(sub)
           return sub._collect[-1]
 
-        projects.append(snapshot.build(state, parts, read))
+        projects.append(snapshot.build(state, parts, read, held.get(str(state.root.resolve()))))
       except (SlicerError, OSError) as exc:
         code = exc.code if isinstance(exc, SlicerError) else "io"
         exit_code = max(exit_code, _exit_for(code))

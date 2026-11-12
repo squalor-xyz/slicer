@@ -26,7 +26,8 @@ changelog                                   pure text in, entries out: changelog
 queries                                     read-only ranking, readiness and removal previews
 ops · render · sync · verify · migrator     behaviour (ops is the single mutation path)
 check                                       composes render + sync + verify
-cli · cli_parser · cli_common · cli_<family>  command line: entry point, parser, shared helpers, handlers
+cli · cli_parser · cli_args · cli_common · cli_<family>  command line: entry point, parser, parser basics, shared helpers, handlers
+vocab                                       name lists the parser prints, light so `--version` stays fast
 tui · tui_style.py                          interactive front end and terminal presentation
 ```
 
@@ -36,7 +37,12 @@ The command line is split so no one file holds every command. All of these sit i
 - `cli.py` is the entry point (`pyproject.toml` and `__main__.py` point at it): `main`, the
   error envelope, the cached parser and the code-location warning.
 - `cli_parser.py` holds `build_parser`: every subcommand, its flags and the handler it runs,
-  in `add_parser` order, which is the order `--help` lists them.
+  in `add_parser` order, which is the order `--help` lists them. It imports no handler module:
+  each handler is a `LazyHandler` naming `module:function`, imported when its command runs.
+- `cli_args.py` holds what building the parser needs and nothing heavier: the exit codes, the
+  parser class and its error, the shared flag helpers and `LazyHandler`. It and `vocab.py`
+  import no `dataclasses`, store, checker or renderer, so `--version` and `--help` load none
+  of them; `test_startup_imports` pins that by module name. `cli_common` re-exports its names.
 - `cli_common.py` holds what every handler shares: exit codes, the shared flags, output
   buffering for `--strict`, the `--render` wrappers (`_mutating` and friends), `_state` and
   the small parsing and lookup helpers.
@@ -104,10 +110,16 @@ generated views back as state.
 For the meaning of state, readiness and lifecycle, see
 [How slicer works](docs/how-it-works.md).
 
-The one deliberate cycle is among the CLI modules: `cli` imports `cli_parser`, which
-imports the handler modules, and every handler module imports `cli_common`. `cli_common`
-imports no `cli*` module when it loads; `_built_parser`, the one helper that needs the built
-parser, imports `cli` inside the function, so the loop closes only at call time. `tui` is
+The one deliberate cycle is among the CLI modules: `cli` imports `cli_parser`, which names
+the handler modules without importing them, `main` imports the one that runs, and every handler
+module imports `cli_common`. `cli_common` imports no `cli*` module but `cli_args` when it
+loads; `_built_parser`, the one helper that needs the built parser, imports `cli` inside the
+function, so the loop closes only at call time. `cli.py` imports none of `store`, `vcs`,
+`cli_common`, `cli_report`, `ops`, `render` or `check` when it loads, only inside the functions
+that use them. `cli_common` and `cli_queue` do import `store` (and `model`, so `dataclasses`)
+when they load, so a command that runs a handler pays for them; `ops`, `render` and `check` are
+imported inside the functions that use them in both, so a read such as `list` loads none of
+the three. `tui` is
 a lazy import, not a cycle: `cli_report.cmd_tui` imports `tui` inside the function, and `tui`
 imports `cli_common` inside `run()`, so a terminal-less environment never pays for curses.
 

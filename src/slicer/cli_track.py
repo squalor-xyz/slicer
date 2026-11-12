@@ -655,6 +655,7 @@ def _status_cmd(status_attr: str):
 
 
 cmd_park = _status_cmd("parked_status")
+cmd_unpark = _status_cmd("open_status")
 
 
 def cmd_start(args: argparse.Namespace) -> int:
