@@ -19117,13 +19117,26 @@
       "status": "open",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "a12e8ae1-ed78-40eb-8150-23664a394d84",
+          "kind": "decision",
+          "text": "**2026-11-12** — Owner decisions (2026-11-12): Q1 (a): the items part's value is exactly what `slicer list --json --lean` gives for that root, the runs part's value exactly what `slicer relay-run list --json` gives, and goals matches `slicer goals --json`, so a caller decodes either with one type. Q2 (a): bump the snapshot's schema version and record the change with `slicer changelog add` (landed-changed/, s454). Runs in the v1.22 wave after s457 lands (both touch snapshot.py).",
+          "created_at": "2026-11-12T00:40:23Z",
+          "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "M",
-        "flags": [
-          "needs-owner"
-        ],
+        "flags": [],
         "trees": [],
         "trees_literal": false,
         "findings": "ork owner 2026-11-11: ork's batched polling (ork S335) is held until slicer's snapshot carries the fields its dashboard reads from `slicer list --json --lean` and `slicer relay-run list --json`.",
