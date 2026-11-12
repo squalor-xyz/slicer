@@ -2950,3 +2950,4 @@
 {"when": "2026-11-12T02:34:23Z", "item": "s459", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-11-12T02:49:59Z", "item": "s459", "action": "note", "from": "", "to": "", "note": "Verified: snapshot schema is 2; the items, goals and runs pa", "by": "Jon Robbins"}
 {"when": "2026-11-12T02:50:00Z", "item": "s459", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-12T02:50:05Z", "item": "s459", "action": "status", "from": "review", "to": "done", "note": "Landed s459", "by": "Jon Robbins"}

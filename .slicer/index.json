@@ -19156,7 +19156,7 @@
       "id": "s459",
       "title": "snapshot: items and runs parts carry the fields that list and relay-run list give",
       "short_title": "snapshot items and runs carry full fields",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [

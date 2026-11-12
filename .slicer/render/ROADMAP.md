@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-446 items · — 1 · done 432 · retired 12 · review 1
+446 items · — 1 · done 433 · retired 12
 
 ## v1.22
 
@@ -41,7 +41,7 @@
 | 6 | [s456](slices/s456.md) | snapshot deps part and --since | M | 2 |  | ork owner 2026-11-11: ork polls items, deps and runs per project; snapshot already batches items, goals and runs across --root values with a revision per part, but has no deps part, and every reply carries every part's value. | done |
 | 7 | [s457](slices/s457.md) | snapshot input fingerprint | M | 2 |  | Follow-up the owner chose on 2026-11-11 while specifying the snapshot deps/--since item: --since drops an unchanged part's value but still loads the store and builds it, because a revision is a hash of the value. | done |
 | 8 | [s458](slices/s458.md) | Wave planning counts a slice with placeholder spec sections as specified | S | - |  |  | — |
-| 9 | [s459](slices/s459.md) | snapshot items and runs carry full fields | M | 2 |  | ork owner 2026-11-11: ork's batched polling (ork S335) is held until slicer's snapshot carries the fields its dashboard reads from `slicer list --json --lean` and `slicer relay-run list --json`. | review |
+| 9 | [s459](slices/s459.md) | snapshot items and runs carry full fields | M | 2 |  | ork owner 2026-11-11: ork's batched polling (ork S335) is held until slicer's snapshot carries the fields its dashboard reads from `slicer list --json --lean` and `slicer relay-run list --json`. | done |
 
 ---
 
