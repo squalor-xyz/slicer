@@ -18707,7 +18707,7 @@
       "id": "s451",
       "title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
       "short_title": "Merge driver for slice JSON: merge notes by id and sections by heading (so a landing merge-in of .slicer/slices/ID.json needs no hand resolution)",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
@@ -18717,6 +18717,34 @@
           "text": "**2026-11-11** — Owner decisions (2026-11-11): Q1 notes merge option (a), union by exact text: base order, then lines only ours added, then lines only theirs added; a line one side removed stays removed only if the other side kept it unchanged. Q2 disagreement option (b), like merge-relay-roles: leave ours byte for byte, exit 2 with merge_conflict naming each place (e.g. sections/Implement/body).",
           "created_at": "2026-11-11T17:03:38Z",
           "attempt": 0,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "51ab1aca-2295-47cd-81a1-6aa4939c2c77",
+          "kind": "",
+          "text": "**2026-11-12** — Human checks at approval (s451):\n- later: deferred to land: In a scratch clone with the driver configured, edit different sections of one slice on two branches with `slicer edit`, merge, and see no conflict and `slicer check` pass.",
+          "created_at": "2026-11-12T00:56:10Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        },
+        {
+          "id": "82d0a2b4-8641-4782-966b-289862291517",
+          "kind": "",
+          "text": "**2026-11-12** — Verified: slicer-slice merge driver (merge-slice) merges slice JSON fields by name, sections by heading and occurrence, and notes as a union by exact text; a disagreement leaves OURS untouched and exits 2 merge_conflict naming each place. Wired through gitattributes (slices/*.json and slices/*/*.json), setup-git (eight lines), the read-only config --get allowlist entry and a verify warning. Full suite 3463 tests OK (1 skipped); slicer check and git diff --check clean; review findings on docs applied; gate PASS.",
+          "created_at": "2026-11-12T00:56:13Z",
+          "attempt": 1,
           "by": "Jon Robbins",
           "verified_by": "",
           "verified_at": "",
@@ -18743,7 +18771,7 @@
         "importance": 1,
         "urgency": 1,
         "effort": 2,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {

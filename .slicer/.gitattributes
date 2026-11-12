@@ -3,9 +3,10 @@
 log.jsonl merge=union
 
 # render/ is a generated projection of index.json, never merged by hand. The
-# slicer-generated driver keeps the current branch's copy on merge instead of
-# writing conflict markers; re-run `slicer render` after resolving index.json so
-# the kept files match it. The name resolves only once a clone defines the driver
+# slicer-generated driver is optional: without it a merge may leave conflict markers
+# or one side's rows in render/, and the next slicer write regenerates the stale
+# files from index.json. With it the merge keeps the current branch's copy instead of
+# writing markers. The name resolves only once a clone defines the driver
 # (one-time, per clone -- slicer's git allowlist cannot run `git config` for you):
 #   git config merge.slicer-generated.name "keep the current branch's generated files"
 #   git config merge.slicer-generated.driver true
@@ -29,3 +30,13 @@ index.json merge=slicer-index
 #   git config merge.slicer-relay-roles.name "keep both sides' relay roles rows and rules with fresh ids"
 #   git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"
 relay-roles.json merge=slicer-relay-roles
+
+# A slice's JSON is merged by the slicer-slice driver, which matches sections by heading
+# and occurrence and object fields by name, and keeps the union of both sides' notes:
+# edits to different sections merge, and only a value both sides changed differently is
+# refused, with the file left as it was. Open slices sit in slices/, finished and retired
+# ones one folder down. Also defined once per clone:
+#   git config merge.slicer-slice.name "merge slice sections by heading and notes by text"
+#   git config merge.slicer-slice.driver "slicer merge-slice %O %A %B"
+slices/*.json merge=slicer-slice
+slices/*/*.json merge=slicer-slice

@@ -32,6 +32,7 @@ READ_ONLY = {
     ("--get", "merge.slicer-generated.driver"),
     ("--get", "merge.slicer-index.driver"),
     ("--get", "merge.slicer-relay-roles.driver"),
+    ("--get", "merge.slicer-slice.driver"),
   }),
 }
 
@@ -347,6 +348,12 @@ def relay_roles_driver_configured(root: Path) -> bool:
   `relay-roles.json` set up. Same read-only query and the same reading of "not
   configured" as the render and index drivers."""
   return _driver_configured(root, "slicer-relay-roles")
+
+
+def slice_driver_configured(root: Path) -> bool:
+  """Whether this clone has the `slicer-slice` merge driver for slice JSON set up.
+  Same read-only query and the same reading of "not configured" as the other drivers."""
+  return _driver_configured(root, "slicer-slice")
 
 
 def merge_file(cwd: Path, base: Path, ours: Path, theirs: Path) -> tuple[int, str]:

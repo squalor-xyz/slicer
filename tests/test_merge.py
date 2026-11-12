@@ -275,8 +275,25 @@ class RenderDriverSetupHintTests(unittest.TestCase):
         ("--get", "merge.slicer-generated.driver"),
         ("--get", "merge.slicer-index.driver"),
         ("--get", "merge.slicer-relay-roles.driver"),
+        ("--get", "merge.slicer-slice.driver"),
       }),
     )
+
+  def test_Vcs_SliceDriverRead_IsAllowedButOtherConfigIsRefused(self) -> None:
+    # s451: the one new read is the slice driver. Unset reads as exit 1; writing,
+    # unsetting and reading its name stay refused before git runs.
+    with support.TempRepo(git=True) as repo:
+      self.assertEqual(vcs._run(repo.root, "config", "--get", "merge.slicer-slice.driver").returncode, 1)
+      self.assertFalse(vcs.slice_driver_configured(repo.root))
+      repo._git("config", "merge.slicer-slice.driver", "slicer merge-slice %O %A %B")
+      self.assertTrue(vcs.slice_driver_configured(repo.root))
+      for argv in (
+        ("config", "merge.slicer-slice.driver", "slicer merge-slice %O %A %B"),
+        ("config", "--unset", "merge.slicer-slice.driver"),
+        ("config", "--get", "merge.slicer-slice.name"),
+      ):
+        with self.assertRaises(StateError):
+          vcs._run(repo.root, *argv)
 
   def test_Vcs_RelayRolesDriverRead_IsAllowedButOtherConfigIsRefused(self) -> None:
     # s267: the one new read is the relay-roles driver. Reading it must not raise
@@ -319,6 +336,25 @@ class SetupGitCommandTests(unittest.TestCase):
       found = repo._git("check-attr", "merge", "--", ".slicer/index.json")
       self.assertEqual(found.stdout.strip(), ".slicer/index.json: merge: slicer-index")
 
+  def test_SetupGit_PrintsTheSliceDriverLines(self) -> None:
+    with support.TempRepo() as repo, support.isolated_discovery(repo.root):
+      out = repo.run("setup-git")[1]
+      self.assertIn(
+        'git config merge.slicer-slice.name "merge slice sections by heading and notes by text"',
+        out,
+      )
+      self.assertIn('git config merge.slicer-slice.driver "slicer merge-slice %O %A %B"', out)
+
+  def test_SetupGit_Attributes_MapSliceJsonToTheDriver(self) -> None:
+    # Open slices sit in slices/, finished and retired ones in a folder below it.
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      for path in (".slicer/slices/S01.json", ".slicer/slices/done/S01.json",
+                   ".slicer/slices/retired/S01.json"):
+        with self.subTest(path=path):
+          found = repo._git("check-attr", "merge", "--", path)
+          self.assertEqual(found.stdout.strip(), f"{path}: merge: slicer-slice")
+
   def test_SetupGit_Json_ReturnsTheCommandsAsAList(self) -> None:
     with support.TempRepo() as repo, support.isolated_discovery(repo.root):
       text = repo.run("setup-git")[1]
@@ -326,7 +362,7 @@ class SetupGitCommandTests(unittest.TestCase):
       self.assertEqual(code, 0)
       commands = json.loads(out)
       self.assertEqual(commands, text.splitlines())
-      self.assertEqual(len(commands), 6)
+      self.assertEqual(len(commands), 8)
       # --lean must not choke on a list of plain strings.
       self.assertEqual(json.loads(repo.run("setup-git", "--json", "--lean")[1]), commands)
 
@@ -482,6 +518,7 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
   MISSING = "render merge driver not configured"
   INDEX_MISSING = "index merge driver not configured"
   RELAY_MISSING = "relay-roles merge driver not configured"
+  SLICE_MISSING = "slice merge driver not configured"
 
   def _configure_driver(self, repo: support.TempRepo) -> None:
     repo._git("config", "merge.slicer-generated.driver", "true")
@@ -579,6 +616,31 @@ class RenderDriverConfiguredWarningTests(unittest.TestCase):
       self.assertIn("setup-git", out)
       self.assertNotIn(self.MISSING, out)  # only the relay-roles driver is unset
       self.assertNotIn(self.INDEX_MISSING, out)
+
+  def test_Verify_SiblingWorktreeSliceDriverUnset_WarnsAndPointsAtSetupGit(self) -> None:
+    with support.TempRepo(git=True) as repo:
+      repo.run("init")
+      self._configure_render_and_index(repo)
+      self._add_sibling(repo)
+      code, out, _ = repo.run("verify")
+      self.assertEqual(code, 0)  # a warning never fails verify
+      self.assertIn(self.SLICE_MISSING, out)
+      self.assertIn("setup-git", out)
+      self.assertNotIn(self.MISSING, out)  # only the slice driver is unset
+      self.assertNotIn(self.INDEX_MISSING, out)
+      repo._git("config", "merge.slicer-slice.driver", "slicer merge-slice %O %A %B")
+      self.assertNotIn(self.SLICE_MISSING, repo.run("verify")[1])
+
+  def test_Verify_SliceDriverCheck_FollowsTheSameGates(self) -> None:
+    with support.TempRepo(git=True) as repo:  # single worktree
+      repo.run("init")
+      repo.commit("base")
+      self.assertNotIn(self.SLICE_MISSING, repo.run("verify")[1])
+    with support.TempRepo(git=True) as repo:  # check off
+      repo.run("init")
+      self._set_config(repo, render_driver_check=False)
+      self._add_sibling(repo)
+      self.assertNotIn(self.SLICE_MISSING, repo.run("verify")[1])
 
   def test_Verify_RelayRolesDriverConfigured_DoesNotWarn(self) -> None:
     with support.TempRepo(git=True) as repo:

@@ -88,8 +88,12 @@ confirmed is shown with a warning and does not block landing.
    step's state when the orchestrator did not commit it. Then the report's later notes as one more
    commit.
 3. When main moved, merge main into the slice branch in the worktree. The merge drivers from
-   `slicer setup-git` keep the index and the render files mergeable. A merge can make a golden
-   stale: rebaseline it and commit the result.
+   `slicer setup-git` keep the index, the render files and the slice JSON under
+   `.slicer/slices/` mergeable: the `slicer-slice` driver merges edits to different sections
+   of one slice, so a slice edited on both branches needs no hand resolution, and refuses
+   only a value both sides changed differently (keep one side with
+   `git checkout --ours|--theirs`, then re-apply the other with `slicer edit`). A merge can
+   make a golden stale: rebaseline it and commit the result.
 4. `slicer render` in the worktree, then commit any rewritten render files.
 5. `slicer check`; exit 1 means drift.
 6. Rerun the full suite on the merged branch, then run each `[AFTER LAND]` line shown at Approve,

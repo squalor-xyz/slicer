@@ -70,6 +70,16 @@ index.json merge=slicer-index
 #   git config merge.slicer-relay-roles.name "keep both sides' relay roles rows and rules with fresh ids"
 #   git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"
 relay-roles.json merge=slicer-relay-roles
+
+# A slice's JSON is merged by the slicer-slice driver, which matches sections by heading
+# and occurrence and object fields by name, and keeps the union of both sides' notes:
+# edits to different sections merge, and only a value both sides changed differently is
+# refused, with the file left as it was. Open slices sit in slices/, finished and retired
+# ones one folder down. Also defined once per clone:
+#   git config merge.slicer-slice.name "merge slice sections by heading and notes by text"
+#   git config merge.slicer-slice.driver "slicer merge-slice %O %A %B"
+slices/*.json merge=slicer-slice
+slices/*/*.json merge=slicer-slice
 """
 
 

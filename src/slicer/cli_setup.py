@@ -11,14 +11,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from slicer import feedback, mergeindex, mergeroles, ops, store, vcs
+from slicer import feedback, mergeindex, mergeroles, mergeslice, ops, store, vcs
 from slicer.cli_common import DRIFT, OK, _emit, _write_err
 
 
 def _render_driver_commands() -> list[str]:
   """The per-clone `git config` commands that turn on the merge drivers named in
-  `.gitattributes`: the render files (S109), the index counter (S191) and the relay
-  roles matrix (s262). slicer's
+  `.gitattributes`: the render files (S109), the index counter (S191), the relay
+  roles matrix (s262) and slice JSON (s451). slicer's
   git allowlist cannot run them, so `init` and `setup-git` print them for a person
   to run once in each clone."""
   return [
@@ -28,6 +28,8 @@ def _render_driver_commands() -> list[str]:
     'git config merge.slicer-index.driver "slicer merge-index %O %A %B"',
     'git config merge.slicer-relay-roles.name "keep both sides\' relay roles rows and rules with fresh ids"',
     'git config merge.slicer-relay-roles.driver "slicer merge-relay-roles %O %A %B"',
+    'git config merge.slicer-slice.name "merge slice sections by heading and notes by text"',
+    'git config merge.slicer-slice.driver "slicer merge-slice %O %A %B"',
   ]
 
 
@@ -74,9 +76,10 @@ def _render_driver_setup() -> str:
   """The `init` hint: why the drivers exist, plus the commands to enable them."""
   indented = "\n".join("  " + command for command in _render_driver_commands())
   return (
-    "render/, index.json and relay-roles.json are pointed at merge drivers so "
-    "parallel branches don't leave conflict markers in render/, on the next_id "
-    "counter, or on relay-roles ids that both branches issued.\n"
+    "render/, index.json, relay-roles.json and the slice files are pointed at merge "
+    "drivers so parallel branches don't leave conflict markers in render/, on the next_id "
+    "counter, on relay-roles ids that both branches issued, or between edits to "
+    "different sections of one slice.\n"
     "Enable them once in this clone:\n" + indented
   )
 
@@ -143,6 +146,15 @@ def cmd_merge_relay_roles(args: argparse.Namespace) -> int:
   that file; a disagreement exits 2 with code `merge_conflict` and leaves the file as
   it was, so Git reports a normal conflict."""
   mergeroles.merge(Path(args.base), Path(args.ours), Path(args.theirs))
+  return OK
+
+
+def cmd_merge_slice(args: argparse.Namespace) -> int:
+  """The `slicer-slice` merge driver: Git passes %O %A %B and reads the result from the
+  second path. Needs no project. A clean merge prints nothing and rewrites that file; a
+  disagreement exits 2 with code `merge_conflict` and leaves the file as it was, so Git
+  reports a normal conflict."""
+  mergeslice.merge(Path(args.base), Path(args.ours), Path(args.theirs))
   return OK
 
 

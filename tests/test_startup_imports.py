@@ -99,6 +99,7 @@ EXPECTED = {
   "setup-git": ("cli_setup:cmd_setup_git", False),
   "merge-index": ("cli_setup:cmd_merge_index", False),
   "merge-relay-roles": ("cli_setup:cmd_merge_relay_roles", False),
+  "merge-slice": ("cli_setup:cmd_merge_slice", False),
   "import": ("cli_track:cmd_import", True),
   "migrate": ("cli_track:cmd_migrate", True),
   "next": ("cli_queue:cmd_next", False),

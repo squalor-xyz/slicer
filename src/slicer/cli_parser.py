@@ -111,6 +111,7 @@ cmd_verify = _lazy("cli_report:cmd_verify")
 cmd_init = _lazy("cli_setup:cmd_init")
 cmd_merge_index = _lazy("cli_setup:cmd_merge_index")
 cmd_merge_relay_roles = _lazy("cli_setup:cmd_merge_relay_roles")
+cmd_merge_slice = _lazy("cli_setup:cmd_merge_slice")
 cmd_setup_git = _lazy("cli_setup:cmd_setup_git")
 
 cmd_add = _lazy("cli_track:cmd_add")
@@ -365,6 +366,11 @@ def _add_setup(add) -> None:
   sp.add_argument("base", help="the common ancestor's relay-roles.json (Git's %%O)")
   sp.add_argument("ours", help="this side's relay-roles.json, rewritten with the result (%%A)")
   sp.add_argument("theirs", help="the other side's relay-roles.json (%%B)")
+
+  sp = add("merge-slice", cmd_merge_slice, argparse.SUPPRESS, json_flag=False)
+  sp.add_argument("base", help="the common ancestor's slice JSON (Git's %%O)")
+  sp.add_argument("ours", help="this side's slice JSON, rewritten with the result (%%A)")
+  sp.add_argument("theirs", help="the other side's slice JSON (%%B)")
 
 
 def _add_import(add) -> None:
