@@ -220,9 +220,19 @@ def _run_root(args: argparse.Namespace) -> Path:
 
 
 def _emit_run(args: argparse.Namespace, payload: dict[str, object], text: str) -> None:
-  """A `relay-run` result. The shape is the contract, so `--lean` only compacts it."""
+  """A `relay-run` result. The shape is the contract, so `--lean` only compacts it.
+
+  A caller that set `args._collect` (`snapshot`) gets the payload, or the text without
+  `--json`, appended as `_emit` does, and nothing is printed.
+  """
+  collected = getattr(args, "_collect", None)
   if getattr(args, "json", False):
-    _dump_json(args, payload)
+    if collected is not None:
+      collected.append(payload)
+    else:
+      _dump_json(args, payload)
+  elif collected is not None:
+    collected.append(text)
   elif text:
     _write_out(args, text)
 

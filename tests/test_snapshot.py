@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import io
 import json
@@ -37,13 +38,13 @@ class SnapshotTests(unittest.TestCase):
     data = self.snapshot(repo)
     self.assertEqual(list(data), ["snapshot", "slicer", "contract", "projects"])
     self.assertEqual([data[k] for k in ("snapshot", "slicer", "contract")],
-                     [1, __version__, ai.RELAY_CONTRACT])
+                     [2, __version__, ai.RELAY_CONTRACT])
     project = data["projects"][0]
     self.assertEqual(list(project), ["root", "revision", "parts", "error"])
     self.assertIsNone(project["error"])
     self.assertEqual(list(project["parts"]), ["items", "goals", "runs", "status", "health"])
     self.assertEqual(project["parts"]["goals"]["value"],
-                     {"goals": "", "non_goals": "", "records": []})
+                     {"goals": "", "non_goals": "", "records": {"goal": [], "non_goal": []}})
     status = json.loads(repo.run("status", "--json")[1])
     self.assertEqual(project["parts"]["status"]["value"],
                      {"next": status["next"]["id"], "blocked": [], "held": []})
@@ -57,12 +58,12 @@ class SnapshotTests(unittest.TestCase):
       self.assertEqual(repo.run("catalog", "add", "--kind", kind, title)[0], 0)
     self.assertEqual(repo.run("catalog", "retire", "C03", "--reason", "Replaced")[0], 0)
     goals = self.snapshot(repo)["projects"][0]["parts"]["goals"]["value"]
-    self.assertEqual(goals, {"goals": "Ship locally", "non_goals": "No server", "records": [
-      {"id": "C02", "kind": "goal", "title": "Ship it"},
-      {"id": "C01", "kind": "non_goal", "title": "No service"},
-    ]})
+    self.assertEqual((goals["goals"], goals["non_goals"]), ("Ship locally", "No server"))
+    self.assertEqual({kind: [(r["id"], r["title"]) for r in records]
+                      for kind, records in goals["records"].items()},
+                     {"goal": [("C02", "Ship it")], "non_goal": [("C01", "No service")]})
 
-  def test_Snapshot_ItemsRow_MatchesListOrderAndFields(self):
+  def test_Snapshot_ItemsRow_MatchesListOrderAndStatus(self):
     repo = self.fixture()
     self.assertEqual(repo.run("start", "S01", "--owner", "Ada")[0], 0)
     for args in (("config", "hold_flags", '["WAIT"]'),
@@ -83,22 +84,12 @@ class SnapshotTests(unittest.TestCase):
     code, out, err = repo.run("add", "Ready", "--depends-on", "S03", "--json")
     self.assertEqual(code, 0, err)
     ready = json.loads(out)["id"]
-    listed = json.loads(repo.run("list", "--json")[1])
+    listed = json.loads(repo.run("list", "--json", "--lean")[1])
     rows = self.snapshot(repo)["projects"][0]["parts"]["items"]["value"]
-    expected = []
-    for row in listed:
-      item = repo.state().index.require(row["id"])
-      expected.append({"id": item.id, "short_title": item.short_title,
-        "status": item.status, "claim": "Ada" if item.id == "S01" else None, "pass": item.pass_key,
-        "release_target": item.pass_key, "wave": None, "size": item.size, "effort": item.effort, "score": item.score,
-        "quadrant": item.quadrant, "held": item.id == "S01", "blocked": item.id == "S02"})
-    self.assertEqual(rows, expected)
+    self.assertEqual(rows, listed)
     self.assertEqual([row["id"] for row in listed], ["S01", ready, "S02"])
-    self.assertEqual([row["id"] for row in rows], [row["id"] for row in listed])
-    by_id = {row["id"]: row for row in rows}
-    self.assertFalse(by_id["S02"]["held"])
-    self.assertFalse(by_id[ready]["blocked"])
-    self.assertTrue(all(len(row) == 13 for row in rows))
+    self.assertEqual({row["id"]: (row.get("claim") or {}).get("owner") for row in rows},
+                     {"S01": "Ada", ready: None, "S02": None})
     status = self.snapshot(repo)["projects"][0]["parts"]["status"]["value"]
     next_code, next_out, _ = repo.run("next", "--json")
     self.assertEqual(next_code, 0)
@@ -135,7 +126,8 @@ class SnapshotTests(unittest.TestCase):
     self.assertEqual(list(parts), ["items", "health"])
     lean = self.snapshot(repo, "--parts", "health,goals", "--lean")["projects"][0]["parts"]
     self.assertEqual(list(lean), ["health", "goals"])
-    self.assertEqual(lean["goals"]["value"], {"goals": "", "non_goals": "", "records": []})
+    self.assertEqual(lean["goals"]["value"],
+                     {"goals": "", "non_goals": "", "records": {"goal": [], "non_goal": []}})
     code, out, err = repo.run("snapshot", "--json", "--parts", "unknown,other")
     self.assertEqual((code, out), (2, ""))
     self.assertIn("usage", err)
@@ -215,7 +207,7 @@ class SnapshotTests(unittest.TestCase):
     repo.write(".git/MERGE_HEAD", "a" * 40 + "\n")
     self.assertEqual(health(), {"render_stale": True, "merge_in_progress": True})
 
-  def test_Snapshot_Runs_OnlyActive(self):
+  def test_Snapshot_RunsPart_EqualsRelayRunListActiveJson(self):
     repo = self.fixture()
     begin = lambda: json.loads(repo.run("relay-run", "begin", "S01", "--json")[1])["run"]["id"]
     ended = begin()
@@ -223,15 +215,114 @@ class SnapshotTests(unittest.TestCase):
     active = begin()
     code, _, err = repo.run("relay-run", "step", active, "--role", "implementer",
                            "--agent", "Codex CLI", "--vendor", "OpenAI", "--model", "test-model",
-                           "--phase", "start", "--task", "Implement snapshot")
+                           "--reasoning", "high", "--phase", "start", "--task", "Implement snapshot")
     self.assertEqual(code, 0, err)
-    original = json.loads(repo.run("relay-run", "list", "--active", "--json")[1])["runs"][0]
-    runs = self.snapshot(repo)["projects"][0]["parts"]["runs"]["value"]
-    self.assertEqual(runs, [{"id": active, "items": ["S01"], "worktree": original["worktree"],
-      "state": "active", "updated_at": original["updated_at"], "steps": [
-        {"id": original["steps"][0]["id"], "role": "implementer", "phase": "start",
-         "task": "Implement snapshot", "model": "test-model", "waiting_on": "", "question": None},
-      ]}])
+    expected = json.loads(repo.run("relay-run", "list", "--json", "--active")[1])
+    self.assertEqual(list(expected), ["runs"])
+    self.assertEqual([run["id"] for run in expected["runs"]], [active])
+    run = expected["runs"][0]
+    self.assertTrue(run["begun_at"])
+    self.assertIn("counts", run)
+    self.assertEqual((run["steps"][0]["vendor"], run["steps"][0]["reasoning"]), ("OpenAI", "high"))
+    part = self.snapshot(repo, "--parts", "runs")["projects"][0]["parts"]["runs"]
+    self.assertEqual(part["value"], expected)
+    self.assertEqual(part["revision"], snapshot_module.revision(expected))
+
+  def test_Snapshot_RunsPart_OtherRoot_ReadsThatRootsLedger(self):
+    repo = self.fixture()
+    other = repo.root / "other"
+    make_project(other, "Other")
+    begin = lambda *root: json.loads(slicer(*root, "relay-run", "begin", "S01", "--json")[1])["run"]["id"]
+    here = begin("--root", str(repo.root))
+    there = begin("--root", str(other))
+    self.assertNotEqual(here, there)
+    expected = json.loads(slicer("--root", str(other), "relay-run", "list", "--json", "--active")[1])
+    self.assertEqual([run["id"] for run in expected["runs"]], [there])
+    with contextlib.chdir(repo.root):  # project A's directory; the snapshot names project B
+      code, out, err = slicer("snapshot", "--json", "--parts", "runs", "--root", str(other))
+    self.assertEqual(code, 0, err)
+    self.assertEqual(json.loads(out)["projects"][0]["parts"]["runs"]["value"], expected)
+
+  def test_Snapshot_GoalsPart_EqualsGoalsJson(self):
+    repo = self.fixture()
+    for ref, body in (("goals", "Ship locally"), ("non_goals", "No server")):
+      path = repo.write(ref + ".md", body)
+      self.assertEqual(repo.run("prose", "edit", ref, "--file", str(path))[0], 0)
+    for kind, title in (("non-goal", "No service"), ("goal", "Ship it"), ("goal", "Old goal")):
+      self.assertEqual(repo.run("catalog", "add", "--kind", kind, title)[0], 0)
+    self.assertEqual(repo.run("catalog", "retire", "C03", "--reason", "Replaced")[0], 0)
+    expected = json.loads(repo.run("goals", "--json")[1])
+    self.assertEqual(list(expected["records"]), ["goal", "non_goal"])
+    part = self.snapshot(repo, "--parts", "goals")["projects"][0]["parts"]["goals"]
+    self.assertEqual(part["value"], expected)
+    self.assertEqual(part["revision"], snapshot_module.revision(expected))
+
+  def test_Snapshot_ItemsPart_EqualsListJsonLean(self):
+    repo = self.fixture()
+    for args in (("config", "hold_flags", '["WAIT"]'),
+                 ("set", "S01", "--flag", "WAIT", "--size", "M", "--effort", "3"),
+                 ("set", "S02", "--depends-on", "S01"),
+                 ("note", "S01", "--text", "A note on S01")):
+      code, _, err = repo.run(*args)
+      self.assertEqual(code, 0, err)
+    code, out, err = repo.run("add", "Finished", "--json")
+    self.assertEqual(code, 0, err)
+    self.assertEqual(repo.run("set", json.loads(out)["id"], "--status", "done")[0], 0)
+    expected = json.loads(repo.run("list", "--json", "--lean")[1])
+    by_id = {row["id"]: row for row in expected}
+    self.assertEqual(by_id["S02"]["depends_on"], ["S01"])
+    self.assertEqual(by_id["S01"]["fields"]["size"], "M")
+    self.assertTrue(by_id["S01"]["notes"])
+    self.assertEqual(len(expected), 2)  # the done item is hidden, as `list` hides it
+    part = self.snapshot(repo, "--parts", "items")["projects"][0]["parts"]["items"]
+    self.assertEqual(part["value"], expected)
+    self.assertEqual(part["revision"], snapshot_module.revision(expected))
+
+  def test_Snapshot_SchemaVersion_IsTwo(self):
+    repo = self.fixture()
+    data = self.snapshot(repo)
+    self.assertEqual(data["snapshot"], 2)
+    self.assertEqual(data["snapshot"], snapshot_module.SCHEMA)
+
+  def test_Snapshot_Since_FullValues_UnchangedThenChanged(self):
+    repo = self.fixture()
+    names = "items,goals,runs"
+    first = self.snapshot(repo, "--parts", names)["projects"][0]
+    path = self.scratch("reply.json", json.dumps({"projects": [first]}))
+    same = self.snapshot(repo, "--parts", names, "--since", path)["projects"][0]["parts"]
+    for name in names.split(","):
+      with self.subTest(part=name):
+        self.assertEqual(same[name], {"revision": first["parts"][name]["revision"],
+                                      "fingerprint": first["parts"][name]["fingerprint"],
+                                      "unchanged": True})
+    self.assertEqual(repo.run("note", "S01", "--text", "Fresh note")[0], 0)
+    run = json.loads(repo.run("relay-run", "begin", "S01", "--json")[1])["run"]["id"]
+    parts = self.snapshot(repo, "--parts", names, "--since", path)["projects"][0]["parts"]
+    self.assertEqual(list(parts["items"]), ["revision", "fingerprint", "value"])
+    self.assertNotEqual(parts["items"]["revision"], first["parts"]["items"]["revision"])
+    row = next(row for row in parts["items"]["value"] if row["id"] == "S01")
+    self.assertIn("Fresh note", json.dumps(row["notes"]))
+    self.assertEqual(parts["goals"]["unchanged"], True)
+    self.assertEqual([r["id"] for r in parts["runs"]["value"]["runs"]], [run])
+    # `relay-run end` moves the runs revision again, from the held reply with the run in it.
+    held = self.snapshot(repo, "--parts", names)["projects"][0]
+    path = self.scratch("held.json", json.dumps({"projects": [held]}))
+    self.assertEqual(repo.run("relay-run", "end", run, "--outcome", "pass")[0], 0)
+    after = self.snapshot(repo, "--parts", names, "--since", path)["projects"][0]["parts"]
+    self.assertNotEqual(after["runs"]["revision"], held["parts"]["runs"]["revision"])
+    self.assertEqual(after["runs"]["value"], {"runs": []})
+    self.assertTrue(after["items"]["unchanged"])
+
+  def test_Snapshot_SnapshotLean_DoesNotChangePartValues(self):
+    repo = self.fixture()
+    self.assertEqual(repo.run("relay-run", "begin", "S01", "--json")[0], 0)
+    names = "items,goals,runs,status,health,deps"
+    full = self.snapshot(repo, "--parts", names)["projects"][0]["parts"]
+    lean = self.snapshot(repo, "--parts", names, "--lean")["projects"][0]["parts"]
+    for name in names.split(","):
+      with self.subTest(part=name):
+        self.assertEqual(lean[name]["value"], full[name]["value"])
+        self.assertEqual(lean[name]["revision"], full[name]["revision"])
 
   def test_Snapshot_Runs_StepsCarryWaitingOnAndQuestion(self):
     repo = self.fixture()
@@ -250,7 +341,7 @@ class SnapshotTests(unittest.TestCase):
     listed = {step["id"]: step for step in
               json.loads(repo.run("relay-run", "list", "--json")[1])["runs"][0]["steps"]}
     runs = self.snapshot(repo)["projects"][0]["parts"]["runs"]["value"]
-    steps = {step["id"]: step for step in runs[0]["steps"]}
+    steps = {step["id"]: step for step in runs["runs"][0]["steps"]}
     self.assertEqual((steps[running]["waiting_on"], steps[running]["question"]), ("", None))
     self.assertEqual(steps[asked]["waiting_on"], "owner")
     self.assertEqual(steps[asked]["question"]["id"], "q1")

@@ -736,7 +736,7 @@ same discovery, exclusions and sorted path order described above; it never walks
 
 ```json
 {
-  "snapshot": 1,
+  "snapshot": 2,
   "slicer": "VERSION",
   "contract": 7,
   "projects": [{
@@ -744,8 +744,8 @@ same discovery, exclusions and sorted path order described above; it never walks
     "revision": "0123456789ab",
     "parts": {
       "items": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": []},
-      "goals": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": {"goals": "", "non_goals": "", "records": []}},
-      "runs": {"revision": "0123456789ab", "fingerprint": null, "value": []},
+      "goals": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": {"goals": "", "non_goals": "", "records": {"goal": [], "non_goal": []}}},
+      "runs": {"revision": "0123456789ab", "fingerprint": null, "value": {"runs": []}},
       "status": {"revision": "0123456789ab", "fingerprint": "ba9876543210", "value": {"next": null, "blocked": [], "held": []}},
       "health": {"revision": "0123456789ab", "fingerprint": null, "value": {"render_stale": false, "merge_in_progress": false}}
     },
@@ -754,6 +754,11 @@ same discovery, exclusions and sorted path order described above; it never walks
 }
 ```
 
+`snapshot` is the schema version. Version 2 gives `items`, `goals` and `runs` the shapes of
+`list --json --lean`, `goals --json` and `relay-run list --json --active`; version 1 gave reduced
+shapes of them (`held` and `blocked` on item rows, a flat `records` list, a bare run list). A
+snapshot's own `--lean` only compacts the printed JSON; it never changes a part's value.
+`status.blocked` and `status.held` still give the ids that item rows no longer carry.
 `slicer` is the running package version; `contract` is the running `ai.RELAY_CONTRACT`.
 The default part order is `items`, `goals`, `runs`, `status`, `health`; `deps` is opt-in, so a
 call with no `--parts` prints what it always did. `--parts` selects only
@@ -767,16 +772,17 @@ Like every other command, snapshot prints the editable-install code warning on s
 It checks each root once, in argument order, never once per part or per project found by `-r`,
 and `SLICER_NO_CODE_WARNING` silences it. Stdout and the exit code are unchanged.
 
-- `items`: default `list` rows in the same order, excluding done and retired. Each row has
-  `id`, `short_title`, `status`, `claim` (owner string or null), `pass`, `release_target` (the same value), `wave` (integer or null), `size`, `effort`,
-  `score` (base importance/urgency score), `quadrant`, `held`, `blocked`. Hold flags and
-  unmet dependencies use the existing configured rules.
-- `goals`: the goals and non-goals prose plus a flat `records` array of `{id, kind, title}`,
-  using the active records from `goals` in goal/non-goal order.
-- `runs`: only active relay runs, in `relay-run list` order. Each has `id`, `items`,
-  `worktree`, `state`, `updated_at`, and `steps`. Each step has `id`, `role`, `phase`, `task`,
-  `model`, `waiting_on` (`owner` or `approval` while it waits, else `""`) and `question` (the
-  object `relay-run list --json` gives its step, or `null`). Ended and stale runs are omitted; a waiting run is active, and its waiting step has `phase` `wait`.
+- `items`: the value `slicer list --json --lean` prints for the project: the default rows
+  (done and retired excluded, no `--envelope`) in the same order, each with `title`,
+  `has_slice`, `depends_on`, `notes`, `fields` and the rest of a `list` row, so a caller decodes a
+  snapshot row and a `list` row with one type.
+- `goals`: the value `slicer goals --json` prints: the `goals` and `non_goals` prose and
+  `records`, an object of the active `goal` and `non_goal` record lists.
+- `runs`: the value `slicer relay-run list --json --active` prints: `{"runs": [...]}`, the active
+  relay runs only, each as `relay-run list` gives it (`begun_at`, `counts`, `outcome`, and each
+  step with its vendor, reasoning effort and start time, `waiting_on` and `question`). Ended and
+  stale runs are omitted; a waiting run is active, and its waiting step has `phase` `wait`. The
+  ledger is the one of the project the snapshot names, not of the current directory.
 - `status`: `next` is the id `next` would offer, or null; `blocked` and `held` are arrays of
   ids from the existing status reader's skipped candidates.
 - `health`: `render_stale` covers missing, differing or orphan render files from `check`;

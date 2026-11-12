@@ -9,11 +9,15 @@ from collections.abc import Callable
 from pathlib import Path
 
 import slicer
-from slicer import check, graph, jsonio, queries, relayrun, vcs, vocab
+from slicer import check, jsonio, vcs, vocab
 from slicer.config import CONFIG_NAME
 from slicer.store import DIR_NAME, INDEX_NAME, SLICES_DIR, State
 
 PARTS = vocab.PARTS
+
+# The reply's `snapshot` key. 2: `items`, `goals` and `runs` hold what `list --json --lean`,
+# `goals --json` and `relay-run list --json --active` print; 1 held reduced shapes of them.
+SCHEMA = 2
 
 
 def revision(value: object) -> str:
@@ -106,9 +110,12 @@ def held_fingerprints(reply: dict) -> dict[str, dict[str, str]]:
 
 
 def build(root: Path, state: Callable[[], State], parts: list[str],
-          read: Callable[[str], object], since: dict[str, str] | None = None,
+          read: Callable[..., object], since: dict[str, str] | None = None,
           since_fingerprints: dict[str, str] | None = None) -> dict:
-  """Reuse command readers bound to this project's state, without printing their views.
+  """Reuse command readers bound to this project, without printing their views.
+
+  `read(*argv)` gives what `slicer ARGV... --json` prints for the project; a part is that
+  value as it comes, with no second copy of a command's shape.
 
   `state` loads the project when first called, so a part answered from its fingerprint
   costs no load. `since` maps part name to the revision the caller holds for this project
@@ -117,41 +124,13 @@ def build(root: Path, state: Callable[[], State], parts: list[str],
   answered `unchanged` when its revision still matches. Either way the value is dropped.
   """
   def items():
-    loaded = state()
-    rows = []
-    for row in read("list"):
-      item = loaded.index.require(row["id"])
-      rows.append({
-        "id": item.id, "short_title": item.short_title, "status": item.status,
-        "claim": item.claim_owner or None, "pass": item.pass_key,
-        "release_target": item.release_target, "wave": item.wave,
-        "size": item.size, "effort": item.effort, "score": item.score,
-        "quadrant": item.quadrant, "held": bool(queries.held_flags(loaded, item)),
-        "blocked": bool(graph.pending(loaded.index, item, loaded.config)),
-      })
-    return rows
+    return read("list", "--lean")  # the rows `slicer list --json --lean` prints
 
   def goals():
-    value = read("goals")
-    return {
-      "goals": value["goals"], "non_goals": value["non_goals"],
-      "records": [{k: record[k] for k in ("id", "kind", "title")}
-                  for records in value["records"].values() for record in records],
-    }
+    return read("goals")  # what `slicer goals --json` prints
 
   def runs():
-    # The step's own `to_dict` values, so `question` is the object `relay-run list --json` gives.
-    keys = ("id", "role", "phase", "task", "model", "waiting_on", "question")
-
-    def step_view(step: relayrun.Step) -> dict:
-      dumped = step.to_dict()  # once per step, not once per key
-      return {k: dumped[k] for k in keys}
-
-    return [{
-      "id": run.id, "items": run.items, "worktree": run.worktree,
-      "state": run.state, "updated_at": run.updated_at,
-      "steps": [step_view(step) for step in run.steps],
-    } for run in relayrun.list_runs(root, active=True)]  # needs no loaded state
+    return read("relay-run", "list", "--active")  # needs no loaded state
 
   def status():
     value = read("status")

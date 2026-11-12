@@ -238,9 +238,12 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
         project = store.discover(path)
         state = functools.cache(lambda: store.load(project))  # not before a part needs it
 
-        def read(command):
-          sub = _built_parser().parse_args([command, "--json"])
-          sub._state = state()
+        def read(*argv):
+          """What `slicer ARGV... --json` gives for this project, collected and not printed."""
+          sub = _built_parser().parse_args([*argv, "--json"])
+          sub.root = str(project)  # `relay-run` finds its ledger from this, not the cwd
+          if argv[0] != "relay-run":  # its handlers need no loaded state
+            sub._state = state()
           sub._collect = []
           sub.func(sub)
           return sub._collect[-1]
@@ -253,7 +256,7 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
         exit_code = max(exit_code, _exit_for(code))
         projects.append({"root": str(path), "revision": None, "parts": {},
                          "error": {"code": code, "message": str(exc), "command": "snapshot"}})
-  _dump_json(args, {"snapshot": 1, "slicer": __version__, "contract": ai.RELAY_CONTRACT,
+  _dump_json(args, {"snapshot": snapshot.SCHEMA, "slicer": __version__, "contract": ai.RELAY_CONTRACT,
                     "projects": projects})
   return exit_code
 
