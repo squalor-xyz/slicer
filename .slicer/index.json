@@ -19069,7 +19069,7 @@
       "id": "s457",
       "title": "snapshot: skip building a part whose inputs have not changed",
       "short_title": "snapshot input fingerprint",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [
         "s456"
