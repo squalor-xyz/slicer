@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import support
 
-from slicer import check, render, sync, verify
+from slicer import check, queries, render, sync, verify
 
 MERGE_HINT = (
   "only the roadmap render is stale, as a merge leaves it; "
@@ -289,6 +289,27 @@ class VagueAcceptanceTests(unittest.TestCase):
       sl = state.slices["S04"]
       sl.sections = [s for s in sl.sections if s.heading not in ("Check", "Failing tests")]
       self.assertEqual(check.vague_acceptance(state, "S04"), [])
+
+  def test_Queries_PlaceholderSections_AgreesWithVagueAcceptance(self) -> None:
+    bodies = {
+      "backticked": ("- `test_new_flag`: fails first.", False),
+      "prose only": ("Written after Q1 and Q2.", True),
+      "fenced only": ("```\ntest_new_flag\n```", True),
+      "empty": ("  \n", False),
+    }
+    with self._fresh() as repo:
+      self._promote(repo, "S01", Check="- Works.")
+      state = repo.state()
+      sl = state.slices["S01"]
+      section = sl.section("Failing tests")
+      for name, (body, expected) in bodies.items():
+        with self.subTest(body=name):
+          section.body = body
+          flagged = "S01 / Failing tests: no backticked test name" in check.vague_acceptance(state, "S01")
+          self.assertEqual("Failing tests" in queries.placeholder_sections(sl), expected)
+          self.assertEqual(flagged, expected)
+      sl.sections = [s for s in sl.sections if s.heading != "Failing tests"]
+      self.assertEqual(queries.placeholder_sections(sl), [])
 
 
 if __name__ == "__main__":

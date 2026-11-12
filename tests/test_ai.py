@@ -2663,6 +2663,15 @@ class AiRelayBriefTests(unittest.TestCase):
     self.assertEqual(code, 2, out + err)
     self.assertEqual(json.loads(out)["error"]["code"], "unspecified", err)
 
+  def test_AiRelayBrief_PlaceholderFailingTests_Unspecified(self):
+    repo = self.project()
+    repo.run("edit", "S01", "--section", "Failing tests", "--text", "Written after Q1 and Q2.")
+    code, out, err = self.brief(repo, "--json")
+    self.assertEqual(code, 2, out + err)
+    error = json.loads(out)["error"]
+    self.assertEqual(error["code"], "unspecified", err)
+    self.assertIn("Failing tests", error["message"])
+
   def test_AiRelayBrief_UnknownId_NoSuchItem(self):
     repo = self.project()
     code, out, err = self.brief(repo, "--json", item="S99")

@@ -77,6 +77,53 @@ class DecideTests(unittest.TestCase):
         "answer cannot be blank" in json.loads(out)["error"]["message"], self.shown(repo)),
         (2, "usage", True, before))
 
+  def promoted(self, repo, failing):
+    repo.run("promote", "S01")
+    repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+    repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+    if failing is not None:
+      repo.run("edit", "S01", "--section", "Failing tests", "--text", failing)
+
+  def test_Decide_PlaceholderFailingTests_SaysStillUnspecified(self):
+    with self.repo() as repo:
+      self.promoted(repo, "Written after Q1 and Q2.")
+      code, text, err = repo.run("decide", "S01", "--text", "Answer")
+      self.assertEqual(code, 0, err)
+      self.assertIn("recorded decision for S01", text)
+      self.assertIn("S01 is still unspecified: Failing tests names no backticked test", text)
+      self.assertIn("`slicer edit S01 --section 'Failing tests'`", text)
+
+  def test_Decide_EmptyRequiredSection_SaysStillUnspecified(self):
+    with self.repo() as repo:
+      repo.run("promote", "S01")
+      _, text, _ = repo.run("decide", "S01", "--text", "Answer")
+      self.assertIn("S01 is still unspecified: Implement and Check are empty", text)
+
+  def test_Decide_PlaceholderFailingTests_JsonUnchanged(self):
+    with self.repo() as repo:
+      self.promoted(repo, "Written after Q1 and Q2.")
+      code, out, err = repo.run("decide", "S01", "--text", "Answer", "--json")
+      self.assertEqual(code, 0, err)
+      held = json.loads(out)
+    with self.repo() as repo:
+      self.promoted(repo, "- `test_Thing_Works`: fails first.")
+      _, out, _ = repo.run("decide", "S01", "--text", "Answer", "--json")
+      specified = json.loads(out)
+    self.assertEqual(list(held), list(specified))
+    self.assertNotIn("unspecified", json.dumps(held))
+
+  def test_Decide_SpecifiedSlice_PrintsNoSpecLine(self):
+    for failing in ("- `test_Thing_Works`: fails first.", None):
+      with self.subTest(failing=failing), self.repo() as repo:
+        self.promoted(repo, failing)
+        _, text, _ = repo.run("decide", "S01", "--text", "Answer")
+        self.assertNotIn("unspecified", text)
+
+  def test_Decide_NoSlice_PrintsNoSpecLine(self):
+    with self.repo() as repo:
+      _, text, _ = repo.run("decide", "S01", "--text", "Answer")
+      self.assertNotIn("unspecified", text)
+
   def test_Decide_PromotedItem_ClearsRenderedHoldFlag(self):
     with self.repo() as repo:
       repo.run("promote", "S01")

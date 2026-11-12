@@ -191,6 +191,15 @@ class PlanParallelTests(unittest.TestCase):
       self.assertEqual([h["id"] for h in payload["held"]], [held])
       self.assertEqual([u["id"] for u in payload["unspecified"]], ["S03"])
 
+  def test_PlanParallel_PlaceholderFailingTests_ReportedUnspecifiedNotPlaced(self) -> None:
+    with self.repo() as repo:
+      waiting = self.file_item(repo, "waiting", "- `src/a.py`")
+      free = self.file_item(repo, "free", "- `src/b.py`")
+      repo.run("edit", waiting, "--section", "Failing tests", "--text", "Written after Q1 and Q2.")
+      payload = self.plan(repo)
+      self.assertEqual(_waves(payload), [[free]])
+      self.assertEqual(payload["unspecified"], [{"id": waiting, "missing": ["Failing tests"]}])
+
   def test_PlanParallel_Empty_ExitsTwoWithShape(self) -> None:
     with self.repo() as repo:
       self.file_item(repo, "no files", None)

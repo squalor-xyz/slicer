@@ -303,6 +303,24 @@ def _render_hint(args: argparse.Namespace) -> str:
   return "" if getattr(args, "render", False) else "run `slicer render`"
 
 
+def _spec_gap_words(item_id: str, missing: list[str], placeholders: list[str]) -> tuple[str, str]:
+  """How `next` and `decide` word a spec gap: what is wrong, and the `edit` hints that fix it.
+
+  Empty headings read "X is empty" and placeholder headings "X names no backticked test";
+  both lists come from `queries.spec_gaps`, `missing` in the order the pool reports.
+  """
+  empty = [name for name in missing if name not in placeholders]
+  parts = []
+  if empty:
+    parts.append(f"{' and '.join(empty)} {'is' if len(empty) == 1 else 'are'} empty")
+  if placeholders:
+    parts.append(f"{' and '.join(placeholders)} names no backticked test")
+  edits = " and ".join(
+    f"`slicer edit {item_id} --section {shlex.quote(name)}`" for name in missing
+  )
+  return " and ".join(parts), edits
+
+
 def _state(args: argparse.Namespace) -> store.State:
   # Under strict --render the whole mutation runs against one staged state that
   # `_mutate_strict` renders and commits, so cache and stage it here and hand the

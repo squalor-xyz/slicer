@@ -116,6 +116,61 @@ class NextVerboseTests(unittest.TestCase):
         "unspecified": [{"id": "S01", "missing": ["Check"]}],
       })
 
+  def _placeholder_slice(self, repo: support.TempRepo, failing: str | None) -> None:
+    """S01 with Implement and Check filled; `failing` is its Failing tests text, or untouched."""
+    repo.run("add", "Waits for the owner")
+    repo.run("promote", "S01")
+    repo.run("edit", "S01", "--section", "Implement", "--text", "Do the thing.")
+    repo.run("edit", "S01", "--section", "Check", "--text", "The thing works.")
+    if failing is not None:
+      repo.run("edit", "S01", "--section", "Failing tests", "--text", failing)
+
+  def test_Next_PlaceholderFailingTests_IsUnspecified(self) -> None:
+    with self.repo() as repo:
+      self._placeholder_slice(repo, "Written after Q1 and Q2.")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(json.loads(out)["unspecified"], [{"id": "S01", "missing": ["Failing tests"]}])
+      self.assertIsNone(json.loads(out)["item"])
+
+  def test_Next_PlaceholderFailingTests_TextNamesNoBacktickedTest(self) -> None:
+    with self.repo() as repo:
+      self._placeholder_slice(repo, "Written after Q1 and Q2.")
+      code, text, err = repo.run("next")
+      self.assertEqual(code, 2, err)
+      self.assertIn("skipped S01: Failing tests names no backticked test", text)
+      self.assertIn("`slicer edit S01 --section 'Failing tests'`", text)
+      self.assertNotIn("is empty", text)
+
+  def test_Next_EmptyAndPlaceholder_WordsEachApart(self) -> None:
+    with self.repo() as repo:
+      self._placeholder_slice(repo, "Written after Q1 and Q2.")
+      repo.run("edit", "S01", "--section", "Check", "--text", " ")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 2, err)
+      self.assertEqual(
+        json.loads(out)["unspecified"], [{"id": "S01", "missing": ["Check", "Failing tests"]}],
+      )
+      _, text, _ = repo.run("next")
+      self.assertIn("Check is empty", text)
+      self.assertIn("Failing tests names no backticked test", text)
+
+  def test_Next_BacktickedFailingTests_StaysEligible(self) -> None:
+    with self.repo() as repo:
+      self._placeholder_slice(repo, "- `test_Thing_Works`: fails first.")
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["id"], "S01")
+      self.assertNotIn("unspecified", json.loads(out))
+
+  def test_Next_EmptyFailingTests_StaysEligible(self) -> None:
+    with self.repo() as repo:
+      self._placeholder_slice(repo, None)
+      code, out, err = repo.run("next", "--json")
+      self.assertEqual(code, 0, err)
+      self.assertEqual(json.loads(out)["id"], "S01")
+      self.assertNotIn("unspecified", json.loads(out))
+
   def test_Next_RequiredSections_ReplaceTheDefaultPair(self) -> None:
     with self.repo() as repo:
       repo.run("add", "Needs a spec")

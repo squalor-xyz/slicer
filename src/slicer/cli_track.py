@@ -369,7 +369,13 @@ def cmd_decide(args: argparse.Namespace) -> int:
   body = _body_from(args, "")
   item = ops.decide(state, args.id, body)
   hint = _render_hint(args)
-  _emit(args, item.to_dict(), f"recorded decision for {item.id}" + (f"; {hint}" if hint else ""))
+  lines = [f"recorded decision for {item.id}" + (f"; {hint}" if hint else "")]
+  # Advisory, and only in the text: the JSON stays the item.
+  empty, placeholders = queries.spec_gaps(state, item)
+  if empty or placeholders:
+    what, edits = cli_common._spec_gap_words(item.id, empty + placeholders, placeholders)
+    lines.append(f"{item.id} is still unspecified: {what}; fill with {edits}")
+  _emit(args, item.to_dict(), "\n".join(lines))
   return OK
 
 

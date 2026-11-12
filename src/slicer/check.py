@@ -10,10 +10,9 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from slicer import ai, feedback, jsonio, ops, render, store, sync, vcs, verify
+from slicer import ai, feedback, jsonio, ops, queries, render, store, sync, vcs, verify
 from slicer.store import State
 
-_BACKTICK_SPAN = re.compile(r"`[^`\n]+`")
 _HUMAN_CHECK = "[HUMAN CHECK]"
 _FENCE_OPEN = re.compile(r"(`{3,}|~{3,})")
 
@@ -149,15 +148,14 @@ def vague_acceptance(state: State, item_id: str) -> list[str]:
   check = sl.section("Check")
   if check is not None and check.body.strip() and not any(
     (kind == "code" and line.strip())
-    or _BACKTICK_SPAN.search(line)
+    or queries.BACKTICK_SPAN.search(line)
     or _HUMAN_CHECK in line
     for line, kind in fence_lines(check.body)
   ):
     lines.append(
       f"{item_id} / Check: no command or {_HUMAN_CHECK} line; say how to tell the slice is done"
     )
-  tests = sl.section("Failing tests")
-  if tests is not None and tests.body.strip() and not _BACKTICK_SPAN.search(tests.body):
+  if "Failing tests" in queries.placeholder_sections(sl):
     lines.append(f"{item_id} / Failing tests: no backticked test name")
   return lines
 

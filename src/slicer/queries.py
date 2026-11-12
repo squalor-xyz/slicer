@@ -20,10 +20,15 @@ from typing import TYPE_CHECKING, Callable, Mapping
 from slicer import graph, ids, paths, vcs
 from slicer.config import Config
 from slicer.errors import StateError
-from slicer.model import Item, readiness_of
+from slicer.model import Item, Slice, readiness_of
 
 if TYPE_CHECKING:
   from slicer.store import State
+
+BACKTICK_SPAN = re.compile(r"`[^`\n]+`")
+
+# An item `next` skips for its spec: `(id, missing headings, the placeholder ones among them)`.
+Unspecified = tuple[str, list[str], list[str]]
 
 
 def actor(state: State, override: str | None = None) -> str:
@@ -71,7 +76,7 @@ class NextResult:
   item: Item | None
   blocked: list[tuple[str, list[str]]]
   held: list[dict[str, object]] = field(default_factory=list)
-  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  unspecified: list[Unspecified] = field(default_factory=list)
   # Eligible items skipped because a sibling worktree has them in work.
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
@@ -86,7 +91,7 @@ class BatchResult:
   items: list[Item]
   blocked: list[tuple[str, list[str]]]
   held: list[dict[str, object]] = field(default_factory=list)
-  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  unspecified: list[Unspecified] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
   # Custom-queue items skipped because another owner holds the claim.
@@ -100,7 +105,7 @@ class _NextPool:
   items: list[Item]
   blocked: list[tuple[str, list[str]]]
   held: list[dict[str, object]] = field(default_factory=list)
-  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  unspecified: list[Unspecified] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
   # Custom-queue items skipped because another owner holds the claim.
@@ -175,7 +180,7 @@ def _ranked_pool(
       active.add(cfg.started_status)
   blocked: list[tuple[str, list[str]]] = []
   held: list[dict[str, object]] = []
-  unspecified: list[tuple[str, list[str]]] = []
+  unspecified: list[Unspecified] = []
   skipped: list[tuple[str, list[dict[str, str]]]] = []
   capped: list[dict[str, int | str]] = []
   claimed_elsewhere: list[dict[str, str]] = []
@@ -200,9 +205,10 @@ def _ranked_pool(
     pending = graph.pending(state.index, item, cfg)
     if pending:
       blocked.append((item.id, pending))
-    missing = _missing_spec(state, item)
+    empty, placeholders = spec_gaps(state, item)
+    missing = empty + placeholders
     if missing:
-      unspecified.append((item.id, missing))
+      unspecified.append((item.id, missing, placeholders))
     cap_applies = cap_queue if queue is not None else not review
     at_cap = (max_attempts is not None and cap_applies
               and item.status != cfg.started_status and item.attempts >= max_attempts)
@@ -422,7 +428,7 @@ class ParallelPlan:
   unplaced: list[dict[str, str]]
   blocked: list[tuple[str, list[str]]]
   held: list[dict[str, object]] = field(default_factory=list)
-  unspecified: list[tuple[str, list[str]]] = field(default_factory=list)
+  unspecified: list[Unspecified] = field(default_factory=list)
   elsewhere: list[tuple[str, list[dict[str, str]]]] = field(default_factory=list)
   capped: list[dict[str, int | str]] = field(default_factory=list)
   claimed_elsewhere: list[dict[str, str]] = field(default_factory=list)
@@ -647,17 +653,40 @@ def path_overlap(state: State, item_ids: list[str]) -> list[dict[str, object]]:
   return pairs
 
 
-def _missing_spec(state: State, item: Item) -> list[str]:
-  """Required headings with no text. A row with no slice is not this case."""
+def placeholder_sections(sl: Slice) -> list[str]:
+  """Headings whose text is a placeholder: a Failing tests section with text and no backticked name.
+
+  `check` warns on exactly this, and `next` treats it as unspecified: the one predicate
+  both read. An empty or missing section is not a placeholder, so a docs-only slice with
+  no Failing tests stays eligible.
+  """
+  tests = sl.section("Failing tests")
+  if tests is not None and tests.body.strip() and not BACKTICK_SPAN.search(tests.body):
+    return ["Failing tests"]
+  return []
+
+
+def spec_gaps(state: State, item: Item) -> tuple[list[str], list[str]]:
+  """What keeps an item from counting as specified: `(empty, placeholders)`.
+
+  `empty` is the required headings with no text, in `required_sections` order;
+  `placeholders` is `placeholder_sections`. A row with no slice has neither.
+  """
   sl = state.slices.get(item.id)
   if sl is None:
-    return []
-  missing: list[str] = []
+    return [], []
+  empty: list[str] = []
   for heading in state.config.required_sections:
     section = sl.section(heading)
     if section is None or not section.body.strip():
-      missing.append(heading)
-  return missing
+      empty.append(heading)
+  return empty, placeholder_sections(sl)
+
+
+def _missing_spec(state: State, item: Item) -> list[str]:
+  """Empty required headings, then placeholder headings. A row with no slice is not this case."""
+  empty, placeholders = spec_gaps(state, item)
+  return empty + [heading for heading in placeholders if heading not in empty]
 
 
 def ready_state(state: State, item: Item) -> bool | str:

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shlex
 import sys
 from contextlib import nullcontext
 from datetime import datetime, timezone
@@ -24,18 +23,14 @@ from slicer.errors import StateError
 
 
 def _unspecified_payload(result: queries.NextResult | queries.BatchResult | queries.ParallelPlan) -> list[dict[str, object]]:
-  return [{"id": item_id, "missing": missing} for item_id, missing in result.unspecified]
+  return [{"id": item_id, "missing": missing} for item_id, missing, _ in result.unspecified]
 
 
 def _unspecified_lines(result: queries.NextResult | queries.BatchResult | queries.ParallelPlan) -> list[str]:
   lines: list[str] = []
-  for item_id, missing in result.unspecified:
-    names = " and ".join(missing)
-    edits = " and ".join(
-      f"`slicer edit {item_id} --section {shlex.quote(name)}`" for name in missing
-    )
-    verb = "is" if len(missing) == 1 else "are"
-    lines.append(f"skipped {item_id}: {names} {verb} empty. Fill them with {edits}.")
+  for item_id, missing, placeholders in result.unspecified:
+    what, edits = cli_common._spec_gap_words(item_id, missing, placeholders)
+    lines.append(f"skipped {item_id}: {what}. Fill them with {edits}.")
   return lines
 
 

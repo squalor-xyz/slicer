@@ -19128,10 +19128,25 @@
       "id": "s458",
       "title": "Wave planning counts a slice with placeholder spec sections as specified",
       "short_title": "Wave planning counts a slice with placeholder spec sections as specified",
-      "status": "open",
+      "status": "review",
       "has_slice": true,
       "depends_on": [],
-      "note_records": [],
+      "note_records": [
+        {
+          "id": "9bf5e3df-6ebd-4d0c-a449-a309f7a964ff",
+          "kind": "",
+          "text": "**2026-11-12** — Verified: a Failing tests section with text and no backticked test name is now unspecified for next, plan-parallel and ai relay-brief, and decide says so in its text. One shared predicate, queries.placeholder_sections, feeds check.vague_acceptance as well. JSON shapes and the relay contract are unchanged. Full suite 3496 tests pass (1 skipped); mutation-checked; docs updated; slicer check passes with only the pre-existing undeclared release target v1.22 warning.",
+          "created_at": "2026-11-12T12:49:50Z",
+          "attempt": 1,
+          "by": "Jon Robbins",
+          "verified_by": "",
+          "verified_at": "",
+          "stale_after": "",
+          "retracted_by": "",
+          "retracted_at": "",
+          "retracted_reason": ""
+        }
+      ],
       "claim": null,
       "fields": {
         "size": "S",
@@ -19149,7 +19164,7 @@
         "importance": 2,
         "urgency": 2,
         "effort": null,
-        "attempts": 0
+        "attempts": 1
       }
     },
     {
