@@ -31,6 +31,22 @@ with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.St
 print(json.dumps(sorted(sys.modules)))
 """
 
+# The same `--version` from a bare argparse parser built as slicer builds its own (`color=False`
+# on 3.14 and later). Whatever this loads is the standard library's cost, not slicer's: on 3.14,
+# argparse loads `_colorize`, which imports `dataclasses` and with it `inspect`.
+_BASELINE_SCRIPT = """
+import argparse, contextlib, io, json, sys
+kwargs = {"color": False} if sys.version_info >= (3, 14) else {}
+parser = argparse.ArgumentParser(prog="slicer", **kwargs)
+parser.add_argument("--version", action="version", version="slicer 0")
+with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+  try:
+    parser.parse_args(["--version"])
+  except SystemExit:
+    pass
+print(json.dumps(sorted(sys.modules)))
+"""
+
 # The modules that hold command handlers: every `cli_*` module but the ones that build the
 # parser or hold what the handlers share.
 HANDLERS = tuple(sorted(
@@ -44,9 +60,18 @@ HEAVY = ("dataclasses", "inspect", "slicer.store", "slicer.check", "slicer.ops",
 
 def modules_after(argv: list[str]) -> set[str]:
   """The names in `sys.modules` after `cli.main(argv)` in a fresh interpreter."""
+  return _modules_from(_SCRIPT, json.dumps(argv))
+
+
+def argparse_baseline() -> set[str]:
+  """The names in `sys.modules` after a bare argparse `--version` in a fresh interpreter."""
+  return _modules_from(_BASELINE_SCRIPT)
+
+
+def _modules_from(script: str, *args: str) -> set[str]:
   env = {**os.environ, "PYTHONPATH": str(SRC), "SLICER_NO_CODE_WARNING": "1"}
   done = subprocess.run(
-    [sys.executable, "-c", _SCRIPT, json.dumps(argv)],
+    [sys.executable, "-c", script, *args],
     capture_output=True, text=True, env=env, check=False,
   )
   if done.returncode != 0:
@@ -63,7 +88,11 @@ class StartupImportsTests(unittest.TestCase):
   def test_Version_ImportsNoHeavyModule(self) -> None:
     loaded = modules_after(["--version"])
     self.assertEqual(sorted(loaded & set(HANDLERS)), [])
-    self.assertEqual(sorted(loaded & set(HEAVY)), [])
+    self.assertEqual(sorted((loaded - argparse_baseline()) & set(HEAVY)), [])
+
+  def test_ArgparseBaseline_HoldsNoSlicerModule(self) -> None:
+    # Guards the baseline above: a slicer module in it would excuse that module for `--version`.
+    self.assertEqual(sorted(name for name in argparse_baseline() if name.startswith("slicer")), [])
 
   def test_Help_ImportsNoHandlerModule(self) -> None:
     loaded = modules_after(["--help"])

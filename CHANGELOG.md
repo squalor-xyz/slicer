@@ -7,7 +7,7 @@ and the release step `slicer changelog assemble` writes those entries under `[Un
 
 ## [Unreleased]
 
-## [1.22.0] - 2026-11-14
+## [1.22.1] - 2026-11-15
 
 ### Added
 
@@ -26,6 +26,11 @@ and the release step `slicer changelog assemble` writes those entries under `[Un
 ### Fixed
 
 - A slice whose Failing tests names no backticked test is now unspecified: `next`, `plan-parallel` and `ai relay-brief` skip it, and `decide` says so (s458).
+- The release tests pass on Python 3.14: the startup import test no longer counts `dataclasses` and `inspect` against `slicer --version` when a bare argparse `--version` on the same interpreter already loads them, as 3.14's argparse does. 1.22.0 was tagged but never published because this test failed on 3.14; this release carries all of its changes.
+
+## [1.22.0] - 2026-11-14
+
+Tagged `v1.22.0` but never published: the release tests failed on Python 3.14. Its changes shipped in 1.22.1.
 
 ## [1.21.0] - 2026-11-09
 
