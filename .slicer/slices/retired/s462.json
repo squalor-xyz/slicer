@@ -1,0 +1,39 @@
+{
+  "id": "s462",
+  "title": "the relay prompt should not pass --render --strict to slicer show, or show should accept those flags",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The implementer reported this as tool feedback (friction) on slicer in ork run ork-20261117-220113-e6de, project ork, item S396:\n\nthe relay prompt should not pass --render --strict to slicer show, or show should accept those flags\n\nEvidence: slicer show S396 --render --strict failed as unrecognized args; slicer show S396 succeeded"
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

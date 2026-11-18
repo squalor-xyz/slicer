@@ -1,0 +1,41 @@
+{
+  "id": "s460",
+  "title": "Relay contract: an engine may run the closing note and finish step",
+  "lead": [
+    "*Proposed.* Drafted 2026-11-17 from an ork review. The relay contract says the implementer runs the closing note and the finish step, and its Conformance section says a program meets each obligation in its own code. This item makes the contract say plainly that an orchestrator that is a program may run both itself, with the implementer's stated outcome as the note. The owner decided this for ork on 2026-11-17 (ork adj 407)."
+  ],
+  "depends_note": null,
+  "findings_note": "ork docs/review-2026-11-12-workflow.md F3: 65 finish steps in five days were model rounds of two commands, median 12 s; one failed on vendor credits (ork S315). Owner decision: ork adj 407 (engine.finish-runner), 2026-11-17.",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "*Proposed.* Evidence:\n\n- ork resumes the implementer for `slicer note` and `slicer done` (`ork/internal/engine/states.go:1225-1262`): 65 such steps from 2026-11-08 to 2026-11-12, median 12 seconds; 51 Claude resumes read 56M tokens.\n- On ork S315 the step failed on Codex credits and cost a second gate and another implementer round.\n- The contract text: \"Only after `VERDICT: PASS`, the implementer runs the closing note and finish step\" (`src/slicer/ai.py:518`), and the Conformance obligation \"Run the closing note and the finish step only after `VERDICT: PASS`\" names no actor.\n- The comment above `RELAY_CONTRACT` (`src/slicer/ai.py:254-259`) says to bump the version when a rule a role follows changes, tracking order included. Who runs the tracking steps is such a rule, so this is relay v13.\n\nNo open owner question."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ai.py:259`\n- `src/slicer/ai.py:518`\n- `src/slicer/ai.py:678`\n- `tests/test_relay_conformance.py`\n- `tests/test_ai.py`\n- `tests/test_relay_pin.py`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_RelayConformance_FinishStep_AProgramMayRunItWithTheOutcomeLine`: the Conformance section of both texts says a program orchestrator may run the closing note and the finish step itself, takes the note text from the `Outcome:` line of the implementer's last report, and records itself as the actor.\n- `test_RelayConformance_FinishStep_AnAgentOrchestratorLeavesItToTheImplementer`: the text keeps the implementer as the runner when the orchestrator is an agent.\n- `test_RelayContract_Version_Is13AndChangeIsRecorded`: `RELAY_CONTRACT` is 13 and `RELAY_CHANGES` has an entry for 13 that names the finish step.\n- `test_RelayJson_Obligations_CarryTheFinishRunnerRule`: `slicer ai relay --json` carries the rule as data."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. Add the rule to the Conformance section and to the implementer text: with a program orchestrator, the implementer writes `Outcome:` (one line) in its report and runs neither command.\n2. Set `RELAY_CONTRACT` to 13 and add the `RELAY_CHANGES` entry.\n3. Carry the rule in the `--json` obligations.\n4. CHANGELOG.md, as the project's rules say."
+    },
+    {
+      "heading": "Check",
+      "body": "Acceptance criteria:\n\n- `slicer ai relay` and `slicer ai relay-orchestrator` open with `Contract: relay v13`.\n- Both texts state that an orchestrator that is a program may run the closing note and the finish step itself, after `VERDICT: PASS`, with the note text from the implementer's `Outcome:` line.\n- Both texts still give the two steps to the implementer when the orchestrator is an agent.\n- The order (PASS, closing note, finish step, then any commit) is unchanged.\n- `slicer ai relay --json` carries the rule, and the change list names v13.\n- A project pinned to v12 is refused the v13 text with the existing pin message.\n\nCommands:\n\n- `python3 -m unittest discover -s tests -t tests` exits 0.\n- `python3 -m unittest discover -s tests -t tests -k '*FinishStep*'` exits 0 and runs the two new conformance tests.\n- `slicer check` exits 0."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

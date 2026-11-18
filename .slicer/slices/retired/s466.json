@@ -1,0 +1,39 @@
+{
+  "id": "s466",
+  "title": "a Check line of the form git diff --stat -- PATH should also list untracked files, or the spec template should use git status --short PATH",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The reviewer reported this as tool feedback (deterministic-check) on slicer in ork run ork-20261117-233555-6d1c, project ork, item S390:\n\na Check line of the form git diff --stat -- PATH should also list untracked files, or the spec template should use git status --short PATH\n\nEvidence: S390 Check expects git diff --stat -- testdata/golden to list two new goldens, but untracked files never appear in git diff, so the line prints nothing even when correct"
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "s468",
+  "title": "when a spec edit re-anchors a count in one section, slicer check could flag the same stale number in other sections of that slice",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The reviewer reported this as tool feedback (deterministic-check) on slicer in ork run ork-20261118-034207-857d, project ork, item S332:\n\nwhen a spec edit re-anchors a count in one section, slicer check could flag the same stale number in other sections of that slice\n\nEvidence: Check and Implement say 53, Git still says 43 in S332"
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

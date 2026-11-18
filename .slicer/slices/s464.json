@@ -1,0 +1,39 @@
+{
+  "id": "s464",
+  "title": "when has_slice is set and the slice file is absent, promote should write the file instead of requiring --force",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "ork tool feedback, run ork-20261117-215053-c643 (S402); merged with s465",
+  "size": "S",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "Triage 2026-11-18. The two commands give contradictory advice when an item is marked as having a slice but its file is missing (for example after a git merge that brought the index without the slice files, as in ork 5f9e52bd):\n\n- `slicer show ID` prints \"(no slice yet; run `slicer promote ID`)\" when no slice file loads (`src/slicer/cli_queue.py:970-975`).\n- `slicer promote ID` refuses on the `has_slice` flag alone: \"ID already has a slice; pass --force to overwrite it\" (`src/slicer/ops.py:707-708`).\n- `slicer check` reports the same state as \"marked as having a slice, but no file exists\" (`src/slicer/verify.py:145-146`).\n\n`--force` exists to protect an existing file. With no file there is nothing to overwrite, so promote should write it without `--force`. s465, retired, covered the same report; the rest of its ask (recovering a Why from git history) is outside slicer.\n\nNo open owner question."
+    },
+    {
+      "heading": "Files",
+      "body": "- `src/slicer/ops.py:707`\n- `src/slicer/store.py:514`\n- `tests/test_ops.py:176`\n- `CHANGELOG.md`"
+    },
+    {
+      "heading": "Failing tests",
+      "body": "- `test_Promote_MarkedButFileMissing_WritesTheFileWithoutForce`: with `has_slice` set and the slice file deleted, `promote ID` exits 0, writes the file with the configured sections, and `slicer check` then reports no finding for that item.\n- `test_Promote_FromSourceMarkedButFileMissing_WritesTheFileWithoutForce`: the same with `--file`, and the sections come from the source.\n- The existing `test_Promote_AlreadyPromoted_RefusesWithoutForce` and `test_Promote_FromSourceAlreadyPromoted_RefusesWithoutForce` still pass: an item whose slice file exists is still refused without `--force`."
+    },
+    {
+      "heading": "Implement",
+      "body": "1. In `ops.promote`, refuse without `--force` only when `has_slice` is set **and** `state.find_slice_file(item_id)` finds a file.\n2. CHANGELOG.md, as the project's rules say."
+    },
+    {
+      "heading": "Check",
+      "body": "Acceptance criteria:\n\n- An item marked as having a slice whose file is missing is promoted without `--force`, with or without `--file`.\n- An item whose slice file exists is still refused without `--force`, with the same message and exit code 2.\n- The advice `show` prints for that item (`run slicer promote ID`) now works as written.\n\nCommands:\n\n- `python3 -m unittest discover -s tests -t tests -k '*Promote*'` exits 0 and runs the two new tests.\n- `python3 -m unittest discover -s tests -t tests` exits 0.\n- `slicer check` exits 0."
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,39 @@
+{
+  "id": "s465",
+  "title": "do not record has_slice until the slice file exists, and have promote --force keep an existing Why body",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The implementer reported this as tool feedback (friction) on slicer in ork run ork-20261117-220113-e6de, project ork, item S396:\n\ndo not record has_slice until the slice file exists, and have promote --force keep an existing Why body\n\nEvidence: after merging 5f9e52bd, slicer check said S412-S415 were marked as having a slice but no file existed; promote --force created the files with an empty Why, so each Why had to be restored with slicer edit from main commit 1527d8c2"
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

@@ -2962,3 +2962,33 @@
 {"when": "2026-11-12T12:49:50Z", "item": "s458", "action": "note", "from": "", "to": "", "note": "Verified: a Failing tests section with text and no backticke", "by": "Jon Robbins"}
 {"when": "2026-11-12T12:49:51Z", "item": "s458", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
 {"when": "2026-11-12T12:49:57Z", "item": "s458", "action": "status", "from": "review", "to": "done", "note": "Landed s458", "by": "Jon Robbins"}
+{"when": "2026-11-17T01:43:16Z", "item": "s460", "action": "add", "from": "", "to": "open", "note": "Relay contract: an engine may run the closing note and finish step"}
+{"when": "2026-11-17T01:43:16Z", "item": "s461", "action": "add", "from": "", "to": "open", "note": "list --touching PATH: open items whose Files name a path"}
+{"when": "2026-11-17T01:43:24Z", "item": "s461", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-11-17T22:28:00Z", "item": "s462", "action": "add", "from": "", "to": "open", "note": "the relay prompt should not pass --render --strict to slicer show, or show should accept those flags"}
+{"when": "2026-11-17T22:28:00Z", "item": "s462", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-17T22:28:42Z", "item": "s463", "action": "add", "from": "", "to": "open", "note": "slicer show should accept --render --strict or the relay prompt should not name that form on show"}
+{"when": "2026-11-17T22:28:42Z", "item": "s463", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-17T23:30:01Z", "item": "s464", "action": "add", "from": "", "to": "open", "note": "when has_slice is set and the slice file is absent, promote should write the file instead of requiring --force"}
+{"when": "2026-11-17T23:30:02Z", "item": "s464", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-17T23:31:54Z", "item": "s465", "action": "add", "from": "", "to": "open", "note": "do not record has_slice until the slice file exists, and have promote --force keep an existing Why body"}
+{"when": "2026-11-17T23:31:54Z", "item": "s465", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-17T23:50:28Z", "item": "s466", "action": "add", "from": "", "to": "open", "note": "a Check line of the form git diff --stat -- PATH should also list untracked files, or the spec template should use git status --short PATH"}
+{"when": "2026-11-17T23:50:28Z", "item": "s466", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-17T23:52:03Z", "item": "s467", "action": "add", "from": "", "to": "open", "note": "write Check lines about new goldens as git status --short PATH, since git diff --stat skips untracked files"}
+{"when": "2026-11-17T23:52:03Z", "item": "s467", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-18T03:53:20Z", "item": "s468", "action": "add", "from": "", "to": "open", "note": "when a spec edit re-anchors a count in one section, slicer check could flag the same stale number in other sections of that slice"}
+{"when": "2026-11-18T03:53:20Z", "item": "s468", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-18T12:57:01Z", "item": "s462", "action": "retire", "from": "open", "to": "retired", "note": "Not a slicer bug: slicer's prompts only pair --render --strict with start/edit and name show as 'show ID --json --lean' (ai.py:18,187,855). Fix the ork prompt or model habit. Triage 2026-11-18."}
+{"when": "2026-11-18T12:57:01Z", "item": "s463", "action": "retire", "from": "open", "to": "retired", "note": "Duplicate of s462; same cause (not a slicer bug). Triage 2026-11-18."}
+{"when": "2026-11-18T12:57:02Z", "item": "s465", "action": "retire", "from": "open", "to": "retired", "note": "Overlaps s464. promote already writes the slice file before the index (ops.py:726-728); the ork mismatch came from a git merge (5f9e52bd) that dropped slice files. Keeping a Why that exists only in git history is outside slicer. Triage 2026-11-18."}
+{"when": "2026-11-18T12:57:02Z", "item": "s466", "action": "retire", "from": "open", "to": "retired", "note": "Not slicer's: slicer's source and docs never suggest git diff --stat in Check lines; the line was in ork's S390 spec. Triage 2026-11-18."}
+{"when": "2026-11-18T12:57:02Z", "item": "s467", "action": "retire", "from": "open", "to": "retired", "note": "Duplicate of s466; same cause (spec authoring in ork). Triage 2026-11-18."}
+{"when": "2026-11-18T12:57:02Z", "item": "s468", "action": "retire", "from": "open", "to": "retired", "note": "Speculative: slicer check has no number-consistency logic and a cross-section stale-count heuristic would be noisy. Triage 2026-11-18."}
+{"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Files"}
+{"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
+{"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Implement"}
+{"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Check"}
+{"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "set", "from": "", "to": "", "note": "size -→S; findings -→ork tool feedback, run ork-20261117-215053-c643 (S402); merged with s465; effort -→1"}
+{"when": "2026-11-18T12:57:31Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Why"}

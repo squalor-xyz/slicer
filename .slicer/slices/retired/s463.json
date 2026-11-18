@@ -1,0 +1,39 @@
+{
+  "id": "s463",
+  "title": "slicer show should accept --render --strict or the relay prompt should not name that form on show",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The implementer reported this as tool feedback (friction) on slicer in ork run ork-20261117-215731-f05c, project ork, item S397:\n\nslicer show should accept --render --strict or the relay prompt should not name that form on show\n\nEvidence: slicer show S397 --root /home/jon/code/squalor-xyz/ork/.worktrees/S397 --render --strict exited 2 unrecognized arguments; start and edit accept those flags"
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}
