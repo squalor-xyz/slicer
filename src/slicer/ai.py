@@ -256,7 +256,7 @@ def handoff_policy_text(kind: str) -> str:
 # `ai relay-orchestrator` and carried in their `--json`. Bump it when a rule an outer
 # session, orchestrator or role follows changes (order, gate, tracking order, waiting,
 # report shape), not for a rewording. Record each version's change in RELAY_CHANGES.
-RELAY_CONTRACT = 12
+RELAY_CONTRACT = 13
 
 RELAY_CHANGES = (
   (5, "Setup resolves the role lineup, orchestrator included, with "
@@ -316,6 +316,13 @@ RELAY_CHANGES = (
    "entry before `role_steps` (`tool feedback: none` when empty, at most 3, counted toward the line "
    "limit, `evidence` last), and `--json` gains a `tool_feedback` key after `conformance`. Tool "
    "feedback is advisory: it is not a finding, is never gated and is never acted on in the slice."),
+  (13, "The contract says who runs the closing note and the finish step: an orchestrator that is a "
+   "program may run them itself, after `VERDICT: PASS` and in the same order, taking the note text "
+   "from the `Outcome:` line of the implementer's report and recording itself as the actor with "
+   "`--owner`. The implementer then writes `Outcome:` (one line) in its report and runs neither "
+   "command; the implementer still runs them when the orchestrator is an agent. Conformance gains "
+   "the obligation `finish_runner` after `finish_after_pass`, and Order's step 3 and the "
+   "implementer's role say the same."),
 )
 
 
@@ -515,7 +522,8 @@ Review; on a slice the project marks as UI, the UI pass runs in parallel with th
    fix round is checked and gated in one pass; see Rules), then the architect, when
    the owner chose one, then the gate, which still decides."""),
   (3, """\
-Only after `VERDICT: PASS`, the implementer runs the closing note and finish step:
+Only after `VERDICT: PASS`, the implementer runs the closing note and finish step (a
+   program orchestrator may run them itself, as Conformance says):
    {finish_step}"""),
   (4, """\
 After the finish step, commit on the slice branch only when your brief allows it."""),
@@ -677,6 +685,12 @@ Record each role's round in the run ledger with `relay-run step`: a new step for
     ('finish_after_pass', """\
 Run the closing note and the finish step only after `{pass_verdict}`. A fix round that
   follows runs them again only after its own PASS."""),
+    ('finish_runner', """\
+An orchestrator that is a program may run the closing note and the finish step itself,
+  after `{pass_verdict}`, in the worktree: it takes the note text from the `Outcome:`
+  line of the implementer's last report and records itself as the actor with `--owner`.
+  The implementer then runs neither. An orchestrator that is an agent leaves both steps
+  to the implementer."""),
     ('run_report', """\
 Return one run report, in the line order of Run report and within its line limit. Send
   it once, never an interim run report. Its first line is the contract marker and its
@@ -778,8 +792,10 @@ Order says, and writes no product code."""),
   ('implementer', 'implementer', """\
 The implementer owns one slice. It runs `slicer start ID --render --strict`,
 writes the failing tests and watches them go red, implements, mutation-checks
-each new test, and closes the slice. Line numbers a slice cites may have moved since
-its spec was written; at start the implementer re-anchors them against the code in
+each new test, and closes the slice: the closing note and the finish step. With a
+program orchestrator that runs them itself, the implementer writes `Outcome:` (one
+line) in its report and runs neither command. Line numbers a slice cites may have moved
+since its spec was written; at start the implementer re-anchors them against the code in
 the worktree."""),
   ('reviewer', 'reviewer', """\
 The reviewer is read-only. It reviews correctness, test strength and direction
@@ -1050,7 +1066,10 @@ each review, fix rounds included, the implementer checks its own diff for concur
 and handle lifetime (locks, files and processes it opens are released on every path),
 for docs that describe the changed behaviour updated in the same diff, and for a test
 that fails when the new wiring is removed (a mutation that disconnects the call site),
-and fixes what it finds. The spec-check brief says the agent is read-only, edits
+and fixes what it finds. When a program orchestrator runs the closing note and the
+finish step itself, the implementer brief says the implementer writes `Outcome:` (one
+line) in its report and runs neither command.
+The spec-check brief says the agent is read-only, edits
 nothing and makes no git writes, and asks for `ready` or `owner needed` lines for each
 slice. A part brief names the part's own files and the files it must not touch. A
 Check line marked `[AFTER LAND]` needs something main does not have yet, such as

@@ -1563,8 +1563,8 @@ class AiRelayTests(unittest.TestCase):
         self.assertEqual(flat.lower().count("re-anchor"), expected)
 
   def test_RelaySpecCheck_Text_NamesNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 12)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 12)
+    self.assertEqual(ai.RELAY_CONTRACT, 13)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 13)
     for label, flat in self.contract_texts():
       with self.subTest(label=label):
         for token in ("ork", "adj", "s116", "s115", "roles.spec-check"):
@@ -1625,7 +1625,7 @@ class AiRelayTests(unittest.TestCase):
       self.assertEqual(code, 0)
       self.assertIn("printing the generic guide", err)
       self.assertEqual({key: json.loads(out)[key] for key in ("contract", "relay")},
-                       {"contract": "relay v12", "relay": text})
+                       {"contract": "relay v13", "relay": text})
       self.assertEqual(text, ai.relay_text())
       before = repo.run("ai", "--json", "relay")
       after = repo.run("ai", "relay", "--json")
@@ -2751,7 +2751,7 @@ class RelayGoldenTests(unittest.TestCase):
 
   def check_golden(self, command, *flags):
     key = "-".join((command, *(flag.lstrip("-") for flag in flags)))
-    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v12.json").read_text())
+    golden = json.loads((Path(__file__).parent / "fixtures/relay-contract-v13.json").read_text())
     for finish in ("done", "handoff"):
       for matrix in (False, True):
         with self.subTest(finish=finish, matrix=matrix), support.TempRepo() as repo:
@@ -3095,11 +3095,11 @@ class RelayApproveLandTests(unittest.TestCase):
         parser.parse_args(shlex.split(command.strip("`"))[1:])
 
   def test_RelayContract_ApproveAndLand_NameNoProject(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 12)
+    self.assertEqual(ai.RELAY_CONTRACT, 13)
     for finish in ("done", "handoff"):
       with self.subTest(finish=finish):
         flat = " ".join(ai.relay_text(finish).split())
-        self.assertTrue(flat.startswith("Contract: relay v12"))
+        self.assertTrue(flat.startswith("Contract: relay v13"))
         for token in ("ork", "adj", "s118", "s119", "landing.in-ork"):
           self.assertNotRegex(flat.casefold(), r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])")
         if finish == "handoff":
@@ -3343,10 +3343,10 @@ class RelayOwnerQuestionContractTests(unittest.TestCase):
           parser.parse_args(argv)
           self.assertEqual(cli_common._unknown_flags(parser, argv), [])
 
-  def test_RelayContract_Bundle_IsV12WithItsChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 12)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11, 12])
-    self.assertEqual(ai.contract_line(), "relay v12")
+  def test_RelayContract_Bundle_IsV13WithItsChangeEntry(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 13)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11, 12, 13])
+    self.assertEqual(ai.contract_line(), "relay v13")
 
   def test_RelayContract_OwnerQuestion_NamesNoProject(self) -> None:
     for text in (ai.relay_text(), ai.orchestrator_text()):
@@ -3507,15 +3507,15 @@ class RelayV11Tests(unittest.TestCase):
     self.assertNotIn("agents repo", source)
 
   def test_AiRelay_Contract_HasV11ChangeEntry(self) -> None:
-    self.assertEqual(ai.RELAY_CONTRACT, 12)
+    self.assertEqual(ai.RELAY_CONTRACT, 13)
     for label, text in (
       ("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text()),
       ("session", ai.orchestrator_text(session=True)),
     ):
       with self.subTest(label=label):
-        self.assertTrue(text.startswith("Contract: relay v12\n"))
+        self.assertTrue(text.startswith("Contract: relay v13\n"))
     entry = dict(ai.RELAY_CHANGES)[11]
-    self.assertEqual([v for v, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11, 12])
+    self.assertEqual([v for v, _ in ai.RELAY_CHANGES], [5, 6, 7, 8, 9, 10, 11, 12, 13])
     self.assertNotIn("\n", entry)
     for phrase in (
       "the read-only ones included, uses absolute paths and `git -C` and never `cd`",
@@ -3541,12 +3541,34 @@ class RelayV11Tests(unittest.TestCase):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, entry)
     payload = self.payload("relay")
-    self.assertEqual(payload["contract"], "relay v12")
+    self.assertEqual(payload["contract"], "relay v13")
     self.assertIn({"version": 11, "text": entry}, payload["changes"])
 
-  def test_AiRelay_Contract_HasV12ChangeEntryForToolFeedback(self) -> None:
+  def test_RelayContract_Version_Is13AndChangeIsRecorded(self) -> None:
+    self.assertEqual(ai.RELAY_CONTRACT, 13)
+    self.assertEqual(ai.contract_line(), "relay v13")
+    for label, text in (
+      ("relay", ai.relay_text()), ("orchestrator", ai.orchestrator_text()),
+      ("session", ai.orchestrator_text(session=True)),
+    ):
+      with self.subTest(label=label):
+        self.assertTrue(text.startswith("Contract: relay v13\n"))
     version, entry = ai.RELAY_CHANGES[-1]
-    self.assertEqual(version, 12)
+    self.assertEqual(version, 13)
+    self.assertNotIn("\n", entry)
+    for phrase in (
+      "closing note and the finish step",
+      "an orchestrator that is a program may run them itself",
+      "`Outcome:` line of the implementer's report",
+      "the implementer still runs them when the orchestrator is an agent",
+      "`finish_runner`",
+    ):
+      with self.subTest(phrase=phrase):
+        self.assertIn(phrase, entry)
+    self.assertEqual(self.payload("relay")["changes"][-1], {"version": 13, "text": entry})
+
+  def test_AiRelay_Contract_HasV12ChangeEntryForToolFeedback(self) -> None:
+    entry = dict(ai.RELAY_CHANGES)[12]
     self.assertNotIn("\n", entry)
     for phrase in (
       "`tool feedback` line",
@@ -3559,7 +3581,7 @@ class RelayV11Tests(unittest.TestCase):
     ):
       with self.subTest(phrase=phrase):
         self.assertIn(phrase, entry)
-    self.assertEqual(self.payload("relay")["changes"][-1], {"version": 12, "text": entry})
+    self.assertIn({"version": 12, "text": entry}, self.payload("relay")["changes"])
 
   def test_AiRelayOrchestratorSession_NonBlockerQuestion_AskedInTheLedgerAndReadBeforeFinish(self) -> None:
     for finish in ("done", "handoff"):

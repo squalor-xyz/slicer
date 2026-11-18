@@ -18,11 +18,11 @@
     },
     {
       "heading": "Files",
-      "body": "- `src/slicer/ai.py:259`\n- `src/slicer/ai.py:518`\n- `src/slicer/ai.py:678`\n- `tests/test_relay_conformance.py`\n- `tests/test_ai.py`\n- `tests/test_relay_pin.py`\n- `CHANGELOG.md`"
+      "body": "- `src/slicer/ai.py:259` (RELAY_CONTRACT, RELAY_CHANGES)\n- `src/slicer/ai.py:524` (ORCHESTRATOR_STEPS step 3)\n- `src/slicer/ai.py:685` (RELAY_CONFORMANCE: finish_after_pass, new finish_runner)\n- `src/slicer/ai.py:RELAY_ROLES` (implementer role) and `RELAY_BRIEF` (implementer brief)\n- `tests/test_relay_conformance.py`\n- `tests/test_ai.py`\n- `tests/test_relay_pin.py`\n- `tests/test_relay_roles.py` (v12 pins)\n- `tests/fixtures/relay-contract-v13.json` (renamed from relay-contract-v12.json)\n- `docs/agents.md`\n- `docs/commands.md`\n- `landed-changed/s460.md` (written by `slicer changelog add`; `CHANGELOG.md` is not edited)"
     },
     {
       "heading": "Failing tests",
-      "body": "- `test_RelayConformance_FinishStep_AProgramMayRunItWithTheOutcomeLine`: the Conformance section of both texts says a program orchestrator may run the closing note and the finish step itself, takes the note text from the `Outcome:` line of the implementer's last report, and records itself as the actor.\n- `test_RelayConformance_FinishStep_AnAgentOrchestratorLeavesItToTheImplementer`: the text keeps the implementer as the runner when the orchestrator is an agent.\n- `test_RelayContract_Version_Is13AndChangeIsRecorded`: `RELAY_CONTRACT` is 13 and `RELAY_CHANGES` has an entry for 13 that names the finish step.\n- `test_RelayJson_Obligations_CarryTheFinishRunnerRule`: `slicer ai relay --json` carries the rule as data."
+      "body": "- `test_RelayConformance_FinishStep_AProgramMayRunItWithTheOutcomeLine`: the Conformance section of both texts says a program orchestrator may run the closing note and the finish step itself, takes the note text from the `Outcome:` line of the implementer's last report, and records itself as the actor; the implementer role and brief say it then writes `Outcome:` and runs neither command.\n- `test_RelayConformance_FinishStep_AnAgentOrchestratorLeavesItToTheImplementer`: the text keeps the implementer as the runner when the orchestrator is an agent (Conformance and Order step 3).\n- `test_RelayContract_Version_Is13AndChangeIsRecorded`: `RELAY_CONTRACT` is 13 and `RELAY_CHANGES` has an entry for 13 that names the finish step.\n- `test_RelayJson_Obligations_CarryTheFinishRunnerRule`: `slicer ai relay --json` carries the rule as data (the `finish_runner` conformance key).\n- `test_AiRelay_PinnedToV12_IsRefusedTheV13TextWithThePinMessage`: a project pinned to v12 is refused with the existing pin message."
     },
     {
       "heading": "Implement",

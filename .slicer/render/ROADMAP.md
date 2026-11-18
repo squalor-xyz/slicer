@@ -27,7 +27,7 @@
 - No canonical database or home-directory state store: `~/.slicer/` is not a canonical
   state directory; canonical state stays in git-tracked JSON inside the checkout.
 
-455 items · — 3 · done 434 · retired 18
+455 items · — 2 · done 434 · retired 18 · review 1
 
 ## v1.22
 
@@ -541,7 +541,7 @@ Later (revisit after orchestrator use)
 |---|---|---|---|---|---|---|---|
 | 341 | S03 | Export back to a legacy markdown index for anything still expecting one | M | - | slicer | legacy export: no known consumer; the project moved off the legacy markdown format (S01), and it is absent from the recorded goals | retired |
 | 342 | [S158](slices/S158.md) | Accept near-miss legacy layouts in migrate | M | 2 | slicer | agents-repo request R8: --index, skip non-slice files, ASCII --, trailing-newline normalisation, column mapping; requester is not migrating · The agents-repo requester froze their tree and is not migrating. migrate stays exact-layout only; a near-miss tree uses import. S157 covers pointing a refusal at the format doc. | retired |
-| 343 | [s460](slices/s460.md) | Engine may run the finish step (relay v13) | S | 1 |  | ork docs/review-2026-11-12-workflow.md F3: 65 finish steps in five days were model rounds of two commands, median 12 s; one failed on vendor credits (ork S315). Owner decision: ork adj 407 (engine.finish-runner), 2026-11-17. | — |
+| 343 | [s460](slices/s460.md) | Engine may run the finish step (relay v13) | S | 1 |  | ork docs/review-2026-11-12-workflow.md F3: 65 finish steps in five days were model rounds of two commands, median 12 s; one failed on vendor credits (ork S315). Owner decision: ork adj 407 (engine.finish-runner), 2026-11-17. | review |
 | 344 | [s461](slices/s461.md) | list --touching PATH | S | 1 |  | ork docs/review-2026-11-12-workflow.md F5: reviewers read slicer list --json --lean (85139 bytes for ork) to find the few items a diff affects. | — |
 | 345 | [s462](slices/s462.md) | the relay prompt should not pass --render --strict to slicer show, or show should accept those flags |  | - |  | Not a slicer bug: slicer's prompts only pair --render --strict with start/edit and name show as 'show ID --json --lean' (ai.py:18,187,855). Fix the ork prompt or model habit. Triage 2026-11-18. | retired |
 | 346 | [s463](slices/s463.md) | slicer show should accept --render --strict or the relay prompt should not name that form on show |  | - |  | Duplicate of s462; same cause (not a slicer bug). Triage 2026-11-18. | retired |

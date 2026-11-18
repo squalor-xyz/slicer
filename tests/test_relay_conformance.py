@@ -24,7 +24,7 @@ RELAY_KEYS = ["contract", "pinned", "check_command", "relay", "setup", "order", 
 ORCHESTRATOR_KEYS = ["contract", "pinned", "orchestrator", "order", "report", "outcomes", "stop", "changes"]
 OBLIGATIONS = [
   "role_order", "gate_rule", "finding_kinds", "stop_rules", "blocker_wait", "role_fallback", "ledger",
-  "finish_after_pass", "run_report", "worktree_scope", "commit_scope",
+  "finish_after_pass", "finish_runner", "run_report", "worktree_scope", "commit_scope",
 ]
 ROLE_KEYS = [
   "outer_session", "orchestrator", "implementer", "reviewer", "architect", "ui_pass", "gate", "spec_check",
@@ -90,7 +90,7 @@ class ConformanceSectionTests(RelayConformanceCase):
            "Wait for the answer to a `blocker` owner question",
            "When a role's round ends in a vendor limit",
            "Record each role's round in the run ledger", "Run the closing note and the finish step only after",
-           "Return one run report", "Work only in the worktree the brief names",
+           "An orchestrator that is a program may run the closing note", "Return one run report", "Work only in the worktree the brief names",
            "Commit on the slice branch only when the brief allows it"),
           items,
         ):
@@ -194,17 +194,17 @@ class ConformanceJsonTests(RelayConformanceCase):
     # The pin (s387) and check_command (s379) are built: `ai relay` carries both right
     # after contract, and `ai relay-orchestrator` carries the pin only.
     payload = self.payload("relay")
-    self.assertEqual(payload["contract"], "relay v12")
+    self.assertEqual(payload["contract"], "relay v13")
     self.assertEqual(list(payload)[:3], ["contract", "pinned", "check_command"])
     self.assertIsNone(payload["pinned"])
     self.assertEqual(payload["check_command"], "")
     orchestrator = self.payload("relay-orchestrator")
-    self.assertEqual(orchestrator["contract"], "relay v12")
+    self.assertEqual(orchestrator["contract"], "relay v13")
     self.assertEqual(list(orchestrator)[:2], ["contract", "pinned"])
     self.assertIsNone(orchestrator["pinned"])
     self.assertNotIn("check_command", orchestrator)
-    self.assertEqual(ai.RELAY_CONTRACT, 12)
-    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 12)
+    self.assertEqual(ai.RELAY_CONTRACT, 13)
+    self.assertEqual([version for version, _ in ai.RELAY_CHANGES][-1], 13)
 
   def test_AiRelayJson_ReportLines_ToolFeedbackBeforeRoleSteps(self) -> None:
     for command in ("relay", "relay-orchestrator"):
@@ -346,6 +346,77 @@ class ConformanceJsonTests(RelayConformanceCase):
     text = json.dumps(payload["conformance"])
     for stop in payload["stop"]:
       self.assertNotIn(stop["text"], text)
+
+
+class FinishStepTests(RelayConformanceCase):
+  """Who runs the closing note and the finish step (s460, relay v13)."""
+
+  PROGRAM = (
+    "An orchestrator that is a program may run the closing note and the finish step itself, "
+    "after `VERDICT: PASS`, "
+  )
+  OUTCOME = "takes the note text from the `Outcome:` line of the implementer's last report"
+  ACTOR = "records itself as the actor with `--owner`"
+  AGENT = "An orchestrator that is an agent leaves both steps to the implementer."
+  IMPLEMENTER = "the implementer writes `Outcome:` (one line) in its report and runs neither command"
+
+  def item(self, text: str) -> str:
+    return dict(zip(OBLIGATIONS, bullets(section(text, "Conformance"))))["finish_runner"]
+
+  def test_RelayConformance_FinishStep_AProgramMayRunItWithTheOutcomeLine(self) -> None:
+    for label, text in self.texts():
+      with self.subTest(label=label):
+        item = self.item(text)
+        for phrase in (self.PROGRAM, self.OUTCOME, self.ACTOR):
+          self.assertIn(phrase, item)
+        # The implementer is told the other half: with such an orchestrator it runs neither command.
+        self.assertIn(self.IMPLEMENTER, flat(section(text, "Every brief")))
+        if label.startswith("relay-"):
+          self.assertIn(self.IMPLEMENTER, flat(section(text, "Roles")))
+        # The new rule sits after the one that fixes the order, which stays as it was.
+        keys = [key for key, _ in zip(OBLIGATIONS, bullets(section(text, "Conformance")))]
+        self.assertEqual(keys.index("finish_runner"), keys.index("finish_after_pass") + 1)
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        item = {i["key"]: i["text"] for i in self.payload(command)["conformance"]}["finish_runner"]
+        for phrase in (self.PROGRAM, self.OUTCOME, self.ACTOR):
+          self.assertIn(phrase, item)
+
+  def test_RelayConformance_FinishStep_AnAgentOrchestratorLeavesItToTheImplementer(self) -> None:
+    for label, text in self.texts():
+      with self.subTest(label=label):
+        self.assertIn(self.AGENT, self.item(text))
+        if not label.startswith("relay-"):
+          step = next(s for s in ai.relay_contract(
+            label.split("-")[1], orchestrator=True, session=label.startswith("session"),
+          )["order"] if s["step"] == 3)
+          self.assertTrue(step["text"].startswith(
+            "Only after `VERDICT: PASS`, the implementer runs the closing note and finish step"), step)
+          self.assertIn("a program orchestrator may run them itself", step["text"])
+          self.assertIn(step["text"], flat(section(text, "Order")))
+    for finish in ("done", "handoff"):
+      with self.subTest(finish=finish):
+        roles_text = flat(section(ai.relay_text(finish), "Roles"))
+        self.assertIn("closes the slice: the closing note and the finish step", roles_text)
+
+  def test_RelayJson_Obligations_CarryTheFinishRunnerRule(self) -> None:
+    for command in ("relay", "relay-orchestrator"):
+      with self.subTest(command=command):
+        payload = self.payload(command)
+        keys = [item["key"] for item in payload["conformance"]]
+        self.assertEqual(keys, OBLIGATIONS)
+        item = payload["conformance"][keys.index("finish_runner")]
+        self.assertEqual(list(item), ["key", "text"])
+        for phrase in (self.PROGRAM, self.OUTCOME, self.ACTOR, self.AGENT):
+          self.assertIn(phrase, item["text"])
+        self.assertNotIn("{", item["text"])
+        # The change list names v13 and the finish step.
+        self.assertEqual(payload["changes"][-1]["version"], 13)
+        self.assertIn("finish step", payload["changes"][-1]["text"])
+    # The only order data that changes is the orchestrator's step 3, and its numbering stays.
+    steps = self.payload("relay-orchestrator")["order"]
+    self.assertEqual([s["step"] for s in steps], [1, 2, 3, 4])
+    self.assertTrue(steps[3]["text"].startswith("After the finish step, commit on the slice branch"))
 
 
 class VendorLimitTests(RelayConformanceCase):

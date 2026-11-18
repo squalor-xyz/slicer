@@ -141,6 +141,16 @@ class PinMismatchTests(RelayPinCase):
       with self.subTest(command=command):
         self.assert_refused(repo, command, ai.RELAY_CONTRACT - 1)
 
+  def test_AiRelay_PinnedToV12_IsRefusedTheV13TextWithThePinMessage(self) -> None:
+    repo = self.project()
+    pin(repo, 12)
+    for command in ("relay", "relay-orchestrator", "relay-brief"):
+      with self.subTest(command=command):
+        self.assert_refused(repo, command, 12)
+        message = self.message(self.serve(repo, command)[2])
+        self.assertIn("this project pins relay v12, but this slicer serves relay v13.", message)
+        self.assertIn("slicer config relay_contract 13", message)
+
   def test_AiRelay_PinNewerThanRunning_RefusesToo(self) -> None:
     repo = self.project()
     pin(repo, ai.RELAY_CONTRACT + 1)
