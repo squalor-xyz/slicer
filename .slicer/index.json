@@ -19228,7 +19228,7 @@
       "id": "s460",
       "title": "Relay contract: an engine may run the closing note and finish step",
       "short_title": "Engine may run the finish step (relay v13)",
-      "status": "review",
+      "status": "done",
       "has_slice": true,
       "depends_on": [],
       "note_records": [
