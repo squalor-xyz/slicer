@@ -1,0 +1,39 @@
+{
+  "id": "s470",
+  "title": "have the merge of main into a slice branch check that every item marked as having a slice still has its slice file, so a missing scaffold is caught before a land round and needs no model repair",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The gate reported this as tool feedback (deterministic-check) on slicer in ork run ork-20261118-151517-1d8b, project ork, item S439:\n\nhave the merge of main into a slice branch check that every item marked as having a slice still has its slice file, so a missing scaffold is caught before a land round and needs no model repair\n\nEvidence: S448 and then S450 each needed a land-round repair after a merge of main, both because of \"marked as having a slice, but no file exists\""
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

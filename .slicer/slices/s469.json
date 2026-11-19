@@ -1,0 +1,39 @@
+{
+  "id": "s469",
+  "title": "slicer check should warn when a Files entry has an anchor that is not :N or :N-M, so the path is not silently dropped",
+  "lead": [],
+  "depends_note": null,
+  "findings_note": "",
+  "size": "",
+  "flags": [],
+  "trees_note": "",
+  "trees_plural": false,
+  "boundary": "**Not in this slice:**",
+  "sections": [
+    {
+      "heading": "Why",
+      "body": "The reviewer reported this as tool feedback (deterministic-check) on slicer in ork run ork-20261118-130536-390b, project ork, item S398:\n\nslicer check should warn when a Files entry has an anchor that is not :N or :N-M, so the path is not silently dropped\n\nEvidence: S398 Files has `docs/design.md:890-896,2925-2929` and the slice's paths omit docs/design.md while slicer check passes"
+    },
+    {
+      "heading": "Files",
+      "body": ""
+    },
+    {
+      "heading": "Failing tests",
+      "body": ""
+    },
+    {
+      "heading": "Implement",
+      "body": ""
+    },
+    {
+      "heading": "Check",
+      "body": ""
+    },
+    {
+      "heading": "Git",
+      "body": ""
+    }
+  ],
+  "notes": []
+}

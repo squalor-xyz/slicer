@@ -2992,3 +2992,7 @@
 {"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Check"}
 {"when": "2026-11-18T12:57:23Z", "item": "s464", "action": "set", "from": "", "to": "", "note": "size -→S; findings -→ork tool feedback, run ork-20261117-215053-c643 (S402); merged with s465; effort -→1"}
 {"when": "2026-11-18T12:57:31Z", "item": "s464", "action": "edit", "from": "", "to": "", "note": "Why"}
+{"when": "2026-11-18T13:24:22Z", "item": "s469", "action": "add", "from": "", "to": "open", "note": "slicer check should warn when a Files entry has an anchor that is not :N or :N-M, so the path is not silently dropped"}
+{"when": "2026-11-18T13:24:22Z", "item": "s469", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-18T22:40:23Z", "item": "s470", "action": "add", "from": "", "to": "open", "note": "have the merge of main into a slice branch check that every item marked as having a slice still has its slice file, so a missing scaffold is caught before a land round and needs no model repair"}
+{"when": "2026-11-18T22:40:23Z", "item": "s470", "action": "promote", "from": "", "to": "", "note": ""}
