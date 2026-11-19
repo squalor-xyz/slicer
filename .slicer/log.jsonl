@@ -2997,3 +2997,7 @@
 {"when": "2026-11-18T13:12:19Z", "item": "s460", "action": "edit", "from": "", "to": "", "note": "Failing tests"}
 {"when": "2026-11-18T13:21:15Z", "item": "s460", "action": "note", "from": "", "to": "", "note": "Relay contract is v13: an orchestrator that is a program may", "by": "Jon Robbins"}
 {"when": "2026-11-18T13:21:16Z", "item": "s460", "action": "handoff", "from": "started", "to": "review", "note": "claim Jon Robbins cleared", "by": "Jon Robbins"}
+{"when": "2026-11-18T13:24:22Z", "item": "s469", "action": "add", "from": "", "to": "open", "note": "slicer check should warn when a Files entry has an anchor that is not :N or :N-M, so the path is not silently dropped"}
+{"when": "2026-11-18T13:24:22Z", "item": "s469", "action": "promote", "from": "", "to": "", "note": ""}
+{"when": "2026-11-18T22:40:23Z", "item": "s470", "action": "add", "from": "", "to": "open", "note": "have the merge of main into a slice branch check that every item marked as having a slice still has its slice file, so a missing scaffold is caught before a land round and needs no model repair"}
+{"when": "2026-11-18T22:40:23Z", "item": "s470", "action": "promote", "from": "", "to": "", "note": ""}
